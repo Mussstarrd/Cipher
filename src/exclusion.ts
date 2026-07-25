@@ -124,7 +124,9 @@ export function scanText(text: string, context: "style" | "lyrics"): EngineWarni
     const t = token.toLowerCase();
     // Only match as a standalone word to avoid false hits ("x", "tip" etc.).
     if (t.length < 3) continue;
-    const re = new RegExp(`(?<![a-z0-9])${t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?![a-z0-9])`, "i");
+    const escaped = t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    // No lookbehind: unsupported on iOS Safari < 16.4, and this code ships to browsers.
+    const re = new RegExp(`(^|[^a-z0-9])${escaped}($|[^a-z0-9])`, "i");
     if (re.test(lower)) {
       warnings.push({
         level: "block",

@@ -10,14 +10,19 @@ const result = await build({
   format: "iife",
   minify: true,
   write: false,
+  // Older mobile Safari compatibility: transpile ?., ??, spread, etc.
+  target: "es2017",
 });
 
 const js = result.outputFiles[0].text;
 const template = await readFile("web/template.html", "utf8");
 const marker = "/*__CIPHER_BUNDLE__*/";
 if (!template.includes(marker)) throw new Error("bundle marker missing from template");
-// script-tag safety: an IIFE bundle shouldn't contain "</script>", but guard anyway
-const html = template.replace(marker, js.replaceAll("</script>", "<\\/script>"));
+// script-tag safety: an IIFE bundle shouldn't contain "</script>", but guard anyway.
+// Function replacement: with a string, String.replace treats $& etc. as special
+// patterns and corrupts any bundle containing them.
+const html = template.replace(marker, () => js.replaceAll("</script>", "<\\/script>"));
+if (html.includes("__CIPHER_BUNDLE__")) throw new Error("marker text leaked into output — corruption");
 
 await mkdir("dist", { recursive: true });
 await writeFile("dist/cipher.html", html);
