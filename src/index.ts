@@ -1,0 +1,10 @@
+export { buildPackage } from "./engine.ts";
+export { ARTISTS, resolveArtist } from "./artists.ts";
+export { GROOVES, groovePhrase } from "./grooves.ts";
+export { PROFILES, DEFAULT_PROFILE, STYLE_WORD_TARGET } from "./profiles.ts";
+export { SLIDER_PRESETS } from "./sliders.ts";
+export { fuse, DEFAULT_ACCENT_WEIGHT, MAX_ACCENT_WEIGHT } from "./fusion.ts";
+export { buildExclusions, scanText, hardBanTokens } from "./exclusion.ts";
+export { assembleStyle } from "./style.ts";
+export { buildScaffold } from "./structure.ts";
+export type * from "./types.ts";

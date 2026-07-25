@@ -1,0 +1,99 @@
+import { parseArgs } from "node:util";
+import { buildPackage } from "./engine.ts";
+import { ARTISTS } from "./artists.ts";
+import type { BuildType, ProfileId, TemplateId } from "./types.ts";
+
+const HELP = `CIPHER — Suno prompt engine
+
+Usage:
+  npm run cipher -- --dominant <artist> [options]
+  npm run cipher -- --list-artists
+
+Options:
+  --dominant <id>        Dominant artist DNA (id, name, or alias). Required.
+  --accent <id[:w]>      Accent DNA with optional weight 0-1 (default 0.3). Repeatable.
+  --build <type>         faithful | balanced | fusion (default: fusion if accents, else faithful)
+  --template <id>        hook-first | hook-first-beat-switch (default: hook-first)
+  --profile <id>         v4.5-all | v5 | v5.5 (default: v5.5)
+  --ban <element>        Element to exclude; triggers negative-to-positive inversion. Repeatable.
+  --bpm <n>              BPM override.
+  --json                 Emit the package as JSON.
+
+Examples:
+  npm run cipher -- --dominant xxxtentacion --accent travis-scott:0.4
+  npm run cipher -- --dominant ti --accent weezer:0.35 --template hook-first-beat-switch
+  npm run cipher -- --dominant juice-wrld --ban saxophone --ban edm
+`;
+
+function main(): void {
+  const { values } = parseArgs({
+    options: {
+      dominant: { type: "string" },
+      accent: { type: "string", multiple: true },
+      build: { type: "string" },
+      template: { type: "string" },
+      profile: { type: "string" },
+      ban: { type: "string", multiple: true },
+      bpm: { type: "string" },
+      json: { type: "boolean" },
+      "list-artists": { type: "boolean" },
+      help: { type: "boolean" },
+    },
+  });
+
+  if (values.help || (!values.dominant && !values["list-artists"])) {
+    console.log(HELP);
+    return;
+  }
+
+  if (values["list-artists"]) {
+    for (const a of ARTISTS) {
+      console.log(`${a.id.padEnd(14)} ${a.displayName.padEnd(14)} ${a.genres.join(" / ")}`);
+    }
+    return;
+  }
+
+  const accents = (values.accent ?? []).map((spec) => {
+    const [artist, w] = spec.split(":");
+    return { artist: artist!, weight: w ? Number(w) : undefined };
+  });
+
+  const pkg = buildPackage({
+    fusion: { dominant: values.dominant!, accents },
+    build: values.build as BuildType | undefined,
+    template: values.template as TemplateId | undefined,
+    profile: values.profile as ProfileId | undefined,
+    ban: values.ban,
+    bpm: values.bpm ? Number(values.bpm) : undefined,
+  });
+
+  if (values.json) {
+    console.log(JSON.stringify(pkg, null, 2));
+    return;
+  }
+
+  const { sliders, meta } = pkg;
+  const line = "─".repeat(64);
+  console.log(line);
+  console.log(
+    `CIPHER package  ·  ${meta.dominant}${meta.accents.length ? " + " + meta.accents.map((a) => `${a.artist}(${a.weight})`).join(" + ") : ""}  ·  ${meta.build} / ${meta.template}  ·  ${meta.profile}  ·  ${meta.bpm} BPM`,
+  );
+  console.log(line);
+  console.log("\n▌STYLE FIELD — paste into “Styles”\n");
+  console.log(pkg.styleText);
+  console.log("\n▌EXCLUDE FIELD — paste into “Exclude Styles”\n");
+  console.log(pkg.excludeText || "(leave empty)");
+  console.log("\n▌LYRICS — fill every «placeholder», delete // lines, then paste\n");
+  console.log(pkg.lyricsScaffold);
+  console.log(`\n▌SLIDERS (Safe↔Chaos / Loose↔Strong scales are unnumbered — eyeball the range)\n`);
+  console.log(`  Weirdness:        ~${sliders.weirdness.min}–${sliders.weirdness.max}%`);
+  console.log(`  Style Influence:  ~${sliders.styleInfluence.min}–${sliders.styleInfluence.max}%`);
+  console.log(`  ${sliders.note}`);
+  if (pkg.warnings.length) {
+    console.log(`\n▌NOTES\n`);
+    for (const w of pkg.warnings) console.log(`  [${w.level}] ${w.message}`);
+  }
+  console.log();
+}
+
+main();
