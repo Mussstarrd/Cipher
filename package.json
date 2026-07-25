@@ -8,7 +8,8 @@
   "scripts": {
     "cipher": "tsx src/cli.ts",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "build:web": "node scripts/build-web.mjs"
   },
   "repository": {
     "type": "git",
@@ -17,6 +18,7 @@
   "license": "UNLICENSED",
   "devDependencies": {
     "@types/node": "^26.1.1",
+    "playwright-core": "^1.62.0",
     "tsx": "^4.23.1",
     "typescript": "^7.0.2",
     "vitest": "^4.1.10"

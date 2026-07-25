@@ -1,0 +1,260 @@
+import { buildPackage } from "../src/engine.ts";
+import { ARTISTS } from "../src/artists.ts";
+import { PROFILES } from "../src/profiles.ts";
+import type { BuildType, ProfileId, SunoPackage, TemplateId } from "../src/types.ts";
+
+type BuildChoice = "auto" | BuildType;
+
+const state = {
+  dominant: "xxxtentacion",
+  accents: new Map<string, number>(),
+  template: "hook-first" as TemplateId,
+  build: "auto" as BuildChoice,
+  profile: "v5.5" as ProfileId,
+  bans: [] as string[],
+  bpm: undefined as number | undefined,
+};
+
+const ACCENT_STEPS = [0.3, 0.45];
+const TEMPLATES: { id: TemplateId; label: string }[] = [
+  { id: "hook-first", label: "Hook-first" },
+  { id: "hook-first-beat-switch", label: "Beat switch" },
+];
+const BUILDS: { id: BuildChoice; label: string }[] = [
+  { id: "auto", label: "Auto" },
+  { id: "faithful", label: "Faithful" },
+  { id: "balanced", label: "Balanced" },
+  { id: "fusion", label: "Fusion" },
+];
+
+const $ = <T extends HTMLElement>(id: string): T => document.getElementById(id) as T;
+
+let current: SunoPackage;
+
+function rebuild(): void {
+  current = buildPackage({
+    fusion: {
+      dominant: state.dominant,
+      accents: [...state.accents.entries()].map(([artist, weight]) => ({ artist, weight })),
+    },
+    template: state.template,
+    build: state.build === "auto" ? undefined : state.build,
+    profile: state.profile,
+    ban: state.bans,
+    bpm: state.bpm,
+  });
+  renderOutput();
+}
+
+function renderDominant(): void {
+  const box = $("dominant");
+  box.textContent = "";
+  for (const a of ARTISTS) {
+    const b = document.createElement("button");
+    b.className = "chip" + (state.dominant === a.id ? " on" : "");
+    b.textContent = a.displayName;
+    b.setAttribute("aria-pressed", String(state.dominant === a.id));
+    b.onclick = () => {
+      state.dominant = a.id;
+      state.accents.delete(a.id);
+      renderDominant();
+      renderAccents();
+      rebuild();
+    };
+    box.appendChild(b);
+  }
+}
+
+function renderAccents(): void {
+  const box = $("accents");
+  box.textContent = "";
+  for (const a of ARTISTS) {
+    const weight = state.accents.get(a.id);
+    const b = document.createElement("button");
+    b.className = "chip" + (weight ? " on" : "");
+    b.disabled = a.id === state.dominant;
+    b.setAttribute("aria-pressed", String(Boolean(weight)));
+    b.innerHTML = "";
+    b.append(a.displayName);
+    if (weight) {
+      b.append(" ");
+      const w = document.createElement("span");
+      w.className = "w";
+      w.textContent = weight.toFixed(2);
+      b.appendChild(w);
+    }
+    b.onclick = () => {
+      const idx = weight ? ACCENT_STEPS.indexOf(weight) + 1 : 0;
+      if (idx >= ACCENT_STEPS.length) state.accents.delete(a.id);
+      else state.accents.set(a.id, ACCENT_STEPS[idx]!);
+      renderAccents();
+      rebuild();
+    };
+    box.appendChild(b);
+  }
+}
+
+function renderSeg<T extends string>(
+  id: string,
+  options: { id: T; label: string }[],
+  get: () => T,
+  set: (v: T) => void,
+): void {
+  const box = $(id);
+  box.textContent = "";
+  for (const opt of options) {
+    const b = document.createElement("button");
+    b.className = get() === opt.id ? "on" : "";
+    b.textContent = opt.label;
+    b.setAttribute("aria-pressed", String(get() === opt.id));
+    b.onclick = () => {
+      set(opt.id);
+      renderSeg(id, options, get, set);
+      rebuild();
+    };
+    box.appendChild(b);
+  }
+}
+
+function renderBans(): void {
+  const box = $("bans");
+  box.textContent = "";
+  const suggestions = ["saxophone", "edm", "pop", "piano", "autotune"];
+  const shown = [...new Set([...state.bans, ...suggestions])];
+  for (const ban of shown) {
+    const active = state.bans.includes(ban);
+    const b = document.createElement("button");
+    b.className = "chip" + (active ? " on" : "");
+    b.textContent = active ? `${ban} ✕` : ban;
+    b.setAttribute("aria-pressed", String(active));
+    b.onclick = () => {
+      state.bans = active ? state.bans.filter((x) => x !== ban) : [...state.bans, ban];
+      renderBans();
+      rebuild();
+    };
+    box.appendChild(b);
+  }
+}
+
+function renderOutput(): void {
+  const profile = PROFILES[state.profile];
+  $("out-style").textContent = current.styleText;
+  const words = current.styleText.split(/\s+/).length;
+  $("style-meta").textContent =
+    `${current.styleText.length} / ${profile.styleCharLimit} chars · ${words} words · ` +
+    `${current.meta.build} build @ ${current.meta.bpm} BPM`;
+  $("out-exclude").textContent = current.excludeText || "(leave empty)";
+  $("out-lyrics").textContent = current.lyricsScaffold;
+
+  const sliders = $("out-sliders");
+  sliders.textContent = "";
+  const rows: [string, { min: number; max: number }][] = [
+    ["Weirdness", current.sliders.weirdness],
+    ["Style influence", current.sliders.styleInfluence],
+  ];
+  for (const [name, range] of rows) {
+    const row = document.createElement("div");
+    row.className = "slider-row";
+    const fillLeft = range.min;
+    const fillWidth = range.max - range.min;
+    row.innerHTML =
+      `<span class="name">${name}</span>` +
+      `<span class="track"><span class="fill" style="left:${fillLeft}%;width:${fillWidth}%"></span></span>` +
+      `<span class="val">~${range.min}–${range.max}%</span>`;
+    sliders.appendChild(row);
+  }
+  const note = document.createElement("p");
+  note.className = "slider-note";
+  note.textContent = current.sliders.note;
+  sliders.appendChild(note);
+
+  const notesCard = $("notes-card");
+  const notes = $("out-notes");
+  notes.textContent = "";
+  notesCard.hidden = current.warnings.length === 0;
+  for (const w of current.warnings) {
+    const li = document.createElement("li");
+    const badge = document.createElement("span");
+    badge.className = `badge ${w.level}`;
+    badge.textContent = w.level;
+    li.appendChild(badge);
+    li.append(w.message);
+    notes.appendChild(li);
+  }
+}
+
+function copyText(kind: string): string {
+  if (kind === "style") return current.styleText;
+  if (kind === "exclude") return current.excludeText;
+  return current.lyricsScaffold;
+}
+
+function wireCopy(): void {
+  for (const btn of document.querySelectorAll<HTMLButtonElement>(".copy")) {
+    btn.onclick = async () => {
+      const text = copyText(btn.dataset.copy ?? "");
+      try {
+        await navigator.clipboard.writeText(text);
+      } catch {
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        ta.remove();
+      }
+      const original = btn.textContent;
+      btn.textContent = "Copied";
+      btn.classList.add("done");
+      setTimeout(() => {
+        btn.textContent = original;
+        btn.classList.remove("done");
+      }, 1200);
+    };
+  }
+}
+
+function init(): void {
+  renderDominant();
+  renderAccents();
+  renderSeg("template", TEMPLATES, () => state.template, (v) => (state.template = v));
+  renderSeg("build", BUILDS, () => state.build, (v) => (state.build = v));
+  renderBans();
+
+  const profileSel = $<HTMLSelectElement>("profile");
+  for (const id of Object.keys(PROFILES)) {
+    const opt = document.createElement("option");
+    opt.value = id;
+    opt.textContent = id === "v4.5-all" ? "v4.5-all (free tier)" : id;
+    profileSel.appendChild(opt);
+  }
+  profileSel.value = state.profile;
+  profileSel.onchange = () => {
+    state.profile = profileSel.value as ProfileId;
+    rebuild();
+  };
+
+  const bpmInput = $<HTMLInputElement>("bpm");
+  bpmInput.onchange = () => {
+    const n = Number(bpmInput.value);
+    state.bpm = bpmInput.value && n >= 60 && n <= 200 ? n : undefined;
+    rebuild();
+  };
+
+  const banInput = $<HTMLInputElement>("ban-input");
+  banInput.onkeydown = (e) => {
+    if (e.key !== "Enter") return;
+    const v = banInput.value.trim().toLowerCase();
+    if (v && !state.bans.includes(v)) {
+      state.bans = [...state.bans, v];
+      banInput.value = "";
+      renderBans();
+      rebuild();
+    }
+  };
+
+  wireCopy();
+  rebuild();
+}
+
+init();
