@@ -35,55 +35,49 @@ export interface ScaffoldResult {
 const HOOK_GUIDE =
   "4 short hook lines — simple phrasing, heavy repetition, identical every time it appears";
 
-function sectionsFor(template: TemplateId, adlib: string): ScaffoldSection[] {
-  const hook: ScaffoldSection = { tag: "[Chorus]", slot: "hook", guide: HOOK_GUIDE, adlib };
-  const hookRepeat: ScaffoldSection = { tag: "[Chorus]", slot: "hook", guide: HOOK_GUIDE, adlib };
+const VERSE_SLOTS = ["verse1", "verse2", "verse3"] as const;
 
-  if (template === "hook-first") {
-    return [
-      { tag: "[Intro: Cold Open]" },
-      hook,
-      {
-        tag: "[Verse 1]",
-        slot: "verse1",
-        guide: "6–8 bars — open with your hardest image; land punchlines on beat 4",
-        adlib,
-      },
-      hookRepeat,
-      {
-        tag: "[Verse 2]",
-        slot: "verse2",
-        guide: "6–8 bars — escalate: denser rhymes or a flow switch in the last 4",
-        adlib: "echo last words",
-      },
-      { ...hookRepeat },
-      { tag: "[Outro]", slot: "outro", guide: "2 lines — strip back to one repeated phrase, let it decay" },
-      { tag: "[End]" },
-    ];
+function sectionsFor(template: TemplateId, adlib: string, verses: 2 | 3): ScaffoldSection[] {
+  const hook = (): ScaffoldSection => ({ tag: "[Chorus]", slot: "hook", guide: HOOK_GUIDE, adlib });
+  const verse = (n: number, guide: string, verseAdlib?: string): ScaffoldSection => ({
+    tag: `[Verse ${n}]`,
+    slot: VERSE_SLOTS[n - 1]!,
+    guide,
+    adlib: verseAdlib ?? adlib,
+  });
+
+  const sections: ScaffoldSection[] = [{ tag: "[Intro: Cold Open]" }, hook()];
+  const switchTemplate = template === "hook-first-beat-switch";
+  // On the beat-switch template, the final verse rides the switched beat.
+  const preSwitchVerses = switchTemplate ? verses - 1 : verses;
+
+  for (let n = 1; n <= preSwitchVerses; n++) {
+    const guide =
+      n === 1
+        ? "6–8 bars — open with your hardest image; land punchlines on beat 4"
+        : "6–8 bars — escalate: denser rhymes or a flow switch in the last 4";
+    sections.push(verse(n, guide, n === 1 ? adlib : "echo last words"), hook());
   }
 
-  return [
-    { tag: "[Intro: Cold Open]" },
-    hook,
-    { tag: "[Verse 1]", slot: "verse1", guide: "6–8 bars in the primary groove", adlib },
-    hookRepeat,
-    {
-      tag: "[Breakdown]",
-      slot: "breakdown",
-      guide: "1–2 sparse lines — half the energy, space before the switch",
-    },
-    { tag: "[Build]", slot: "build", guide: "2 lines rising tension — shorter words, tighter rhythm" },
-    { tag: "[Drop]" },
-    {
-      tag: "[Verse 2]",
-      slot: "verse2",
-      guide: "6–8 bars on the switched beat — new flow, same identity",
-      adlib: "echo",
-    },
-    { ...hookRepeat },
-    { tag: "[Outro]", slot: "outro", guide: "2 lines — one repeated phrase over the decaying beat" },
+  if (switchTemplate) {
+    sections.push(
+      {
+        tag: "[Breakdown]",
+        slot: "breakdown",
+        guide: "1–2 sparse lines — half the energy, space before the switch",
+      },
+      { tag: "[Build]", slot: "build", guide: "2 lines rising tension — shorter words, tighter rhythm" },
+      { tag: "[Drop]" },
+      verse(verses, "6–8 bars on the switched beat — new flow, same identity", "echo"),
+      hook(),
+    );
+  }
+
+  sections.push(
+    { tag: "[Outro]", slot: "outro", guide: "2 lines — strip back to one repeated phrase, let it decay" },
     { tag: "[End]" },
-  ];
+  );
+  return sections;
 }
 
 /** Render one section's placeholder body line (« » must be replaced before pasting). */
@@ -100,11 +94,14 @@ export function sectionPlaceholder(s: ScaffoldSection): string | undefined {
 export function assembleLyrics(
   sections: ScaffoldSection[],
   slotTexts: Partial<Record<NonNullable<ScaffoldSection["slot"]>, string>> = {},
+  opts: { tagsOnly?: boolean } = {},
 ): string {
   const blocks: string[] = [];
   let pendingTag: string | undefined;
   for (const s of sections) {
-    const body = (s.slot && slotTexts[s.slot]?.trim()) || sectionPlaceholder(s);
+    const body = opts.tagsOnly
+      ? undefined
+      : (s.slot && slotTexts[s.slot]?.trim()) || sectionPlaceholder(s);
     const tag = pendingTag ? `${pendingTag}\n${s.tag}` : s.tag;
     pendingTag = undefined;
     if (!body) {
@@ -128,11 +125,12 @@ export function buildScaffold(
   dominant: ArtistDNA,
   profile: ModelProfile,
   bpm: number,
+  verses: 2 | 3 = 2,
 ): ScaffoldResult {
   const warnings: EngineWarning[] = [];
   const adlib = dominant.adlibs?.[0] ?? "yeah";
   const flowNote = dominant.lyricNotes?.[0] ?? "keep bar cadence consistent with the groove";
-  const sections = sectionsFor(template, adlib);
+  const sections = sectionsFor(template, adlib, verses);
 
   const header = [
     `// CIPHER scaffold — ${template} @ ${bpm} BPM (delete these // lines before pasting)`,

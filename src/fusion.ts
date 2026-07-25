@@ -1,17 +1,23 @@
 import type { ArtistDNA, EngineWarning, StyleSlots } from "./types.ts";
-import { groovePhrase } from "./grooves.ts";
+import { GROOVES } from "./grooves.ts";
+import { rng, shuffled } from "./random.ts";
 
 /**
- * Dominant + accent fusion.
+ * Dominant + accent fusion with seeded pool-picking.
  *
  * The dominant DNA owns the identity slots: genre anchor, groove, vocal
  * delivery, BPM. Accents contribute a weight-capped number of
  * instrumentation/texture/mood descriptors so a blend (e.g. Weezer texture
  * over T.I. bounce) colors the track without collapsing the rap identity.
+ *
+ * Slot arrays are pools: each build draws a seeded subset (signatures at
+ * index 0 of instrumentation/vocal always included), so the same DNA choices
+ * regenerate a different prompt with the same vibe under a new seed, and an
+ * identical one under the same seed.
+ *
  * Research grounding: §3.2 (1–2 genres, 2–4 instruments, one strong identity
  * beats many weak signals) and §3.3 (mashups are officially supported but the
- * style vector is lossy — the loudest tags win, so the dominant must stay
- * loudest by coming first).
+ * style vector is lossy — the loudest tags win, so the dominant stays first).
  */
 export interface WeightedAccent {
   dna: ArtistDNA;
@@ -20,6 +26,12 @@ export interface WeightedAccent {
 
 export const DEFAULT_ACCENT_WEIGHT = 0.3;
 export const MAX_ACCENT_WEIGHT = 0.45;
+
+/** Signature-first pick: index 0 always, plus n seeded picks from the rest. */
+function pickWithSignature(pool: readonly string[], n: number, rnd: () => number): string[] {
+  if (pool.length === 0) return [];
+  return [pool[0]!, ...shuffled(pool.slice(1), rnd).slice(0, n)];
+}
 
 /** How many descriptors an accent may contribute at a given weight. */
 function accentQuota(weight: number): { instrumentation: number; texture: number; vocal: number } {
@@ -31,7 +43,7 @@ function accentQuota(weight: number): { instrumentation: number; texture: number
 export function fuse(
   dominant: ArtistDNA,
   accents: WeightedAccent[],
-  opts: { bpm?: number; grooveVariant?: number } = {},
+  opts: { bpm?: number; seed?: number } = {},
 ): {
   slots: StyleSlots;
   warnings: EngineWarning[];
@@ -40,6 +52,7 @@ export function fuse(
   applied: { artist: string; weight: number }[];
 } {
   const warnings: EngineWarning[] = [];
+  const rnd = rng(opts.seed ?? 0);
 
   const clamped = accents.map((a) => {
     if (a.weight > MAX_ACCENT_WEIGHT) {
@@ -62,52 +75,59 @@ export function fuse(
     genre.push(dominant.genres[1]);
   }
 
-  // Groove: dominant's, always emitted (first-class slot).
-  const groove = [groovePhrase(dominant.groove, opts.grooveVariant ?? 0)];
-  if (dominant.grooveExtras?.[0]) groove.push(dominant.grooveExtras[0]);
-
-  // Mood: dominant leads; strongest accent may add one.
-  const mood = [...dominant.mood.slice(0, 2)];
-  const topAccent = clamped.slice().sort((a, b) => b.weight - a.weight)[0];
-  if (topAccent && topAccent.weight >= 0.25 && topAccent.dna.mood[0]) {
-    mood.push(topAccent.dna.mood[0]);
+  // Groove: dominant's, always emitted (first-class slot); seeded phrase pick.
+  const grooveVocab = GROOVES[dominant.groove];
+  const groove = [shuffled(grooveVocab.phrases, rnd)[0]!];
+  if (dominant.grooveExtras?.length) {
+    groove.push(shuffled(dominant.grooveExtras, rnd)[0]!);
   }
 
-  // Instrumentation: dominant first, then accent contributions by quota,
-  // capped at 4 total (research §3.2: 2–4 instruments).
-  const instrumentation = [...dominant.instrumentation.slice(0, 2)];
+  // Mood: two seeded picks from the dominant pool; strongest accent may add one.
+  const mood = shuffled(dominant.mood, rnd).slice(0, 2);
+  const topAccent = clamped.slice().sort((a, b) => b.weight - a.weight)[0];
+  if (topAccent && topAccent.weight >= 0.25 && topAccent.dna.mood.length) {
+    mood.push(shuffled(topAccent.dna.mood, rnd)[0]!);
+  }
+
+  // Instrumentation: dominant signature + 1 seeded, then accent contributions
+  // (their signature first) by quota, capped at 4 total (research §3.2).
+  const instrumentation = pickWithSignature(dominant.instrumentation, 1, rnd);
   for (const a of clamped) {
     const quota = accentQuota(a.weight);
-    for (const item of a.dna.instrumentation.slice(0, quota.instrumentation)) {
+    for (const item of pickWithSignature(a.dna.instrumentation, quota.instrumentation - 1, rnd)) {
       if (instrumentation.length >= 4) break;
       instrumentation.push(item);
     }
   }
-  if (instrumentation.length < 4 && dominant.instrumentation[2]) {
-    instrumentation.push(dominant.instrumentation[2]);
+  if (instrumentation.length < 4) {
+    const extra = shuffled(dominant.instrumentation.slice(1), rnd).find(
+      (i) => !instrumentation.includes(i),
+    );
+    if (extra) instrumentation.push(extra);
   }
 
-  // Vocal: dominant's delivery is untouchable; a strong accent may add one
-  // harmony/texture descriptor after it.
-  const vocal = [...dominant.vocal.slice(0, 2)];
+  // Vocal: dominant's signature delivery is untouchable + 1 seeded; a strong
+  // accent may add its signature as a harmony/texture hint after.
+  const vocal = pickWithSignature(dominant.vocal, 1, rnd);
   for (const a of clamped) {
     const quota = accentQuota(a.weight);
     if (quota.vocal > 0 && a.dna.vocal[0]) vocal.push(a.dna.vocal[0]);
   }
 
-  // Texture: dominant first, accents per quota, cap 3.
-  const texture = [...dominant.texture.slice(0, 1)];
+  // Texture: one seeded dominant pick, accents per quota, cap 3.
+  const texture = shuffled(dominant.texture, rnd).slice(0, 1);
   for (const a of clamped) {
     const quota = accentQuota(a.weight);
-    for (const item of a.dna.texture.slice(0, quota.texture)) {
+    for (const item of shuffled(a.dna.texture, rnd).slice(0, quota.texture)) {
       if (texture.length >= 3) break;
       texture.push(item);
     }
   }
 
-  // BPM: explicit request wins; otherwise midpoint of the dominant's range.
+  // BPM: explicit request wins; otherwise a seeded point in the dominant's
+  // range, snapped to 5.
   const [lo, hi] = dominant.bpm;
-  let bpm = opts.bpm ?? Math.round((lo + hi) / 2 / 5) * 5;
+  let bpm = opts.bpm ?? Math.round((lo + rnd() * (hi - lo)) / 5) * 5;
   if (opts.bpm && (opts.bpm < lo || opts.bpm > hi)) {
     warnings.push({
       level: "warn",

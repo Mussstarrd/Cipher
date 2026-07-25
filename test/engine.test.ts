@@ -5,11 +5,24 @@ import { PROFILES, STYLE_WORD_TARGET } from "../src/profiles.ts";
 import { GROOVES } from "../src/grooves.ts";
 
 describe("buildPackage", () => {
-  it("is deterministic: same input produces identical output", () => {
+  it("is deterministic: same input and seed produce identical output", () => {
     const opts = {
       fusion: { dominant: "xxxtentacion", accents: [{ artist: "travis-scott", weight: 0.4 }] },
+      seed: 42,
     };
     expect(buildPackage(opts)).toEqual(buildPackage(opts));
+  });
+
+  it("a different seed rerolls wording but keeps the identity anchors", () => {
+    const base = { fusion: { dominant: "ti" } };
+    const a = buildPackage({ ...base, seed: 1 });
+    const b = buildPackage({ ...base, seed: 2 });
+    expect(a.styleText).not.toBe(b.styleText);
+    for (const pkg of [a, b]) {
+      expect(pkg.styleText.startsWith("southern trap")).toBe(true);
+      expect(pkg.styleText).toContain("bouncy synth brass stabs"); // instrumentation signature
+      expect(pkg.styleText).toContain("smooth commanding southern drawl"); // vocal signature
+    }
   });
 
   it("front-loads the dominant genre anchor", () => {
@@ -132,6 +145,77 @@ describe("structure templates", () => {
     const pkg = buildPackage({ fusion: { dominant: "jay-z" } });
     const hooks = pkg.lyricsScaffold.split("[Chorus]").length - 1;
     expect(hooks).toBe(3);
+  });
+});
+
+describe("production polish", () => {
+  it("appends specific engineering polish phrases, skipping overlaps", async () => {
+    const { POLISH_POOL } = await import("../src/polish.ts");
+    const pkg = buildPackage({ fusion: { dominant: "jay-z" }, seed: 1 });
+    const present = POLISH_POOL.filter((p) => pkg.styleText.includes(p));
+    expect(present.length).toBeGreaterThanOrEqual(1);
+    // Never the debunked generic praise words (research §11).
+    expect(pkg.styleText).not.toMatch(/studio quality|high quality/i);
+  });
+
+  it("filters polish that repeats wording already in the DNA", async () => {
+    const { pickPolish } = await import("../src/polish.ts");
+    const slots = {
+      genre: ["trap"],
+      mood: [],
+      groove: [],
+      instrumentation: ["crisp trap hi-hat rolls", "punchy snappy drums"],
+      vocal: [],
+      texture: ["warm analog warmth"],
+    };
+    for (let seed = 0; seed < 20; seed++) {
+      const picks = pickPolish(slots, seed);
+      expect(picks).not.toContain("crisp highs");
+      expect(picks).not.toContain("punchy low end");
+      expect(picks).not.toContain("analog warmth");
+    }
+  });
+});
+
+describe("tags-only lyrics", () => {
+  it("emits bracket tags only, in order, with Drop glued", () => {
+    const pkg = buildPackage({
+      fusion: { dominant: "ugk" },
+      template: "hook-first-beat-switch",
+    });
+    const lines = pkg.lyricsTagsOnly.split("\n").filter((l) => l.trim());
+    expect(lines.every((l) => /^\[.*\]$/.test(l))).toBe(true);
+    expect(pkg.lyricsTagsOnly).toContain("[Drop]\n[Verse 2]");
+    expect(lines[0]).toBe("[Intro: Cold Open]");
+    expect(lines[lines.length - 1]).toBe("[End]");
+  });
+
+  it("three-verse option adds [Verse 3] and another hook", () => {
+    const pkg = buildPackage({ fusion: { dominant: "ugk" }, verses: 3 });
+    expect(pkg.lyricsTagsOnly).toContain("[Verse 3]");
+    expect(pkg.lyricsTagsOnly.split("[Chorus]").length - 1).toBe(4);
+  });
+});
+
+describe("phase 3 tuning", () => {
+  it("ugk resolves by alias and keeps country out of its lane guards", () => {
+    const pkg = buildPackage({ fusion: { dominant: "pimp c" } });
+    expect(pkg.meta.dominant).toBe("ugk");
+    expect(pkg.excludeText).not.toContain("country");
+    expect(pkg.styleText.startsWith("Texas southern rap")).toBe(true);
+  });
+
+  it("jay-z guards against the jazzy drift it was producing", () => {
+    const pkg = buildPackage({ fusion: { dominant: "jay-z" } });
+    expect(pkg.styleText).not.toContain("boom bap");
+    expect(pkg.excludeText).toContain("smooth jazz");
+    expect(pkg.excludeText).toContain("lo-fi chillhop");
+  });
+
+  it("kanye no longer leads with chipmunk-pitched samples", () => {
+    const pkg = buildPackage({ fusion: { dominant: "kanye-west" } });
+    expect(pkg.styleText).not.toContain("chipmunk");
+    expect(pkg.excludeText).toContain("high-pitched cartoon vocals");
   });
 });
 

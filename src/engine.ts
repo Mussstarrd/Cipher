@@ -4,8 +4,9 @@ import { resolveArtist } from "./artists.ts";
 import { DEFAULT_ACCENT_WEIGHT, fuse, type WeightedAccent } from "./fusion.ts";
 import { buildExclusions, scanText } from "./exclusion.ts";
 import { assembleStyle } from "./style.ts";
-import { buildScaffold } from "./structure.ts";
+import { assembleLyrics, buildScaffold } from "./structure.ts";
 import { SLIDER_PRESETS } from "./sliders.ts";
+import { pickPolish } from "./polish.ts";
 
 /** Build a ready-to-paste Suno package from a fusion spec. Deterministic. */
 export function buildPackage(options: BuildOptions): SunoPackage {
@@ -34,14 +35,15 @@ export function buildPackage(options: BuildOptions): SunoPackage {
   const build = options.build ?? (accents.length > 0 ? "fusion" : "faithful");
   const template = options.template ?? "hook-first";
 
-  const fused = fuse(dominant, accents, { bpm: options.bpm });
+  const seed = options.seed ?? 0;
+  const fused = fuse(dominant, accents, { bpm: options.bpm, seed });
   warnings.push(...fused.warnings);
 
   const guards = options.laneGuards === false ? [] : (dominant.laneGuards ?? []);
   const exclusions = buildExclusions(options.ban ?? [], profile, guards);
   warnings.push(...exclusions.warnings);
 
-  const scaffold = buildScaffold(template, dominant, profile, fused.bpm);
+  const scaffold = buildScaffold(template, dominant, profile, fused.bpm, options.verses ?? 2);
   warnings.push(...scaffold.warnings);
 
   // Template style addenda (e.g. the beat-switch description, research §4.2)
@@ -52,7 +54,7 @@ export function buildPackage(options: BuildOptions): SunoPackage {
     ...(scaffold.styleAddendum ? [scaffold.styleAddendum] : []),
   ];
 
-  const style = assembleStyle(fused.slots, profile, injections);
+  const style = assembleStyle(fused.slots, profile, injections, pickPolish(fused.slots, seed));
   warnings.push(...style.warnings);
   warnings.push(...scanText(scaffold.lyricsScaffold, "lyrics"));
 
@@ -68,6 +70,7 @@ export function buildPackage(options: BuildOptions): SunoPackage {
     excludeText: exclusions.excludeText,
     lyricsScaffold: scaffold.lyricsScaffold,
     lyricsSections: scaffold.sections,
+    lyricsTagsOnly: assembleLyrics(scaffold.sections, {}, { tagsOnly: true }),
     sliders: SLIDER_PRESETS[build],
     warnings,
     meta: {
@@ -77,6 +80,8 @@ export function buildPackage(options: BuildOptions): SunoPackage {
       dominant: dominant.id,
       accents: fused.applied,
       bpm: fused.bpm,
+      seed,
+      verses: options.verses ?? 2,
     },
   };
 }

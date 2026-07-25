@@ -203,3 +203,38 @@ Universal caveat [COMMUNITY, all sources]: bracket tags are **probabilistic hint
 **Independent:** SSRN abstract 5998376 (Jan 2026, slider interaction framing; abstract-level only).
 
 **Known reliability gaps:** no official character limits anywhere; front-loading is experiential consensus, not measured; Reddit unreachable (community claims mediated via SEO guide sites that cross-copy); single-source claims flagged inline (81% weirdness cliff, 55% audio-influence recipe, v5.5 silent artist substitution).
+
+## 11. Production-quality micro-tricks (added 2026-07-26, second research pass)
+
+Focused pass on words/formatting that improve perceived mix/master quality. No published controlled A/B tests exist anywhere; strongest claims below are multi-source community consensus, with self-reported testing from guide sites (hookgenius, songsmith, jackrighteous, the `mttkllr/suno-field-guide` GitHub repo) and a July 2026 aggregation of 150+ r/SunoAI threads (medium.com/@aitooldiscovery).
+
+### Style-field quality language
+- **Specific engineering vocabulary beats generic praise.** "punchy drums", "crisp highs", "wide stereo", "punchy low end" give actionable direction; "high quality" / "studio quality" are low-value on v5+ (softly regarded as near-placebo, though no source flatly calls them placebo). [COMMUNITY consensus]
+- The real quality lever per the r/SunoAI aggregate: **naming 3–5 concrete instruments**, not quality adjectives. [COMMUNITY aggregate]
+- Working descriptors from the field guide: "tape saturation", "analog warmth", "natural dynamics"; the word "realistic" is often ignored — use physical recording language ("close mic presence", "room tone") instead. **Do not stack compression descriptors** — Suno output is already heavily compressed; more compression language crushes transients. [COMMUNITY-tested, single-source: github.com/mttkllr/suno-field-guide]
+- Vocal clarity set: "vocal-forward" + "spacious mix" (claimed ~60% improvement, unverifiable), "dry close-mic vocal", front-load vocal descriptors; "Broadway musical clarity (hard consonants, centered vowels)" as an intelligibility override — avoid pairing clarity terms with heavy reverb. [COMMUNITY, hookgenius/james-palm/field-guide]
+- Rap/trap: without explicit drum language a trap prompt "defaults to a thin, polite mix"; "distorted sliding 808s with long sustain" beats "hard 808s". [COMMUNITY, undetectr/hookgenius/jackrighteous]
+
+### Formatting
+- Comma-separated short tags have quasi-official backing: suno.wiki cites Suno developers — commas make "a balanced list where each item has an equal chance of contributing." One dissenting single-source (field guide): periods bind critical requirements. Unresolved; commas remain the default. [OFFICIAL-adjacent + COMMUNITY]
+- 8+ comma elements collapse priority ("averages into undifferentiated output"); keep 3–5 core elements, ≤ ~100 words. ALL CAPS in the *style* field: no documented effect. [COMMUNITY]
+- Lyrics-side delivery levers (multi-source): period = breath/pitch reset; comma = short gap; ellipsis = drag; **hyphen-chaining ("i-hit-the-street-and-never-look-back") forces fast tight flow**; **syllable-splitting ("to-night") stretches articulation**; ALL CAPS = louder ("very high reliability" per field guide — upgrades §4.7's uncertainty); consistent line lengths stabilize phrasing. [COMMUNITY-tested, multiple sources]
+- Blank lines between sections are **contested**: standard practice vs. field-guide's v5.5 claim that blank lines read as pauses/instrumental gaps and hollow out sections. Unresolved — Phase 3 test. [COMMUNITY conflict]
+
+### Exclude-side quality guards
+- Excluding "muffled", "muddy", "lo-fi", "distorted" is recommended but weak — pair with positive replacements ("clean mix, crisp, bright"); keep exclusions to ~2–3 (over-excluding "makes the arrangement unstable"). [COMMUNITY]
+- Verified exclude win for rap intros: "humming, hums, mmm vocals, wordless vocals" kills intro vocalizations. [COMMUNITY-tested, single-source]
+
+### Version notes
+- v5 baseline master is officially much cleaner than v4.5 (ELO 1293 vs 1208) → model choice matters more than quality tags. But **v5.5 is MORE prompt-sensitive** ("a vague prompt that limped along on v5 sounds more generic on v5.5") and less saturated by default — ask for grit explicitly. [OFFICIAL + COMMUNITY]
+- **v5.5 known regression:** widely reported mid-track degradation (hiss/robotic drift partway through) and export hiss. Workaround: compose on v4.5/v5, then **Cover on v5.5**. [COMMUNITY, multiple sources]
+
+### The Cover-as-remaster recipe (community-verified, single source for exact numbers)
+Cover the finished track with minimal prompt "«original genre» with high fidelity recording and professional mastering", **Weirdness 0, Style Influence 100, Audio Influence 100**, no mood/style descriptors. Reported more reliable than the Remaster button, which "works best on structurally solid tracks" and often fails to remove shimmer. Shimmer mitigation without external tools: insert a metatag at the timestamp where shimmer starts and regenerate; or isolate the artifact stem via Get Stems. [COMMUNITY]
+
+### Encoded in the engine from this section
+- `POLISH_POOL` (src/polish.ts): "punchy low end", "wide stereo image", "crisp highs", "vocal-forward mix", "natural dynamics", "analog warmth" — seeded pick of 2, filtered against wording already present, no compression terms, no generic praise.
+- Lyric-editor hints: hyphen-chain for tight flow, syllable-split to stretch, caps/`!` guidance.
+- Cover-as-remaster tip surfaced in the UI sliders card.
+
+**Sources for §11:** songsmith.studio (sound-quality, punctuation-is-rhythm, symbols); james-palm.medium.com "7 Proven Methods" (2026); hookgenius.app (mixing tips, vocal prompts what-works-what's-placebo, fix-muddy, fix-rushed-lyrics, trap prompts, negative prompting); github.com/mttkllr/suno-field-guide (read in full — richest single source, self-labeled tested vs anecdotal); medium.com/@aitooldiscovery r/SunoAI aggregate (Jul 2026); suno.wiki comma FAQ (cites Suno devs); jackrighteous.com (negative prompting v5, lyric formatting, pronunciation, remaster guide, shimmer/hiss); roo.beehiiv.com (v5.5 prompts 2026); undetectr.com; neuralanalog.com (fix-suno-hiss); lilys.ai shimmer-fix summary (Jan 2026); cometapi.com v5 lyrics; freesongwritingtools.com (metatags-advanced); orustech.substack.com; help.suno.com articles 8105281 (Remaster), 6882817 (Add Vocals) [OFFICIAL]; suno.com/release-notes [OFFICIAL].

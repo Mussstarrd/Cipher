@@ -272,6 +272,7 @@
   <section>
     <div class="label"><span>Structure</span></div>
     <div class="seg" id="template" role="group" aria-label="Structure template"></div>
+    <div class="seg" id="verses" role="group" aria-label="Verse count"></div>
   </section>
 
   <section>
@@ -301,6 +302,7 @@
   <div class="card">
     <div class="card-head">
       <div class="label"><span>Style field</span></div>
+      <button class="copy" id="reroll" title="New wording, same vibe">🎲 Reroll</button>
       <button class="copy" data-copy="style">Copy</button>
     </div>
     <p class="out" id="out-style"></p>
@@ -317,10 +319,12 @@
 
   <div class="card">
     <div class="card-head">
-      <div class="label"><span>Lyrics</span></div>
+      <div class="label"><span>Lyrics field</span></div>
       <button class="copy" data-copy="lyrics">Copy</button>
     </div>
+    <div class="seg" id="lyrics-mode" role="group" aria-label="Lyrics mode"></div>
     <p class="meta" id="lyrics-hint"></p>
+    <pre class="out" id="out-tags" hidden></pre>
     <div class="lyrics-editor" id="lyrics-editor"></div>
   </div>
 
@@ -329,6 +333,12 @@
       <div class="label"><span>Sliders</span></div>
     </div>
     <div class="sliders" id="out-sliders"></div>
+    <p class="slider-note">
+      Pro finish: when a keeper sounds rough, Cover it with the minimal prompt
+      “«your genre» with high fidelity recording and professional mastering” at
+      Weirdness 0 · Style Influence 100 · Audio Influence 100 — community-reported
+      as more reliable than the Remaster button (research §11).
+    </p>
   </div>
 
   <div class="card" id="notes-card" hidden>

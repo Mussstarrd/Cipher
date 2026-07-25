@@ -20,7 +20,11 @@ interface Prioritized {
   priority: number;
 }
 
-function prioritize(slots: StyleSlots, positiveInjections: string[]): Prioritized[] {
+function prioritize(
+  slots: StyleSlots,
+  positiveInjections: string[],
+  polish: string[],
+): Prioritized[] {
   const items: Prioritized[] = [];
   const push = (arr: string[], base: number, extra: number) =>
     arr.forEach((text, i) => items.push({ text, priority: i === 0 ? base : extra }));
@@ -36,6 +40,9 @@ function prioritize(slots: StyleSlots, positiveInjections: string[]): Prioritize
   // vocal[0] is the dominant's delivery identity — untouchable.
   slots.vocal.forEach((text, i) => items.push({ text, priority: i === 0 ? 0 : i === 1 ? 2 : 3 }));
   push(slots.texture, 3, 5);
+  // Production polish: specific engineering language, low-value words already
+  // filtered upstream (research §11). Kept over texture extras, under identity.
+  polish.forEach((text) => items.push({ text, priority: 2 }));
   if (slots.bpm) items.push({ text: `${slots.bpm} BPM`, priority: 0 });
   return items;
 }
@@ -44,12 +51,13 @@ export function assembleStyle(
   slots: StyleSlots,
   profile: ModelProfile,
   positiveInjections: string[] = [],
+  polish: string[] = [],
 ): { styleText: string; warnings: EngineWarning[] } {
   const warnings: EngineWarning[] = [];
 
   // Dedup while preserving first (highest-influence) position.
   const seen = new Set<string>();
-  let items = prioritize(slots, positiveInjections).filter((p) => {
+  let items = prioritize(slots, positiveInjections, polish).filter((p) => {
     const key = p.text.toLowerCase();
     if (!p.text || seen.has(key)) return false;
     seen.add(key);

@@ -17,6 +17,9 @@ Options:
   --profile <id>         v4.5-all | v5 | v5.5 (default: v5.5)
   --ban <element>        Element to exclude; triggers negative-to-positive inversion. Repeatable.
   --bpm <n>              BPM override.
+  --seed <n>             Variation seed: same seed = same package, new seed = same vibe, fresh wording.
+  --verses <2|3>         Verse count (default 2; 3 lengthens the track).
+  --tags-only            Print the bracket-tags-only lyrics (structure control, no bars).
   --json                 Emit the package as JSON.
 
 Examples:
@@ -35,6 +38,9 @@ function main(): void {
       profile: { type: "string" },
       ban: { type: "string", multiple: true },
       bpm: { type: "string" },
+      seed: { type: "string" },
+      verses: { type: "string" },
+      "tags-only": { type: "boolean" },
       json: { type: "boolean" },
       "list-artists": { type: "boolean" },
       help: { type: "boolean" },
@@ -65,6 +71,8 @@ function main(): void {
     profile: values.profile as ProfileId | undefined,
     ban: values.ban,
     bpm: values.bpm ? Number(values.bpm) : undefined,
+    seed: values.seed ? Number(values.seed) : undefined,
+    verses: values.verses === "3" ? 3 : 2,
   });
 
   if (values.json) {
@@ -83,8 +91,13 @@ function main(): void {
   console.log(pkg.styleText);
   console.log("\n▌EXCLUDE FIELD — paste into “Exclude Styles”\n");
   console.log(pkg.excludeText || "(leave empty)");
-  console.log("\n▌LYRICS — fill every «placeholder», delete // lines, then paste\n");
-  console.log(pkg.lyricsScaffold);
+  if (values["tags-only"]) {
+    console.log("\n▌LYRICS (tags only) — paste as-is; Suno fills in around the structure\n");
+    console.log(pkg.lyricsTagsOnly);
+  } else {
+    console.log("\n▌LYRICS — fill every «placeholder», delete // lines, then paste\n");
+    console.log(pkg.lyricsScaffold);
+  }
   console.log(`\n▌SLIDERS (Safe↔Chaos / Loose↔Strong scales are unnumbered — eyeball the range)\n`);
   console.log(`  Weirdness:        ~${sliders.weirdness.min}–${sliders.weirdness.max}%`);
   console.log(`  Style Influence:  ~${sliders.styleInfluence.min}–${sliders.styleInfluence.max}%`);

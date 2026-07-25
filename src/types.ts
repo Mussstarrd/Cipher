@@ -49,6 +49,12 @@ export interface GrooveVocabulary {
   phrases: string[];
 }
 
+/**
+ * Slot arrays are DESCRIPTOR POOLS, not fixed emissions: the engine picks a
+ * seeded subset each build so repeated builds vary wording while keeping the
+ * vibe. Convention: index 0 of `instrumentation` and `vocal` is the signature
+ * descriptor and is always emitted.
+ */
 export interface ArtistDNA {
   id: string;
   /** Human label only — never emitted into Suno-bound fields (research §3.4). */
@@ -121,6 +127,14 @@ export interface BuildOptions {
   /** Default true: emit the dominant DNA's lane-guard exclusions (anti-drift, research §5). */
   laneGuards?: boolean;
   bpm?: number;
+  /**
+   * Variation seed. Same seed + same inputs = identical package; a different
+   * seed picks a different combination from the same DNA descriptor pools —
+   * same vibe, fresh prompt. Default 0.
+   */
+  seed?: number;
+  /** Verse count for the structure template (default 2; 3 lengthens the track). */
+  verses?: 2 | 3;
 }
 
 /** One entry of the lyrics structure; `slot` marks user-writable sections. */
@@ -128,7 +142,7 @@ export interface ScaffoldSection {
   /** Bracket tag emitted verbatim, e.g. "[Chorus]". */
   tag: string;
   /** Writable slot id; repeated slots (the hook) share one text. */
-  slot?: "hook" | "verse1" | "verse2" | "breakdown" | "build" | "outro";
+  slot?: "hook" | "verse1" | "verse2" | "verse3" | "breakdown" | "build" | "outro";
   /** Placeholder guidance shown when the slot is unwritten. */
   guide?: string;
   /** Suggested parenthetical ad-lib (research §4.5). */
@@ -141,6 +155,12 @@ export interface SunoPackage {
   lyricsScaffold: string;
   /** Structured form of the scaffold, for UIs that let the user write bars in place. */
   lyricsSections: ScaffoldSection[];
+  /**
+   * Bracket tags only, no lyric content — paste-ready structure control for
+   * when Suno should handle the vocals/instrumental itself (research §4.1:
+   * ordering is respected; §4.2: beat switches via Build/Drop/Breakdown).
+   */
+  lyricsTagsOnly: string;
   sliders: SliderRecommendation;
   warnings: EngineWarning[];
   meta: {
@@ -150,5 +170,7 @@ export interface SunoPackage {
     dominant: string;
     accents: { artist: string; weight: number }[];
     bpm: number;
+    seed: number;
+    verses: 2 | 3;
   };
 }

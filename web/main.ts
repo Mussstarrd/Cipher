@@ -16,13 +16,26 @@ const state = {
   bans: [] as string[],
   laneGuards: true,
   bpm: undefined as number | undefined,
+  verses: 2 as 2 | 3,
+  lyricsMode: "tags" as "tags" | "bars",
   lyrics: new Map<SlotId, string>(),
+  // Fresh seed per session: same DNA picks give a new prompt with the same
+  // vibe each visit; Reroll draws another.
+  seed: Math.floor(Math.random() * 1e9),
 };
 
 const ACCENT_STEPS = [0.3, 0.45];
 const TEMPLATES: { id: TemplateId; label: string }[] = [
   { id: "hook-first", label: "Hook-first" },
   { id: "hook-first-beat-switch", label: "Beat switch" },
+];
+const VERSES: { id: "2" | "3"; label: string }[] = [
+  { id: "2", label: "2 verses (~2:30)" },
+  { id: "3", label: "3 verses (longer)" },
+];
+const LYRICS_MODES: { id: "tags" | "bars"; label: string }[] = [
+  { id: "tags", label: "Tags only" },
+  { id: "bars", label: "Write bars" },
 ];
 const BUILDS: { id: BuildChoice; label: string }[] = [
   { id: "auto", label: "Auto" },
@@ -47,6 +60,8 @@ function rebuild(): void {
     ban: state.bans,
     laneGuards: state.laneGuards,
     bpm: state.bpm,
+    seed: state.seed,
+    verses: state.verses,
   });
   renderOutput();
 }
@@ -164,13 +179,30 @@ function assembledLyrics(): string {
 }
 
 function renderLyricsEditor(): void {
+  const tagsPre = $<HTMLPreElement>("out-tags");
+  const box = $("lyrics-editor");
+
+  if (state.lyricsMode === "tags") {
+    $("lyrics-hint").textContent =
+      "Paste-ready structure control — Suno fills in the vocals and instrumental around these tags. " +
+      "Section order is respected; the beat-switch template steers the swap with [Breakdown]/[Build]/[Drop].";
+    tagsPre.hidden = false;
+    tagsPre.textContent = current.lyricsTagsOnly;
+    box.hidden = true;
+    box.textContent = "";
+    return;
+  }
+
+  tagsPre.hidden = true;
+  box.hidden = false;
   const dna = resolveArtist(state.dominant);
   $("lyrics-hint").textContent =
     `Write your bars in each box — Copy gives finished, paste-ready lyrics. ` +
     `Flow: ${dna?.lyricNotes?.[0] ?? "keep bar cadence consistent with the groove"}. ` +
-    `Ad-libs go in (parens), 1–3 words.`;
+    `Ad-libs go in (parens), 1–3 words. ` +
+    `Delivery tricks: hyphen-chain-words-like-this for fast tight flow, split syl-la-bles to stretch, ` +
+    `CAPS + ! shouts (bleeds into next lines), ellipsis… drags.`;
 
-  const box = $("lyrics-editor");
   box.textContent = "";
   const seen = new Set<SlotId>();
   for (const section of current.lyricsSections) {
@@ -219,7 +251,7 @@ function renderOutput(): void {
   const words = current.styleText.split(/\s+/).length;
   $("style-meta").textContent =
     `${current.styleText.length} / ${profile.styleCharLimit} chars · ${words} words · ` +
-    `${current.meta.build} build @ ${current.meta.bpm} BPM`;
+    `${current.meta.build} build @ ${current.meta.bpm} BPM · roll #${current.meta.seed % 1000}`;
   $("out-exclude").textContent =
     current.excludeText || "(empty — tap a ban chip or turn lane guards on)";
   renderLyricsEditor();
@@ -264,11 +296,11 @@ function renderOutput(): void {
 function copyText(kind: string): string {
   if (kind === "style") return current.styleText;
   if (kind === "exclude") return current.excludeText;
-  return assembledLyrics();
+  return state.lyricsMode === "tags" ? current.lyricsTagsOnly : assembledLyrics();
 }
 
 function wireCopy(): void {
-  for (const btn of document.querySelectorAll<HTMLButtonElement>(".copy")) {
+  for (const btn of document.querySelectorAll<HTMLButtonElement>(".copy[data-copy]")) {
     btn.onclick = async () => {
       const text = copyText(btn.dataset.copy ?? "");
       try {
@@ -296,8 +328,15 @@ function init(): void {
   renderDominant();
   renderAccents();
   renderSeg("template", TEMPLATES, () => state.template, (v) => (state.template = v));
+  renderSeg("verses", VERSES, () => String(state.verses) as "2" | "3", (v) => (state.verses = Number(v) as 2 | 3));
   renderSeg("build", BUILDS, () => state.build, (v) => (state.build = v));
+  renderSeg("lyrics-mode", LYRICS_MODES, () => state.lyricsMode, (v) => (state.lyricsMode = v));
   renderBans();
+
+  $("reroll").onclick = () => {
+    state.seed = Math.floor(Math.random() * 1e9);
+    rebuild();
+  };
 
   const profileSel = $<HTMLSelectElement>("profile");
   for (const id of Object.keys(PROFILES)) {
