@@ -49,13 +49,23 @@
   }
 
   * { box-sizing: border-box; }
+  html, body { height: 100%; }
   body {
     margin: 0;
+    overflow: hidden;
     background: var(--bg);
     color: var(--text);
     font-family: var(--sans);
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
+  }
+  /* Own the scrolling: embedded viewers (app side panels, sized iframes) often
+     clip the body without passing scroll through, so the page scrolls itself. */
+  .scroll {
+    height: 100vh;
+    height: 100dvh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
   .wrap {
     max-width: 680px;
@@ -223,6 +233,7 @@
   }
 </style>
 
+<div class="scroll">
 <div class="wrap">
   <header>
     <h1 class="brand">CIPHER<span class="dot">.</span></h1>
@@ -312,6 +323,7 @@
     Deterministic build — same inputs, same package. Grounded in
     <a href="https://github.com/mussstarrd/cipher/blob/main/docs/suno-research.md">docs/suno-research.md</a>.
   </footer>
+</div>
 </div>
 
 <script>/*__CIPHER_BUNDLE__*/</script>
