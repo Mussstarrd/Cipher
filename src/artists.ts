@@ -30,6 +30,7 @@ export const ARTISTS: ArtistDNA[] = [
     ],
     vocal: ["pained melodic rap", "raw screamed vocal doubles"],
     texture: ["bedroom lo-fi grit", "blown-out mix"],
+    laneGuards: ["edm drop", "country"],
     bpm: [130, 160],
     adlibs: ["yeah", "what", "ay"],
     lyricNotes: [
@@ -50,6 +51,7 @@ export const ARTISTS: ArtistDNA[] = [
     ],
     vocal: ["auto-tuned melodic vocals", "effortless freestyle sing-rap cadence"],
     texture: ["polished modern trap production"],
+    laneGuards: ["edm drop", "country"],
     bpm: [140, 165],
     adlibs: ["oh", "yeah yeah", "woah"],
     lyricNotes: [
@@ -70,6 +72,7 @@ export const ARTISTS: ArtistDNA[] = [
       "dense multisyllabic rhyme chains",
     ],
     texture: ["crisp modern southern mix"],
+    laneGuards: ["edm drop", "country"],
     bpm: [88, 150],
     adlibs: ["woo", "ay", "uh"],
     lyricNotes: [
@@ -86,6 +89,7 @@ export const ARTISTS: ArtistDNA[] = [
     instrumentation: ["soulful sample chops", "dusty live drums", "mellow electric keys"],
     vocal: ["conversational storytelling flow", "understated double-time runs"],
     texture: ["warm analog warmth", "90s-leaning boom bap polish"],
+    laneGuards: ["edm drop", "country"],
     bpm: [85, 100],
     lyricNotes: [
       "narrative verses with a clear arc; save the double-time run for the final 4 bars of a verse",
@@ -105,6 +109,7 @@ export const ARTISTS: ArtistDNA[] = [
     ],
     vocal: ["confident chant-like rap delivery", "sung-rap hooks"],
     texture: ["orchestral maximalist production", "wide cinematic mix"],
+    laneGuards: ["edm drop", "country"],
     bpm: [85, 105],
     adlibs: ["uh", "hah", "yeah"],
     lyricNotes: ["big declarative hook lines built for crowd shout-back"],
@@ -119,6 +124,7 @@ export const ARTISTS: ArtistDNA[] = [
     instrumentation: ["chopped soul samples", "hard knocking boom bap drums", "deep round bass"],
     vocal: ["laid-back conversational flow", "precise internal rhyme placement"],
     texture: ["classic New York polish"],
+    laneGuards: ["edm drop", "country"],
     bpm: [85, 100],
     lyricNotes: [
       "conversational cadence that never sounds rushed; punchlines land on beat 4",
@@ -134,6 +140,7 @@ export const ARTISTS: ArtistDNA[] = [
     instrumentation: ["dark minor piano loop", "hard-hitting boom bap drums", "eerie string stabs"],
     vocal: ["raspy gravelly punchline delivery", "measured menacing pace"],
     texture: ["grimy 2000s New York grit"],
+    laneGuards: ["edm drop", "country"],
     bpm: [88, 98],
     adlibs: ["ha", "uh-huh"],
     lyricNotes: ["one hard punchline per two bars, delivered dry with a pause after"],
@@ -149,6 +156,7 @@ export const ARTISTS: ArtistDNA[] = [
     instrumentation: ["funky live bass grooves", "warm analog synth leads", "live horn section"],
     vocal: ["double-time southern bounce flow", "eccentric melodic hooks"],
     texture: ["psychedelic funk warmth", "vintage analog character"],
+    laneGuards: ["edm drop", "country"],
     bpm: [95, 160],
     lyricNotes: ["alternate double-time bounce verses with sung playful hooks"],
   },
@@ -163,6 +171,7 @@ export const ARTISTS: ArtistDNA[] = [
     instrumentation: ["rage synths", "booming 808 glides", "cavernous reverb tails"],
     vocal: ["layered autotuned harmonies", "ad-lib heavy delivery", "pitched vocal chops"],
     texture: ["psychedelic haze", "arena-scale modern mix"],
+    laneGuards: ["edm drop", "country"],
     bpm: [130, 155],
     adlibs: ["yeah", "straight up", "alright"],
     lyricNotes: [
@@ -180,6 +189,7 @@ export const ARTISTS: ArtistDNA[] = [
     instrumentation: ["bouncy synth brass stabs", "crisp trap hi-hat rolls", "808 knock"],
     vocal: ["smooth commanding southern drawl", "effortless swagger delivery"],
     texture: ["clean 2000s Atlanta trap sheen"],
+    laneGuards: ["edm drop", "country"],
     bpm: [120, 150],
     adlibs: ["ay", "okay", "yeah"],
     lyricNotes: ["even-keeled confident cadence; never strained, always in control"],
@@ -199,6 +209,7 @@ export const ARTISTS: ArtistDNA[] = [
     ],
     vocal: ["earnest clean male vocals", "big singalong harmony stacks"],
     texture: ["90s alt-rock warmth", "garage-polished crunch"],
+    laneGuards: ["edm drop", "country"],
     bpm: [100, 140],
     lyricNotes: ["simple heartfelt hook lines built for group singalong"],
   },

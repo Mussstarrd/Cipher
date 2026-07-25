@@ -79,7 +79,11 @@ export interface ExclusionResult {
   warnings: EngineWarning[];
 }
 
-export function buildExclusions(bans: string[], profile: ModelProfile): ExclusionResult {
+export function buildExclusions(
+  bans: string[],
+  profile: ModelProfile,
+  laneGuards: string[] = [],
+): ExclusionResult {
   const warnings: EngineWarning[] = [];
   const terms: string[] = [];
   const positives: string[] = [];
@@ -104,6 +108,15 @@ export function buildExclusions(bans: string[], profile: ModelProfile): Exclusio
         message: `No inversion mapping for "${ban}" — exclude alone is leaky (research §5). Add a competing positive to the style yourself, or extend the inversion map.`,
       });
     }
+  }
+
+  // Lane guards fill remaining slots after user bans. They are soft anti-drift
+  // defaults (research §5), so they carry no positive injection and no warning.
+  for (const raw of laneGuards) {
+    const guard = raw.trim().toLowerCase();
+    if (!guard || terms.includes(guard)) continue;
+    if (terms.length >= profile.maxExcludeTerms) break;
+    terms.push(guard);
   }
 
   let excludeText = terms.join(", ");

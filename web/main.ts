@@ -1,9 +1,11 @@
 import { buildPackage } from "../src/engine.ts";
-import { ARTISTS } from "../src/artists.ts";
+import { ARTISTS, resolveArtist } from "../src/artists.ts";
 import { PROFILES } from "../src/profiles.ts";
-import type { BuildType, ProfileId, SunoPackage, TemplateId } from "../src/types.ts";
+import { assembleLyrics } from "../src/structure.ts";
+import type { BuildType, ProfileId, ScaffoldSection, SunoPackage, TemplateId } from "../src/types.ts";
 
 type BuildChoice = "auto" | BuildType;
+type SlotId = NonNullable<ScaffoldSection["slot"]>;
 
 const state = {
   dominant: "xxxtentacion",
@@ -12,7 +14,9 @@ const state = {
   build: "auto" as BuildChoice,
   profile: "v5.5" as ProfileId,
   bans: [] as string[],
+  laneGuards: true,
   bpm: undefined as number | undefined,
+  lyrics: new Map<SlotId, string>(),
 };
 
 const ACCENT_STEPS = [0.3, 0.45];
@@ -41,6 +45,7 @@ function rebuild(): void {
     build: state.build === "auto" ? undefined : state.build,
     profile: state.profile,
     ban: state.bans,
+    laneGuards: state.laneGuards,
     bpm: state.bpm,
   });
   renderOutput();
@@ -119,6 +124,22 @@ function renderSeg<T extends string>(
 function renderBans(): void {
   const box = $("bans");
   box.textContent = "";
+
+  // Lane-guard toggle: default exclusions guarding the genre lane.
+  const guards = resolveArtist(state.dominant)?.laneGuards ?? [];
+  if (guards.length) {
+    const g = document.createElement("button");
+    g.className = "chip" + (state.laneGuards ? " on" : "");
+    g.textContent = `lane guards: ${guards.join(", ")}`;
+    g.setAttribute("aria-pressed", String(state.laneGuards));
+    g.onclick = () => {
+      state.laneGuards = !state.laneGuards;
+      renderBans();
+      rebuild();
+    };
+    box.appendChild(g);
+  }
+
   const suggestions = ["saxophone", "edm", "pop", "piano", "autotune"];
   const shown = [...new Set([...state.bans, ...suggestions])];
   for (const ban of shown) {
@@ -136,6 +157,62 @@ function renderBans(): void {
   }
 }
 
+function assembledLyrics(): string {
+  const slotTexts: Partial<Record<SlotId, string>> = {};
+  for (const [slot, text] of state.lyrics) slotTexts[slot] = text;
+  return assembleLyrics(current.lyricsSections, slotTexts);
+}
+
+function renderLyricsEditor(): void {
+  const dna = resolveArtist(state.dominant);
+  $("lyrics-hint").textContent =
+    `Write your bars in each box — Copy gives finished, paste-ready lyrics. ` +
+    `Flow: ${dna?.lyricNotes?.[0] ?? "keep bar cadence consistent with the groove"}. ` +
+    `Ad-libs go in (parens), 1–3 words.`;
+
+  const box = $("lyrics-editor");
+  box.textContent = "";
+  const seen = new Set<SlotId>();
+  for (const section of current.lyricsSections) {
+    const tagline = document.createElement("div");
+    tagline.className = "tagline";
+    tagline.textContent = section.tag;
+    if (section.slot && seen.has(section.slot)) {
+      tagline.append(" ");
+      const hint = document.createElement("span");
+      hint.className = "adlib-hint";
+      hint.textContent = "— same hook repeats here";
+      tagline.appendChild(hint);
+      box.appendChild(tagline);
+      continue;
+    }
+    if (section.slot && section.adlib) {
+      tagline.append(" ");
+      const hint = document.createElement("span");
+      hint.className = "adlib-hint";
+      hint.textContent = `ad-lib: (${section.adlib})`;
+      tagline.appendChild(hint);
+    }
+    box.appendChild(tagline);
+    if (!section.slot) continue;
+
+    seen.add(section.slot);
+    const slot = section.slot;
+    const ta = document.createElement("textarea");
+    ta.className = "lyric-input";
+    ta.placeholder = section.guide ?? "";
+    ta.value = state.lyrics.get(slot) ?? "";
+    ta.rows = slot.startsWith("verse") ? 5 : 3;
+    ta.setAttribute("aria-label", `${section.tag} lyrics`);
+    ta.oninput = () => {
+      const v = ta.value;
+      if (v.trim()) state.lyrics.set(slot, v);
+      else state.lyrics.delete(slot);
+    };
+    box.appendChild(ta);
+  }
+}
+
 function renderOutput(): void {
   const profile = PROFILES[state.profile];
   $("out-style").textContent = current.styleText;
@@ -143,8 +220,9 @@ function renderOutput(): void {
   $("style-meta").textContent =
     `${current.styleText.length} / ${profile.styleCharLimit} chars · ${words} words · ` +
     `${current.meta.build} build @ ${current.meta.bpm} BPM`;
-  $("out-exclude").textContent = current.excludeText || "(leave empty)";
-  $("out-lyrics").textContent = current.lyricsScaffold;
+  $("out-exclude").textContent =
+    current.excludeText || "(empty — tap a ban chip or turn lane guards on)";
+  renderLyricsEditor();
 
   const sliders = $("out-sliders");
   sliders.textContent = "";
@@ -186,7 +264,7 @@ function renderOutput(): void {
 function copyText(kind: string): string {
   if (kind === "style") return current.styleText;
   if (kind === "exclude") return current.excludeText;
-  return current.lyricsScaffold;
+  return assembledLyrics();
 }
 
 function wireCopy(): void {

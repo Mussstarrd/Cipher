@@ -68,6 +68,13 @@ export interface ArtistDNA {
   adlibs?: string[];
   /** Flow/rhyme guidance surfaced in the lyric scaffold (research §4.3: bar cadence beats tags). */
   lyricNotes?: string[];
+  /**
+   * Default exclude-field terms guarding this DNA's genre lane against known
+   * drift attractors (research §5: community anti-drift practice, e.g. "no EDM
+   * elements"). Emitted unless the build disables lane guards; user bans take
+   * the exclude slots first.
+   */
+  laneGuards?: string[];
 }
 
 /** Build types map to slider presets (research §6). */
@@ -111,13 +118,29 @@ export interface BuildOptions {
   profile?: ProfileId;
   /** Elements the user wants banned; each triggers negative-to-positive inversion (research §5). */
   ban?: string[];
+  /** Default true: emit the dominant DNA's lane-guard exclusions (anti-drift, research §5). */
+  laneGuards?: boolean;
   bpm?: number;
+}
+
+/** One entry of the lyrics structure; `slot` marks user-writable sections. */
+export interface ScaffoldSection {
+  /** Bracket tag emitted verbatim, e.g. "[Chorus]". */
+  tag: string;
+  /** Writable slot id; repeated slots (the hook) share one text. */
+  slot?: "hook" | "verse1" | "verse2" | "breakdown" | "build" | "outro";
+  /** Placeholder guidance shown when the slot is unwritten. */
+  guide?: string;
+  /** Suggested parenthetical ad-lib (research §4.5). */
+  adlib?: string;
 }
 
 export interface SunoPackage {
   styleText: string;
   excludeText: string;
   lyricsScaffold: string;
+  /** Structured form of the scaffold, for UIs that let the user write bars in place. */
+  lyricsSections: ScaffoldSection[];
   sliders: SliderRecommendation;
   warnings: EngineWarning[];
   meta: {

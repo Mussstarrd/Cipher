@@ -76,8 +76,18 @@ describe("buildPackage", () => {
 describe("negative-to-positive inversion", () => {
   it("pairs a ban with a competing positive in the style field", () => {
     const pkg = buildPackage({ fusion: { dominant: "juice-wrld" }, ban: ["saxophone"] });
-    expect(pkg.excludeText).toBe("saxophone");
+    expect(pkg.excludeText.startsWith("saxophone")).toBe(true);
     expect(pkg.styleText).toContain("heavy synth brass lead");
+  });
+
+  it("emits the dominant's lane guards by default, user bans first", () => {
+    const pkg = buildPackage({ fusion: { dominant: "ti" }, ban: ["saxophone"] });
+    expect(pkg.excludeText).toBe("saxophone, edm drop, country");
+  });
+
+  it("omits lane guards when disabled", () => {
+    const pkg = buildPackage({ fusion: { dominant: "ti" }, laneGuards: false });
+    expect(pkg.excludeText).toBe("");
   });
 
   it("caps exclude terms at the profile max and warns", () => {
@@ -91,7 +101,7 @@ describe("negative-to-positive inversion", () => {
 
   it("warns instead of silently passing an unmapped ban", () => {
     const pkg = buildPackage({ fusion: { dominant: "jid" }, ban: ["kazoo"] });
-    expect(pkg.excludeText).toBe("kazoo");
+    expect(pkg.excludeText.startsWith("kazoo")).toBe(true);
     expect(pkg.warnings.some((w) => w.message.includes("No inversion mapping"))).toBe(true);
   });
 });
@@ -122,6 +132,29 @@ describe("structure templates", () => {
     const pkg = buildPackage({ fusion: { dominant: "jay-z" } });
     const hooks = pkg.lyricsScaffold.split("[Chorus]").length - 1;
     expect(hooks).toBe(3);
+  });
+});
+
+describe("lyrics assembly", () => {
+  it("fills written slots and repeats the hook identically", async () => {
+    const { assembleLyrics } = await import("../src/structure.ts");
+    const pkg = buildPackage({ fusion: { dominant: "ti" } });
+    const text = assembleLyrics(pkg.lyricsSections, {
+      hook: "King talk, we don't fold (fold)",
+      verse1: "Line one\nLine two",
+    });
+    expect(text.split("King talk, we don't fold (fold)").length - 1).toBe(3);
+    expect(text).toContain("[Verse 1]\nLine one\nLine two");
+    // Unwritten slots keep their « » placeholders so gaps are visible.
+    expect(text).toContain("«6–8 bars — escalate");
+    expect(text.endsWith("[End]")).toBe(true);
+  });
+
+  it("glues [Drop] to the switched verse in the beat-switch template", async () => {
+    const { assembleLyrics } = await import("../src/structure.ts");
+    const pkg = buildPackage({ fusion: { dominant: "ti" }, template: "hook-first-beat-switch" });
+    const text = assembleLyrics(pkg.lyricsSections, { verse2: "Switch flow here" });
+    expect(text).toContain("[Drop]\n[Verse 2]\nSwitch flow here");
   });
 });
 

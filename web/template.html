@@ -1,3 +1,4 @@
+<meta charset="utf-8" />
 <title>CIPHER — Suno Prompt Engine</title>
 <style>
   :root {
@@ -210,6 +211,24 @@
   .slider-row .val { font-variant-numeric: tabular-nums; width: 70px; text-align: right; }
   .slider-note { font-size: 12px; color: var(--muted); }
 
+  .lyrics-editor { display: flex; flex-direction: column; gap: 8px; }
+  .tagline { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+  .tagline .adlib-hint { font-style: italic; }
+  textarea.lyric-input {
+    width: 100%;
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    color: var(--text);
+    border-radius: 10px;
+    padding: 9px 12px;
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.5;
+    resize: vertical;
+    min-height: 60px;
+  }
+  textarea.lyric-input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
   .notes { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; list-style: none; }
   .notes li { display: flex; gap: 8px; font-size: 13px; color: var(--muted); align-items: baseline; }
   .badge {
@@ -298,11 +317,11 @@
 
   <div class="card">
     <div class="card-head">
-      <div class="label"><span>Lyrics scaffold</span></div>
+      <div class="label"><span>Lyrics</span></div>
       <button class="copy" data-copy="lyrics">Copy</button>
     </div>
-    <p class="meta">Fill every «placeholder» and delete the // lines before pasting — Suno sings what you paste.</p>
-    <pre class="out" id="out-lyrics"></pre>
+    <p class="meta" id="lyrics-hint"></p>
+    <div class="lyrics-editor" id="lyrics-editor"></div>
   </div>
 
   <div class="card">

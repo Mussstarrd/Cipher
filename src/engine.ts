@@ -37,7 +37,8 @@ export function buildPackage(options: BuildOptions): SunoPackage {
   const fused = fuse(dominant, accents, { bpm: options.bpm });
   warnings.push(...fused.warnings);
 
-  const exclusions = buildExclusions(options.ban ?? [], profile);
+  const guards = options.laneGuards === false ? [] : (dominant.laneGuards ?? []);
+  const exclusions = buildExclusions(options.ban ?? [], profile, guards);
   warnings.push(...exclusions.warnings);
 
   const scaffold = buildScaffold(template, dominant, profile, fused.bpm);
@@ -66,6 +67,7 @@ export function buildPackage(options: BuildOptions): SunoPackage {
     styleText: style.styleText,
     excludeText: exclusions.excludeText,
     lyricsScaffold: scaffold.lyricsScaffold,
+    lyricsSections: scaffold.sections,
     sliders: SLIDER_PRESETS[build],
     warnings,
     meta: {

@@ -6,5 +6,5 @@ export { SLIDER_PRESETS } from "./sliders.ts";
 export { fuse, DEFAULT_ACCENT_WEIGHT, MAX_ACCENT_WEIGHT } from "./fusion.ts";
 export { buildExclusions, scanText, hardBanTokens } from "./exclusion.ts";
 export { assembleStyle } from "./style.ts";
-export { buildScaffold } from "./structure.ts";
+export { buildScaffold, assembleLyrics, sectionPlaceholder } from "./structure.ts";
 export type * from "./types.ts";
