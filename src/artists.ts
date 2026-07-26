@@ -25,6 +25,11 @@ import type { ArtistDNA } from "./types.ts";
  *   lane guard.
  * - ugk: added; lane guards deliberately do NOT exclude country — the
  *   country-fried funk color is the identity.
+ * - funk-attractor rule (owner concern): "funk" never appears in genre slots
+ *   anywhere in the library — genre tokens are front-loaded and can flip a
+ *   track into an actual funk band. Funk color is instrument/texture-level
+ *   only, vocal signatures say "rap" explicitly, and ugk/outkast guard
+ *   "disco" in the exclude field.
  *
  * displayName/aliases are for input matching and leak-scanning ONLY — they
  * must never reach a Suno-bound field.
@@ -240,7 +245,9 @@ export const ARTISTS: ArtistDNA[] = [
     id: "outkast",
     displayName: "OutKast",
     aliases: ["andre 3000", "big boi"],
-    genres: ["southern hip hop", "psychedelic funk rap"],
+    // Same funk-attractor rule as ugk: no "funk" in genre slots; the funk
+    // color comes from instrumentation/texture.
+    genres: ["southern hip hop", "eccentric Dirty South rap"],
     mood: [
       "playful cosmic energy",
       "eccentric soul",
@@ -258,12 +265,12 @@ export const ARTISTS: ArtistDNA[] = [
       "talkbox accents",
     ],
     vocal: [
-      "double-time southern bounce flow",
+      "double-time southern rap bounce",
       "eccentric melodic hooks",
       "smooth crooned interludes",
     ],
     texture: ["psychedelic funk warmth", "vintage analog character", "technicolor stereo spread"],
-    laneGuards: ["edm drop"],
+    laneGuards: ["edm drop", "disco"],
     bpm: [95, 160],
     lyricNotes: ["alternate double-time bounce verses with sung playful hooks"],
   },
@@ -271,7 +278,10 @@ export const ARTISTS: ArtistDNA[] = [
     id: "ugk",
     displayName: "UGK",
     aliases: ["bun b", "pimp c", "underground kingz", "underground kings"],
-    genres: ["Texas southern rap", "country-fried funk rap"],
+    // "funk" stays OUT of the genre slots (front-loaded genre tokens are the
+    // strongest attractors — a funk genre anchor can flip the whole track into
+    // a 70s funk band). Funk color lives at instrument level only.
+    genres: ["Texas southern rap", "90s Houston player rap"],
     mood: [
       "slab-cruising player cool",
       "sweltering Gulf Coast soul",
@@ -289,13 +299,19 @@ export const ARTISTS: ArtistDNA[] = [
       "sunburnt soul horns",
     ],
     vocal: [
-      "heavyweight Texas drawl",
-      "silky player delivery trading with a gruff commanding bark",
-      "double-time country-boy flow",
+      "heavyweight Texas rap drawl",
+      "silky player rap delivery trading with a gruff commanding bark",
+      "double-time country-boy rap flow",
     ],
-    texture: ["sweltering analog southern soul", "candy-paint trunk rattle", "90s Houston warmth"],
+    texture: [
+      "sweltering analog southern soul",
+      "candy-paint trunk rattle",
+      "country-fried soul warmth",
+      "90s Houston warmth",
+    ],
     // No "country" guard: the country-fried color IS this DNA's identity.
-    laneGuards: ["edm drop"],
+    // "disco" guards against the funk-instrumentation pulling a funk-band takeover.
+    laneGuards: ["edm drop", "disco"],
     bpm: [80, 105],
     adlibs: ["yeah", "uh", "already"],
     lyricNotes: ["slow confident drawl in the pocket; let bars breathe over the funk"],

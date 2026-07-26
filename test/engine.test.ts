@@ -198,6 +198,21 @@ describe("tags-only lyrics", () => {
 });
 
 describe("phase 3 tuning", () => {
+  it("never puts funk in a genre slot (genre tokens are takeover attractors)", () => {
+    for (const artist of ARTISTS) {
+      for (const g of artist.genres) {
+        expect(/funk/i.test(g), `"${g}" in ${artist.id} genres`).toBe(false);
+      }
+    }
+    // Funk-colored DNAs keep an explicit rap identity in the vocal signature
+    // and guard against funk-band takeover in the exclude field.
+    for (const id of ["ugk", "outkast"]) {
+      const pkg = buildPackage({ fusion: { dominant: id } });
+      expect(pkg.styleText).toMatch(/rap/i);
+      expect(pkg.excludeText).toContain("disco");
+    }
+  });
+
   it("ugk resolves by alias and keeps country out of its lane guards", () => {
     const pkg = buildPackage({ fusion: { dominant: "pimp c" } });
     expect(pkg.meta.dominant).toBe("ugk");
