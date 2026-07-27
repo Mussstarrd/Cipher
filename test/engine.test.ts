@@ -227,6 +227,31 @@ describe("phase 3 tuning", () => {
     expect(pkg.excludeText).toContain("lo-fi chillhop");
   });
 
+  it("new DNAs resolve by alias and anchor rap-first", () => {
+    const cases: [string, string][] = [
+      ["bobby ray", "melodic southern rap"],
+      ["chance", "psychedelic Chicago rap"],
+      ["drizzy", "moody Toronto rap"],
+      ["gampo", "rowdy midwest party rap"],
+    ];
+    for (const [alias, genre] of cases) {
+      const pkg = buildPackage({ fusion: { dominant: alias } });
+      expect(pkg.styleText.startsWith(genre), `${alias} → ${genre}`).toBe(true);
+    }
+  });
+
+  it("drake DNA carries the muffled filtered-beat identity", () => {
+    const pkg = buildPackage({ fusion: { dominant: "drake" } });
+    expect(pkg.styleText).toContain("muffled low-pass filtered beat");
+    expect(pkg.meta.bpm).toBeGreaterThanOrEqual(70);
+    expect(pkg.meta.bpm).toBeLessThanOrEqual(100);
+  });
+
+  it("anti-cartoon lane guards hold for the crossover-risk DNAs", () => {
+    expect(buildPackage({ fusion: { dominant: "bob" } }).excludeText).toContain("bubblegum pop");
+    expect(buildPackage({ fusion: { dominant: "chance" } }).excludeText).toContain("smooth jazz");
+  });
+
   it("kanye no longer leads with chipmunk-pitched samples", () => {
     const pkg = buildPackage({ fusion: { dominant: "kanye-west" } });
     expect(pkg.styleText).not.toContain("chipmunk");
@@ -296,6 +321,6 @@ describe("fusion weighting", () => {
   });
 
   it("throws on unknown artists", () => {
-    expect(() => buildPackage({ fusion: { dominant: "drake" } })).toThrow(/Unknown dominant/);
+    expect(() => buildPackage({ fusion: { dominant: "nas" } })).toThrow(/Unknown dominant/);
   });
 });

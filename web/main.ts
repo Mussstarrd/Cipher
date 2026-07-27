@@ -338,6 +338,24 @@ function init(): void {
     rebuild();
   };
 
+  // Randomize = new DNA combo (dominant, maybe one accent) + fresh seed.
+  // Reroll only re-words; this reshuffles the deck.
+  $("randomize").onclick = () => {
+    const pick = ARTISTS[Math.floor(Math.random() * ARTISTS.length)]!;
+    state.dominant = pick.id;
+    state.accents.clear();
+    if (Math.random() < 0.6) {
+      const others = ARTISTS.filter((a) => a.id !== pick.id);
+      const accent = others[Math.floor(Math.random() * others.length)]!;
+      state.accents.set(accent.id, ACCENT_STEPS[Math.floor(Math.random() * ACCENT_STEPS.length)]!);
+    }
+    state.seed = Math.floor(Math.random() * 1e9);
+    renderDominant();
+    renderAccents();
+    renderBans();
+    rebuild();
+  };
+
   const profileSel = $<HTMLSelectElement>("profile");
   for (const id of Object.keys(PROFILES)) {
     const opt = document.createElement("option");
