@@ -13,6 +13,19 @@ describe("buildPackage", () => {
     expect(buildPackage(opts)).toEqual(buildPackage(opts));
   });
 
+  it("ten seeds on the same fusion give at least nine distinct prompts", () => {
+    const texts = new Set<string>();
+    for (let seed = 1; seed <= 10; seed++) {
+      texts.add(
+        buildPackage({
+          fusion: { dominant: "jid", accents: [{ artist: "jay-z", weight: 0.3 }] },
+          seed,
+        }).styleText,
+      );
+    }
+    expect(texts.size).toBeGreaterThanOrEqual(9);
+  });
+
   it("a different seed rerolls wording but keeps the identity anchors", () => {
     const base = { fusion: { dominant: "ti" } };
     const a = buildPackage({ ...base, seed: 1 });

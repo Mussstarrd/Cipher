@@ -46,4 +46,4 @@ export const DEFAULT_PROFILE: ProfileId = "v5.5";
  * engine trims toward `max`, allowing fusion builds a little more room since
  * blends carry more load-bearing descriptors than single-DNA builds.
  */
-export const STYLE_WORD_TARGET = { min: 15, max: 40 };
+export const STYLE_WORD_TARGET = { min: 15, max: 44 };

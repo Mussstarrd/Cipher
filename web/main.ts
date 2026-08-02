@@ -338,6 +338,29 @@ function init(): void {
     rebuild();
   };
 
+  // Mobile browsers resume frozen pages instead of reloading them, so the
+  // per-visit seed never re-rolled on "relaunch" — same picks, same prompt.
+  // Auto-reroll on resume: bfcache restores always, visibility returns after
+  // 5+ minutes away.
+  let hiddenAt = 0;
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") {
+      hiddenAt = Date.now();
+      return;
+    }
+    if (hiddenAt && Date.now() - hiddenAt > 5 * 60_000) {
+      state.seed = Math.floor(Math.random() * 1e9);
+      rebuild();
+    }
+    hiddenAt = 0;
+  });
+  window.addEventListener("pageshow", (e) => {
+    if ((e as PageTransitionEvent).persisted) {
+      state.seed = Math.floor(Math.random() * 1e9);
+      rebuild();
+    }
+  });
+
   // Randomize = new DNA combo (dominant, maybe one accent) + fresh seed.
   // Reroll only re-words; this reshuffles the deck.
   $("randomize").onclick = () => {

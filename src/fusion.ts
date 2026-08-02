@@ -89,9 +89,14 @@ export function fuse(
     mood.push(shuffled(topAccent.dna.mood, rnd)[0]!);
   }
 
-  // Instrumentation: dominant signature + 1 seeded, then accent contributions
-  // (their signature first) by quota, capped at 4 total (research §3.2).
-  const instrumentation = pickWithSignature(dominant.instrumentation, 1, rnd);
+  // Instrumentation: dominant signature + seeded picks (2 when solo, 1 when
+  // accents need room), then accent contributions (their signature first) by
+  // quota, capped at 4 total (research §3.2).
+  const instrumentation = pickWithSignature(
+    dominant.instrumentation,
+    clamped.length ? 1 : 2,
+    rnd,
+  );
   for (const a of clamped) {
     const quota = accentQuota(a.weight);
     for (const item of pickWithSignature(a.dna.instrumentation, quota.instrumentation - 1, rnd)) {
@@ -114,8 +119,9 @@ export function fuse(
     if (quota.vocal > 0 && a.dna.vocal[0]) vocal.push(a.dna.vocal[0]);
   }
 
-  // Texture: one seeded dominant pick, accents per quota, cap 3.
-  const texture = shuffled(dominant.texture, rnd).slice(0, 1);
+  // Texture: seeded dominant picks (2 when solo, 1 with accents), accents per
+  // quota, cap 3.
+  const texture = shuffled(dominant.texture, rnd).slice(0, clamped.length ? 1 : 2);
   for (const a of clamped) {
     const quota = accentQuota(a.weight);
     for (const item of shuffled(a.dna.texture, rnd).slice(0, quota.texture)) {
