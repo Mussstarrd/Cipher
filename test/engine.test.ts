@@ -27,19 +27,37 @@ describe("buildPackage", () => {
   });
 
   it("a different seed rerolls wording but keeps the identity anchors", () => {
-    const base = { fusion: { dominant: "ti" } };
+    const base = { fusion: { dominant: "ti" }, mode: "trap-anthem" };
     const a = buildPackage({ ...base, seed: 1 });
     const b = buildPackage({ ...base, seed: 2 });
     expect(a.styleText).not.toBe(b.styleText);
     for (const pkg of [a, b]) {
       expect(pkg.styleText.startsWith("southern trap")).toBe(true);
-      expect(pkg.styleText).toContain("bouncy synth brass stabs"); // instrumentation signature
+      expect(pkg.styleText).toContain("live orchestral brass stabs over 808 knock"); // signature
       expect(pkg.styleText).toContain("smooth commanding southern drawl"); // vocal signature
     }
   });
 
+  it("modes: pinning selects the era, rolling varies it, vocal identity persists", () => {
+    const gritty = buildPackage({ fusion: { dominant: "jay-z" }, mode: "gritty-nyc" });
+    const intro = buildPackage({ fusion: { dominant: "jay-z" }, mode: "introspective" });
+    const bounce = buildPackage({ fusion: { dominant: "jay-z" }, mode: "bounce" });
+    expect(gritty.styleText.startsWith("gritty New York rap")).toBe(true);
+    expect(intro.styleText.startsWith("reflective East Coast rap")).toBe(true);
+    expect(bounce.styleText.startsWith("2000s East Coast club rap")).toBe(true);
+    for (const pkg of [gritty, intro, bounce]) {
+      expect(pkg.styleText).toContain("laid-back commanding rap flow");
+    }
+    // Rolling (no pin) reaches more than one mode across seeds.
+    const modes = new Set<string>();
+    for (let seed = 1; seed <= 12; seed++) {
+      modes.add(buildPackage({ fusion: { dominant: "jay-z" }, seed }).meta.mode ?? "");
+    }
+    expect(modes.size).toBeGreaterThan(1);
+  });
+
   it("front-loads the dominant genre anchor", () => {
-    const pkg = buildPackage({ fusion: { dominant: "ti" } });
+    const pkg = buildPackage({ fusion: { dominant: "ti" }, mode: "trap-anthem" });
     expect(pkg.styleText.startsWith("southern trap")).toBe(true);
   });
 
@@ -86,6 +104,7 @@ describe("buildPackage", () => {
   it("keeps genre count at 1-2 in fusions", () => {
     const pkg = buildPackage({
       fusion: { dominant: "ti", accents: [{ artist: "weezer", weight: 0.45 }] },
+      mode: "trap-anthem",
     });
     expect(pkg.styleText.startsWith("southern trap, alt-rock")).toBe(true);
   });
@@ -213,7 +232,8 @@ describe("tags-only lyrics", () => {
 describe("phase 3 tuning", () => {
   it("never puts funk in a genre slot (genre tokens are takeover attractors)", () => {
     for (const artist of ARTISTS) {
-      for (const g of artist.genres) {
+      const genrePools = [artist.genres, ...(artist.modes ?? []).map((m) => m.genres ?? [])];
+      for (const g of genrePools.flat()) {
         expect(/funk/i.test(g), `"${g}" in ${artist.id} genres`).toBe(false);
       }
     }
@@ -227,7 +247,7 @@ describe("phase 3 tuning", () => {
   });
 
   it("ugk resolves by alias and keeps country out of its lane guards", () => {
-    const pkg = buildPackage({ fusion: { dominant: "pimp c" } });
+    const pkg = buildPackage({ fusion: { dominant: "pimp c" }, mode: "classic-slab" });
     expect(pkg.meta.dominant).toBe("ugk");
     expect(pkg.excludeText).not.toContain("country");
     expect(pkg.styleText.startsWith("Texas southern rap")).toBe(true);
@@ -242,15 +262,16 @@ describe("phase 3 tuning", () => {
 
   it("new DNAs resolve by alias and anchor rap-first", () => {
     const cases: [string, string][] = [
-      ["bobby ray", "melodic southern rap"],
+      ["gates", "Baton Rouge street rap"],
       ["chance", "psychedelic Chicago rap"],
       ["drizzy", "moody Toronto rap"],
       ["gampo", "rowdy midwest party rap"],
     ];
     for (const [alias, genre] of cases) {
-      const pkg = buildPackage({ fusion: { dominant: alias } });
+      const pkg = buildPackage({ fusion: { dominant: alias }, mode: "pain" });
       expect(pkg.styleText.startsWith(genre), `${alias} → ${genre}`).toBe(true);
     }
+    expect(() => buildPackage({ fusion: { dominant: "bobby ray" } })).toThrow(/Unknown/);
   });
 
   it("drake DNA carries the muffled filtered-beat identity", () => {
@@ -261,8 +282,10 @@ describe("phase 3 tuning", () => {
   });
 
   it("anti-cartoon lane guards hold for the crossover-risk DNAs", () => {
-    expect(buildPackage({ fusion: { dominant: "bob" } }).excludeText).toContain("bubblegum pop");
     expect(buildPackage({ fusion: { dominant: "chance" } }).excludeText).toContain("smooth jazz");
+    expect(buildPackage({ fusion: { dominant: "kanye-west" } }).excludeText).toContain(
+      "high-pitched cartoon vocals",
+    );
   });
 
   it("kanye no longer leads with chipmunk-pitched samples", () => {

@@ -18,6 +18,7 @@ Options:
   --ban <element>        Element to exclude; triggers negative-to-positive inversion. Repeatable.
   --bpm <n>              BPM override.
   --seed <n>             Variation seed: same seed = same package, new seed = same vibe, fresh wording.
+  --mode <id>            Pin the dominant's DNA mode (see --list-artists); omit to roll one.
   --verses <2|3>         Verse count (default 2; 3 lengthens the track).
   --tags-only            Print the bracket-tags-only lyrics (structure control, no bars).
   --json                 Emit the package as JSON.
@@ -39,6 +40,7 @@ function main(): void {
       ban: { type: "string", multiple: true },
       bpm: { type: "string" },
       seed: { type: "string" },
+      mode: { type: "string" },
       verses: { type: "string" },
       "tags-only": { type: "boolean" },
       json: { type: "boolean" },
@@ -54,7 +56,8 @@ function main(): void {
 
   if (values["list-artists"]) {
     for (const a of ARTISTS) {
-      console.log(`${a.id.padEnd(14)} ${a.displayName.padEnd(14)} ${a.genres.join(" / ")}`);
+      const modes = a.modes?.length ? `  [modes: ${a.modes.map((m) => m.id).join(", ")}]` : "";
+      console.log(`${a.id.padEnd(14)} ${a.displayName.padEnd(16)} ${a.genres.join(" / ")}${modes}`);
     }
     return;
   }
@@ -72,6 +75,7 @@ function main(): void {
     ban: values.ban,
     bpm: values.bpm ? Number(values.bpm) : undefined,
     seed: values.seed ? Number(values.seed) : undefined,
+    mode: values.mode,
     verses: values.verses === "3" ? 3 : 2,
   });
 
@@ -84,7 +88,7 @@ function main(): void {
   const line = "─".repeat(64);
   console.log(line);
   console.log(
-    `CIPHER package  ·  ${meta.dominant}${meta.accents.length ? " + " + meta.accents.map((a) => `${a.artist}(${a.weight})`).join(" + ") : ""}  ·  ${meta.build} / ${meta.template}  ·  ${meta.profile}  ·  ${meta.bpm} BPM`,
+    `CIPHER package  ·  ${meta.dominant}${meta.mode ? ` (${meta.mode})` : ""}${meta.accents.length ? " + " + meta.accents.map((a) => `${a.artist}(${a.weight})`).join(" + ") : ""}  ·  ${meta.build} / ${meta.template}  ·  ${meta.profile}  ·  ${meta.bpm} BPM`,
   );
   console.log(line);
   console.log("\n▌STYLE FIELD — paste into “Styles”\n");

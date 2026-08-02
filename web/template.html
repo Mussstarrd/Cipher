@@ -50,6 +50,7 @@
   }
 
   * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
   html, body { height: 100%; }
   body {
     margin: 0;
@@ -265,6 +266,7 @@
       <button class="copy" id="randomize" title="Random DNA combo + fresh wording">🎲 Randomize</button>
     </div>
     <div class="chips" id="dominant"></div>
+    <div class="seg" id="modes" hidden role="group" aria-label="DNA mode"></div>
   </section>
 
   <section>

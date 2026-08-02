@@ -36,7 +36,7 @@ export function buildPackage(options: BuildOptions): SunoPackage {
   const template = options.template ?? "hook-first";
 
   const seed = options.seed ?? 0;
-  const fused = fuse(dominant, accents, { bpm: options.bpm, seed });
+  const fused = fuse(dominant, accents, { bpm: options.bpm, seed, mode: options.mode });
   warnings.push(...fused.warnings);
 
   const guards = options.laneGuards === false ? [] : (dominant.laneGuards ?? []);
@@ -82,6 +82,7 @@ export function buildPackage(options: BuildOptions): SunoPackage {
       bpm: fused.bpm,
       seed,
       verses: options.verses ?? 2,
+      mode: fused.modeLabel,
     },
   };
 }

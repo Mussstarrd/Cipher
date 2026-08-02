@@ -1,4 +1,4 @@
-import type { ArtistDNA, EngineWarning, StyleSlots } from "./types.ts";
+import type { ArtistDNA, DnaMode, EngineWarning, StyleSlots } from "./types.ts";
 import { GROOVES } from "./grooves.ts";
 import { rng, shuffled } from "./random.ts";
 
@@ -33,6 +33,31 @@ function pickWithSignature(pool: readonly string[], n: number, rnd: () => number
   return [pool[0]!, ...shuffled(pool.slice(1), rnd).slice(0, n)];
 }
 
+/**
+ * Roll (or pin) one of the DNA's modes and merge its overrides over the base.
+ * DNAs without modes pass through unchanged.
+ */
+function applyMode(
+  dna: ArtistDNA,
+  rnd: () => number,
+  forced?: string,
+): { dna: ArtistDNA; mode?: DnaMode } {
+  if (!dna.modes?.length) return { dna };
+  const mode =
+    (forced ? dna.modes.find((m) => m.id === forced) : undefined) ??
+    shuffled(dna.modes, rnd)[0]!;
+  const merged: ArtistDNA = {
+    ...dna,
+    ...(mode.genres && { genres: mode.genres }),
+    ...(mode.mood && { mood: mode.mood }),
+    ...(mode.grooveExtras && { grooveExtras: mode.grooveExtras }),
+    ...(mode.instrumentation && { instrumentation: mode.instrumentation }),
+    ...(mode.texture && { texture: mode.texture }),
+    ...(mode.bpm && { bpm: mode.bpm }),
+  };
+  return { dna: merged, mode };
+}
+
 /** How many descriptors an accent may contribute at a given weight. */
 function accentQuota(weight: number): { instrumentation: number; texture: number; vocal: number } {
   if (weight >= 0.4) return { instrumentation: 2, texture: 1, vocal: 1 };
@@ -43,18 +68,24 @@ function accentQuota(weight: number): { instrumentation: number; texture: number
 export function fuse(
   dominant: ArtistDNA,
   accents: WeightedAccent[],
-  opts: { bpm?: number; seed?: number } = {},
+  opts: { bpm?: number; seed?: number; mode?: string } = {},
 ): {
   slots: StyleSlots;
   warnings: EngineWarning[];
   bpm: number;
   /** Accents with clamped weights actually applied. */
   applied: { artist: string; weight: number }[];
+  /** Label of the dominant's rolled/pinned mode, when it has modes. */
+  modeLabel?: string;
 } {
   const warnings: EngineWarning[] = [];
   const rnd = rng(opts.seed ?? 0);
 
-  const clamped = accents.map((a) => {
+  const domMode = applyMode(dominant, rnd, opts.mode);
+  dominant = domMode.dna;
+
+  const clamped = accents.map((raw) => {
+    const a = { ...raw, dna: applyMode(raw.dna, rnd).dna };
     if (a.weight > MAX_ACCENT_WEIGHT) {
       warnings.push({
         level: "info",
@@ -147,5 +178,6 @@ export function fuse(
     warnings,
     bpm,
     applied: clamped.map((a) => ({ artist: a.dna.id, weight: a.weight })),
+    modeLabel: domMode.mode?.label,
   };
 }

@@ -17,6 +17,7 @@ const state = {
   laneGuards: true,
   bpm: undefined as number | undefined,
   verses: 2 as 2 | 3,
+  mode: "auto" as string,
   lyricsMode: "tags" as "tags" | "bars",
   lyrics: new Map<SlotId, string>(),
   // Fresh seed per session: same DNA picks give a new prompt with the same
@@ -62,6 +63,7 @@ function rebuild(): void {
     bpm: state.bpm,
     seed: state.seed,
     verses: state.verses,
+    mode: state.mode === "auto" ? undefined : state.mode,
   });
   renderOutput();
 }
@@ -76,9 +78,33 @@ function renderDominant(): void {
     b.setAttribute("aria-pressed", String(state.dominant === a.id));
     b.onclick = () => {
       state.dominant = a.id;
+      state.mode = "auto";
       state.accents.delete(a.id);
       renderDominant();
+      renderModes();
       renderAccents();
+      renderBans();
+      rebuild();
+    };
+    box.appendChild(b);
+  }
+}
+
+function renderModes(): void {
+  const box = $("modes");
+  const modes = resolveArtist(state.dominant)?.modes ?? [];
+  box.hidden = modes.length === 0;
+  box.textContent = "";
+  if (!modes.length) return;
+  const options = [{ id: "auto", label: "🎲 Roll it" }, ...modes];
+  for (const opt of options) {
+    const b = document.createElement("button");
+    b.className = state.mode === opt.id ? "on" : "";
+    b.textContent = opt.label;
+    b.setAttribute("aria-pressed", String(state.mode === opt.id));
+    b.onclick = () => {
+      state.mode = opt.id;
+      renderModes();
       rebuild();
     };
     box.appendChild(b);
@@ -251,7 +277,9 @@ function renderOutput(): void {
   const words = current.styleText.split(/\s+/).length;
   $("style-meta").textContent =
     `${current.styleText.length} / ${profile.styleCharLimit} chars · ${words} words · ` +
-    `${current.meta.build} build @ ${current.meta.bpm} BPM · roll #${current.meta.seed % 1000}`;
+    `${current.meta.build} build @ ${current.meta.bpm} BPM` +
+    (current.meta.mode ? ` · ${current.meta.mode}` : "") +
+    ` · roll #${current.meta.seed % 1000}`;
   $("out-exclude").textContent =
     current.excludeText || "(empty — tap a ban chip or turn lane guards on)";
   renderLyricsEditor();
@@ -326,6 +354,7 @@ function wireCopy(): void {
 
 function init(): void {
   renderDominant();
+  renderModes();
   renderAccents();
   renderSeg("template", TEMPLATES, () => state.template, (v) => (state.template = v));
   renderSeg("verses", VERSES, () => String(state.verses) as "2" | "3", (v) => (state.verses = Number(v) as 2 | 3));
@@ -366,6 +395,7 @@ function init(): void {
   $("randomize").onclick = () => {
     const pick = ARTISTS[Math.floor(Math.random() * ARTISTS.length)]!;
     state.dominant = pick.id;
+    state.mode = "auto";
     state.accents.clear();
     if (Math.random() < 0.6) {
       const others = ARTISTS.filter((a) => a.id !== pick.id);
@@ -374,6 +404,7 @@ function init(): void {
     }
     state.seed = Math.floor(Math.random() * 1e9);
     renderDominant();
+    renderModes();
     renderAccents();
     renderBans();
     rebuild();

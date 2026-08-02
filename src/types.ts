@@ -50,6 +50,24 @@ export interface GrooveVocabulary {
 }
 
 /**
+ * A mode is an era/side of an artist's catalog (e.g. gritty NYC vs
+ * introspective vs bounce). Fields present override the base DNA's slots for
+ * that roll; absent fields fall through to the base. A mode with no overrides
+ * represents the base sound. Vocal identity intentionally stays in the base —
+ * modes change the beat and palette, not who's rapping.
+ */
+export interface DnaMode {
+  id: string;
+  label: string;
+  genres?: string[];
+  mood?: string[];
+  grooveExtras?: string[];
+  instrumentation?: string[];
+  texture?: string[];
+  bpm?: [number, number];
+}
+
+/**
  * Slot arrays are DESCRIPTOR POOLS, not fixed emissions: the engine picks a
  * seeded subset each build so repeated builds vary wording while keeping the
  * vibe. Convention: index 0 of `instrumentation` and `vocal` is the signature
@@ -81,6 +99,8 @@ export interface ArtistDNA {
    * the exclude slots first.
    */
   laneGuards?: string[];
+  /** Era/mode variants; when present the engine rolls (or pins) one per build. */
+  modes?: DnaMode[];
 }
 
 /** Build types map to slider presets (research §6). */
@@ -135,6 +155,8 @@ export interface BuildOptions {
   seed?: number;
   /** Verse count for the structure template (default 2; 3 lengthens the track). */
   verses?: 2 | 3;
+  /** Pin the dominant's DNA mode by id; omit to let the seed roll one. */
+  mode?: string;
 }
 
 /** One entry of the lyrics structure; `slot` marks user-writable sections. */
@@ -172,5 +194,7 @@ export interface SunoPackage {
     bpm: number;
     seed: number;
     verses: 2 | 3;
+    /** Label of the dominant's rolled/pinned mode, when the DNA has modes. */
+    mode?: string;
   };
 }
