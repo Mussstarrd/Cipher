@@ -79,18 +79,30 @@ export interface ExclusionResult {
   warnings: EngineWarning[];
 }
 
+/**
+ * Anti-vocal exclusion set for beat-only builds — research §5 (triple-layer:
+ * any single suppression layer leaks vocals) + §11 (humming/wordless-vocal
+ * exclusion is a verified win for killing intro vocalizations).
+ */
+export const ANTI_VOCAL_TERMS = ["vocals", "singing", "lyrics", "humming"];
+
 export function buildExclusions(
   bans: string[],
   profile: ModelProfile,
   laneGuards: string[] = [],
+  opts: { instrumental?: boolean } = {},
 ): ExclusionResult {
   const warnings: EngineWarning[] = [];
   const terms: string[] = [];
   const positives: string[] = [];
 
+  // Instrumental builds spend the budget on vocal suppression first; lane
+  // guards are skipped so the cap (research §5: >5 degrades) isn't blown.
+  if (opts.instrumental) terms.push(...ANTI_VOCAL_TERMS);
+
   for (const raw of bans) {
     const ban = raw.trim().toLowerCase();
-    if (!ban) continue;
+    if (!ban || terms.includes(ban)) continue;
     if (terms.length >= profile.maxExcludeTerms) {
       warnings.push({
         level: "warn",
@@ -112,7 +124,7 @@ export function buildExclusions(
 
   // Lane guards fill remaining slots after user bans. They are soft anti-drift
   // defaults (research §5), so they carry no positive injection and no warning.
-  for (const raw of laneGuards) {
+  for (const raw of opts.instrumental ? [] : laneGuards) {
     const guard = raw.trim().toLowerCase();
     if (!guard || terms.includes(guard)) continue;
     if (terms.length >= profile.maxExcludeTerms) break;

@@ -19,6 +19,7 @@ Options:
   --bpm <n>              BPM override.
   --seed <n>             Variation seed: same seed = same package, new seed = same vibe, fresh wording.
   --mode <id>            Pin the dominant's DNA mode (see --list-artists); omit to roll one.
+  --instrumental         Beat-only: no vocal language, anti-vocal excludes, instrumental tag structure.
   --verses <2|3>         Verse count (default 2; 3 lengthens the track).
   --tags-only            Print the bracket-tags-only lyrics (structure control, no bars).
   --json                 Emit the package as JSON.
@@ -41,6 +42,7 @@ function main(): void {
       bpm: { type: "string" },
       seed: { type: "string" },
       mode: { type: "string" },
+      instrumental: { type: "boolean" },
       verses: { type: "string" },
       "tags-only": { type: "boolean" },
       json: { type: "boolean" },
@@ -76,6 +78,7 @@ function main(): void {
     bpm: values.bpm ? Number(values.bpm) : undefined,
     seed: values.seed ? Number(values.seed) : undefined,
     mode: values.mode,
+    instrumental: values.instrumental,
     verses: values.verses === "3" ? 3 : 2,
   });
 
@@ -95,7 +98,12 @@ function main(): void {
   console.log(pkg.styleText);
   console.log("\n▌EXCLUDE FIELD — paste into “Exclude Styles”\n");
   console.log(pkg.excludeText || "(leave empty)");
-  if (values["tags-only"]) {
+  if (pkg.meta.instrumental) {
+    console.log(
+      "\n▌LYRICS (instrumental structure) — paste as-is, and ALSO flip Suno's Instrumental toggle\n",
+    );
+    console.log(pkg.lyricsTagsOnly);
+  } else if (values["tags-only"]) {
     console.log("\n▌LYRICS (tags only) — paste as-is; Suno fills in around the structure\n");
     console.log(pkg.lyricsTagsOnly);
   } else {

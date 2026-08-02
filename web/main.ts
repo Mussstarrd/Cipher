@@ -18,6 +18,7 @@ const state = {
   bpm: undefined as number | undefined,
   verses: 2 as 2 | 3,
   mode: "auto" as string,
+  instrumental: true,
   lyricsMode: "tags" as "tags" | "bars",
   lyrics: new Map<SlotId, string>(),
   // Fresh seed per session: same DNA picks give a new prompt with the same
@@ -37,6 +38,10 @@ const VERSES: { id: "2" | "3"; label: string }[] = [
 const LYRICS_MODES: { id: "tags" | "bars"; label: string }[] = [
   { id: "tags", label: "Tags only" },
   { id: "bars", label: "Write bars" },
+];
+const OUTPUTS: { id: "beat" | "song"; label: string }[] = [
+  { id: "beat", label: "Beat only (no vocals)" },
+  { id: "song", label: "Full song" },
 ];
 const BUILDS: { id: BuildChoice; label: string }[] = [
   { id: "auto", label: "Auto" },
@@ -64,6 +69,7 @@ function rebuild(): void {
     seed: state.seed,
     verses: state.verses,
     mode: state.mode === "auto" ? undefined : state.mode,
+    instrumental: state.instrumental,
   });
   renderOutput();
 }
@@ -208,6 +214,19 @@ function renderLyricsEditor(): void {
   const tagsPre = $<HTMLPreElement>("out-tags");
   const box = $("lyrics-editor");
 
+  // Beat-only: always the instrumental tag structure; bars make no sense.
+  $("lyrics-mode").hidden = state.instrumental;
+  if (state.instrumental) {
+    $("lyrics-hint").textContent =
+      "Instrumental structure — paste as-is, and ALSO switch on Suno's own Instrumental toggle: " +
+      "any single vocal-suppression layer leaks (research §5).";
+    tagsPre.hidden = false;
+    tagsPre.textContent = current.lyricsTagsOnly;
+    box.hidden = true;
+    box.textContent = "";
+    return;
+  }
+
   if (state.lyricsMode === "tags") {
     $("lyrics-hint").textContent =
       "Paste-ready structure control — Suno fills in the vocals and instrumental around these tags. " +
@@ -324,6 +343,7 @@ function renderOutput(): void {
 function copyText(kind: string): string {
   if (kind === "style") return current.styleText;
   if (kind === "exclude") return current.excludeText;
+  if (state.instrumental) return current.lyricsTagsOnly;
   return state.lyricsMode === "tags" ? current.lyricsTagsOnly : assembledLyrics();
 }
 
@@ -356,6 +376,12 @@ function init(): void {
   renderDominant();
   renderModes();
   renderAccents();
+  renderSeg(
+    "output",
+    OUTPUTS,
+    () => (state.instrumental ? "beat" : "song"),
+    (v) => (state.instrumental = v === "beat"),
+  );
   renderSeg("template", TEMPLATES, () => state.template, (v) => (state.template = v));
   renderSeg("verses", VERSES, () => String(state.verses) as "2" | "3", (v) => (state.verses = Number(v) as 2 | 3));
   renderSeg("build", BUILDS, () => state.build, (v) => (state.build = v));

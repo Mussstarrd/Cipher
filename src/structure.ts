@@ -80,6 +80,38 @@ function sectionsFor(template: TemplateId, adlib: string, verses: 2 | 3): Scaffo
   return sections;
 }
 
+/**
+ * Instrumental (beat-only) structures — reliable-tier instrumental tags only
+ * (research §4.4: [Instrumental], [Instrumental Break], [Drum Break],
+ * [Interlude]/[Melodic Interlude], [Build]/[Drop]/[Breakdown] all verified).
+ * No [Verse]/[Chorus] tags: song-section tags invite vocals.
+ */
+function instrumentalSections(template: TemplateId, verses: 2 | 3): ScaffoldSection[] {
+  const cycle: ScaffoldSection[] = [{ tag: "[Drum Break]" }, { tag: "[Melodic Interlude]" }];
+  const sections: ScaffoldSection[] = [
+    { tag: "[Instrumental]" },
+    { tag: "[Intro]" },
+    { tag: "[Melodic Interlude]" },
+  ];
+  const cycles = verses === 3 ? 2 : 1;
+  for (let i = 0; i < cycles; i++) sections.push(...cycle);
+
+  if (template === "hook-first-beat-switch") {
+    sections.push(
+      { tag: "[Breakdown]" },
+      { tag: "[Build]" },
+      { tag: "[Drop]" },
+      { tag: "[Instrumental Break]" },
+      { tag: "[Melodic Interlude]" },
+    );
+  } else {
+    sections.push({ tag: "[Breakdown]" }, { tag: "[Melodic Interlude]" });
+  }
+
+  sections.push({ tag: "[Outro]" }, { tag: "[End]" });
+  return sections;
+}
+
 /** Render one section's placeholder body line (« » must be replaced before pasting). */
 export function sectionPlaceholder(s: ScaffoldSection): string | undefined {
   if (!s.guide) return undefined;
@@ -126,8 +158,24 @@ export function buildScaffold(
   profile: ModelProfile,
   bpm: number,
   verses: 2 | 3 = 2,
+  instrumental = false,
 ): ScaffoldResult {
   const warnings: EngineWarning[] = [];
+
+  if (instrumental) {
+    const sections = instrumentalSections(template, verses);
+    const tags = assembleLyrics(sections, {}, { tagsOnly: true });
+    return {
+      lyricsScaffold: tags,
+      sections,
+      warnings,
+      styleAddendum:
+        template === "hook-first-beat-switch"
+          ? "dramatic mid-song beat switch from minimal to explosive"
+          : undefined,
+    };
+  }
+
   const adlib = dominant.adlibs?.[0] ?? "yeah";
   const flowNote = dominant.lyricNotes?.[0] ?? "keep bar cadence consistent with the groove";
   const sections = sectionsFor(template, adlib, verses);

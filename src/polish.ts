@@ -1,5 +1,6 @@
 import type { StyleSlots } from "./types.ts";
 import { rng, shuffled } from "./random.ts";
+import { allowedInInstrumental } from "./fusion.ts";
 
 /**
  * Production-polish descriptor pool — research §11.
@@ -30,7 +31,12 @@ function words(s: string): string[] {
  * the style slots (e.g. skip "crisp highs" when the DNA already says "crisp
  * trap hi-hat rolls" — redundant tags dilute the vector, research §3.2).
  */
-export function pickPolish(slots: StyleSlots, seed: number, n = 2): string[] {
+export function pickPolish(
+  slots: StyleSlots,
+  seed: number,
+  n = 2,
+  opts: { instrumental?: boolean } = {},
+): string[] {
   const existing = new Set(
     [
       ...slots.genre,
@@ -41,6 +47,10 @@ export function pickPolish(slots: StyleSlots, seed: number, n = 2): string[] {
       ...slots.texture,
     ].flatMap(words),
   );
-  const candidates = POLISH_POOL.filter((p) => words(p).every((w) => !existing.has(w)));
+  const candidates = POLISH_POOL.filter(
+    (p) =>
+      words(p).every((w) => !existing.has(w)) &&
+      (!opts.instrumental || allowedInInstrumental(p)),
+  );
   return shuffled(candidates, rng(seed ^ 0x5f3759df)).slice(0, n);
 }

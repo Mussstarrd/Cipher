@@ -33,6 +33,19 @@ function pickWithSignature(pool: readonly string[], n: number, rnd: () => number
   return [pool[0]!, ...shuffled(pool.slice(1), rnd).slice(0, n)];
 }
 
+const SAMPLE_HINT = /(chop|sample|pitch|screw|filter)/i;
+const VOCAL_HINT = /(vocal|choir|sung|sing|croon|harmon|chant|hum\b|humming|acapella|a cappella)/i;
+
+/**
+ * Instrumental-build filter: any performed-vocal language is out; vocal
+ * SAMPLES (chopped/pitched/screwed/filtered) are instruments and stay —
+ * that's the "subtle soul sample" exception.
+ */
+export function allowedInInstrumental(text: string): boolean {
+  if (!VOCAL_HINT.test(text)) return true;
+  return SAMPLE_HINT.test(text) && /vocal/i.test(text);
+}
+
 /**
  * Roll (or pin) one of the DNA's modes and merge its overrides over the base.
  * DNAs without modes pass through unchanged.
@@ -68,7 +81,7 @@ function accentQuota(weight: number): { instrumentation: number; texture: number
 export function fuse(
   dominant: ArtistDNA,
   accents: WeightedAccent[],
-  opts: { bpm?: number; seed?: number; mode?: string } = {},
+  opts: { bpm?: number; seed?: number; mode?: string; instrumental?: boolean } = {},
 ): {
   slots: StyleSlots;
   warnings: EngineWarning[];
@@ -83,6 +96,11 @@ export function fuse(
 
   const domMode = applyMode(dominant, rnd, opts.mode);
   dominant = domMode.dna;
+
+  // Beat-only builds: strip performed-vocal language from every pool before
+  // picking; vocal-sample descriptors survive as instruments.
+  const filterPool = (pool: string[]): string[] =>
+    opts.instrumental ? pool.filter(allowedInInstrumental) : pool;
 
   const clamped = accents.map((raw) => {
     const a = { ...raw, dna: applyMode(raw.dna, rnd).dna };
@@ -123,39 +141,41 @@ export function fuse(
   // Instrumentation: dominant signature + seeded picks (2 when solo, 1 when
   // accents need room), then accent contributions (their signature first) by
   // quota, capped at 4 total (research §3.2).
-  const instrumentation = pickWithSignature(
-    dominant.instrumentation,
-    clamped.length ? 1 : 2,
-    rnd,
-  );
+  const domInstrPool = filterPool(dominant.instrumentation);
+  const instrumentation = pickWithSignature(domInstrPool, clamped.length ? 1 : 2, rnd);
   for (const a of clamped) {
     const quota = accentQuota(a.weight);
-    for (const item of pickWithSignature(a.dna.instrumentation, quota.instrumentation - 1, rnd)) {
+    for (const item of pickWithSignature(
+      filterPool(a.dna.instrumentation),
+      quota.instrumentation - 1,
+      rnd,
+    )) {
       if (instrumentation.length >= 4) break;
       instrumentation.push(item);
     }
   }
   if (instrumentation.length < 4) {
-    const extra = shuffled(dominant.instrumentation.slice(1), rnd).find(
-      (i) => !instrumentation.includes(i),
-    );
+    const extra = shuffled(domInstrPool.slice(1), rnd).find((i) => !instrumentation.includes(i));
     if (extra) instrumentation.push(extra);
   }
 
   // Vocal: dominant's signature delivery is untouchable + 1 seeded; a strong
   // accent may add its signature as a harmony/texture hint after.
-  const vocal = pickWithSignature(dominant.vocal, 1, rnd);
-  for (const a of clamped) {
-    const quota = accentQuota(a.weight);
-    if (quota.vocal > 0 && a.dna.vocal[0]) vocal.push(a.dna.vocal[0]);
+  // Instrumental builds emit NO vocal slot at all.
+  const vocal = opts.instrumental ? [] : pickWithSignature(dominant.vocal, 1, rnd);
+  if (!opts.instrumental) {
+    for (const a of clamped) {
+      const quota = accentQuota(a.weight);
+      if (quota.vocal > 0 && a.dna.vocal[0]) vocal.push(a.dna.vocal[0]);
+    }
   }
 
   // Texture: seeded dominant picks (2 when solo, 1 with accents), accents per
   // quota, cap 3.
-  const texture = shuffled(dominant.texture, rnd).slice(0, clamped.length ? 1 : 2);
+  const texture = shuffled(filterPool(dominant.texture), rnd).slice(0, clamped.length ? 1 : 2);
   for (const a of clamped) {
     const quota = accentQuota(a.weight);
-    for (const item of shuffled(a.dna.texture, rnd).slice(0, quota.texture)) {
+    for (const item of shuffled(filterPool(a.dna.texture), rnd).slice(0, quota.texture)) {
       if (texture.length >= 3) break;
       texture.push(item);
     }

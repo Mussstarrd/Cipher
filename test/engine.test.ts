@@ -209,6 +209,51 @@ describe("production polish", () => {
   });
 });
 
+describe("instrumental (beat-only) builds", () => {
+  it("emits zero performed-vocal language across every DNA and seed sample", async () => {
+    const { allowedInInstrumental } = await import("../src/fusion.ts");
+    for (const artist of ARTISTS) {
+      for (const seed of [0, 7, 99]) {
+        const pkg = buildPackage({ fusion: { dominant: artist.id }, instrumental: true, seed });
+        for (const part of pkg.styleText.split(", ")) {
+          expect(allowedInInstrumental(part), `"${part}" (${artist.id}, seed ${seed})`).toBe(true);
+        }
+        for (const v of artist.vocal) {
+          expect(pkg.styleText).not.toContain(v);
+        }
+      }
+    }
+  });
+
+  it("keeps vocal-sample descriptors — the subtle soul-sample exception", async () => {
+    const { allowedInInstrumental } = await import("../src/fusion.ts");
+    expect(allowedInInstrumental("pitched-down chopped vocal hook")).toBe(true);
+    expect(allowedInInstrumental("soulful vocal sample chops")).toBe(true);
+    expect(allowedInInstrumental("gospel choir swells")).toBe(false);
+    expect(allowedInInstrumental("airy backing-vocal harmonies")).toBe(false);
+    expect(allowedInInstrumental("vocal-forward mix")).toBe(false);
+  });
+
+  it("spends the exclude budget on vocal suppression", () => {
+    const pkg = buildPackage({ fusion: { dominant: "ti" }, instrumental: true });
+    expect(pkg.excludeText.startsWith("vocals, singing, lyrics, humming")).toBe(true);
+    expect(pkg.excludeText).not.toContain("edm drop"); // lane guards yield their slots
+  });
+
+  it("emits an instrumental tag structure with no song-section tags", () => {
+    const pkg = buildPackage({
+      fusion: { dominant: "travis-scott" },
+      instrumental: true,
+      template: "hook-first-beat-switch",
+    });
+    expect(pkg.lyricsTagsOnly.startsWith("[Instrumental]")).toBe(true);
+    expect(pkg.lyricsTagsOnly).not.toContain("[Verse");
+    expect(pkg.lyricsTagsOnly).not.toContain("[Chorus]");
+    expect(pkg.lyricsTagsOnly).toContain("[Drop]");
+    expect(pkg.lyricsTagsOnly.endsWith("[End]")).toBe(true);
+  });
+});
+
 describe("tags-only lyrics", () => {
   it("emits bracket tags only, in order, with Drop glued", () => {
     const pkg = buildPackage({

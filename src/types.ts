@@ -157,6 +157,12 @@ export interface BuildOptions {
   verses?: 2 | 3;
   /** Pin the dominant's DNA mode by id; omit to let the seed roll one. */
   mode?: string;
+  /**
+   * Beat-only build: no vocal descriptors anywhere (chopped/pitched vocal
+   * SAMPLES stay — they're instruments), exclude budget goes to vocal
+   * suppression, and the lyrics field is an instrumental tag structure.
+   */
+  instrumental?: boolean;
 }
 
 /** One entry of the lyrics structure; `slot` marks user-writable sections. */
@@ -196,5 +202,6 @@ export interface SunoPackage {
     verses: 2 | 3;
     /** Label of the dominant's rolled/pinned mode, when the DNA has modes. */
     mode?: string;
+    instrumental: boolean;
   };
 }

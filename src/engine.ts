@@ -36,15 +36,36 @@ export function buildPackage(options: BuildOptions): SunoPackage {
   const template = options.template ?? "hook-first";
 
   const seed = options.seed ?? 0;
-  const fused = fuse(dominant, accents, { bpm: options.bpm, seed, mode: options.mode });
+  const instrumental = options.instrumental ?? false;
+  const fused = fuse(dominant, accents, {
+    bpm: options.bpm,
+    seed,
+    mode: options.mode,
+    instrumental,
+  });
   warnings.push(...fused.warnings);
 
   const guards = options.laneGuards === false ? [] : (dominant.laneGuards ?? []);
-  const exclusions = buildExclusions(options.ban ?? [], profile, guards);
+  const exclusions = buildExclusions(options.ban ?? [], profile, guards, { instrumental });
   warnings.push(...exclusions.warnings);
 
-  const scaffold = buildScaffold(template, dominant, profile, fused.bpm, options.verses ?? 2);
+  const scaffold = buildScaffold(
+    template,
+    dominant,
+    profile,
+    fused.bpm,
+    options.verses ?? 2,
+    instrumental,
+  );
   warnings.push(...scaffold.warnings);
+
+  if (instrumental) {
+    warnings.push({
+      level: "info",
+      message:
+        'Beat-only build: ALSO switch on Suno\'s own "Instrumental" toggle — style/exclude/tags alone leak vocals (research §5 triple-layering).',
+    });
+  }
 
   // Template style addenda (e.g. the beat-switch description, research §4.2)
   // ride with the inversion positives: both are load-bearing and must survive
@@ -54,7 +75,12 @@ export function buildPackage(options: BuildOptions): SunoPackage {
     ...(scaffold.styleAddendum ? [scaffold.styleAddendum] : []),
   ];
 
-  const style = assembleStyle(fused.slots, profile, injections, pickPolish(fused.slots, seed));
+  const style = assembleStyle(
+    fused.slots,
+    profile,
+    injections,
+    pickPolish(fused.slots, seed, 2, { instrumental }),
+  );
   warnings.push(...style.warnings);
   warnings.push(...scanText(scaffold.lyricsScaffold, "lyrics"));
 
@@ -83,6 +109,7 @@ export function buildPackage(options: BuildOptions): SunoPackage {
       seed,
       verses: options.verses ?? 2,
       mode: fused.modeLabel,
+      instrumental,
     },
   };
 }
