@@ -1,0 +1,12 @@
+# Godot
+.godot/
+*.uid
+
+# Android gradle build template (installed per-machine via
+# Project > Install Android Build Template)
+android/
+
+# Export output
+build/
+*.apk
+*.aab

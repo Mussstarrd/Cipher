@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="JudgmentConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://config/judgment_config.gd" id="1_cfg"]
+
+[resource]
+script = ExtResource("1_cfg")
+easy_outer_ms = 140.0
+easy_inner_ms = 65.0
+medium_outer_ms = 110.0
+medium_inner_ms = 55.0
+hard_outer_ms = 70.0
+hard_inner_ms = 35.0
+spatial_threshold_px = 64.0
+landing_grace_ms = 90.0
+px_per_beat = 220.0
+jump_height_px = 150.0
+jump_duration_beats = 1.0
+chain_thresholds = Array[int]([4, 8, 16])
+start_coins = 10
+coins_dropped_on_miss = 5
+coin_recollect_seconds = 2.5
+drums_unmute_beats = 0.5
