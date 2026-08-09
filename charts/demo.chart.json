@@ -12,9 +12,21 @@
   },
   "events": [
     {
+      "beat": 10.0,
+      "type": "trace",
+      "duration_beats": 4.0,
+      "lane": 0
+    },
+    {
       "beat": 15.5,
       "type": "tap",
       "nudge_ms": -45
+    },
+    {
+      "beat": 17.0,
+      "type": "trace",
+      "duration_beats": 4.0,
+      "lane": 1
     },
     {
       "beat": 22.0,
@@ -80,6 +92,12 @@
       "beat": 43.0,
       "type": "tap",
       "nudge_ms": 40
+    },
+    {
+      "beat": 44.0,
+      "type": "trace",
+      "duration_beats": 4.0,
+      "lane": 2
     },
     {
       "beat": 49.0,
@@ -187,6 +205,12 @@
       "nudge_ms": -40
     },
     {
+      "beat": 84.0,
+      "type": "trace",
+      "duration_beats": 4.0,
+      "lane": 0
+    },
+    {
       "beat": 92.0,
       "type": "tap",
       "nudge_ms": 45
@@ -195,6 +219,12 @@
       "beat": 93.5,
       "type": "tap",
       "nudge_ms": -45
+    },
+    {
+      "beat": 95.0,
+      "type": "trace",
+      "duration_beats": 4.0,
+      "lane": 2
     },
     {
       "beat": 101.0,
@@ -235,6 +265,12 @@
       "beat": 113.0,
       "type": "tap",
       "nudge_ms": -45
+    },
+    {
+      "beat": 114.5,
+      "type": "trace",
+      "duration_beats": 4.0,
+      "lane": 1
     },
     {
       "beat": 119.5,

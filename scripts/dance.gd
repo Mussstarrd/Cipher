@@ -40,6 +40,22 @@ var cue_times: Array[float] = []   # song-time seconds, sorted
 var cue_state: Array[int] = []     # 0 pending, 1 hit, 2 missed
 var _next_pending := 0
 
+## Trace (slide) challenges: a neon path on the left half; a comet runs
+## along it for duration_beats and the finger must stay on the comet.
+## Coverage is accumulated in path-progress space (a pure function of the
+## song clock), never frame delta.
+const TRACE_X := 200.0
+const TRACE_AMP := 78.0
+const TRACE_RADIUS := 85.0     # finger-to-comet tolerance while tracing
+const TRACE_GRAB := 110.0      # tolerance to grab the comet at the start
+const TRACE_PASS := 0.65       # coverage fraction that counts as traced
+
+var traces: Array[Dictionary] = []  # {start_t, dur_s, shape, covered, last_s, announced}
+var trace_idx := 0
+var trace_pointer := -1
+var trace_layer: Node2D
+var _pointers: Dictionary = {}      # pointer id -> last canvas position
+
 var spectators: Array[Spectator] = []
 var _crowd_serial := 0
 var _next_crowd_beat := 0.0
@@ -86,9 +102,21 @@ func _load_cues() -> void:
 	# hit transient (the chart generator aligns cues to the audio).
 	var times: Array[float] = []
 	for e in chart.events:
+		if str(e["type"]) == "trace":
+			traces.append({
+				"start_t": SongClock.grid_beat_to_time(float(e["beat"])),
+				"dur_s": float(e["duration_beats"]) * SongClock.beat_duration(),
+				"shape": int(e["lane"]),
+				"covered": 0.0,
+				"last_s": 0.0,
+				"announced": false,
+			})
+			continue
 		times.append(SongClock.grid_beat_to_time(float(e["beat"]))
 			+ float(e["nudge_ms"]) / 1000.0)
 	times.sort()
+	traces.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		return float(a["start_t"]) < float(b["start_t"]))
 	for t in times:
 		cue_times.append(t)
 		cue_state.append(0)
@@ -107,6 +135,12 @@ func _build_scene() -> void:
 	dancer = Dancer.new()
 	dancer.position = Vector2(center_x, ground_y)
 	add_child(dancer)
+
+	# traces render above the crowd
+	trace_layer = Node2D.new()
+	trace_layer.z_index = 60
+	trace_layer.draw.connect(_draw_trace_layer)
+	add_child(trace_layer)
 
 	var hud := CanvasLayer.new()
 	hud.layer = 10
@@ -153,9 +187,55 @@ func _build_scene() -> void:
 	hud.add_child(back)
 
 
+## Multitouch routing: the trace needs one finger sliding while the other
+## taps, so dance mode consumes raw touches (index-aware) instead of the
+## single emulated mouse. Emulated mouse events are ignored to avoid
+## double-firing; a real mouse (desktop) maps to pointer id 100; keyboard
+## "bounce" stays a plain tap.
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("bounce"):
+	if event is InputEventScreenTouch:
+		if event.pressed:
+			_pointer_down(event.index, event.position)
+		else:
+			_pointer_up(event.index)
+	elif event is InputEventScreenDrag:
+		_pointer_move(event.index, event.position)
+	elif event is InputEventMouseButton and event.device != InputEvent.DEVICE_ID_EMULATION:
+		if event.button_index == MOUSE_BUTTON_LEFT:
+			if event.pressed:
+				_pointer_down(100, event.position)
+			else:
+				_pointer_up(100)
+	elif event is InputEventMouseMotion and event.device != InputEvent.DEVICE_ID_EMULATION:
+		if _pointers.has(100):
+			_pointer_move(100, event.position)
+	elif event is InputEventKey and event.is_action_pressed("bounce"):
 		_on_tap()
+
+
+func _pointer_down(id: int, pos: Vector2) -> void:
+	_pointers[id] = pos
+	# grab the trace comet if one is up (including its lead-in)
+	if trace_pointer == -1 and SongClock.running and trace_idx < traces.size():
+		var tr := traces[trace_idx]
+		var s_now := _trace_progress(tr)
+		if s_now > -0.5 and s_now < 1.0:
+			var comet := _trace_path(tr, clampf(s_now, 0.0, 1.0))
+			if pos.distance_to(comet) < TRACE_GRAB:
+				trace_pointer = id
+				Input.vibrate_handheld(10)
+				return
+	_on_tap()
+
+
+func _pointer_move(id: int, pos: Vector2) -> void:
+	_pointers[id] = pos
+
+
+func _pointer_up(id: int) -> void:
+	_pointers.erase(id)
+	if id == trace_pointer:
+		trace_pointer = -1  # can re-grab mid-trace
 
 
 func _on_tap() -> void:
@@ -301,6 +381,74 @@ func _update_tier(beat: float) -> void:
 	Stems.set_escalation_level(level)
 
 
+## Path progress for the current visual timeline; <0 during lead-in.
+func _trace_progress(tr: Dictionary) -> float:
+	var now := SongClock.time() - Settings.calibration_offset_ms / 1000.0 \
+		- Settings.av_offset_ms / 1000.0
+	return (now - float(tr["start_t"])) / float(tr["dur_s"])
+
+
+## Shape 0: straight top->bottom. 1: straight bottom->top. 2: S-curve down.
+func _trace_path(tr: Dictionary, s: float) -> Vector2:
+	var y_top := ground_y * 0.32
+	var y_bot := ground_y - 60.0
+	var y := lerpf(y_top, y_bot, s) if int(tr["shape"]) != 1 else lerpf(y_bot, y_top, s)
+	var x := TRACE_X
+	if int(tr["shape"]) == 2:
+		x += TRACE_AMP * sin(s * TAU * 0.75)
+	return Vector2(x, y)
+
+
+func _update_trace(beat: float) -> void:
+	if trace_idx >= traces.size():
+		return
+	var tr := traces[trace_idx]
+	var s_now := _trace_progress(tr)
+	if s_now >= 1.0:
+		_finish_trace(tr)
+		trace_idx += 1
+		trace_pointer = -1
+		return
+	if s_now >= -0.5 and not bool(tr["announced"]):
+		tr["announced"] = true
+		_popup("TRACE THE LINE! ->" if int(tr["shape"]) != 1 else "TRACE THE LINE! (up)",
+			Color(0.4, 1.0, 0.85), 30)
+	if s_now < 0.0:
+		return
+	# coverage accumulates in progress-space: only while the finger rides
+	# the comet does the covered fraction advance
+	var s_clamped := clampf(s_now, 0.0, 1.0)
+	if trace_pointer != -1 and _pointers.has(trace_pointer):
+		var comet := _trace_path(tr, s_clamped)
+		if (_pointers[trace_pointer] as Vector2).distance_to(comet) < TRACE_RADIUS:
+			tr["covered"] = float(tr["covered"]) + maxf(0.0, s_clamped - float(tr["last_s"]))
+			# gentle half-beat tick while riding the comet
+			if beat - float(tr.get("hap_beat", -99.0)) >= 0.5:
+				tr["hap_beat"] = beat
+				Input.vibrate_handheld(8)
+	tr["last_s"] = s_clamped
+
+
+func _finish_trace(tr: Dictionary) -> void:
+	var ratio := float(tr["covered"])
+	if ratio >= TRACE_PASS:
+		var beat := SongClock.current_beat()
+		combo += 2
+		hits += 1
+		best_combo = maxi(best_combo, combo)
+		var bonus := 250 * (tier + 1)
+		score += bonus
+		Stems.open_drums_until(beat + 1.0)
+		Input.vibrate_handheld(60)
+		_ring_flash_beat = beat
+		_ring_flash_color = Color(0.4, 1.0, 0.85)
+		_popup("TRACED! +%d" % bonus, Color(0.4, 1.0, 0.85), 34)
+		_update_tier(beat)
+	else:
+		_popup("SLOPPY TRACE! (%d%%)" % int(ratio * 100.0), Color(1.0, 0.4, 0.35), 32)
+		_stumble(SongClock.current_beat(), 1.2)
+
+
 func _crowd_target() -> int:
 	return mini(MAX_CROWD, combo + tier * 2)
 
@@ -363,7 +511,9 @@ func _process(_delta: float) -> void:
 		s.set_beat(beat)
 	if SongClock.running:
 		_consume_overdue(SongClock.time() - Settings.calibration_offset_ms / 1000.0)
+		_update_trace(beat)
 		_manage_crowd(beat)
+	trace_layer.queue_redraw()
 	for c in get_children():
 		if c is Spectator and (c as Spectator).offscreen():
 			c.queue_free()
@@ -570,6 +720,58 @@ func _draw_popups(beat: float) -> void:
 			Color(0.0, 0.0, 0.0, alpha * 0.6))
 		draw_string(font, pos, text, HORIZONTAL_ALIGNMENT_CENTER,
 			-1, int(pop["size"]), Color(col.r, col.g, col.b, alpha))
+
+
+func _draw_trace_layer() -> void:
+	if not SongClock.running or trace_idx >= traces.size():
+		return
+	var tr := traces[trace_idx]
+	var s_now := _trace_progress(tr)
+	if s_now < -0.5 or s_now >= 1.0:
+		return
+	var appear := clampf((s_now + 0.5) * 3.0, 0.0, 1.0)
+	var s_clamped := clampf(s_now, 0.0, 1.0)
+	var neon := Color(0.35, 1.0, 0.8)
+	var tracing: bool = trace_pointer != -1 and _pointers.has(trace_pointer) \
+		and (_pointers[trace_pointer] as Vector2).distance_to(_trace_path(tr, s_clamped)) < TRACE_RADIUS
+
+	# path polyline with glow; the stretch behind the comet dims out
+	const SEGS := 40
+	var prev := _trace_path(tr, 0.0)
+	for i in range(1, SEGS + 1):
+		var s := float(i) / SEGS
+		var p := _trace_path(tr, s)
+		var passed: bool = s < s_clamped
+		var a := appear * (0.25 if passed else 0.85)
+		trace_layer.draw_line(prev, p, Color(neon, a * 0.18), 14.0)
+		trace_layer.draw_line(prev, p, Color(neon, a), 4.0)
+		prev = p
+
+	# direction arrow at the entry point during lead-in
+	if s_now < 0.15:
+		var a0 := _trace_path(tr, 0.0)
+		var dirv := (_trace_path(tr, 0.06) - a0).normalized()
+		var tip := a0 + dirv * 34.0
+		var side := Vector2(-dirv.y, dirv.x) * 13.0
+		trace_layer.draw_colored_polygon(
+			PackedVector2Array([tip, a0 + side, a0 - side]), Color(neon, appear))
+
+	# the comet: ride it with your finger
+	var comet := _trace_path(tr, s_clamped)
+	var ccol := Color(0.5, 1.0, 0.6) if tracing else Color(1.0, 1.0, 1.0)
+	if s_now >= 0.0 and trace_pointer == -1:
+		ccol = Color(1.0, 0.55, 0.4)  # running away untraced!
+	for gi in 3:
+		var gs := clampf(s_clamped - 0.02 * (gi + 1), 0.0, 1.0)
+		trace_layer.draw_circle(_trace_path(tr, gs), 10.0 - gi * 2.5, Color(ccol, 0.25))
+	trace_layer.draw_circle(comet, 26.0, Color(ccol, 0.18 * appear))
+	trace_layer.draw_circle(comet, 15.0, Color(ccol, 0.85 * appear))
+	trace_layer.draw_circle(comet, 8.0, Color(1.0, 1.0, 0.95, appear))
+	# lead-in countdown ring converges on the comet
+	if s_now < 0.0:
+		var lead := -s_now / 0.5
+		trace_layer.draw_arc(comet, 15.0 + 70.0 * lead, 0.0, TAU, 40,
+			Color(neon, appear * 0.7), 3.0)
 
 
 func _on_track_finished() -> void:
