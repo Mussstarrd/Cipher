@@ -8,12 +8,12 @@ extends Resource
 ## gap between neighbouring grid slots so adjacent windows never overlap,
 ## which is what scales them with grid density.
 
-@export var easy_outer_ms := 140.0
-@export var easy_inner_ms := 65.0
-@export var medium_outer_ms := 110.0
-@export var medium_inner_ms := 55.0
-@export var hard_outer_ms := 70.0
-@export var hard_inner_ms := 35.0
+@export var easy_outer_ms := 160.0
+@export var easy_inner_ms := 80.0
+@export var medium_outer_ms := 130.0
+@export var medium_inner_ms := 60.0
+@export var hard_outer_ms := 90.0
+@export var hard_inner_ms := 45.0
 
 ## Spatial gate: max distance of the player's feet from the enemy head zone.
 @export var spatial_threshold_px := 64.0

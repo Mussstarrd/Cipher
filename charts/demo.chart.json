@@ -1,6 +1,6 @@
 {
   "bpm": 85.04,
-  "offset_ms": 12,
+  "offset_ms": 2129,
   "swing_percent": 50.0,
   "audio_file": "res://tracks/demo/instrumental.wav",
   "stems": {
@@ -12,284 +12,232 @@
   },
   "events": [
     {
-      "beat": 4.0,
-      "type": "enemy"
-    },
-    {
-      "beat": 6.0,
-      "type": "enemy"
-    },
-    {
-      "beat": 8.0,
-      "type": "enemy"
-    },
-    {
-      "beat": 9.0,
-      "type": "enemy"
-    },
-    {
-      "beat": 10.0,
-      "type": "enemy"
-    },
-    {
-      "beat": 12.5,
-      "type": "enemy"
-    },
-    {
-      "beat": 13.5,
-      "type": "enemy"
+      "beat": 9.5,
+      "type": "tap"
     },
     {
       "beat": 16.0,
-      "type": "enemy"
+      "type": "tap"
     },
     {
-      "beat": 17.0,
-      "type": "enemy"
+      "beat": 19.5,
+      "type": "tap"
     },
     {
-      "beat": 18.0,
-      "type": "enemy"
+      "beat": 20.0,
+      "type": "tap"
     },
     {
-      "beat": 20.5,
-      "type": "enemy"
+      "beat": 22.5,
+      "type": "tap"
     },
     {
-      "beat": 21.5,
-      "type": "enemy"
+      "beat": 23.0,
+      "type": "tap"
     },
     {
-      "beat": 24.0,
-      "type": "enemy"
+      "beat": 23.5,
+      "type": "tap"
     },
     {
-      "beat": 26.0,
-      "type": "enemy"
+      "beat": 26.5,
+      "type": "tap"
     },
     {
-      "beat": 27.0,
-      "type": "enemy"
+      "beat": 29.0,
+      "type": "tap"
     },
     {
-      "beat": 28.0,
-      "type": "enemy"
+      "beat": 33.0,
+      "type": "tap"
     },
     {
-      "beat": 30.25,
-      "type": "enemy"
+      "beat": 35.5,
+      "type": "tap"
     },
     {
-      "beat": 31.25,
-      "type": "enemy"
+      "beat": 36.0,
+      "type": "tap"
     },
     {
-      "beat": 33.25,
-      "type": "enemy"
+      "beat": 36.5,
+      "type": "tap"
     },
     {
-      "beat": 40.0,
-      "type": "enemy"
+      "beat": 39.5,
+      "type": "tap"
     },
     {
       "beat": 42.0,
-      "type": "enemy"
+      "type": "tap"
     },
     {
-      "beat": 44.0,
-      "type": "enemy"
+      "beat": 42.5,
+      "type": "tap"
     },
     {
-      "beat": 45.0,
-      "type": "enemy"
+      "beat": 43.0,
+      "type": "tap"
+    },
+    {
+      "beat": 45.5,
+      "type": "tap"
     },
     {
       "beat": 46.0,
-      "type": "enemy"
+      "type": "tap"
     },
     {
       "beat": 48.5,
-      "type": "enemy"
+      "type": "tap"
+    },
+    {
+      "beat": 49.0,
+      "type": "tap"
     },
     {
       "beat": 49.5,
-      "type": "enemy"
+      "type": "tap"
     },
     {
-      "beat": 52.0,
-      "type": "enemy"
+      "beat": 55.0,
+      "type": "tap"
     },
     {
-      "beat": 53.0,
-      "type": "enemy"
+      "beat": 55.5,
+      "type": "tap"
     },
     {
-      "beat": 54.0,
-      "type": "enemy"
+      "beat": 56.0,
+      "type": "tap"
     },
     {
-      "beat": 56.5,
-      "type": "enemy"
-    },
-    {
-      "beat": 57.5,
-      "type": "enemy"
-    },
-    {
-      "beat": 60.0,
-      "type": "enemy"
+      "beat": 61.5,
+      "type": "tap"
     },
     {
       "beat": 62.0,
-      "type": "enemy"
+      "type": "tap"
     },
     {
-      "beat": 63.0,
-      "type": "enemy"
+      "beat": 62.5,
+      "type": "tap"
     },
     {
-      "beat": 64.0,
-      "type": "enemy"
+      "beat": 68.0,
+      "type": "tap"
     },
     {
-      "beat": 66.25,
-      "type": "enemy"
+      "beat": 69.0,
+      "type": "tap"
     },
     {
-      "beat": 67.25,
-      "type": "enemy"
+      "beat": 72.0,
+      "type": "tap"
     },
     {
-      "beat": 69.25,
-      "type": "enemy"
+      "beat": 74.5,
+      "type": "tap"
     },
     {
-      "beat": 76.0,
-      "type": "enemy"
+      "beat": 75.0,
+      "type": "tap"
     },
     {
-      "beat": 78.0,
-      "type": "enemy"
+      "beat": 75.5,
+      "type": "tap"
     },
     {
-      "beat": 80.0,
-      "type": "enemy"
+      "beat": 76.5,
+      "type": "tap"
+    },
+    {
+      "beat": 78.5,
+      "type": "tap"
     },
     {
       "beat": 81.0,
-      "type": "enemy"
+      "type": "tap"
     },
     {
-      "beat": 82.0,
-      "type": "enemy"
+      "beat": 95.0,
+      "type": "tap"
     },
     {
-      "beat": 84.5,
-      "type": "enemy"
+      "beat": 100.5,
+      "type": "tap"
     },
     {
-      "beat": 85.5,
-      "type": "enemy"
+      "beat": 101.0,
+      "type": "tap"
     },
     {
-      "beat": 88.0,
-      "type": "enemy"
+      "beat": 101.5,
+      "type": "tap"
     },
     {
-      "beat": 89.0,
-      "type": "enemy"
+      "beat": 102.5,
+      "type": "tap"
     },
     {
-      "beat": 90.0,
-      "type": "enemy"
+      "beat": 104.5,
+      "type": "tap"
     },
     {
-      "beat": 92.5,
-      "type": "enemy"
+      "beat": 107.0,
+      "type": "tap"
     },
     {
-      "beat": 93.5,
-      "type": "enemy"
+      "beat": 108.0,
+      "type": "tap"
     },
     {
-      "beat": 96.0,
-      "type": "enemy"
+      "beat": 111.0,
+      "type": "tap"
     },
     {
-      "beat": 98.0,
-      "type": "enemy"
-    },
-    {
-      "beat": 99.0,
-      "type": "enemy"
-    },
-    {
-      "beat": 100.0,
-      "type": "enemy"
-    },
-    {
-      "beat": 102.25,
-      "type": "enemy"
-    },
-    {
-      "beat": 103.25,
-      "type": "enemy"
-    },
-    {
-      "beat": 105.25,
-      "type": "enemy"
-    },
-    {
-      "beat": 112.0,
-      "type": "enemy"
+      "beat": 113.5,
+      "type": "tap"
     },
     {
       "beat": 114.0,
-      "type": "enemy"
+      "type": "tap"
     },
     {
-      "beat": 116.0,
-      "type": "enemy"
-    },
-    {
-      "beat": 117.0,
-      "type": "enemy"
-    },
-    {
-      "beat": 118.0,
-      "type": "enemy"
+      "beat": 120.0,
+      "type": "tap"
     },
     {
       "beat": 120.5,
-      "type": "enemy"
+      "type": "tap"
     },
     {
-      "beat": 121.5,
-      "type": "enemy"
+      "beat": 121.0,
+      "type": "tap"
     },
     {
-      "beat": 124.0,
-      "type": "enemy"
+      "beat": 127.0,
+      "type": "tap"
     },
     {
-      "beat": 125.0,
-      "type": "enemy"
-    },
-    {
-      "beat": 126.0,
-      "type": "enemy"
-    },
-    {
-      "beat": 128.5,
-      "type": "enemy"
+      "beat": 127.5,
+      "type": "tap"
     },
     {
       "beat": 129.5,
-      "type": "enemy"
+      "type": "tap"
     },
     {
-      "beat": 132.0,
-      "type": "enemy"
+      "beat": 130.0,
+      "type": "tap"
+    },
+    {
+      "beat": 130.5,
+      "type": "tap"
+    },
+    {
+      "beat": 133.0,
+      "type": "tap"
     }
   ]
 }
