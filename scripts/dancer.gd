@@ -112,11 +112,27 @@ func _draw() -> void:
 	_limb(shoulder + Vector2(-16.0, 4.0), l_sh, 24.0, l_el, 22.0, SHIRT)
 	_limb(shoulder + Vector2(16.0, 4.0), r_sh, 24.0, r_el, 22.0, SHIRT)
 
+	# gold chain appears once he's really going
+	if tier >= 2:
+		var neck := shoulder + Vector2(head_shake * 0.7, -4.0)
+		draw_arc(neck, 13.0, 0.4, PI - 0.4, 12, Color(0.95, 0.8, 0.2), 3.0)
+		draw_circle(neck + Vector2(0.0, 13.0), 4.0, Color(0.95, 0.8, 0.2))
+
 	# head + face
 	var head := shoulder + Vector2(head_shake, -22.0)
 	draw_circle(head, 17.0, SKIN)
-	draw_circle(head + Vector2(-6.0, -3.0), 2.6, Color.BLACK)
-	draw_circle(head + Vector2(6.0, -3.0), 2.6, Color.BLACK)
+	# beanie with pom
+	draw_rect(Rect2(head.x - 17.0, head.y - 19.0, 34.0, 11.0), Color(0.25, 0.5, 0.85))
+	draw_rect(Rect2(head.x - 17.0, head.y - 10.0, 34.0, 3.0), Color(0.18, 0.38, 0.68))
+	draw_circle(head + Vector2(0.0, -21.0), 4.5, Color(0.9, 0.9, 0.95))
+	if tier >= 3:
+		# sunglasses: he can no longer see, and does not care
+		draw_rect(Rect2(head.x - 13.0, head.y - 7.0, 11.0, 7.0), Color(0.05, 0.05, 0.08))
+		draw_rect(Rect2(head.x + 2.0, head.y - 7.0, 11.0, 7.0), Color(0.05, 0.05, 0.08))
+		draw_line(head + Vector2(-2.0, -4.0), head + Vector2(2.0, -4.0), Color(0.05, 0.05, 0.08), 2.0)
+	else:
+		draw_circle(head + Vector2(-6.0, -3.0), 2.6, Color.BLACK)
+		draw_circle(head + Vector2(6.0, -3.0), 2.6, Color.BLACK)
 	# big goofy grin
 	draw_arc(head + Vector2(0.0, 3.0), 8.0, 0.3, PI - 0.3, 10, Color.BLACK, 2.5)
 
@@ -140,8 +156,11 @@ func _draw_breakdance(t: float) -> void:
 		PANTS, LIMB_W + 2.0)
 	var head := Vector2(0.0, 16.0)
 	draw_circle(head, 15.0, SKIN)
-	draw_circle(head + Vector2(-5.0, 2.0), 2.4, Color.BLACK)
-	draw_circle(head + Vector2(5.0, 2.0), 2.4, Color.BLACK)
+	draw_rect(Rect2(head.x - 15.0, head.y - 17.0, 30.0, 10.0), Color(0.25, 0.5, 0.85))
+	draw_circle(head + Vector2(0.0, -19.0), 4.0, Color(0.9, 0.9, 0.95))
+	# shades stay on mid-spin, obviously
+	draw_rect(Rect2(head.x - 11.0, head.y - 2.0, 9.0, 6.0), Color(0.05, 0.05, 0.08))
+	draw_rect(Rect2(head.x + 2.0, head.y - 2.0, 9.0, 6.0), Color(0.05, 0.05, 0.08))
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
 

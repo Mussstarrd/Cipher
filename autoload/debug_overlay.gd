@@ -39,10 +39,41 @@ func _ready() -> void:
 	btn.pressed.connect(toggle)
 	add_child(btn)
 
+	# A/V sync nudge: shifts cue visuals vs the audio (persisted). Only
+	# shown while the overlay is open.
+	_av_minus = _av_button("VIS -10ms", -66.0, -10.0)
+	_av_plus = _av_button("VIS +10ms", -114.0, 10.0)
+
+
+func _av_button(text: String, top_offset: float, delta: float) -> Button:
+	var b := Button.new()
+	b.text = text
+	b.modulate.a = 0.7
+	b.anchor_left = 1.0
+	b.anchor_right = 1.0
+	b.anchor_top = 1.0
+	b.anchor_bottom = 1.0
+	b.offset_left = -150.0
+	b.offset_right = -12.0
+	b.offset_top = top_offset
+	b.offset_bottom = top_offset + 42.0
+	b.visible = false
+	b.pressed.connect(func() -> void:
+		Settings.av_offset_ms = clampf(Settings.av_offset_ms + delta, -250.0, 250.0)
+		Settings.save_settings())
+	add_child(b)
+	return b
+
+
+var _av_minus: Button
+var _av_plus: Button
+
 
 func toggle() -> void:
 	_shown = not _shown
 	_label.visible = _shown
+	_av_minus.visible = _shown
+	_av_plus.visible = _shown
 
 
 func push_judgment(delta_ms: float) -> void:
@@ -72,6 +103,7 @@ func _process(delta: float) -> void:
 		+ "beat: %.2f\n" % SongClock.current_beat()
 		+ "chain: %d\n" % chain
 		+ "fps: %d\n" % Engine.get_frames_per_second()
-		+ "cal offset: %+.0f ms\n" % Settings.calibration_offset_ms
+		+ "cal offset: %+.0f ms   av offset: %+.0f ms\n" \
+			% [Settings.calibration_offset_ms, Settings.av_offset_ms]
 		+ "judgments (ms, +late): " + j
 	)

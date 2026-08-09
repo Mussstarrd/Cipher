@@ -8,6 +8,11 @@ const DIFFICULTIES: Array[String] = ["easy", "medium", "hard"]
 var difficulty := "easy"
 var calibration_offset_ms := 0.0
 var has_calibration := false
+## Shifts where cues are DRAWN relative to the audio clock (positive =
+## visuals later). Compensates devices that misreport output latency.
+## Adjust live from the debug overlay. Judgment is unaffected — tap
+## calibration handles the input side.
+var av_offset_ms := 0.0
 
 
 func _ready() -> void:
@@ -21,6 +26,7 @@ func load_settings() -> void:
 	difficulty = cf.get_value("game", "difficulty", "easy")
 	calibration_offset_ms = cf.get_value("calibration", "offset_ms", 0.0)
 	has_calibration = cf.get_value("calibration", "done", false)
+	av_offset_ms = cf.get_value("calibration", "av_offset_ms", 0.0)
 
 
 func save_settings() -> void:
@@ -28,6 +34,7 @@ func save_settings() -> void:
 	cf.set_value("game", "difficulty", difficulty)
 	cf.set_value("calibration", "offset_ms", calibration_offset_ms)
 	cf.set_value("calibration", "done", has_calibration)
+	cf.set_value("calibration", "av_offset_ms", av_offset_ms)
 	cf.save(PATH)
 
 

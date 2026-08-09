@@ -19,8 +19,10 @@ const GOOD_WORDS: Array[String] = ["okay", "loose...", "close"]
 const STUMBLE_WORDS: Array[String] = ["WHOA!", "OOF!", "MY SHOE!", "SPLAT!"]
 
 const MAX_CROWD := 14
-const APPROACH_BEATS := 2.0
-const RING_R := 74.0
+## Ticker: cues scroll right-to-left along the LED sidewalk strip and
+## must be tapped when they reach the marker under the dancer's feet.
+const TICKER_PX_PER_BEAT := 240.0
+const STRIP_H := 46.0
 
 var cfg: JudgmentConfig = preload("res://config/game_config.tres")
 
@@ -80,12 +82,15 @@ func _exit_tree() -> void:
 
 
 func _load_cues() -> void:
-	var beats: Array[float] = []
+	# Cue time = grid slot + per-cue nudge measured from the track's actual
+	# hit transient (the chart generator aligns cues to the audio).
+	var times: Array[float] = []
 	for e in chart.events:
-		beats.append(float(e["beat"]))
-	beats.sort()
-	for b in beats:
-		cue_times.append(SongClock.grid_beat_to_time(b))
+		times.append(SongClock.grid_beat_to_time(float(e["beat"]))
+			+ float(e["nudge_ms"]) / 1000.0)
+	times.sort()
+	for t in times:
+		cue_times.append(t)
 		cue_state.append(0)
 
 
@@ -384,60 +389,186 @@ func _draw() -> void:
 	var vs := get_viewport_rect().size
 	var beat := SongClock.current_beat()
 
-	# alley backdrop
-	var bx := -40.0
-	var i := 0
-	while bx < vs.x + 40.0:
-		var h := ground_y * (0.35 + 0.4 * Spectator._hash01(i))
-		var w := 150.0 + 130.0 * Spectator._hash01(i + 57)
-		draw_rect(Rect2(bx, ground_y - h, w - 14.0, h), Color(0.10, 0.11, 0.16))
-		for wi in 3:
-			if Spectator._hash01(i * 7 + wi) > 0.45:
-				draw_rect(Rect2(bx + 18.0 + wi * 40.0, ground_y - h + 22.0, 13.0, 17.0),
-					Color(0.85, 0.75, 0.4, 0.25))
+	_draw_backdrop(vs, beat)
+	_draw_shadows()
+	_draw_ticker(vs, beat)
+	_draw_popups(beat)
+
+
+func _draw_backdrop(vs: Vector2, beat: float) -> void:
+	# night-sky gradient: translucent bands let the tier-pulse ColorRect
+	# glow through near the skyline
+	var top := Color(0.03, 0.03, 0.09)
+	var horizon_col := Color(0.12, 0.08, 0.16)
+	var bands := 10
+	for bi in bands:
+		var f0 := float(bi) / bands
+		var c := top.lerp(horizon_col, f0)
+		c.a = 0.9 - f0 * 0.75
+		draw_rect(Rect2(-40.0, -40.0 + (ground_y + 40.0) * f0,
+			vs.x + 80.0, (ground_y + 40.0) / bands + 1.0), c)
+	# moon + stars
+	var moon := Vector2(vs.x * 0.82, ground_y * 0.18)
+	draw_circle(moon, 34.0, Color(0.92, 0.9, 0.8, 0.12))
+	draw_circle(moon, 26.0, Color(0.92, 0.9, 0.82))
+	draw_circle(moon + Vector2(-9.0, -4.0), 5.0, Color(0.8, 0.78, 0.7))
+	draw_circle(moon + Vector2(7.0, 8.0), 3.5, Color(0.8, 0.78, 0.7))
+	for si in 26:
+		var sp := Vector2(Spectator._hash01(si * 3) * vs.x,
+			Spectator._hash01(si * 3 + 1) * ground_y * 0.5)
+		var tw := 0.35 + 0.3 * sin(beat * 2.0 + si * 1.7)
+		draw_circle(sp, 1.6, Color(0.9, 0.9, 1.0, tw))
+
+	# far building layer
+	var bx := -60.0
+	var i := 100
+	while bx < vs.x + 60.0:
+		var h := ground_y * (0.5 + 0.35 * Spectator._hash01(i))
+		var w := 190.0 + 150.0 * Spectator._hash01(i + 57)
+		draw_rect(Rect2(bx, ground_y - h, w - 10.0, h), Color(0.07, 0.075, 0.115))
 		bx += w
 		i += 1
-	draw_rect(Rect2(-40.0, ground_y, vs.x + 80.0, vs.y - ground_y + 40.0),
-		Color(0.16, 0.17, 0.22))
-	draw_line(Vector2(-40.0, ground_y + 1.5), Vector2(vs.x + 40.0, ground_y + 1.5),
-		Color(0.32, 0.34, 0.42), 3.0)
+	# near building layer with lit windows and rooftop clutter
+	bx = -40.0
+	i = 0
+	while bx < vs.x + 40.0:
+		var h := ground_y * (0.3 + 0.34 * Spectator._hash01(i))
+		var w := 150.0 + 130.0 * Spectator._hash01(i + 57)
+		draw_rect(Rect2(bx, ground_y - h, w - 14.0, h), Color(0.10, 0.11, 0.16))
+		draw_rect(Rect2(bx, ground_y - h, w - 14.0, 5.0), Color(0.14, 0.15, 0.21))
+		for wy in 3:
+			for wi in 3:
+				if Spectator._hash01(i * 17 + wy * 5 + wi) > 0.55:
+					draw_rect(Rect2(bx + 18.0 + wi * 40.0,
+						ground_y - h + 22.0 + wy * 42.0, 13.0, 17.0),
+						Color(0.85, 0.75, 0.4, 0.22 + 0.12 * Spectator._hash01(wi + wy)))
+		if Spectator._hash01(i + 200) > 0.6:
+			var ax := bx + (w - 14.0) * 0.5
+			draw_line(Vector2(ax, ground_y - h), Vector2(ax, ground_y - h - 34.0),
+				Color(0.16, 0.17, 0.23), 3.0)
+		bx += w
+		i += 1
 
+	# sidewalk
+	draw_rect(Rect2(-40.0, ground_y, vs.x + 80.0, vs.y - ground_y + 40.0),
+		Color(0.15, 0.16, 0.21))
+	draw_line(Vector2(-40.0, ground_y + 1.5), Vector2(vs.x + 40.0, ground_y + 1.5),
+		Color(0.30, 0.32, 0.40), 3.0)
+
+	# street lamps flanking the show, with warm light pools
+	for side: float in [-1.0, 1.0]:
+		var lx := center_x + side * 430.0
+		draw_line(Vector2(lx, ground_y), Vector2(lx, ground_y - 250.0),
+			Color(0.2, 0.21, 0.27), 6.0)
+		draw_line(Vector2(lx, ground_y - 250.0),
+			Vector2(lx - side * 42.0, ground_y - 262.0), Color(0.2, 0.21, 0.27), 5.0)
+		var head := Vector2(lx - side * 48.0, ground_y - 258.0)
+		draw_circle(head, 9.0, Color(1.0, 0.85, 0.5))
+		draw_circle(head, 22.0, Color(1.0, 0.85, 0.5, 0.10))
+		draw_circle(head, 44.0, Color(1.0, 0.85, 0.5, 0.05))
+		draw_set_transform(Vector2(head.x, ground_y + 8.0), 0.0, Vector2(1.0, 0.22))
+		draw_circle(Vector2.ZERO, 95.0, Color(1.0, 0.85, 0.5, 0.06))
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+
+
+func _draw_shadows() -> void:
+	for who in ([dancer] + spectators):
+		if who == null or not is_instance_valid(who):
+			continue
+		draw_set_transform(Vector2(who.position.x, who.position.y + 4.0),
+			0.0, Vector2(1.0, 0.25))
+		draw_circle(Vector2.ZERO, 34.0 if who == dancer else 24.0,
+			Color(0.0, 0.0, 0.0, 0.30))
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+
+
+func _draw_ticker(vs: Vector2, beat: float) -> void:
 	if not SongClock.running:
 		return
-	var focus := dancer.position + Vector2(0.0, -100.0)
-	var now := SongClock.time() - Settings.calibration_offset_ms / 1000.0
-	var horizon := APPROACH_BEATS * SongClock.beat_duration()
+	# LED strip on the pavement, right under his feet
+	var y0 := ground_y + 22.0
+	var strip := Rect2(-40.0, y0, vs.x + 80.0, STRIP_H)
+	draw_rect(strip, Color(0.05, 0.06, 0.09))
+	var neon := Color(0.25, 0.85, 0.95)
+	for edge_y: float in [y0, y0 + STRIP_H]:
+		draw_line(Vector2(-40.0, edge_y), Vector2(vs.x + 40.0, edge_y),
+			Color(neon, 0.12), 8.0)
+		draw_line(Vector2(-40.0, edge_y), Vector2(vs.x + 40.0, edge_y),
+			Color(neon, 0.5), 2.5)
+	# dim LED dot matrix
+	var dx := 0.0
+	while dx < vs.x:
+		draw_circle(Vector2(dx, y0 + STRIP_H * 0.5), 1.5, Color(neon, 0.10))
+		dx += 18.0
 
-	# target ring (+ hit/stumble flash)
-	var flash := clampf(1.0 - (beat - _ring_flash_beat) * 2.0, 0.0, 1.0)
-	var ring_col := Color(0.85, 0.87, 1.0, 0.45).lerp(_ring_flash_color, flash)
-	draw_arc(focus, RING_R, 0.0, TAU, 48, ring_col, 4.0 + 4.0 * flash)
-	if flash > 0.0:
-		draw_arc(focus, RING_R + (1.0 - flash) * 50.0, 0.0, TAU, 48,
-			Color(_ring_flash_color, flash * 0.6), 3.0)
+	# visual timeline: audio clock shifted by the player's A/V nudge
+	var now := SongClock.time() - Settings.calibration_offset_ms / 1000.0 \
+		- Settings.av_offset_ms / 1000.0
+	var pps := TICKER_PX_PER_BEAT / SongClock.beat_duration()
+	var cy := y0 + STRIP_H * 0.5
 
-	# approach circles: each cue contracts onto the ring at its moment
-	for ci in range(maxi(0, _next_pending - 4), cue_times.size()):
-		var dt := cue_times[ci] - now
-		if dt > horizon:
-			break
-		if cue_state[ci] != 0 or dt < -0.3:
+	# scrolling beat ticks so the pulse is readable between cues
+	var t_left := now - (center_x + 60.0) / pps
+	var b0 := floorf(SongClock.linear_beat_at(t_left))
+	for k in 24:
+		var bt := SongClock.grid_beat_to_time(b0 + k)
+		var x := center_x + (bt - now) * pps
+		if x < -40.0 or x > vs.x + 40.0:
 			continue
-		var f := clampf(dt / horizon, 0.0, 1.0)
-		var r := RING_R + 250.0 * f
-		var col := Color(0.95, 0.85, 0.4, clampf(1.1 - f, 0.25, 0.95))
-		if dt < 0.0:
-			col = Color(1.0, 0.5, 0.4, 0.9)  # window closing!
-		draw_arc(focus, r, 0.0, TAU, 48, col, 5.0 if f < 0.35 else 3.0)
+		var downbeat := absf(fposmod(b0 + k, 4.0)) < 0.01
+		draw_line(Vector2(x, y0 + 6.0), Vector2(x, y0 + STRIP_H - 6.0),
+			Color(0.5, 0.55, 0.7, 0.35 if downbeat else 0.15),
+			3.0 if downbeat else 1.5)
 
-	# floating judgment popups
+	# hit marker under his feet (+ judgment flash)
+	var flash := clampf(1.0 - (beat - _ring_flash_beat) * 2.0, 0.0, 1.0)
+	var mk := Color(0.95, 0.4, 0.9).lerp(_ring_flash_color, flash)
+	draw_rect(Rect2(center_x - 26.0, y0 - 4.0, 52.0, STRIP_H + 8.0),
+		Color(mk, 0.10 + 0.25 * flash))
+	draw_line(Vector2(center_x, y0 - 8.0), Vector2(center_x, y0 + STRIP_H + 8.0),
+		Color(mk, 0.25), 9.0)
+	draw_line(Vector2(center_x, y0 - 8.0), Vector2(center_x, y0 + STRIP_H + 8.0),
+		mk, 3.0)
+	if flash > 0.0:
+		draw_circle(Vector2(center_x, cy), 30.0 + (1.0 - flash) * 46.0,
+			Color(_ring_flash_color, flash * 0.35))
+		# the dancer lights up too
+		draw_circle(dancer.position + Vector2(0.0, -70.0), 90.0,
+			Color(_ring_flash_color, flash * 0.10))
+
+	# cue pads scrolling toward the marker
+	for ci in range(maxi(0, _next_pending - 6), cue_times.size()):
+		var x := center_x + (cue_times[ci] - now) * pps
+		if x > vs.x + 60.0:
+			break
+		if x < -60.0 or cue_state[ci] == 1:
+			continue
+		var missed := cue_state[ci] == 2
+		var closing: bool = (cue_times[ci] - now) < 0.0
+		var col := Color(1.0, 0.85, 0.3)
+		if missed:
+			col = Color(0.6, 0.25, 0.22)
+		elif closing:
+			col = Color(1.0, 0.5, 0.35)
+		# neon pad with glow
+		draw_circle(Vector2(x, cy), 20.0, Color(col, 0.16))
+		draw_circle(Vector2(x, cy), 13.0, Color(col, 0.55))
+		draw_circle(Vector2(x, cy), 8.0, col)
+		draw_circle(Vector2(x, cy - 3.0), 3.0, Color(1.0, 1.0, 0.9, 0.8))
+
+
+func _draw_popups(beat: float) -> void:
 	var font := ThemeDB.fallback_font
 	for pop in _popups:
 		var age := beat - float(pop["born"])
 		var alpha := clampf(1.2 - age * 0.6, 0.0, 1.0)
 		var col: Color = pop["color"]
 		var pos := Vector2(float(pop["x"]), float(pop["y"]) - age * 26.0)
-		draw_string(font, pos, str(pop["text"]), HORIZONTAL_ALIGNMENT_CENTER,
+		var text := str(pop["text"])
+		draw_string(font, pos + Vector2(2.0, 2.0), text,
+			HORIZONTAL_ALIGNMENT_CENTER, -1, int(pop["size"]),
+			Color(0.0, 0.0, 0.0, alpha * 0.6))
+		draw_string(font, pos, text, HORIZONTAL_ALIGNMENT_CENTER,
 			-1, int(pop["size"]), Color(col.r, col.g, col.b, alpha))
 
 
