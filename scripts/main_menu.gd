@@ -8,6 +8,7 @@ var _difficulty_btn: Button
 func _ready() -> void:
 	var bg := ColorRect.new()
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	bg.color = Color(0.06, 0.07, 0.10)
 	add_child(bg)
 

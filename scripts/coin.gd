@@ -40,4 +40,6 @@ func _draw() -> void:
 	var alpha := 1.0
 	if _age > _lifetime - 0.6:  # blink before vanishing
 		alpha = 0.4 + 0.6 * float(int(_age * 10.0) % 2)
-	draw_rect(Rect2(-7.0, -7.0, 14.0, 14.0), Color(0.98, 0.85, 0.25, alpha))
+	draw_circle(Vector2.ZERO, 8.0, Color(0.85, 0.68, 0.18, alpha))
+	draw_circle(Vector2.ZERO, 6.0, Color(0.98, 0.85, 0.25, alpha))
+	draw_circle(Vector2(-2.0, -2.0), 2.0, Color(1.0, 0.95, 0.7, alpha))

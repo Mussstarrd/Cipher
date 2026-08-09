@@ -37,5 +37,24 @@ func consume_miss() -> void:
 
 
 func _draw() -> void:
-	draw_rect(Rect2(-SIZE / 2.0, -SIZE, SIZE, SIZE), Color(0.85, 0.3, 0.32))
-	draw_rect(Rect2(-SIZE / 2.0, -SIZE, SIZE, HEAD_H), Color(0.62, 0.18, 0.2))
+	# Procedural alley trash can, feet at the origin.
+	var metal := Color(0.58, 0.62, 0.68)
+	var shade := Color(0.42, 0.45, 0.52)
+	var lid := Color(0.5, 0.54, 0.61)
+	# tapered body
+	draw_polygon(PackedVector2Array([
+		Vector2(-SIZE / 2.0, -SIZE + HEAD_H),
+		Vector2(SIZE / 2.0, -SIZE + HEAD_H),
+		Vector2(SIZE / 2.0 - 6.0, 0.0),
+		Vector2(-SIZE / 2.0 + 6.0, 0.0),
+	]), PackedColorArray([metal]))
+	# ridges
+	for i in 3:
+		var x := -12.0 + i * 12.0
+		draw_line(Vector2(x, -SIZE + HEAD_H + 4.0), Vector2(x * 0.85, -3.0), shade, 2.0)
+	# lid (this slab is the bounce target / head zone)
+	draw_rect(Rect2(-SIZE / 2.0 - 4.0, -SIZE, SIZE + 8.0, HEAD_H), lid)
+	draw_rect(Rect2(-7.0, -SIZE - 6.0, 14.0, 6.0), shade)  # handle
+	# a little spilled trash at the base
+	draw_circle(Vector2(-SIZE / 2.0 - 2.0, -3.0), 4.0, Color(0.35, 0.5, 0.3))
+	draw_circle(Vector2(SIZE / 2.0 + 1.0, -2.0), 3.0, Color(0.6, 0.55, 0.35))

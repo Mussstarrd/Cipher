@@ -69,6 +69,7 @@ func _build_world() -> void:
 	bg_layer.layer = -10
 	bg = ColorRect.new()
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE  # taps must reach gameplay
 	bg.color = Color(0.07, 0.08, 0.12)
 	bg_layer.add_child(bg)
 	add_child(bg_layer)
@@ -143,14 +144,37 @@ func _draw() -> void:
 	if chart == null:
 		return
 	var end_x := (chart.end_beat() + 8.0) * cfg.px_per_beat
+
+	# Alley skyline silhouettes (deterministic pseudo-random heights).
+	var bx := -600.0
+	var i := 0
+	while bx < end_x + 800.0:
+		var h := 150.0 + 190.0 * _hash01(i)
+		var w := 170.0 + 150.0 * _hash01(i + 57)
+		draw_rect(Rect2(bx, GROUND_Y - h, w - 16.0, h), Color(0.10, 0.11, 0.16))
+		# a few lit windows
+		for wi in 3:
+			if _hash01(i * 7 + wi) > 0.45:
+				draw_rect(Rect2(bx + 20.0 + wi * 42.0, GROUND_Y - h + 24.0, 14.0, 18.0),
+					Color(0.85, 0.75, 0.4, 0.25))
+		bx += w
+		i += 1
+
+	# Sidewalk with a curb line; seams mark the beats.
 	draw_rect(Rect2(-2000.0, GROUND_Y, end_x + 4000.0, 400.0),
 		Color(0.16, 0.17, 0.22))
+	draw_line(Vector2(-2000.0, GROUND_Y + 1.5), Vector2(end_x + 2000.0, GROUND_Y + 1.5),
+		Color(0.32, 0.34, 0.42), 3.0)
 	for b in int(chart.end_beat()) + 9:
 		var x := b * cfg.px_per_beat
 		var downbeat := b % 4 == 0
 		draw_line(Vector2(x, GROUND_Y), Vector2(x, GROUND_Y + 16.0),
 			Color(0.45, 0.48, 0.6, 0.9 if downbeat else 0.35),
 			3.0 if downbeat else 1.5)
+
+
+func _hash01(n: int) -> float:
+	return fposmod(sin(float(n) * 12.9898) * 43758.5453, 1.0)
 
 
 func _process(_delta: float) -> void:
@@ -164,7 +188,8 @@ func _process(_delta: float) -> void:
 		_collect_coins()
 		_update_bg(beat)
 	DebugOverlay.chain = chain
-	hud_label.text = "COINS %d    CHAIN %d    x%d" % [coin_count, chain, multiplier]
+	hud_label.text = "%s    COINS %d    CHAIN %d    x%d" \
+		% [Settings.difficulty.to_upper(), coin_count, chain, multiplier]
 
 
 func _unhandled_input(event: InputEvent) -> void:

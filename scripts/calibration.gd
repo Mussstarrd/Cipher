@@ -20,6 +20,9 @@ var _result: Label
 
 
 func _ready() -> void:
+	# Let taps fall through to _unhandled_input instead of being consumed
+	# by this full-screen Control in the GUI phase.
+	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_player = AudioStreamPlayer.new()
 	_player.stream = ClickSynth.click_track(REF_BPM)
 	add_child(_player)

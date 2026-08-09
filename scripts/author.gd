@@ -24,6 +24,9 @@ var _grid_btn: Button
 
 
 func _ready() -> void:
+	# Let taps fall through to _unhandled_input instead of being consumed
+	# by this full-screen Control in the GUI phase.
+	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	chart = _load_chart()
 	_build_ui()
 	if chart == null:
