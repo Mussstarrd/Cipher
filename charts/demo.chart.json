@@ -1,32 +1,295 @@
 {
-  "bpm": 90.0,
-  "offset_ms": 0,
-  "swing_percent": 54.0,
+  "bpm": 85.04,
+  "offset_ms": 12,
+  "swing_percent": 50.0,
   "audio_file": "res://tracks/demo/instrumental.wav",
   "stems": {
     "instrumental": "res://tracks/demo/instrumental.wav",
     "player_drums": "res://tracks/demo/player_drums.wav",
-    "escalation": ["res://tracks/demo/escalation.wav"]
+    "escalation": [
+      "res://tracks/demo/escalation.wav"
+    ]
   },
   "events": [
-    { "beat": 4.0, "type": "enemy" },
-    { "beat": 6.0, "type": "enemy" },
-    { "beat": 8.0, "type": "enemy" },
-    { "beat": 9.0, "type": "enemy" },
-    { "beat": 10.0, "type": "enemy" },
-    { "beat": 12.5, "type": "enemy" },
-    { "beat": 13.5, "type": "enemy" },
-    { "beat": 16.0, "type": "enemy" },
-    { "beat": 17.0, "type": "enemy" },
-    { "beat": 18.0, "type": "enemy" },
-    { "beat": 20.5, "type": "enemy" },
-    { "beat": 21.5, "type": "enemy" },
-    { "beat": 24.0, "type": "enemy" },
-    { "beat": 26.0, "type": "enemy" },
-    { "beat": 27.0, "type": "enemy" },
-    { "beat": 28.0, "type": "enemy" },
-    { "beat": 30.25, "type": "enemy" },
-    { "beat": 31.25, "type": "enemy" },
-    { "beat": 33.25, "type": "enemy" }
+    {
+      "beat": 4.0,
+      "type": "enemy"
+    },
+    {
+      "beat": 6.0,
+      "type": "enemy"
+    },
+    {
+      "beat": 8.0,
+      "type": "enemy"
+    },
+    {
+      "beat": 9.0,
+      "type": "enemy"
+    },
+    {
+      "beat": 10.0,
+      "type": "enemy"
+    },
+    {
+      "beat": 12.5,
+      "type": "enemy"
+    },
+    {
+      "beat": 13.5,
+      "type": "enemy"
+    },
+    {
+      "beat": 16.0,
+      "type": "enemy"
+    },
+    {
+      "beat": 17.0,
+      "type": "enemy"
+    },
+    {
+      "beat": 18.0,
+      "type": "enemy"
+    },
+    {
+      "beat": 20.5,
+      "type": "enemy"
+    },
+    {
+      "beat": 21.5,
+      "type": "enemy"
+    },
+    {
+      "beat": 24.0,
+      "type": "enemy"
+    },
+    {
+      "beat": 26.0,
+      "type": "enemy"
+    },
+    {
+      "beat": 27.0,
+      "type": "enemy"
+    },
+    {
+      "beat": 28.0,
+      "type": "enemy"
+    },
+    {
+      "beat": 30.25,
+      "type": "enemy"
+    },
+    {
+      "beat": 31.25,
+      "type": "enemy"
+    },
+    {
+      "beat": 33.25,
+      "type": "enemy"
+    },
+    {
+      "beat": 40.0,
+      "type": "enemy"
+    },
+    {
+      "beat": 42.0,
+      "type": "enemy"
+    },
+    {
+      "beat": 44.0,
+      "type": "enemy"
+    },
+    {
+      "beat": 45.0,
+      "type": "enemy"
+    },
+    {
+      "beat": 46.0,
+      "type": "enemy"
+    },
+    {
+      "beat": 48.5,
+      "type": "enemy"
+    },
+    {
+      "beat": 49.5,
+      "type": "enemy"
+    },
+    {
+      "beat": 52.0,
+      "type": "enemy"
+    },
+    {
+      "beat": 53.0,
+      "type": "enemy"
+    },
+    {
+      "beat": 54.0,
+      "type": "enemy"
+    },
+    {
+      "beat": 56.5,
+      "type": "enemy"
+    },
+    {
+      "beat": 57.5,
+      "type": "enemy"
+    },
+    {
+      "beat": 60.0,
+      "type": "enemy"
+    },
+    {
+      "beat": 62.0,
+      "type": "enemy"
+    },
+    {
+      "beat": 63.0,
+      "type": "enemy"
+    },
+    {
+      "beat": 64.0,
+      "type": "enemy"
+    },
+    {
+      "beat": 66.25,
+      "type": "enemy"
+    },
+    {
+      "beat": 67.25,
+      "type": "enemy"
+    },
+    {
+      "beat": 69.25,
+      "type": "enemy"
+    },
+    {
+      "beat": 76.0,
+      "type": "enemy"
+    },
+    {
+      "beat": 78.0,
+      "type": "enemy"
+    },
+    {
+      "beat": 80.0,
+      "type": "enemy"
+    },
+    {
+      "beat": 81.0,
+      "type": "enemy"
+    },
+    {
+      "beat": 82.0,
+      "type": "enemy"
+    },
+    {
+      "beat": 84.5,
+      "type": "enemy"
+    },
+    {
+      "beat": 85.5,
+      "type": "enemy"
+    },
+    {
+      "beat": 88.0,
+      "type": "enemy"
+    },
+    {
+      "beat": 89.0,
+      "type": "enemy"
+    },
+    {
+      "beat": 90.0,
+      "type": "enemy"
+    },
+    {
+      "beat": 92.5,
+      "type": "enemy"
+    },
+    {
+      "beat": 93.5,
+      "type": "enemy"
+    },
+    {
+      "beat": 96.0,
+      "type": "enemy"
+    },
+    {
+      "beat": 98.0,
+      "type": "enemy"
+    },
+    {
+      "beat": 99.0,
+      "type": "enemy"
+    },
+    {
+      "beat": 100.0,
+      "type": "enemy"
+    },
+    {
+      "beat": 102.25,
+      "type": "enemy"
+    },
+    {
+      "beat": 103.25,
+      "type": "enemy"
+    },
+    {
+      "beat": 105.25,
+      "type": "enemy"
+    },
+    {
+      "beat": 112.0,
+      "type": "enemy"
+    },
+    {
+      "beat": 114.0,
+      "type": "enemy"
+    },
+    {
+      "beat": 116.0,
+      "type": "enemy"
+    },
+    {
+      "beat": 117.0,
+      "type": "enemy"
+    },
+    {
+      "beat": 118.0,
+      "type": "enemy"
+    },
+    {
+      "beat": 120.5,
+      "type": "enemy"
+    },
+    {
+      "beat": 121.5,
+      "type": "enemy"
+    },
+    {
+      "beat": 124.0,
+      "type": "enemy"
+    },
+    {
+      "beat": 125.0,
+      "type": "enemy"
+    },
+    {
+      "beat": 126.0,
+      "type": "enemy"
+    },
+    {
+      "beat": 128.5,
+      "type": "enemy"
+    },
+    {
+      "beat": 129.5,
+      "type": "enemy"
+    },
+    {
+      "beat": 132.0,
+      "type": "enemy"
+    }
   ]
 }

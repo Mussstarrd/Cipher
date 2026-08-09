@@ -39,7 +39,7 @@ func _ready() -> void:
 	SongClock.configure(chart.bpm, chart.offset_ms, chart.swing_percent)
 	_build_world()
 	_build_hud()
-	if not Stems.load_track(chart.stems):
+	if not Stems.load_track(chart.stems, chart.bpm, int(ceilf(chart.end_beat())) + 8):
 		toast("Could not load audio stems — check chart paths")
 		return
 	Stems.track_finished.connect(_on_track_finished)

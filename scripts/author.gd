@@ -33,7 +33,7 @@ func _ready() -> void:
 		_flash("Could not load chart")
 		return
 	SongClock.configure(chart.bpm, chart.offset_ms, chart.swing_percent)
-	if Stems.load_track(chart.stems):
+	if Stems.load_track(chart.stems, chart.bpm, int(ceilf(chart.end_beat())) + 8):
 		Stems.track_finished.connect(_on_track_finished)
 		_restart_playback()
 	else:
@@ -67,7 +67,7 @@ func _build_ui() -> void:
 	var bar := HBoxContainer.new()
 	bar.offset_left = 12.0
 	bar.offset_top = 12.0
-	bar.add_theme_constant_override("separation", 10)
+	bar.add_theme_constant_override("separation", 14)
 	add_child(bar)
 
 	bar.add_child(_bar_button("MENU",
@@ -108,8 +108,8 @@ func _build_ui() -> void:
 func _bar_button(text: String, on_pressed: Callable) -> Button:
 	var b := Button.new()
 	b.text = text
-	b.custom_minimum_size = Vector2(0.0, 52.0)
-	b.add_theme_font_size_override("font_size", 20)
+	b.custom_minimum_size = Vector2(130.0, 84.0)
+	b.add_theme_font_size_override("font_size", 26)
 	b.pressed.connect(on_pressed)
 	return b
 
@@ -134,9 +134,18 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if chart == null or not SongClock.running:
 		return
+	# Dead zone under the toolbar: a missed button press must not edit the
+	# chart. Only taps in the timeline band (and below) count. Use the
+	# event's own position — the stored mouse position is not reliably
+	# updated by taps on touch screens.
+	var pos := get_viewport().get_mouse_position()
+	if event is InputEventMouse:
+		pos = (event as InputEventMouse).position
+	if pos.y < BAND_TOP - 40.0:
+		return
 	Input.vibrate_handheld(15)
 	if delete_mode:
-		_delete_at_x(get_viewport().get_mouse_position().x)
+		_delete_at_x(pos.x)
 	else:
 		_place_at_playhead()
 

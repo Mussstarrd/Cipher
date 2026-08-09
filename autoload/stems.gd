@@ -21,12 +21,17 @@ var _drums_open_until_beat := -INF
 
 ## stem_paths matches the chart schema:
 ## {"instrumental": path, "player_drums": path, "escalation": [paths]}
-func load_track(stem_paths: Dictionary) -> bool:
+## If bpm > 0 and the instrumental turns out to be the silent placeholder,
+## it is replaced with a synthesized click track so the beat is audible
+## until real stems are dropped in.
+func load_track(stem_paths: Dictionary, bpm := 0.0, fallback_beats := 0) -> bool:
 	clear()
 	instrumental = _make_player(str(stem_paths.get("instrumental", "")), 0.0)
 	if instrumental == null:
 		push_error("Stems: could not load instrumental stem")
 		return false
+	if bpm > 0.0 and fallback_beats > 0 and _is_silent_wav(instrumental.stream):
+		instrumental.stream = ClickSynth.click_track(bpm, fallback_beats)
 	instrumental.finished.connect(func() -> void: track_finished.emit())
 	drums = _make_player(str(stem_paths.get("player_drums", "")), MUTE_DB)
 	for p in stem_paths.get("escalation", []):
@@ -90,6 +95,18 @@ func _players() -> Array[AudioStreamPlayer]:
 		out.append(drums)
 	out.append_array(escalation)
 	return out
+
+
+static func _is_silent_wav(stream: AudioStream) -> bool:
+	if not stream is AudioStreamWAV:
+		return false
+	var d: PackedByteArray = (stream as AudioStreamWAV).data
+	var i := 0
+	while i < d.size():
+		if d[i] != 0:
+			return false
+		i += 1024
+	return d.size() > 0
 
 
 func _make_player(path: String, vol_db: float) -> AudioStreamPlayer:
