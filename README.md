@@ -9,8 +9,9 @@ with the music. Placeholder rectangle art only — architecture is the point.
 
 ## Requirements
 
-- **Godot 4.3+ standard editor** (4.4.x recommended — needed for `targetSdk 36`
-  gradle builds).
+- **Godot 4.5.x standard editor** (4.5.2+ recommended). 4.5 export templates
+  are 16 KB-page-aligned, which Android 16 devices (e.g. 2026 Samsung
+  flagships) require — 4.4.x templates fail to install on them.
 - **Android SDK** with platform **36** installed, plus **JDK 17**
   (Android Studio's bundled SDK/JDK works).
 - A physical Android device with **USB debugging** enabled. Nothing is tuned for
