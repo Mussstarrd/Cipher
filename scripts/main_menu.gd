@@ -27,7 +27,7 @@ func _ready() -> void:
 	box.add_child(title)
 
 	var sub := Label.new()
-	sub.text = "tap = jump / bounce · stay on the beat"
+	sub.text = "tap on beat · keep the groove · draw a crowd"
 	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	sub.add_theme_font_size_override("font_size", 22)
 	sub.modulate.a = 0.7
@@ -35,11 +35,9 @@ func _ready() -> void:
 
 	box.add_child(_spacer(20.0))
 	box.add_child(_menu_button("PLAY",
-		func() -> void: _go("res://scenes/runner.tscn")))
+		func() -> void: _go("res://scenes/dance.tscn")))
 	box.add_child(_menu_button("CALIBRATE",
 		func() -> void: _go("res://scenes/calibration.tscn")))
-	box.add_child(_menu_button("AUTHOR CHART",
-		func() -> void: _go("res://scenes/author.tscn")))
 
 	_difficulty_btn = _menu_button("", _cycle_difficulty)
 	_refresh_difficulty_label()
