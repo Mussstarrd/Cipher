@@ -6,7 +6,7 @@ extends Control
 ## judgment in gameplay.
 
 const REF_BPM := 90.0
-const TAPS_NEEDED := 16
+const TAPS_NEEDED := 8
 const OUTLIER_MS := 60.0
 ## Taps further than 40% of a beat from any beat are ignored outright.
 const IGNORE_FRACTION := 0.4
@@ -21,8 +21,10 @@ var _result: Label
 
 func _ready() -> void:
 	_player = AudioStreamPlayer.new()
-	_player.stream = ClickSynth.metronome_loop(REF_BPM, 4)
+	_player.stream = ClickSynth.click_track(REF_BPM)
 	add_child(_player)
+	# The click track is linear (not looped); restart it if it runs out.
+	_player.finished.connect(_restart)
 	_build_ui()
 	_restart()
 
@@ -45,7 +47,7 @@ func _build_ui() -> void:
 	add_child(title)
 
 	var hint := Label.new()
-	hint.text = "Tap anywhere in time with the click. %d taps." % TAPS_NEEDED
+	hint.text = "Tap anywhere in time with the click. %d taps — about 6 seconds." % TAPS_NEEDED
 	hint.anchor_left = 0.5
 	hint.anchor_right = 0.5
 	hint.offset_left = -400.0
@@ -130,7 +132,7 @@ func _finish() -> void:
 	for d in _deltas:
 		if absf(d - m) <= OUTLIER_MS:
 			kept.append(d)
-	var result := _median(kept) if kept.size() >= 4 else m
+	var result := _median(kept) if kept.size() >= 3 else m
 	Settings.calibration_offset_ms = result
 	Settings.has_calibration = true
 	Settings.save_settings()

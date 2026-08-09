@@ -77,7 +77,7 @@ func _refresh_difficulty_label() -> void:
 func _prompt_first_run_calibration() -> void:
 	var dlg := ConfirmationDialog.new()
 	dlg.title = "First launch"
-	dlg.dialog_text = "Calibrate your tap timing before playing?\nIt takes about 15 seconds."
+	dlg.dialog_text = "Calibrate your tap timing before playing?\nIt takes about 6 seconds."
 	dlg.ok_button_text = "Calibrate"
 	dlg.cancel_button_text = "Later"
 	add_child(dlg)

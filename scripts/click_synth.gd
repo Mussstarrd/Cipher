@@ -1,12 +1,13 @@
 class_name ClickSynth
 extends RefCounted
-## Synthesises a looping metronome WAV at runtime for the calibration
-## screen. Because the clicks are baked into a stream that loops sample-
-## accurately, the SongClock can derive time from its playback position
-## exactly like a real track — no scheduled one-shots involved.
+## Synthesises a metronome click track at runtime for the calibration
+## screen. The clicks are baked into one long linear stream, so the
+## SongClock derives time from its playback position exactly like a real
+## track — no scheduled one-shots, and no loop points (sample loops in
+## runtime-built streams are avoided as a crash-safety measure on Android).
 
 
-static func metronome_loop(bpm: float, beats := 4, sample_rate := 44100) -> AudioStreamWAV:
+static func click_track(bpm: float, beats := 96, sample_rate := 44100) -> AudioStreamWAV:
 	var spb := 60.0 / bpm
 	var frames := int(roundf(beats * spb * sample_rate))
 	var data := PackedByteArray()
@@ -15,7 +16,7 @@ static func metronome_loop(bpm: float, beats := 4, sample_rate := 44100) -> Audi
 	var click_frames := int(0.03 * sample_rate)
 	for b in beats:
 		var start := int(roundf(b * spb * sample_rate))
-		var freq := 1320.0 if b == 0 else 880.0  # accent the downbeat
+		var freq := 1320.0 if b % 4 == 0 else 880.0  # accent the downbeat
 		for i in click_frames:
 			var idx := start + i
 			if idx >= frames:
@@ -30,7 +31,4 @@ static func metronome_loop(bpm: float, beats := 4, sample_rate := 44100) -> Audi
 	wav.format = AudioStreamWAV.FORMAT_16_BITS
 	wav.mix_rate = sample_rate
 	wav.stereo = false
-	wav.loop_mode = AudioStreamWAV.LOOP_FORWARD
-	wav.loop_begin = 0
-	wav.loop_end = frames
 	return wav
