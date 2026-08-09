@@ -50,7 +50,7 @@ func _build_ui() -> void:
 	add_child(title)
 
 	var hint := Label.new()
-	hint.text = "Tap anywhere in time with the click. %d taps — about 6 seconds." % TAPS_NEEDED
+	hint.text = "Tap anywhere in time with the CLICK SOUND (not the circle). %d taps — about 6 seconds.\nIf the circle's pop doesn't match the click: open DBG (top right) and nudge VIS +/- until it does." % TAPS_NEEDED
 	hint.anchor_left = 0.5
 	hint.anchor_right = 0.5
 	hint.offset_left = -400.0
@@ -166,10 +166,18 @@ func _draw() -> void:
 	draw_rect(Rect2(Vector2.ZERO, size), Color(0.06, 0.07, 0.10))
 	if not SongClock.running:
 		return
-	var beat := SongClock.current_beat()
+	# The pulse pops exactly on the click. The A/V offset (DBG overlay,
+	# VIS +/- buttons) shifts this visual against the audio for devices
+	# that misreport output latency — tune it here until pop == click.
+	var beat := SongClock.current_beat() \
+		- Settings.av_offset_ms / 1000.0 / SongClock.beat_duration()
 	var frac := fposmod(beat, 1.0)
 	var center := size * 0.5 + Vector2(0.0, -20.0)
 	var accent := fposmod(beat, 4.0) < 1.0
 	var col := Color(0.95, 0.72, 0.28) if accent else Color(0.5, 0.55, 0.75)
-	draw_circle(center, 60.0 + 70.0 * (1.0 - frac), Color(col, 0.25))
-	draw_circle(center, 46.0, col)
+	var pop := exp(-frac * 7.0)
+	draw_circle(center, 46.0 + 34.0 * pop, Color(col, 0.20 + 0.5 * pop))
+	draw_circle(center, 40.0 + 14.0 * pop, col)
+	# thin approach ring so the next pop is predictable
+	draw_arc(center, 54.0 + 120.0 * (1.0 - frac), 0.0, TAU, 48,
+		Color(col, 0.35), 2.5)

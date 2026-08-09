@@ -53,8 +53,11 @@ const TRACE_PASS := 0.65       # coverage fraction that counts as traced
 var traces: Array[Dictionary] = []  # {start_t, dur_s, shape, covered, last_s, announced}
 var trace_idx := 0
 var trace_pointer := -1
-var trace_layer: Node2D
 var _pointers: Dictionary = {}      # pointer id -> last canvas position
+
+## Screen is split: left of this fraction is the trace zone (slides only,
+## never tap-judged), right of it is the tap zone.
+const TAP_ZONE_FRACTION := 0.40
 
 var spectators: Array[Spectator] = []
 var _crowd_serial := 0
@@ -136,12 +139,6 @@ func _build_scene() -> void:
 	dancer.position = Vector2(center_x, ground_y)
 	add_child(dancer)
 
-	# traces render above the crowd
-	trace_layer = Node2D.new()
-	trace_layer.z_index = 60
-	trace_layer.draw.connect(_draw_trace_layer)
-	add_child(trace_layer)
-
 	var hud := CanvasLayer.new()
 	hud.layer = 10
 	add_child(hud)
@@ -215,6 +212,9 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _pointer_down(id: int, pos: Vector2) -> void:
 	_pointers[id] = pos
+	if finished:
+		_on_tap()
+		return
 	# grab the trace comet if one is up (including its lead-in)
 	if trace_pointer == -1 and SongClock.running and trace_idx < traces.size():
 		var tr := traces[trace_idx]
@@ -225,6 +225,10 @@ func _pointer_down(id: int, pos: Vector2) -> void:
 				trace_pointer = id
 				Input.vibrate_handheld(10)
 				return
+	# left of the divider is trace territory: never judged as a tap, so a
+	# finger waiting for (or missing) a shape can't trip the dancer
+	if pos.x < get_viewport_rect().size.x * TAP_ZONE_FRACTION:
+		return
 	_on_tap()
 
 
@@ -464,9 +468,13 @@ func _manage_crowd(beat: float) -> void:
 		s.phase = Spectator._hash01(_crowd_serial) * 0.6
 		var side := -1.0 if _crowd_serial % 2 == 0 else 1.0
 		var rank := spectators.size() / 2
-		s.slot_pos = Vector2(
-			center_x + side * (150.0 + 55.0 * rank + Spectator._hash01(_crowd_serial + 3) * 30.0),
-			ground_y + 10.0)
+		var slot_x := center_x + side * (150.0 + 55.0 * rank
+			+ Spectator._hash01(_crowd_serial + 3) * 30.0)
+		# the trace zone stays clear — left-side crowd bunches up at its edge
+		var zone_edge := get_viewport_rect().size.x * TAP_ZONE_FRACTION + 50.0
+		if slot_x < zone_edge:
+			slot_x = zone_edge + Spectator._hash01(_crowd_serial + 7) * 40.0
+		s.slot_pos = Vector2(slot_x, ground_y + 10.0)
 		s.position = Vector2(center_x + side * 1400.0, s.slot_pos.y)
 		add_child(s)
 		spectators.append(s)
@@ -513,7 +521,6 @@ func _process(_delta: float) -> void:
 		_consume_overdue(SongClock.time() - Settings.calibration_offset_ms / 1000.0)
 		_update_trace(beat)
 		_manage_crowd(beat)
-	trace_layer.queue_redraw()
 	for c in get_children():
 		if c is Spectator and (c as Spectator).offscreen():
 			c.queue_free()
@@ -542,6 +549,8 @@ func _draw() -> void:
 	_draw_backdrop(vs, beat)
 	_draw_shadows()
 	_draw_ticker(vs, beat)
+	_draw_zone_divider(vs)
+	_draw_traces()
 	_draw_popups(beat)
 
 
@@ -722,7 +731,25 @@ func _draw_popups(beat: float) -> void:
 			-1, int(pop["size"]), Color(col.r, col.g, col.b, alpha))
 
 
-func _draw_trace_layer() -> void:
+func _draw_zone_divider(vs: Vector2) -> void:
+	# faint dashed divider between the trace side and the tap side
+	var dx := vs.x * TAP_ZONE_FRACTION
+	var dy := 20.0
+	while dy < ground_y - 10.0:
+		draw_line(Vector2(dx, dy), Vector2(dx, dy + 14.0),
+			Color(0.6, 0.7, 0.9, 0.10), 2.0)
+		dy += 30.0
+	# when a trace is inbound or live, tint its territory so the left hand
+	# knows to get ready
+	if SongClock.running and trace_idx < traces.size():
+		var s_now := _trace_progress(traces[trace_idx])
+		if s_now > -0.6 and s_now < 1.0:
+			var a := clampf((s_now + 0.6) * 2.0, 0.0, 1.0) * 0.05
+			draw_rect(Rect2(-40.0, 0.0, dx + 40.0, ground_y),
+				Color(0.35, 1.0, 0.8, a))
+
+
+func _draw_traces() -> void:
 	if not SongClock.running or trace_idx >= traces.size():
 		return
 	var tr := traces[trace_idx]
@@ -736,15 +763,15 @@ func _draw_trace_layer() -> void:
 		and (_pointers[trace_pointer] as Vector2).distance_to(_trace_path(tr, s_clamped)) < TRACE_RADIUS
 
 	# path polyline with glow; the stretch behind the comet dims out
-	const SEGS := 40
+	var segs := 40
 	var prev := _trace_path(tr, 0.0)
-	for i in range(1, SEGS + 1):
-		var s := float(i) / SEGS
+	for i in range(1, segs + 1):
+		var s := float(i) / segs
 		var p := _trace_path(tr, s)
 		var passed: bool = s < s_clamped
 		var a := appear * (0.25 if passed else 0.85)
-		trace_layer.draw_line(prev, p, Color(neon, a * 0.18), 14.0)
-		trace_layer.draw_line(prev, p, Color(neon, a), 4.0)
+		draw_line(prev, p, Color(neon, a * 0.18), 14.0)
+		draw_line(prev, p, Color(neon, a), 4.0)
 		prev = p
 
 	# direction arrow at the entry point during lead-in
@@ -753,7 +780,7 @@ func _draw_trace_layer() -> void:
 		var dirv := (_trace_path(tr, 0.06) - a0).normalized()
 		var tip := a0 + dirv * 34.0
 		var side := Vector2(-dirv.y, dirv.x) * 13.0
-		trace_layer.draw_colored_polygon(
+		draw_colored_polygon(
 			PackedVector2Array([tip, a0 + side, a0 - side]), Color(neon, appear))
 
 	# the comet: ride it with your finger
@@ -763,14 +790,14 @@ func _draw_trace_layer() -> void:
 		ccol = Color(1.0, 0.55, 0.4)  # running away untraced!
 	for gi in 3:
 		var gs := clampf(s_clamped - 0.02 * (gi + 1), 0.0, 1.0)
-		trace_layer.draw_circle(_trace_path(tr, gs), 10.0 - gi * 2.5, Color(ccol, 0.25))
-	trace_layer.draw_circle(comet, 26.0, Color(ccol, 0.18 * appear))
-	trace_layer.draw_circle(comet, 15.0, Color(ccol, 0.85 * appear))
-	trace_layer.draw_circle(comet, 8.0, Color(1.0, 1.0, 0.95, appear))
+		draw_circle(_trace_path(tr, gs), 10.0 - gi * 2.5, Color(ccol, 0.25))
+	draw_circle(comet, 26.0, Color(ccol, 0.18 * appear))
+	draw_circle(comet, 15.0, Color(ccol, 0.85 * appear))
+	draw_circle(comet, 8.0, Color(1.0, 1.0, 0.95, appear))
 	# lead-in countdown ring converges on the comet
 	if s_now < 0.0:
 		var lead := -s_now / 0.5
-		trace_layer.draw_arc(comet, 15.0 + 70.0 * lead, 0.0, TAU, 40,
+		draw_arc(comet, 15.0 + 70.0 * lead, 0.0, TAU, 40,
 			Color(neon, appear * 0.7), 3.0)
 
 
