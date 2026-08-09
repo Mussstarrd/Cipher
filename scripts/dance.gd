@@ -40,19 +40,18 @@ var cue_times: Array[float] = []   # song-time seconds, sorted
 var cue_state: Array[int] = []     # 0 pending, 1 hit, 2 missed
 var _next_pending := 0
 
-## Trace (slide) challenges: a neon path on the left half; a comet runs
-## along it for duration_beats and the finger must stay on the comet.
-## Coverage is accumulated in path-progress space (a pure function of the
-## song clock), never frame delta.
-const TRACE_X := 200.0
-const TRACE_AMP := 78.0
-const TRACE_RADIUS := 85.0     # finger-to-comet tolerance while tracing
-const TRACE_GRAB := 110.0      # tolerance to grab the comet at the start
-const TRACE_PASS := 0.65       # coverage fraction that counts as traced
+## Trace (slide) challenges: a neon fuse on the left half. The shape pops
+## up, sizzles for one beat, then ignites and burns start-to-end over
+## duration_beats — keep a finger pressed on the flame as it travels. No
+## grab step: any finger near the flame counts. Coverage accumulates in
+## path-progress space (a pure function of the song clock), never frame
+## delta.
+const TRACE_RADIUS := 95.0     # finger-to-flame tolerance while burning
+const TRACE_PASS := 0.6        # coverage fraction that counts as traced
+const TRACE_LEAD_BEATS := 1.0  # shape pops up this long before ignition
 
-var traces: Array[Dictionary] = []  # {start_t, dur_s, shape, covered, last_s, announced}
+var traces: Array[Dictionary] = []  # {start_t, dur_s, shape, pts, cum, covered, last_s, announced}
 var trace_idx := 0
-var trace_pointer := -1
 var _pointers: Dictionary = {}      # pointer id -> last canvas position
 
 ## Screen is split: left of this fraction is the trace zone (slides only,
@@ -106,14 +105,16 @@ func _load_cues() -> void:
 	var times: Array[float] = []
 	for e in chart.events:
 		if str(e["type"]) == "trace":
-			traces.append({
+			var tr := {
 				"start_t": SongClock.grid_beat_to_time(float(e["beat"])),
 				"dur_s": float(e["duration_beats"]) * SongClock.beat_duration(),
 				"shape": int(e["lane"]),
 				"covered": 0.0,
 				"last_s": 0.0,
 				"announced": false,
-			})
+			}
+			_bake_trace_path(tr)
+			traces.append(tr)
 			continue
 		times.append(SongClock.grid_beat_to_time(float(e["beat"]))
 			+ float(e["nudge_ms"]) / 1000.0)
@@ -215,18 +216,8 @@ func _pointer_down(id: int, pos: Vector2) -> void:
 	if finished:
 		_on_tap()
 		return
-	# grab the trace comet if one is up (including its lead-in)
-	if trace_pointer == -1 and SongClock.running and trace_idx < traces.size():
-		var tr := traces[trace_idx]
-		var s_now := _trace_progress(tr)
-		if s_now > -0.5 and s_now < 1.0:
-			var comet := _trace_path(tr, clampf(s_now, 0.0, 1.0))
-			if pos.distance_to(comet) < TRACE_GRAB:
-				trace_pointer = id
-				Input.vibrate_handheld(10)
-				return
 	# left of the divider is trace territory: never judged as a tap, so a
-	# finger waiting for (or missing) a shape can't trip the dancer
+	# finger riding (or waiting for) a fuse can't trip the dancer
 	if pos.x < get_viewport_rect().size.x * TAP_ZONE_FRACTION:
 		return
 	_on_tap()
@@ -238,8 +229,6 @@ func _pointer_move(id: int, pos: Vector2) -> void:
 
 func _pointer_up(id: int) -> void:
 	_pointers.erase(id)
-	if id == trace_pointer:
-		trace_pointer = -1  # can re-grab mid-trace
 
 
 func _on_tap() -> void:
@@ -385,22 +374,64 @@ func _update_tier(beat: float) -> void:
 	Stems.set_escalation_level(level)
 
 
-## Path progress for the current visual timeline; <0 during lead-in.
+## Path progress for the current visual timeline; <0 during the sizzle
+## lead-in, 0 at ignition, 1 when the fuse is fully burned.
 func _trace_progress(tr: Dictionary) -> float:
 	var now := SongClock.time() - Settings.calibration_offset_ms / 1000.0 \
 		- Settings.av_offset_ms / 1000.0
 	return (now - float(tr["start_t"])) / float(tr["dur_s"])
 
 
-## Shape 0: straight top->bottom. 1: straight bottom->top. 2: S-curve down.
+## Fuse shapes, as waypoint polylines in the trace zone.
+## 0 vert down, 1 vert up, 2 horiz L->R, 3 horiz R->L, 4 zigzag,
+## 5 Z-shape, 6 S-curve.
+func _bake_trace_path(tr: Dictionary) -> void:
+	var xl := 90.0
+	var xr := 430.0
+	var cx := (xl + xr) / 2.0
+	var yt := ground_y * 0.30
+	var yb := ground_y - 70.0
+	var ym := (yt + yb) / 2.0
+	var pts := PackedVector2Array()
+	match int(tr["shape"]):
+		0:
+			pts = PackedVector2Array([Vector2(cx, yt), Vector2(cx, yb)])
+		1:
+			pts = PackedVector2Array([Vector2(cx, yb), Vector2(cx, yt)])
+		2:
+			pts = PackedVector2Array([Vector2(xl, ym), Vector2(xr, ym)])
+		3:
+			pts = PackedVector2Array([Vector2(xr, ym), Vector2(xl, ym)])
+		4:  # zigzag down
+			pts = PackedVector2Array([
+				Vector2(xl + 40.0, yt), Vector2(xr - 40.0, yt + (yb - yt) * 0.33),
+				Vector2(xl + 40.0, yt + (yb - yt) * 0.66), Vector2(xr - 40.0, yb)])
+		5:  # a proper Z
+			pts = PackedVector2Array([
+				Vector2(xl + 30.0, yt), Vector2(xr - 30.0, yt),
+				Vector2(xl + 30.0, yb), Vector2(xr - 30.0, yb)])
+		_:  # S-curve, sampled into a polyline
+			for i in 25:
+				var s := float(i) / 24.0
+				pts.append(Vector2(cx + 85.0 * sin(s * TAU * 0.75),
+					lerpf(yt, yb, s)))
+	var cum := PackedFloat32Array([0.0])
+	for i in range(1, pts.size()):
+		cum.append(cum[i - 1] + pts[i - 1].distance_to(pts[i]))
+	tr["pts"] = pts
+	tr["cum"] = cum
+
+
 func _trace_path(tr: Dictionary, s: float) -> Vector2:
-	var y_top := ground_y * 0.32
-	var y_bot := ground_y - 60.0
-	var y := lerpf(y_top, y_bot, s) if int(tr["shape"]) != 1 else lerpf(y_bot, y_top, s)
-	var x := TRACE_X
-	if int(tr["shape"]) == 2:
-		x += TRACE_AMP * sin(s * TAU * 0.75)
-	return Vector2(x, y)
+	var pts: PackedVector2Array = tr["pts"]
+	var cum: PackedFloat32Array = tr["cum"]
+	var target := clampf(s, 0.0, 1.0) * cum[cum.size() - 1]
+	for i in range(1, pts.size()):
+		if cum[i] >= target:
+			var seg := cum[i] - cum[i - 1]
+			var f := 0.0 if seg <= 0.0 else (target - cum[i - 1]) / seg
+			return pts[i - 1].lerp(pts[i], f)
+	return pts[pts.size() - 1]
 
 
 func _update_trace(beat: float) -> void:
@@ -411,26 +442,31 @@ func _update_trace(beat: float) -> void:
 	if s_now >= 1.0:
 		_finish_trace(tr)
 		trace_idx += 1
-		trace_pointer = -1
 		return
-	if s_now >= -0.5 and not bool(tr["announced"]):
+	var lead := TRACE_LEAD_BEATS * SongClock.beat_duration() / float(tr["dur_s"])
+	if s_now >= -lead and not bool(tr["announced"]):
 		tr["announced"] = true
-		_popup("TRACE THE LINE! ->" if int(tr["shape"]) != 1 else "TRACE THE LINE! (up)",
-			Color(0.4, 1.0, 0.85), 30)
+		_popup("FOLLOW THE FUSE!", Color(0.4, 1.0, 0.85), 30)
+		Input.vibrate_handheld(20)
 	if s_now < 0.0:
 		return
-	# coverage accumulates in progress-space: only while the finger rides
-	# the comet does the covered fraction advance
+	# coverage advances only while some finger rides the flame
 	var s_clamped := clampf(s_now, 0.0, 1.0)
-	if trace_pointer != -1 and _pointers.has(trace_pointer):
-		var comet := _trace_path(tr, s_clamped)
-		if (_pointers[trace_pointer] as Vector2).distance_to(comet) < TRACE_RADIUS:
-			tr["covered"] = float(tr["covered"]) + maxf(0.0, s_clamped - float(tr["last_s"]))
-			# gentle half-beat tick while riding the comet
-			if beat - float(tr.get("hap_beat", -99.0)) >= 0.5:
-				tr["hap_beat"] = beat
-				Input.vibrate_handheld(8)
+	if _finger_on_flame(tr, s_clamped):
+		tr["covered"] = float(tr["covered"]) + maxf(0.0, s_clamped - float(tr["last_s"]))
+		# gentle half-beat tick while riding
+		if beat - float(tr.get("hap_beat", -99.0)) >= 0.5:
+			tr["hap_beat"] = beat
+			Input.vibrate_handheld(8)
 	tr["last_s"] = s_clamped
+
+
+func _finger_on_flame(tr: Dictionary, s: float) -> bool:
+	var flame := _trace_path(tr, s)
+	for pos in _pointers.values():
+		if (pos as Vector2).distance_to(flame) < TRACE_RADIUS:
+			return true
+	return false
 
 
 func _finish_trace(tr: Dictionary) -> void:
@@ -739,12 +775,14 @@ func _draw_zone_divider(vs: Vector2) -> void:
 		draw_line(Vector2(dx, dy), Vector2(dx, dy + 14.0),
 			Color(0.6, 0.7, 0.9, 0.10), 2.0)
 		dy += 30.0
-	# when a trace is inbound or live, tint its territory so the left hand
-	# knows to get ready
+	# when a fuse is inbound or burning, tint its territory so the left
+	# hand knows to get ready
 	if SongClock.running and trace_idx < traces.size():
-		var s_now := _trace_progress(traces[trace_idx])
-		if s_now > -0.6 and s_now < 1.0:
-			var a := clampf((s_now + 0.6) * 2.0, 0.0, 1.0) * 0.05
+		var tr := traces[trace_idx]
+		var lead := TRACE_LEAD_BEATS * SongClock.beat_duration() / float(tr["dur_s"])
+		var s_now := _trace_progress(tr)
+		if s_now > -lead and s_now < 1.0:
+			var a := clampf((s_now + lead) / lead, 0.0, 1.0) * 0.05
 			draw_rect(Rect2(-40.0, 0.0, dx + 40.0, ground_y),
 				Color(0.35, 1.0, 0.8, a))
 
@@ -754,51 +792,59 @@ func _draw_traces() -> void:
 		return
 	var tr := traces[trace_idx]
 	var s_now := _trace_progress(tr)
-	if s_now < -0.5 or s_now >= 1.0:
+	var lead := TRACE_LEAD_BEATS * SongClock.beat_duration() / float(tr["dur_s"])
+	if s_now < -lead or s_now >= 1.0:
 		return
-	var appear := clampf((s_now + 0.5) * 3.0, 0.0, 1.0)
+	var beat := SongClock.current_beat()
+	# the shape pops in fast, then the fuse ignites at s = 0
+	var appear := clampf((s_now + lead) / lead * 2.0, 0.0, 1.0)
 	var s_clamped := clampf(s_now, 0.0, 1.0)
 	var neon := Color(0.35, 1.0, 0.8)
-	var tracing: bool = trace_pointer != -1 and _pointers.has(trace_pointer) \
-		and (_pointers[trace_pointer] as Vector2).distance_to(_trace_path(tr, s_clamped)) < TRACE_RADIUS
+	var ember := Color(1.0, 0.45, 0.15)
+	var riding := _finger_on_flame(tr, s_clamped)
 
-	# path polyline with glow; the stretch behind the comet dims out
-	var segs := 40
+	# unburned fuse ahead: neon; burned behind: dark ember trail
+	var segs := 48
 	var prev := _trace_path(tr, 0.0)
 	for i in range(1, segs + 1):
 		var s := float(i) / segs
 		var p := _trace_path(tr, s)
-		var passed: bool = s < s_clamped
-		var a := appear * (0.25 if passed else 0.85)
-		draw_line(prev, p, Color(neon, a * 0.18), 14.0)
-		draw_line(prev, p, Color(neon, a), 4.0)
+		if s < s_clamped:  # already burned away
+			draw_line(prev, p, Color(0.25, 0.12, 0.08, appear * 0.7), 5.0)
+			if Spectator._hash01(i * 31) > 0.6:  # glowing embers
+				var die := Spectator._hash01(i * 7 + int(beat * 2.0)) * 0.5
+				draw_circle(p, 2.5, Color(ember, appear * (0.3 + die)))
+		else:
+			draw_line(prev, p, Color(neon, appear * 0.20), 15.0)
+			draw_line(prev, p, Color(neon, appear * 0.9), 5.0)
 		prev = p
 
-	# direction arrow at the entry point during lead-in
-	if s_now < 0.15:
-		var a0 := _trace_path(tr, 0.0)
-		var dirv := (_trace_path(tr, 0.06) - a0).normalized()
-		var tip := a0 + dirv * 34.0
-		var side := Vector2(-dirv.y, dirv.x) * 13.0
-		draw_colored_polygon(
-			PackedVector2Array([tip, a0 + side, a0 - side]), Color(neon, appear))
-
-	# the comet: ride it with your finger
-	var comet := _trace_path(tr, s_clamped)
-	var ccol := Color(0.5, 1.0, 0.6) if tracing else Color(1.0, 1.0, 1.0)
-	if s_now >= 0.0 and trace_pointer == -1:
-		ccol = Color(1.0, 0.55, 0.4)  # running away untraced!
-	for gi in 3:
-		var gs := clampf(s_clamped - 0.02 * (gi + 1), 0.0, 1.0)
-		draw_circle(_trace_path(tr, gs), 10.0 - gi * 2.5, Color(ccol, 0.25))
-	draw_circle(comet, 26.0, Color(ccol, 0.18 * appear))
-	draw_circle(comet, 15.0, Color(ccol, 0.85 * appear))
-	draw_circle(comet, 8.0, Color(1.0, 1.0, 0.95, appear))
-	# lead-in countdown ring converges on the comet
+	var flame := _trace_path(tr, s_clamped)
 	if s_now < 0.0:
-		var lead := -s_now / 0.5
-		draw_arc(comet, 15.0 + 70.0 * lead, 0.0, TAU, 40,
-			Color(neon, appear * 0.7), 3.0)
+		# sizzling at the start point, about to ignite
+		var sputter := 0.7 + 0.3 * sin(beat * 40.0)
+		draw_circle(flame, 26.0 * sputter, Color(ember, appear * 0.25))
+		draw_circle(flame, 12.0 * sputter, Color(1.0, 0.8, 0.3, appear * 0.9))
+		draw_circle(flame, 5.0, Color(1.0, 1.0, 0.85, appear))
+		return
+
+	# the burning flame head: flickers, sparks, and judges you
+	var flick := 0.8 + 0.35 * Spectator._hash01(int(beat * 16.0))
+	var fcol := Color(1.0, 0.75, 0.25) if riding else Color(1.0, 0.45, 0.3)
+	draw_circle(flame, 34.0 * flick, Color(fcol, 0.16))
+	draw_circle(flame, 19.0 * flick, Color(fcol, 0.55))
+	draw_circle(flame, 10.0, Color(1.0, 0.95, 0.75))
+	draw_circle(flame, 4.5, Color(1.0, 1.0, 1.0))
+	# sparks spraying off the flame
+	for si in 5:
+		var sh := Spectator._hash01(si * 13 + int(beat * 12.0))
+		var ang := sh * TAU
+		var dist := 16.0 + 34.0 * Spectator._hash01(si * 29 + int(beat * 12.0))
+		draw_circle(flame + Vector2(cos(ang), sin(ang)) * dist,
+			2.0, Color(1.0, 0.85, 0.4, 0.7 * (1.0 - dist / 50.0)))
+	# finger-off warning ring
+	if not riding:
+		draw_arc(flame, TRACE_RADIUS, 0.0, TAU, 48, Color(1.0, 0.4, 0.3, 0.25), 2.0)
 
 
 func _on_track_finished() -> void:
