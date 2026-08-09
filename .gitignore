@@ -10,3 +10,5 @@ android/
 build/
 *.apk
 *.aab
+# ...except shipped builds
+!releases/*.apk

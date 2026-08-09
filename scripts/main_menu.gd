@@ -3,6 +3,7 @@ extends Control
 ## resolution) selector. Prompts for calibration on first launch.
 
 var _difficulty_btn: Button
+var _song_btn: Button
 
 
 func _ready() -> void:
@@ -36,6 +37,11 @@ func _ready() -> void:
 	box.add_child(_spacer(20.0))
 	box.add_child(_menu_button("PLAY",
 		func() -> void: _go("res://scenes/dance.tscn")))
+
+	_song_btn = _menu_button("", _cycle_song)
+	_refresh_song_label()
+	box.add_child(_song_btn)
+
 	box.add_child(_menu_button("CALIBRATE",
 		func() -> void: _go("res://scenes/calibration.tscn")))
 
@@ -60,6 +66,15 @@ func _spacer(h: float) -> Control:
 	var c := Control.new()
 	c.custom_minimum_size = Vector2(0.0, h)
 	return c
+
+
+func _cycle_song() -> void:
+	Settings.cycle_song()
+	_refresh_song_label()
+
+
+func _refresh_song_label() -> void:
+	_song_btn.text = "SONG: %s" % Settings.song_entry()["title"]
 
 
 func _cycle_difficulty() -> void:

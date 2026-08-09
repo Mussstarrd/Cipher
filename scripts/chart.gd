@@ -14,6 +14,7 @@ var bpm := 90.0
 var offset_ms := 0
 var swing_percent := 50.0
 var audio_file := ""
+var backdrop := "alley"
 var stems: Dictionary = {}
 var events: Array[Dictionary] = []
 
@@ -39,6 +40,7 @@ static func from_dict(d: Dictionary) -> Chart:
 	c.offset_ms = int(d.get("offset_ms", 0))
 	c.swing_percent = float(d.get("swing_percent", 50.0))
 	c.audio_file = str(d.get("audio_file", ""))
+	c.backdrop = str(d.get("backdrop", "alley"))
 	c.stems = d.get("stems", {})
 	for raw in d.get("events", []):
 		if typeof(raw) != TYPE_DICTIONARY:
@@ -60,6 +62,7 @@ func to_dict() -> Dictionary:
 		"offset_ms": offset_ms,
 		"swing_percent": swing_percent,
 		"audio_file": audio_file,
+		"backdrop": backdrop,
 		"stems": stems,
 		"events": events,
 	}

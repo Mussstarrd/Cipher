@@ -1,0 +1,513 @@
+{
+  "bpm": 71.04,
+  "offset_ms": 20,
+  "swing_percent": 50.0,
+  "backdrop": "mall",
+  "audio_file": "res://tracks/aintshit/instrumental.wav",
+  "stems": {
+    "instrumental": "res://tracks/aintshit/instrumental.wav",
+    "player_drums": "res://tracks/aintshit/player_drums.wav",
+    "escalation": [
+      "res://tracks/aintshit/escalation.wav"
+    ]
+  },
+  "events": [
+    {
+      "beat": 8.0,
+      "type": "trace",
+      "duration_beats": 4.0,
+      "lane": 0
+    },
+    {
+      "beat": 17.0,
+      "type": "tap",
+      "nudge_ms": -17
+    },
+    {
+      "beat": 19.0,
+      "type": "tap",
+      "nudge_ms": -22
+    },
+    {
+      "beat": 20.0,
+      "type": "tap",
+      "nudge_ms": -8
+    },
+    {
+      "beat": 21.0,
+      "type": "tap",
+      "nudge_ms": -16
+    },
+    {
+      "beat": 21.5,
+      "type": "tap",
+      "nudge_ms": -9
+    },
+    {
+      "beat": 23.0,
+      "type": "tap",
+      "nudge_ms": -11
+    },
+    {
+      "beat": 25.0,
+      "type": "tap",
+      "nudge_ms": -16
+    },
+    {
+      "beat": 27.0,
+      "type": "tap",
+      "nudge_ms": -10
+    },
+    {
+      "beat": 27.5,
+      "type": "tap",
+      "nudge_ms": -3
+    },
+    {
+      "beat": 29.0,
+      "type": "tap",
+      "nudge_ms": -16
+    },
+    {
+      "beat": 30.0,
+      "type": "tap",
+      "nudge_ms": -2
+    },
+    {
+      "beat": 31.0,
+      "type": "tap",
+      "nudge_ms": -10
+    },
+    {
+      "beat": 33.0,
+      "type": "tap",
+      "nudge_ms": -4
+    },
+    {
+      "beat": 35.0,
+      "type": "tap",
+      "nudge_ms": -10
+    },
+    {
+      "beat": 35.5,
+      "type": "tap",
+      "nudge_ms": -3
+    },
+    {
+      "beat": 36.0,
+      "type": "tap",
+      "nudge_ms": 4
+    },
+    {
+      "beat": 36.5,
+      "type": "tap"
+    },
+    {
+      "beat": 37.0,
+      "type": "tap",
+      "nudge_ms": -4
+    },
+    {
+      "beat": 37.5,
+      "type": "tap",
+      "nudge_ms": 3
+    },
+    {
+      "beat": 38.0,
+      "type": "tap",
+      "nudge_ms": -1
+    },
+    {
+      "beat": 39.0,
+      "type": "tap",
+      "nudge_ms": -10
+    },
+    {
+      "beat": 39.5,
+      "type": "tap",
+      "nudge_ms": -3
+    },
+    {
+      "beat": 41.0,
+      "type": "tap",
+      "nudge_ms": -4
+    },
+    {
+      "beat": 43.0,
+      "type": "tap",
+      "nudge_ms": 2
+    },
+    {
+      "beat": 44.0,
+      "type": "tap",
+      "nudge_ms": 5
+    },
+    {
+      "beat": 45.0,
+      "type": "tap",
+      "nudge_ms": -4
+    },
+    {
+      "beat": 45.5,
+      "type": "tap",
+      "nudge_ms": 3
+    },
+    {
+      "beat": 47.0,
+      "type": "tap",
+      "nudge_ms": 2
+    },
+    {
+      "beat": 47.5,
+      "type": "tap",
+      "nudge_ms": -3
+    },
+    {
+      "beat": 48.0,
+      "type": "tap",
+      "nudge_ms": -7
+    },
+    {
+      "beat": 50.0,
+      "type": "trace",
+      "duration_beats": 4.0,
+      "lane": 2
+    },
+    {
+      "beat": 63.0,
+      "type": "tap",
+      "nudge_ms": 2
+    },
+    {
+      "beat": 65.0,
+      "type": "tap",
+      "nudge_ms": -3
+    },
+    {
+      "beat": 66.0,
+      "type": "tap",
+      "nudge_ms": 11
+    },
+    {
+      "beat": 67.0,
+      "type": "tap",
+      "nudge_ms": 2
+    },
+    {
+      "beat": 67.5,
+      "type": "tap",
+      "nudge_ms": 10
+    },
+    {
+      "beat": 68.5,
+      "type": "tap",
+      "nudge_ms": 13
+    },
+    {
+      "beat": 69.0,
+      "type": "tap",
+      "nudge_ms": 8
+    },
+    {
+      "beat": 70.0,
+      "type": "tap",
+      "nudge_ms": 11
+    },
+    {
+      "beat": 71.0,
+      "type": "tap",
+      "nudge_ms": 3
+    },
+    {
+      "beat": 71.5,
+      "type": "tap",
+      "nudge_ms": 10
+    },
+    {
+      "beat": 75.0,
+      "type": "tap",
+      "nudge_ms": 3
+    },
+    {
+      "beat": 76.5,
+      "type": "tap",
+      "nudge_ms": 13
+    },
+    {
+      "beat": 77.0,
+      "type": "tap",
+      "nudge_ms": 9
+    },
+    {
+      "beat": 79.0,
+      "type": "tap",
+      "nudge_ms": 3
+    },
+    {
+      "beat": 79.5,
+      "type": "tap",
+      "nudge_ms": 10
+    },
+    {
+      "beat": 81.0,
+      "type": "trace",
+      "duration_beats": 4.0,
+      "lane": 4
+    },
+    {
+      "beat": 87.0,
+      "type": "tap",
+      "nudge_ms": 15
+    },
+    {
+      "beat": 89.0,
+      "type": "tap",
+      "nudge_ms": 9
+    },
+    {
+      "beat": 90.5,
+      "type": "tap",
+      "nudge_ms": 19
+    },
+    {
+      "beat": 91.0,
+      "type": "tap",
+      "nudge_ms": 15
+    },
+    {
+      "beat": 92.0,
+      "type": "tap",
+      "nudge_ms": 18
+    },
+    {
+      "beat": 93.0,
+      "type": "tap",
+      "nudge_ms": 9
+    },
+    {
+      "beat": 97.0,
+      "type": "tap",
+      "nudge_ms": 9
+    },
+    {
+      "beat": 99.0,
+      "type": "tap",
+      "nudge_ms": 15
+    },
+    {
+      "beat": 99.5,
+      "type": "tap",
+      "nudge_ms": 22
+    },
+    {
+      "beat": 101.0,
+      "type": "tap",
+      "nudge_ms": 9
+    },
+    {
+      "beat": 103.0,
+      "type": "tap",
+      "nudge_ms": 15
+    },
+    {
+      "beat": 103.5,
+      "type": "tap",
+      "nudge_ms": 22
+    },
+    {
+      "beat": 105.0,
+      "type": "tap",
+      "nudge_ms": 9
+    },
+    {
+      "beat": 107.0,
+      "type": "tap",
+      "nudge_ms": 15
+    },
+    {
+      "beat": 108.5,
+      "type": "tap",
+      "nudge_ms": 25
+    },
+    {
+      "beat": 109.0,
+      "type": "tap",
+      "nudge_ms": 21
+    },
+    {
+      "beat": 111.0,
+      "type": "tap",
+      "nudge_ms": 15
+    },
+    {
+      "beat": 112.0,
+      "type": "tap",
+      "nudge_ms": 30
+    },
+    {
+      "beat": 114.0,
+      "type": "trace",
+      "duration_beats": 4.0,
+      "lane": 5
+    },
+    {
+      "beat": 129.0,
+      "type": "tap",
+      "nudge_ms": 10
+    },
+    {
+      "beat": 130.5,
+      "type": "tap",
+      "nudge_ms": 20
+    },
+    {
+      "beat": 131.0,
+      "type": "tap",
+      "nudge_ms": 16
+    },
+    {
+      "beat": 133.0,
+      "type": "tap",
+      "nudge_ms": 10
+    },
+    {
+      "beat": 135.0,
+      "type": "tap",
+      "nudge_ms": 5
+    },
+    {
+      "beat": 135.5,
+      "type": "tap",
+      "nudge_ms": 12
+    },
+    {
+      "beat": 136.5,
+      "type": "tap",
+      "nudge_ms": 15
+    },
+    {
+      "beat": 137.0,
+      "type": "tap",
+      "nudge_ms": 10
+    },
+    {
+      "beat": 139.0,
+      "type": "tap",
+      "nudge_ms": 5
+    },
+    {
+      "beat": 139.5,
+      "type": "tap",
+      "nudge_ms": 12
+    },
+    {
+      "beat": 140.5,
+      "type": "tap",
+      "nudge_ms": 15
+    },
+    {
+      "beat": 141.0,
+      "type": "tap",
+      "nudge_ms": 11
+    },
+    {
+      "beat": 142.0,
+      "type": "trace",
+      "duration_beats": 4.0,
+      "lane": 6
+    },
+    {
+      "beat": 151.0,
+      "type": "tap",
+      "nudge_ms": 5
+    },
+    {
+      "beat": 153.0,
+      "type": "tap",
+      "nudge_ms": -1
+    },
+    {
+      "beat": 155.0,
+      "type": "tap",
+      "nudge_ms": -6
+    },
+    {
+      "beat": 157.0,
+      "type": "tap",
+      "nudge_ms": -1
+    },
+    {
+      "beat": 159.0,
+      "type": "tap",
+      "nudge_ms": -6
+    },
+    {
+      "beat": 161.0,
+      "type": "tap"
+    },
+    {
+      "beat": 162.5,
+      "type": "tap",
+      "nudge_ms": -2
+    },
+    {
+      "beat": 163.0,
+      "type": "tap",
+      "nudge_ms": -6
+    },
+    {
+      "beat": 163.5,
+      "type": "tap",
+      "nudge_ms": 1
+    },
+    {
+      "beat": 164.0,
+      "type": "tap",
+      "nudge_ms": -3
+    },
+    {
+      "beat": 165.0,
+      "type": "tap"
+    },
+    {
+      "beat": 167.0,
+      "type": "tap",
+      "nudge_ms": -6
+    },
+    {
+      "beat": 167.5,
+      "type": "tap",
+      "nudge_ms": 1
+    },
+    {
+      "beat": 169.0,
+      "type": "tap"
+    },
+    {
+      "beat": 170.5,
+      "type": "tap",
+      "nudge_ms": -2
+    },
+    {
+      "beat": 171.0,
+      "type": "tap",
+      "nudge_ms": -6
+    },
+    {
+      "beat": 171.5,
+      "type": "tap",
+      "nudge_ms": 1
+    },
+    {
+      "beat": 176.0,
+      "type": "tap",
+      "nudge_ms": 44
+    },
+    {
+      "beat": 178.0,
+      "type": "trace",
+      "duration_beats": 4.0,
+      "lane": 1
+    }
+  ]
+}

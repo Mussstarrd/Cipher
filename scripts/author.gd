@@ -7,7 +7,7 @@ extends Control
 ## shipped res:// chart.
 
 const CHART_SAVE_PATH := "user://charts/demo.chart.json"
-const RES_CHART_PATH := "res://charts/demo.chart.json"
+const RES_CHART_PATH := "res://charts/dragon.chart.json"
 const PLAYHEAD_X := 420.0
 const PX_PER_BEAT := 170.0
 const BAND_TOP := 170.0

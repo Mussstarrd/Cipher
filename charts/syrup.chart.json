@@ -1,0 +1,710 @@
+{
+  "bpm": 89.04,
+  "offset_ms": 220,
+  "swing_percent": 50.0,
+  "backdrop": "chinatown",
+  "audio_file": "res://tracks/syrup/instrumental.wav",
+  "stems": {
+    "instrumental": "res://tracks/syrup/instrumental.wav",
+    "player_drums": "res://tracks/syrup/player_drums.wav",
+    "escalation": [
+      "res://tracks/syrup/escalation.wav"
+    ]
+  },
+  "events": [
+    {
+      "beat": 4.5,
+      "type": "tap",
+      "nudge_ms": 22
+    },
+    {
+      "beat": 12.5,
+      "type": "tap",
+      "nudge_ms": 45
+    },
+    {
+      "beat": 14.0,
+      "type": "trace",
+      "duration_beats": 4.0,
+      "lane": 0
+    },
+    {
+      "beat": 21.5,
+      "type": "tap",
+      "nudge_ms": -10
+    },
+    {
+      "beat": 23.0,
+      "type": "trace",
+      "duration_beats": 4.0,
+      "lane": 2
+    },
+    {
+      "beat": 29.5,
+      "type": "tap",
+      "nudge_ms": -45
+    },
+    {
+      "beat": 31.0,
+      "type": "trace",
+      "duration_beats": 4.0,
+      "lane": 4
+    },
+    {
+      "beat": 37.5,
+      "type": "tap",
+      "nudge_ms": -45
+    },
+    {
+      "beat": 39.0,
+      "type": "tap",
+      "nudge_ms": -45
+    },
+    {
+      "beat": 41.0,
+      "type": "tap",
+      "nudge_ms": -42
+    },
+    {
+      "beat": 45.0,
+      "type": "tap",
+      "nudge_ms": -32
+    },
+    {
+      "beat": 46.0,
+      "type": "tap",
+      "nudge_ms": -45
+    },
+    {
+      "beat": 49.0,
+      "type": "tap",
+      "nudge_ms": -23
+    },
+    {
+      "beat": 50.0,
+      "type": "tap",
+      "nudge_ms": -35
+    },
+    {
+      "beat": 52.0,
+      "type": "tap",
+      "nudge_ms": -13
+    },
+    {
+      "beat": 52.5,
+      "type": "tap",
+      "nudge_ms": -13
+    },
+    {
+      "beat": 54.0,
+      "type": "tap",
+      "nudge_ms": -25
+    },
+    {
+      "beat": 57.0,
+      "type": "tap",
+      "nudge_ms": -3
+    },
+    {
+      "beat": 58.0,
+      "type": "tap",
+      "nudge_ms": -27
+    },
+    {
+      "beat": 60.0,
+      "type": "tap",
+      "nudge_ms": -5
+    },
+    {
+      "beat": 62.0,
+      "type": "tap",
+      "nudge_ms": -17
+    },
+    {
+      "beat": 62.5,
+      "type": "tap",
+      "nudge_ms": -6
+    },
+    {
+      "beat": 65.0,
+      "type": "tap",
+      "nudge_ms": 4
+    },
+    {
+      "beat": 66.0,
+      "type": "tap",
+      "nudge_ms": -19
+    },
+    {
+      "beat": 68.0,
+      "type": "tap",
+      "nudge_ms": 15
+    },
+    {
+      "beat": 70.0,
+      "type": "tap",
+      "nudge_ms": -9
+    },
+    {
+      "beat": 71.0,
+      "type": "tap",
+      "nudge_ms": 13
+    },
+    {
+      "beat": 73.0,
+      "type": "tap",
+      "nudge_ms": 12
+    },
+    {
+      "beat": 74.0,
+      "type": "tap",
+      "nudge_ms": -11
+    },
+    {
+      "beat": 76.5,
+      "type": "tap",
+      "nudge_ms": 22
+    },
+    {
+      "beat": 77.0,
+      "type": "tap",
+      "nudge_ms": 22
+    },
+    {
+      "beat": 77.5,
+      "type": "tap",
+      "nudge_ms": 22
+    },
+    {
+      "beat": 78.0,
+      "type": "tap",
+      "nudge_ms": -2
+    },
+    {
+      "beat": 81.0,
+      "type": "tap",
+      "nudge_ms": 20
+    },
+    {
+      "beat": 82.0,
+      "type": "tap",
+      "nudge_ms": -4
+    },
+    {
+      "beat": 85.0,
+      "type": "tap",
+      "nudge_ms": 30
+    },
+    {
+      "beat": 86.0,
+      "type": "tap",
+      "nudge_ms": 6
+    },
+    {
+      "beat": 87.0,
+      "type": "tap",
+      "nudge_ms": 29
+    },
+    {
+      "beat": 90.0,
+      "type": "tap",
+      "nudge_ms": 16
+    },
+    {
+      "beat": 91.5,
+      "type": "tap",
+      "nudge_ms": 38
+    },
+    {
+      "beat": 92.0,
+      "type": "tap",
+      "nudge_ms": 15
+    },
+    {
+      "beat": 94.0,
+      "type": "tap",
+      "nudge_ms": 14
+    },
+    {
+      "beat": 95.5,
+      "type": "tap",
+      "nudge_ms": 25
+    },
+    {
+      "beat": 97.0,
+      "type": "tap",
+      "nudge_ms": 36
+    },
+    {
+      "beat": 98.0,
+      "type": "tap",
+      "nudge_ms": 12
+    },
+    {
+      "beat": 100.0,
+      "type": "tap",
+      "nudge_ms": 34
+    },
+    {
+      "beat": 102.0,
+      "type": "tap",
+      "nudge_ms": 10
+    },
+    {
+      "beat": 106.0,
+      "type": "tap",
+      "nudge_ms": 20
+    },
+    {
+      "beat": 108.0,
+      "type": "tap",
+      "nudge_ms": 42
+    },
+    {
+      "beat": 109.0,
+      "type": "tap",
+      "nudge_ms": 42
+    },
+    {
+      "beat": 109.5,
+      "type": "tap",
+      "nudge_ms": 41
+    },
+    {
+      "beat": 110.0,
+      "type": "tap",
+      "nudge_ms": 6
+    },
+    {
+      "beat": 113.0,
+      "type": "tap",
+      "nudge_ms": 40
+    },
+    {
+      "beat": 114.0,
+      "type": "tap",
+      "nudge_ms": 16
+    },
+    {
+      "beat": 118.0,
+      "type": "tap",
+      "nudge_ms": 14
+    },
+    {
+      "beat": 119.0,
+      "type": "tap",
+      "nudge_ms": 37
+    },
+    {
+      "beat": 121.0,
+      "type": "tap",
+      "nudge_ms": 36
+    },
+    {
+      "beat": 122.0,
+      "type": "tap",
+      "nudge_ms": 12
+    },
+    {
+      "beat": 127.0,
+      "type": "tap",
+      "nudge_ms": 21
+    },
+    {
+      "beat": 129.0,
+      "type": "tap",
+      "nudge_ms": 32
+    },
+    {
+      "beat": 130.0,
+      "type": "tap",
+      "nudge_ms": 8
+    },
+    {
+      "beat": 134.0,
+      "type": "tap",
+      "nudge_ms": 6
+    },
+    {
+      "beat": 138.0,
+      "type": "tap",
+      "nudge_ms": 16
+    },
+    {
+      "beat": 140.0,
+      "type": "tap",
+      "nudge_ms": 27
+    },
+    {
+      "beat": 142.0,
+      "type": "tap",
+      "nudge_ms": 3
+    },
+    {
+      "beat": 143.0,
+      "type": "tap",
+      "nudge_ms": 25
+    },
+    {
+      "beat": 143.5,
+      "type": "tap",
+      "nudge_ms": 25
+    },
+    {
+      "beat": 145.0,
+      "type": "tap",
+      "nudge_ms": 36
+    },
+    {
+      "beat": 146.0,
+      "type": "tap",
+      "nudge_ms": 12
+    },
+    {
+      "beat": 150.0,
+      "type": "tap",
+      "nudge_ms": 10
+    },
+    {
+      "beat": 154.0,
+      "type": "tap",
+      "nudge_ms": 9
+    },
+    {
+      "beat": 156.5,
+      "type": "tap",
+      "nudge_ms": 7
+    },
+    {
+      "beat": 158.0,
+      "type": "tap",
+      "nudge_ms": 7
+    },
+    {
+      "beat": 159.0,
+      "type": "tap",
+      "nudge_ms": 6
+    },
+    {
+      "beat": 159.5,
+      "type": "tap",
+      "nudge_ms": 18
+    },
+    {
+      "beat": 162.0,
+      "type": "tap",
+      "nudge_ms": 5
+    },
+    {
+      "beat": 164.5,
+      "type": "tap",
+      "nudge_ms": 4
+    },
+    {
+      "beat": 166.0,
+      "type": "tap",
+      "nudge_ms": -9
+    },
+    {
+      "beat": 166.5,
+      "type": "tap",
+      "nudge_ms": 14
+    },
+    {
+      "beat": 167.0,
+      "type": "tap",
+      "nudge_ms": 14
+    },
+    {
+      "beat": 170.0,
+      "type": "tap",
+      "nudge_ms": -11
+    },
+    {
+      "beat": 172.0,
+      "type": "tap"
+    },
+    {
+      "beat": 172.5,
+      "type": "tap",
+      "nudge_ms": -12
+    },
+    {
+      "beat": 173.5,
+      "type": "tap",
+      "nudge_ms": -1
+    },
+    {
+      "beat": 174.0,
+      "type": "tap",
+      "nudge_ms": -24
+    },
+    {
+      "beat": 178.0,
+      "type": "tap",
+      "nudge_ms": -38
+    },
+    {
+      "beat": 180.5,
+      "type": "tap",
+      "nudge_ms": -27
+    },
+    {
+      "beat": 182.0,
+      "type": "tap",
+      "nudge_ms": -40
+    },
+    {
+      "beat": 183.0,
+      "type": "tap",
+      "nudge_ms": -28
+    },
+    {
+      "beat": 184.5,
+      "type": "tap",
+      "nudge_ms": -29
+    },
+    {
+      "beat": 186.0,
+      "type": "trace",
+      "duration_beats": 4.0,
+      "lane": 5
+    },
+    {
+      "beat": 199.0,
+      "type": "tap",
+      "nudge_ms": -45
+    },
+    {
+      "beat": 199.5,
+      "type": "tap",
+      "nudge_ms": -45
+    },
+    {
+      "beat": 201.0,
+      "type": "trace",
+      "duration_beats": 4.0,
+      "lane": 6
+    },
+    {
+      "beat": 207.0,
+      "type": "tap",
+      "nudge_ms": -45
+    },
+    {
+      "beat": 209.0,
+      "type": "tap",
+      "nudge_ms": -45
+    },
+    {
+      "beat": 211.5,
+      "type": "tap",
+      "nudge_ms": -45
+    },
+    {
+      "beat": 212.0,
+      "type": "tap",
+      "nudge_ms": -45
+    },
+    {
+      "beat": 212.5,
+      "type": "tap",
+      "nudge_ms": -42
+    },
+    {
+      "beat": 214.0,
+      "type": "tap",
+      "nudge_ms": -45
+    },
+    {
+      "beat": 215.0,
+      "type": "tap",
+      "nudge_ms": -44
+    },
+    {
+      "beat": 217.0,
+      "type": "tap",
+      "nudge_ms": -45
+    },
+    {
+      "beat": 218.0,
+      "type": "tap",
+      "nudge_ms": -45
+    },
+    {
+      "beat": 219.0,
+      "type": "tap",
+      "nudge_ms": -45
+    },
+    {
+      "beat": 220.0,
+      "type": "tap",
+      "nudge_ms": -45
+    },
+    {
+      "beat": 222.0,
+      "type": "tap",
+      "nudge_ms": -45
+    },
+    {
+      "beat": 225.0,
+      "type": "tap",
+      "nudge_ms": -25
+    },
+    {
+      "beat": 226.0,
+      "type": "tap",
+      "nudge_ms": -37
+    },
+    {
+      "beat": 228.0,
+      "type": "tap",
+      "nudge_ms": -15
+    },
+    {
+      "beat": 228.5,
+      "type": "tap",
+      "nudge_ms": -15
+    },
+    {
+      "beat": 230.0,
+      "type": "tap",
+      "nudge_ms": -39
+    },
+    {
+      "beat": 234.0,
+      "type": "tap",
+      "nudge_ms": -29
+    },
+    {
+      "beat": 236.0,
+      "type": "tap",
+      "nudge_ms": -19
+    },
+    {
+      "beat": 238.0,
+      "type": "tap",
+      "nudge_ms": -20
+    },
+    {
+      "beat": 239.0,
+      "type": "tap",
+      "nudge_ms": -20
+    },
+    {
+      "beat": 239.5,
+      "type": "tap",
+      "nudge_ms": -9
+    },
+    {
+      "beat": 241.0,
+      "type": "tap",
+      "nudge_ms": 2
+    },
+    {
+      "beat": 242.0,
+      "type": "tap",
+      "nudge_ms": -22
+    },
+    {
+      "beat": 244.0,
+      "type": "tap",
+      "nudge_ms": 1
+    },
+    {
+      "beat": 244.5,
+      "type": "tap",
+      "nudge_ms": 12
+    },
+    {
+      "beat": 246.0,
+      "type": "tap",
+      "nudge_ms": -12
+    },
+    {
+      "beat": 247.0,
+      "type": "tap",
+      "nudge_ms": 11
+    },
+    {
+      "beat": 250.0,
+      "type": "tap",
+      "nudge_ms": -2
+    },
+    {
+      "beat": 255.0,
+      "type": "tap",
+      "nudge_ms": 7
+    },
+    {
+      "beat": 258.0,
+      "type": "tap",
+      "nudge_ms": 6
+    },
+    {
+      "beat": 259.5,
+      "type": "tap",
+      "nudge_ms": 28
+    },
+    {
+      "beat": 260.0,
+      "type": "tap",
+      "nudge_ms": 28
+    },
+    {
+      "beat": 261.0,
+      "type": "tap",
+      "nudge_ms": 27
+    },
+    {
+      "beat": 262.0,
+      "type": "tap",
+      "nudge_ms": 15
+    },
+    {
+      "beat": 263.0,
+      "type": "tap",
+      "nudge_ms": 26
+    },
+    {
+      "beat": 266.0,
+      "type": "tap",
+      "nudge_ms": 13
+    },
+    {
+      "beat": 266.5,
+      "type": "tap",
+      "nudge_ms": 36
+    },
+    {
+      "beat": 268.0,
+      "type": "tap",
+      "nudge_ms": 36
+    },
+    {
+      "beat": 268.5,
+      "type": "tap",
+      "nudge_ms": 35
+    },
+    {
+      "beat": 274.0,
+      "type": "tap",
+      "nudge_ms": 21
+    },
+    {
+      "beat": 278.0,
+      "type": "tap",
+      "nudge_ms": 19
+    },
+    {
+      "beat": 282.0,
+      "type": "tap",
+      "nudge_ms": 29
+    },
+    {
+      "beat": 287.0,
+      "type": "tap",
+      "nudge_ms": 15
+    }
+  ]
+}

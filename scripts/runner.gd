@@ -8,7 +8,7 @@ const GROUND_Y := 520.0
 const CAMERA_LEAD := 320.0  # player's distance from the left screen edge
 const LANE_HEIGHT := 90.0
 const USER_CHART_PATH := "user://charts/demo.chart.json"
-const RES_CHART_PATH := "res://charts/demo.chart.json"
+const RES_CHART_PATH := "res://charts/dragon.chart.json"
 
 var cfg: JudgmentConfig = preload("res://config/game_config.tres")
 

@@ -49,6 +49,9 @@ func _draw() -> void:
 	if stumbling:
 		_draw_stumble(t)
 		return
+	if tier >= 5:
+		_draw_cartwheel(t)
+		return
 	if tier >= 4:
 		_draw_breakdance(t)
 		return
@@ -161,6 +164,33 @@ func _draw_breakdance(t: float) -> void:
 	# shades stay on mid-spin, obviously
 	draw_rect(Rect2(head.x - 11.0, head.y - 2.0, 9.0, 6.0), Color(0.05, 0.05, 0.08))
 	draw_rect(Rect2(head.x + 2.0, head.y - 2.0, 9.0, 6.0), Color(0.05, 0.05, 0.08))
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+
+
+func _draw_cartwheel(t: float) -> void:
+	# Full cartwheels: the whole body stars over, one revolution per two
+	# beats, wheeling side to side across his spot.
+	var rot := t * PI
+	var sway := sin(t * PI * 0.5) * 46.0
+	var hub := Vector2(sway, -56.0)
+	draw_set_transform(hub, rot, Vector2.ONE)
+	# torso as the hub
+	draw_rect(Rect2(-13.0, -22.0, 26.0, 44.0), SHIRT)
+	# four spread limbs, X formation
+	for k in 4:
+		var ang := PI / 4.0 + k * PI / 2.0
+		var dirv := Vector2(cos(ang), sin(ang))
+		var col := SHIRT if k < 2 else PANTS
+		draw_line(dirv * 16.0, dirv * 58.0, col, LIMB_W + 1.0)
+		if k >= 2:  # shoes fly
+			draw_rect(Rect2(dirv.x * 58.0 - 9.0, dirv.y * 58.0 - 5.0, 18.0, 9.0), SHOE)
+	# head sticking out one end, beanie holding on for dear life
+	var head := Vector2(0.0, -38.0)
+	draw_circle(head, 15.0, SKIN)
+	draw_rect(Rect2(head.x - 15.0, head.y - 17.0, 30.0, 10.0), Color(0.25, 0.5, 0.85))
+	draw_circle(head + Vector2(0.0, -19.0), 4.0, Color(0.9, 0.9, 0.95))
+	draw_rect(Rect2(head.x - 11.0, head.y - 4.0, 9.0, 6.0), Color(0.05, 0.05, 0.08))
+	draw_rect(Rect2(head.x + 2.0, head.y - 4.0, 9.0, 6.0), Color(0.05, 0.05, 0.08))
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
 

@@ -9,16 +9,15 @@ extends Node2D
 ## from the JudgmentConfig resource, clamped so adjacent cue windows never
 ## overlap.
 
-const RES_CHART_PATH := "res://charts/demo.chart.json"
-
-const TIER_COMBO: Array[int] = [0, 3, 6, 10, 16]
+const TIER_COMBO: Array[int] = [0, 3, 6, 10, 16, 24]
 const TIER_NAMES: Array[String] = ["", "TWITCHIN'!", "HARLEM SHAKE!!",
-	"ZOMBIE MODE!!", "BREAKDANCE!!!"]
+	"ZOMBIE MODE!!", "BREAKDANCE!!!", "CARTWHEELS?! GO CRAZY!!"]
 const PERFECT_WORDS: Array[String] = ["CLEAN!", "NICE!", "SHEESH!", "GROOVY!", "FUNKY!"]
 const GOOD_WORDS: Array[String] = ["okay", "loose...", "close"]
 const STUMBLE_WORDS: Array[String] = ["WHOA!", "OOF!", "MY SHOE!", "SPLAT!"]
 
-const MAX_CROWD := 14
+const MAX_CROWD := 26  # two rows; tier 5 packs the place out
+const FRONT_ROW := 14
 ## Ticker: cues scroll right-to-left along the LED sidewalk strip and
 ## must be tapped when they reach the marker under the dancer's feet.
 const TICKER_PX_PER_BEAT := 240.0
@@ -80,7 +79,7 @@ func _ready() -> void:
 	ground_y = vs.y - 96.0
 	center_x = vs.x / 2.0
 
-	chart = Chart.load_from_file(RES_CHART_PATH)
+	chart = Chart.load_from_file(str(Settings.song_entry()["chart"]))
 	if chart == null:
 		return
 	SongClock.configure(chart.bpm, chart.offset_ms, chart.swing_percent)
@@ -490,27 +489,39 @@ func _finish_trace(tr: Dictionary) -> void:
 
 
 func _crowd_target() -> int:
-	return mini(MAX_CROWD, combo + tier * 2)
+	var t := combo + tier * 2
+	if tier >= 5:
+		t = MAX_CROWD  # cartwheels: everybody shows up
+	return mini(MAX_CROWD, t)
 
 
 func _manage_crowd(beat: float) -> void:
 	if beat < _next_crowd_beat:
 		return
-	_next_crowd_beat = beat + 1.0
+	_next_crowd_beat = beat + (0.5 if tier >= 5 else 1.0)
 	if spectators.size() < _crowd_target():
 		var s := Spectator.new()
 		_crowd_serial += 1
 		s.seed_n = _crowd_serial * 13
 		s.phase = Spectator._hash01(_crowd_serial) * 0.6
-		var side := -1.0 if _crowd_serial % 2 == 0 else 1.0
-		var rank := spectators.size() / 2
-		var slot_x := center_x + side * (150.0 + 55.0 * rank
+		var row := 0 if spectators.size() < FRONT_ROW else 1
+		var row_count := spectators.size() if row == 0 else spectators.size() - FRONT_ROW
+		var side := -1.0 if row_count % 2 == 0 else 1.0
+		var rank := row_count / 2
+		var spread := 55.0 if row == 0 else 48.0
+		var slot_x := center_x + side * (150.0 + spread * rank
 			+ Spectator._hash01(_crowd_serial + 3) * 30.0)
 		# the trace zone stays clear — left-side crowd bunches up at its edge
 		var zone_edge := get_viewport_rect().size.x * TAP_ZONE_FRACTION + 50.0
 		if slot_x < zone_edge:
 			slot_x = zone_edge + Spectator._hash01(_crowd_serial + 7) * 40.0
-		s.slot_pos = Vector2(slot_x, ground_y + 10.0)
+		s.slot_pos = Vector2(slot_x, ground_y + 10.0 - row * 34.0)
+		if row == 1:
+			s.row_scale = 0.82
+			s.z_index = -1  # behind the front row
+		# in the mall, the 11th arrival is the mall santa
+		if chart.backdrop == "mall" and _crowd_serial == 11:
+			s.santa = true
 		s.position = Vector2(center_x + side * 1400.0, s.slot_pos.y)
 		add_child(s)
 		spectators.append(s)
@@ -591,6 +602,152 @@ func _draw() -> void:
 
 
 func _draw_backdrop(vs: Vector2, beat: float) -> void:
+	match chart.backdrop:
+		"chinatown":
+			_draw_backdrop_chinatown(vs, beat)
+		"mall":
+			_draw_backdrop_mall(vs, beat)
+		_:
+			_draw_backdrop_alley(vs, beat)
+	# confetti rains once the cartwheels start
+	if tier >= 5:
+		for ci in 40:
+			var h0 := Spectator._hash01(ci * 3)
+			var h1 := Spectator._hash01(ci * 3 + 1)
+			var speed := 90.0 + 120.0 * Spectator._hash01(ci * 3 + 2)
+			var cy := fposmod(h1 * 2000.0 + beat * speed, ground_y + 60.0) - 30.0
+			var cx := h0 * vs.x + sin(beat * 2.0 + ci) * 24.0
+			draw_set_transform(Vector2(cx, cy), beat * 3.0 + ci, Vector2.ONE)
+			draw_rect(Rect2(-5.0, -3.0, 10.0, 6.0),
+				Color.from_hsv(Spectator._hash01(ci * 7), 0.7, 0.95, 0.85))
+			draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+
+
+func _draw_backdrop_chinatown(vs: Vector2, beat: float) -> void:
+	# dusk gradient behind a lantern-lit street
+	var bands := 10
+	for bi in bands:
+		var f0 := float(bi) / bands
+		var c := Color(0.06, 0.02, 0.10).lerp(Color(0.18, 0.07, 0.12), f0)
+		c.a = 0.9 - f0 * 0.75
+		draw_rect(Rect2(-40.0, -40.0 + (ground_y + 40.0) * f0,
+			vs.x + 80.0, (ground_y + 40.0) / bands + 1.0), c)
+	# pagoda-roof silhouettes
+	var bx := -60.0
+	var i := 300
+	while bx < vs.x + 60.0:
+		var h := ground_y * (0.35 + 0.3 * Spectator._hash01(i))
+		var w := 200.0 + 140.0 * Spectator._hash01(i + 57)
+		var top_y := ground_y - h
+		draw_rect(Rect2(bx + 14.0, top_y, w - 42.0, h), Color(0.10, 0.07, 0.10))
+		# swooping roof
+		draw_polygon(PackedVector2Array([
+			Vector2(bx - 6.0, top_y + 8.0), Vector2(bx + w / 2.0 - 7.0, top_y - 26.0),
+			Vector2(bx + w - 8.0, top_y + 8.0)]),
+			PackedColorArray([Color(0.16, 0.09, 0.10)]))
+		for wi in 2:
+			if Spectator._hash01(i * 5 + wi) > 0.4:
+				draw_rect(Rect2(bx + 30.0 + wi * 52.0, top_y + 30.0, 15.0, 20.0),
+					Color(0.95, 0.6, 0.25, 0.3))
+		bx += w
+		i += 1
+	# strings of red lanterns swaying with the beat
+	for li in 9:
+		var lx := 40.0 + li * (vs.x / 9.0)
+		var sway := sin(beat * PI * 0.5 + li * 1.3) * 7.0
+		var ly := 90.0 + 40.0 * sin(li * 2.1) + absf(sway) * 0.4
+		var p := Vector2(lx + sway, ly)
+		draw_line(p + Vector2(0.0, -34.0), p, Color(0.25, 0.2, 0.15), 2.0)
+		draw_circle(p, 26.0, Color(1.0, 0.25, 0.15, 0.13))
+		draw_circle(p, 14.0, Color(0.9, 0.2, 0.12))
+		draw_rect(Rect2(p.x - 6.0, p.y - 18.0, 12.0, 4.0), Color(0.9, 0.75, 0.2))
+		draw_rect(Rect2(p.x - 5.0, p.y + 13.0, 10.0, 5.0), Color(0.9, 0.75, 0.2))
+		draw_circle(p + Vector2(0.0, -4.0), 5.0, Color(1.0, 0.55, 0.3, 0.8))
+	# street
+	draw_rect(Rect2(-40.0, ground_y, vs.x + 80.0, vs.y - ground_y + 40.0),
+		Color(0.14, 0.12, 0.14))
+	draw_line(Vector2(-40.0, ground_y + 1.5), Vector2(vs.x + 40.0, ground_y + 1.5),
+		Color(0.4, 0.25, 0.2), 3.0)
+
+
+func _draw_backdrop_mall(vs: Vector2, beat: float) -> void:
+	# bright mall interior: upper wall, skylight, storefronts, and a stage
+	draw_rect(Rect2(-40.0, -40.0, vs.x + 80.0, ground_y + 80.0), Color(0.16, 0.15, 0.19))
+	# skylight strip
+	for si in 6:
+		var sx := 40.0 + si * (vs.x / 6.0)
+		draw_rect(Rect2(sx, 10.0, vs.x / 6.0 - 26.0, 34.0), Color(0.25, 0.27, 0.36))
+		draw_rect(Rect2(sx + 4.0, 14.0, vs.x / 6.0 - 34.0, 26.0), Color(0.32, 0.36, 0.5))
+	# second-floor railing
+	draw_rect(Rect2(-40.0, 60.0, vs.x + 80.0, 8.0), Color(0.35, 0.34, 0.4))
+	for ri in 40:
+		draw_line(Vector2(ri * (vs.x / 38.0), 68.0), Vector2(ri * (vs.x / 38.0), 96.0),
+			Color(0.3, 0.29, 0.35), 3.0)
+	draw_rect(Rect2(-40.0, 96.0, vs.x + 80.0, 6.0), Color(0.28, 0.27, 0.33))
+	# storefronts with glowing signs
+	var store_cols := [Color(0.9, 0.45, 0.6), Color(0.4, 0.75, 0.9), Color(0.95, 0.8, 0.3),
+		Color(0.55, 0.85, 0.5), Color(0.8, 0.55, 0.9)]
+	var bx := -20.0
+	var i := 0
+	while bx < vs.x + 20.0:
+		var w := 200.0 + 90.0 * Spectator._hash01(i + 500)
+		draw_rect(Rect2(bx, 120.0, w - 12.0, ground_y - 200.0), Color(0.12, 0.11, 0.15))
+		var sign_c: Color = store_cols[i % store_cols.size()]
+		var flicker := 0.75 + 0.25 * sin(beat * TAU * 0.5 + i * 2.0)
+		draw_rect(Rect2(bx + 16.0, 136.0, w - 44.0, 26.0), Color(sign_c, 0.25 * flicker))
+		draw_rect(Rect2(bx + 20.0, 140.0, w - 52.0, 18.0), Color(sign_c, 0.8 * flicker))
+		draw_rect(Rect2(bx + 14.0, 180.0, w - 40.0, ground_y - 290.0),
+			Color(0.75, 0.78, 0.85, 0.12))  # glass
+		bx += w
+		i += 1
+	# christmas garland under the railing (it's santa season)
+	for gi in 20:
+		var gx := gi * (vs.x / 19.0)
+		draw_arc(Vector2(gx + vs.x / 38.0, 104.0), vs.x / 38.0, PI * 0.15, PI * 0.85, 10,
+			Color(0.2, 0.5, 0.25), 4.0)
+		draw_circle(Vector2(gx + vs.x / 38.0, 104.0 + vs.x / 38.0 * 0.8), 4.0,
+			Color(0.9, 0.2, 0.2) if gi % 2 == 0 else Color(0.95, 0.8, 0.25))
+	# mall floor: big shiny tiles
+	draw_rect(Rect2(-40.0, ground_y, vs.x + 80.0, vs.y - ground_y + 40.0),
+		Color(0.55, 0.53, 0.58))
+	var tx := 0.0
+	while tx < vs.x + 40.0:
+		draw_line(Vector2(tx, ground_y), Vector2(tx, vs.y + 40.0), Color(0.42, 0.4, 0.46), 2.0)
+		tx += 90.0
+	draw_line(Vector2(-40.0, ground_y + 1.5), Vector2(vs.x + 40.0, ground_y + 1.5),
+		Color(0.7, 0.68, 0.74), 2.0)
+	# THE STAGE: riser under the dancer, 8 Mile energy
+	var stage_w := 360.0
+	draw_rect(Rect2(center_x - stage_w / 2.0 - 14.0, ground_y - 6.0, stage_w + 28.0, 60.0),
+		Color(0.2, 0.18, 0.22))
+	draw_rect(Rect2(center_x - stage_w / 2.0, ground_y - 14.0, stage_w, 12.0),
+		Color(0.32, 0.28, 0.36))
+	# speaker stacks
+	for side: float in [-1.0, 1.0]:
+		var spx := center_x + side * (stage_w / 2.0 + 44.0)
+		draw_rect(Rect2(spx - 24.0, ground_y - 96.0, 48.0, 96.0), Color(0.1, 0.1, 0.12))
+		draw_circle(Vector2(spx, ground_y - 66.0), 15.0, Color(0.2, 0.2, 0.24))
+		draw_circle(Vector2(spx, ground_y - 66.0), 7.0 + 3.0 * exp(-fposmod(beat, 1.0) * 6.0),
+			Color(0.05, 0.05, 0.07))
+		draw_circle(Vector2(spx, ground_y - 26.0), 10.0, Color(0.2, 0.2, 0.24))
+	# velvet rope line in front of the stage
+	for side: float in [-1.0, 1.0]:
+		for pi in 3:
+			var px := center_x + side * (120.0 + pi * 130.0)
+			draw_line(Vector2(px, ground_y + 46.0), Vector2(px, ground_y - 8.0),
+				Color(0.75, 0.68, 0.35), 5.0)
+			draw_circle(Vector2(px, ground_y - 10.0), 7.0, Color(0.85, 0.78, 0.4))
+			if pi > 0:
+				var prev_x := center_x + side * (120.0 + (pi - 1) * 130.0)
+				var mid := Vector2((px + prev_x) / 2.0, ground_y + 8.0)
+				draw_arc(mid, absf(px - prev_x) / 2.0, PI * 0.12, PI * 0.88, 14,
+					Color(0.72, 0.12, 0.16), 6.0)
+	# rope across the middle, right where the first fan stands
+	var mid_c := Vector2(center_x, ground_y + 8.0)
+	draw_arc(mid_c, 120.0, PI * 0.12, PI * 0.88, 14, Color(0.72, 0.12, 0.16), 6.0)
+
+
+func _draw_backdrop_alley(vs: Vector2, beat: float) -> void:
 	# night-sky gradient: translucent bands let the tier-pulse ColorRect
 	# glow through near the skyline
 	var top := Color(0.03, 0.03, 0.09)
