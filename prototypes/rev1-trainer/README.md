@@ -1,4 +1,4 @@
-# REV1 Trainer — Prototype 0
+# REV1 Trainer — Prototype 1
 
 A single-file Web MIDI proof-of-fun: connects to a Pioneer DDJ-REV1 in the
 browser, shows a live MIDI monitor, calibrates the pads and crossfader, and
@@ -23,11 +23,22 @@ GOOD ±140ms), combo, and a grade.
 No controller handy? Keyboard fallback: `Z` = left pad, `X` = cut left,
 `N` = cut right, `M` = right pad.
 
-## What this proves / doesn't
+## Prototype 1 additions
 
-Proves: the REV1 is readable from a browser with millisecond timestamps,
-crossfader cuts and pad hits can be detected and scored, and the rhythm-game
-loop is buildable with zero native code.
+- **Song ingestion & analysis** — load any local audio file; on-device DSP
+  extracts BPM (autocorrelation of spectral flux, verified to ~0.1% on a
+  synthetic test), beat grid, kick onsets (low band) and snare onsets
+  (mid band). Waveform strip visualizes all of it. Nothing is uploaded.
+- **Song drills** — "Ride the beat", "Cut the snares", "Chop the kicks",
+  and a combo mode: notes are generated from the track's actual drum
+  structure while the song plays, with an ergonomic minimum spacing so
+  charts stay humanly playable.
+- **Surface Learn** — touch any control on the REV1, name it, and build a
+  full exportable JSON map of the control surface (shown by name in the
+  MIDI monitor once learned). Export the JSON and feed it back to
+  development — it becomes the app's built-in REV1 map.
 
-Doesn't include (yet): audio playback of real tracks, jog-wheel/scratch
-scoring, song ingestion & beatgrid analysis. Those are the next spikes.
+Still to come (P2+): jog/scratch gesture recognition, EQ/FX-lever drills,
+phrase detection, drill cards with star ratings, two-deck audio engine,
+performance mode. See `docs/rev1-curriculum.md` for the skill taxonomy and
+chart-generation rules.

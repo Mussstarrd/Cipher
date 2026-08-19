@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>REV1 Trainer — Prototype 0</title>
+<title>REV1 Trainer — Prototype 1</title>
 <style>
   /* Deliberately single-theme: this is a performance screen, dark like a booth. */
   :root {
@@ -23,113 +23,83 @@
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; }
   body {
-    background: var(--bg);
-    color: var(--text);
+    background: var(--bg); color: var(--text);
     font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     min-height: 100vh;
   }
-  header {
-    display: flex; align-items: center; gap: 16px;
-    padding: 14px 22px;
-    border-bottom: 1px solid var(--line);
-  }
+  header { display: flex; align-items: center; gap: 16px; padding: 14px 22px; border-bottom: 1px solid var(--line); }
   header h1 { font-size: 17px; margin: 0; letter-spacing: .04em; }
   header h1 .accent { color: var(--cyan); }
-  #device-pill {
-    font-family: var(--mono); font-size: 12px;
-    padding: 4px 12px; border-radius: 99px;
-    border: 1px solid var(--line); color: var(--dim);
-  }
+  #device-pill { font-family: var(--mono); font-size: 12px; padding: 4px 12px; border-radius: 99px; border: 1px solid var(--line); color: var(--dim); }
   #device-pill.ok { border-color: var(--lime); color: var(--lime); }
   #device-pill.warn { border-color: var(--amber); color: var(--amber); }
   header .spacer { flex: 1; }
-  button {
-    background: var(--panel-2); color: var(--text);
-    border: 1px solid var(--line); border-radius: 8px;
-    padding: 8px 16px; font-size: 14px; cursor: pointer;
-  }
+  button { background: var(--panel-2); color: var(--text); border: 1px solid var(--line); border-radius: 8px; padding: 8px 16px; font-size: 14px; cursor: pointer; }
   button:hover { border-color: var(--cyan); }
   button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
   button.primary { background: var(--cyan); color: #062026; border-color: var(--cyan); font-weight: 700; }
   button.primary:hover { filter: brightness(1.1); }
+  button.small { padding: 4px 10px; font-size: 12px; }
   button:disabled { opacity: .4; cursor: default; }
-  main {
-    display: grid; grid-template-columns: 1fr 340px; gap: 18px;
-    padding: 18px 22px; max-width: 1200px; margin: 0 auto;
-  }
-  @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
-  .panel {
-    background: var(--panel); border: 1px solid var(--line);
-    border-radius: 12px; padding: 16px 18px;
-  }
-  .panel h2 {
-    margin: 0 0 10px; font-size: 12px; letter-spacing: .12em;
-    text-transform: uppercase; color: var(--dim); font-weight: 600;
-  }
-  /* ---- game stage ---- */
+  main { display: grid; grid-template-columns: 1fr 340px; gap: 18px; padding: 18px 22px; max-width: 1240px; margin: 0 auto; }
+  @media (max-width: 950px) { main { grid-template-columns: 1fr; } }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; }
+  .panel h2 { margin: 0 0 10px; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); font-weight: 600; }
   #stage-wrap { position: relative; }
   canvas { display: block; width: 100%; border-radius: 8px; background: #0A0C10; }
-  #overlay {
-    position: absolute; inset: 0; display: flex; flex-direction: column;
-    align-items: center; justify-content: center; gap: 14px; text-align: center;
-    background: rgba(10,12,16,.82); border-radius: 8px; padding: 24px;
-  }
+  #overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; text-align: center; background: rgba(10,12,16,.82); border-radius: 8px; padding: 24px; }
   #overlay.hidden { display: none; }
-  #overlay .big { font-size: 26px; font-weight: 800; letter-spacing: .02em; }
-  #overlay .sub { color: var(--dim); max-width: 46ch; line-height: 1.5; }
+  #overlay .big { font-size: 26px; font-weight: 800; }
+  #overlay .sub { color: var(--dim); max-width: 48ch; line-height: 1.5; }
   #overlay .stat-row { display: flex; gap: 26px; font-family: var(--mono); }
-  #overlay .stat-row div { text-align: center; }
   #overlay .stat-row .n { font-size: 24px; font-weight: 700; }
   #overlay .stat-row .l { font-size: 11px; color: var(--dim); letter-spacing: .1em; }
+  .hidden { display: none !important; }
   .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 12px; }
   .controls label { font-size: 13px; color: var(--dim); display: flex; align-items: center; gap: 8px; }
   select, input[type="range"] { accent-color: var(--cyan); }
-  select {
-    background: var(--panel-2); color: var(--text);
-    border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; font-size: 13px;
-  }
-  /* ---- monitor ---- */
-  #monitor {
-    font-family: var(--mono); font-size: 12px; line-height: 1.7;
-    height: 210px; overflow-y: auto; background: #0A0C10;
-    border-radius: 8px; padding: 10px 12px; border: 1px solid var(--line);
-  }
+  select { background: var(--panel-2); color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; font-size: 13px; }
+  input[type="text"] { background: var(--panel-2); color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; font-size: 13px; width: 150px; }
+  #monitor { font-family: var(--mono); font-size: 12px; line-height: 1.7; height: 170px; overflow-y: auto; background: #0A0C10; border-radius: 8px; padding: 10px 12px; border: 1px solid var(--line); }
   #monitor .t-note { color: var(--magenta); }
   #monitor .t-cc { color: var(--cyan); }
   #monitor .t-off { color: var(--dim); }
   #monitor .t-game { color: var(--lime); }
+  #monitor .t-name { color: var(--amber); }
   .hint { color: var(--dim); font-size: 13px; line-height: 1.55; margin: 8px 0 0; }
-  .lane-key { display: inline-block; font-family: var(--mono); font-size: 11px;
-    border: 1px solid var(--line); border-radius: 4px; padding: 1px 6px; margin: 0 2px; }
-  /* ---- calibration ---- */
-  #calib-step { font-size: 15px; margin: 8px 0; min-height: 44px; }
-  #calib-step .waiting { color: var(--amber); }
-  #calib-step .done { color: var(--lime); }
+  .lane-key { display: inline-block; font-family: var(--mono); font-size: 11px; border: 1px solid var(--line); border-radius: 4px; padding: 1px 6px; margin: 0 2px; }
+  #calib-step { font-size: 14px; margin: 8px 0; min-height: 22px; }
+  .waiting { color: var(--amber); }
+  .done { color: var(--lime); }
   .map-table { font-family: var(--mono); font-size: 12px; color: var(--dim); width: 100%; margin-top: 8px; border-collapse: collapse; }
   .map-table td { padding: 3px 6px; border-bottom: 1px solid var(--line); }
   .map-table td:last-child { text-align: right; color: var(--text); }
+  #wave { margin-top: 10px; }
+  #song-status { font-family: var(--mono); font-size: 12px; color: var(--dim); margin-top: 8px; min-height: 18px; }
+  #song-status .ok { color: var(--lime); }
+  #learn-live { font-family: var(--mono); font-size: 13px; background: #0A0C10; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; margin: 8px 0; min-height: 20px; color: var(--amber); }
+  textarea { width: 100%; height: 90px; background: #0A0C10; color: var(--dim); border: 1px solid var(--line); border-radius: 8px; font-family: var(--mono); font-size: 11px; padding: 8px; }
 </style>
 </head>
 <body>
 <header>
-  <h1>REV1 <span class="accent">TRAINER</span> <span style="color:var(--dim);font-weight:400;font-size:13px">· prototype 0</span></h1>
+  <h1>REV1 <span class="accent">TRAINER</span> <span style="color:var(--dim);font-weight:400;font-size:13px">· prototype 1</span></h1>
   <span id="device-pill">no device</span>
   <span class="spacer"></span>
   <button id="btn-connect" class="primary">Connect MIDI</button>
 </header>
 
 <main>
-  <div>
+  <div style="display:flex;flex-direction:column;gap:18px">
     <div class="panel">
-      <h2>Cut Drill</h2>
+      <h2>Drills</h2>
       <div id="stage-wrap">
-        <canvas id="stage" width="800" height="460"></canvas>
+        <canvas id="stage" width="800" height="440"></canvas>
         <div id="overlay">
           <div class="big" id="ov-title">Ready when you are</div>
-          <div class="sub" id="ov-sub">Connect your DDJ-REV1 (or use the keyboard:
+          <div class="sub" id="ov-sub">Metronome drills work immediately. Load a song below to unlock song drills — notes generated from the track's real kicks, snares and beat grid. Keyboard fallback:
             <span class="lane-key">Z</span> left pad · <span class="lane-key">X</span> cut left ·
-            <span class="lane-key">N</span> cut right · <span class="lane-key">M</span> right pad).
-            Notes fall down four lanes — hit the matching control when the note reaches the line.</div>
+            <span class="lane-key">N</span> cut right · <span class="lane-key">M</span> right pad.</div>
           <div class="stat-row hidden" id="ov-stats">
             <div><div class="n" id="st-score">0</div><div class="l">SCORE</div></div>
             <div><div class="n" id="st-acc">–</div><div class="l">ACCURACY</div></div>
@@ -142,41 +112,69 @@
       <div class="controls">
         <label>Drill
           <select id="sel-drill">
-            <option value="pads">Pad ping-pong</option>
-            <option value="cuts">Crossfader cuts</option>
-            <option value="combo" selected>Pads + cuts combo</option>
+            <optgroup label="Metronome">
+              <option value="m:pads">Pad ping-pong</option>
+              <option value="m:cuts">Crossfader cuts</option>
+              <option value="m:combo" selected>Pads + cuts combo</option>
+            </optgroup>
+            <optgroup label="Song (load a track first)">
+              <option value="s:ride" disabled>Ride the beat</option>
+              <option value="s:snares" disabled>Cut the snares</option>
+              <option value="s:kicks" disabled>Chop the kicks</option>
+              <option value="s:full" disabled>Kicks + snares combo</option>
+            </optgroup>
           </select>
         </label>
-        <label>BPM
-          <input type="range" id="sel-bpm" min="60" max="140" value="90" step="5">
-          <span id="bpm-val" style="font-family:var(--mono)">90</span>
-        </label>
-        <label>Metronome
-          <input type="checkbox" id="sel-click" checked>
-        </label>
-        <label>Audio offset
-          <input type="range" id="sel-offset" min="-150" max="150" value="0" step="5">
-          <span id="offset-val" style="font-family:var(--mono)">0ms</span>
-        </label>
+        <label>BPM <input type="range" id="sel-bpm" min="60" max="140" value="90" step="5"><span id="bpm-val" style="font-family:var(--mono)">90</span></label>
+        <label>Metronome <input type="checkbox" id="sel-click" checked></label>
+        <label>Audio offset <input type="range" id="sel-offset" min="-150" max="150" value="0" step="5"><span id="offset-val" style="font-family:var(--mono)">0ms</span></label>
       </div>
-      <p class="hint">Timing windows: ±60&nbsp;ms = PERFECT, ±140&nbsp;ms = GOOD. 32 beats per drill. If hits feel unfairly early/late, nudge the audio offset.</p>
+      <p class="hint">±60&nbsp;ms = PERFECT, ±140&nbsp;ms = GOOD. Song drills pick a 32-beat section after the intro and chart the track's own drum hits.</p>
+    </div>
+
+    <div class="panel">
+      <h2>Song — load &amp; analyze</h2>
+      <div class="controls" style="margin-top:0">
+        <input type="file" id="song-file" accept="audio/*">
+      </div>
+      <div id="song-status">No track loaded.</div>
+      <canvas id="wave" width="800" height="90"></canvas>
+      <p class="hint">Analysis runs fully on this laptop: spectral flux in a low band (kicks, red) and a mid band (snares, amber), beat grid by autocorrelation (ticks). Nothing is uploaded anywhere.</p>
     </div>
   </div>
 
   <div style="display:flex;flex-direction:column;gap:18px">
     <div class="panel">
-      <h2>Calibration</h2>
-      <div id="calib-step">Not calibrated — using keyboard fallback until you run it.</div>
+      <h2>Calibration (game inputs)</h2>
+      <div id="calib-step">Using defaults until you calibrate.</div>
       <div style="display:flex;gap:10px">
-        <button id="btn-calib">Calibrate controller</button>
-        <button id="btn-calib-reset">Reset</button>
+        <button id="btn-calib" class="small">Calibrate</button>
+        <button id="btn-calib-reset" class="small">Reset</button>
       </div>
       <table class="map-table" id="map-table"></table>
     </div>
+
+    <div class="panel">
+      <h2>Surface Learn (full control map)</h2>
+      <div style="display:flex;gap:10px;align-items:center">
+        <button id="btn-learn" class="small">Start learning</button>
+        <span id="learn-count" style="font-family:var(--mono);font-size:12px;color:var(--dim)">0 controls named</span>
+      </div>
+      <div id="learn-live">—</div>
+      <div class="controls" style="margin-top:0">
+        <input type="text" id="learn-name" placeholder="e.g. PLAY deck L" disabled>
+        <button id="btn-learn-save" class="small" disabled>Save</button>
+      </div>
+      <div style="display:flex;gap:10px;margin:8px 0 6px">
+        <button id="btn-map-export" class="small">Export map JSON</button>
+      </div>
+      <textarea id="map-json" readonly placeholder="Learned map JSON appears here…"></textarea>
+      <p class="hint">Touch one control on the REV1, type its name, Save. Named controls show by name in the monitor. Export and send me the JSON — that becomes the app's built-in REV1 map.</p>
+    </div>
+
     <div class="panel">
       <h2>MIDI Monitor</h2>
       <div id="monitor"><span class="t-off">— waiting for events —</span></div>
-      <p class="hint">Every touch on the controller shows up here with a timestamp. This stream is the entire input layer of the future game.</p>
     </div>
   </div>
 </main>
@@ -184,20 +182,24 @@
 <script>
 "use strict";
 /* =========================================================
-   REV1 Trainer — prototype 0
-   Proves: Web MIDI input from a DDJ-REV1, per-event timing,
-   and a scored Guitar-Hero-style drill loop.
+   REV1 Trainer — prototype 1
+   P0: Web MIDI + scored drill loop (field-tested).
+   P1 adds: Surface Learn (label & export full MIDI map),
+   song ingestion, offline BPM/beat/kick/snare analysis,
+   drills generated from the song's real structure.
    ========================================================= */
 
-// ---------- state ----------
+// ---------------- state ----------------
 const S = {
-  midi: null,
-  input: null,
-  calib: loadCalib(),          // {padL:{ch}, padR:{ch}, xfader:{ch, cc}}
+  midi: null, input: null,
+  calib: loadJSON("rev1.calib"),
   calibStep: -1,
-  xfVal: 64, xfZone: "mid",    // crossfader tracking
-  game: null,                  // active game state
-  audio: null,                 // AudioContext
+  surface: loadJSON("rev1.surface") || {},   // { "n:7:0": "Hot cue 1 L", "c:6:31": "Crossfader", ... }
+  learning: false, learnKey: null,
+  xfVal: 64, xfZone: "mid",
+  game: null, audio: null,
+  song: null,        // { name, buffer, analysis }
+  playing: null,     // { src, ctxStart, songStart }
 };
 
 const LANES = [
@@ -208,51 +210,34 @@ const LANES = [
 ];
 const LANE_IDX = Object.fromEntries(LANES.map((l, i) => [l.id, i]));
 
-// Best-guess defaults from the DDJ-400/REV1 family; calibration overrides.
-function defaultCalib() {
-  return { padL: { ch: 7 }, padR: { ch: 9 }, xfader: { ch: 6, cc: 31 } };
-}
-function loadCalib() {
-  try { const c = JSON.parse(localStorage.getItem("rev1.calib")); if (c && c.xfader) return c; } catch (e) {}
-  return null;
-}
-function saveCalib(c) { localStorage.setItem("rev1.calib", JSON.stringify(c)); }
+function defaultCalib() { return { padL: { ch: 7 }, padR: { ch: 9 }, xfader: { ch: 6, cc: 31 } }; }
+function loadJSON(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }
+function saveJSON(k, v) { localStorage.setItem(k, JSON.stringify(v)); }
 
-// ---------- dom ----------
+// ---------------- dom ----------------
 const $ = (id) => document.getElementById(id);
 const monitorEl = $("monitor");
 let monitorCount = 0;
-
 function logMonitor(cls, text) {
   if (monitorCount === 0) monitorEl.innerHTML = "";
   monitorCount++;
   const line = document.createElement("div");
-  line.className = cls;
-  line.textContent = text;
+  line.className = cls; line.textContent = text;
   monitorEl.appendChild(line);
   while (monitorEl.childNodes.length > 120) monitorEl.removeChild(monitorEl.firstChild);
   monitorEl.scrollTop = monitorEl.scrollHeight;
 }
+function stamp(t) { return (t / 1000).toFixed(3).padStart(8); }
 
-// ---------- midi ----------
+// ---------------- midi ----------------
 $("btn-connect").addEventListener("click", connectMidi);
-
 async function connectMidi() {
-  if (!navigator.requestMIDIAccess) {
-    setPill("warn", "Web MIDI unsupported — use Chrome/Edge");
-    logMonitor("t-off", "This browser has no Web MIDI. Chrome or Edge required.");
-    return;
-  }
-  try {
-    S.midi = await navigator.requestMIDIAccess({ sysex: false });
-  } catch (e) {
-    setPill("warn", "MIDI permission denied");
-    return;
-  }
+  if (!navigator.requestMIDIAccess) { setPill("warn", "Web MIDI unsupported — use Chrome/Edge"); return; }
+  try { S.midi = await navigator.requestMIDIAccess({ sysex: false }); }
+  catch (e) { setPill("warn", "MIDI permission denied"); return; }
   S.midi.onstatechange = pickInput;
   pickInput();
 }
-
 function pickInput() {
   let chosen = null, first = null;
   for (const input of S.midi.inputs.values()) {
@@ -264,126 +249,129 @@ function pickInput() {
   S.input = chosen;
   if (chosen) {
     chosen.onmidimessage = onMidi;
-    const isRev = /ddj|rev/i.test(chosen.name);
-    setPill(isRev ? "ok" : "warn", chosen.name);
+    setPill(/ddj|rev/i.test(chosen.name) ? "ok" : "warn", chosen.name);
     logMonitor("t-game", `connected: ${chosen.name}`);
     if (!S.calib) { S.calib = defaultCalib(); renderCalib(); }
-  } else {
-    setPill("warn", "no MIDI inputs found");
-    logMonitor("t-off", "No MIDI inputs. Is the REV1 plugged in and powered?");
-  }
+  } else setPill("warn", "no MIDI inputs found");
 }
-
-function setPill(cls, text) {
-  const p = $("device-pill");
-  p.className = cls; p.textContent = text;
-}
+function setPill(cls, text) { const p = $("device-pill"); p.className = cls; p.textContent = text; }
 
 function onMidi(msg) {
   const [status, d1, d2] = msg.data;
   const type = status & 0xF0, ch = status & 0x0F;
-  const t = msg.timeStamp; // DOMHighResTimeStamp, same clock as performance.now()
+  const t = msg.timeStamp;
 
-  if (type === 0x90 && d2 > 0) {           // note on
-    logMonitor("t-note", `${stamp(t)} NOTE ch${ch + 1} n${d1} v${d2}`);
+  if (type === 0x90 && d2 > 0) {
+    const key = `n:${ch}:${d1}`;
+    const name = S.surface[key];
+    logMonitor(name ? "t-name" : "t-note", `${stamp(t)} ${name || `NOTE ch${ch + 1} n${d1}`} v${d2}`);
+    learnCandidate(key, `NOTE ch${ch + 1} n${d1}`);
     handleCalib({ kind: "note", ch, note: d1 });
     if (S.calib) {
       if (ch === S.calib.padL.ch) gameInput("padL", t);
       else if (ch === S.calib.padR.ch) gameInput("padR", t);
     }
-  } else if (type === 0x80 || (type === 0x90 && d2 === 0)) {
-    // note off — ignore for gameplay, keep monitor quiet
-  } else if (type === 0xB0) {              // control change
+  } else if (type === 0xB0) {
+    const key = `c:${ch}:${d1}`;
+    const name = S.surface[key];
     if (S.calib && ch === S.calib.xfader.ch && d1 === S.calib.xfader.cc) {
       trackXfader(d2, t);
-      // don't spam the monitor with every fader tick; sample it
-      if (d2 === 0 || d2 === 127 || d2 % 32 === 0)
-        logMonitor("t-cc", `${stamp(t)} XFADER ${d2}`);
-    } else {
-      logMonitor("t-cc", `${stamp(t)} CC ch${ch + 1} #${d1} = ${d2}`);
+      if (d2 === 0 || d2 === 127 || d2 % 32 === 0) logMonitor("t-cc", `${stamp(t)} XFADER ${d2}`);
+    } else if (d2 === 0 || d2 === 127 || d2 % 16 === 0 || name) {
+      logMonitor(name ? "t-name" : "t-cc", `${stamp(t)} ${name || `CC ch${ch + 1} #${d1}`} = ${d2}`);
     }
+    learnCandidate(key, `CC ch${ch + 1} #${d1}`);
     handleCalib({ kind: "cc", ch, cc: d1, val: d2 });
   }
 }
-function stamp(t) { return (t / 1000).toFixed(3).padStart(8); }
 
-// Crossfader → discrete cut events at the extremes.
 function trackXfader(v, t) {
-  const prev = S.xfZone;
   const zone = v <= 14 ? "left" : v >= 113 ? "right" : "mid";
   S.xfVal = v;
-  if (zone !== prev) {
+  if (zone !== S.xfZone) {
     S.xfZone = zone;
     if (zone === "left") gameInput("cutL", t);
     if (zone === "right") gameInput("cutR", t);
   }
 }
 
-// ---------- keyboard fallback ----------
 document.addEventListener("keydown", (e) => {
-  if (e.repeat) return;
+  if (e.repeat || e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
   const lane = LANES.find((l) => l.key === e.key.toLowerCase());
   if (lane) gameInput(lane.id, performance.now());
 });
 
-// ---------- calibration ----------
+// ---------------- surface learn ----------------
+$("btn-learn").addEventListener("click", () => {
+  S.learning = !S.learning;
+  $("btn-learn").textContent = S.learning ? "Stop learning" : "Start learning";
+  $("learn-name").disabled = $("btn-learn-save").disabled = !S.learning;
+  $("learn-live").textContent = S.learning ? "Touch a control on the REV1…" : "—";
+  S.learnKey = null;
+});
+function learnCandidate(key, desc) {
+  if (!S.learning || S.surface[key]) return;
+  S.learnKey = key;
+  $("learn-live").textContent = `${desc}  →  name it:`;
+}
+$("btn-learn-save").addEventListener("click", () => {
+  const name = $("learn-name").value.trim();
+  if (!name || !S.learnKey) return;
+  S.surface[S.learnKey] = name;
+  saveJSON("rev1.surface", S.surface);
+  logMonitor("t-name", `learned: ${name}`);
+  $("learn-name").value = ""; $("learn-live").textContent = "Saved ✓ — touch the next control…";
+  S.learnKey = null;
+  renderLearnCount();
+});
+function renderLearnCount() {
+  $("learn-count").textContent = `${Object.keys(S.surface).length} controls named`;
+}
+$("btn-map-export").addEventListener("click", () => {
+  $("map-json").value = JSON.stringify(S.surface, null, 2);
+  $("map-json").select();
+});
+renderLearnCount();
+
+// ---------------- calibration ----------------
 const CALIB_STEPS = [
   { id: "padL", prompt: "Hit any performance pad on the LEFT deck…", kind: "note" },
   { id: "padR", prompt: "Hit any performance pad on the RIGHT deck…", kind: "note" },
   { id: "xfader", prompt: "Slam the crossfader fully LEFT, then fully RIGHT…", kind: "cc" },
 ];
 let calibDraft = null, ccSeen = null;
-
 $("btn-calib").addEventListener("click", () => {
   if (!S.input) { $("calib-step").innerHTML = '<span class="waiting">Connect MIDI first.</span>'; return; }
-  calibDraft = {}; ccSeen = {};
-  S.calibStep = 0;
-  showCalibStep();
+  calibDraft = {}; ccSeen = {}; S.calibStep = 0; showCalibStep();
 });
 $("btn-calib-reset").addEventListener("click", () => {
   localStorage.removeItem("rev1.calib");
   S.calib = S.input ? defaultCalib() : null;
-  S.calibStep = -1;
-  renderCalib();
+  S.calibStep = -1; renderCalib();
 });
-
 function showCalibStep() {
-  const step = CALIB_STEPS[S.calibStep];
-  $("calib-step").innerHTML = `<span class="waiting">Step ${S.calibStep + 1}/3 — ${step.prompt}</span>`;
+  $("calib-step").innerHTML = `<span class="waiting">Step ${S.calibStep + 1}/3 — ${CALIB_STEPS[S.calibStep].prompt}</span>`;
 }
-
 function handleCalib(ev) {
   if (S.calibStep < 0) return;
   const step = CALIB_STEPS[S.calibStep];
-  if (step.kind === "note" && ev.kind === "note") {
-    calibDraft[step.id] = { ch: ev.ch };
-    advanceCalib();
-  } else if (step.kind === "cc" && ev.kind === "cc") {
-    // find the CC that swings across the full range during the gesture
+  if (step.kind === "note" && ev.kind === "note") { calibDraft[step.id] = { ch: ev.ch }; advanceCalib(); }
+  else if (step.kind === "cc" && ev.kind === "cc") {
     const k = ev.ch + ":" + ev.cc;
-    ccSeen[k] = ccSeen[k] || { min: 127, max: 0, ch: ev.ch, cc: ev.cc };
+    ccSeen[k] = ccSeen[k] || { min: 127, max: 0 };
     ccSeen[k].min = Math.min(ccSeen[k].min, ev.val);
     ccSeen[k].max = Math.max(ccSeen[k].max, ev.val);
-    if (ccSeen[k].max - ccSeen[k].min > 100) {
-      calibDraft.xfader = { ch: ev.ch, cc: ev.cc };
-      advanceCalib();
-    }
+    if (ccSeen[k].max - ccSeen[k].min > 100) { calibDraft.xfader = { ch: ev.ch, cc: ev.cc }; advanceCalib(); }
   }
 }
-
 function advanceCalib() {
   S.calibStep++;
   if (S.calibStep >= CALIB_STEPS.length) {
-    S.calibStep = -1;
-    S.calib = calibDraft;
-    saveCalib(S.calib);
-    $("calib-step").innerHTML = '<span class="done">Calibrated ✓ — mapping saved on this laptop.</span>';
+    S.calibStep = -1; S.calib = calibDraft; saveJSON("rev1.calib", S.calib);
+    $("calib-step").innerHTML = '<span class="done">Calibrated ✓</span>';
     renderCalib();
-  } else {
-    showCalibStep();
-  }
+  } else showCalibStep();
 }
-
 function renderCalib() {
   const c = S.calib;
   const rows = c ? [
@@ -392,12 +380,10 @@ function renderCalib() {
     ["Crossfader", `ch ${c.xfader.ch + 1} · CC #${c.xfader.cc}`],
   ] : [["No mapping", "keyboard only"]];
   $("map-table").innerHTML = rows.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join("");
-  if (S.calibStep === -1 && c && !document.querySelector("#calib-step .done"))
-    $("calib-step").textContent = "Using saved/default mapping. Re-calibrate if pads or fader don't register.";
 }
 renderCalib();
 
-// ---------- audio ----------
+// ---------------- audio ----------------
 function audioCtx() {
   if (!S.audio) S.audio = new (window.AudioContext || window.webkitAudioContext)();
   return S.audio;
@@ -412,174 +398,391 @@ function clickAt(audioTime, accent) {
   osc.start(audioTime); osc.stop(audioTime + 0.06);
 }
 function hitSound(quality) {
-  const ctx = audioCtx();
-  const t = ctx.currentTime;
+  const ctx = audioCtx(), t = ctx.currentTime;
   const osc = ctx.createOscillator(), g = ctx.createGain();
   osc.type = "triangle";
   osc.frequency.value = quality === "perfect" ? 880 : quality === "good" ? 660 : 180;
-  g.gain.setValueAtTime(0.25, t);
-  g.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+  g.gain.setValueAtTime(0.18, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
   osc.connect(g).connect(ctx.destination);
-  osc.start(t); osc.stop(t + 0.13);
+  osc.start(t); osc.stop(t + 0.11);
 }
 
-// ---------- patterns ----------
-function buildPattern(drill, beats) {
+// ---------------- song analysis (pure DSP, runs locally) ----------------
+// FFT: iterative radix-2, in-place.
+function fft(re, im) {
+  const n = re.length;
+  for (let i = 1, j = 0; i < n; i++) {
+    let bit = n >> 1;
+    for (; j & bit; bit >>= 1) j ^= bit;
+    j ^= bit;
+    if (i < j) { [re[i], re[j]] = [re[j], re[i]]; [im[i], im[j]] = [im[j], im[i]]; }
+  }
+  for (let len = 2; len <= n; len <<= 1) {
+    const ang = -2 * Math.PI / len, wr = Math.cos(ang), wi = Math.sin(ang);
+    for (let i = 0; i < n; i += len) {
+      let cwr = 1, cwi = 0;
+      for (let k = 0; k < len / 2; k++) {
+        const ur = re[i + k], ui = im[i + k];
+        const vr = re[i + k + len / 2] * cwr - im[i + k + len / 2] * cwi;
+        const vi = re[i + k + len / 2] * cwi + im[i + k + len / 2] * cwr;
+        re[i + k] = ur + vr; im[i + k] = ui + vi;
+        re[i + k + len / 2] = ur - vr; im[i + k + len / 2] = ui - vi;
+        const nwr = cwr * wr - cwi * wi; cwi = cwr * wi + cwi * wr; cwr = nwr;
+      }
+    }
+  }
+}
+
+async function analyzeSong(buffer, progress) {
+  const sr = buffer.sampleRate, N = buffer.length, chn = buffer.numberOfChannels;
+  const mono = new Float32Array(N);
+  for (let c = 0; c < chn; c++) {
+    const d = buffer.getChannelData(c);
+    for (let i = 0; i < N; i++) mono[i] += d[i] / chn;
+  }
+  const FRAME = 1024, HOP = 512;
+  const nF = Math.max(1, Math.floor((N - FRAME) / HOP));
+  const fps = sr / HOP;
+  const win = new Float32Array(FRAME);
+  for (let i = 0; i < FRAME; i++) win[i] = 0.5 - 0.5 * Math.cos(2 * Math.PI * i / FRAME);
+  const binHz = sr / FRAME;
+  const loMax = Math.max(2, Math.round(150 / binHz));
+  const midMin = Math.round(1500 / binHz), midMax = Math.min(FRAME / 2 - 1, Math.round(5000 / binHz));
+  const fluxAll = new Float32Array(nF), fluxLo = new Float32Array(nF), fluxMid = new Float32Array(nF);
+  const re = new Float32Array(FRAME), im = new Float32Array(FRAME);
+  let prev = new Float32Array(FRAME / 2), cur = new Float32Array(FRAME / 2);
+  for (let f = 0; f < nF; f++) {
+    const off = f * HOP;
+    for (let i = 0; i < FRAME; i++) { re[i] = mono[off + i] * win[i]; im[i] = 0; }
+    fft(re, im);
+    let sAll = 0, sLo = 0, sMid = 0;
+    for (let b = 1; b < FRAME / 2; b++) {
+      cur[b] = Math.hypot(re[b], im[b]);
+      const d = cur[b] - prev[b];
+      if (d > 0) {
+        sAll += d;
+        if (b <= loMax) sLo += d;
+        else if (b >= midMin && b <= midMax) sMid += d;
+      }
+    }
+    fluxAll[f] = sAll; fluxLo[f] = sLo; fluxMid[f] = sMid;
+    [prev, cur] = [cur, prev];
+    if (f % 1024 === 0) { progress && progress(f / nF); await new Promise(r => setTimeout(r)); }
+  }
+  smoothInPlace(fluxAll, 2); smoothInPlace(fluxLo, 1); smoothInPlace(fluxMid, 1);
+
+  // tempo: autocorrelation of fluxAll, 60–180 BPM, gentle prior around 120
+  let bestLag = 0, bestScore = -1;
+  const minLag = Math.floor(fps * 60 / 180), maxLag = Math.ceil(fps * 60 / 60);
+  for (let lag = minLag; lag <= maxLag; lag++) {
+    let s = 0;
+    for (let t = 0; t + lag < nF; t++) s += fluxAll[t] * fluxAll[t + lag];
+    const bpm = 60 * fps / lag;
+    const prior = Math.exp(-Math.pow((bpm - 120) / 60, 2));
+    s *= (0.75 + 0.25 * prior);
+    if (s > bestScore) { bestScore = s; bestLag = lag; }
+  }
+  // parabolic refinement
+  const yl = acAt(fluxAll, bestLag - 1), y0 = acAt(fluxAll, bestLag), yr = acAt(fluxAll, bestLag + 1);
+  const denom = (yl - 2 * y0 + yr);
+  const delta = denom !== 0 ? 0.5 * (yl - yr) / denom : 0;
+  const period = (bestLag + Math.max(-0.5, Math.min(0.5, delta))) / fps; // seconds/beat
+  const bpm = 60 / period;
+
+  // phase: best comb alignment over one period, 10ms steps
+  let bestPhase = 0, bestPS = -1;
+  for (let p = 0; p < period; p += 0.01) {
+    let s = 0;
+    for (let bt = p; bt < nF / fps; bt += period) {
+      const idx = Math.round(bt * fps);
+      if (idx < nF) s += fluxAll[idx];
+    }
+    if (s > bestPS) { bestPS = s; bestPhase = p; }
+  }
+  const duration = N / sr;
+  const beats = [];
+  for (let bt = bestPhase; bt < duration; bt += period) beats.push(bt);
+
+  const frameT = (f) => (f * HOP + FRAME / 2) / sr;
+  const kicks = pickOnsets(fluxLo, fps, 0.18).map(frameT);
+  const snares = pickOnsets(fluxMid, fps, 0.18).map(frameT);
+  return { bpm, period, beats, kicks, snares, duration, fluxAll, fps };
+}
+function acAt(x, lag) {
+  if (lag < 1) return 0;
+  let s = 0; for (let t = 0; t + lag < x.length; t++) s += x[t] * x[t + lag];
+  return s;
+}
+function smoothInPlace(x, r) {
+  const src = x.slice();
+  for (let i = 0; i < x.length; i++) {
+    let s = 0, c = 0;
+    for (let j = -r; j <= r; j++) { const k = i + j; if (k >= 0 && k < x.length) { s += src[k]; c++; } }
+    x[i] = s / c;
+  }
+}
+function pickOnsets(flux, fps, minGapSec) {
+  const n = flux.length, W = Math.round(fps * 1.2), out = [];
+  let lastPick = -1e9;
+  for (let i = 2; i < n - 2; i++) {
+    if (flux[i] <= flux[i - 1] || flux[i] < flux[i + 1]) continue;   // local max
+    let s = 0, c = 0;
+    for (let j = Math.max(0, i - W); j < Math.min(n, i + W); j++) { s += flux[j]; c++; }
+    const mean = s / c;
+    let v = 0;
+    for (let j = Math.max(0, i - W); j < Math.min(n, i + W); j++) v += Math.pow(flux[j] - mean, 2);
+    const std = Math.sqrt(v / c);
+    if (flux[i] > mean + 1.4 * std && (i - lastPick) / fps >= minGapSec) { out.push(i); lastPick = i; }
+  }
+  return out;
+}
+window.analyzeSong = analyzeSong; // exposed for automated tests
+
+// ---------------- song loading ----------------
+$("song-file").addEventListener("change", async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const ctx = audioCtx(); ctx.resume();
+  $("song-status").textContent = `Decoding ${file.name}…`;
+  try {
+    const buf = await ctx.decodeAudioData(await file.arrayBuffer());
+    $("song-status").textContent = "Analyzing… 0%";
+    const analysis = await analyzeSong(buf, (p) => { $("song-status").textContent = `Analyzing… ${Math.round(p * 100)}%`; });
+    S.song = { name: file.name, buffer: buf, analysis };
+    $("song-status").innerHTML = `<span class="ok">${file.name}</span> — ${analysis.bpm.toFixed(1)} BPM · ${analysis.kicks.length} kicks · ${analysis.snares.length} snares · ${Math.round(analysis.duration)}s`;
+    document.querySelectorAll('#sel-drill option[value^="s:"]').forEach(o => o.disabled = false);
+    drawWave();
+  } catch (err) {
+    $("song-status").textContent = "Could not decode that file: " + err.message;
+  }
+});
+
+const waveCv = $("wave"), waveCx = waveCv.getContext("2d");
+function drawWave(playPos) {
+  const a = S.song && S.song.analysis;
+  const W = waveCv.width, H = waveCv.height;
+  waveCx.clearRect(0, 0, W, H);
+  if (!a) return;
+  const n = a.fluxAll.length;
+  let max = 0; for (let i = 0; i < n; i++) max = Math.max(max, a.fluxAll[i]);
+  waveCx.fillStyle = "#2A3245";
+  const step = Math.max(1, Math.floor(n / W));
+  for (let x = 0; x < W; x++) {
+    let m = 0;
+    for (let j = x * step; j < Math.min(n, (x + 1) * step); j++) m = Math.max(m, a.fluxAll[j]);
+    const h = (m / max) * (H - 24);
+    waveCx.fillRect(x, H - 12 - h, 1, h);
+  }
+  waveCx.fillStyle = "#586074";
+  for (const bt of a.beats) {
+    const x = (bt / a.duration) * W;
+    waveCx.fillRect(x, 0, 1, 5);
+  }
+  waveCx.fillStyle = "#FF6B5C";
+  for (const t of a.kicks) waveCx.fillRect((t / a.duration) * W - 1, H - 8, 2, 5);
+  waveCx.fillStyle = "#FFC24D";
+  for (const t of a.snares) waveCx.fillRect((t / a.duration) * W - 1, 8, 2, 5);
+  if (playPos != null) {
+    waveCx.fillStyle = "#3DD6E8";
+    waveCx.fillRect((playPos / a.duration) * W - 1, 0, 2, H);
+  }
+}
+
+// ---------------- drills ----------------
+const PERFECT_MS = 60, GOOD_MS = 140, DESPAWN_MS = 180;
+const BEATS_TOTAL = 36; // metronome: 4 count-in + 32 scored
+
+$("sel-bpm").addEventListener("input", () => $("bpm-val").textContent = $("sel-bpm").value);
+$("sel-offset").addEventListener("input", () => $("offset-val").textContent = $("sel-offset").value + "ms");
+$("btn-start").addEventListener("click", startDrill);
+
+function buildMetroPattern(drill, beats) {
   const seq = [];
-  for (let b = 4; b < beats; b++) {                 // 1 bar count-in
-    let lane = null;
+  for (let b = 4; b < beats; b++) {
+    let lane;
     if (drill === "pads") lane = b % 2 === 0 ? "padL" : "padR";
     else if (drill === "cuts") lane = b % 2 === 0 ? "cutL" : "cutR";
-    else { // combo: pad, pad, cut, cut
-      lane = ["padL", "padR", "cutL", "cutR"][b % 4];
-    }
-    seq.push({ beat: b, lane, hit: null });
+    else lane = ["padL", "padR", "cutL", "cutR"][b % 4];
+    seq.push({ beat: b, lane });
   }
   return seq;
 }
 
-// ---------- game ----------
-const PERFECT_MS = 60, GOOD_MS = 140, DESPAWN_MS = 180;
-const BEATS_TOTAL = 36; // 4 count-in + 32 scored
+// pick a 32-beat window after the intro; chart real onsets inside it
+function buildSongNotes(kind) {
+  const a = S.song.analysis;
+  const startIdx = a.beats.findIndex(b => b >= a.duration * 0.15);
+  const i0 = Math.max(0, startIdx);
+  const tS = a.beats[i0] ?? 0;
+  const tE = Math.min(tS + 32 * a.period, a.duration - 1);
+  const inWin = (arr) => arr.filter(t => t >= tS && t < tE);
+  let events = [];
+  if (kind === "ride") {
+    events = a.beats.filter(t => t >= tS && t < tE).map((t, i) => ({ t, lane: i % 2 === 0 ? "padL" : "padR" }));
+  } else if (kind === "snares") {
+    events = inWin(a.snares).map((t, i) => ({ t, lane: i % 2 === 0 ? "cutL" : "cutR" }));
+  } else if (kind === "kicks") {
+    events = inWin(a.kicks).map((t, i) => ({ t, lane: i % 2 === 0 ? "padL" : "padR" }));
+  } else { // full: kicks→pads, snares→cuts, merged
+    const k = inWin(a.kicks).map((t, i) => ({ t, lane: i % 2 === 0 ? "padL" : "padR" }));
+    const s = inWin(a.snares).map((t, i) => ({ t, lane: i % 2 === 0 ? "cutL" : "cutR" }));
+    events = k.concat(s).sort((x, y) => x.t - y.t);
+  }
+  // ergonomics: enforce minimum spacing so charts stay human
+  const MIN_GAP = 0.22, out = [];
+  for (const ev of events) if (!out.length || ev.t - out[out.length - 1].t >= MIN_GAP) out.push(ev);
+  return { notes: out, tS, tE };
+}
 
-$("sel-bpm").addEventListener("input", () => $("bpm-val").textContent = $("sel-bpm").value);
-$("sel-offset").addEventListener("input", () => $("offset-val").textContent = $("sel-offset").value + "ms");
-$("btn-start").addEventListener("click", startGame);
+function startDrill() {
+  const ctx = audioCtx(); ctx.resume();
+  stopPlayback();
+  const [mode, kind] = $("sel-drill").value.split(":");
+  const offset = +$("sel-offset").value;
 
-function startGame() {
-  const ctx = audioCtx();
-  ctx.resume();
-  const bpm = +$("sel-bpm").value;
-  const beatMs = 60000 / bpm;
-  // Anchor both clocks at "now": beat 0 happens 500ms from now.
-  const perfNow = performance.now();
-  const audioNow = ctx.currentTime;
-  const t0 = perfNow + 500;                          // perf-clock time of beat 0
-  const audioT0 = audioNow + 0.5;                    // audio-clock time of beat 0
-  S.game = {
-    bpm, beatMs, t0, audioT0,
-    offset: +$("sel-offset").value,
-    click: $("sel-click").checked,
-    notes: buildPattern($("sel-drill").value, BEATS_TOTAL),
-    score: 0, combo: 0, bestCombo: 0,
-    counts: { perfect: 0, good: 0, miss: 0 },
-    nextClick: 0, over: false,
-    fx: [],
-  };
+  if (mode === "m") {
+    const bpm = +$("sel-bpm").value, beatMs = 60000 / bpm;
+    const t0 = performance.now() + 500, audioT0 = ctx.currentTime + 0.5;
+    const notes = buildMetroPattern(kind, BEATS_TOTAL)
+      .map(n => ({ lane: n.lane, tPerf: t0 + n.beat * beatMs + offset, hit: null }));
+    S.game = {
+      notes, score: 0, combo: 0, bestCombo: 0, counts: { perfect: 0, good: 0, miss: 0 },
+      fx: [], over: false,
+      metro: { beatMs, t0, audioT0, next: 0, total: BEATS_TOTAL, click: $("sel-click").checked },
+      endPerf: t0 + BEATS_TOTAL * beatMs + 600,
+    };
+  } else {
+    if (!S.song) return;
+    const { notes, tS, tE } = buildSongNotes(kind);
+    if (!notes.length) { $("ov-sub").textContent = "Analysis found no events in the drill window — try another track."; return; }
+    const LEAD = 2.0;                       // start playback 2 beats-ish early
+    const songStart = Math.max(0, tS - LEAD);
+    const src = ctx.createBufferSource();
+    src.buffer = S.song.buffer;
+    src.connect(ctx.destination);
+    const ctxStart = ctx.currentTime + 0.15;
+    src.start(ctxStart, songStart);
+    S.playing = { src, ctxStart, songStart };
+    // perf-clock time of song position p: perfAt(p) = perfNowBase + (ctxStart - ctxNow + (p - songStart))*1000
+    const base = performance.now() + (ctxStart - ctx.currentTime) * 1000;
+    const perfAt = (p) => base + (p - songStart) * 1000;
+    S.game = {
+      notes: notes.map(n => ({ lane: n.lane, tPerf: perfAt(n.t) + offset, hit: null })),
+      score: 0, combo: 0, bestCombo: 0, counts: { perfect: 0, good: 0, miss: 0 },
+      fx: [], over: false, metro: null,
+      endPerf: perfAt(tE) + 800, songEnd: tE,
+    };
+  }
   $("overlay").classList.add("hidden");
   requestAnimationFrame(frame);
 }
 
-function noteTime(g, n) { return g.t0 + n.beat * g.beatMs + g.offset; }
+function stopPlayback() {
+  if (S.playing) { try { S.playing.src.stop(); } catch (e) {} S.playing = null; }
+}
 
 function gameInput(lane, t) {
   logMonitor("t-game", `${stamp(t)} INPUT ${lane}`);
   const g = S.game;
   if (!g || g.over) return;
-  // earliest unhit note in this lane within the good window
   let best = null, bestErr = Infinity;
   for (const n of g.notes) {
     if (n.hit || n.lane !== lane) continue;
-    const err = t - noteTime(g, n);
+    const err = t - n.tPerf;
     if (Math.abs(err) < Math.abs(bestErr) && err > -GOOD_MS - 20) { best = n; bestErr = err; }
   }
   if (best && Math.abs(bestErr) <= GOOD_MS) {
     const q = Math.abs(bestErr) <= PERFECT_MS ? "perfect" : "good";
-    best.hit = q;
-    g.counts[q]++;
-    g.combo++;
+    best.hit = q; g.counts[q]++; g.combo++;
     g.bestCombo = Math.max(g.bestCombo, g.combo);
     g.score += (q === "perfect" ? 100 : 60) + g.combo * 2;
-    g.fx.push({ lane: LANE_IDX[lane], text: q.toUpperCase(), t: performance.now(), err: bestErr });
+    g.fx.push({ lane: LANE_IDX[lane], text: q.toUpperCase(), t: performance.now() });
     hitSound(q);
   } else {
     g.combo = 0;
-    g.fx.push({ lane: LANE_IDX[lane], text: "…", t: performance.now(), err: 0 });
+    g.fx.push({ lane: LANE_IDX[lane], text: "…", t: performance.now() });
   }
 }
 
-// ---------- render ----------
+// ---------------- render ----------------
 const cv = $("stage"), cx = cv.getContext("2d");
-const HITLINE = 380, SPAWN_Y = -30, FALL_MS = 1800;
+const HITLINE = 360, SPAWN_Y = -30, FALL_MS = 1800;
 
 function frame() {
   const g = S.game;
   if (!g) return;
   const now = performance.now();
 
-  // schedule metronome a beat ahead
-  if (g.click) {
-    const ctx = audioCtx();
-    while (g.nextClick < BEATS_TOTAL) {
-      const at = g.audioT0 + (g.nextClick * g.beatMs) / 1000;
-      if (at < ctx.currentTime + 0.25) { clickAt(Math.max(at, ctx.currentTime), g.nextClick % 4 === 0); g.nextClick++; }
+  if (g.metro && g.metro.click) {
+    const ctx = audioCtx(), m = g.metro;
+    while (m.next < m.total) {
+      const at = m.audioT0 + (m.next * m.beatMs) / 1000;
+      if (at < ctx.currentTime + 0.25) { clickAt(Math.max(at, ctx.currentTime), m.next % 4 === 0); m.next++; }
       else break;
     }
   }
 
-  // misses
   for (const n of g.notes) {
-    if (!n.hit && now - noteTime(g, n) > DESPAWN_MS) {
+    if (!n.hit && now - n.tPerf > DESPAWN_MS) {
       n.hit = "miss"; g.counts.miss++; g.combo = 0;
-      g.fx.push({ lane: LANE_IDX[n.lane], text: "MISS", t: now, err: 0 });
+      g.fx.push({ lane: LANE_IDX[n.lane], text: "MISS", t: now });
       hitSound("miss");
     }
   }
 
   draw(g, now);
+  if (S.playing && S.song) {
+    const ctx = audioCtx();
+    const pos = S.playing.songStart + Math.max(0, ctx.currentTime - S.playing.ctxStart);
+    drawWave(pos);
+  }
 
-  const endT = g.t0 + BEATS_TOTAL * g.beatMs + 600;
-  if (now > endT) { endGame(g); return; }
+  if (now > g.endPerf) { endGame(g); return; }
   requestAnimationFrame(frame);
 }
 
 function draw(g, now) {
   const W = cv.width, H = cv.height, laneW = W / LANES.length;
   cx.clearRect(0, 0, W, H);
-
-  // lanes
   for (let i = 0; i < LANES.length; i++) {
     cx.fillStyle = i % 2 ? "#0D1016" : "#0A0C10";
     cx.fillRect(i * laneW, 0, laneW, H);
-    cx.fillStyle = "#586074";
-    cx.font = "600 13px sans-serif";
-    cx.textAlign = "center";
+    cx.fillStyle = "#586074"; cx.font = "600 13px sans-serif"; cx.textAlign = "center";
     cx.fillText(LANES[i].label, i * laneW + laneW / 2, H - 14);
   }
-  // hit line
   cx.strokeStyle = "#E8ECF4"; cx.globalAlpha = .85; cx.lineWidth = 3;
   cx.beginPath(); cx.moveTo(0, HITLINE); cx.lineTo(W, HITLINE); cx.stroke();
   cx.globalAlpha = 1;
 
-  // count-in
-  const beatNow = (now - g.t0) / g.beatMs;
-  if (beatNow < 4 && beatNow > -1) {
-    cx.fillStyle = "#8A93A8"; cx.font = "800 64px sans-serif";
-    cx.fillText(String(4 - Math.floor(Math.max(beatNow, 0))), W / 2, 120);
+  if (g.metro) {
+    const beatNow = (now - g.metro.t0) / g.metro.beatMs;
+    if (beatNow < 4 && beatNow > -1) {
+      cx.fillStyle = "#8A93A8"; cx.font = "800 64px sans-serif";
+      cx.fillText(String(4 - Math.floor(Math.max(beatNow, 0))), W / 2, 120);
+    }
+  } else if (g.notes.length && now < g.notes[0].tPerf - 400) {
+    cx.fillStyle = "#8A93A8"; cx.font = "700 22px sans-serif";
+    cx.fillText("listen…", W / 2, 110);
   }
 
-  // notes
   for (const n of g.notes) {
-    if (n.hit === "miss" || n.hit === "perfect" || n.hit === "good") continue;
-    const tN = noteTime(g, n);
-    const y = HITLINE - ((tN - now) / FALL_MS) * (HITLINE - SPAWN_Y);
+    if (n.hit) continue;
+    const y = HITLINE - ((n.tPerf - now) / FALL_MS) * (HITLINE - SPAWN_Y);
     if (y < SPAWN_Y || y > HITLINE + 40) continue;
     const i = LANE_IDX[n.lane];
     cx.fillStyle = LANES[i].color;
     const cxn = i * laneW + laneW / 2;
-    if (n.lane === "cutL" || n.lane === "cutR") {   // cut notes are arrows
-      cx.beginPath();
+    if (n.lane === "cutL" || n.lane === "cutR") {
       const dir = n.lane === "cutL" ? -1 : 1;
+      cx.beginPath();
       cx.moveTo(cxn + dir * 26, y); cx.lineTo(cxn - dir * 14, y - 16); cx.lineTo(cxn - dir * 14, y + 16);
       cx.closePath(); cx.fill();
-    } else {                                        // pad notes are pills
-      cx.beginPath();
-      cx.roundRect(cxn - 34, y - 13, 68, 26, 13);
-      cx.fill();
+    } else {
+      cx.beginPath(); cx.roundRect(cxn - 34, y - 13, 68, 26, 13); cx.fill();
     }
   }
 
-  // hud
   cx.textAlign = "left";
   cx.fillStyle = "#E8ECF4"; cx.font = "700 20px sans-serif";
   cx.fillText(g.score, 16, 30);
@@ -587,7 +790,6 @@ function draw(g, now) {
   cx.fillText(`combo ${g.combo}`, 16, 50);
   cx.textAlign = "center";
 
-  // feedback fx
   g.fx = g.fx.filter(f => now - f.t < 600);
   for (const f of g.fx) {
     const a = 1 - (now - f.t) / 600;
@@ -601,6 +803,7 @@ function draw(g, now) {
 
 function endGame(g) {
   g.over = true;
+  stopPlayback();
   const total = g.counts.perfect + g.counts.good + g.counts.miss;
   const acc = total ? Math.round(((g.counts.perfect + g.counts.good * 0.6) / total) * 100) : 0;
   const grade = acc >= 95 ? "S" : acc >= 85 ? "A" : acc >= 70 ? "B" : acc >= 50 ? "C" : "D";
@@ -614,6 +817,7 @@ function endGame(g) {
   $("btn-start").textContent = "Play again";
   $("overlay").classList.remove("hidden");
   S.game = null;
+  drawWave();
 }
 </script>
 </body>
