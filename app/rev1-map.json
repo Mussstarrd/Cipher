@@ -1,0 +1,31 @@
+{
+  "device": "Pioneer DDJ-REV1",
+  "note": "Channels are 0-indexed MIDI channels. verification: 'spike' = measured in Phase 0 spikes on hardware; 'field' = exercised by P0 prototype calibration/drills on hardware; 'presumed' = inferred from sibling deck or DDJ-400-family docs, verify before relying on it.",
+  "jog": {
+    "deckL": {
+      "rotate": { "type": "cc", "ch": 0, "cc": 34, "encoding": "center64", "ticksPerRev": 720, "verification": "spike" },
+      "touch":  { "type": "note", "ch": 0, "note": 54, "verification": "spike" }
+    },
+    "deckR": {
+      "rotate": { "type": "cc", "ch": 1, "cc": 34, "encoding": "center64", "ticksPerRev": 720, "verification": "presumed" },
+      "touch":  { "type": "note", "ch": 1, "note": 54, "verification": "presumed" }
+    }
+  },
+  "mixer": {
+    "crossfader": { "type": "cc", "ch": 6, "cc": 31, "verification": "field" }
+  },
+  "pads": {
+    "deckL": { "type": "note", "ch": 7, "verification": "field" },
+    "deckR": { "type": "note", "ch": 9, "verification": "field" }
+  },
+  "observedUnmapped": {
+    "note": "Status bytes seen in Spike B wiggle capture not yet assigned to named controls: 0x91 (ch1 notes), 0x95 (ch5 notes). Assign during map hardening with the dev Surface Learn tool.",
+    "statusBytes": ["0x91", "0x95"]
+  },
+  "measured": {
+    "jogUpdateRateAvgHz": 340,
+    "jogUpdateRatePeakHz": 660,
+    "timestampGranularityMs": 0.1,
+    "interMessageJitterSdMs": 1.04
+  }
+}
