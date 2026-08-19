@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ScratchTrainer — Phase 0 Spike Harness</title>
+<style>
+  :root {
+    --bg:#0D0F14; --panel:#151923; --panel2:#1C2230; --line:#2A3245;
+    --text:#E8ECF4; --dim:#8A93A8; --cyan:#3DD6E8; --amber:#FFC24D;
+    --lime:#A8E85C; --red:#FF6B5C; --mono:"SF Mono","Cascadia Code",Consolas,monospace;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text);
+    font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; }
+  header { display:flex; align-items:center; gap:14px; padding:14px 22px; border-bottom:1px solid var(--line); }
+  h1 { font-size:16px; margin:0; } h1 .a { color:var(--cyan); }
+  #pill { font-family:var(--mono); font-size:12px; padding:4px 12px; border-radius:99px; border:1px solid var(--line); color:var(--dim); }
+  #pill.ok { border-color:var(--lime); color:var(--lime); }
+  #pill.warn { border-color:var(--amber); color:var(--amber); }
+  .spacer { flex:1; }
+  button { background:var(--panel2); color:var(--text); border:1px solid var(--line); border-radius:8px; padding:8px 14px; font-size:13px; cursor:pointer; }
+  button:hover { border-color:var(--cyan); }
+  button.primary { background:var(--cyan); color:#062026; font-weight:700; border-color:var(--cyan); }
+  button.rec { background:var(--red); color:#fff; border-color:var(--red); }
+  button:disabled { opacity:.4; cursor:default; }
+  nav { display:flex; gap:8px; padding:12px 22px 0; }
+  nav button.tab-on { border-color:var(--cyan); color:var(--cyan); }
+  main { padding:16px 22px 60px; max-width:1000px; margin:0 auto; }
+  section.tab { display:none; }
+  section.tab.on { display:block; }
+  .panel { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:16px 18px; margin-top:14px; }
+  h2 { font-size:13px; letter-spacing:.1em; text-transform:uppercase; color:var(--dim); margin:0 0 10px; }
+  .step { display:flex; gap:10px; align-items:center; margin:8px 0; flex-wrap:wrap; }
+  .step .lbl { min-width:340px; font-size:14px; }
+  .stat { font-family:var(--mono); font-size:12.5px; color:var(--amber); }
+  .ok { color:var(--lime); } .bad { color:var(--red); } .dim { color:var(--dim); }
+  textarea { width:100%; height:180px; background:#0A0C10; color:var(--dim); border:1px solid var(--line); border-radius:8px; font-family:var(--mono); font-size:11px; padding:8px; }
+  pre.small { font-family:var(--mono); font-size:12px; color:var(--dim); white-space:pre-wrap; background:#0A0C10; border:1px solid var(--line); border-radius:8px; padding:10px; max-height:220px; overflow:auto; }
+  p.hint { color:var(--dim); font-size:13px; line-height:1.5; }
+  input[type="range"] { accent-color:var(--cyan); }
+  label { font-size:13px; color:var(--dim); }
+</style>
+</head>
+<body>
+<header>
+  <h1>SCRATCH<span class="a">TRAINER</span> · Phase 0 spikes</h1>
+  <span id="pill">no device</span>
+  <span class="spacer"></span>
+  <button id="btn-connect" class="primary">Connect MIDI</button>
+</header>
+<nav>
+  <button data-tab="B" class="tab-on">B · Serato coexistence</button>
+  <button data-tab="A">A · Jog encoding</button>
+  <button data-tab="C">C · Web Audio scrub</button>
+  <button data-tab="D">D · Timestamps</button>
+</nav>
+<main>
+
+<!-- ================= SPIKE B ================= -->
+<section class="tab on" id="tab-B">
+  <div class="panel">
+    <h2>Protocol — run this FIRST</h2>
+    <p class="hint">1. Open <b>Serato DJ Lite</b> and confirm it is actively controlling the REV1 (move a fader, see Serato respond).<br>
+    2. With Serato still open, click <b>Connect MIDI</b> above and allow the permission.<br>
+    3. Click <b>Start 10-second capture</b> and wiggle knobs/pads on the REV1 the whole time.<br>
+    4. Read the verdict, copy the report. If Chrome gets nothing, run the native probe scripts (see spikes/README.md) with Serato still open, and note their result in the report.</p>
+    <div class="step">
+      <button id="b-start">Start 10-second capture</button>
+      <span class="stat" id="b-status">idle</span>
+    </div>
+    <pre class="small" id="b-out">—</pre>
+    <div class="step"><button id="b-report">Generate report</button><button id="b-copy">Copy</button></div>
+    <textarea id="b-md" placeholder="Report appears here…"></textarea>
+  </div>
+</section>
+
+<!-- ================= SPIKE A ================= -->
+<section class="tab" id="tab-A">
+  <div class="panel">
+    <h2>Protocol — close Serato for this one (clean capture)</h2>
+    <p class="hint">Use the <b>LEFT</b> jog. Each capture: press the red button, do exactly what the label says, press Stop. Repeat all five for the RIGHT jog only if the left looks odd.</p>
+    <div class="step"><span class="lbl">1 · Slow forward — one full revolution, ~3 seconds, platter touched</span><button class="rec" data-cap="slowFwd">Rec</button><span class="stat" id="st-slowFwd">—</span></div>
+    <div class="step"><span class="lbl">2 · Slow reverse — one full revolution, ~3 seconds</span><button class="rec" data-cap="slowRev">Rec</button><span class="stat" id="st-slowRev">—</span></div>
+    <div class="step"><span class="lbl">3 · Aggressive scratch stroke — go hard for ~1 second</span><button class="rec" data-cap="fast">Rec</button><span class="stat" id="st-fast">—</span></div>
+    <div class="step"><span class="lbl">4 · Touch only — touch platter top 1s, release. Do NOT rotate</span><button class="rec" data-cap="touch">Rec</button><span class="stat" id="st-touch">—</span></div>
+    <div class="step"><span class="lbl">5 · Exactly FIVE slow full revolutions (for ticks/rev)</span><button class="rec" data-cap="fiveRev">Rec</button><span class="stat" id="st-fiveRev">—</span></div>
+    <div class="step"><button id="a-analyze">Analyze all captures</button><button id="a-copy">Copy report</button></div>
+    <pre class="small" id="a-out">—</pre>
+    <textarea id="a-md" placeholder="jog_encoding.md content appears here…"></textarea>
+  </div>
+</section>
+
+<!-- ================= SPIKE C ================= -->
+<section class="tab" id="tab-C">
+  <div class="panel">
+    <h2>Protocol</h2>
+    <p class="hint">Click <b>Init audio</b> (builds a synthesized chirp — position is audible as pitch; no copyrighted audio involved). Then touch the LEFT jog and scratch: the sound should track your hand, including reverse. Judge honestly: does pitch bend follow the hand <i>mid-stroke</i>, or does it stutter/lag? Keyboard sim (hold ← / →) exists only to verify the pipeline without hardware — the verdict must come from the jog.</p>
+    <div class="step">
+      <button id="c-init" class="primary">Init audio</button>
+      <label>Sensitivity <input type="range" id="c-sens" min="50" max="1200" value="300" step="25"><span class="stat" id="c-sens-v">300</span> samples/tick</label>
+      <span class="stat" id="c-status">audio not started</span>
+    </div>
+    <pre class="small" id="c-out">—</pre>
+    <div class="step">
+      <label><input type="radio" name="c-verdict" value="smooth"> pitch tracks hand smoothly</label>
+      <label><input type="radio" name="c-verdict" value="steppy"> audible but steppy/zipper</label>
+      <label><input type="radio" name="c-verdict" value="laggy"> laggy / not usable</label>
+    </div>
+    <div class="step"><button id="c-report">Generate report</button><button id="c-copy">Copy</button></div>
+    <textarea id="c-md" placeholder="webaudio_scrub.md content appears here…"></textarea>
+  </div>
+</section>
+
+<!-- ================= SPIKE D ================= -->
+<section class="tab" id="tab-D">
+  <div class="panel">
+    <h2>Protocol</h2>
+    <p class="hint">1. Click <b>Measure clock granularity</b> (no hardware needed).<br>
+    2. Click <b>Start 5-second spin capture</b>, then spin the LEFT jog at a steady medium speed for the whole 5 seconds. Jitter = spread of inter-message intervals at constant speed.</p>
+    <div class="step"><button id="d-gran">Measure clock granularity</button><span class="stat" id="d-gran-out">—</span></div>
+    <div class="step"><button id="d-spin">Start 5-second spin capture</button><span class="stat" id="d-spin-out">—</span></div>
+    <pre class="small" id="d-out">—</pre>
+    <div class="step"><button id="d-report">Generate report</button><button id="d-copy">Copy</button></div>
+    <textarea id="d-md" placeholder="timestamp_precision.md content appears here…"></textarea>
+  </div>
+</section>
+
+</main>
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const hex = b => b.toString(16).padStart(2, "0");
+const env = () => `Chrome UA: ${navigator.userAgent}\nPlatform: ${navigator.platform} · cores: ${navigator.hardwareConcurrency}`;
+
+// ---------- tabs ----------
+document.querySelectorAll("nav button").forEach(b => b.addEventListener("click", () => {
+  document.querySelectorAll("nav button").forEach(x => x.classList.remove("tab-on"));
+  document.querySelectorAll("section.tab").forEach(x => x.classList.remove("on"));
+  b.classList.add("tab-on");
+  $("tab-" + b.dataset.tab).classList.add("on");
+}));
+
+// ---------- midi core ----------
+const M = { midi:null, input:null, listeners:new Set(), deviceNames:[] };
+$("btn-connect").addEventListener("click", async () => {
+  if (!navigator.requestMIDIAccess) { setPill("warn","Web MIDI unsupported"); return; }
+  try { M.midi = await navigator.requestMIDIAccess({sysex:false}); }
+  catch(e){ setPill("warn","permission denied"); return; }
+  M.midi.onstatechange = pickInput;
+  pickInput();
+});
+function pickInput(){
+  M.deviceNames = [...M.midi.inputs.values()].map(i => i.name);
+  let chosen = null, first = null;
+  for (const input of M.midi.inputs.values()) {
+    if (!first) first = input;
+    if (/ddj|rev/i.test(input.name)) { chosen = input; break; }
+  }
+  chosen = chosen || first;
+  if (M.input) M.input.onmidimessage = null;
+  M.input = chosen;
+  if (chosen) { chosen.onmidimessage = onMidi; setPill(/ddj|rev/i.test(chosen.name)?"ok":"warn", chosen.name); }
+  else setPill("warn","no MIDI inputs");
+}
+function setPill(c,t){ const p=$("pill"); p.className=c; p.textContent=t; }
+function onMidi(msg){
+  const ev = { t: msg.timeStamp, bytes: [...msg.data] };
+  for (const fn of M.listeners) fn(ev);
+}
+
+// ================= SPIKE B =================
+let bCap = null;
+$("b-start").addEventListener("click", () => {
+  bCap = { events:0, byStatus:{}, t0: performance.now() };
+  const fn = ev => {
+    bCap.events++;
+    const k = hex(ev.bytes[0]);
+    bCap.byStatus[k] = (bCap.byStatus[k]||0)+1;
+  };
+  M.listeners.add(fn);
+  $("b-status").textContent = "capturing… wiggle the controller";
+  const tick = setInterval(() => {
+    const left = 10 - (performance.now()-bCap.t0)/1000;
+    $("b-status").textContent = `capturing… ${left.toFixed(0)}s left · ${bCap.events} events`;
+    if (left <= 0) {
+      clearInterval(tick); M.listeners.delete(fn);
+      $("b-status").textContent = "done";
+      $("b-out").textContent =
+        `MIDI inputs visible to Chrome: ${M.deviceNames.length ? M.deviceNames.join(" · ") : "NONE"}\n` +
+        `Events received in 10 s: ${bCap.events}\n` +
+        `Status-byte breakdown: ${JSON.stringify(bCap.byStatus)}\n` +
+        `VERDICT: ${bCap.events > 0 ? "Chrome RECEIVES MIDI alongside Serato (coexistence works at this layer)" : "Chrome received NOTHING — run the native probes to isolate OS vs browser"}`;
+    }
+  }, 250);
+});
+$("b-report").addEventListener("click", () => {
+  $("b-md").value = `# Spike B — Serato coexistence
+
+## Environment
+${env()}
+OS (fill in exact version): ______
+Serato DJ Lite version: ______  (confirm it was actively controlling the deck: yes/no)
+
+## Result (harness capture, Serato open)
+${$("b-out").textContent}
+
+## Native probe (only if Chrome got nothing)
+- node native-midi-probe.mjs result: ______
+- python native_midi_probe.py result: ______
+
+## Conclusion
+- [ ] Coexistence works in Chrome → Branch 1 (scoring overlay) viable
+- [ ] Blocked in Chrome, native sees events → MIDI relay bridge (~100 lines) viable
+- [ ] Blocked at OS level → Branch 2 (self-contained) or re-plan
+`;
+});
+$("b-copy").addEventListener("click", () => { $("b-md").select(); document.execCommand("copy"); });
+
+// ================= SPIKE A =================
+const A = { caps:{} };
+document.querySelectorAll("button[data-cap]").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const id = btn.dataset.cap;
+    if (btn.textContent === "Rec") {
+      A.caps[id] = { events:[], t0: performance.now() };
+      const fn = ev => A.caps[id].events.push(ev);
+      A.caps[id].fn = fn; M.listeners.add(fn);
+      btn.textContent = "Stop";
+      $("st-"+id).textContent = "recording…";
+    } else {
+      const cap = A.caps[id];
+      cap.dur = (performance.now() - cap.t0)/1000;
+      M.listeners.delete(cap.fn);
+      btn.textContent = "Rec";
+      $("st-"+id).textContent = `${cap.events.length} events in ${cap.dur.toFixed(1)}s`;
+    }
+  });
+});
+
+function ccGroups(events){
+  const g = {};
+  for (const ev of events) {
+    const [s,d1,d2] = ev.bytes;
+    if ((s & 0xF0) !== 0xB0) continue;
+    const k = `ch${(s&0x0F)+1}:cc${d1}`;
+    (g[k] = g[k] || { vals:[], ts:[], ch:s&0x0F, cc:d1 }).vals.push(d2);
+    g[k].ts.push(ev.t);
+  }
+  return g;
+}
+function dominant(g){
+  let best=null; for (const k in g) if (!best || g[k].vals.length > g[best].vals.length) best=k;
+  return best;
+}
+function summarize(vals){
+  const sorted=[...vals].sort((a,b)=>a-b);
+  const counts={}; vals.forEach(v=>counts[v]=(counts[v]||0)+1);
+  const top=Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([v,c])=>`${v}×${c}`).join(" ");
+  return { min:sorted[0], max:sorted[sorted.length-1], median:sorted[Math.floor(sorted.length/2)], top };
+}
+function decodeSum(vals, mode){
+  let s=0;
+  for (const v of vals) s += Math.abs(mode==="center64" ? v-64 : (v<64 ? v : v-128));
+  return s;
+}
+function classify(vals){
+  const s = summarize(vals);
+  const nearCenter = vals.filter(v=>v>=56&&v<=72).length/vals.length;
+  const nearEdges = vals.filter(v=>v<=8||v>=120).length/vals.length;
+  if (nearCenter > 0.9) return "center-64 offset (values hug 64±)";
+  if (nearEdges > 0.9) return "two's-complement style (small values fwd, 120s reverse)";
+  return `UNCLEAR — inspect raw (median ${s.median}, range ${s.min}–${s.max})`;
+}
+
+$("a-analyze").addEventListener("click", () => {
+  const need = ["slowFwd","slowRev","fast","touch","fiveRev"];
+  const missing = need.filter(k => !A.caps[k] || !A.caps[k].events.length);
+  let out = "", raw = "";
+  if (missing.length) out += `MISSING captures: ${missing.join(", ")} — results below are partial.\n\n`;
+
+  for (const id of need) {
+    const cap = A.caps[id]; if (!cap || !cap.events.length) continue;
+    raw += `--- ${id} (${cap.dur.toFixed(2)}s) ---\n` +
+      cap.events.slice(0,400).map(e=>`${e.t.toFixed(2)} [${e.bytes.map(hex).join(" ")}]`).join("\n") +
+      (cap.events.length>400 ? `\n…${cap.events.length-400} more` : "") + "\n";
+  }
+
+  const gFwd = A.caps.slowFwd ? ccGroups(A.caps.slowFwd.events) : {};
+  const domK = dominant(gFwd);
+  if (domK) {
+    const dom = gFwd[domK];
+    const sFwd = summarize(dom.vals);
+    out += `Q1 ENCODING — dominant rotation CC: ${domK} (${dom.vals.length} msgs)\n`;
+    out += `  slowFwd values: median ${sFwd.median}, range ${sFwd.min}–${sFwd.max}, top: ${sFwd.top}\n`;
+    const gRev = A.caps.slowRev ? ccGroups(A.caps.slowRev.events) : {};
+    if (gRev[domK]) { const sRev = summarize(gRev[domK].vals);
+      out += `  slowRev values: median ${sRev.median}, range ${sRev.min}–${sRev.max}, top: ${sRev.top}\n`; }
+    out += `  inference: ${classify(dom.vals.concat(gRev[domK]?gRev[domK].vals:[]))}\n\n`;
+
+    out += `Q2 MSB/LSB — CC counts alongside ${domK} in slowFwd:\n`;
+    for (const k in gFwd) out += `  ${k}: ${gFwd[k].vals.length} msgs\n`;
+    const pair = gFwd[`ch${dom.ch+1}:cc${dom.cc+32}`];
+    out += pair ? `  cc${dom.cc}+cc${dom.cc+32} pair present → likely 14-bit MSB/LSB\n\n`
+                : `  no cc+32 companion → single 7-bit CC\n\n`;
+  } else out += "Q1/Q2: no rotation CC captured.\n\n";
+
+  if (A.caps.touch) {
+    const notes = A.caps.touch.events.filter(e => (e.bytes[0]&0xF0)===0x90 || (e.bytes[0]&0xF0)===0x80)
+      .map(e => `${(e.bytes[0]&0xF0)===0x90&&e.bytes[2]>0?"ON":"OFF"} ch${(e.bytes[0]&0x0F)+1} n${e.bytes[1]}`);
+    const tCC = ccGroups(A.caps.touch.events);
+    out += `Q3 TOUCH — note events during touch-only: ${notes.length ? notes.join(", ") : "none"}\n`;
+    out += `  CCs during touch-only: ${Object.keys(tCC).map(k=>`${k}(${tCC[k].vals.length})`).join(" ") || "none"}\n\n`;
+  }
+
+  if (A.caps.fiveRev && domK) {
+    const g5 = ccGroups(A.caps.fiveRev.events);
+    if (g5[domK]) {
+      const v = g5[domK].vals;
+      out += `Q4 TICKS/REV (5 revolutions, ${v.length} msgs on ${domK}):\n`;
+      out += `  center-64 decode: ${(decodeSum(v,"center64")/5).toFixed(0)} ticks/rev\n`;
+      out += `  two's-comp decode: ${(decodeSum(v,"twos")/5).toFixed(0)} ticks/rev\n`;
+      out += `  (trust the decode matching Q1's inference)\n\n`;
+    }
+  }
+
+  if (A.caps.fast && domK) {
+    const gF = ccGroups(A.caps.fast.events);
+    if (gF[domK]) {
+      const n = gF[domK].vals.length, d = A.caps.fast.dur;
+      const ts = gF[domK].ts;
+      let peak = 0;
+      for (let i=0;i<ts.length;i++){ let j=i; while(j<ts.length && ts[j]-ts[i]<=100) j++; peak=Math.max(peak,j-i); }
+      out += `Q5 UPDATE RATE — aggressive stroke: ${(n/d).toFixed(0)} msgs/s average, peak ${peak*10} msgs/s (best 100 ms window)\n`;
+      out += `  → ${peak*10 >= 400 ? "velocity-envelope scoring plausible" : peak*10 >= 150 ? "borderline — prototype velocity scoring before committing" : "LOW: score stroke extent + direction changes only (brief's fallback)"}\n`;
+    }
+  }
+
+  $("a-out").textContent = out;
+  $("a-md").value = `# Spike A — Jog wheel encoding\n\n## Environment\n${env()}\n\n## Findings\n\`\`\`\n${out}\`\`\`\n\n## Raw capture log\n\`\`\`\n${raw}\`\`\`\n`;
+});
+$("a-copy").addEventListener("click", () => { $("a-md").select(); document.execCommand("copy"); });
+
+// ================= SPIKE C =================
+const C = { ctx:null, node:null, seq:0, rtts:[], sens:300 };
+$("c-sens").addEventListener("input", () => { C.sens = +$("c-sens").value; $("c-sens-v").textContent = C.sens; });
+
+const WORKLET = `
+class Scrub extends AudioWorkletProcessor {
+  constructor(){
+    super();
+    this.buf = null; this.pos = 0; this.target = 0;
+    this.port.onmessage = e => {
+      const m = e.data;
+      if (m.buf) { this.buf = m.buf; this.pos = 0; this.target = 0; }
+      else if (m.delta !== undefined) {
+        this.target = Math.max(0, this.target + m.delta);
+        if (m.seq !== undefined) this.port.postMessage({ ack: m.seq });
+      } else if (m.reset) { this.target = this.pos; }
+    };
+  }
+  process(_, outputs){
+    const out = outputs[0][0];
+    if (!this.buf) { out.fill(0); return true; }
+    for (let i = 0; i < out.length; i++) {
+      this.pos += (this.target - this.pos) * 0.015;   // light hand-tracking smoothing
+      const p = Math.max(0, Math.min(this.buf.length - 2, this.pos));
+      const i0 = p | 0, fr = p - i0;
+      out[i] = this.buf[i0] * (1 - fr) + this.buf[i0 + 1] * fr;
+    }
+    return true;
+  }
+}
+registerProcessor("scrub", Scrub);
+`;
+
+function makeScrubBuffer(sr) {
+  // synthesized scrub source: rising chirp with tremolo — position is audible as pitch
+  const dur = 2.0, buf = new Float32Array(sr * dur);
+  let phase = 0;
+  for (let i = 0; i < buf.length; i++) {
+    const f = 180 + 700 * (i / buf.length);
+    phase += 2 * Math.PI * f / sr;
+    buf[i] = 0.35 * Math.sin(phase) * (0.65 + 0.35 * Math.sin(2 * Math.PI * 3 * i / sr));
+  }
+  return buf;
+}
+
+$("c-init").addEventListener("click", async () => {
+  const ctx = C.ctx = new (window.AudioContext||window.webkitAudioContext)({ latencyHint: "interactive" });
+  await ctx.resume();
+  C.pending = {};
+  const buf = makeScrubBuffer(ctx.sampleRate);
+  try {
+    const url = URL.createObjectURL(new Blob([WORKLET], { type: "application/javascript" }));
+    await ctx.audioWorklet.addModule(url);
+    C.node = new AudioWorkletNode(ctx, "scrub", { outputChannelCount: [1] });
+    C.node.connect(ctx.destination);
+    C.node.port.postMessage({ buf }, [buf.buffer]);
+    C.node.port.onmessage = e => {
+      if (e.data.ack !== undefined && C.pending[e.data.ack] !== undefined) {
+        C.rtts.push(performance.now() - C.pending[e.data.ack]);
+        delete C.pending[e.data.ack];
+        if (C.rtts.length % 50 === 0) renderCStats();
+      }
+    };
+    C.engine = "worklet";
+    C.sendDelta = (delta) => {
+      C.seq++; C.pending[C.seq] = performance.now();
+      C.node.port.postMessage({ delta, seq: C.seq });
+    };
+  } catch (e) {
+    // file:// pages can refuse blob worklet modules — fall back to ScriptProcessor.
+    // Serve over http://localhost (python3 -m http.server) for the worklet path.
+    const sp = ctx.createScriptProcessor(512, 0, 1);
+    const st = { pos: 0, target: 0 };
+    sp.onaudioprocess = (ev) => {
+      const out = ev.outputBuffer.getChannelData(0);
+      for (let i = 0; i < out.length; i++) {
+        st.pos += (st.target - st.pos) * 0.015;
+        const p = Math.max(0, Math.min(buf.length - 2, st.pos));
+        const i0 = p | 0, fr = p - i0;
+        out[i] = buf[i0] * (1 - fr) + buf[i0 + 1] * fr;
+      }
+    };
+    sp.connect(ctx.destination);
+    C.node = sp;
+    C.engine = "scriptprocessor (fallback — serve via http://localhost for the worklet path)";
+    C.spBlock = 512 / ctx.sampleRate * 1000;
+    C.sendDelta = (delta) => { st.target = Math.max(0, st.target + delta); };
+  }
+  const fn = ev => {
+    const [s,d1,d2] = ev.bytes;
+    if ((s & 0xF0) !== 0xB0) return;
+    // treat any strongly-active CC as the jog while the harness runs (analysis of WHICH cc is Spike A's job)
+    const delta = (d2 - 64);
+    if (delta === 0 || Math.abs(delta) > 32) return;   // ignore abs-position controls slamming
+    C.sendDelta(delta * C.sens);
+  };
+  M.listeners.add(fn);
+  $("c-status").textContent = `audio live (${C.engine.split(" ")[0]}) — scratch the LEFT jog (or hold ←/→ to sim)`;
+  renderCStats();
+});
+function renderCStats(){
+  if (!C.ctx) return;
+  const rt = C.rtts.slice(-200);
+  const mean = rt.length ? rt.reduce((a,b)=>a+b,0)/rt.length : 0;
+  const isWk = C.engine === "worklet";
+  const block = isWk ? 128 / C.ctx.sampleRate * 1000 : (C.spBlock || 11.6);
+  $("c-out").textContent =
+`engine: ${C.engine || "not started"}
+AudioContext sampleRate: ${C.ctx.sampleRate} Hz
+baseLatency:   ${(C.ctx.baseLatency*1000).toFixed(1)} ms
+outputLatency: ${((C.ctx.outputLatency||0)*1000).toFixed(1)} ms
+processing block: ${block.toFixed(2)} ms
+${isWk ? `main-thread → worklet round-trip: mean ${mean.toFixed(2)} ms over ${rt.length} msgs` : "round-trip: n/a on ScriptProcessor path"}
+estimated motion→sound: outputLatency + block ${isWk ? "+ ~half round-trip " : ""}≈ ${(((C.ctx.outputLatency||C.ctx.baseLatency)*1000) + block + (isWk ? mean/2 : 0)).toFixed(1)} ms  (excludes USB/MIDI-stack time — Spike D covers input-side jitter)`;
+}
+// keyboard sim (pipeline verification only)
+let simTimer = null, simDir = 0;
+document.addEventListener("keydown", e => {
+  if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+  simDir = e.key === "ArrowRight" ? 1 : -1;
+  if (!simTimer && C.sendDelta) simTimer = setInterval(() => C.sendDelta(simDir * 2 * C.sens), 8);
+});
+document.addEventListener("keyup", e => {
+  if (e.key === "ArrowLeft" || e.key === "ArrowRight") { clearInterval(simTimer); simTimer = null; }
+});
+$("c-report").addEventListener("click", () => {
+  renderCStats();
+  const v = document.querySelector('input[name="c-verdict"]:checked');
+  $("c-md").value = `# Spike C — Web Audio scrub viability\n\n## Environment\n${env()}\n\n## Measured\n\`\`\`\n${$("c-out").textContent}\n\`\`\`\n\n## Human verdict (jog, not keyboard)\n${v ? v.value : "NOT RECORDED — pick one in the harness"}\n\nNotes on feel (fill in): ______\n\n## Conclusion\n- [ ] usable for learning\n- [ ] usable only for slow strokes\n- [ ] not usable — Branch 2 dead if Spike B also failed\n`;
+});
+$("c-copy").addEventListener("click", () => { $("c-md").select(); document.execCommand("copy"); });
+
+// ================= SPIKE D =================
+$("d-gran").addEventListener("click", () => {
+  let min = Infinity, last = performance.now(), n = 0;
+  const t0 = last;
+  while (performance.now() - t0 < 200) {
+    const t = performance.now();
+    if (t > last) { min = Math.min(min, t - last); last = t; n++; }
+  }
+  $("d-gran-out").textContent = `performance.now() granularity ≈ ${min.toFixed(4)} ms (${n} distinct steps in 200 ms)`;
+});
+let dCap = null;
+$("d-spin").addEventListener("click", () => {
+  dCap = { events: [] };
+  const fn = ev => { if ((ev.bytes[0]&0xF0)===0xB0) dCap.events.push(ev.t); };
+  M.listeners.add(fn);
+  $("d-spin-out").textContent = "capturing 5 s — spin steadily…";
+  setTimeout(() => {
+    M.listeners.delete(fn);
+    const ts = dCap.events;
+    if (ts.length < 20) { $("d-spin-out").textContent = `only ${ts.length} events — spin faster and retry`; return; }
+    const dts = []; for (let i=1;i<ts.length;i++) dts.push(ts[i]-ts[i-1]);
+    dts.sort((a,b)=>a-b);
+    const mean = dts.reduce((a,b)=>a+b,0)/dts.length;
+    const sd = Math.sqrt(dts.reduce((a,b)=>a+(b-mean)**2,0)/dts.length);
+    const p = q => dts[Math.floor(q*dts.length)];
+    const uniq = [...new Set(ts.map(t => +(t % 1).toFixed(3)))].length;
+    $("d-spin-out").textContent = "done";
+    $("d-out").textContent =
+`inter-message intervals over ${ts.length} CC msgs:
+mean ${mean.toFixed(2)} ms · sd ${sd.toFixed(2)} ms · p5 ${p(0.05).toFixed(2)} · p50 ${p(0.5).toFixed(2)} · p95 ${p(0.95).toFixed(2)} ms
+distinct sub-ms fractional values seen: ${uniq} ${uniq <= 3 ? "(timestamps look QUANTIZED)" : "(timestamps look fine-grained)"}
+read: sd is an upper bound on input jitter (includes real hand speed variation).
+vs ±60 ms PERFECT window: ${sd < 10 ? "comfortably fine" : sd < 25 ? "fine" : "investigate before tightening windows"}`;
+  }, 5000);
+});
+$("d-report").addEventListener("click", () => {
+  $("d-md").value = `# Spike D — Timestamp precision\n\n## Environment\n${env()}\n\n## Measured\n\`\`\`\n${$("d-gran-out").textContent}\n${$("d-out").textContent}\n\`\`\`\n\n## Conclusion vs ±60 ms windows\n(fill in after reading numbers)\n`;
+});
+$("d-copy").addEventListener("click", () => { $("d-md").select(); document.execCommand("copy"); });
+</script>
+</body>
+</html>
