@@ -93,12 +93,12 @@
         <div class="stars" id="stars-baby">☆☆☆</div>
         <button class="primary" id="btn-baby">Train</button>
       </div>
-      <div class="card locked">
+      <div class="card" id="card-chirp">
         <span class="tag">Scratching · Level 2</span>
         <h3>Chirp</h3>
-        <div class="desc">Push, cut, return, open — the fader joins the stroke. Unlocks after Baby Scratch.</div>
-        <div class="stars">☆☆☆</div>
-        <button disabled>Milestone 2</button>
+        <div class="desc">The fader joins the stroke: push forward, cut closed, then open exactly as you pull back. Two clean chirps per cycle.</div>
+        <div class="stars" id="stars-chirp">☆☆☆</div>
+        <button class="primary" id="btn-chirp">Train</button>
       </div>
       <div class="card locked">
         <span class="tag">Scratching · Level 3</span>
@@ -132,6 +132,7 @@
       <label>BPM <input type="range" id="bpm" min="60" max="110" value="85" step="5"><span id="bpm-v" style="font-family:var(--mono)">85</span></label>
       <label>Metronome <input type="checkbox" id="click-on" checked></label>
       <label>Feel trim <input type="range" id="trim" min="-150" max="150" value="0" step="10"><span id="trim-v" style="font-family:var(--mono)">0ms</span></label>
+      <label>Cut side <select id="cutside"><option value="R">right</option><option value="L">left</option></select></label>
       <span class="pill" id="pill-jog">jog: waiting</span>
       <span class="pill" id="dbg" style="min-width:220px">stroke debug</span>
     </div>
@@ -306,7 +307,7 @@ function onMidi(msg) {
       }
       return;
     }
-    if (ch === MAP.crossfader.ch && d1 === MAP.crossfader.cc) { mon("c", `xfader ${d2}`); return; }
+    if (ch === MAP.crossfader.ch && d1 === MAP.crossfader.cc) { faderCC(d2, t); return; }
     mon("c", `CC ch${ch + 1} #${d1} = ${d2}`);
   } else if (type === 0x90 || type === 0x80) {
     const on = type === 0x90 && d2 > 0;
@@ -414,22 +415,52 @@ const D = { running: false, targets: [], t0: 0, beatMs: 0, score: 0, combo: 0, b
             counts: { perfect: 0, good: 0, miss: 0 }, extHints: { short: 0, long: 0 }, fx: [],
             metro: null, endPerf: 0, lastHit: null, trim: 0 };
 
-$("btn-baby").addEventListener("click", () => {
+const DRILLS = {
+  baby: {
+    title: "Baby Scratch",
+    sub: 'Hand rests on the LEFT jog the whole time. Each arrow = one quick SNAP of about an 1/8 turn (~150–250 ms), then hold still until the next arrow. Blue ▲: snap forward exactly as the arrow head crosses the line. Magenta ▼: snap back on the "and". Not a slow drag — snap, stop, wait. 1 bar count-in, 16 beats scored.',
+  },
+  chirp: {
+    title: "Chirp",
+    sub: "Start with the fader OPEN. Blue ▲: snap forward on the beat. Amber ◆ (filled): CUT the fader closed on the next half-beat. Then, together on the next beat: OPEN the fader (hollow ◆) at the same moment you snap back (▼). Rest half a beat, repeat. Two chirps per 2-beat cycle, 8 cycles.",
+  },
+};
+function openDrill(kind) {
   if (latencyOffset === null) { $("modal").classList.add("on"); return; }  // calibration is non-optional
+  D.kind = kind;
+  $("ov-title").textContent = DRILLS[kind].title;
+  $("ov-sub").textContent = DRILLS[kind].sub;
+  $("ov-stars").classList.add("hidden");
+  $("ov-stats").classList.add("hidden");
+  $("btn-start").textContent = "Start";
   $("home").classList.add("off"); $("drill").classList.add("on");
   drawIdle();
-});
+}
+$("btn-baby").addEventListener("click", () => openDrill("baby"));
+$("btn-chirp").addEventListener("click", () => openDrill("chirp"));
 $("btn-back").addEventListener("click", () => { stopDrill(); $("drill").classList.remove("on"); $("home").classList.remove("off"); });
 $("bpm").addEventListener("input", () => $("bpm-v").textContent = $("bpm").value);
 $("trim").addEventListener("input", () => { D.trim = +$("trim").value; $("trim-v").textContent = D.trim + "ms"; });
+$("cutside").value = store.get("cutSide", "R");
+$("cutside").addEventListener("change", () => store.set("cutSide", $("cutside").value));
 $("btn-start").addEventListener("click", startDrill);
 
-function buildTargets(t0, beatMs) {
-  // 1 bar count-in, then 16 beats: forward ON the beat, back on the "and"
+function buildTargets(kind, t0, beatMs) {
   const out = [];
-  for (let b = 4; b < 20; b++) {
-    out.push({ tPerf: t0 + b * beatMs, dir: +1, hit: null });
-    out.push({ tPerf: t0 + (b + 0.5) * beatMs, dir: -1, hit: null });
+  if (kind === "baby") {
+    // 1 bar count-in, then 16 beats: forward ON the beat, back on the "and"
+    for (let b = 4; b < 20; b++) {
+      out.push({ tPerf: t0 + b * beatMs, type: "stroke", dir: +1, hit: null });
+      out.push({ tPerf: t0 + (b + 0.5) * beatMs, type: "stroke", dir: -1, hit: null });
+    }
+  } else { // chirp: 2-beat cycle — fwd @ beat, close @ +0.5, open+back together @ +1
+    for (let c = 0; c < 8; c++) {
+      const b = 4 + c * 2;
+      out.push({ tPerf: t0 + b * beatMs, type: "stroke", dir: +1, hit: null });
+      out.push({ tPerf: t0 + (b + 0.5) * beatMs, type: "gate", gate: "close", hit: null });
+      out.push({ tPerf: t0 + (b + 1) * beatMs, type: "gate", gate: "open", hit: null });
+      out.push({ tPerf: t0 + (b + 1) * beatMs, type: "stroke", dir: -1, hit: null });
+    }
   }
   return out;
 }
@@ -440,7 +471,7 @@ async function startDrill() {
   const t0 = performance.now() + 600;
   const audioT0 = ctx.currentTime + 0.6;
   Object.assign(D, {
-    running: true, t0, beatMs, targets: buildTargets(t0, beatMs),
+    running: true, t0, beatMs, targets: buildTargets(D.kind || "baby", t0, beatMs),
     score: 0, combo: 0, bestCombo: 0, counts: { perfect: 0, good: 0, miss: 0 },
     extHints: { short: 0, long: 0 }, fx: [],
     metro: { audioT0, next: 0, total: 20, on: $("click-on").checked },
@@ -460,7 +491,7 @@ function strokeStartEvent(s) {
   const tAdj = s.t0 - effOffset();
   let best = null, bestErr = Infinity;
   for (const tg of D.targets) {
-    if (tg.hit || tg.dir !== s.dir) continue;
+    if (tg.hit || tg.type !== "stroke" || tg.dir !== s.dir) continue;
     const err = tAdj - tg.tPerf;
     if (Math.abs(err) < Math.abs(bestErr)) { best = tg; bestErr = err; }
   }
@@ -498,6 +529,44 @@ function strokeEndEvent(s) {
   D.lastHit = null;
 }
 function setDebug(t) { const el = $("dbg"); if (el) el.textContent = t; }
+
+// ---- crossfader gate tracking (hysteresis; "cut side" = where closed is) ----
+const fader = { state: "open", v: 64 };
+function faderCC(v, t) {
+  fader.v = v;
+  const side = store.get("cutSide", "R");
+  const isClosed = side === "R" ? v >= 104 : v <= 23;
+  const isOpen = side === "R" ? v <= 88 : v >= 39;
+  if (fader.state !== "closed" && isClosed) { fader.state = "closed"; gateEvent("close", t); }
+  else if (fader.state !== "open" && isOpen) { fader.state = "open"; gateEvent("open", t); }
+}
+function gateEvent(kind, t) {
+  mon("c", `fader ${kind}`);
+  if (!D.running) { setDebug(`fader ${kind}`); return; }
+  const tAdj = t - effOffset();
+  let best = null, bestErr = Infinity;
+  for (const tg of D.targets) {
+    if (tg.hit || tg.type !== "gate" || tg.gate !== kind) continue;
+    const err = tAdj - tg.tPerf;
+    if (Math.abs(err) < Math.abs(bestErr)) { best = tg; bestErr = err; }
+  }
+  const errTxt = best ? `${bestErr >= 0 ? "+" : ""}${Math.round(bestErr)}ms` : "no target";
+  if (!best || Math.abs(bestErr) > WIN_MATCH) { D.combo = 0; addFx("…", 0); setDebug(`fader ${kind} · ${errTxt} · no match`); return; }
+  if (Math.abs(bestErr) > WIN_G) {
+    best.hit = "miss"; D.counts.miss++; D.combo = 0;
+    addFx(bestErr > 0 ? "LATE" : "EARLY", 0); blip("miss");
+    setDebug(`fader ${kind} · ${errTxt} · outside window`);
+    return;
+  }
+  const timing = Math.abs(bestErr) <= WIN_P ? "perfect" : "good";
+  best.hit = timing;
+  D.counts[timing]++;
+  D.combo++; D.bestCombo = Math.max(D.bestCombo, D.combo);
+  D.score += (timing === "perfect" ? 100 : 60) + D.combo * 2;
+  addFx(timing.toUpperCase(), 0);
+  blip(timing);
+  setDebug(`fader ${kind} · ${errTxt} · ${timing.toUpperCase()}`);
+}
 function touchEvent(e) { setPill("pill-jog", e.on ? "ok" : "warn", e.on ? "jog: touched" : "jog: released"); }
 function addFx(text, dir) { D.fx.push({ text, dir, t: performance.now() }); }
 
@@ -545,6 +614,7 @@ function draw(now) {
   cx.fillStyle = "#586074"; cx.font = "600 12px sans-serif"; cx.textAlign = "center";
   cx.fillText("FWD ▲", LANE_X + LANE_W * 0.28, H - 12);
   cx.fillText("BACK ▼", LANE_X + LANE_W * 0.72, H - 12);
+  if (D.kind === "chirp") cx.fillText("FADER ◆", LANE_X + LANE_W * 0.5, H - 12);
 
   // count-in
   const beatNow = (now - D.t0) / D.beatMs;
@@ -559,6 +629,16 @@ function draw(now) {
     if (tg.hit) continue;
     const y = HITY - ((tg.tPerf - now) / FALL) * (HITY - SPAWN);
     if (y < SPAWN - 40 || y > HITY + 50) continue;
+    if (tg.type === "gate") {
+      // fader gate diamonds: filled = cut closed, hollow = open
+      const x = LANE_X + LANE_W * 0.5;
+      cx.beginPath();
+      cx.moveTo(x, y - 15); cx.lineTo(x + 15, y); cx.lineTo(x, y + 15); cx.lineTo(x - 15, y);
+      cx.closePath();
+      if (tg.gate === "close") { cx.fillStyle = "#FFC24D"; cx.fill(); }
+      else { cx.strokeStyle = "#A8E85C"; cx.lineWidth = 3.5; cx.stroke(); }
+      continue;
+    }
     const bodyLen = (bodyMs / FALL) * (HITY - SPAWN);
     const x = tg.dir > 0 ? LANE_X + LANE_W * 0.28 : LANE_X + LANE_W * 0.72;
     cx.fillStyle = tg.dir > 0 ? "#3DD6E8" : "#FF5CA8";
@@ -585,7 +665,7 @@ function draw(now) {
     cx.fillStyle = f.text.startsWith("PERFECT") ? "#A8E85C" : f.text.startsWith("GOOD") ? "#FFC24D" :
                    f.text === "MISS" ? "#FF6B5C" : "#8A93A8";
     cx.font = "800 17px sans-serif";
-    const x = f.dir > 0 ? LANE_X + LANE_W * 0.28 : LANE_X + LANE_W * 0.72;
+    const x = LANE_X + LANE_W * (f.dir > 0 ? 0.28 : f.dir < 0 ? 0.72 : 0.5);
     cx.fillText(f.text, x, HITY - 30 - (1 - a) * 22);
     cx.globalAlpha = 1;
   }
@@ -616,8 +696,9 @@ function endDrill() {
   const total = D.counts.perfect + D.counts.good + D.counts.miss;
   const acc = total ? Math.round(((D.counts.perfect + D.counts.good * 0.6) / total) * 100) : 0;
   const stars = acc >= 93 ? 3 : acc >= 80 ? 2 : acc >= 60 ? 1 : 0;
-  if (stars > bestStars) { bestStars = stars; store.set("stars.baby", stars); }
-  $("stars-baby").textContent = "★".repeat(bestStars) + "☆".repeat(3 - bestStars);
+  const key = "stars." + (D.kind || "baby");
+  if (stars > store.get(key, 0)) store.set(key, stars);
+  refreshCards();
   $("ov-title").textContent = stars === 3 ? "Flawless arcs." : stars === 2 ? "Getting sharp." : stars === 1 ? "It's coming." : "Run it back.";
   $("ov-stars").textContent = "★".repeat(stars) + "☆".repeat(3 - stars);
   $("ov-stars").classList.remove("hidden");
@@ -631,11 +712,27 @@ function endDrill() {
   $("overlay").classList.remove("hidden");
 }
 
-// init stars display
-$("stars-baby").textContent = "★".repeat(bestStars) + "☆".repeat(3 - bestStars);
+// stars display
+function refreshCards() {
+  for (const k of ["baby", "chirp"]) {
+    const el = $("stars-" + k);
+    if (el) { const s = store.get("stars." + k, 0); el.textContent = "★".repeat(s) + "☆".repeat(3 - s); }
+  }
+}
+refreshCards();
+
+// keyboard fader fallback (dev): hold C = fader cut closed, release = open
+document.addEventListener("keydown", (e) => {
+  if (e.repeat || e.target.tagName === "INPUT") return;
+  if (e.key.toLowerCase() === "c") gateEvent("close", performance.now());
+});
+document.addEventListener("keyup", (e) => {
+  if (e.target.tagName === "INPUT") return;
+  if (e.key.toLowerCase() === "c") gateEvent("open", performance.now());
+});
 
 // test hooks (headless verification only)
-window.__st = { engine, StrokeEngine, D, startDrill, get latencyOffset() { return latencyOffset; }, setOffset(v) { latencyOffset = v; store.set("latencyOffset", v); renderCalPill(); } };
+window.__st = { engine, StrokeEngine, D, startDrill, openDrill, gateEvent, get latencyOffset() { return latencyOffset; }, setOffset(v) { latencyOffset = v; store.set("latencyOffset", v); renderCalPill(); } };
 </script>
 </body>
 </html>
