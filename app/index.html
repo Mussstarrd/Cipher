@@ -131,7 +131,9 @@
       <button id="btn-back">← Drills</button>
       <label>BPM <input type="range" id="bpm" min="60" max="110" value="85" step="5"><span id="bpm-v" style="font-family:var(--mono)">85</span></label>
       <label>Metronome <input type="checkbox" id="click-on" checked></label>
+      <label>Feel trim <input type="range" id="trim" min="-150" max="150" value="0" step="10"><span id="trim-v" style="font-family:var(--mono)">0ms</span></label>
       <span class="pill" id="pill-jog">jog: waiting</span>
+      <span class="pill" id="dbg" style="min-width:220px">stroke debug</span>
     </div>
     <div id="stagewrap">
       <canvas id="stage" width="860" height="470"></canvas>
@@ -206,8 +208,8 @@ function mon(cls, text) {
 // message rate), 720 ticks/rev, touch gate note, ≥3-tick debounce.
 // =====================================================================
 class StrokeEngine {
-  constructor({ debounce = 3, stallMs = 110, minExtent = 10, binMs = 15, onStroke = () => {}, onTouch = () => {} } = {}) {
-    Object.assign(this, { debounce, stallMs, minExtent, binMs, onStroke, onTouch });
+  constructor({ debounce = 3, stallMs = 160, minExtent = 8, binMs = 15, onStroke = () => {}, onStrokeStart = () => {}, onTouch = () => {} } = {}) {
+    Object.assign(this, { debounce, stallMs, minExtent, binMs, onStroke, onStrokeStart, onTouch });
     this.touched = false;
     this._clear();
   }
@@ -256,6 +258,7 @@ class StrokeEngine {
   }
   _start(t, dir, extent) {
     this.stroke = { t0: t, dir, extent, rev: 0, binT: t, binSum: extent, peakRate: 0 };
+    this.onStrokeStart({ t0: t, dir });
   }
   _endStroke(t) {
     const s = this.stroke;
@@ -270,7 +273,7 @@ class StrokeEngine {
 // MIDI
 // =====================================================================
 const M = { midi: null, input: null };
-const engine = new StrokeEngine({ onStroke: strokeEvent, onTouch: touchEvent });
+const engine = new StrokeEngine({ onStroke: strokeEndEvent, onStrokeStart: strokeStartEvent, onTouch: touchEvent });
 let jogPos = 0; // visual only (purple dot); resets on touch
 
 $("btn-connect").addEventListener("click", async () => {
@@ -401,12 +404,15 @@ function padEvent(t) {
 // =====================================================================
 // BABY SCRATCH DRILL
 // =====================================================================
-const TPQ = MAP.jogL.ticksPerRev / 4;      // quarter turn = 180 ticks
-const WIN_P = 60, WIN_G = 140, WIN_MATCH = 180, DESPAWN = 200;
-const EXT_FULL = [TPQ * 0.55, TPQ * 1.55]; // 99–279 ticks: full arc credit
-const EXT_PART = [TPQ * 0.33, TPQ * 2.2];  // partial credit band
+// Scored at stroke START (the moment the sound begins); the arc is judged
+// at stroke end as a bonus/hint. Extent bands come from field data: real
+// relaxed baby-scratch arcs on this jog run ~40-150 ticks (20-75 deg),
+// far less than a literal quarter turn.
+const WIN_P = 60, WIN_G = 140, WIN_MATCH = 180, DESPAWN = WIN_MATCH + 60;
+const EXT_FULL = [40, 260];                // full arc credit band (ticks)
 const D = { running: false, targets: [], t0: 0, beatMs: 0, score: 0, combo: 0, bestCombo: 0,
-            counts: { perfect: 0, good: 0, miss: 0 }, extHints: { short: 0, long: 0 }, fx: [], metro: null, endPerf: 0 };
+            counts: { perfect: 0, good: 0, miss: 0 }, extHints: { short: 0, long: 0 }, fx: [],
+            metro: null, endPerf: 0, lastHit: null, trim: 0 };
 
 $("btn-baby").addEventListener("click", () => {
   if (latencyOffset === null) { $("modal").classList.add("on"); return; }  // calibration is non-optional
@@ -415,6 +421,7 @@ $("btn-baby").addEventListener("click", () => {
 });
 $("btn-back").addEventListener("click", () => { stopDrill(); $("drill").classList.remove("on"); $("home").classList.remove("off"); });
 $("bpm").addEventListener("input", () => $("bpm-v").textContent = $("bpm").value);
+$("trim").addEventListener("input", () => { D.trim = +$("trim").value; $("trim-v").textContent = D.trim + "ms"; });
 $("btn-start").addEventListener("click", startDrill);
 
 function buildTargets(t0, beatMs) {
@@ -444,33 +451,53 @@ async function startDrill() {
 }
 function stopDrill() { D.running = false; }
 
-function strokeEvent(s) {
-  mon("g", `stroke ${s.dir > 0 ? "fwd" : "back"} ${s.extent}tk ${Math.round(s.peakDegPerSec)}°/s`);
-  if (!D.running) return;
-  const tAdj = s.t0 - latencyOffset;
+function effOffset() { return (latencyOffset || 0) + D.trim; }
+
+// Timing is judged the moment the stroke STARTS — a relaxed stroke must
+// never lose its target to the despawn timer while still in motion.
+function strokeStartEvent(s) {
+  if (!D.running) { setDebug(`stroke start ${s.dir > 0 ? "fwd" : "back"}`); return; }
+  const tAdj = s.t0 - effOffset();
   let best = null, bestErr = Infinity;
   for (const tg of D.targets) {
     if (tg.hit || tg.dir !== s.dir) continue;
     const err = tAdj - tg.tPerf;
     if (Math.abs(err) < Math.abs(bestErr)) { best = tg; bestErr = err; }
   }
-  if (!best || Math.abs(bestErr) > WIN_MATCH) { D.combo = 0; addFx("…", s.dir); return; }
-  if (Math.abs(bestErr) > WIN_G) { D.combo = 0; addFx(bestErr > 0 ? "LATE" : "EARLY", s.dir); return; }
-  const timing = Math.abs(bestErr) <= WIN_P ? "perfect" : "good";
-  let extMult = 1, hint = "";
-  if (s.extent < EXT_FULL[0] || s.extent > EXT_FULL[1]) {
-    extMult = 0.7;
-    hint = s.extent < EXT_FULL[0] ? "short" : "long";
-    if (s.extent < EXT_PART[0] || s.extent > EXT_PART[1]) extMult = 0.4;
-    D.extHints[hint]++;
+  const errTxt = best ? `${bestErr >= 0 ? "+" : ""}${Math.round(bestErr)}ms` : "no target";
+  if (!best || Math.abs(bestErr) > WIN_MATCH) { D.combo = 0; D.lastHit = null; addFx("…", s.dir); setDebug(`stroke ${s.dir > 0 ? "fwd" : "back"} · ${errTxt} · no match`); return; }
+  if (Math.abs(bestErr) > WIN_G) {
+    best.hit = "miss"; D.counts.miss++; D.combo = 0; D.lastHit = null;
+    addFx(bestErr > 0 ? "LATE" : "EARLY", s.dir); blip("miss");
+    setDebug(`stroke ${s.dir > 0 ? "fwd" : "back"} · ${errTxt} · outside window`);
+    return;
   }
+  const timing = Math.abs(bestErr) <= WIN_P ? "perfect" : "good";
   best.hit = timing;
   D.counts[timing]++;
   D.combo++; D.bestCombo = Math.max(D.bestCombo, D.combo);
-  D.score += Math.round(((timing === "perfect" ? 100 : 60) + D.combo * 2) * extMult);
-  addFx(timing.toUpperCase() + (hint ? " · " + hint.toUpperCase() + " ARC" : ""), s.dir);
+  D.score += (timing === "perfect" ? 100 : 60) + D.combo * 2;
+  D.lastHit = { dir: s.dir, timing, err: bestErr };
+  addFx(timing.toUpperCase(), s.dir);
   blip(timing);
+  setDebug(`stroke ${s.dir > 0 ? "fwd" : "back"} · ${errTxt} · ${timing.toUpperCase()}`);
 }
+
+// Arc judged when the stroke completes: bonus for a full arc, hint otherwise.
+function strokeEndEvent(s) {
+  mon("g", `stroke ${s.dir > 0 ? "fwd" : "back"} ${s.extent}tk ${Math.round(s.durMs)}ms ${Math.round(s.peakDegPerSec)}°/s`);
+  setDebug(`last: ${s.dir > 0 ? "fwd" : "back"} · ${s.extent} ticks (${Math.round(s.extent * 0.5)}°) · ${Math.round(s.durMs)}ms`);
+  if (!D.running || !D.lastHit || D.lastHit.dir !== s.dir) return;
+  if (s.extent >= EXT_FULL[0] && s.extent <= EXT_FULL[1]) {
+    D.score += 25;
+  } else {
+    const hint = s.extent < EXT_FULL[0] ? "short" : "long";
+    D.extHints[hint]++;
+    addFx(hint.toUpperCase() + " ARC", s.dir);
+  }
+  D.lastHit = null;
+}
+function setDebug(t) { const el = $("dbg"); if (el) el.textContent = t; }
 function touchEvent(e) { setPill("pill-jog", e.on ? "ok" : "warn", e.on ? "jog: touched" : "jog: released"); }
 function addFx(text, dir) { D.fx.push({ text, dir, t: performance.now() }); }
 
@@ -494,7 +521,7 @@ function frame() {
     }
   }
   for (const tg of D.targets) {
-    if (!tg.hit && now - latencyOffset - tg.tPerf > DESPAWN) {
+    if (!tg.hit && now - effOffset() - tg.tPerf > DESPAWN) {
       tg.hit = "miss"; D.counts.miss++; D.combo = 0;
       addFx("MISS", tg.dir); blip("miss");
     }
@@ -608,7 +635,7 @@ function endDrill() {
 $("stars-baby").textContent = "★".repeat(bestStars) + "☆".repeat(3 - bestStars);
 
 // test hooks (headless verification only)
-window.__st = { engine, StrokeEngine, strokeEvent, D, startDrill, get latencyOffset() { return latencyOffset; }, setOffset(v) { latencyOffset = v; store.set("latencyOffset", v); renderCalPill(); } };
+window.__st = { engine, StrokeEngine, D, startDrill, get latencyOffset() { return latencyOffset; }, setOffset(v) { latencyOffset = v; store.set("latencyOffset", v); renderCalPill(); } };
 </script>
 </body>
 </html>
