@@ -3,8 +3,9 @@
 ## Environment
 Chrome UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36
 Platform: Win32 · cores: 32
-OS: Windows 10/11 x64 (exact build: TBD from owner)
-Serato DJ Lite version: TBD (owner confirmed it was actively controlling the deck before the capture: yes)
+OS: Windows 11 Home 25H2, build 26200.9168 (Lenovo Legion Pro 5 16IRX9, i9-14900HX, 16 GB RAM, RTX 4060)
+Serato DJ Lite version: 4.0.9 (owner confirmed it was actively controlling the deck before the capture: yes)
+Chrome: 151.0.7922.170 (64-bit)
 
 ## Result (harness capture, Serato open) — 2026-08-19, owner-run on real hardware
 MIDI inputs visible to Chrome: DDJ-REV1
