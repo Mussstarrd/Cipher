@@ -137,7 +137,7 @@
       <span class="pill" id="dbg" style="min-width:220px">stroke debug</span>
     </div>
     <div id="stagewrap">
-      <canvas id="stage" width="860" height="470"></canvas>
+      <canvas id="stage" width="900" height="566"></canvas>
       <div id="overlay">
         <div class="big" id="ov-title">Baby Scratch</div>
         <div class="stars-big hidden" id="ov-stars"></div>
@@ -190,7 +190,6 @@ const store = {
   set(k, v) { localStorage.setItem("st." + k, JSON.stringify(v)); },
 };
 let latencyOffset = store.get("latencyOffset", null);   // ms; null = not calibrated
-let bestStars = store.get("stars.baby", 0);
 
 // ---------- monitor ----------
 let monCount = 0;
@@ -574,7 +573,22 @@ function addFx(text, dir) { D.fx.push({ text, dir, t: performance.now() }); }
 // RENDER
 // =====================================================================
 const cv = $("stage"), cx = cv.getContext("2d");
-const HITY = 340, SPAWN = -30, FALL = 1800, LANE_X = 250, LANE_W = 360;
+const FALL = 1300, TRAVEL = 185;
+// Top-down schematic of the deck (our own line art, not vendor imagery).
+// Targets fall onto the physical control they belong to.
+const GEO = {
+  jogL:  { x: 180, y: 330, r: 105 },
+  jogR:  { x: 720, y: 330, r: 105 },
+  mixer: { x: 330, y: 92, w: 240, h: 396 },
+  xf:    { x: 385, y: 452, w: 130, h: 16 },
+  chF:   [{ x: 392, y: 252, h: 148 }, { x: 500, y: 252, h: 148 }],
+  padsL: { x: 342, y: 176 }, padsR: { x: 456, y: 176 },
+  tempoL:{ x: 95, y: 132, w: 170, h: 10 }, tempoR: { x: 635, y: 132, w: 170, h: 10 },
+  browse:{ x: 450, y: 118, r: 18 },
+};
+const A_FWD = GEO.jogL.x - 48, A_BACK = GEO.jogL.x + 48;
+const HIT_JOG = GEO.jogL.y - GEO.jogL.r - 12;   // arrows land just above the left platter
+const HIT_XF  = GEO.xf.y - 24;                  // diamonds land just above the crossfader
 
 function frame() {
   if (!D.running) return;
@@ -600,61 +614,131 @@ function frame() {
   requestAnimationFrame(frame);
 }
 
-function drawIdle() { cx.clearRect(0, 0, cv.width, cv.height); drawJog(0, false); }
+const TOP_PAD = 46;   // headroom so a spawning note is fully visible
+function drawIdle() {
+  cx.clearRect(0, 0, cv.width, cv.height);
+  cx.save(); cx.translate(0, TOP_PAD); drawDeck(); drawLive(); cx.restore();
+}
+
+// ---- translucent top-down schematic of the deck ----
+function drawDeck() {
+  const W = cv.width, H = 520;   // design height; canvas is taller for note headroom
+  cx.save();
+  cx.globalAlpha = 0.55;
+  cx.lineWidth = 2; cx.strokeStyle = "#39415A"; cx.fillStyle = "#11151D";
+
+  cx.beginPath(); cx.roundRect(24, 74, W - 48, H - 96, 16); cx.fill(); cx.stroke();          // chassis
+  const m = GEO.mixer;
+  cx.beginPath(); cx.roundRect(m.x, m.y, m.w, m.h, 12); cx.stroke();                          // mixer well
+
+  for (const j of [GEO.jogL, GEO.jogR]) {                                                     // platters
+    cx.beginPath(); cx.arc(j.x, j.y, j.r, 0, Math.PI * 2); cx.stroke();
+    cx.beginPath(); cx.arc(j.x, j.y, j.r * 0.4, 0, Math.PI * 2); cx.stroke();
+  }
+  for (const t of [GEO.tempoL, GEO.tempoR]) {                                                 // tempo sliders
+    cx.beginPath(); cx.roundRect(t.x, t.y, t.w, t.h, 5); cx.stroke();
+    cx.beginPath(); cx.roundRect(t.x + t.w / 2 - 7, t.y - 5, 14, t.h + 10, 4); cx.stroke();
+  }
+  cx.lineWidth = 1.5;
+  for (const p of [GEO.padsL, GEO.padsR]) {                                                   // 4x2 pad banks
+    for (let r = 0; r < 2; r++) for (let c = 0; c < 4; c++) {
+      cx.beginPath(); cx.roundRect(p.x + c * 28, p.y + r * 28, 22, 22, 5); cx.stroke();
+    }
+  }
+  for (const f of GEO.chF) {                                                                  // channel faders
+    cx.beginPath(); cx.roundRect(f.x - 7, f.y, 14, f.h, 6); cx.stroke();
+  }
+  cx.beginPath(); cx.arc(GEO.browse.x, GEO.browse.y, GEO.browse.r, 0, Math.PI * 2); cx.stroke();
+  cx.beginPath(); cx.roundRect(GEO.xf.x, GEO.xf.y, GEO.xf.w, GEO.xf.h, 8); cx.stroke();       // crossfader slot
+  cx.restore();
+
+  cx.fillStyle = "#4A5265"; cx.font = "600 10.5px sans-serif"; cx.textAlign = "center";
+  cx.fillText("LEFT PLATTER", GEO.jogL.x, GEO.jogL.y + GEO.jogL.r + 20);
+  cx.fillText("RIGHT PLATTER", GEO.jogR.x, GEO.jogR.y + GEO.jogR.r + 20);
+  cx.fillText("CROSSFADER", GEO.xf.x + GEO.xf.w / 2, GEO.xf.y + GEO.xf.h + 18);
+}
+
+// ---- live hardware state drawn on the schematic ----
+function drawLive() {
+  const j = GEO.jogL;
+  // platter ring lights when your hand is on it
+  cx.beginPath(); cx.arc(j.x, j.y, j.r, 0, Math.PI * 2);
+  cx.strokeStyle = engine.touched ? "#3DD6E8" : "#2A3245";
+  cx.lineWidth = engine.touched ? 4 : 2.5; cx.stroke();
+  // arc coach ring + purple dot: VISUAL ONLY, never a scoring input
+  cx.beginPath(); cx.arc(j.x, j.y, j.r - 16, -Math.PI / 2, 0);
+  cx.strokeStyle = "#242B3C"; cx.lineWidth = 9; cx.stroke();
+  const ang = -Math.PI / 2 + (jogPos / MAP.jogL.ticksPerRev) * Math.PI * 2;
+  cx.beginPath();
+  cx.arc(j.x + Math.cos(ang) * (j.r - 16), j.y + Math.sin(ang) * (j.r - 16), 9, 0, Math.PI * 2);
+  cx.fillStyle = "#B08CFF"; cx.fill();
+
+  // crossfader cap at its real position
+  const x = GEO.xf.x + (fader.v / 127) * GEO.xf.w;
+  cx.beginPath(); cx.roundRect(x - 9, GEO.xf.y - 6, 18, GEO.xf.h + 12, 5);
+  cx.fillStyle = fader.state === "closed" ? "#FFC24D" : "#A8E85C"; cx.fill();
+}
 
 function draw(now) {
-  const W = cv.width, H = cv.height;
-  cx.clearRect(0, 0, W, H);
+  cx.clearRect(0, 0, cv.width, cv.height);
+  cx.save(); cx.translate(0, TOP_PAD);
+  drawDeck();
 
-  // ribbon lane
-  cx.fillStyle = "#0D1016"; cx.fillRect(LANE_X, 0, LANE_W, H);
-  cx.strokeStyle = "#E8ECF4"; cx.globalAlpha = .85; cx.lineWidth = 3;
-  cx.beginPath(); cx.moveTo(LANE_X, HITY); cx.lineTo(LANE_X + LANE_W, HITY); cx.stroke();
+  // guide rails + hit lines on the controls that matter this drill
+  cx.save(); cx.globalAlpha = .5; cx.strokeStyle = "#39415A"; cx.setLineDash([4, 7]); cx.lineWidth = 1;
+  for (const x of [A_FWD, A_BACK]) { cx.beginPath(); cx.moveTo(x, HIT_JOG - TRAVEL); cx.lineTo(x, HIT_JOG); cx.stroke(); }
+  if (D.kind === "chirp") { const x = GEO.xf.x + GEO.xf.w / 2; cx.beginPath(); cx.moveTo(x, HIT_XF - TRAVEL); cx.lineTo(x, HIT_XF); cx.stroke(); }
+  cx.restore();
+  cx.strokeStyle = "#E8ECF4"; cx.globalAlpha = .8; cx.lineWidth = 2.5;
+  cx.beginPath(); cx.moveTo(A_FWD - 30, HIT_JOG); cx.lineTo(A_BACK + 30, HIT_JOG); cx.stroke();
+  if (D.kind === "chirp") {
+    cx.beginPath(); cx.moveTo(GEO.xf.x - 6, HIT_XF); cx.lineTo(GEO.xf.x + GEO.xf.w + 6, HIT_XF); cx.stroke();
+  }
   cx.globalAlpha = 1;
-  cx.fillStyle = "#586074"; cx.font = "600 12px sans-serif"; cx.textAlign = "center";
-  cx.fillText("FWD ▲", LANE_X + LANE_W * 0.28, H - 12);
-  cx.fillText("BACK ▼", LANE_X + LANE_W * 0.72, H - 12);
-  if (D.kind === "chirp") cx.fillText("FADER ◆", LANE_X + LANE_W * 0.5, H - 12);
+  cx.fillStyle = "#586074"; cx.font = "600 11px sans-serif"; cx.textAlign = "center";
+  cx.fillText("PUSH", A_FWD - 36, HIT_JOG - 8);
+  cx.fillText("PULL", A_BACK + 36, HIT_JOG - 8);
+  if (D.kind === "chirp") cx.fillText("FADER", GEO.xf.x + GEO.xf.w / 2, HIT_XF - TRAVEL - 6);
 
   // count-in
   const beatNow = (now - D.t0) / D.beatMs;
   if (beatNow < 4 && beatNow > -1) {
-    cx.fillStyle = "#8A93A8"; cx.font = "800 60px sans-serif";
-    cx.fillText(String(4 - Math.floor(Math.max(beatNow, 0))), LANE_X + LANE_W / 2, 110);
+    cx.fillStyle = "#8A93A8"; cx.font = "800 56px sans-serif";
+    cx.fillText(String(4 - Math.floor(Math.max(beatNow, 0))), cv.width / 2, 60);
   }
 
-  // trajectory ribbons: arrow head hits the line at stroke-start time; body = suggested arc duration
-  const bodyMs = Math.min(260, D.beatMs * 0.35);
+  // falling targets, each onto its own control
+  const bodyMs = Math.min(240, D.beatMs * 0.35);
   for (const tg of D.targets) {
     if (tg.hit) continue;
-    const y = HITY - ((tg.tPerf - now) / FALL) * (HITY - SPAWN);
-    if (y < SPAWN - 40 || y > HITY + 50) continue;
+    const hitY = tg.type === "gate" ? HIT_XF : HIT_JOG;
+    const y = hitY - ((tg.tPerf - now) / FALL) * TRAVEL;
+    if (y < hitY - TRAVEL - 30 || y > hitY + 45) continue;
     if (tg.type === "gate") {
-      // fader gate diamonds: filled = cut closed, hollow = open
-      const x = LANE_X + LANE_W * 0.5;
+      const x = GEO.xf.x + GEO.xf.w / 2;
       cx.beginPath();
-      cx.moveTo(x, y - 15); cx.lineTo(x + 15, y); cx.lineTo(x, y + 15); cx.lineTo(x - 15, y);
+      cx.moveTo(x, y - 14); cx.lineTo(x + 14, y); cx.lineTo(x, y + 14); cx.lineTo(x - 14, y);
       cx.closePath();
       if (tg.gate === "close") { cx.fillStyle = "#FFC24D"; cx.fill(); }
       else { cx.strokeStyle = "#A8E85C"; cx.lineWidth = 3.5; cx.stroke(); }
       continue;
     }
-    const bodyLen = (bodyMs / FALL) * (HITY - SPAWN);
-    const x = tg.dir > 0 ? LANE_X + LANE_W * 0.28 : LANE_X + LANE_W * 0.72;
+    const bodyLen = (bodyMs / FALL) * TRAVEL;
+    const x = tg.dir > 0 ? A_FWD : A_BACK;
     cx.fillStyle = tg.dir > 0 ? "#3DD6E8" : "#FF5CA8";
-    cx.beginPath();                                  // ribbon body
-    cx.roundRect(x - 13, y - bodyLen, 26, bodyLen, 10);
-    cx.fill();
-    cx.beginPath();                                  // arrow head at the hit end
-    if (tg.dir > 0) { cx.moveTo(x, y + 16); cx.lineTo(x - 17, y - 4); cx.lineTo(x + 17, y - 4); }
-    else { cx.moveTo(x, y - bodyLen - 16); cx.lineTo(x - 17, y - bodyLen + 4); cx.lineTo(x + 17, y - bodyLen + 4); }
+    cx.beginPath(); cx.roundRect(x - 12, y - bodyLen, 24, bodyLen, 9); cx.fill();
+    cx.beginPath();
+    if (tg.dir > 0) { cx.moveTo(x, y + 15); cx.lineTo(x - 16, y - 4); cx.lineTo(x + 16, y - 4); }
+    else { cx.moveTo(x, y - bodyLen - 15); cx.lineTo(x - 16, y - bodyLen + 4); cx.lineTo(x + 16, y - bodyLen + 4); }
     cx.closePath(); cx.fill();
   }
 
+  drawLive();
+
   // hud
   cx.textAlign = "left";
-  cx.fillStyle = "#E8ECF4"; cx.font = "700 20px sans-serif"; cx.fillText(D.score, 14, 30);
-  cx.fillStyle = "#8A93A8"; cx.font = "600 13px sans-serif"; cx.fillText(`combo ${D.combo}`, 14, 50);
+  cx.fillStyle = "#E8ECF4"; cx.font = "700 20px sans-serif"; cx.fillText(D.score, 34, 44);
+  cx.fillStyle = "#8A93A8"; cx.font = "600 13px sans-serif"; cx.fillText(`combo ${D.combo}`, 34, 63);
 
   // fx
   cx.textAlign = "center";
@@ -664,31 +748,13 @@ function draw(now) {
     cx.globalAlpha = a;
     cx.fillStyle = f.text.startsWith("PERFECT") ? "#A8E85C" : f.text.startsWith("GOOD") ? "#FFC24D" :
                    f.text === "MISS" ? "#FF6B5C" : "#8A93A8";
-    cx.font = "800 17px sans-serif";
-    const x = LANE_X + LANE_W * (f.dir > 0 ? 0.28 : f.dir < 0 ? 0.72 : 0.5);
-    cx.fillText(f.text, x, HITY - 30 - (1 - a) * 22);
+    cx.font = "800 16px sans-serif";
+    const x = f.dir > 0 ? A_FWD : f.dir < 0 ? A_BACK : GEO.xf.x + GEO.xf.w / 2;
+    const yb = f.dir === 0 ? HIT_XF : HIT_JOG;
+    cx.fillText(f.text, x, yb - 26 - (1 - a) * 20);
     cx.globalAlpha = 1;
   }
-
-  drawJog(jogPos, engine.touched);
-}
-
-function drawJog(pos, touched) {
-  // jog arc coach (left of lane). Purple dot = VISUAL ARC COACH ONLY — the
-  // scorer uses relative displacement from touch-on, never this position.
-  const cxr = 125, cyr = 235, R = 86;
-  cx.beginPath(); cx.arc(cxr, cyr, R, 0, Math.PI * 2);
-  cx.strokeStyle = touched ? "#3DD6E8" : "#2A3245"; cx.lineWidth = 4; cx.stroke();
-  // quarter-turn guide arc (target extent), from 12 o'clock clockwise 90°
-  cx.beginPath(); cx.arc(cxr, cyr, R - 12, -Math.PI / 2, 0);
-  cx.strokeStyle = "#2A3245"; cx.lineWidth = 8; cx.stroke();
-  const ang = -Math.PI / 2 + (pos / MAP.jogL.ticksPerRev) * Math.PI * 2;
-  cx.beginPath();
-  cx.arc(cxr + Math.cos(ang) * (R - 12), cyr + Math.sin(ang) * (R - 12), 9, 0, Math.PI * 2);
-  cx.fillStyle = "#B08CFF"; cx.fill();
-  cx.fillStyle = "#586074"; cx.font = "600 11px sans-serif"; cx.textAlign = "center";
-  cx.fillText("arc coach — visual only", cxr, cyr + R + 24);
-  cx.fillText(touched ? "TOUCHED" : "touch the platter", cxr, cyr + R + 40);
+  cx.restore();
 }
 
 function endDrill() {
