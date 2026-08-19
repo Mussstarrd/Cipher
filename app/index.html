@@ -129,8 +129,17 @@
   <section id="drill">
     <div class="drillbar">
       <button id="btn-back">← Drills</button>
-      <label>BPM <input type="range" id="bpm" min="60" max="110" value="85" step="5"><span id="bpm-v" style="font-family:var(--mono)">85</span></label>
-      <label>Metronome <input type="checkbox" id="click-on" checked></label>
+      <label>BPM <input type="range" id="bpm" min="60" max="160" value="85" step="1"><span id="bpm-v" style="font-family:var(--mono)">85</span></label>
+      <label>Beat <select id="beat-kind">
+        <option value="click">metronome click</option>
+        <option value="boombap" selected>boom bap</option>
+        <option value="house">four on the floor</option>
+        <option value="track" disabled>loaded track</option>
+        <option value="silent">silent</option>
+      </select></label>
+      <button id="btn-beat">▶ beat</button>
+      <label>Your beat <input type="file" id="beat-file" accept="audio/*" style="max-width:190px"></label>
+      <span class="pill" id="pill-track">no track</span>
       <label>Feel trim <input type="range" id="trim" min="-150" max="150" value="0" step="10"><span id="trim-v" style="font-family:var(--mono)">0ms</span></label>
       <label>Cut side <select id="cutside"><option value="R">right</option><option value="L">left</option></select></label>
       <span class="pill" id="pill-jog">jog: waiting</span>
@@ -350,6 +359,199 @@ function clickAt(at, accent) {
   g.gain.exponentialRampToValueAtTime(0.001, at + 0.05);
   o.connect(g).connect(ctx.destination); o.start(at); o.stop(at + 0.06);
 }
+// ---- drum voices (synthesized; no sample licensing) ----
+function kickAt(at) {
+  const ctx = audio(), o = ctx.createOscillator(), g = ctx.createGain();
+  o.frequency.setValueAtTime(130, at);
+  o.frequency.exponentialRampToValueAtTime(46, at + 0.09);
+  g.gain.setValueAtTime(0.85, at);
+  g.gain.exponentialRampToValueAtTime(0.001, at + 0.26);
+  o.connect(g).connect(ctx.destination); o.start(at); o.stop(at + 0.28);
+}
+function noiseBurst(at, dur, hp, gain) {
+  const ctx = audio(), n = Math.ceil(ctx.sampleRate * dur);
+  const buf = ctx.createBuffer(1, n, ctx.sampleRate), d = buf.getChannelData(0);
+  for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 2);
+  const s = ctx.createBufferSource(); s.buffer = buf;
+  const f = ctx.createBiquadFilter(); f.type = "highpass"; f.frequency.value = hp;
+  const g = ctx.createGain(); g.gain.value = gain;
+  s.connect(f).connect(g).connect(ctx.destination); s.start(at);
+}
+function snareAt(at) {
+  noiseBurst(at, 0.19, 1400, 0.5);
+  const ctx = audio(), o = ctx.createOscillator(), g = ctx.createGain();
+  o.type = "triangle"; o.frequency.setValueAtTime(190, at);
+  g.gain.setValueAtTime(0.35, at); g.gain.exponentialRampToValueAtTime(0.001, at + 0.12);
+  o.connect(g).connect(ctx.destination); o.start(at); o.stop(at + 0.13);
+}
+function hatAt(at) { noiseBurst(at, 0.045, 7000, 0.16); }
+
+// ---- backing beat engine: keeps a loop running on the audio clock ----
+// 16th-note grid within a 4-beat bar
+const PATTERNS = {
+  boombap: { kick: [0, 3, 10], snare: [4, 12], hat: [0, 2, 4, 6, 8, 10, 12, 14] },
+  house:   { kick: [0, 4, 8, 12], snare: [4, 12], hat: [2, 6, 10, 14] },
+};
+const beat = { kind: "boombap", running: false, bpm: 85, startAt: 0, next16: 0,
+               timer: null, buffer: null, loopStart: 0, loopEnd: 0, node: null };
+
+function beatStart(atAudioTime) {
+  const ctx = audio();
+  beatStop();
+  beat.kind = $("beat-kind").value;
+  if (beat.kind === "silent") return;
+  beat.startAt = atAudioTime != null ? atAudioTime : ctx.currentTime + 0.15;
+  beat.next16 = 0;
+  beat.running = true;
+  if (beat.kind === "track" && beat.buffer) {
+    const s = ctx.createBufferSource();
+    s.buffer = beat.buffer; s.loop = true;
+    s.loopStart = beat.loopStart; s.loopEnd = beat.loopEnd;
+    s.connect(ctx.destination);
+    s.start(beat.startAt, beat.loopStart);
+    beat.node = s;
+  } else {
+    beat.timer = setInterval(beatSchedule, 60);
+    beatSchedule();
+  }
+  $("btn-beat").textContent = "■ beat";
+}
+function beatStop() {
+  beat.running = false;
+  if (beat.timer) { clearInterval(beat.timer); beat.timer = null; }
+  if (beat.node) { try { beat.node.stop(); } catch (e) {} beat.node = null; }
+  const b = $("btn-beat"); if (b) b.textContent = "▶ beat";
+}
+function beatSchedule() {
+  if (!beat.running) return;
+  const ctx = audio(), p = PATTERNS[beat.kind];
+  const step = 60 / beat.bpm / 4;                       // one 16th note
+  const horizon = ctx.currentTime + 0.3;
+  while (beat.startAt + beat.next16 * step < horizon) {
+    const i = beat.next16, at = beat.startAt + i * step, inBar = i % 16;
+    if (at >= ctx.currentTime - 0.001) {
+      if (beat.kind === "click") { if (inBar % 4 === 0) clickAt(at, inBar === 0); }
+      else if (p) {
+        if (p.kick.includes(inBar)) kickAt(at);
+        if (p.snare.includes(inBar)) snareAt(at);
+        if (p.hat.includes(inBar)) hatAt(at);
+      }
+    }
+    beat.next16++;
+  }
+}
+// audio time of the next bar downbeat at or after `after`
+function nextDownbeat(after) {
+  const barSec = (60 / beat.bpm) * 4;
+  if (!beat.running) return after;
+  const n = Math.ceil((after - beat.startAt) / barSec);
+  return beat.startAt + n * barSec;
+}
+
+// ---- tempo analysis for a user-supplied beat (on-device; nothing uploaded) ----
+function fft(re, im) {
+  const n = re.length;
+  for (let i = 1, j = 0; i < n; i++) {
+    let bit = n >> 1;
+    for (; j & bit; bit >>= 1) j ^= bit;
+    j ^= bit;
+    if (i < j) { [re[i], re[j]] = [re[j], re[i]]; [im[i], im[j]] = [im[j], im[i]]; }
+  }
+  for (let len = 2; len <= n; len <<= 1) {
+    const ang = -2 * Math.PI / len, wr = Math.cos(ang), wi = Math.sin(ang);
+    for (let i = 0; i < n; i += len) {
+      let cwr = 1, cwi = 0;
+      for (let k = 0; k < len / 2; k++) {
+        const ur = re[i + k], ui = im[i + k];
+        const vr = re[i + k + len / 2] * cwr - im[i + k + len / 2] * cwi;
+        const vi = re[i + k + len / 2] * cwi + im[i + k + len / 2] * cwr;
+        re[i + k] = ur + vr; im[i + k] = ui + vi;
+        re[i + k + len / 2] = ur - vr; im[i + k + len / 2] = ui - vi;
+        const nwr = cwr * wr - cwi * wi; cwi = cwr * wi + cwi * wr; cwr = nwr;
+      }
+    }
+  }
+}
+function acAt(x, lag) { let s = 0; for (let t = 0; t + lag < x.length; t++) s += x[t] * x[t + lag]; return s; }
+
+// Analyse a slice: spectral-flux onset envelope -> autocorrelation tempo -> comb phase.
+function analyseTempo(buffer, startSec, durSec) {
+  const sr = buffer.sampleRate;
+  const i0 = Math.floor(startSec * sr);
+  const n = Math.min(Math.floor(durSec * sr), buffer.length - i0);
+  const mono = new Float32Array(n);
+  for (let c = 0; c < buffer.numberOfChannels; c++) {
+    const d = buffer.getChannelData(c);
+    for (let i = 0; i < n; i++) mono[i] += d[i0 + i] / buffer.numberOfChannels;
+  }
+  const FRAME = 1024, HOP = 512, nF = Math.max(1, Math.floor((n - FRAME) / HOP)), fps = sr / HOP;
+  const win = new Float32Array(FRAME);
+  for (let i = 0; i < FRAME; i++) win[i] = 0.5 - 0.5 * Math.cos(2 * Math.PI * i / FRAME);
+  const flux = new Float32Array(nF);
+  const re = new Float32Array(FRAME), im = new Float32Array(FRAME);
+  let prev = new Float32Array(FRAME / 2), cur = new Float32Array(FRAME / 2);
+  for (let f = 0; f < nF; f++) {
+    const off = f * HOP;
+    for (let i = 0; i < FRAME; i++) { re[i] = mono[off + i] * win[i]; im[i] = 0; }
+    fft(re, im);
+    let s = 0;
+    for (let b = 1; b < FRAME / 2; b++) { cur[b] = Math.hypot(re[b], im[b]); const d = cur[b] - prev[b]; if (d > 0) s += d; }
+    flux[f] = s;
+    [prev, cur] = [cur, prev];
+  }
+  let bestLag = 0, best = -1;
+  const minLag = Math.floor(fps * 60 / 180), maxLag = Math.ceil(fps * 60 / 60);
+  for (let lag = minLag; lag <= maxLag; lag++) {
+    const bpm = 60 * fps / lag;
+    const s = acAt(flux, lag) * (0.75 + 0.25 * Math.exp(-Math.pow((bpm - 110) / 60, 2)));
+    if (s > best) { best = s; bestLag = lag; }
+  }
+  const yl = acAt(flux, bestLag - 1), y0 = acAt(flux, bestLag), yr = acAt(flux, bestLag + 1);
+  const den = yl - 2 * y0 + yr;
+  const delta = den !== 0 ? Math.max(-0.5, Math.min(0.5, 0.5 * (yl - yr) / den)) : 0;
+  const period = (bestLag + delta) / fps;
+  let phase = 0, bestP = -1;
+  for (let p = 0; p < period; p += 0.005) {
+    let s = 0;
+    for (let t = p; t < nF / fps; t += period) { const idx = Math.round(t * fps); if (idx < nF) s += flux[idx]; }
+    if (s > bestP) { bestP = s; phase = p; }
+  }
+  return { bpm: 60 / period, period, firstBeatSec: startSec + phase };
+}
+
+$("beat-file").addEventListener("change", async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const ctx = audio(); await ctx.resume();
+  $("pill-track").className = "pill warn"; $("pill-track").textContent = "decoding…";
+  try {
+    const buf = await ctx.decodeAudioData(await file.arrayBuffer());
+    $("pill-track").textContent = "analysing…";
+    await new Promise(r => setTimeout(r, 10));
+    const startSec = Math.min(buf.duration * 0.15, 30);
+    const a = analyseTempo(buf, startSec, Math.min(45, buf.duration - startSec));
+    // loop 4 bars starting on a detected downbeat
+    const bars = 4 * 4 * a.period;
+    let ls = a.firstBeatSec;
+    while (ls + bars > buf.duration && ls - bars > 0) ls -= bars;
+    beat.buffer = buf;
+    beat.loopStart = Math.max(0, ls);
+    beat.loopEnd = Math.min(buf.duration, beat.loopStart + bars);
+    beat.bpm = a.bpm;
+    $("bpm").value = Math.round(Math.min(160, Math.max(60, a.bpm)));
+    $("bpm-v").textContent = Math.round(a.bpm);
+    const opt = document.querySelector('#beat-kind option[value="track"]');
+    opt.disabled = false; opt.textContent = file.name.replace(/\.[^.]+$/, "").slice(0, 24);
+    $("beat-kind").value = "track";
+    $("pill-track").className = "pill ok";
+    $("pill-track").textContent = `${a.bpm.toFixed(1)} BPM · 4-bar loop`;
+    if (beat.running) beatStart();
+  } catch (err) {
+    $("pill-track").className = "pill warn";
+    $("pill-track").textContent = "could not read that file";
+  }
+});
+
 function blip(q) {
   const ctx = audio(), t = ctx.currentTime, o = ctx.createOscillator(), g = ctx.createGain();
   o.type = "triangle";
@@ -421,7 +623,7 @@ const DRILLS = {
   },
   chirp: {
     title: "Chirp",
-    sub: "One hand on the record, one on the crossfader. Count \"ONE… and… TWO… rest\": ONE (blue ▲) push the record forward — fader's open, you hear it. \"and\" (filled ◆) slam the fader SHUT — silence. TWO (hollow ◆ + pink ▼ together) open the fader AND pull back at the same moment — that's the second chirp. Rest, repeat. It should sound like: chp!… chp!…",
+    sub: "Same groove as the baby scratch, with the fader riding along. START WITH THE FADER CLOSED. On every beat both hands go OUT: open the fader as you push the record forward. On every \"and\" both hands come BACK: cut the fader shut as you pull the record back. Out, back, out, back — one chirp per beat, riding the drums. It should sound like: chp… chp… chp… chp…",
   },
 };
 function openDrill(kind) {
@@ -437,9 +639,18 @@ function openDrill(kind) {
 }
 $("btn-baby").addEventListener("click", () => openDrill("baby"));
 $("btn-chirp").addEventListener("click", () => openDrill("chirp"));
-$("btn-back").addEventListener("click", () => { stopDrill(); $("drill").classList.remove("on"); $("home").classList.remove("off"); });
-$("bpm").addEventListener("input", () => $("bpm-v").textContent = $("bpm").value);
+$("btn-back").addEventListener("click", () => { stopDrill(); beatStop(); $("drill").classList.remove("on"); $("home").classList.remove("off"); });
+$("bpm").addEventListener("input", () => {
+  $("bpm-v").textContent = $("bpm").value;
+  beat.bpm = +$("bpm").value;
+  if (beat.running && beat.kind !== "track") beatStart();   // re-lock the grid to the new tempo
+});
 $("trim").addEventListener("input", () => { D.trim = +$("trim").value; $("trim-v").textContent = D.trim + "ms"; });
+$("btn-beat").addEventListener("click", async () => {
+  const ctx = audio(); await ctx.resume();
+  if (beat.running) beatStop(); else beatStart();
+});
+$("beat-kind").addEventListener("change", () => { if (beat.running) beatStart(); });
 $("cutside").value = store.get("cutSide", "R");
 $("cutside").addEventListener("change", () => store.set("cutSide", $("cutside").value));
 $("btn-start").addEventListener("click", startDrill);
@@ -452,13 +663,15 @@ function buildTargets(kind, t0, beatMs) {
       out.push({ tPerf: t0 + b * beatMs, type: "stroke", dir: +1, hit: null });
       out.push({ tPerf: t0 + (b + 0.5) * beatMs, type: "stroke", dir: -1, hit: null });
     }
-  } else { // chirp: 2-beat cycle — fwd @ beat, close @ +0.5, open+back together @ +1
-    for (let c = 0; c < 8; c++) {
-      const b = 4 + c * 2;
+  } else {
+    // chirp: same groove as the baby scratch, with the fader riding along.
+    // Both hands go OUT on the beat (open + push) and COME BACK on the "and"
+    // (close + pull). Starts from a closed fader so every gate is a real move.
+    for (let b = 4; b < 20; b++) {
+      out.push({ tPerf: t0 + b * beatMs, type: "gate", gate: "open", hit: null });
       out.push({ tPerf: t0 + b * beatMs, type: "stroke", dir: +1, hit: null });
       out.push({ tPerf: t0 + (b + 0.5) * beatMs, type: "gate", gate: "close", hit: null });
-      out.push({ tPerf: t0 + (b + 1) * beatMs, type: "gate", gate: "open", hit: null });
-      out.push({ tPerf: t0 + (b + 1) * beatMs, type: "stroke", dir: -1, hit: null });
+      out.push({ tPerf: t0 + (b + 0.5) * beatMs, type: "stroke", dir: -1, hit: null });
     }
   }
   return out;
@@ -466,14 +679,18 @@ function buildTargets(kind, t0, beatMs) {
 
 async function startDrill() {
   const ctx = audio(); await ctx.resume();
-  const bpm = +$("bpm").value, beatMs = 60000 / bpm;
-  const t0 = performance.now() + 600;
-  const audioT0 = ctx.currentTime + 0.6;
+  beat.bpm = +$("bpm").value;
+  const beatMs = 60000 / beat.bpm;
+  // If a beat is already playing, drop the chart onto its next downbeat so the
+  // drill rides the groove instead of restarting it.
+  let audioT0;
+  if (beat.running) audioT0 = nextDownbeat(ctx.currentTime + 0.5);
+  else { audioT0 = ctx.currentTime + 0.6; beatStart(audioT0); }
+  const t0 = performance.now() + (audioT0 - ctx.currentTime) * 1000;
   Object.assign(D, {
     running: true, t0, beatMs, targets: buildTargets(D.kind || "baby", t0, beatMs),
     score: 0, combo: 0, bestCombo: 0, counts: { perfect: 0, good: 0, miss: 0 },
     extHints: { short: 0, long: 0 }, fx: [],
-    metro: { audioT0, next: 0, total: 20, on: $("click-on").checked },
     endPerf: t0 + 20 * beatMs + 700,
   });
   $("overlay").classList.add("hidden");
@@ -595,14 +812,6 @@ function frame() {
   const now = performance.now();
   engine.update(now);
 
-  if (D.metro.on) {
-    const ctx = audio(), m = D.metro;
-    while (m.next < m.total) {
-      const at = m.audioT0 + (m.next * D.beatMs) / 1000;
-      if (at < ctx.currentTime + 0.25) { clickAt(Math.max(at, ctx.currentTime), m.next % 4 === 0); m.next++; }
-      else break;
-    }
-  }
   for (const tg of D.targets) {
     if (!tg.hit && now - effOffset() - tg.tPerf > DESPAWN) {
       tg.hit = "miss"; D.counts.miss++; D.combo = 0;
@@ -798,7 +1007,7 @@ document.addEventListener("keyup", (e) => {
 });
 
 // test hooks (headless verification only)
-window.__st = { engine, StrokeEngine, D, startDrill, openDrill, gateEvent, get latencyOffset() { return latencyOffset; }, setOffset(v) { latencyOffset = v; store.set("latencyOffset", v); renderCalPill(); } };
+window.__st = { engine, StrokeEngine, D, startDrill, openDrill, gateEvent, beat, beatStart, beatStop, analyseTempo, get latencyOffset() { return latencyOffset; }, setOffset(v) { latencyOffset = v; store.set("latencyOffset", v); renderCalPill(); } };
 </script>
 </body>
 </html>

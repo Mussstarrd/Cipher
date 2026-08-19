@@ -20,12 +20,23 @@ Keyboard dev fallback: hold ArrowUp/ArrowDown = fwd/back stroke, Space = pad.
   3-tick debounce, stall splitting, per-stroke extent/velocity.
 - **Latency calibration**: tap-to-metronome median offset, stored locally,
   applied to all timing judgments.
+- **Chirp drill**: same groove as the baby scratch with the fader riding
+  along — both hands out on the beat (open + push), both back on the "and"
+  (close + pull). One chirp per beat.
 - **Baby Scratch drill**: trajectory ribbons (direction + timing + arc
   extent), ±60/±140 ms windows on stroke start, quarter-turn arc credit
   (90–140° full), short/long arc hints, combo, 3-star grading.
 - **Purple-dot arc coach** on the jog graphic — visual guide only, never a
   scoring input (scoring uses relative displacement from touch-on).
 - Hardened map in `rev1-map.json` (spike-verified entries flagged).
+
+## Backing beat
+Drills run over a real groove, not a bare click. Pick **boom bap**, **four on
+the floor**, plain **metronome click**, or **silent** — or load your own beat
+file, which is analysed on-device for tempo (±0.2% on a synthetic test) and
+looped 4 bars from a detected downbeat. The beat keeps running between drills;
+starting a drill drops its chart onto the next bar downbeat so the drill rides
+the groove instead of restarting it.
 
 ## Milestone 2 (next)
 Chirp drill (fader gates join the stroke) → Transform → crossfader cut-in &
