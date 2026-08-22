@@ -36,9 +36,12 @@ converged.
 Two failure modes handled explicitly
 ------------------------------------
 1. **Unit rounding.** The API reports Celsius; the climate report publishes whole
-   degrees Fahrenheit. A reading that converts to 71.6F sits close enough to the
-   71/72 boundary that a rounding difference flips a bracket. Values within
-   ``BOUNDARY_MARGIN_F`` of a strike are refused rather than traded.
+   degrees Fahrenheit, and a flip across a half-degree changes which bracket
+   wins. Rather than refusing every reading near a boundary, the resolver
+   enumerates the whole-degree values the report could plausibly publish
+   (``plausible_rounded_values``) and takes the signal only when all of them
+   imply the same outcome -- so an ambiguity that does not change the answer
+   costs nothing, and one that does is dropped.
 2. **Wrong station.** See ``stations.py``. Unverified stations never produce
    deterministic signals.
 """
@@ -47,6 +50,7 @@ from __future__ import annotations
 
 import json
 import math
+import os
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -59,8 +63,6 @@ from .base import Estimate
 from .stations import Station, station_for
 
 NWS_API = "https://api.weather.gov"
-# The NWS asks for a contact address in the User-Agent. Set CIPHER_CONTACT.
-USER_AGENT = "cipher-scanner/0.1 (contact: set CIPHER_CONTACT)"
 
 # Assumed uncertainty, in degrees F, between the value derived from the API and
 # the whole-degree value the climate report publishes. ASOS instruments report
@@ -73,6 +75,22 @@ BOUNDARY_MARGIN_F = 0.35
 
 class WeatherError(RuntimeError):
     pass
+
+
+def user_agent() -> str:
+    """User-Agent for NWS requests, including a contact address.
+
+    The NWS API asks callers to identify themselves with a contact address and
+    reserves the right to block traffic that does not. Read at call time rather
+    than at import so setting the variable does not require a reimport.
+    """
+    contact = os.environ.get("CIPHER_CONTACT", "").strip()
+    if not contact:
+        raise WeatherError(
+            "set CIPHER_CONTACT to an email address or URL before calling the NWS API -- "
+            "they ask callers to identify themselves and may block anonymous traffic"
+        )
+    return f"cipher-scanner/0.1 ({contact})"
 
 
 @dataclass(frozen=True)
@@ -96,15 +114,16 @@ def fetch_observations(
     *,
     since: datetime,
     timeout: float = 10.0,
-    user_agent: str = USER_AGENT,
+    agent: str | None = None,
 ) -> list[Observation]:
     """Pull validated temperature observations for a station since ``since``."""
+    agent = agent or user_agent()
     query = urllib.parse.urlencode(
         {"start": since.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"), "limit": 200}
     )
     url = f"{NWS_API}/stations/{station_id}/observations?{query}"
     request = urllib.request.Request(
-        url, headers={"Accept": "application/geo+json", "User-Agent": user_agent}
+        url, headers={"Accept": "application/geo+json", "User-Agent": agent}
     )
     try:
         with urllib.request.urlopen(request, timeout=timeout) as response:

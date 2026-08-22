@@ -32,6 +32,16 @@ python -m cipher weather --series KXHIGHNY --verify KXHIGHNY:KNYC
 If the registry disagrees with what you read, it errors instead of guessing.
 Believe the rulebook, not `stations.py`.
 
+## Step 0.5 — identify yourself to the NWS
+
+The NWS API asks callers to supply a contact address and may block traffic that
+does not. The code refuses to send an anonymous request rather than getting your
+IP quietly throttled mid-run:
+
+```bash
+export CIPHER_CONTACT="you@example.com"
+```
+
 ## Step 1 — run it in the late afternoon or evening, local time
 
 ```bash

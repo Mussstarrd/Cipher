@@ -27,7 +27,10 @@ python -m cipher calibrate # score whatever the journal has settled
 python -m unittest discover -s tests -t .
 ```
 
-To actually trade it, follow [docs/PLAYBOOK.md](docs/PLAYBOOK.md).
+To actually trade it, follow [docs/PLAYBOOK.md](docs/PLAYBOOK.md). Live runs need
+outbound access to `api.elections.kalshi.com` and `api.weather.gov`, and
+`CIPHER_CONTACT` set to an email or URL — the NWS asks callers to identify
+themselves and the code refuses to send an anonymous request.
 
 ## What is here
 

@@ -366,3 +366,46 @@ class TestWeatherEndToEnd(StationIsolation, unittest.TestCase):
             ticket = size_to_stake(s, 2000)
             self.assertIsNotNone(ticket)
             self.assertLessEqual(ticket.outlay_cents, 2000)
+
+
+class TestUserAgent(unittest.TestCase):
+    """The NWS asks callers to identify themselves and may block those who don't."""
+
+    def setUp(self):
+        import os
+
+        self._saved = os.environ.get("CIPHER_CONTACT")
+
+    def tearDown(self):
+        import os
+
+        if self._saved is None:
+            os.environ.pop("CIPHER_CONTACT", None)
+        else:
+            os.environ["CIPHER_CONTACT"] = self._saved
+
+    def test_missing_contact_fails_loudly_rather_than_sending_a_placeholder(self):
+        import os
+
+        from cipher.resolvers.weather import WeatherError, user_agent
+
+        os.environ.pop("CIPHER_CONTACT", None)
+        with self.assertRaises(WeatherError):
+            user_agent()
+
+    def test_contact_is_included_when_set(self):
+        import os
+
+        from cipher.resolvers.weather import user_agent
+
+        os.environ["CIPHER_CONTACT"] = "someone@example.com"
+        self.assertIn("someone@example.com", user_agent())
+
+    def test_blank_contact_is_treated_as_missing(self):
+        import os
+
+        from cipher.resolvers.weather import WeatherError, user_agent
+
+        os.environ["CIPHER_CONTACT"] = "   "
+        with self.assertRaises(WeatherError):
+            user_agent()
