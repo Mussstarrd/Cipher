@@ -129,7 +129,8 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, {
         reports: s.reports.filter((r) => !r.internal).slice(0, 12),
         messages: s.messages.slice(-80),
-        household: (brief.match(/\*\*(\w+)\*\*/g) || []).map((x) => x.replace(/\*/g, "")),
+        // Only the roster table's rows — not every bold word in the brief.
+        household: [...brief.matchAll(/^\|\s*\*\*([\w'-]+)\*\*\s*\|/gm)].map((m) => m[1]),
         slots: SLOTS, now: nowET(), push: pushReady(),
         vapid: process.env.VAPID_PUBLIC || null,
         needsPass: Boolean(PASS),

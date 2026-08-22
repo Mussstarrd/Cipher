@@ -1,0 +1,14 @@
+{
+ "messages": [],
+ "reports": [
+  {
+   "slot": "07:00",
+   "at": "2026-08-22T12:06:49.878Z",
+   "day": "2026-08-22",
+   "text": "I could not produce this check-in.\n\nWake 07:00 FAILED: Could not resolve authentication method. Expected one of apiKey, authToken, credentials, config, or profile to be set. Or for one of the \"X-Api-Key\" or \"Authorization\" headers to be explicitly omitted\n\nThis is my failure, not a quiet day.",
+   "failed": true
+  }
+ ],
+ "subs": [],
+ "lastRun": {}
+}
