@@ -13,7 +13,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { wake, answer, review } from "./brain.js";
 import { notify, pushReady } from "./push.js";
-import { fetchNew, send as sendMail, mailReady } from "./mail.js";
+import { fetchNew, send as sendMail, mailReady, credentialWarning } from "./mail.js";
 import { upcoming, asLines, calendarReady } from "./calendar.js";
 import { backup, backupReady } from "./backup.js";
 import {
@@ -310,5 +310,7 @@ server.listen(PORT, () => {
   console.log(`[hearth] push ${pushReady() ? "ready" : "OFF — run: npm run keys"}`);
   console.log(`[hearth] backup ${backupReady() ? "ON" : "OFF — set BACKUP_GIT_REMOTE"}`);
   console.log(`[hearth] calendar ${calendarReady() ? "ON" : "OFF — set CALENDAR_ICS_URLS"}`);
+  const cw = credentialWarning();
+  if (cw) console.error(`[hearth] !! ${cw}`);
   console.log(`[hearth] mail ${mailReady() ? `ON as ${process.env.GMAIL_USER}` : "OFF — set GMAIL_USER + GMAIL_APP_PASSWORD"}`);
 });

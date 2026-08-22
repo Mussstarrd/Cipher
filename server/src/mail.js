@@ -17,6 +17,23 @@ const PASS = (process.env.GMAIL_APP_PASSWORD || "").replace(/\s+/g, "");
 
 export const mailReady = () => Boolean(USER && PASS);
 
+/**
+ * A Gmail app password is always exactly 16 lowercase letters. Anything else
+ * means a character was lost or added in transit, and Google will answer with
+ * a flat "Invalid credentials" that tells you nothing about which of the two
+ * dozen possible causes it was. Catch it here instead.
+ */
+export function credentialWarning() {
+  if (!USER || !PASS) return null;
+  if (PASS.length !== 16) {
+    return `GMAIL_APP_PASSWORD is ${PASS.length} characters after removing spaces; a Gmail app password is always 16. A character was lost or added when it was pasted — retype it as one block with no spaces.`;
+  }
+  if (!/^[a-z]{16}$/.test(PASS)) {
+    return "GMAIL_APP_PASSWORD contains something other than lowercase letters. Google issues only a-z — check for a stray character from the paste.";
+  }
+  return null;
+}
+
 /** Noise that should never reach a family brief. */
 const JUNK = [
   /no[-_.]?reply@.*(kohls|walmart|amazon|adobe|linkedin|upstart|cymatics)/i,
