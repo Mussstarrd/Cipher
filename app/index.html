@@ -439,6 +439,10 @@ button{font:inherit;color:inherit;cursor:pointer}
     o+= showForm ? formHTML() : '<button class="addbtn" id="addopen">+ Add a recurring thing</button>';
     o+='</div>';
 
+    if(S.caps){
+      o+='<div class="sec"><h2>Runtime</h2><div class="card"><h3>Capabilities this account can actually run</h3>'
+       + '<p style="font-family:\'DM Mono\',monospace;font-size:12.5px">'+esc(S.caps.replace(/,/g," \u00b7 "))+'</p></div></div>';
+    }
     o+='<p class="note"><b>This is the intake, and it never ends.</b> Everything you add here Hearth treats as <em>told</em> — a starting guess, not a fact. What it watches actually happen over the next few weeks is what turns a guess into something it relies on. Correcting it is worth more than adding to it.</p>';
     o+='</div>';
     return '<div class="pane'+(tab==="week"?" on":"")+'" id="p-week">'+o+'</div>';
@@ -472,7 +476,7 @@ button{font:inherit;color:inherit;cursor:pointer}
   function render(){
     root.innerHTML=
       '<div class="hd"><div class="hd-top"><div class="mark">Hearth</div>'
-      +'<div class="house">Lake of the Woods &middot; 4 check-ins daily</div>'+statusChip()+'</div>'
+      +'<div class="house">Lake of the Woods'+(S.caps?' &middot; '+esc(S.caps.split(",").length)+' capabilities live':' &middot; 4 check-ins daily')+'</div>'+statusChip()+'</div>'
       +'<div class="tabs" role="tablist">'
       +'<button class="tab" role="tab" data-tab="channel" aria-selected="'+(tab==="channel")+'">Channel</button>'
       +'<button class="tab" role="tab" data-tab="week" aria-selected="'+(tab==="week")+'">This week</button>'
@@ -580,7 +584,24 @@ button{font:inherit;color:inherit;cursor:pointer}
   if(window.claude&&window.claude.use){
     window.claude.use("artifact").then(function(a){
       if(a){ api=a; mode="shared"; render(); }
+      return probe();
     }).catch(function(){});
+  }
+
+  /* Ask the runtime which capabilities this account can actually run, and
+     record the answer in state so it survives and can be read back. */
+  function probe(){
+    var names=["artifact","assets","comments","db","downloads","embed","mcp",
+               "permissions","room","sample","user"];
+    return Promise.all(names.map(function(n){
+      try{ return window.claude.use(n).then(function(v){ return v?n:null; })
+                                      .catch(function(){ return null; }); }
+      catch(e){ return Promise.resolve(null); }
+    })).then(function(r){
+      var got=r.filter(Boolean).join(",");
+      if(got && got!==(S.caps||"")){ S.caps=got; save(); }
+      render();
+    });
   }
 })();
 </script>
