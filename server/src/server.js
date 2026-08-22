@@ -193,11 +193,21 @@ const body = (req) => new Promise((ok, no) => {
 
 const authed = (b) => !PASS || b.pass === PASS;
 
+// Funnel publishes this to the open internet — that is the point, so the family
+// needs nothing installed. It also means the passphrase is the only door. Reads
+// must be gated too: a check-in naming the children, the schools and the day's
+// movements is not less sensitive than the ability to post.
+const authedRead = (u, req) =>
+  !PASS ||
+  u.searchParams.get("pass") === PASS ||
+  req.headers["x-hearth-pass"] === PASS;
+
 const server = http.createServer(async (req, res) => {
   const u = new URL(req.url, URL_BASE);
 
   try {
     if (req.method === "GET" && u.pathname === "/api/state") {
+      if (!authedRead(u, req)) return send(res, 401, { error: "passphrase required" });
       const s = loadState();
       const { brief } = loadBrief();
       return send(res, 200, {

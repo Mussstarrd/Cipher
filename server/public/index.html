@@ -78,7 +78,28 @@ const hhmm = (iso) => new Date(iso).toLocaleTimeString("en-GB", { timeZone: "Ame
 const dayOf = (iso) => new Date(iso).toLocaleDateString("en-GB", { timeZone: "America/New_York", weekday: "short", day: "numeric", month: "short" });
 
 async function load() {
-  try { S = await (await fetch("/api/state")).json(); render(); } catch (e) { /* offline; keep last view */ }
+  try {
+    const r = await fetch("/api/state", { headers: pass ? { "x-hearth-pass": pass } : {} });
+    if (r.status === 401) { askPass(); return; }
+    S = await r.json(); render();
+  } catch (e) { /* offline; keep the last view rather than blanking it */ }
+}
+
+function askPass() {
+  document.getElementById("root").innerHTML =
+    '<div class="hd"><div class="row"><div class="mark">Hearth</div></div></div>' +
+    '<div class="wrap"><p>This is the Fenn household. Enter the family passphrase.</p>' +
+    '<form id="pf"><input id="pi" type="password" autocomplete="current-password" ' +
+    'style="width:100%;padding:11px;border-radius:6px;border:1px solid var(--rule-2);' +
+    'background:var(--bubble);color:var(--ink);font:inherit" placeholder="Passphrase">' +
+    '<button class="send" style="width:auto;padding:0 18px;margin-top:10px;border-radius:6px">Open</button>' +
+    '</form></div>';
+  document.getElementById("pf").onsubmit = (e) => {
+    e.preventDefault();
+    pass = document.getElementById("pi").value.trim();
+    localStorage.setItem("hearth.pass", pass);
+    load();
+  };
 }
 
 function reportsView() {
