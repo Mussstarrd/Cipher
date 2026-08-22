@@ -41,6 +41,14 @@ export async function fetchNew(sinceUid = 0, max = 40) {
     await client.connect();
     const lock = await client.getMailboxLock("INBOX");
     try {
+      // A brand-new or freshly-emptied mailbox has nothing to fetch, and asking
+      // for a UID range against zero messages is an IMAP error, not an empty
+      // result. Check before asking.
+      if (!client.mailbox || client.mailbox.exists === 0) {
+        lock.release();
+        await client.logout();
+        return { messages: [], lastUid: sinceUid, error: null };
+      }
       const range = sinceUid > 0 ? `${sinceUid + 1}:*` : "1:*";
       for await (const msg of client.fetch({ uid: range }, { uid: true, source: true })) {
         if (msg.uid <= sinceUid) continue;        // gmail returns the anchor
@@ -59,7 +67,16 @@ export async function fetchNew(sinceUid = 0, max = 40) {
     await client.logout();
   } catch (e) {
     // Never silently return an empty inbox — that reads as "quiet day".
-    return { messages: out, lastUid, error: String(e?.message || e) };
+    // imapflow's bare "Command failed" is useless on its own, so carry the
+    // server's own words: that is where the actual reason lives.
+    const detail = [
+      e?.message,
+      e?.responseText,
+      e?.serverResponseCode && `code=${e.serverResponseCode}`,
+      e?.authenticationFailed && "authentication failed — check the app password",
+    ].filter(Boolean).join(" | ");
+    try { await client.logout(); } catch {}
+    return { messages: out, lastUid, error: detail || String(e) };
   }
   return { messages: out.slice(-max), lastUid, error: null };
 }

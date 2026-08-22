@@ -9,7 +9,8 @@
   "scripts": {
     "start": "node src/server.js",
     "wake": "node src/wake-now.js",
-    "keys": "node -e \"import('web-push').then(w=>console.log(w.default.generateVAPIDKeys()))\""
+    "keys": "node -e \"import('web-push').then(w=>console.log(w.default.generateVAPIDKeys()))\"",
+    "mailtest": "node --env-file=.env src/mailtest.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "latest",
