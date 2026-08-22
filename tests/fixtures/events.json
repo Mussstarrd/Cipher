@@ -1,0 +1,140 @@
+{
+  "events": [
+    {
+      "event_ticker": "DEMO-YESNO",
+      "title": "Synthetic: YES ask + NO ask = 96c, cheap-fee end of the curve",
+      "category": "Demo",
+      "mutually_exclusive": false,
+      "markets": [
+        {
+          "ticker": "DEMO-YESNO-A",
+          "event_ticker": "DEMO-YESNO",
+          "title": "Crossed book",
+          "close_time": "2099-01-01T00:00:00Z",
+          "status": "active",
+          "yes_bid": 6,
+          "yes_ask": 8,
+          "no_bid": 86,
+          "no_ask": 88,
+          "yes_ask_size": 300,
+          "no_ask_size": 250,
+          "yes_bid_size": 300,
+          "no_bid_size": 250
+        }
+      ]
+    },
+    {
+      "event_ticker": "DEMO-BRACKETS",
+      "title": "Synthetic: exhaustive brackets sum below 100c",
+      "category": "Demo",
+      "mutually_exclusive": true,
+      "markets": [
+        {
+          "ticker": "DEMO-BRACKETS-LOW",
+          "event_ticker": "DEMO-BRACKETS",
+          "title": "Below 100",
+          "close_time": "2099-01-01T00:00:00Z",
+          "status": "active",
+          "yes_bid": 18,
+          "yes_ask": 21,
+          "yes_ask_size": 400,
+          "yes_bid_size": 400
+        },
+        {
+          "ticker": "DEMO-BRACKETS-MID",
+          "event_ticker": "DEMO-BRACKETS",
+          "title": "100 to 200",
+          "close_time": "2099-01-01T00:00:00Z",
+          "status": "active",
+          "yes_bid": 40,
+          "yes_ask": 44,
+          "yes_ask_size": 500,
+          "yes_bid_size": 500
+        },
+        {
+          "ticker": "DEMO-BRACKETS-HIGH",
+          "event_ticker": "DEMO-BRACKETS",
+          "title": "Above 200",
+          "close_time": "2099-01-01T00:00:00Z",
+          "status": "active",
+          "yes_bid": 26,
+          "yes_ask": 29,
+          "yes_ask_size": 350,
+          "yes_bid_size": 350
+        }
+      ]
+    },
+    {
+      "event_ticker": "DEMO-LADDER",
+      "title": "Synthetic: higher strike quoted above a lower strike",
+      "category": "Demo",
+      "mutually_exclusive": false,
+      "markets": [
+        {
+          "ticker": "DEMO-LADDER-T100",
+          "event_ticker": "DEMO-LADDER",
+          "title": "Above 100",
+          "close_time": "2099-01-01T00:00:00Z",
+          "status": "active",
+          "strike_type": "greater",
+          "floor_strike": 100,
+          "yes_bid": 62,
+          "yes_ask": 65,
+          "yes_bid_size": 200,
+          "yes_ask_size": 200
+        },
+        {
+          "ticker": "DEMO-LADDER-T110",
+          "event_ticker": "DEMO-LADDER",
+          "title": "Above 110",
+          "close_time": "2099-01-01T00:00:00Z",
+          "status": "active",
+          "strike_type": "greater",
+          "floor_strike": 110,
+          "yes_bid": 52,
+          "yes_ask": 55,
+          "yes_bid_size": 180,
+          "yes_ask_size": 180
+        }
+      ]
+    },
+    {
+      "event_ticker": "DEMO-CLEAN",
+      "title": "Synthetic: a well-priced control event",
+      "category": "Demo",
+      "mutually_exclusive": true,
+      "markets": [
+        {
+          "ticker": "DEMO-CLEAN-A",
+          "event_ticker": "DEMO-CLEAN",
+          "title": "Outcome A",
+          "close_time": "2099-01-01T00:00:00Z",
+          "status": "active",
+          "yes_bid": 58,
+          "yes_ask": 61,
+          "no_bid": 39,
+          "no_ask": 42,
+          "yes_ask_size": 500,
+          "no_ask_size": 500,
+          "yes_bid_size": 500,
+          "no_bid_size": 500
+        },
+        {
+          "ticker": "DEMO-CLEAN-B",
+          "event_ticker": "DEMO-CLEAN",
+          "title": "Outcome B",
+          "close_time": "2099-01-01T00:00:00Z",
+          "status": "active",
+          "yes_bid": 39,
+          "yes_ask": 42,
+          "no_bid": 58,
+          "no_ask": 61,
+          "yes_ask_size": 500,
+          "no_ask_size": 500,
+          "yes_bid_size": 500,
+          "no_bid_size": 500
+        }
+      ]
+    }
+  ]
+}
