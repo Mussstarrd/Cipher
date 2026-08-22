@@ -71,3 +71,19 @@ _Empty. Jeffery has authorised this category; not yet supplied._
   Nate will post it in TeamSnap as he gets it.
 - watch for: the schedule appearing. When it does, every game becomes a dated
   commitment and should reach the check-ins.
+
+---
+
+## Cash flow
+
+### Paydays — alternating
+- cadence: **both biweekly on Fridays, offset by a week.** Jeffery paid Fri
+  2026-08-21; Suzan paid Fri 2026-08-28.
+- so: money lands **every** Friday, from one of them alternately.
+- confidence: told 2026-08-22
+- action: the useful output is not the payday, it is whether a bill's due date
+  falls in Jeffery's week or Suzan's. Once bills are recorded, flag any debit
+  landing in the gap before the relevant paycheck. Never state an amount unless
+  Jeffery supplied it.
+- **unknown: which of the two weeks is tighter.** Do not assume. It will show up
+  in what gets asked about, not in the calendar.
