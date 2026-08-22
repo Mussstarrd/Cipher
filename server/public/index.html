@@ -6,6 +6,13 @@
 <title>Hearth</title>
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#A83E24">
+<link rel="icon" href="/icon-192.png">
+<!-- Safari ignores the manifest for home-screen installs: it reads these. -->
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Hearth">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=DM+Mono:wght@400;500&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap">
 <style>
 :root{--ground:#E8EAED;--surface:#FDFDFE;--surface-2:#DDE0E5;--bubble:#fff;
@@ -73,6 +80,12 @@ let me = localStorage.getItem("hearth.me") || "Jeffery";
 let pass = localStorage.getItem("hearth.pass") || "";
 let tab = "now";
 const PEOPLE = ["Jeffery", "Suzan", "Aiden", "Abby"];
+const IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+  (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+// Installed apps report standalone; a browser tab does not. On iOS this is the
+// difference between notifications being possible and not existing at all.
+const INSTALLED = window.matchMedia("(display-mode: standalone)").matches ||
+  navigator.standalone === true;
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const hhmm = (iso) => new Date(iso).toLocaleTimeString("en-GB", { timeZone: "America/New_York", hour: "2-digit", minute: "2-digit" });
 const dayOf = (iso) => new Date(iso).toLocaleDateString("en-GB", { timeZone: "America/New_York", weekday: "short", day: "numeric", month: "short" });
@@ -124,8 +137,7 @@ function render() {
   $("#root").innerHTML = `
   <div class="hd"><div class="row"><div class="mark">Hearth</div>
     <div class="sub">${esc(S.now.hm || "")} &middot; ${S.slots.length} wakes daily</div>
-    <button class="chip ${Notification?.permission === "granted" ? "on" : ""}" id="notif">
-      ${Notification?.permission === "granted" ? "notifying" : "notify me"}</button></div>
+    <button class="chip ${notifState().cls}" id="notif">${notifState().label}</button></div>
     <div class="tabs">
       <button class="tab" data-t="now" aria-selected="${tab === "now"}">Reports</button>
       <button class="tab" data-t="chat" aria-selected="${tab === "chat"}">Channel</button>
@@ -171,7 +183,31 @@ async function post(url, data) {
   return r.json().catch(() => ({}));
 }
 
+function notifState() {
+  const ok = typeof Notification !== "undefined" && Notification.permission === "granted";
+  if (ok) return { cls: "on", label: "notifying" };
+  if (IS_IOS && !INSTALLED) return { cls: "", label: "add to home screen" };
+  return { cls: "", label: "notify me" };
+}
+
 async function enablePush() {
+  // iOS only allows notifications for a web app launched from the Home Screen.
+  // In a Safari tab the API is missing entirely, so asking would throw.
+  if (IS_IOS && !INSTALLED) {
+    alert(
+      "On iPhone, notifications only work once Hearth is on your Home Screen.\n\n" +
+      "1. Tap the Share button — the square with an arrow, at the bottom of Safari\n" +
+      "2. Scroll down and tap \u201cAdd to Home Screen\u201d\n" +
+      "3. Tap Add\n" +
+      "4. Open Hearth from the Home Screen icon, then tap \u201cnotify me\u201d again\n\n" +
+      "This is an Apple rule, not a Hearth one \u2014 Safari tabs cannot receive notifications."
+    );
+    return;
+  }
+  if (typeof Notification === "undefined" || !("serviceWorker" in navigator)) {
+    alert("This browser cannot do notifications. Everything else still works.");
+    return;
+  }
   if (!S.vapid) return alert("Push is not set up on the server yet. Run: npm run keys");
   const perm = await Notification.requestPermission();
   if (perm !== "granted") return;

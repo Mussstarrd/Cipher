@@ -303,8 +303,12 @@ const server = http.createServer(async (req, res) => {
     const p = path.join(PUB, path.normalize(file).replace(/^(\.\.[/\\])+/, ""));
     if (fs.existsSync(p) && fs.statSync(p).isFile()) {
       const ext = path.extname(p);
+      // A wrong content-type on an icon is silent: the browser simply never
+      // offers to install the app, with no error anywhere.
       const type = { ".html": "text/html", ".js": "text/javascript",
-        ".json": "application/json", ".css": "text/css" }[ext] || "application/octet-stream";
+        ".json": "application/json", ".css": "text/css", ".png": "image/png",
+        ".svg": "image/svg+xml", ".ico": "image/x-icon",
+        ".webmanifest": "application/manifest+json" }[ext] || "application/octet-stream";
       res.writeHead(200, { "content-type": type });
       return res.end(fs.readFileSync(p));
     }
