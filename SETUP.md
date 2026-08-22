@@ -101,14 +101,18 @@ value did not take — fix it before going further.**
 
 ```bash
 curl -fsSL https://tailscale.com/install.sh | sh
-sudo tailscale up
-sudo tailscale funnel 8787
+sudo tailscale up --ssh
+sudo tailscale funnel --bg 8787
 ```
 
 It prints a permanent `https://something.ts.net` URL. Put it in `.env` as
 `HEARTH_URL`, then `sudo systemctl restart hearth`.
 
 Nothing is exposed to the open internet — only devices you allow.
+
+`--ssh` turns on Tailscale SSH: from then on `ssh root@hearth` works from any
+device on your tailnet, with no keys to generate, copy or lose. That is the real
+administration path. Closing port 22 to the internet does not touch it.
 
 ## First run
 
