@@ -87,3 +87,23 @@ _Empty. Jeffery has authorised this category; not yet supplied._
   Jeffery supplied it.
 - **unknown: which of the two weeks is tighter.** Do not assume. It will show up
   in what gets asked about, not in the calendar.
+
+---
+
+## Hearth's own maintenance
+
+### The 07:00 trigger's clock will drift at the DST change
+- trigger: `trig_01E5jDRY32mqVmaf2PNK8RKR`, cron `0 11 * * *` — evaluated in **UTC**,
+  not local time.
+- right now (EDT, UTC-4) 11:00 UTC is 07:00 Eastern. Correct.
+- **when DST ends on Sun 2026-11-01**, Eastern becomes UTC-5 and the same cron
+  fires at **06:00 local** — an hour early, every day, silently.
+- lead: raise this in the week before 2026-11-01.
+- action: change the cron to `0 12 * * *`. Reverse it when DST resumes on
+  Sun 2027-03-14 (back to `0 11 * * *`).
+- confidence: certain — this is arithmetic, not observation.
+
+This entry exists because Hearth should catch its own maintenance deadlines the
+same way it catches the family's. A system that reminds you about soccer
+registration and then quietly breaks its own alarm clock has not understood the
+assignment.

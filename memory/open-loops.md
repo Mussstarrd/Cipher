@@ -63,3 +63,18 @@ explicitly abandoned — that is the whole point.
 - [opened 2026-08-22] **Unexplained: Prince William County Public Schools mail.**
   Jeffery receives PWCS division-wide email. No known connection to this
   household. Do not act on it, do not assume it is junk. Ask once, casually.
+
+## Hearth's infrastructure
+
+- [opened 2026-08-22] **Jeffery — attach connectors to the 07:00 routine.**
+  The trigger was created from inside a coding session and carries **no MCP
+  connectors**, so the fired session runs without Gmail, Calendar or Drive. It
+  will produce a brief from memory alone and will say so plainly rather than
+  quietly producing a thinner one.
+  Fix: open the Routines UI on claude.ai, find "Hearth — 07:00 check-in", and
+  attach Gmail (and Calendar if wanted). Until then the morning brief is
+  memory-only — which is a fair test of standalone mode, but not the full thing.
+
+- [opened 2026-08-22] **Hearth — verify the first fire actually happened.**
+  If 07:00 passes with no push notification, the heartbeat did not work and that
+  is the single most important thing to fix. Do not assume success.
