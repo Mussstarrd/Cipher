@@ -1,0 +1,16 @@
+{
+  "name": "hearth",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "start": "node src/server.js",
+    "wake": "node src/wake-now.js",
+    "keys": "node -e \"import('web-push').then(w=>console.log(w.default.generateVAPIDKeys()))\""
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "latest",
+    "web-push": "^3"
+  }
+}

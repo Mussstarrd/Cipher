@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Hearth</title>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#A83E24">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=DM+Mono:wght@400;500&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap">
+<style>
+:root{--ground:#E8EAED;--surface:#FDFDFE;--surface-2:#DDE0E5;--bubble:#fff;
+ --ink:#191C21;--ink-2:#434A54;--ink-3:#6F7883;--rule:#C9CDD4;--rule-2:#B0B6BF;
+ --ember:#A83E24;--soft:#F5E4DF;--good:#276A4C}
+@media(prefers-color-scheme:dark){:root{--ground:#0F1216;--surface:#171B21;--surface-2:#20252D;
+ --bubble:#1D2229;--ink:#E5E8EC;--ink-2:#AFB7C1;--ink-3:#7C8592;--rule:#272D36;--rule-2:#39414C;
+ --ember:#E4805F;--soft:#2E211C;--good:#5FB58C}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:Archivo,system-ui,sans-serif;font-size:15px;line-height:1.5}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--ember);outline-offset:2px}
+.app{max-width:620px;margin:0 auto;min-height:100vh;background:var(--surface);
+ border-inline:1px solid var(--rule);display:flex;flex-direction:column}
+.hd{position:sticky;top:0;z-index:9;background:var(--surface);border-bottom:1px solid var(--rule);padding:12px 16px 0}
+.row{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.mark{font-family:Newsreader,serif;font-size:23px}
+.sub{font-family:"DM Mono",monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);flex:1}
+.chip{font-family:"DM Mono",monospace;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;
+ padding:3px 8px;border-radius:99px;border:1px solid var(--rule-2);color:var(--ink-3);background:none}
+.chip.on{color:var(--good);border-color:var(--good)}
+.tabs{display:flex;gap:2px;margin-top:10px}
+.tab{background:none;border:0;padding:9px 13px;font-size:13.5px;font-weight:500;color:var(--ink-3);border-bottom:2px solid transparent}
+.tab[aria-selected=true]{color:var(--ink);border-bottom-color:var(--ember)}
+.who{display:flex;gap:6px;padding:9px 16px;background:var(--surface-2);border-bottom:1px solid var(--rule);flex-wrap:wrap;align-items:center}
+.who>span{font-family:"DM Mono",monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.pick{background:var(--surface);border:1px solid var(--rule-2);border-radius:99px;padding:3px 11px;font-size:12.5px;font-weight:500}
+.pick[aria-pressed=true]{background:var(--ember);border-color:var(--ember);color:#fff}
+.pane{display:none;flex:1;flex-direction:column}.pane.on{display:flex}
+.wrap{padding:16px;display:flex;flex-direction:column;gap:14px}
+.report{border:1px solid var(--rule);border-left:2px solid var(--ember);background:var(--soft);
+ border-radius:4px 10px 10px 4px;padding:14px 16px;font-family:Newsreader,Georgia,serif;font-size:16px;line-height:1.55;white-space:pre-wrap}
+.report.fail{background:none;border-color:var(--ember)}
+.rmeta{font-family:"DM Mono",monospace;font-size:10px;letter-spacing:.06em;color:var(--ember);
+ text-transform:uppercase;margin-bottom:7px;display:block}
+.post{display:flex;flex-direction:column;gap:5px;max-width:88%}
+.post.me{align-self:flex-end;align-items:flex-end}
+.post.h{max-width:100%;align-self:stretch}
+.meta{font-family:"DM Mono",monospace;font-size:10px;color:var(--ink-3);display:flex;gap:7px}
+.meta b{color:var(--ink-2);text-transform:uppercase;font-weight:500}
+.bub{background:var(--bubble);border:1px solid var(--rule);border-radius:13px;padding:10px 13px;white-space:pre-wrap;overflow-wrap:anywhere}
+.post.me .bub{background:var(--surface-2)}
+.post.h .bub{background:var(--soft);border-left:2px solid var(--ember);border-radius:4px 13px 13px 4px;font-family:Newsreader,serif;font-size:16px}
+.post.h .meta b{color:var(--ember)}
+.comp{position:sticky;bottom:0;background:var(--surface);border-top:1px solid var(--rule);padding:10px 12px;display:flex;gap:8px;align-items:flex-end}
+.comp textarea{flex:1;resize:none;background:var(--bubble);color:var(--ink);border:1px solid var(--rule-2);
+ border-radius:18px;padding:10px 14px;font:inherit;min-height:40px;max-height:120px}
+.send{background:var(--ember);color:#fff;border:0;border-radius:99px;width:40px;height:40px;flex:none;font-size:17px}
+.send:disabled{opacity:.4}
+.act{display:flex;gap:8px;flex-wrap:wrap;padding:0 16px 16px}
+.act button{background:none;border:1px solid var(--rule-2);border-radius:5px;padding:9px 13px;font-size:13px;color:var(--ink-2)}
+.note{font-size:12px;color:var(--ink-3);padding:0 16px 28px;line-height:1.55}
+.empty{color:var(--ink-3);font-style:italic}
+dialog{border:1px solid var(--rule-2);border-radius:6px;background:var(--surface);color:var(--ink);padding:20px;max-width:320px}
+dialog input{width:100%;padding:9px;margin:10px 0;background:var(--bubble);color:var(--ink);border:1px solid var(--rule-2);border-radius:4px;font:inherit}
+</style>
+</head>
+<body>
+<div class="app" id="root"></div>
+
+<script>
+const $ = (s) => document.querySelector(s);
+let S = { reports: [], messages: [], slots: [], now: {}, vapid: null, needsPass: false };
+let me = localStorage.getItem("hearth.me") || "Jeffery";
+let pass = localStorage.getItem("hearth.pass") || "";
+let tab = "now";
+const PEOPLE = ["Jeffery", "Suzan", "Aiden", "Abby"];
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const hhmm = (iso) => new Date(iso).toLocaleTimeString("en-GB", { timeZone: "America/New_York", hour: "2-digit", minute: "2-digit" });
+const dayOf = (iso) => new Date(iso).toLocaleDateString("en-GB", { timeZone: "America/New_York", weekday: "short", day: "numeric", month: "short" });
+
+async function load() {
+  try { S = await (await fetch("/api/state")).json(); render(); } catch (e) { /* offline; keep last view */ }
+}
+
+function reportsView() {
+  if (!S.reports.length) return `<p class="empty">Nothing yet. Hearth wakes at ${S.slots.join(", ")} Eastern.</p>`;
+  return S.reports.map((r) => `<div class="report${r.failed ? " fail" : ""}">
+    <span class="rmeta">${esc(r.slot)} &middot; ${esc(dayOf(r.at))}${r.failed ? " &middot; failed" : ""}</span>${esc(r.text)}</div>`).join("");
+}
+
+function chatView() {
+  const ms = S.messages.map((m) => {
+    const h = m.who === "Hearth", mine = !h && m.who === me;
+    return `<div class="post ${h ? "h" : mine ? "me" : ""}">
+      <div class="meta"><b>${esc(m.who)}</b><span>${esc(hhmm(m.at))}</span></div>
+      <div class="bub">${esc(m.text)}</div></div>`;
+  }).join("");
+  return `<div class="wrap">${ms || '<p class="empty">Ask Hearth anything.</p>'}</div>
+    <form class="comp" id="comp"><textarea id="msg" rows="1" placeholder="Ask Hearth, or tell the family"></textarea>
+    <button class="send" id="send" disabled aria-label="Send">&#8593;</button></form>`;
+}
+
+function render() {
+  $("#root").innerHTML = `
+  <div class="hd"><div class="row"><div class="mark">Hearth</div>
+    <div class="sub">${esc(S.now.hm || "")} &middot; ${S.slots.length} wakes daily</div>
+    <button class="chip ${Notification?.permission === "granted" ? "on" : ""}" id="notif">
+      ${Notification?.permission === "granted" ? "notifying" : "notify me"}</button></div>
+    <div class="tabs">
+      <button class="tab" data-t="now" aria-selected="${tab === "now"}">Reports</button>
+      <button class="tab" data-t="chat" aria-selected="${tab === "chat"}">Channel</button>
+    </div></div>
+  <div class="who"><span>You are</span>${PEOPLE.map((p) => `<button class="pick" data-me="${p}" aria-pressed="${p === me}">${p}</button>`).join("")}</div>
+  <div class="pane ${tab === "now" ? "on" : ""}"><div class="wrap">${reportsView()}</div>
+    <div class="act">${S.slots.map((s) => `<button data-wake="${s}">Run ${s} now</button>`).join("")}</div>
+    <p class="note">Hearth hibernates between wakes. At ${S.slots.join(", ")} Eastern it reads its own memory, works out what matters, writes down what it learned, and notifies everyone. The 22:00 wake also rewrites its memory — that is the one that makes tomorrow better than today.</p></div>
+  <div class="pane ${tab === "chat" ? "on" : ""}">${chatView()}</div>`;
+  wire();
+}
+
+function wire() {
+  document.querySelectorAll("[data-t]").forEach((b) => b.onclick = () => { tab = b.dataset.t; render(); });
+  document.querySelectorAll("[data-me]").forEach((b) => b.onclick = () => {
+    me = b.dataset.me; localStorage.setItem("hearth.me", me); render();
+  });
+  document.querySelectorAll("[data-wake]").forEach((b) => b.onclick = async () => {
+    b.disabled = true; b.textContent = "thinking…";
+    await post("/api/wake", { slot: b.dataset.wake }); await load();
+  });
+  $("#notif") && ($("#notif").onclick = enablePush);
+  const ta = $("#msg"), snd = $("#send");
+  if (ta) {
+    ta.oninput = () => { snd.disabled = !ta.value.trim(); ta.style.height = "auto"; ta.style.height = Math.min(ta.scrollHeight, 120) + "px"; };
+    ta.onkeydown = (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); if (ta.value.trim()) $("#comp").requestSubmit(); } };
+    $("#comp").onsubmit = async (e) => {
+      e.preventDefault();
+      const text = ta.value.trim(); if (!text) return;
+      ta.value = ""; snd.disabled = true;
+      await post("/api/message", { who: me, text });
+      await load();
+      setTimeout(load, 4000); setTimeout(load, 9000);   // Hearth answers a moment later
+    };
+  }
+}
+
+async function post(url, data) {
+  if (S.needsPass && !pass) { pass = prompt("Family passphrase") || ""; localStorage.setItem("hearth.pass", pass); }
+  const r = await fetch(url, { method: "POST", headers: { "content-type": "application/json" },
+    body: JSON.stringify({ ...data, pass }) });
+  if (r.status === 401) { localStorage.removeItem("hearth.pass"); pass = ""; alert("Wrong passphrase."); }
+  return r.json().catch(() => ({}));
+}
+
+async function enablePush() {
+  if (!S.vapid) return alert("Push is not set up on the server yet. Run: npm run keys");
+  const perm = await Notification.requestPermission();
+  if (perm !== "granted") return;
+  const reg = await navigator.serviceWorker.register("/sw.js");
+  const sub = await reg.pushManager.subscribe({
+    userVisibleOnly: true,
+    applicationServerKey: Uint8Array.from(atob(S.vapid.replace(/-/g, "+").replace(/_/g, "/")), (c) => c.charCodeAt(0)),
+  });
+  await post("/api/subscribe", { sub });
+  render();
+}
+
+load();
+setInterval(load, 30000);
+</script>
+</body>
+</html>
