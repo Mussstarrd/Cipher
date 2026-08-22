@@ -15,6 +15,7 @@ import { wake, answer, review } from "./brain.js";
 import { notify, pushReady } from "./push.js";
 import { fetchNew, send as sendMail, mailReady } from "./mail.js";
 import { upcoming, asLines, calendarReady } from "./calendar.js";
+import { backup, backupReady } from "./backup.js";
 import {
   loadState, saveState, appendDaily, writeLayer, todayET, loadBrief,
 } from "./memory.js";
@@ -103,6 +104,7 @@ async function runSlot(slot, { forced = false } = {}) {
             `- ${m.from} | ${m.subject}\n  ${m.text.slice(0, 700)}`).join("\n")}`
         : "No new mail since the last check-in.",
       s.mailError ? `WARNING: the inbox could not be read (${s.mailError}). Say so in the check-in; do not present this as a quiet day.` : "",
+      s.backupError ? `WARNING: memory has not been backed up since ${s.backupErrorSince || "the last success"} (${s.backupError}). Raise this once, plainly — everything learned is currently on one disk.` : "",
     ].filter(Boolean).join("\n\n");
     const text = await wake(slot, extra);
     s.reports.unshift({ slot, at: new Date().toISOString(), day: todayET(), text });
@@ -131,6 +133,20 @@ async function runSlot(slot, { forced = false } = {}) {
       saveState(st);
       console.log(`[hearth] review rewrote: ${Object.keys(files).join(", ") || "nothing"}`);
     }
+    const backupErr = await backup(slot);
+    if (backupErr) {
+      console.error(`[hearth] BACKUP FAILED: ${backupErr}`);
+      const st = loadState();
+      st.backupError = backupErr;
+      st.backupErrorSince ||= new Date().toISOString();
+      saveState(st);
+    } else if (backupReady()) {
+      const st = loadState();
+      st.backupError = null; st.backupErrorSince = null;
+      st.backupAt = new Date().toISOString();
+      saveState(st);
+    }
+
     console.log(`[hearth] ${slot} done`);
     return text;
   } catch (e) {
@@ -192,6 +208,7 @@ const server = http.createServer(async (req, res) => {
         slots: SLOTS, now: nowET(), push: pushReady(),
         vapid: process.env.VAPID_PUBLIC || null,
         calendar: { ready: calendarReady() },
+        backup: { ready: backupReady(), at: s.backupAt || null, error: s.backupError || null },
         mail: { ready: mailReady(), count: s.mail?.length || 0, error: s.mailError || null,
                 recent: (s.mail || []).slice(-15).map(({ from, subject, at }) => ({ from, subject, at })) },
         needsPass: Boolean(PASS),
@@ -291,6 +308,7 @@ server.listen(PORT, () => {
   console.log(`[hearth] awake on ${URL_BASE}`);
   console.log(`[hearth] slots ${SLOTS.join(" ")} ${TZ}`);
   console.log(`[hearth] push ${pushReady() ? "ready" : "OFF — run: npm run keys"}`);
+  console.log(`[hearth] backup ${backupReady() ? "ON" : "OFF — set BACKUP_GIT_REMOTE"}`);
   console.log(`[hearth] calendar ${calendarReady() ? "ON" : "OFF — set CALENDAR_ICS_URLS"}`);
   console.log(`[hearth] mail ${mailReady() ? `ON as ${process.env.GMAIL_USER}` : "OFF — set GMAIL_USER + GMAIL_APP_PASSWORD"}`);
 });
