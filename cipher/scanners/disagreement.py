@@ -20,6 +20,7 @@ need. In order of how much money each one saves:
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime
 
 from ..fees import expected_value_cents, schedule_for
 from ..model import Market
@@ -42,6 +43,33 @@ class DisagreementConfig:
     # where a wrong model looks most attractive. Skip the lottery-ticket end.
     min_price_cents: int = 5
     max_price_cents: int = 99
+    # Staleness allowance for *deterministic* estimates. Much longer on purpose:
+    # a deterministic claim rests on a quantity that cannot move against you --
+    # an observed daily maximum is a valid lower bound an hour later, because a
+    # day's max never falls. Age degrades a model's guess; it does not degrade a
+    # monotone fact. Set to None to apply the ordinary limit to everything.
+    deterministic_staleness_seconds: float | None = None
+
+    def staleness_limit(self, deterministic: bool) -> float:
+        if deterministic and self.deterministic_staleness_seconds is not None:
+            return self.deterministic_staleness_seconds
+        return self.max_staleness_seconds
+
+
+# Presets, because the right staleness window is a property of the source, not
+# of the scanner. Getting this wrong in either direction is expensive: too tight
+# and hourly sources never fire at all; too loose and a fast-moving source gets
+# traded on yesterday's news.
+CRYPTO = DisagreementConfig(max_staleness_seconds=20.0, min_edge_cents=2.0)
+WEATHER = DisagreementConfig(
+    # NWS observations arrive roughly hourly, so a 20s window rejects every
+    # estimate the weather resolver will ever produce.
+    max_staleness_seconds=75 * 60,
+    # A monotone bound stays true all evening.
+    deterministic_staleness_seconds=10 * 3600,
+    min_edge_cents=2.0,
+    min_confidence=0.6,
+)
 
 
 def _haircut(probability: float, market_price: float, confidence: float) -> float:
@@ -54,14 +82,19 @@ def scan(
     market: Market,
     estimate: Estimate,
     config: DisagreementConfig | None = None,
+    now: datetime | None = None,
 ) -> list[Signal]:
-    """Emit at most one signal for the cheaper of the two sides."""
+    """Emit at most one signal for the cheaper of the two sides.
+
+    ``now`` overrides the clock so a scan can be replayed against a recorded
+    day at the timestamps it actually happened.
+    """
     config = config or DisagreementConfig()
 
     if estimate.confidence < config.min_confidence:
         return []
-    staleness = estimate.staleness_seconds()
-    if staleness > config.max_staleness_seconds:
+    staleness = estimate.staleness_seconds(now)
+    if staleness > config.staleness_limit(estimate.deterministic):
         return []
 
     quote = market.quote
@@ -77,7 +110,10 @@ def scan(
             continue
 
         probability = _haircut(implied, ask / 100, estimate.confidence)
-        edge = expected_value_cents(probability, ask, 1, schedule)
+        edge = (
+            expected_value_cents(probability, ask, config.max_contracts, schedule)
+            / config.max_contracts
+        )
         if edge < config.min_edge_cents:
             continue
 
@@ -96,7 +132,8 @@ def scan(
                 ),
                 invalidated_if=(
                     f"the source moves, or the observation ages past "
-                    f"{config.max_staleness_seconds:.0f}s (currently {staleness:.1f}s)"
+                    f"{config.staleness_limit(estimate.deterministic):.0f}s "
+                    f"(currently {staleness:.1f}s)"
                 ),
                 minutes_to_close=market.minutes_to_close(),
                 extra={

@@ -60,14 +60,19 @@ constraint is *partial fills* — half an arbitrage is a naked directional bet.
 That is why every signal here is sized to the thinnest leg and the legs are
 emitted together. Realistic expectation: small, infrequent, real.
 
-### Tier 2 — Deterministic resolution. The actual opportunity. *(scaffolded)*
+### Tier 2 — Deterministic resolution. The actual opportunity. *(weather built; see PLAYBOOK.md)*
 
 For markets settling on a published, machine-readable number, the outcome is
 often knowable before the book reprices:
 
 - **Weather.** "High temperature in NYC today" settles on a specific NWS
   product. By mid-afternoon the day's high is frequently locked in, but the
-  market can still be pricing 88c.
+  market can still be pricing 88c. **Built** — `resolvers/weather.py`. The key
+  property is monotonicity: a daily max never falls, so the hourly observation
+  feed is a lower bound on the settlement value. That makes "already above this
+  bracket's ceiling" a genuinely deterministic claim, while the mirror claim
+  ("has not got there yet") is not, since the feed can understate the true max.
+  The resolver treats those two cases very differently.
 - **Economic releases.** CPI, NFP, Fed decisions. The number is published at a
   known instant; anyone parsing it faster than the median trader has seconds of
   edge on a contract about to go to 100.

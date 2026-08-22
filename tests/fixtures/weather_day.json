@@ -1,0 +1,46 @@
+{
+  "_comment": "A synthetic late-afternoon NYC day. Observed max 78F, so every bracket at or below 77F is already ruled out. Prices are illustrative, not real.",
+  "now": "2025-08-15T23:10:00Z",
+  "station": "KNYC",
+  "observations": {
+    "features": [
+      {"properties": {"timestamp": "2025-08-15T12:51:00Z", "temperature": {"value": 19.4, "qualityControl": "V"}}},
+      {"properties": {"timestamp": "2025-08-15T15:51:00Z", "temperature": {"value": 22.8, "qualityControl": "V"}}},
+      {"properties": {"timestamp": "2025-08-15T18:51:00Z", "temperature": {"value": 25.0, "qualityControl": "V"}}},
+      {"properties": {"timestamp": "2025-08-15T19:51:00Z", "temperature": {"value": 25.6, "qualityControl": "V"}}},
+      {"properties": {"timestamp": "2025-08-15T20:51:00Z", "temperature": {"value": 25.3, "qualityControl": "V"}}},
+      {"properties": {"timestamp": "2025-08-15T21:51:00Z", "temperature": {"value": 24.4, "qualityControl": "V"}}},
+      {"properties": {"timestamp": "2025-08-15T22:51:00Z", "temperature": {"value": 23.3, "qualityControl": "V"}}}
+    ]
+  },
+  "markets": [
+    {
+      "ticker": "KXHIGHNY-25AUG15-B74", "event_ticker": "KXHIGHNY-25AUG15",
+      "title": "NYC high 74-75F", "close_time": "2025-08-16T03:59:00Z", "status": "active",
+      "strike_type": "between", "floor_strike": 74, "cap_strike": 75,
+      "yes_bid": 3, "yes_ask": 6, "no_bid": 94, "no_ask": 97,
+      "yes_ask_size": 400, "no_ask_size": 400, "yes_bid_size": 400, "no_bid_size": 400
+    },
+    {
+      "ticker": "KXHIGHNY-25AUG15-B76", "event_ticker": "KXHIGHNY-25AUG15",
+      "title": "NYC high 76-77F", "close_time": "2025-08-16T03:59:00Z", "status": "active",
+      "strike_type": "between", "floor_strike": 76, "cap_strike": 77,
+      "yes_bid": 8, "yes_ask": 11, "no_bid": 89, "no_ask": 92,
+      "yes_ask_size": 350, "no_ask_size": 350, "yes_bid_size": 350, "no_bid_size": 350
+    },
+    {
+      "ticker": "KXHIGHNY-25AUG15-B78", "event_ticker": "KXHIGHNY-25AUG15",
+      "title": "NYC high 78-79F", "close_time": "2025-08-16T03:59:00Z", "status": "active",
+      "strike_type": "between", "floor_strike": 78, "cap_strike": 79,
+      "yes_bid": 71, "yes_ask": 74, "no_bid": 26, "no_ask": 29,
+      "yes_ask_size": 500, "no_ask_size": 500, "yes_bid_size": 500, "no_bid_size": 500
+    },
+    {
+      "ticker": "KXHIGHNY-25AUG15-T80", "event_ticker": "KXHIGHNY-25AUG15",
+      "title": "NYC high above 80F", "close_time": "2025-08-16T03:59:00Z", "status": "active",
+      "strike_type": "greater", "floor_strike": 80,
+      "yes_bid": 6, "yes_ask": 9, "no_bid": 91, "no_ask": 94,
+      "yes_ask_size": 300, "no_ask_size": 300, "yes_bid_size": 300, "no_bid_size": 300
+    }
+  ]
+}

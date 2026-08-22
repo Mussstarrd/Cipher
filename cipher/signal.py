@@ -91,10 +91,22 @@ class Signal:
 
     @property
     def edge_cents(self) -> float:
-        """Expected profit per contract, after fees, in cents."""
+        """Expected profit per contract, after fees, in cents.
+
+        Fees are amortised over the *proposed order size*, not over a single
+        contract. The distinction is large at the extremes: the per-order cent
+        rounding makes one contract at 97c look like it costs a full cent in
+        fees (0.2c of edge), while the same fee across 200 contracts is 0.02c
+        each. Pricing the edge off a 1-contract fee understates it enough to
+        suppress genuinely good signals.
+        """
         if self.is_locked:
             return self.locked_profit_cents / max(self.contracts, 1)
-        return expected_value_cents(self.probability, self.price_cents, 1, self.schedule)
+        contracts = max(self.contracts, 1)
+        return (
+            expected_value_cents(self.probability, self.price_cents, contracts, self.schedule)
+            / contracts
+        )
 
     @property
     def kelly(self) -> float:

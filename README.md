@@ -18,11 +18,16 @@ No dependencies beyond the standard library.
 
 ```bash
 python -m cipher fees      # fee-adjusted breakeven table — read this first
-python -m cipher demo      # run every scanner over bundled fixtures, offline
+python -m cipher demo      # structural scanners over fixtures, offline
+python -m cipher weather --fixture tests/fixtures/weather_day.json \
+        --verify KXHIGHNY:KNYC          # the weather strategy, offline, with order tickets
+python -m cipher power     # how many settled trades before edge beats luck
 python -m cipher scan      # live structural scan (needs network access to Kalshi)
 python -m cipher calibrate # score whatever the journal has settled
 python -m unittest discover -s tests -t .
 ```
+
+To actually trade it, follow [docs/PLAYBOOK.md](docs/PLAYBOOK.md).
 
 ## What is here
 
@@ -36,6 +41,10 @@ python -m unittest discover -s tests -t .
 | `cipher/scanners/disagreement.py` | Source-vs-book comparison, with staleness and confidence guard rails. |
 | `cipher/resolvers/base.py` | The resolver protocol — one per resolution-source family. |
 | `cipher/resolvers/barrier.py` | Closed-form pricing for crypto/index level markets. |
+| `cipher/resolvers/weather.py` | NWS daily-high resolver. The first real source-of-truth reader. |
+| `cipher/resolvers/stations.py` | Series → station registry. Unverified by default, on purpose. |
+| `cipher/ticket.py` | Signal → a priced order, stating the loss side as loudly as the win side. |
+| `cipher/power.py` | Sample size and a pre-committed decision rule for proving an edge. |
 | `cipher/journal.py` | Append-only signal log, Brier scoring, calibration table. |
 
 ## What is deliberately not here
@@ -50,16 +59,28 @@ python -m unittest discover -s tests -t .
   weather / CPI / crypto-index feed parsers are the next real work, and they are
   the part that actually takes weeks.
 
+## The weather strategy in one paragraph
+
+A day's maximum temperature can only go up. The NWS hourly observation feed is a
+*lower bound* on what the daily climate report will publish, and the exchange
+settles on that report. So once the observed max is above a bracket's ceiling,
+that bracket cannot win — no forecasting required, and the inequality holds even
+though the feed may understate the true max. That asymmetry is the whole edge,
+and it is why `weather.py` marks only that one direction as deterministic. The
+mirror claim ("the max is still below this bracket, so it will not get there")
+is *not* safe, and is treated as a model guess.
+
 ## Next steps
 
-1. Point `scan` at live data and see how often Tier 1 genuinely fires, and at
-   what depth. This calibrates whether the arbitrage tier is worth automating.
-2. Build one Tier 2 resolver end to end — weather is the best first target: a
-   single well-documented NWS product, slow enough to be forgiving, frequent
-   enough to accumulate a sample.
-3. Run observe-only for a few hundred settled signals. Check the Brier score
-   against the market benchmark and the top of the calibration curve.
-4. Only then consider execution.
+1. Verify station mappings against the live rulebooks and flip them in
+   `stations.py`. Nothing else matters until this is right.
+2. Run `weather` observe-only through a few evenings and check that resolutions
+   match what the resolver implied.
+3. Replace `probability_rises_by` with per-station empirics from a season of
+   observations. It is currently a transparent prior, and it is the highest-value
+   thing to improve.
+4. Point `scan` at live data to see how often the arbitrage tier genuinely fires.
+5. Only after `calibrate` beats the market Brier score, consider execution.
 
 ## Caveats
 

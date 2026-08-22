@@ -90,3 +90,51 @@ class TestDisagreement(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestStalenessPresets(unittest.TestCase):
+    """Staleness tolerance is a property of the source, not of the scanner."""
+
+    def test_crypto_preset_rejects_a_minute_old_reading(self):
+        from cipher.scanners.disagreement import CRYPTO
+
+        self.assertEqual(
+            scan(market(yes_ask=50), estimate(probability=0.9, age_seconds=60), CRYPTO), []
+        )
+
+    def test_weather_preset_accepts_an_hourly_observation(self):
+        from cipher.scanners.disagreement import WEATHER
+
+        signals = scan(market(yes_ask=50), estimate(probability=0.9, age_seconds=55 * 60), WEATHER)
+        self.assertEqual(len(signals), 1)
+
+    def test_deterministic_claims_get_a_longer_allowance(self):
+        """A daily max never falls, so an old observation is still a valid bound."""
+        from cipher.scanners.disagreement import WEATHER
+
+        age = 4 * 3600
+        modelled = scan(market(yes_ask=50), estimate(probability=0.9, age_seconds=age), WEATHER)
+        known = scan(
+            market(yes_ask=50),
+            estimate(probability=0.9, age_seconds=age, deterministic=True),
+            WEATHER,
+        )
+        self.assertEqual(modelled, [], "a stale model guess is worthless")
+        self.assertEqual(len(known), 1, "a stale monotone bound is still true")
+
+    def test_deterministic_allowance_is_not_unlimited(self):
+        from cipher.scanners.disagreement import WEATHER
+
+        self.assertEqual(
+            scan(
+                market(yes_ask=50),
+                estimate(probability=0.9, age_seconds=30 * 3600, deterministic=True),
+                WEATHER,
+            ),
+            [],
+        )
+
+    def test_default_config_applies_one_limit_to_everything(self):
+        config = DisagreementConfig(max_staleness_seconds=20)
+        self.assertEqual(config.staleness_limit(deterministic=True), 20)
+        self.assertEqual(config.staleness_limit(deterministic=False), 20)
