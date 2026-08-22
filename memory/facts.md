@@ -29,3 +29,23 @@ silent overwrite.
   is coming — never trade advice, never a trade. (told)
 - [2026-08-22] Aiden photographs school paper and it reaches Jeffery. Reinforce
   the habit; it is doing real work. (told)
+
+## Soccer — fall 2026
+
+- [2026-08-22] Aiden plays U10 in the **Orange County Soccer Association**. (told)
+- [2026-08-22] Coach Nate Woodruff, natefbd@gmail.com, cell 703-586-2025.
+  Assisted by Coach Nelson and Coach Bert. (told)
+- [2026-08-22] Practices are at **Sweetbriar Park, Lake of the Woods** — which is
+  in the neighbourhood, so drive time is small. (told)
+- [2026-08-22] The team's own comms run through **TeamSnap**, not email. Once
+  Jeffery accepts, that is where the schedule and messages live. (told)
+- [2026-08-22] The team name is genuinely "TBD" — a parent vote is pending, so
+  the TeamSnap invite reading "Join TBD" is not an error. (observed)
+
+## Resolved, worth remembering
+
+- [2026-08-22] Coach Nate's original 17 Aug email went to `jefferey.fenn@gmail.com`
+  — one letter wrong. That was the "mix up" he apologised for. He resent to the
+  correct address on 21 Aug and the TeamSnap invite also arrived correctly.
+  **No action needed.** Kept only so that if OCSA mail ever goes missing again,
+  the roster spelling is the first thing to check. (verified in Gmail)
