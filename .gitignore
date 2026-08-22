@@ -1,0 +1,9 @@
+# Runtime state. On the droplet this holds real messages, reports, push
+# subscriptions and the family's inbox position — none of which belongs in a
+# public repo, and none of which should ever be overwritten by a git pull.
+# It is backed up separately, to a private repo, by server/src/backup.js.
+server/data/
+server/.env
+
+node_modules/
+*.log
