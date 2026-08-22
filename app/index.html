@@ -161,15 +161,35 @@ button{font:inherit;color:inherit;cursor:pointer}
  "rhythms": [
   {
    "id": "r1",
-   "what": "Abby — dance class",
+   "what": "Abby — Merit School at The Castle",
    "who": "Abby",
    "days": [
-    6
+    1,
+    2,
+    3,
+    4,
+    5
    ],
-   "time": "08:30"
+   "time": "07:30",
+   "end": "16:45",
+   "note": "Fredericksburg — real drive"
   },
   {
    "id": "r2",
+   "what": "Aiden — school",
+   "who": "Aiden",
+   "days": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "time": "—",
+   "note": "Orange County Public Schools, 4th grade, Ms. Slagle"
+  },
+  {
+   "id": "r3",
    "what": "Aiden — soccer practice",
    "who": "Aiden",
    "days": [
@@ -179,23 +199,46 @@ button{font:inherit;color:inherit;cursor:pointer}
    "time": "17:30",
    "end": "18:30",
    "note": "Sweetbriar Park"
+  },
+  {
+   "id": "r4",
+   "what": "Abby — dance class",
+   "who": "Abby",
+   "days": [
+    6
+   ],
+   "time": "08:30"
   }
  ],
  "seasonal": [
   {
+   "id": "s0",
+   "what": "Tuesday 25 Aug — school lets out 2 hours early",
+   "flag": true,
+   "detail": "OCPS teacher professional development. Aiden needs collecting two hours early, and it is the same day as his first soccer practice at 5:30. I do not know your normal dismissal time, so I am not going to invent a pickup time — tell me once and I will never ask again."
+  },
+  {
    "id": "s1",
-   "what": "Aiden — OCSA registration",
+   "what": "The season's game schedule",
    "flag": false,
-   "detail": "Fall 2026 is done. A spring season probably runs too, but I have not verified that and will not pretend otherwise. When it opens I will raise it three weeks before it closes, ask whether to sign him up, and hand you the link. I never register and never pay."
+   "detail": "Not published yet. Coach Nate posts it in TeamSnap as he gets it. The moment it lands, every game becomes a dated commitment — but only if the calendar sync is switched on."
   },
   {
    "id": "s2",
-   "what": "The season's game schedule",
-   "flag": true,
-   "detail": "Not published yet. Coach Nate posts it in TeamSnap as he gets it. The moment it lands, every game becomes a dated commitment and reaches these check-ins — but only if the calendar sync below is switched on."
+   "what": "Aiden — OCSA registration",
+   "flag": false,
+   "detail": "Fall 2026 is done. A spring season probably runs too, but I have not verified that and will not pretend otherwise. When it opens I will raise it three weeks before it closes, ask whether to sign him up, and hand you the link. I never register and never pay."
   }
  ],
  "loops": [
+  {
+   "id": "l0",
+   "text": "Finish Abby's Lillio registration — her enrolment is not finalised",
+   "who": "Jeffery",
+   "since": "22 Aug",
+   "done": false,
+   "due": "today"
+  },
   {
    "id": "l1",
    "text": "Accept the TeamSnap invite",
@@ -215,14 +258,30 @@ button{font:inherit;color:inherit;cursor:pointer}
   },
   {
    "id": "l3",
-   "text": "Confirm which school Aiden attends",
-   "who": "Hearth",
+   "text": "Tell me Aiden's normal dismissal time",
+   "who": "Jeffery",
+   "since": "22 Aug",
+   "done": false,
+   "due": "before Tue"
+  },
+  {
+   "id": "l4",
+   "text": "LOWA proxy ballot — annual meeting 7 Sep",
+   "who": "Jeffery",
+   "since": "22 Aug",
+   "done": false,
+   "due": "2nd notice"
+  },
+  {
+   "id": "l5",
+   "text": "Decide on Play N Kick for Abby — starts 9 Sep",
+   "who": "Jeffery",
    "since": "22 Aug",
    "done": false
   },
   {
-   "id": "l4",
-   "text": "Watch for the OCSA game schedule to be published",
+   "id": "l6",
+   "text": "Who is Kathryn Hilderbrand? She collected Abby on the 21st",
    "who": "Hearth",
    "since": "22 Aug",
    "done": false
@@ -247,6 +306,12 @@ button{font:inherit;color:inherit;cursor:pointer}
    "who": "Hearth",
    "ts": "2026-08-22T11:42:00",
    "text": "Found it. Three things.\n\nFirst practice is Tuesday 25 August, 5:30 at Sweetbriar Park. Coach Nate says it is a mild one — introductions, positions, expectations. Sweetbriar is in Lake of the Woods, so the drive is nothing.\n\nThe TeamSnap invite is sitting in your inbox from yesterday, unopened. It says \"Join TBD\" — not a bug, the team genuinely has no name yet, there is a parent vote coming. The link is on the This week tab. Do it before Tuesday, because the season schedule gets published there and nowhere else.\n\nAnd the thing worth more than either: once you are in, TeamSnap can push the team schedule straight into Google Calendar. Turn that on once and every game, every change, every rain cancellation reaches me without anyone typing a word. That is the difference between me knowing about soccer and me knowing about your season.\n\nOne more so you are not left wondering. Nate's first email on the 17th went to jefferey.fenn — one letter wrong. That was the mix-up he apologised for. He resent it correctly on the 21st and the TeamSnap invite came to the right address too. Nothing for you to do. I note it only so that if OCSA mail ever goes quiet, the roster spelling is the first place to look."
+  },
+  {
+   "id": "m4",
+   "who": "Hearth",
+   "ts": "2026-08-22T12:05:00",
+   "text": "I read your inbox. Stop what you are doing for two minutes.\n\nAbby's enrolment at Merit School is not finalised. The message came Friday afternoon and is still unread. Their words: enrolment \"cannot be finalised\" until the Lillio registration is complete, and \"may be delayed or forfeited\" if it is not done promptly. She has been signing in every day, which is exactly why this is easy to assume is fine.\n\nTwo specific things they told you:\n\nYou are listed as Abby's emergency contact, and a parent cannot be one. They will add you as a parent once registration is finished, but the emergency contact has to be someone else. Kathryn Hilderbrand collected Abby on the 21st, so she is already an authorised pickup — she may be the obvious answer, but I do not know who she is to you, so I am not putting her name in a form.\n\nAnd the registration form you uploaded arrived blank. It needs saving to a computer, filling in, and re-uploading. Do it on a laptop, not your phone — they say so explicitly.\n\nThen the rest, in order:\n\nTuesday 25 August, school dismisses two hours early — teacher professional development. Same day as Aiden's first soccer practice. I do not know your normal dismissal time so I am not going to guess a pickup time. Tell me once.\n\nTeamSnap invite still unopened. Link is on This week.\n\nLower down: the LOWA proxy ballot is on its second reminder, meeting is 7 September. Play N Kick for Abby starts 9 September if you want it. And the Merit pool party moved to the 29th.\n\nOne thing I am deliberately not raising as a problem: the diaper note from Thursday. You already ordered them Friday and they arrived. Closed."
   }
  ]
 }
@@ -307,7 +372,7 @@ button{font:inherit;color:inherit;cursor:pointer}
     o+=dayRow(0,ti);
     o+='</div>';
 
-    o+='<div class="sec"><h2>Coming round again</h2>';
+    o+='<div class="sec"><h2>Coming up</h2>';
     S.seasonal.forEach(function(s){
       o+='<div class="card'+(s.flag?" flag":"")+'">'
        + (s.flag?'<span class="lead">Needs attention now</span>':"")

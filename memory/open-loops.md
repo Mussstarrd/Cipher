@@ -5,27 +5,61 @@ explicitly abandoned — that is the whole point.
 
 ---
 
+## Urgent
+
+- [opened 2026-08-22] **Jeffery — finish Abby's Lillio registration at Merit School.**
+  **Her enrolment is not finalised and the school says it "may be delayed or
+  forfeited" if this is not completed promptly.** She is attending daily right
+  now, so this is easy to assume is fine. It is not.
+  Two specific corrections the school gave on 2026-08-21:
+  1. **Dad cannot be listed as the emergency contact** — emergency contacts
+     cannot be a parent or legal guardian. Once registration is complete they can
+     add Jeffery as a *parent*. A non-parent name is needed.
+     Possible candidate: **Kathryn Hilderbrand**, who signed Abby out on 21 Aug
+     and is therefore already an authorised pickup — *unverified, ask before using.*
+  2. **The uploaded registration form came through blank.** It must be saved to a
+     computer, filled in completely, and re-uploaded.
+  Notes: Lillio is per-child, not per-family. Do it on a laptop, not a phone.
+  Source: Procare Office Chat from Merit School at The Castle, 21 Aug, unread.
+  Surface at: every check-in until it is done. This one earns the interruption.
+
+## This week
+
+- [opened 2026-08-22] **Tuesday 25 Aug — OCPS dismisses 2 hours early.**
+  Teacher professional development. Aiden needs collecting two hours early, and
+  the same day is his first soccer practice at 17:30.
+  **Hearth does not know the normal dismissal time** — do not compute a pickup
+  time until someone confirms it. Ask once.
+
 - [opened 2026-08-22] **Jeffery — accept the TeamSnap invite.**
-  Jeffery asked not to be let forget. Invite arrived 2026-08-21 from
-  donotreply@email.teamsnap.com, subject "Join TBD on TeamSnap", still in the inbox.
   Link: https://go.teamsnap.com/invitations/68ba0c041f3aee9dc8d2f6da/claim
-  **Deadline: before Tue 2026-08-25**, because the season schedule is published
-  there and nowhere else.
-  Surface at: 17:00 Sat, 17:00 Sun, 17:00 Mon, 07:00 Tue. Then stop and log a miss.
+  Before Tue 25 Aug; the season schedule is published there and nowhere else.
 
 - [opened 2026-08-22] **Jeffery — turn on TeamSnap calendar sync once joined.**
-  TeamSnap can push the team schedule to Google Calendar. Doing that once means
-  every game and every change reaches Hearth with nobody typing anything. Highest
-  leverage item on this list. Raise it immediately after the invite is accepted,
-  not before — one task at a time.
+  Highest-leverage item here: it wires every game and change into Hearth without
+  anyone typing. Raise immediately after the invite is accepted, not before.
 
-- [opened 2026-08-22] **Hearth — confirm which school Aiden attends.**
-  Inferred as Orange County Public Schools from the address; never confirmed.
-  Ask once, at a moment that makes sense. Do not guess on a form.
+## Dated, further out
 
-- [opened 2026-08-22] **Hearth — watch for the OCSA game schedule.**
-  Coach Nate will post it in TeamSnap as he receives it. Not yet published. When
-  it lands, every game becomes a dated commitment.
+- [opened 2026-08-22] **LOWA Board election proxy ballot** — second reminder
+  already received. Annual meeting Sun 7 Sep, 10:00, Community Center,
+  110 Sweetbriar Park Road. Decide whether to submit a proxy.
 
-- [opened 2026-08-22] **Hearth — watch for the team name vote.**
-  Cosmetic, but it will make the TeamSnap entry stop saying "TBD".
+- [opened 2026-08-22] **Decide on Play N Kick at Merit School** — soccer
+  enrichment for Abby, starts Wed 9 Sep 10:00. Opt-in.
+
+- [opened 2026-08-22] **Merit School pool party, Sat 29 Aug, 12:00–14:00.**
+  Postponed from an earlier date because of weather. Food provided. Optional.
+
+## Hearth's own
+
+- [opened 2026-08-22] **Confirm which OCPS elementary Aiden attends.**
+  District confirmed as Orange County Public Schools (ocss-va.org) and his
+  teacher is Ms. Slagle, 4th grade — but the campus name has never been stated.
+  Get it from a school email signature rather than asking again.
+
+- [opened 2026-08-22] **Watch for the OCSA game schedule to be published.**
+
+- [opened 2026-08-22] **Unexplained: Prince William County Public Schools mail.**
+  Jeffery receives PWCS division-wide email. No known connection to this
+  household. Do not act on it, do not assume it is junk. Ask once, casually.
