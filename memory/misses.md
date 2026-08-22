@@ -30,3 +30,17 @@ _Empty._
   **Adjustment — now mandatory:** before any republish, read the live artifact,
   take its state as authoritative, merge local changes into it, then publish.
   Never publish a state built only from the local file.
+
+- [2026-08-22] **The first scheduled run half-failed, and the prompt did not
+  anticipate the right failure.** It was written to handle a missing Gmail
+  connector gracefully — which happened, correctly. It did not anticipate that
+  the run might be unable to **commit and push at all**, which is what appears to
+  have happened: nothing reached the branch.
+  **Adjustment:** an unattended run must verify its own write access *first* and
+  report that failure loudly in its output, before doing any of the work it is
+  about to be unable to save. Doing the thinking and then discovering it cannot
+  be recorded is the worst possible order.
+  **Second adjustment:** the completion notification and the brief are different
+  messages from different senders. Jeffery reasonably assumed the push he
+  received was the brief. Anything Hearth sends must be identifiable as coming
+  from Hearth, or it will be confused with harness noise.
