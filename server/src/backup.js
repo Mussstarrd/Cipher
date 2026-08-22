@@ -22,10 +22,20 @@ const run = promisify(execFile);
 const DIR = process.env.BACKUP_DIR || "/opt/hearth-backup";
 const REMOTE = process.env.BACKUP_GIT_REMOTE || "";
 
+/** True only when there is somewhere OFF this machine to push to. */
 export const backupReady = () => Boolean(REMOTE);
 
+/** Where the local history lives, for anything that needs to say so. */
+export const backupDir = () => DIR;
+
 const git = (args, cwd = DIR) =>
-  run("git", args, { cwd, timeout: 60_000, maxBuffer: 4 << 20 });
+  run("git", args, {
+    cwd, timeout: 60_000, maxBuffer: 4 << 20,
+    // Without this a remote with a stale token makes git sit waiting for a
+    // username on a terminal that does not exist, and the backup "hangs" for
+    // the full timeout instead of failing with the reason.
+    env: { ...process.env, GIT_TERMINAL_PROMPT: "0", GIT_ASKPASS: "" },
+  });
 
 async function ensureRepo() {
   if (!fs.existsSync(path.join(DIR, ".git"))) {
@@ -38,7 +48,7 @@ async function ensureRepo() {
   }
   // Always reset the remote: the token in it may have been rotated.
   await git(["remote", "remove", "backup"]).catch(() => {});
-  await git(["remote", "add", "backup", REMOTE]);
+  if (REMOTE) await git(["remote", "add", "backup", REMOTE]);
 }
 
 function copyDir(from, to) {
@@ -56,7 +66,6 @@ function copyDir(from, to) {
  * Returns null on success, or a message worth telling a human about.
  */
 export async function backup(note = "") {
-  if (!backupReady()) return null;
   try {
     await ensureRepo();
     copyDir(MEM, path.join(DIR, "memory"));
@@ -76,6 +85,14 @@ export async function backup(note = "") {
 
     const stamp = new Date().toISOString().replace("T", " ").slice(0, 16);
     await git(["commit", "-q", "-m", `memory ${stamp}${note ? ` — ${note}` : ""}`]);
+
+    // No remote yet: commit anyway. Local history is not a backup — one disk
+    // failure still takes everything — but it is the defence against the more
+    // likely accident, which is the 22:00 review rewriting a memory layer
+    // badly. With history you roll back one file; without it, it is just gone.
+    // And when a remote is finally set, every commit made up to then pushes.
+    if (!REMOTE) return null;
+
     await git(["push", "-q", "--set-upstream", "backup", "main"]);
     return null;
   } catch (e) {
