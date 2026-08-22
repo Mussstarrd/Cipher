@@ -10,7 +10,10 @@
     "start": "node src/server.js",
     "wake": "node src/wake-now.js",
     "keys": "node -e \"import('web-push').then(w=>console.log(w.default.generateVAPIDKeys()))\"",
-    "mailtest": "node --env-file=.env src/mailtest.js"
+    "mailtest": "node --env-file=.env src/mailtest.js",
+    "test": "node --test src/*.test.js",
+    "backuptest": "node --env-file=.env src/backuptest.js",
+    "preflight": "node --env-file=.env src/preflight.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "latest",

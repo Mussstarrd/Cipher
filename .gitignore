@@ -5,8 +5,15 @@ server/node_modules/
 node_modules/
 
 # Secrets. API key, mail password, calendar addresses, push keys.
+# The globs matter: a `.env.bak` made before editing is exactly as sensitive as
+# the .env itself, and `server/.env` alone does not cover it. Keep .env.example
+# tracked — it is the template and holds no values.
 server/.env
 .env
+.env.*
+server/.env.*
+!.env.example
+!server/.env.example
 
 *.log
 .DS_Store

@@ -22,11 +22,23 @@ systemctl status hearth
 journalctl -u hearth -f          # live
 journalctl -u hearth -n 50 --no-pager
 systemctl restart hearth
-cd /opt/hearth/server && npm run mailtest    # diagnose mail alone
+
+cd /opt/hearth/server
+npm run preflight                # does Hearth actually work? writes nothing
+npm run preflight -- --brief 07:00   # ...and render that check-in, without saving it
+npm test                         # the scheduler decision, 11 cases
+npm run mailtest                 # diagnose mail alone
+npm run backuptest               # diagnose backup alone, including the push
 ```
 
-A healthy start prints five lines: `awake`, `backup`, `calendar`, `mail`, `push`.
-Anything `OFF` is a missing value in `.env`.
+**Start with `preflight`.** "It is running" and "it works" are different claims,
+and the whole point of that command is to stop them looking alike. It exercises
+memory, the model, calendar, mail, push, the URL notifications open, backup and
+the clock, and writes nothing anywhere — safe at any hour, service up or down.
+
+A healthy start prints six lines: `awake`, `slots`, `push`, `backup`, `calendar`,
+`mail`. Anything `OFF` is a missing value in `.env`. `backup LOCAL ONLY` is not
+`OFF` — memory is being versioned on this disk, but there is no copy off it.
 
 ## Keeping Jeffery's other session in the loop
 
@@ -67,11 +79,32 @@ only thing you both see.** So:
 | no "Add to Home Screen" | icons missing, or served as `application/octet-stream` |
 | iPhone cannot enable notifications | iOS only allows them for a Home-Screen app, never a Safari tab |
 | Funnel refused | must be enabled once in the Tailscale admin console |
+| service restart-loops ~5 min after `mail:` error | imapflow emits `'error'` as an **event**; unlistened, it kills the process. Fixed — keep the `client.on("error")` in `mail.js` |
+| a check-in never arrived and nothing says why | the minute was missed. There is now a 90-min grace window; before that, an exact-match tick lost the day in silence |
+| push notification opens a blank page | `HEARTH_URL` unset or malformed in `.env` → falls back to localhost. `preflight` fails on this |
+| a value in `.env` has no effect | that line has no `=`, or the key is defined again lower down. `preflight` reports both |
 
 ## Open work
 
-- `backup OFF` — memory has no off-machine copy. Highest-value remaining task:
-  create a **private** repo, add a fine-grained token, set `BACKUP_GIT_REMOTE`.
-- The first real 07:00 wake has not happened yet. Watch it; treat anything it
-  gets wrong as a finding, not a nuisance.
+Session of 22 Aug: see `docs/findings-2026-08-22.md` for what was fixed, what
+was diagnosed and left alone, and why. What remains:
+
+- **Nobody is subscribed to push. Zero devices.** This is now the largest gap —
+  every check-in the service produces ends in a notification that reaches no
+  one. Needs a human to add the app to a home screen and allow notifications
+  (on iPhone, only a Home-Screen app can; never a Safari tab). Ahead of backup,
+  because a working brief nobody receives is the same as no brief.
+- **No off-machine backup.** Memory is now versioned locally in
+  `/opt/hearth-backup` after every wake, which covers a bad memory rewrite but
+  not a lost droplet. Finishing it needs a private repo and a fine-grained
+  token, both of which are Jeffery's to create: `docs/backup.md`.
+- **Rotate the `origin` PAT.** It sat in a world-readable `.git/config` and was
+  exposed in a session transcript. Permissions are fixed; the token is not.
+- **Ask Jeffery about the calendar.** The configured feed is reachable and
+  totally empty, while `rhythms.md` holds the family's real commitments. Either
+  the ICS URL is the wrong calendar, or this household is genuinely standalone.
+  One question settles it; guessing does not.
+- **Check memory on the 23rd.** It currently records "nothing is scheduled",
+  which was true of the deleted trigger and is false of the service. If the
+  22:00 review has not reconciled it, that is a miss for `misses.md`.
 - Suzan, Aiden and Abby are not on it yet. Adoption is the actual test.
