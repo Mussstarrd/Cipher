@@ -51,7 +51,24 @@ export async function fetchNew(sinceUid = 0, max = 40) {
   const client = new ImapFlow({
     host: "imap.gmail.com", port: 993, secure: true,
     auth: { user: USER, pass: PASS }, logger: false,
+    // Bound every stage. Without these a half-open socket sits for minutes
+    // before anything notices, which is exactly how the crash below happened.
+    connectionTimeout: 20_000,
+    greetingTimeout: 20_000,
+    socketTimeout: 90_000,
   });
+
+  // ImapFlow is an EventEmitter, and a dropped connection arrives as an 'error'
+  // EVENT, not a rejected promise — often minutes after the call that caused it
+  // has already returned. In Node an 'error' event with no listener is a hard
+  // process crash, so the try/catch below could never have caught it: the
+  // service died five minutes after each failed fetch, in a restart loop whose
+  // stack trace pointed at a timer and looked nothing like a mail problem.
+  // This one listener is the entire fix. Keep it.
+  client.on("error", (e) => {
+    console.error(`[hearth] imap connection error (handled): ${e?.message || e}`);
+  });
+
   const out = [];
   let lastUid = sinceUid;
   try {
@@ -62,8 +79,6 @@ export async function fetchNew(sinceUid = 0, max = 40) {
       // for a UID range against zero messages is an IMAP error, not an empty
       // result. Check before asking.
       if (!client.mailbox || client.mailbox.exists === 0) {
-        lock.release();
-        await client.logout();
         return { messages: [], lastUid: sinceUid, error: null };
       }
       const range = sinceUid > 0 ? `${sinceUid + 1}:*` : "1:*";
@@ -84,16 +99,21 @@ export async function fetchNew(sinceUid = 0, max = 40) {
     await client.logout();
   } catch (e) {
     // Never silently return an empty inbox — that reads as "quiet day".
-    // imapflow's bare "Command failed" is useless on its own, so carry the
-    // server's own words: that is where the actual reason lives.
+    // imapflow's bare "Command failed" says nothing on its own. Carry every
+    // field that might name the real cause, including the error code — a
+    // timeout and a rejected password produce the same useless message.
     const detail = [
       e?.message,
       e?.responseText,
-      e?.serverResponseCode && `code=${e.serverResponseCode}`,
+      e?.code && `code=${e.code}`,
+      e?.serverResponseCode && `server=${e.serverResponseCode}`,
       e?.authenticationFailed && "authentication failed — check the app password",
     ].filter(Boolean).join(" | ");
-    try { await client.logout(); } catch {}
     return { messages: out, lastUid, error: detail || String(e) };
+  } finally {
+    // logout() is a courtesy the server may never get to answer; close() is the
+    // guarantee. Skipping it is what left the socket alive to time out later.
+    try { client.close(); } catch {}
   }
   return { messages: out.slice(-max), lastUid, error: null };
 }
