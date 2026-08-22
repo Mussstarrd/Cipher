@@ -1,9 +1,12 @@
-# Runtime state. On the droplet this holds real messages, reports, push
-# subscriptions and the family's inbox position — none of which belongs in a
-# public repo, and none of which should ever be overwritten by a git pull.
-# It is backed up separately, to a private repo, by server/src/backup.js.
+# Runtime state. Written by the running service — must never be tracked, or the
+# app's own writes conflict with every git pull.
 server/data/
-server/.env
-
+server/node_modules/
 node_modules/
+
+# Secrets. API key, mail password, calendar addresses, push keys.
+server/.env
+.env
+
 *.log
+.DS_Store
