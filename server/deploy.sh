@@ -71,8 +71,9 @@ WorkingDirectory=$DIR/server
 ExecStart=/usr/bin/node --env-file=$DIR/server/.env src/server.js
 Restart=always
 RestartSec=5
-StandardOutput=append:$DIR/server/data/hearth.log
-StandardError=append:$DIR/server/data/hearth.log
+# Log to journald, not a file: it rotates on its own, and journalctl -u hearth
+# is what anyone will actually type. An append: file grows forever and hides
+# the app's output from the one command people know.
 
 [Install]
 WantedBy=multi-user.target
@@ -96,6 +97,6 @@ server/.env as HEARTH_URL, then:  sudo systemctl restart hearth
 Send the family that URL. On a phone: open it, Add to Home Screen, tap
 "notify me". The passphrase is in server/.env — give it to them, nobody else.
 
-  logs:     tail -f /opt/hearth/server/data/hearth.log
+  logs:     journalctl -u hearth -f
   restart:  sudo systemctl restart hearth
 NEXT

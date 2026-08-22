@@ -150,7 +150,7 @@ why Password authentication was the right choice rather than a compromise.
 ```bash
 sudo journalctl -u hearth -f          # live logs
 sudo systemctl restart hearth
-tail -f /opt/hearth/server/data/hearth.log
+journalctl -u hearth -f
 ```
 
 **"Could not resolve authentication method"** — the API key is missing or the
