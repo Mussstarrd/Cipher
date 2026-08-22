@@ -72,26 +72,19 @@ it restarts on crash and survives reboots.
 
 ## Fill in the rest
 
-```bash
-nano /opt/hearth/server/.env
-```
-
-Add your three remaining values:
-
-```
-GMAIL_USER=fennassistant@gmail.com
-GMAIL_APP_PASSWORD=abcdefghijklmnop
-CALENDAR_ICS_URLS=https://calendar.google.com/calendar/ical/.../basic.ics
-```
-
-Several calendars go on one line separated by commas, no spaces.
-
-Ctrl+O, Enter, Ctrl+X to save. Then:
+One line at a time, so a mangled paste can only break one value and can never
+leave the shell waiting on a heredoc terminator:
 
 ```bash
+echo 'GMAIL_USER=fennassistant@gmail.com' >> /opt/hearth/server/.env
+echo 'GMAIL_APP_PASSWORD=abcd efgh ijkl mnop' >> /opt/hearth/server/.env
+echo 'CALENDAR_ICS_URLS=https://calendar.google.com/calendar/ical/.../basic.ics' >> /opt/hearth/server/.env
 sudo systemctl restart hearth
 sudo journalctl -u hearth -n 20 --no-pager
 ```
+
+Keep the single quotes — they protect spaces and `%` signs. Several calendars go
+in one `echo`, comma-separated, no spaces between them.
 
 You want four lines saying `awake`, `calendar ON`, `mail ON as
 fennassistant@gmail.com`, and `push ready`. **Anything saying OFF means that
