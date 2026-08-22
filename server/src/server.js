@@ -14,6 +14,7 @@ import { fileURLToPath } from "node:url";
 import { wake, answer, review } from "./brain.js";
 import { notify, pushReady } from "./push.js";
 import { fetchNew, send as sendMail, mailReady } from "./mail.js";
+import { upcoming, asLines, calendarReady } from "./calendar.js";
 import {
   loadState, saveState, appendDaily, writeLayer, todayET, loadBrief,
 } from "./memory.js";
@@ -89,7 +90,14 @@ async function runSlot(slot, { forced = false } = {}) {
   try {
     const since = s.reports[0]?.at || new Date(Date.now() - 864e5).toISOString();
     const fresh = (s.mail || []).filter((m) => m.at > since);
+    const cal = await upcoming(8);
     const extra = [
+      calendarReady()
+        ? (cal.events.length
+            ? `Calendar, next 8 days:\n${asLines(cal.events)}`
+            : "Calendar reachable, nothing scheduled in the next 8 days.")
+        : "",
+      cal.error ? `WARNING: a calendar failed to load (${cal.error}). Say so; do not present this as an empty week.` : "",
       fresh.length
         ? `Mail since the last check-in:\n${fresh.map((m) =>
             `- ${m.from} | ${m.subject}\n  ${m.text.slice(0, 700)}`).join("\n")}`
@@ -183,6 +191,7 @@ const server = http.createServer(async (req, res) => {
         household: [...brief.matchAll(/^\|\s*\*\*([\w'-]+)\*\*\s*\|/gm)].map((m) => m[1]),
         slots: SLOTS, now: nowET(), push: pushReady(),
         vapid: process.env.VAPID_PUBLIC || null,
+        calendar: { ready: calendarReady() },
         mail: { ready: mailReady(), count: s.mail?.length || 0, error: s.mailError || null,
                 recent: (s.mail || []).slice(-15).map(({ from, subject, at }) => ({ from, subject, at })) },
         needsPass: Boolean(PASS),
@@ -282,5 +291,6 @@ server.listen(PORT, () => {
   console.log(`[hearth] awake on ${URL_BASE}`);
   console.log(`[hearth] slots ${SLOTS.join(" ")} ${TZ}`);
   console.log(`[hearth] push ${pushReady() ? "ready" : "OFF — run: npm run keys"}`);
+  console.log(`[hearth] calendar ${calendarReady() ? "ON" : "OFF — set CALENDAR_ICS_URLS"}`);
   console.log(`[hearth] mail ${mailReady() ? `ON as ${process.env.GMAIL_USER}` : "OFF — set GMAIL_USER + GMAIL_APP_PASSWORD"}`);
 });
