@@ -14,11 +14,13 @@ import { fileURLToPath } from "node:url";
 import { wake, answer, review } from "./brain.js";
 import { notify, pushReady } from "./push.js";
 import { fetchNew, send as sendMail, mailReady, credentialWarning } from "./mail.js";
-import { upcoming, asLines, calendarReady } from "./calendar.js";
-import { backup, backupReady } from "./backup.js";
+import { calendarReady } from "./calendar.js";
+import { backup, backupReady, backupDir } from "./backup.js";
 import {
   loadState, saveState, appendDaily, writeLayer, todayET, loadBrief,
 } from "./memory.js";
+import { SLOTS, dueSlot, GRACE_MIN, MAX_TRIES } from "./schedule.js";
+import { wakeContext } from "./context.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const PUB = path.resolve(here, "..", "public");
@@ -26,7 +28,6 @@ const PORT = Number(process.env.PORT || 8787);
 const URL_BASE = process.env.HEARTH_URL || `http://localhost:${PORT}`;
 const PASS = process.env.HEARTH_PASSPHRASE || "";
 const TZ = "America/New_York";
-const SLOTS = ["07:00", "12:00", "17:00", "22:00"];
 
 /* ---------- the clock ---------- */
 // Read wall-clock time in Eastern directly, so DST is handled by the calendar
@@ -84,41 +85,57 @@ setTimeout(ingest, 4000);
 
 let running = false;
 
-async function runSlot(slot, { forced = false } = {}) {
+// Last known total size of the calendar feeds, so /api/state can distinguish
+// "quiet week" from "empty calendar" without refetching on every poll. null
+// until the first wake has looked — which is "unknown", not "fine".
+let calTotal = null;
+
+async function runSlot(slot, { forced = false, late = 0 } = {}) {
   if (running) return null;
   running = true;
   const s = loadState();
   try {
-    const since = s.reports[0]?.at || new Date(Date.now() - 864e5).toISOString();
-    const fresh = (s.mail || []).filter((m) => m.at > since);
-    const cal = await upcoming(8);
-    const extra = [
-      calendarReady()
-        ? (cal.events.length
-            ? `Calendar, next 8 days:\n${asLines(cal.events)}`
-            : "Calendar reachable, nothing scheduled in the next 8 days.")
-        : "",
-      cal.error ? `WARNING: a calendar failed to load (${cal.error}). Say so; do not present this as an empty week.` : "",
-      fresh.length
-        ? `Mail since the last check-in:\n${fresh.map((m) =>
-            `- ${m.from} | ${m.subject}\n  ${m.text.slice(0, 700)}`).join("\n")}`
-        : "No new mail since the last check-in.",
-      s.mailError ? `WARNING: the inbox could not be read (${s.mailError}). Say so in the check-in; do not present this as a quiet day.` : "",
-      s.backupError ? `WARNING: memory has not been backed up since ${s.backupErrorSince || "the last success"} (${s.backupError}). Raise this once, plainly — everything learned is currently on one disk.` : "",
-    ].filter(Boolean).join("\n\n");
+    // Count the attempt before doing any work. A wake that takes the process
+    // down with it must still count as a try, or a reliably-failing slot turns
+    // into a restart loop that burns a model call on every tick.
+    if (!forced) {
+      const d = todayET();
+      const prev = s.wakeTries?.[slot];
+      s.wakeTries = {
+        ...(s.wakeTries || {}),
+        [slot]: { day: d, n: (prev?.day === d ? prev.n : 0) + 1, at: new Date().toISOString() },
+      };
+      saveState(s);
+    }
+    const { extra, calTotal: total } = await wakeContext(slot, s, late);
+    if (total !== null) calTotal = total;
+
     const text = await wake(slot, extra);
-    s.reports.unshift({ slot, at: new Date().toISOString(), day: todayET(), text });
-    s.reports = s.reports.slice(0, 60);
-    if (!forced) s.lastRun[slot] = todayET();
 
     appendDaily(`## ${slot} check-in\n\n${text}`);
 
-    s.subs = await notify(s.subs, {
-      title: `Hearth — ${slot}`,
+    const subs = await notify(loadState().subs, {
+      title: `Hearth — ${slot}${late ? " (late)" : ""}`,
       body: text.split("\n").filter(Boolean)[0]?.slice(0, 140) || "Your check-in is ready.",
       url: URL_BASE,
     });
-    saveState(s);
+
+    // Reload before writing. The wake is tens of seconds of model call, and
+    // ingest() or a backgrounded answer() will have saved their own work in the
+    // meantime — writing back the copy loaded before the call silently deleted
+    // whatever arrived during it: a family message, or a morning's mail.
+    const after = loadState();
+    after.subs = subs;
+    after.reports.unshift({
+      slot, at: new Date().toISOString(), day: todayET(), text,
+      ...(late ? { late } : {}),
+    });
+    after.reports = after.reports.slice(0, 60);
+    if (!forced) {
+      after.lastRun[slot] = todayET();
+      if (after.wakeTries) delete after.wakeTries[slot];
+    }
+    saveState(after);
 
     // The close-out is followed by the only pass that rewrites memory.
     if (slot === "22:00") {
@@ -140,10 +157,11 @@ async function runSlot(slot, { forced = false } = {}) {
       st.backupError = backupErr;
       st.backupErrorSince ||= new Date().toISOString();
       saveState(st);
-    } else if (backupReady()) {
+    } else {
       const st = loadState();
       st.backupError = null; st.backupErrorSince = null;
       st.backupAt = new Date().toISOString();
+      st.backupOffMachine = backupReady();
       saveState(st);
     }
 
@@ -169,13 +187,12 @@ async function runSlot(slot, { forced = false } = {}) {
 
 function tick() {
   const { day, hm } = nowET();
-  const s = loadState();
-  for (const slot of SLOTS) {
-    if (hm === slot && s.lastRun[slot] !== day) {
-      console.log(`[hearth] waking for ${slot}`);
-      runSlot(slot);
-    }
-  }
+  const d = dueSlot(hm, loadState(), day);
+  if (!d) return;
+  console.log(d.late === 0
+    ? `[hearth] waking for ${d.slot}`
+    : `[hearth] waking for ${d.slot}, ${d.late} min late — the exact minute was missed`);
+  runSlot(d.slot, { late: d.late });
 }
 setInterval(tick, 30_000);
 tick();
@@ -217,8 +234,17 @@ const server = http.createServer(async (req, res) => {
         household: [...brief.matchAll(/^\|\s*\*\*([\w'-]+)\*\*\s*\|/gm)].map((m) => m[1]),
         slots: SLOTS, now: nowET(), push: pushReady(),
         vapid: process.env.VAPID_PUBLIC || null,
-        calendar: { ready: calendarReady() },
-        backup: { ready: backupReady(), at: s.backupAt || null, error: s.backupError || null },
+        calendar: {
+          ready: calendarReady(),
+          // null = not looked yet. Do not collapse that into false.
+          empty: calTotal === null ? null : calTotal === 0,
+        },
+        // `ready` has always meant "there is a copy off this machine". Keep that
+        // meaning — the wall must not go green because a local commit worked.
+        backup: {
+          ready: backupReady(), at: s.backupAt || null, error: s.backupError || null,
+          local: backupDir(), offMachine: Boolean(s.backupOffMachine),
+        },
         mail: { ready: mailReady(), count: s.mail?.length || 0, error: s.mailError || null,
                 recent: (s.mail || []).slice(-15).map(({ from, subject, at }) => ({ from, subject, at })) },
         needsPass: Boolean(PASS),
@@ -320,9 +346,11 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(PORT, () => {
   console.log(`[hearth] awake on ${URL_BASE}`);
-  console.log(`[hearth] slots ${SLOTS.join(" ")} ${TZ}`);
+  console.log(`[hearth] slots ${SLOTS.join(" ")} ${TZ} (grace ${GRACE_MIN}m, ${MAX_TRIES} tries)`);
   console.log(`[hearth] push ${pushReady() ? "ready" : "OFF — run: npm run keys"}`);
-  console.log(`[hearth] backup ${backupReady() ? "ON" : "OFF — set BACKUP_GIT_REMOTE"}`);
+  console.log(backupReady()
+    ? `[hearth] backup ON — pushing to a remote after every wake`
+    : `[hearth] backup LOCAL ONLY — history kept in ${backupDir()}, but memory still lives on one disk. Set BACKUP_GIT_REMOTE: see docs/backup.md`);
   console.log(`[hearth] calendar ${calendarReady() ? "ON" : "OFF — set CALENDAR_ICS_URLS"}`);
   const cw = credentialWarning();
   if (cw) console.error(`[hearth] !! ${cw}`);

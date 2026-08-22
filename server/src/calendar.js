@@ -25,11 +25,16 @@ const name = (u) => {
 
 /** Events between now and `days` ahead, expanding anything recurring. */
 export async function upcoming(days = 8) {
-  if (!calendarReady()) return { events: [], error: null };
+  if (!calendarReady()) return { events: [], total: 0, error: null };
   const from = new Date();
   const to = new Date(Date.now() + days * 864e5);
   const out = [];
   const problems = [];
+  // How many events the feeds hold in total, at any date. An empty window and
+  // an empty *calendar* mean completely different things, and telling them
+  // apart is the difference between "a quiet week" and "this family does not
+  // keep its schedule here". Only one of those is safe to say out loud.
+  let total = 0;
 
   await Promise.all(URLS.map(async (url) => {
     const cal = name(url);
@@ -37,6 +42,7 @@ export async function upcoming(days = 8) {
       const data = await ical.async.fromURL(url);
       for (const ev of Object.values(data)) {
         if (ev.type !== "VEVENT") continue;
+        total += 1;
         const push = (start) => {
           if (start < from || start > to) return;
           const ms = ev.end && ev.start ? ev.end - ev.start : 0;
@@ -67,7 +73,7 @@ export async function upcoming(days = 8) {
 
   out.sort((a, b) => a.start.localeCompare(b.start));
   // A calendar that failed to load must never look like an empty week.
-  return { events: out, error: problems.length ? problems.join("; ") : null };
+  return { events: out, total, error: problems.length ? problems.join("; ") : null };
 }
 
 /** Compact lines for a wake prompt. */
