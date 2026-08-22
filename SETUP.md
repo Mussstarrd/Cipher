@@ -98,7 +98,12 @@ sudo tailscale up --ssh
 sudo tailscale funnel --bg 8787
 ```
 
-It prints a permanent `https://something.ts.net` URL. Put it in `.env` as
+The first `funnel` command is normally refused: Funnel is off by default on a
+new tailnet, because it is the feature that publishes to the internet. The error
+prints a link ending in `/f/funnel?node=…` — open it, enable Funnel, run the
+command again.
+
+It then prints a permanent `https://something.ts.net` URL. Put it in `.env` as
 `HEARTH_URL`, then `sudo systemctl restart hearth`.
 
 Funnel publishes that URL to the public internet — deliberately, so the family
