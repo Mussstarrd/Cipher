@@ -123,6 +123,29 @@ that is Hearth telling you the truth — go back and check the app password.
 
 Then send the URL and the passphrase (in `.env`) to Suzan. Same three steps.
 
+## Lock the front door
+
+Once the first run works. A fresh droplet has SSH open to the internet and bots
+start guessing passwords on new IPs within minutes. You never need SSH — the
+DigitalOcean Console reaches the machine another way, and Tailscale gives you a
+private path.
+
+```bash
+ufw default deny incoming
+ufw default allow outgoing
+ufw allow in on tailscale0
+ufw --force enable
+ufw status verbose
+```
+
+Safe to run **from the DigitalOcean Console**, precisely because the Console is
+not SSH — the same commands over a normal SSH session would cut you off
+mid-command. The `.ts.net` URL keeps working: Funnel arrives through Tailscale's
+own tunnel rather than an open port.
+
+After this a leaked root password is useless from outside the tailnet, which is
+why Password authentication was the right choice rather than a compromise.
+
 ---
 
 ## When something breaks
