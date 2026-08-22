@@ -11,7 +11,9 @@ import nodemailer from "nodemailer";
 import { simpleParser } from "mailparser";
 
 const USER = process.env.GMAIL_USER;
-const PASS = process.env.GMAIL_APP_PASSWORD;
+// Google shows app passwords as four groups of four. People paste the spaces;
+// SMTP does not want them. Strip rather than fail with "invalid credentials".
+const PASS = (process.env.GMAIL_APP_PASSWORD || "").replace(/\s+/g, "");
 
 export const mailReady = () => Boolean(USER && PASS);
 
