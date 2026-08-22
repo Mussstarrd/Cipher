@@ -13,6 +13,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { wake, answer, review } from "./brain.js";
 import { notify, pushReady } from "./push.js";
+import { fetchNew, send as sendMail, mailReady } from "./mail.js";
 import {
   loadState, saveState, appendDaily, writeLayer, todayET, loadBrief,
 } from "./memory.js";
@@ -39,6 +40,46 @@ function nowET() {
   return { day: `${p.year}-${p.month}-${p.day}`, hm: `${p.hour}:${p.minute}` };
 }
 
+
+/* ---------- the inbox ---------- */
+// Ingestion is separate from thinking on purpose: pulling mail is free and can
+// run often, while reasoning about it is expensive and happens on the wakes.
+let ingesting = false;
+async function ingest() {
+  if (!mailReady() || ingesting) return;
+  ingesting = true;
+  try {
+    const s = loadState();
+    const { messages, lastUid, error } = await fetchNew(s.lastUid);
+    if (error) {
+      console.error(`[hearth] mail: ${error}`);
+      // A failing inbox must never look like a quiet one.
+      const st = loadState();
+      st.mailError = error;
+      saveState(st);
+      return;
+    }
+    if (!messages.length) {
+      const st = loadState();
+      st.lastUid = lastUid; st.mailError = null;
+      saveState(st);
+      return;
+    }
+    const st = loadState();
+    st.mail = [...st.mail, ...messages].slice(-120);
+    st.lastUid = lastUid;
+    st.mailError = null;
+    saveState(st);
+    appendDaily(messages.map((m) =>
+      `- mail from ${m.from} — ${m.subject}`).join("\n"));
+    console.log(`[hearth] ingested ${messages.length} message(s)`);
+  } finally {
+    ingesting = false;
+  }
+}
+setInterval(ingest, 10 * 60_000);
+setTimeout(ingest, 4000);
+
 let running = false;
 
 async function runSlot(slot, { forced = false } = {}) {
@@ -46,7 +87,16 @@ async function runSlot(slot, { forced = false } = {}) {
   running = true;
   const s = loadState();
   try {
-    const text = await wake(slot);
+    const since = s.reports[0]?.at || new Date(Date.now() - 864e5).toISOString();
+    const fresh = (s.mail || []).filter((m) => m.at > since);
+    const extra = [
+      fresh.length
+        ? `Mail since the last check-in:\n${fresh.map((m) =>
+            `- ${m.from} | ${m.subject}\n  ${m.text.slice(0, 700)}`).join("\n")}`
+        : "No new mail since the last check-in.",
+      s.mailError ? `WARNING: the inbox could not be read (${s.mailError}). Say so in the check-in; do not present this as a quiet day.` : "",
+    ].filter(Boolean).join("\n\n");
+    const text = await wake(slot, extra);
     s.reports.unshift({ slot, at: new Date().toISOString(), day: todayET(), text });
     s.reports = s.reports.slice(0, 60);
     if (!forced) s.lastRun[slot] = todayET();
@@ -133,6 +183,8 @@ const server = http.createServer(async (req, res) => {
         household: [...brief.matchAll(/^\|\s*\*\*([\w'-]+)\*\*\s*\|/gm)].map((m) => m[1]),
         slots: SLOTS, now: nowET(), push: pushReady(),
         vapid: process.env.VAPID_PUBLIC || null,
+        mail: { ready: mailReady(), count: s.mail?.length || 0, error: s.mailError || null,
+                recent: (s.mail || []).slice(-15).map(({ from, subject, at }) => ({ from, subject, at })) },
         needsPass: Boolean(PASS),
       });
     }
@@ -179,6 +231,29 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, { ok: true });
     }
 
+
+    if (req.method === "POST" && u.pathname === "/api/send") {
+      const b = await body(req);
+      if (!authed(b)) return send(res, 401, { error: "wrong passphrase" });
+      if (!mailReady()) return send(res, 400, { error: "mail not configured" });
+      // Deliberately only reachable from a human pressing a button. Hearth
+      // drafts; a person sends. Nothing here is callable by the model.
+      try {
+        await sendMail({ to: b.to, subject: b.subject, body: b.body });
+        appendDaily(`- ${b.who || "someone"} sent mail to ${b.to} — ${b.subject}`);
+        return send(res, 200, { ok: true });
+      } catch (e) {
+        return send(res, 500, { error: String(e?.message || e) });
+      }
+    }
+
+    if (req.method === "POST" && u.pathname === "/api/ingest") {
+      const b = await body(req);
+      if (!authed(b)) return send(res, 401, { error: "wrong passphrase" });
+      await ingest();
+      return send(res, 200, { ok: true, mail: loadState().mail.length });
+    }
+
     if (req.method === "POST" && u.pathname === "/api/wake") {
       const b = await body(req);
       if (!authed(b)) return send(res, 401, { error: "wrong passphrase" });
@@ -207,4 +282,5 @@ server.listen(PORT, () => {
   console.log(`[hearth] awake on ${URL_BASE}`);
   console.log(`[hearth] slots ${SLOTS.join(" ")} ${TZ}`);
   console.log(`[hearth] push ${pushReady() ? "ready" : "OFF — run: npm run keys"}`);
+  console.log(`[hearth] mail ${mailReady() ? `ON as ${process.env.GMAIL_USER}` : "OFF — set GMAIL_USER + GMAIL_APP_PASSWORD"}`);
 });

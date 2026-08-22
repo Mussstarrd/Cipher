@@ -61,7 +61,7 @@ export function writeLayer(file, content) {
 
 /* ---- channel state: messages, reports, push subscriptions ---- */
 const STATE = path.join(DATA, "state.json");
-const EMPTY = { messages: [], reports: [], subs: [], lastRun: {} };
+const EMPTY = { messages: [], reports: [], subs: [], lastRun: {}, mail: [], lastUid: 0 };
 
 export function loadState() {
   fs.mkdirSync(DATA, { recursive: true });

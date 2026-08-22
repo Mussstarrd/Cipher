@@ -3,7 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "start": "node src/server.js",
     "wake": "node src/wake-now.js",
@@ -11,6 +13,9 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "latest",
+    "imapflow": "^1.7.2",
+    "mailparser": "^3.9.15",
+    "nodemailer": "^9.0.5",
     "web-push": "^3"
   }
 }

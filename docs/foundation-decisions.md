@@ -1,5 +1,22 @@
 # Foundation decisions
 
+> **PARKED 2026-08-22.** Everything below was written for a multi-tenant
+> product. Jeffery's call: build it as a refined tool for one household first.
+> Nothing here is wrong, it is just not now — revisit only if another family
+> asks to use it.
+>
+> **What changed for the personal build:**
+> - **Gmail is fine, and needs no OAuth.** App Passwords still work in 2026:
+>   2FA on the account, generate a 16-character password, connect over
+>   `imap.gmail.com:993` and `smtp.gmail.com:465`. No Google Cloud project, no
+>   CASA assessment, no verification, nothing that expires. For one household
+>   this is strictly better than OAuth.
+> - **COPPA does not apply.** It governs commercial services collecting from
+>   children. A parent running software for his own household is not that.
+> - **No multi-tenancy, no Stripe, no magic links.** One household, one box.
+> - Still true and still worth keeping: the append-only event log, memory the
+>   family can read and correct, and a real delete path.
+
 Recorded so they are not re-litigated. Full reasoning:
 https://claude.ai/code/artifact/65e87f03-5784-4078-991e-fbf5b9a7e1ec
 
