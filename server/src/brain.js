@@ -7,7 +7,9 @@
  * Recording makes a system fatter. Reviewing its own errors makes it sharper.
  */
 import Anthropic from "@anthropic-ai/sdk";
-import { loadBrief, readDaily, todayET, LAYERS } from "./memory.js";
+import fs from "node:fs";
+import path from "node:path";
+import { loadBrief, readDaily, todayET, LAYERS, DATA } from "./memory.js";
 
 const client = new Anthropic();
 const MODEL = "claude-opus-5";
@@ -31,6 +33,12 @@ something they should not have, once, and the family stops trusting this.
 
 Never put a hint in the family room that something exists in the adults room.
 "There's something for the grown-ups" is worse than silence — it is an invitation.
+
+There is also a **private** room: each person has a scratchpad only they and you
+can see, for half-formed thinking before it goes to the family. Nothing said
+there is ever quoted, summarised or hinted at in any other room, to anyone —
+including the parents. What you learn there may quietly inform how you help
+that person, nothing more.
 `.trim();
 
 const VOICE = `
@@ -129,9 +137,12 @@ export async function answer(who, question, recent = [], room = "family") {
   const system = `You are Hearth, this household's assistant.\n\n${context()}\n\n${ROOMS}\n\n${VOICE}\n\n` +
     (room === "adults"
       ? "You are answering in the ADULTS room. Jeffery and Suzan only. Speak plainly about money, health and anything else that belongs here."
+      : room === "me"
+      ? `You are in ${who}'s PRIVATE scratchpad. Only ${who} sees this — not the rest of the family. This is where they think out loud, plan, and get their words straight before saying something in the family channel. Help them think; never act outward from here, and never carry anything said here into another room. If what they are working on needs the family to know, help them phrase it and let them post it themselves.`
       : "You are answering in the FAMILY room. A nine-year-old and a two-year-old can read this. If the honest answer belongs in the adults room, say only that you will take it up with Jeffery and Suzan — never hint at what it concerns.");
   const thread = recent.map((m) => `${m.who}: ${m.text}`).join("\n");
-  const user = `${who} just asked, in the family channel:
+  const where = room === "me" ? "their private scratchpad" : room === "adults" ? "the adults room" : "the family channel";
+  const user = `${who} just asked, in ${where}:
 
 ${question}
 
@@ -182,6 +193,11 @@ Then rewrite the memory layers that changed:
   that shape is what the app's checkboxes are built on.
 - corrections.md — anything a human explicitly said you got wrong. Highest
   authority in the system. Never soften these.
+  Daily-log lines marked "[private NAME]" came from that person's scratchpad.
+  They may inform what you understand, but their content must never surface in
+  any check-in, any other room, or any memory line another person would read.
+  If one belongs in memory at all, strip it to the bare fact and drop who was
+  thinking about it.
 - misses.md — where you were wrong, and the adjustment it implies.
 - reference.md — only if a genuinely new detail surfaced.
 
@@ -193,19 +209,47 @@ Include a file ONLY if it actually changed. Each value must be the COMPLETE new
 file, not a diff. If nothing changed, return {"summary": "...", "files": {}}.`;
 
   const raw = await ask(system, user, 16000);
-  const start = raw.indexOf("{");
-  const end = raw.lastIndexOf("}");
-  if (start < 0 || end < start) return { summary: raw, files: {} };
-  try {
-    const out = JSON.parse(raw.slice(start, end + 1));
-    const files = Object.fromEntries(
-      Object.entries(out.files || {}).filter(([f]) => LAYERS.includes(f)),
+  let out = tryParse(raw);
+
+  // A review is an entire day's learning in one JSON object, and on 22 Aug the
+  // model produced it with a single stray bracket — parse failed, memory went
+  // unwritten, and 16KB of near-JSON got dumped into the daily log. One comma
+  // must not cost a day: hand the broken output back and ask for it repaired.
+  if (!out) {
+    const fixed = await ask(
+      "You repair malformed JSON. Return ONLY the corrected JSON object — no prose, no code fences, not a word outside the braces. Preserve the content exactly; fix only the syntax.",
+      `This was meant to be one valid JSON object of the shape {"summary": "...", "files": {"name.md": "..."}} but it does not parse:
+
+${raw}`,
+      16000,
     );
-    return { summary: String(out.summary || "").trim(), files };
-  } catch {
-    // Never let a parse failure silently discard a day. Keep the prose.
-    return { summary: raw, files: {} };
+    out = tryParse(fixed);
   }
+
+  if (!out) {
+    // Still broken. Save the raw somewhere it can be recovered by hand, and say
+    // so — a clean admission beats 16KB of noise in the daily log.
+    const p = path.join(DATA, `review-failed-${todayET()}.txt`);
+    try { fs.mkdirSync(DATA, { recursive: true }); fs.writeFileSync(p, raw); } catch { /* the log line below still tells the story */ }
+    return {
+      summary: `The 22:00 review produced output I could not parse, twice. Memory is unchanged tonight; the raw output is saved at ${p} for the next session to salvage.`,
+      files: {},
+    };
+  }
+
+  const files = Object.fromEntries(
+    Object.entries(out.files || {}).filter(([f]) => LAYERS.includes(f)),
+  );
+  return { summary: String(out.summary || "").trim(), files };
+}
+
+function tryParse(raw) {
+  const i = raw.indexOf("{"), j = raw.lastIndexOf("}");
+  if (i < 0 || j < i) return null;
+  try {
+    const o = JSON.parse(raw.slice(i, j + 1));
+    return o && typeof o === "object" ? o : null;
+  } catch { return null; }
 }
 
 /**

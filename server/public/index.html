@@ -152,6 +152,12 @@ button{font:inherit;color:inherit;cursor:pointer}
   display:flex;align-items:center;justify-content:center}
 .cam:active{transform:translate(2px,2px);box-shadow:none}
 .cam:disabled{opacity:.45;box-shadow:none}
+.comp{flex-direction:column;align-items:stretch}
+.crow{display:flex;gap:9px;align-items:flex-end}
+.draft{display:flex;gap:10px;align-items:center;margin-bottom:9px;
+  border:2px dashed var(--rule-2);background:var(--sunk);padding:8px;font-size:13px}
+.draft img{width:52px;height:52px;object-fit:cover;border:2px solid var(--ink);flex:none}
+.draft span{flex:1;color:var(--ink-2)}
 .empty{color:var(--ink-3);font-style:italic}
 </style>
 </head>
@@ -172,6 +178,16 @@ let apass = localStorage.getItem("hearth.apass") || "";
 // One id per phone, made once and kept. It is what lets the server say who
 // wrote something without taking the app's word for it.
 let device = localStorage.getItem("hearth.device") || "";
+// Which thread inside the channel: the family, or your own scratchpad, or (once
+// unlocked) the adults room. This is also the room a post lands in.
+let subtab = "family";
+// A photo waiting in the composer. Nothing uploads until Send — a picture with
+// no words is a picture nobody can act on.
+let draft = null;
+// Scroll bookkeeping: stick to the bottom on tab switches and on new messages,
+// but never yank someone who has deliberately scrolled up to read.
+let stick = false;
+let lastCount = -1;
 if (!device) {
   device = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random());
   try { localStorage.setItem("hearth.device", device); } catch (e) {}
@@ -204,7 +220,11 @@ async function load(force) {
     h["x-hearth-device"] = device;
     const r = await fetch("/api/state", { headers: h });
     if (r.status === 401) { askPass(); return; }
-    S = await r.json(); render();
+    const wasNear = nearBottom();
+    S = await r.json();
+    if (lastCount >= 0 && S.messages.length > lastCount && wasNear) stick = true;
+    lastCount = S.messages.length;
+    render();
   } catch (e) { /* offline; keep the last view rather than blanking it */ }
 }
 
@@ -317,8 +337,17 @@ function setupView() {
   return cards.join("");
 }
 
+const nearBottom = () =>
+  window.innerHeight + window.scrollY >= document.body.scrollHeight - 220;
+
 function chatView() {
-  const ms = S.messages.map((m) => {
+  const rooms = [["family", "Family"], ["me", "Just me"]];
+  if (S.adult) rooms.push(["adults", "Adults"]);
+  if (!rooms.some(([k]) => k === subtab)) subtab = "family";
+  const pills = `<div class="who" style="border-top:none">${rooms.map(([k, l]) =>
+    `<button class="pick" data-room="${k}" aria-pressed="${subtab === k}">${l}</button>`).join("")}</div>`;
+
+  const ms = S.messages.filter((m) => (m.room || "family") === subtab).map((m) => {
     const h = m.who === "Hearth", mine = !h && m.who === S.me;
     const img = m.photo
       ? `<img src="/api/photo?id=${encodeURIComponent(m.photo)}&pass=${encodeURIComponent(pass)}" alt="Photo ${esc(m.who)} sent" loading="lazy">`
@@ -328,12 +357,21 @@ function chatView() {
       <div class="bub">${esc(m.text)}${img}</div></div>`;
   }).join("");
   if (!S.me) return `<div class="wrap"><p class="empty">Say who this phone belongs to at the top, then you can post. Every message is stamped with that name — nobody can post as anybody else.</p></div>`;
-  return `<div class="wrap">${ms || '<p class="empty">Ask Hearth anything.</p>'}</div>
+  const empty = subtab === "me"
+    ? `<p class="empty">Yours alone — nobody else in the family sees this, ever. Think out loud, plan, get the words right, then post the finished thought in Family.</p>`
+    : subtab === "adults"
+    ? '<p class="empty">Jeffery and Suzan only.</p>'
+    : '<p class="empty">Ask Hearth anything.</p>';
+  return `${pills}<div class="wrap">${ms || empty}</div>
     <form class="comp" id="comp">
+    ${draft ? `<div class="draft"><img src="${draft}" alt="Photo ready to send">
+      <span>Photo attached &mdash; add a note, then send.</span>
+      <button type="button" class="more" id="undraft">remove</button></div>` : ""}
+    <div class="crow">
     <input type="file" id="pick" accept="image/*" capture="environment" hidden>
     <button type="button" class="cam" id="cam" aria-label="Photograph a form or a letter">&#128247;</button>
-    <textarea id="msg" rows="1" placeholder="Ask Hearth, or photograph the paper"></textarea>
-    <button class="send" id="send" disabled aria-label="Send">&#8593;</button></form>`;
+    <textarea id="msg" rows="1" placeholder="${draft ? "What is this photo? Which kid, when is it due&hellip;" : subtab === "me" ? "Think out loud &mdash; only you and Hearth see this" : "Ask Hearth, or photograph the paper"}"></textarea>
+    <button class="send" id="send" disabled aria-label="Send">&#8593;</button></div></form>`;
 }
 
 function render() {
@@ -365,6 +403,10 @@ function render() {
   <div class="pane ${tab === "loops" ? "on" : ""}">${loopsView()}</div>
   <div class="pane ${tab === "chat" ? "on" : ""}">${chatView()}</div>`;
   wire();
+  if (tab === "chat" && stick) {
+    stick = false;
+    window.scrollTo(0, document.body.scrollHeight);
+  }
   if (keep) {
     const el = document.getElementById(keep.id);
     if (el) {
@@ -376,7 +418,11 @@ function render() {
 }
 
 function wire() {
-  document.querySelectorAll("[data-t]").forEach((b) => b.onclick = () => { tab = b.dataset.t; render(); });
+  document.querySelectorAll("[data-t]").forEach((b) => b.onclick = () => {
+    tab = b.dataset.t;
+    if (tab === "chat") stick = true;
+    render();
+  });
   document.querySelectorAll("[data-claim]").forEach((b) => b.onclick = async () => {
     const r = await post("/api/claim", { who: b.dataset.claim });
     if (r && r.ok) load(true);
@@ -466,6 +512,12 @@ function wire() {
     if (r && r.ok) load(true); else alert(r && r.error ? r.error : "Refused.");
   });
 
+  document.querySelectorAll("[data-room]").forEach((b) => b.onclick = () => {
+    subtab = b.dataset.room; stick = true; render();
+  });
+
+  // The camera ATTACHES. Nothing leaves the phone until Send — so there is
+  // always a chance to say what the photo is before Hearth reads it.
   const cam = $("#cam"), pickr = $("#pick");
   if (cam && pickr) {
     cam.onclick = () => pickr.click();
@@ -475,30 +527,42 @@ function wire() {
       if (!f) return;
       cam.disabled = true; cam.textContent = "…";
       try {
-        const data = await shrink(f);
-        const note = ($("#msg") && $("#msg").value.trim()) || "";
-        const r = await post("/api/photo", { data, note });
-        if (r && r.ok) { if ($("#msg")) $("#msg").value = ""; await load(true);
-          setTimeout(() => load(true), 6000); setTimeout(() => load(true), 14000); }
-        else alert(r && r.error ? r.error : "Could not send that photo.");
+        draft = await shrink(f);
+        render();
+        const t = $("#msg"); if (t) t.focus({ preventScroll: true });
       } catch (err) {
         alert("Could not read that photo: " + (err && err.message ? err.message : err));
+        cam.disabled = false; cam.innerHTML = "&#128247;";
       }
-      cam.disabled = false; cam.innerHTML = "&#128247;";
     };
   }
+  const un2 = $("#undraft");
+  if (un2) un2.onclick = () => { draft = null; render(); };
 
   const ta = $("#msg"), snd = $("#send");
   if (ta) {
-    ta.oninput = () => { snd.disabled = !ta.value.trim(); ta.style.height = "auto"; ta.style.height = Math.min(ta.scrollHeight, 120) + "px"; };
-    ta.onkeydown = (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); if (ta.value.trim()) $("#comp").requestSubmit(); } };
+    snd.disabled = !draft;
+    ta.oninput = () => { snd.disabled = !ta.value.trim() && !draft; ta.style.height = "auto"; ta.style.height = Math.min(ta.scrollHeight, 120) + "px"; };
+    ta.onkeydown = (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); if (ta.value.trim() || draft) $("#comp").requestSubmit(); } };
     $("#comp").onsubmit = async (e) => {
       e.preventDefault();
-      const text = ta.value.trim(); if (!text) return;
+      const text = ta.value.trim();
+      if (!text && !draft) return;
       ta.value = ""; snd.disabled = true;
-      await post("/api/message", { who: me, text });
-      await load(true);
-      setTimeout(() => load(true), 4000); setTimeout(() => load(true), 9000);   // Hearth answers a moment later
+      stick = true;
+      if (draft) {
+        const data = draft; draft = null;
+        const r = await post("/api/photo", { data, note: text, room: subtab });
+        if (!r || !r.ok) { alert(r && r.error ? r.error : "Could not send that photo."); }
+        await load(true);
+        setTimeout(() => { stick = nearBottom(); load(true); }, 6000);
+        setTimeout(() => { stick = nearBottom(); load(true); }, 14000);
+      } else {
+        await post("/api/message", { who: me, text, room: subtab });
+        await load(true);
+        setTimeout(() => { stick = nearBottom(); load(true); }, 4000);   // Hearth answers a moment later
+        setTimeout(() => { stick = nearBottom(); load(true); }, 9000);
+      }
     };
   }
 }

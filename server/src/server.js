@@ -232,6 +232,14 @@ const body = (req, limit = 1e6) => new Promise((ok, no) => {
 
 const authed = (b) => !PASS || b.pass === PASS;
 
+// Which room a post lands in. "me" is anyone's to use; "adults" needs the
+// second secret; everything else is family.
+const roomFor = (b, who) => {
+  if (b.room === "me") return { room: "me", owner: who };
+  if (b.room === "adults" && adultPass() && b.apass === adultPass()) return { room: "adults" };
+  return { room: "family" };
+};
+
 // Funnel publishes this to the open internet — that is the point, so the family
 // needs nothing installed. It also means the passphrase is the only door. Reads
 // must be gated too: a check-in naming the children, the schools and the day's
@@ -259,8 +267,13 @@ const server = http.createServer(async (req, res) => {
       const s = loadState();
       const { brief } = loadBrief();
       const adult = isAdult(u, req);
+      const me = nameFor(s, u.searchParams.get("device") || req.headers["x-hearth-device"] || "");
       // Filtered server-side, never client-side: a hidden div is not a boundary.
-      const visible = (x) => adult || (x.room || "family") === "family";
+      // A private message belongs to exactly one person; not even an adult sees
+      // someone else's scratchpad.
+      const visible = (x) => x.room === "me"
+        ? Boolean(me) && x.owner === me
+        : adult || (x.room || "family") === "family";
       return send(res, 200, {
         adult,
         adultRoomExists: Boolean(adultPass()),
@@ -270,7 +283,7 @@ const server = http.createServer(async (req, res) => {
         household: [...brief.matchAll(/^\|\s*\*\*([\w'-]+)\*\*\s*\|/gm)].map((m) => m[1]),
         slots: SLOTS, now: nowET(), push: pushReady(),
         nextSlot: currentSlot(),
-        me: nameFor(s, u.searchParams.get("device") || req.headers["x-hearth-device"] || ""),
+        me,
         vapid: process.env.VAPID_PUBLIC || null,
         calendar: {
           ready: calendarReady(),
@@ -303,27 +316,31 @@ const server = http.createServer(async (req, res) => {
       const text = String(b.text || "").trim().slice(0, 4000);
       if (!text) return send(res, 400, { error: "empty" });
       // Posting to the adults room requires the adult secret, not a claim.
-      const room = b.room === "adults" && adultPass() && b.apass === adultPass() ? "adults" : "family";
+      const { room, owner } = roomFor(b, who);
 
       const s = loadState();
-      s.messages.push({ id: `m${Date.now()}`, who, text, room, at: new Date().toISOString() });
+      s.messages.push({ id: `m${Date.now()}`, who, text, room, ...(owner ? { owner } : {}), at: new Date().toISOString() });
       saveState(s);
-      appendDaily(`- ${who}: ${text}`);
+      // A scratchpad line is marked so the 22:00 review knows it must never
+      // surface anywhere that person would not be alone.
+      appendDaily(room === "me" ? `- [private ${who}] ${text}` : `- ${who}: ${text}`);
 
       // Answer in the background; the poster should not wait on a model call.
       (async () => {
         try {
-          const recent = loadState().messages.filter((m) => (m.room || "family") === room).slice(-8);
+          const recent = loadState().messages
+            .filter((m) => (m.room || "family") === room && (room !== "me" || m.owner === who))
+            .slice(-8);
           const reply = await answer(who, text, recent, room);
           const st = loadState();
-          st.messages.push({ id: `h${Date.now()}`, who: "Hearth", text: reply, room, at: new Date().toISOString() });
+          st.messages.push({ id: `h${Date.now()}`, who: "Hearth", text: reply, room, ...(owner ? { owner } : {}), at: new Date().toISOString() });
           saveState(st);
-          appendDaily(`- Hearth: ${reply}`);
+          appendDaily(room === "me" ? `- [private ${who}] Hearth: ${reply}` : `- Hearth: ${reply}`);
         } catch (e) {
           const st = loadState();
           st.messages.push({
             id: `h${Date.now()}`, who: "Hearth", failed: true,
-            text: `I could not answer that: ${e?.message || e}`, room, at: new Date().toISOString(),
+            text: `I could not answer that: ${e?.message || e}`, room, ...(owner ? { owner } : {}), at: new Date().toISOString(),
           });
           saveState(st);
         }
@@ -351,12 +368,14 @@ const server = http.createServer(async (req, res) => {
       fs.writeFileSync(path.join(PHOTOS, `${id}.${mediaType.split("/")[1]}`), bytes);
 
       const note = String(b.note || "").trim().slice(0, 500);
-      const room = b.room === "adults" && adultPass() && b.apass === adultPass() ? "adults" : "family";
+      const { room, owner } = roomFor(b, who);
       const s = loadState();
       s.messages.push({ id: `m${Date.now()}`, who, text: note || "Sent a photo.", photo: id,
-                        room, at: new Date().toISOString() });
+                        room, ...(owner ? { owner } : {}), at: new Date().toISOString() });
       saveState(s);
-      appendDaily(`- ${who} photographed a document${note ? `: ${note}` : ""} (${id})`);
+      appendDaily(room === "me"
+        ? `- [private ${who}] photographed a document${note ? `: ${note}` : ""} (${id})`
+        : `- ${who} photographed a document${note ? `: ${note}` : ""} (${id})`);
 
       // Read it in the background. Nobody holds a phone up waiting for a model.
       (async () => {
@@ -364,8 +383,9 @@ const server = http.createServer(async (req, res) => {
           const r = await readPaper(who, [{ media_type: mediaType, data: b64 }], note);
           // A photograph can be about money or about a child's behaviour, so the
           // reading decides the room — but it can only ever go MORE private than
-          // where it was posted, never less.
-          const out = room === "adults" ? "adults" : r.room;
+          // where it was posted, never less. Posted in a scratchpad, it stays
+          // in that scratchpad.
+          const out = room === "me" ? "me" : room === "adults" ? "adults" : r.room;
           const day = todayET();
           const opened = [];
           for (const l of r.loops || []) {
@@ -377,14 +397,16 @@ const server = http.createServer(async (req, res) => {
             : "";
           const st = loadState();
           st.messages.push({ id: `h${Date.now()}`, who: "Hearth", text: r.text + tail,
-                             room: out, at: new Date().toISOString() });
+                             room: out, ...(owner ? { owner } : {}), at: new Date().toISOString() });
           saveState(st);
-          appendDaily(`- Hearth read ${id}: ${r.text}${tail}`);
+          appendDaily(room === "me"
+            ? `- [private ${who}] Hearth read ${id}: ${r.text}${tail}`
+            : `- Hearth read ${id}: ${r.text}${tail}`);
         } catch (e) {
           const st = loadState();
           st.messages.push({ id: `h${Date.now()}`, who: "Hearth", failed: true,
             text: `I could not read that photo: ${e?.message || e}. The picture is saved — try again, or just tell me what it says.`,
-            room, at: new Date().toISOString() });
+            room, ...(owner ? { owner } : {}), at: new Date().toISOString() });
           saveState(st);
         }
       })();
