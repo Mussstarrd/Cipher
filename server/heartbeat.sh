@@ -60,7 +60,7 @@ DISK=$(df -h / | awk 'NR==2{print $4" free of "$2" ("$5" used)"}')
 MEMF=$(free -m | awk '/^Mem:/{print $7"MB available of "$2"MB"}')
 
 TODO=$(ls ops/instructions/*.md 2>/dev/null | grep -v README | while read -r f; do
-  grep -qi '^status:[[:space:]]*done' "$f" || echo "  - ${f#ops/instructions/}: $(grep -m1 '^# ' "$f" | sed 's/^# //')"
+  grep -qiE '^\**status:[[:space:]]*done' "$f" || echo "  - ${f#ops/instructions/}: $(grep -m1 '^# ' "$f" | sed 's/^# //')"
 done)
 
 # --- write --------------------------------------------------------------
@@ -76,7 +76,11 @@ done)
   echo "- wakes: $(js runs)"
   echo "- state: $(js counts)"
   echo "- last message: $(js last)"
-  echo "- credentials: api $(envset ANTHROPIC_API_KEY) · gmail $(envset GMAIL_APP_PASSWORD) · calendar $(envset CALENDAR_ICS_URLS) · backup $(envset BACKUP_GIT_REMOTE) · adult room $(envset HEARTH_ADULT_PASSPHRASE) · vapid $(envset VAPID_PRIVATE)"
+  # The adults passphrase can live in .env OR in the file a parent sets from the
+  # app; reporting "unset" while the app file exists was a false alarm.
+  ADULT_STATE=$(envset HEARTH_ADULT_PASSPHRASE)
+  [ "$ADULT_STATE" = "unset" ] && [ -s server/data/adult-pass ] && ADULT_STATE="set (via app)"
+  echo "- credentials: api $(envset ANTHROPIC_API_KEY) · gmail $(envset GMAIL_APP_PASSWORD) · calendar $(envset CALENDAR_ICS_URLS) · backup $(envset BACKUP_GIT_REMOTE) · adult room $ADULT_STATE · vapid $(envset VAPID_PRIVATE)"
   echo "- host: $DISK · $MEMF · load$(cut -d' ' -f1-3 /proc/loadavg | sed 's/^/ /')"
   [ -n "$TODO" ] && { echo "- open instructions:"; echo "$TODO"; }
   [ -n "$UPD" ] && { echo; echo "\`\`\`"; echo "$UPD"; echo "\`\`\`"; }
