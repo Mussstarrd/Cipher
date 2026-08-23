@@ -346,8 +346,33 @@ const server = http.createServer(async (req, res) => {
             : "");
           const st = loadState();
           st.messages.push({ id: `h${Date.now()}`, who: "Hearth", text: reply, room, ...(owner ? { owner } : {}), at: new Date().toISOString() });
+
+          // The two doors out of a scratchpad, and the only two. A relay is the
+          // person's own words posted under their own name because they asked.
+          // An alert goes to the parents alone — never the family room — and
+          // Hearth has already told the person it is doing it.
+          if (room === "me" && r.relay) {
+            st.messages.push({ id: `m${Date.now() + 1}`, who, text: r.relay, room: "family", at: new Date().toISOString() });
+            appendDaily(`- ${who} (posted from their scratchpad): ${r.relay}`);
+          }
+          if (room === "me" && r.alert) {
+            st.messages.push({
+              id: `h${Date.now() + 2}`, who: "Hearth",
+              text: `A safety note from ${who}'s private chat — shared with you two only, and ${who} knows I am sharing it:\n\n${r.alert}`,
+              room: "adults", at: new Date().toISOString(),
+            });
+            appendDaily(`- [safety] Alerted Jeffery and Suzan about ${who}'s private chat. ${who} was told.`);
+            // Push only to devices claimed by a parent. A phone that has not
+            // said who it belongs to gets nothing — a safety note on a child's
+            // lock screen would be the exact leak the rooms exist to prevent.
+            const parents = st.subs.filter((x) => x.who === "Jeffery" || x.who === "Suzan");
+            if (parents.length) {
+              try { await notify(parents, { title: "Hearth", body: `A safety note about ${who} is in the Adults thread.`, url: URL_BASE }); }
+              catch { /* the message is still in the thread */ }
+            }
+          }
           saveState(st);
-          appendDaily(room === "me" ? `- [private ${who}] Hearth: ${reply}` : `- Hearth: ${reply}`);
+          appendDaily(room === "me" ? `- [private ${who}] Hearth: ${r.text}` : `- Hearth: ${reply}`);
         } catch (e) {
           const st = loadState();
           st.messages.push({
@@ -528,7 +553,13 @@ const server = http.createServer(async (req, res) => {
       const b = await body(req);
       if (!authed(b)) return send(res, 401, { error: "wrong passphrase" });
       const s = loadState();
-      if (!s.subs.some((x) => x.endpoint === b.sub?.endpoint)) s.subs.push(b.sub);
+      // Remember whose phone this subscription is, so anything sensitive can be
+      // pushed to the parents' devices and only theirs. Re-subscribing updates
+      // the name — claims can change.
+      const subWho = nameFor(s, b.device) || null;
+      const hit = s.subs.find((x) => x.endpoint === b.sub?.endpoint);
+      if (hit) hit.who = subWho;
+      else if (b.sub) s.subs.push({ ...b.sub, who: subWho });
       saveState(s);
       return send(res, 200, { ok: true });
     }

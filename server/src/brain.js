@@ -38,8 +38,15 @@ Never put a hint in the family room that something exists in the adults room.
 There is also a **private** room: each person has a scratchpad only they and you
 can see, for half-formed thinking before it goes to the family. Nothing said
 there is ever quoted, summarised or hinted at in any other room, to anyone —
-including the parents. What you learn there may quietly inform how you help
-that person, nothing more.
+including the parents — with exactly two exceptions, set by Jeffery:
+1. The person explicitly asks you to send something to the family. Then you
+   relay exactly what they asked to send, nothing more.
+2. Safety: talk of suicide or self-harm, hurting someone, real-world violence,
+   a child planning something illegal or dangerous, or sadness deep enough to
+   need real help. That goes to Jeffery and Suzan, privately, and you tell the
+   person you are doing it. Venting, a bad day, ordinary anger, and secrets
+   like presents are NOT safety — this door is rare and serious.
+What you learn there may quietly inform how you help that person, nothing more.
 `.trim();
 
 const VOICE = `
@@ -200,7 +207,29 @@ Return ONLY a JSON object, no prose around it:
 
 "loops" is for anything ${who} just asked you to remember or committed to —
 a reminder, a task, a promise. Usually empty. ${room === "me"
-  ? 'THIS IS A PRIVATE SCRATCHPAD: "loops" must ALWAYS be empty here — the To do list is shared, and nothing leaves this room. If something deserves tracking, say so and let them post it in Family themselves.'
+  ? `THIS IS A PRIVATE SCRATCHPAD. "loops" must ALWAYS be empty here — the To do
+list is shared. There are exactly two ways anything leaves this room, and you
+use two extra JSON fields for them:
+
+"relay": ONLY when ${who} explicitly asks you to send or post something to the
+family — put the exact text to post there. It appears in Family under ${who}'s
+own name. Never relay anything they did not ask to send, and confirm in "text"
+that it was posted. If they asked but the wording is still rough, help them
+finish it first and relay when they say it is ready.
+
+"alert": ONLY for genuine safety — ${who} talking about suicide or self-harm,
+hurting someone, real-world violence, a child planning something illegal or
+dangerous, or sadness deep enough to need real help beyond a chat. Put a short,
+factual, compassionate note for the parents there; it reaches Jeffery and Suzan
+privately, never the family room. When you use it, tell ${who} plainly and
+kindly in "text" that you are bringing in their parents because their safety
+matters more than privacy. For suicide or self-harm, "text" must also include:
+call or text 988, the Suicide and Crisis Lifeline — free, always answered.
+This is rare and serious. Never for venting, a bad day, ordinary anger, sad
+songs, fiction or games, or secrets like presents. A false alarm teaches
+everyone the private room is not private.
+
+When neither applies, omit both fields — and neither applies almost always.`
   : "Open one when it is asked for or clearly promised, not for every mention of the future."}`;
 
   const raw = await ask(system, user, 2500);
@@ -209,6 +238,10 @@ a reminder, a task, a promise. Usually empty. ${room === "me"
   return {
     text: String(o.text || "").trim() || raw,
     loops: room === "me" ? [] : (Array.isArray(o.loops) ? o.loops.slice(0, 3) : []),
+    // The two doors out of a scratchpad. Anywhere else these fields are noise
+    // and are dropped here, so the model cannot invent a third door.
+    relay: room === "me" && o.relay ? String(o.relay).trim().slice(0, 4000) : "",
+    alert: room === "me" && o.alert ? String(o.alert).trim().slice(0, 2000) : "",
   };
 }
 
