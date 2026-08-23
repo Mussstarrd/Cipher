@@ -115,6 +115,43 @@ button{font:inherit;color:inherit;cursor:pointer}
   box-shadow:2px 2px 0 var(--ink);min-height:42px}
 .act button:active{transform:translate(2px,2px);box-shadow:none}
 .note{font-size:13px;color:var(--ink-3);padding:0 14px 30px;line-height:1.55}
+
+/* open loops — the list the family actually acts on */
+.sect{font-family:Silkscreen,monospace;font-size:9px;letter-spacing:.06em;
+  text-transform:uppercase;color:#fff;background:var(--ink);padding:6px 9px;
+  align-self:flex-start;margin-top:6px}
+.sect.urgent{background:var(--magenta)}
+.loop{display:flex;gap:11px;border:2px solid var(--ink);background:var(--card);
+  padding:12px;box-shadow:2px 2px 0 var(--ink);align-items:flex-start}
+.loop.urgent{border-color:var(--magenta);box-shadow:2px 2px 0 var(--magenta)}
+.loop.done{opacity:.5;box-shadow:none}
+.loop.done .ltitle{text-decoration:line-through}
+.box{flex:none;width:28px;height:28px;border:3px solid var(--ink);background:var(--paper);
+  font-size:17px;line-height:22px;text-align:center;padding:0;color:var(--teal);font-weight:800}
+.box[aria-checked=true]{background:var(--teal);color:#04231F}
+.ltitle{font-weight:600;line-height:1.35}
+.ldet{font-size:13px;color:var(--ink-2);white-space:pre-wrap;margin-top:6px;
+  overflow-wrap:anywhere}
+.lmeta{font-family:Silkscreen,monospace;font-size:9px;color:var(--ink-3);margin-top:7px}
+.more{background:none;border:none;padding:0;font-family:Silkscreen,monospace;
+  font-size:9px;color:var(--purple);text-transform:uppercase;letter-spacing:.05em}
+
+/* setup cards — things that are not connected yet, and how to connect them */
+.setup{border:3px dashed var(--rule-2);background:var(--sunk);padding:14px;font-size:14px}
+.setup h3{margin:0 0 8px;font-family:Bungee,sans-serif;font-size:13px}
+.setup ol{margin:8px 0 0;padding-left:20px}
+.setup li{margin-bottom:5px}
+.setup input{width:100%;padding:11px;border:2px solid var(--ink);background:var(--card);
+  color:var(--ink);font:inherit;font-size:16px;margin-top:9px}
+.ok{color:var(--teal);font-weight:600}
+
+/* photos in the channel */
+.bub img{display:block;max-width:100%;border:2px solid var(--ink);margin-top:8px}
+.cam{background:var(--purple);color:#fff;border:2px solid var(--ink);
+  width:48px;height:46px;flex:none;font-size:19px;box-shadow:2px 2px 0 var(--ink);
+  display:flex;align-items:center;justify-content:center}
+.cam:active{transform:translate(2px,2px);box-shadow:none}
+.cam:disabled{opacity:.45;box-shadow:none}
 .empty{color:var(--ink-3);font-style:italic}
 </style>
 </head>
@@ -123,7 +160,10 @@ button{font:inherit;color:inherit;cursor:pointer}
 
 <script>
 const $ = (s) => document.querySelector(s);
-let S = { reports: [], messages: [], slots: [], now: {}, vapid: null, needsPass: false };
+let S = { reports: [], messages: [], loops: [], calendars: [], slots: [], now: {}, vapid: null, needsPass: false };
+// Loop bodies are collapsed by default — a list you have to scroll is a list
+// nobody reads. Expanded ids live here, not in the DOM, so a refresh keeps them.
+const open = new Set();
 let me = localStorage.getItem("hearth.me") || "Jeffery";
 let pass = localStorage.getItem("hearth.pass") || "";
 let tab = "now";
@@ -196,16 +236,88 @@ function reportsView() {
     <span class="rmeta">${esc(r.slot)} &middot; ${esc(dayOf(r.at))}${r.failed ? " &middot; failed" : ""}</span>${esc(r.text)}</div>`).join("");
 }
 
+const openCount = () => (S.loops || []).filter((l) => !l.done).length;
+
+const SECTION_ORDER = ["Urgent", "This week", "Dated, further out", "Hearth's own", "Hearth's infrastructure"];
+
+function loopsView() {
+  const all = S.loops || [];
+  if (!all.length) return `<div class="wrap"><p class="empty">No open loops. Anything anyone promises turns up here.</p></div>`;
+  const live = all.filter((l) => !l.done);
+  const done = all.filter((l) => l.done);
+  const order = (a) => {
+    const i = SECTION_ORDER.indexOf(a);
+    return i < 0 ? SECTION_ORDER.length : i;
+  };
+  const sections = [...new Set(live.map((l) => l.section))].sort((a, b) => order(a) - order(b));
+
+  const item = (l) => {
+    const urgent = !l.done && l.section === "Urgent";
+    const shown = open.has(l.id);
+    return `<div class="loop${l.done ? " done" : ""}${urgent ? " urgent" : ""}">
+      <button class="box" data-loop="${l.id}" data-done="${l.done ? 1 : 0}"
+        role="checkbox" aria-checked="${l.done}"
+        aria-label="${l.done ? "Mark not done" : "Mark done"}: ${esc(l.title)}">${l.done ? "&#10003;" : ""}</button>
+      <div style="flex:1;min-width:0">
+        <div class="ltitle">${esc(l.title)}</div>
+        ${l.detail && shown ? `<div class="ldet">${esc(l.detail.replace(/^ {2}/gm, ""))}</div>` : ""}
+        ${l.detail ? `<button class="more" data-more="${l.id}">${shown ? "less" : "more"}</button>` : ""}
+        <div class="lmeta">${l.done ? `done by ${esc(l.by || "someone")}` : `open since ${esc(l.opened)}`}</div>
+      </div></div>`;
+  };
+
+  return `<div class="wrap">
+    ${sections.map((sec) => `<div class="sect${sec === "Urgent" ? " urgent" : ""}">${esc(sec)}</div>
+      ${live.filter((l) => l.section === sec).map(item).join("")}`).join("")}
+    ${done.length ? `<div class="sect">Done</div>${done.map(item).join("")}` : ""}
+    <p class="note" style="padding:6px 0 0">Ticking one writes it into Hearth's memory with your name on it. The 22:00 review clears out what is finished.</p>
+  </div>`;
+}
+
+/** Shown only to an adult, and only while something is not connected yet. */
+function setupView() {
+  if (!S.adult) return "";
+  const cals = S.calendars || [];
+  const cal = `<div class="setup"><h3>Calendars ${cals.length ? `<span class="ok">&mdash; ${cals.length} connected</span>` : ""}</h3>
+    ${cals.length
+      ? `<div style="margin-bottom:8px">${cals.map((c) =>
+          `<div style="display:flex;gap:8px;align-items:center;margin-bottom:5px">
+            <span style="flex:1">${esc(c.label)} <span style="color:var(--ink-3);font-size:12px">&mdash; added by ${esc(c.by)}</span></span>
+            ${c.removable ? `<button class="more" data-calrm="${esc(c.id)}">remove</button>` : ""}
+          </div>`).join("")}</div>`
+      : `<p style="margin:0">Hearth cannot see anybody's calendar yet, so every check-in is working from what people have typed in.</p>`}
+    <p style="margin:10px 0 0"><b>To add one</b> &mdash; this part has to be done on a computer, not a phone. Google only shows the address on the desktop site.</p>
+    <ol>
+      <li>Open <b>calendar.google.com</b> on a laptop, signed in as whoever owns the calendar.</li>
+      <li>Left column, hover the calendar name &rarr; <b>&#8942;</b> &rarr; <b>Settings and sharing</b>.</li>
+      <li>Scroll right down to <b>Integrate calendar</b>.</li>
+      <li>Copy <b>Secret address in iCal format</b>. It ends in <code>.ics</code>. Treat it like a password &mdash; anyone holding it can read that calendar.</li>
+      <li>Paste it below. Suzan does the same on her own account and pastes hers too.</li>
+    </ol>
+    <form id="calf"><input id="calu" placeholder="https://calendar.google.com/calendar/ical/&hellip;/basic.ics"
+      autocomplete="off" autocapitalize="off" spellcheck="false">
+      <input id="call" placeholder="What to call it &mdash; &ldquo;Jeffery&rsquo;s calendar&rdquo;">
+      <button class="send" style="width:auto;padding:0 18px;margin-top:9px">Connect</button></form>
+  </div>`;
+  return cal;
+}
+
 function chatView() {
   const ms = S.messages.map((m) => {
     const h = m.who === "Hearth", mine = !h && m.who === S.me;
+    const img = m.photo
+      ? `<img src="/api/photo?id=${encodeURIComponent(m.photo)}&pass=${encodeURIComponent(pass)}" alt="Photo ${esc(m.who)} sent" loading="lazy">`
+      : "";
     return `<div class="post ${h ? "h" : mine ? "me" : ""}">
       <div class="meta"><b>${esc(m.who)}</b><span>${esc(hhmm(m.at))}</span></div>
-      <div class="bub">${esc(m.text)}</div></div>`;
+      <div class="bub">${esc(m.text)}${img}</div></div>`;
   }).join("");
   if (!S.me) return `<div class="wrap"><p class="empty">Say who this phone belongs to at the top, then you can post. Every message is stamped with that name — nobody can post as anybody else.</p></div>`;
   return `<div class="wrap">${ms || '<p class="empty">Ask Hearth anything.</p>'}</div>
-    <form class="comp" id="comp"><textarea id="msg" rows="1" placeholder="Ask Hearth, or tell the family"></textarea>
+    <form class="comp" id="comp">
+    <input type="file" id="pick" accept="image/*" capture="environment" hidden>
+    <button type="button" class="cam" id="cam" aria-label="Photograph a form or a letter">&#128247;</button>
+    <textarea id="msg" rows="1" placeholder="Ask Hearth, or photograph the paper"></textarea>
     <button class="send" id="send" disabled aria-label="Send">&#8593;</button></form>`;
 }
 
@@ -220,6 +332,7 @@ function render() {
     ${S.adultRoomExists ? `<button class="chip ${S.adult ? "adult" : ""}" id="roomsw">${S.adult ? "adults" : "family"}</button>` : ""}</div>
     <div class="tabs">
       <button class="tab" data-t="now" aria-selected="${tab === "now"}">Reports</button>
+      <button class="tab" data-t="loops" aria-selected="${tab === "loops"}">To do${openCount() ? ` <span style="font-family:Figtree">${openCount()}</span>` : ""}</button>
       <button class="tab" data-t="chat" aria-selected="${tab === "chat"}">Channel</button>
     </div></div>
   <div class="squig"></div>
@@ -228,12 +341,13 @@ function render() {
         <button class="pick" id="unclaim" style="margin-left:auto;font-size:11px">not me</button></div>`
     : `<div class="who"><span>Who is this phone?</span>${PEOPLE.map((p) =>
         `<button class="pick" data-claim="${p}">${p}</button>`).join("")}</div>`}
-  <div class="pane ${tab === "now" ? "on" : ""}"><div class="wrap">${reportsView()}</div>
+  <div class="pane ${tab === "now" ? "on" : ""}"><div class="wrap">${setupView()}${reportsView()}</div>
     <div class="act">
       <button id="runnow">Update now</button>
       ${S.adult ? '<button id="clearch" style="background:var(--magenta);color:#fff">Clear channel</button>' : ""}
     </div>
     <p class="note">Hearth hibernates between wakes. At ${S.slots.join(", ")} Eastern it reads its own memory, works out what matters, writes down what it learned, and notifies everyone. The 22:00 wake also rewrites its memory — that is the one that makes tomorrow better than today.</p></div>
+  <div class="pane ${tab === "loops" ? "on" : ""}">${loopsView()}</div>
   <div class="pane ${tab === "chat" ? "on" : ""}">${chatView()}</div>`;
   wire();
   if (keep) {
@@ -289,6 +403,61 @@ function wire() {
     try { localStorage.setItem("hearth.apass", apass); } catch (e) {}
     load(true);
   };
+  document.querySelectorAll("[data-more]").forEach((b) => b.onclick = () => {
+    const id = b.dataset.more;
+    open.has(id) ? open.delete(id) : open.add(id);
+    render();
+  });
+
+  document.querySelectorAll("[data-loop]").forEach((b) => b.onclick = async () => {
+    const done = b.dataset.done !== "1";
+    // Tick it in the page first. Waiting on a round trip to see a checkbox move
+    // is how people tap twice and undo themselves.
+    b.setAttribute("aria-checked", String(done));
+    b.innerHTML = done ? "&#10003;" : "";
+    b.disabled = true;
+    const r = await post("/api/loop", { id: b.dataset.loop, done });
+    if (!r || !r.ok) alert(r && r.error ? r.error : "Could not save that.");
+    await load(true);
+  });
+
+  const cf = $("#calf");
+  if (cf) cf.onsubmit = async (e) => {
+    e.preventDefault();
+    const url = $("#calu").value.trim();
+    if (!url) return;
+    const r = await post("/api/calendar", { url, label: $("#call").value.trim() });
+    if (r && r.ok) { $("#calu").value = ""; $("#call").value = ""; load(true); }
+    else alert(r && r.error ? r.error : "Refused.");
+  };
+  document.querySelectorAll("[data-calrm]").forEach((b) => b.onclick = async () => {
+    if (!confirm("Disconnect this calendar? Hearth stops seeing it immediately.")) return;
+    const r = await post("/api/calendar", { remove: b.dataset.calrm });
+    if (r && r.ok) load(true); else alert(r && r.error ? r.error : "Refused.");
+  });
+
+  const cam = $("#cam"), pickr = $("#pick");
+  if (cam && pickr) {
+    cam.onclick = () => pickr.click();
+    pickr.onchange = async () => {
+      const f = pickr.files && pickr.files[0];
+      pickr.value = "";
+      if (!f) return;
+      cam.disabled = true; cam.textContent = "…";
+      try {
+        const data = await shrink(f);
+        const note = ($("#msg") && $("#msg").value.trim()) || "";
+        const r = await post("/api/photo", { data, note });
+        if (r && r.ok) { if ($("#msg")) $("#msg").value = ""; await load(true);
+          setTimeout(() => load(true), 6000); setTimeout(() => load(true), 14000); }
+        else alert(r && r.error ? r.error : "Could not send that photo.");
+      } catch (err) {
+        alert("Could not read that photo: " + (err && err.message ? err.message : err));
+      }
+      cam.disabled = false; cam.innerHTML = "&#128247;";
+    };
+  }
+
   const ta = $("#msg"), snd = $("#send");
   if (ta) {
     ta.oninput = () => { snd.disabled = !ta.value.trim(); ta.style.height = "auto"; ta.style.height = Math.min(ta.scrollHeight, 120) + "px"; };
@@ -302,6 +471,31 @@ function wire() {
       setTimeout(() => load(true), 4000); setTimeout(() => load(true), 9000);   // Hearth answers a moment later
     };
   }
+}
+
+/**
+ * A phone camera produces four megapixels of paper. Sending that raw over a
+ * home broadband uplink is a thirty-second wait and a failed request. Long edge
+ * 1600 is still comfortably enough to read a permission slip.
+ */
+function shrink(file, max = 1600, quality = 0.75) {
+  return new Promise((ok, no) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const scale = Math.min(1, max / Math.max(img.width, img.height));
+      const c = document.createElement("canvas");
+      c.width = Math.round(img.width * scale);
+      c.height = Math.round(img.height * scale);
+      const x = c.getContext("2d");
+      x.fillStyle = "#fff"; x.fillRect(0, 0, c.width, c.height);   // PNG transparency reads as black
+      x.drawImage(img, 0, 0, c.width, c.height);
+      ok(c.toDataURL("image/jpeg", quality));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); no(new Error("not an image this browser can open")); };
+    img.src = url;
+  });
 }
 
 async function post(url, data) {

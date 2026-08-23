@@ -11,19 +11,22 @@ import http from "node:http";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { wake, answer, review } from "./brain.js";
+import { wake, answer, review, readPaper } from "./brain.js";
 import { notify, pushReady } from "./push.js";
 import { fetchNew, send as sendMail, mailReady, credentialWarning } from "./mail.js";
-import { calendarReady } from "./calendar.js";
+import { calendarReady, feeds, addFeed, removeFeed } from "./calendar.js";
 import { backup, backupReady, backupDir } from "./backup.js";
 import {
   loadState, saveState, appendDaily, writeLayer, todayET, loadBrief,
 } from "./memory.js";
 import { SLOTS, dueSlot, GRACE_MIN, MAX_TRIES } from "./schedule.js";
 import { wakeContext } from "./context.js";
+import * as loops from "./loops.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const PUB = path.resolve(here, "..", "public");
+// Photographs stay on this disk and out of git. They are of children's paperwork.
+const PHOTOS = path.resolve(here, "..", "data", "photos");
 const PORT = Number(process.env.PORT || 8787);
 const URL_BASE = process.env.HEARTH_URL || `http://localhost:${PORT}`;
 const PASS = process.env.HEARTH_PASSPHRASE || "";
@@ -216,8 +219,8 @@ const send = (res, code, body, type = "application/json") => {
   res.end(typeof body === "string" ? body : JSON.stringify(body));
 };
 
-const body = (req) => new Promise((ok, no) => {
-  let d = ""; req.on("data", (c) => { d += c; if (d.length > 1e6) req.destroy(); });
+const body = (req, limit = 1e6) => new Promise((ok, no) => {
+  let d = ""; req.on("data", (c) => { d += c; if (d.length > limit) req.destroy(); });
   req.on("end", () => { try { ok(d ? JSON.parse(d) : {}); } catch (e) { no(e); } });
 });
 
@@ -276,6 +279,11 @@ const server = http.createServer(async (req, res) => {
         },
         mail: { ready: mailReady(), count: s.mail?.length || 0, error: s.mailError || null,
                 recent: (s.mail || []).slice(-15).map(({ from, subject, at }) => ({ from, subject, at })) },
+        // Open loops are the list the family actually acts on, so they are a
+        // first-class view rather than something only the check-ins mention.
+        loops: loops.list(),
+        // Labels only. An ICS secret address is a password and never leaves here.
+        calendars: feeds(),
         needsPass: Boolean(PASS),
       });
     }
@@ -315,6 +323,112 @@ const server = http.createServer(async (req, res) => {
         }
       })();
       return send(res, 200, { ok: true });
+    }
+
+    // A photograph of a piece of school paper. This is the input that closes the
+    // household's real failure: a form comes home in a bag and surfaces the
+    // morning it is due. Aiden holds it up to a phone and it stops being lost.
+    if (req.method === "POST" && u.pathname === "/api/photo") {
+      const b = await body(req, 12e6);
+      if (!authed(b)) return send(res, 401, { error: "wrong passphrase" });
+      const s0 = loadState();
+      const who = nameFor(s0, b.device);
+      if (!who) return send(res, 409, { error: "this device has not said who it belongs to" });
+      const m = String(b.data || "").match(/^data:(image\/(?:jpeg|png|webp|gif));base64,([\s\S]+)$/);
+      if (!m) return send(res, 400, { error: "expected a jpeg, png, webp or gif" });
+      const [, mediaType, b64] = m;
+      const bytes = Buffer.from(b64, "base64");
+      if (bytes.length > 8e6) return send(res, 413, { error: "that photo is too big" });
+
+      const id = `p${Date.now()}`;
+      fs.mkdirSync(PHOTOS, { recursive: true });
+      fs.writeFileSync(path.join(PHOTOS, `${id}.${mediaType.split("/")[1]}`), bytes);
+
+      const note = String(b.note || "").trim().slice(0, 500);
+      const room = b.room === "adults" && ADULT_PASS && b.apass === ADULT_PASS ? "adults" : "family";
+      const s = loadState();
+      s.messages.push({ id: `m${Date.now()}`, who, text: note || "Sent a photo.", photo: id,
+                        room, at: new Date().toISOString() });
+      saveState(s);
+      appendDaily(`- ${who} photographed a document${note ? `: ${note}` : ""} (${id})`);
+
+      // Read it in the background. Nobody holds a phone up waiting for a model.
+      (async () => {
+        try {
+          const r = await readPaper(who, [{ media_type: mediaType, data: b64 }], note);
+          // A photograph can be about money or about a child's behaviour, so the
+          // reading decides the room — but it can only ever go MORE private than
+          // where it was posted, never less.
+          const out = room === "adults" ? "adults" : r.room;
+          const day = todayET();
+          const opened = [];
+          for (const l of r.loops || []) {
+            const a = loops.add({ section: l.section, title: l.title, detail: l.detail, day });
+            if (a.ok && !a.duplicate) opened.push(a.title);
+          }
+          const tail = opened.length
+            ? `\n\nOpen loop${opened.length > 1 ? "s" : ""} added: ${opened.join("; ")}.`
+            : "";
+          const st = loadState();
+          st.messages.push({ id: `h${Date.now()}`, who: "Hearth", text: r.text + tail,
+                             room: out, at: new Date().toISOString() });
+          saveState(st);
+          appendDaily(`- Hearth read ${id}: ${r.text}${tail}`);
+        } catch (e) {
+          const st = loadState();
+          st.messages.push({ id: `h${Date.now()}`, who: "Hearth", failed: true,
+            text: `I could not read that photo: ${e?.message || e}. The picture is saved — try again, or just tell me what it says.`,
+            room, at: new Date().toISOString() });
+          saveState(st);
+        }
+      })();
+      return send(res, 200, { ok: true, id });
+    }
+
+    // The photo back again, so the channel shows what was sent. Gated like
+    // everything else: the passphrase is the only door.
+    if (req.method === "GET" && u.pathname === "/api/photo") {
+      if (!authedRead(u, req)) return send(res, 401, { error: "passphrase required" });
+      const id = String(u.searchParams.get("id") || "");
+      if (!/^p\d+$/.test(id)) return send(res, 400, { error: "bad id" });
+      const hit = (fs.existsSync(PHOTOS) ? fs.readdirSync(PHOTOS) : [])
+        .find((f) => f.startsWith(`${id}.`));
+      if (!hit) return send(res, 404, { error: "no such photo" });
+      const ext = path.extname(hit).slice(1);
+      res.writeHead(200, { "content-type": `image/${ext === "jpg" ? "jpeg" : ext}`,
+                           "cache-control": "private, max-age=86400" });
+      return res.end(fs.readFileSync(path.join(PHOTOS, hit)));
+    }
+
+    // Ticking a loop off. Attribution comes from the device, same as a message —
+    // "who said it was done" is exactly the kind of thing that gets disputed.
+    if (req.method === "POST" && u.pathname === "/api/loop") {
+      const b = await body(req);
+      if (!authed(b)) return send(res, 401, { error: "wrong passphrase" });
+      const who = nameFor(loadState(), b.device);
+      if (!who) return send(res, 409, { error: "this device has not said who it belongs to" });
+      const r = loops.setDone(String(b.id || ""), Boolean(b.done), who, todayET());
+      if (!r.ok) return send(res, 400, r);
+      if (!r.unchanged) {
+        appendDaily(`- ${who} marked "${r.title}" ${b.done ? "done" : "not done after all"}`);
+      }
+      return send(res, 200, r);
+    }
+
+    // Connecting a calendar without opening a terminal.
+    if (req.method === "POST" && u.pathname === "/api/calendar") {
+      const b = await body(req);
+      if (!ADULT_PASS || b.apass !== ADULT_PASS) return send(res, 403, { error: "adults only" });
+      const who = nameFor(loadState(), b.device) || "an adult";
+      if (b.remove) {
+        const r = removeFeed(String(b.remove));
+        appendDaily(`- ${who} disconnected a calendar feed`);
+        return send(res, 200, r);
+      }
+      const r = addFeed(b.url, who, b.label || "");
+      if (!r.ok) return send(res, 400, r);
+      if (!r.duplicate) appendDaily(`- ${who} connected a calendar feed (${b.label || "unlabelled"})`);
+      return send(res, 200, r);
     }
 
     if (req.method === "POST" && u.pathname === "/api/claim") {

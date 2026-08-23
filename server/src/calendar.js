@@ -12,11 +12,59 @@
  * Treat those URLs like passwords: anyone holding one can read the calendar.
  */
 import ical from "node-ical";
+import fs from "node:fs";
+import path from "node:path";
+import { DATA } from "./memory.js";
 
-const URLS = (process.env.CALENDAR_ICS_URLS || "")
+// Feeds added from the app live here rather than in .env, so nobody has to open
+// an SSH session on a phone to connect a calendar. Deliberately NOT state.json:
+// an ICS secret address is a password, and state.json is what gets backed up.
+const FEEDS = path.join(DATA, "calendars.json");
+
+const fromEnv = () => (process.env.CALENDAR_ICS_URLS || "")
   .split(",").map((s) => s.trim()).filter(Boolean);
 
-export const calendarReady = () => URLS.length > 0;
+const fromDisk = () => {
+  try { return JSON.parse(fs.readFileSync(FEEDS, "utf8")).map((x) => x.url); }
+  catch { return []; }
+};
+
+const urls = () => [...new Set([...fromEnv(), ...fromDisk()])];
+
+export const calendarReady = () => urls().length > 0;
+
+/** What the app may see: a label and who added it. Never the URL itself. */
+export function feeds() {
+  let saved = [];
+  try { saved = JSON.parse(fs.readFileSync(FEEDS, "utf8")); } catch { /* none yet */ }
+  return [
+    ...fromEnv().map((u) => ({ label: name(u), by: "the .env file", removable: false })),
+    ...saved.map((x) => ({ label: x.label || name(x.url), by: x.by || "someone", at: x.at, removable: true, id: x.id })),
+  ];
+}
+
+export function addFeed(url, by, label = "") {
+  const u = String(url || "").trim();
+  if (!/^https?:\/\/\S+$/.test(u)) return { ok: false, error: "that is not a URL" };
+  if (!/\.ics(\?|$)/i.test(u) && !/ical/i.test(u)) {
+    return { ok: false, error: "that does not look like an iCal address — it should end in .ics" };
+  }
+  if (urls().includes(u)) return { ok: true, duplicate: true };
+  let saved = [];
+  try { saved = JSON.parse(fs.readFileSync(FEEDS, "utf8")); } catch { /* none yet */ }
+  saved.push({ id: `c${Date.now()}`, url: u, label: label.trim() || name(u), by, at: new Date().toISOString() });
+  fs.mkdirSync(DATA, { recursive: true });
+  fs.writeFileSync(FEEDS, JSON.stringify(saved, null, 2));
+  return { ok: true };
+}
+
+export function removeFeed(id) {
+  let saved = [];
+  try { saved = JSON.parse(fs.readFileSync(FEEDS, "utf8")); } catch { return { ok: false, error: "none saved" }; }
+  const left = saved.filter((x) => x.id !== id);
+  fs.writeFileSync(FEEDS, JSON.stringify(left, null, 2));
+  return { ok: true, removed: saved.length - left.length };
+}
 
 const name = (u) => {
   try { return decodeURIComponent(new URL(u).pathname.split("/").filter(Boolean).slice(-2, -1)[0] || "calendar"); }
@@ -36,7 +84,7 @@ export async function upcoming(days = 8) {
   // keep its schedule here". Only one of those is safe to say out loud.
   let total = 0;
 
-  await Promise.all(URLS.map(async (url) => {
+  await Promise.all(urls().map(async (url) => {
     const cal = name(url);
     try {
       const data = await ical.async.fromURL(url);

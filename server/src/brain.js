@@ -62,6 +62,8 @@ async function ask(system, user, maxTokens = 4000) {
     thinking: { type: "adaptive" },
     cache_control: { type: "ephemeral" },   // the memory prefix is identical every wake
     system,
+    // `user` is a string for ordinary turns and an array of content blocks when
+    // there is a photograph in it.
     messages: [{ role: "user", content: user }],
   });
   return r.content.filter((b) => b.type === "text").map((b) => b.text).join("").trim();
@@ -169,6 +171,15 @@ Then rewrite the memory layers that changed:
   time, capture any registration or payment link that got used.
 - open-loops.md — close what is done, add what was newly promised, flag anything
   untouched over a week. Nothing leaves for being old.
+  The app writes into this file too. A bullet starting "- [done DATE by NAME]"
+  was ticked off by that person in the app: that is a human statement and it
+  outranks your reading of the day. Remove those bullets — they are finished and
+  the list has to stay short enough to read — but if one was ticked and something
+  today says it is NOT actually done, keep it and say so plainly. Never re-open a
+  ticked loop silently, and never invent a "- [done ...]" bullet yourself; only a
+  person tapping the box writes one. Keep the "- [opened DATE] **Title**" shape
+  on everything still open, one blank line between bullets, and "## " headings —
+  that shape is what the app's checkboxes are built on.
 - corrections.md — anything a human explicitly said you got wrong. Highest
   authority in the system. Never soften these.
 - misses.md — where you were wrong, and the adjustment it implies.
@@ -194,5 +205,72 @@ file, not a diff. If nothing changed, return {"summary": "...", "files": {}}.`;
   } catch {
     // Never let a parse failure silently discard a day. Keep the prose.
     return { summary: raw, files: {} };
+  }
+}
+
+/**
+ * A photograph of school paper, turned into something that will not be lost.
+ *
+ * This is the failure this house actually has: a form comes home in a bag,
+ * surfaces the morning it is due, and by then the pen, the cheque and the time
+ * are all missing. The input is a nine-year-old holding up a piece of paper.
+ *
+ * It reads the paper and returns both a message for the channel and the loops
+ * it wants opened. It never signs anything and never claims to have returned
+ * anything — a photograph is evidence that paper exists, not that it is handled.
+ */
+export async function readPaper(who, images, note = "") {
+  const system = `You are Hearth, this household's assistant, reading a photograph of
+a document somebody in the family has just held up to a phone.\n\n${context()}\n\n${ROOMS}\n\n${VOICE}`;
+
+  const user = [
+    ...images.map((im) => ({
+      type: "image",
+      source: { type: "base64", media_type: im.media_type, data: im.data },
+    })),
+    {
+      type: "text",
+      text: `${who} photographed this${note ? ` and said: "${note}"` : ""}. Today is ${todayET()}.
+
+Read it. Work out, and say which of these you could NOT find rather than guessing:
+what it is for, which child, the date of the event, the deadline to return it,
+whether money is involved and how much, and exactly what is required —
+information, a signature, payment, or all three.
+
+Then decide what has to be remembered. A form that needs a wet signature on the
+original becomes an open loop with its deadline and where the paper is. A form
+that needs information becomes an open loop too, listing which fields you can
+already fill from memory/reference.md and which are genuinely unknown.
+
+You cannot produce a filled document from here yet. Do not imply you have. Say
+what is blank and let a human fill it.
+
+If the photograph is not a document — it is a child's drawing, a screenshot, a
+picture of the dog — say so plainly in one line and open no loops.
+
+Return ONLY a JSON object, no prose around it:
+{"room": "family" | "adults",
+ "text": "<what goes in the channel: what this is, when it is due, what it costs, what is required, what you could not read>",
+ "loops": [{"section": "Urgent" | "This week" | "Dated, further out",
+            "title": "<one line, starts with who owes the action>",
+            "detail": "<the deadline, what is required, where the paper physically is, and what is still unknown>"}]}
+
+"loops" is usually one item and may be empty. A notice with nothing to do is not
+an open loop — it is a line in the channel and nothing more.`,
+    },
+  ];
+
+  const raw = await ask(system, user, 4000);
+  const i = raw.indexOf("{"), j = raw.lastIndexOf("}");
+  if (i < 0 || j < i) return { room: "family", text: raw, loops: [] };
+  try {
+    const o = JSON.parse(raw.slice(i, j + 1));
+    return {
+      room: o.room === "adults" ? "adults" : "family",
+      text: String(o.text || "").trim(),
+      loops: Array.isArray(o.loops) ? o.loops.slice(0, 4) : [],
+    };
+  } catch {
+    return { room: "family", text: raw, loops: [] };
   }
 }
