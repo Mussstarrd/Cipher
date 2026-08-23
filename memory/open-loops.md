@@ -11,6 +11,8 @@ explicitly abandoned — that is the whole point.
   06:38 Sun 23 Aug: coffee reminder loop was set and stored, no push received. I can't see delivery status from inside a session, so this needs the Claude Code side. Check alongside the unverified 07:00 trigger — likely the same pipeline. Diagnostic: did the coffee item appear in the To do tab? Yes = storage fine, delivery broken. No = it failed earlier.
 
 - [opened 2026-08-23] **Jeffery — check the coffee**
+  due: 2026-08-23 09:28
+  for: Jeffery
   Asked at 06:33 Sunday 23 Aug for a five-minute reminder.
 
 - [opened 2026-08-22] **Jeffery — finish Abby's Lillio registration at Merit School.**
