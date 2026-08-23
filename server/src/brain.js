@@ -15,6 +15,19 @@ import { summary as portfolioSummary } from "./markets.js";
 import { forecast, asWeatherLines } from "./weather.js";
 
 const client = new Anthropic();
+
+/** The clock, in the family's own timezone. The chat brain went a full day
+ *  without this and had to tell Jeffery it could not compute "in five minutes"
+ *  — honest, but the honest answer to a question the code should have made
+ *  unnecessary. */
+function nowLine() {
+  const p = Object.fromEntries(new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York", weekday: "long", year: "numeric",
+    month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit",
+    hour12: false,
+  }).formatToParts(new Date()).map((x) => [x.type, x.value]));
+  return `It is ${p.weekday} ${p.year}-${p.month}-${p.day}, ${p.hour}:${p.minute} Eastern.`;
+}
 const MODEL = "claude-opus-5";
 
 const ROOMS = `
@@ -215,7 +228,9 @@ export async function answer(who, question, recent = [], room = "family") {
       : "You are answering in the FAMILY room. A nine-year-old and a two-year-old can read this. If the honest answer belongs in the adults room, say only that you will take it up with Jeffery and Suzan — never hint at what it concerns.");
   const thread = recent.map((m) => `${m.who}: ${m.text}`).join("\n");
   const where = room === "me" ? "their private scratchpad" : room === "adults" ? "the adults room" : "the family channel";
-  const user = `${who} just asked, in ${where}:
+  const user = `${nowLine()}
+
+${who} just asked, in ${where}:
 
 ${question}
 
