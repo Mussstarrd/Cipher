@@ -59,6 +59,70 @@ export function writeLayer(file, content) {
   fs.writeFileSync(path.join(MEM, file), content.endsWith("\n") ? content : content + "\n");
 }
 
+/* ---------- topics: knowledge filed by subject ---------- */
+// The daily log is a stream; a stream is where knowledge goes to be forgotten.
+// Topics are where it goes to be FOUND: one file per subject, curated by the
+// 22:00 review, so "everything about soccer" is one open, not an archaeology
+// dig through a season of daily logs.
+export const TOPICS = path.join(MEM, "topics");
+const TOPIC_NAME = /^[a-z0-9][a-z0-9-]{0,48}\.md$/;
+
+export function listTopics() {
+  if (!fs.existsSync(TOPICS)) return [];
+  return fs.readdirSync(TOPICS).filter((f) => TOPIC_NAME.test(f)).sort().map((f) => {
+    const text = read(path.join(TOPICS, f));
+    // First line is the title; an "aliases:" line teaches retrieval its other names.
+    const title = (text.match(/^#\s*(.+)$/m) || [, f.replace(/\.md$/, "")])[1];
+    const aliases = (text.match(/^aliases:\s*(.+)$/mi) || [, ""])[1]
+      .split(",").map((a) => a.trim().toLowerCase()).filter(Boolean);
+    return { file: f, title, aliases, text };
+  });
+}
+
+export function writeTopic(file, content) {
+  if (!TOPIC_NAME.test(file)) throw new Error(`refusing topic name ${file}`);
+  fs.mkdirSync(TOPICS, { recursive: true });
+  fs.writeFileSync(path.join(TOPICS, file), content.endsWith("\n") ? content : content + "\n");
+}
+
+/** Topics whose name or aliases appear in the text — cheap, no model call. */
+export function matchTopics(text, max = 3) {
+  const hay = String(text).toLowerCase();
+  return listTopics().filter((t) => {
+    const names = [t.file.replace(/\.md$/, "").replace(/-/g, " "), t.title.toLowerCase(), ...t.aliases];
+    return names.some((n) => n && hay.includes(n));
+  }).slice(0, max);
+}
+
+/* ---------- search: retrieval without a model call ---------- */
+/** Case-insensitive search across every memory file, snippets with sources. */
+export function searchMemory(q, cap = 30) {
+  const needle = String(q || "").trim().toLowerCase();
+  if (needle.length < 2) return [];
+  const words = needle.split(/\s+/).filter((w) => w.length >= 2);
+  const files = [
+    ...LAYERS.map((f) => ({ label: f, p: path.join(MEM, f) })),
+    ...(fs.existsSync(TOPICS) ? fs.readdirSync(TOPICS).filter((f) => f.endsWith(".md"))
+        .map((f) => ({ label: `topics/${f}`, p: path.join(TOPICS, f) })) : []),
+    ...(fs.existsSync(path.join(MEM, "daily")) ? fs.readdirSync(path.join(MEM, "daily"))
+        .filter((f) => f.endsWith(".md")).sort().reverse().slice(0, 30)
+        .map((f) => ({ label: `daily/${f}`, p: path.join(MEM, "daily", f) })) : []),
+    { label: "portfolio.md", p: path.join(MEM, "portfolio.md") },
+  ];
+  const out = [];
+  for (const { label, p } of files) {
+    if (out.length >= cap) break;
+    const lines = read(p).split("\n");
+    for (let i = 0; i < lines.length && out.length < cap; i++) {
+      const low = lines[i].toLowerCase();
+      if (words.every((w) => low.includes(w))) {
+        out.push({ file: label, line: i + 1, text: lines[i].trim().slice(0, 240) });
+      }
+    }
+  }
+  return out;
+}
+
 /* ---- channel state: messages, reports, push subscriptions ---- */
 const STATE = path.join(DATA, "state.json");
 const EMPTY = { messages: [], reports: [], subs: [], lastRun: {}, mail: [], lastUid: 0 };

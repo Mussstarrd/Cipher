@@ -9,7 +9,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import fs from "node:fs";
 import path from "node:path";
-import { loadBrief, readDaily, todayET, LAYERS, DATA } from "./memory.js";
+import { loadBrief, readDaily, todayET, LAYERS, DATA, listTopics, matchTopics } from "./memory.js";
 import { upcoming, asLines, calendarReady, feeds } from "./calendar.js";
 import { summary as portfolioSummary } from "./markets.js";
 import { forecast, asWeatherLines } from "./weather.js";
@@ -183,6 +183,14 @@ ${asLines(cal.events)}`;
   }
 }
 
+/** The topic files whose subject the question touches, inlined whole. */
+function topicContext(question) {
+  const hits = matchTopics(question);
+  if (!hits.length) return "";
+  return "\nTopic files that match this question:\n" +
+    hits.map((t) => `----- memory/topics/${t.file} -----\n${t.text}`).join("\n\n");
+}
+
 async function weatherNow() {
   try {
     const wx = await forecast();
@@ -217,6 +225,7 @@ ${CAN_AND_CANNOT}
 Right now:
 ${await calendarNow()}
 ${await weatherNow()}${room === "adults" ? `\n${await portfolioNow()}` : ""}
+${topicContext(question)}
 
 Answer ${who} directly. Check memory before answering — most questions have
 already been answered once, and re-asking is the fastest way to get abandoned.
@@ -323,12 +332,26 @@ Then rewrite the memory layers that changed:
 - misses.md — where you were wrong, and the adjustment it implies.
 - reference.md — only if a genuinely new detail surfaced.
 
+Then FILE the day's knowledge by subject. memory/topics/ holds one file per
+topic — soccer, merit-school, bills, whatever this family actually talks about —
+so "everything about X" is one open, not a dig through daily logs. Existing
+topics:
+${listTopics().map((t) => `- ${t.file}: ${t.title}`).join("\n") || "(none yet — create the first ones)"}
+
+Rules for topics: filenames are kebab-case like soccer.md. Start each with
+"# Title" then an "aliases: other, names" line so retrieval finds it by any
+name the family uses. Dated bullets, newest first, provenance marked like the
+other layers. Update a topic when today touched it; create one when a subject
+has clearly arrived to stay; merge or delete topics on Sundays if they overlap.
+Private-scratchpad lines never enter a topic file.
+
 Return ONLY a JSON object, no prose around it:
 {"summary": "<3-5 lines for the daily log>",
- "files": {"facts.md": "<complete new contents>", ...}}
+ "files": {"facts.md": "<complete new contents>", ...},
+ "topics": {"soccer.md": "<complete new contents>", ...}}
 
 Include a file ONLY if it actually changed. Each value must be the COMPLETE new
-file, not a diff. If nothing changed, return {"summary": "...", "files": {}}.`;
+file, not a diff. If nothing changed, return {"summary": "...", "files": {}, "topics": {}}.`;
 
   const raw = await ask(system, user, 16000);
   let out = tryParse(raw);
@@ -362,7 +385,9 @@ ${raw}`,
   const files = Object.fromEntries(
     Object.entries(out.files || {}).filter(([f]) => LAYERS.includes(f)),
   );
-  return { summary: String(out.summary || "").trim(), files };
+  // Topic names are validated at write time; pass them through as claimed.
+  const topics = out.topics && typeof out.topics === "object" ? out.topics : {};
+  return { summary: String(out.summary || "").trim(), files, topics };
 }
 
 function tryParse(raw) {

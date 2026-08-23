@@ -286,7 +286,13 @@ const SECTION_ORDER = ["Urgent", "This week", "Dated, further out", "Hearth's ow
 
 function loopsView() {
   const all = S.loops || [];
-  if (!all.length) return `<div class="wrap"><p class="empty">No open loops. Anything anyone promises turns up here.</p></div>`;
+  if (!all.length) return `<div class="wrap">
+    <form id="sf" style="display:flex;gap:8px">
+      <input id="sq" placeholder="Search everything Hearth knows&hellip;" autocomplete="off"
+        style="flex:1;padding:11px;border:2px solid var(--ink);background:var(--card);color:var(--ink);font:inherit;font-size:16px;box-shadow:2px 2px 0 var(--ink)">
+      <button class="send" style="width:auto;padding:0 16px">Find</button>
+    </form><div id="sr"></div>
+    <p class="empty">No open loops. Anything anyone promises turns up here.</p></div>`;
   const live = all.filter((l) => !l.done);
   const done = all.filter((l) => l.done);
   const order = (a) => {
@@ -311,6 +317,12 @@ function loopsView() {
   };
 
   return `<div class="wrap">
+    <form id="sf" style="display:flex;gap:8px">
+      <input id="sq" placeholder="Search everything Hearth knows&hellip;" autocomplete="off"
+        style="flex:1;padding:11px;border:2px solid var(--ink);background:var(--card);color:var(--ink);font:inherit;font-size:16px;box-shadow:2px 2px 0 var(--ink)">
+      <button class="send" style="width:auto;padding:0 16px">Find</button>
+    </form>
+    <div id="sr"></div>
     ${sections.map((sec) => `<div class="sect${sec === "Urgent" ? " urgent" : ""}">${esc(sec)}</div>
       ${live.filter((l) => l.section === sec).map(item).join("")}`).join("")}
     ${done.length ? `<div class="sect">Done</div>${done.map(item).join("")}` : ""}
@@ -516,6 +528,21 @@ function wire() {
     subtab = "adults"; stick = true;
     load(true);
   };
+  const sf = $("#sf");
+  if (sf) sf.onsubmit = async (e) => {
+    e.preventDefault();
+    const q = $("#sq").value.trim();
+    if (!q) return;
+    const h = { "x-hearth-pass": pass, "x-hearth-apass": apass, "x-hearth-device": device };
+    const r = await fetch(`/api/search?q=${encodeURIComponent(q)}`, { headers: h }).then((x) => x.json()).catch(() => ({ hits: [] }));
+    const box = $("#sr");
+    box.innerHTML = (r.hits && r.hits.length)
+      ? r.hits.map((x) => `<div style="border:2px solid var(--ink);background:var(--card);padding:9px 11px;margin-top:8px;box-shadow:2px 2px 0 var(--ink)">
+          <div style="font-family:Silkscreen,monospace;font-size:9px;color:var(--ink-3);text-transform:uppercase">${esc(x.file)}</div>
+          <div style="font-size:14px;margin-top:3px">${esc(x.text)}</div></div>`).join("")
+      : '<p class="empty" style="margin-top:10px">Nothing in memory matches that. Ask Hearth in the channel — it may know and just not have written it down yet.</p>';
+  };
+
   document.querySelectorAll("[data-more]").forEach((b) => b.onclick = () => {
     const id = b.dataset.more;
     open.has(id) ? open.delete(id) : open.add(id);

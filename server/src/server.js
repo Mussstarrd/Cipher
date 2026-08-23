@@ -17,7 +17,8 @@ import { fetchNew, send as sendMail, mailReady, credentialWarning } from "./mail
 import { calendarReady, feeds, addFeed, removeFeed } from "./calendar.js";
 import { backup, backupReady, backupDir } from "./backup.js";
 import {
-  loadState, saveState, appendDaily, writeLayer, todayET, loadBrief,
+  loadState, saveState, appendDaily, writeLayer, writeTopic, searchMemory,
+  todayET, loadBrief,
 } from "./memory.js";
 import { SLOTS, dueSlot, GRACE_MIN, MAX_TRIES } from "./schedule.js";
 import { wakeContext } from "./context.js";
@@ -162,8 +163,12 @@ async function runSlot(slot, { forced = false, late = 0 } = {}) {
 
     // The close-out is followed by the only pass that rewrites memory.
     if (slot === "22:00") {
-      const { summary, files } = await review();
+      const { summary, files, topics } = await review();
       for (const [f, content] of Object.entries(files)) writeLayer(f, content);
+      for (const [f, content] of Object.entries(topics || {})) {
+        try { writeTopic(f, String(content)); }
+        catch (e) { appendDaily(`- review proposed a topic I refused: ${f} (${e.message})`); }
+      }
       appendDaily(`## Evening review\n\n${summary}`);
       const st = loadState();
       st.reports.unshift({
@@ -526,6 +531,19 @@ const server = http.createServer(async (req, res) => {
       if (!r.ok) return send(res, 400, r);
       if (!r.duplicate) appendDaily(`- ${who} connected a calendar feed (${b.label || "unlabelled"})`);
       return send(res, 200, r);
+    }
+
+    // Retrieval without a model call: grep the memory, show the source. The
+    // answer to "what did the coach's email say" should not cost a wake.
+    if (req.method === "GET" && u.pathname === "/api/search") {
+      if (!authedRead(u, req)) return send(res, 401, { error: "passphrase required" });
+      const hits = searchMemory(u.searchParams.get("q") || "");
+      // The adults boundary holds here too: money and adults-room material live
+      // in files a child's passphrase can still search. Filter by source.
+      const adult = isAdult(u, req);
+      const filtered = adult ? hits : hits.filter((h) =>
+        h.file !== "portfolio.md" && !/\[adults\]|\[private /.test(h.text));
+      return send(res, 200, { hits: filtered.slice(0, 20) });
     }
 
     if (req.method === "POST" && u.pathname === "/api/claim") {
