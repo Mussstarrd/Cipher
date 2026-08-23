@@ -342,6 +342,13 @@ so "everything about X" is one open, not a dig through daily logs. Existing
 topics:
 ${listTopics().map((t) => `- ${t.file}: ${t.title}`).join("\n") || "(none yet — create the first ones)"}
 
+On SUNDAYS also draft next week's dinner plan into meals.md under "## This
+week": seven nights, drawn from "How this family eats" and what the daily logs
+show got cooked, swapped or vetoed. Fast or ready-ahead food on soccer nights
+(Tue/Thu end 18:30). A plan nobody asked to change all week is a good week —
+note what got swapped and why in "How this family eats" so next Sunday is
+smarter.
+
 Rules for topics: filenames are kebab-case like soccer.md. Start each with
 "# Title" then an "aliases: other, names" line so retrieval finds it by any
 name the family uses. Dated bullets, newest first, provenance marked like the

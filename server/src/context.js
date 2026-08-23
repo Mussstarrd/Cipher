@@ -11,6 +11,9 @@ import { upcoming, asLines, calendarReady } from "./calendar.js";
 import { backupReady } from "./backup.js";
 import { forecast, asWeatherLines } from "./weather.js";
 import { summary as portfolioSummary, loadBook } from "./markets.js";
+import fs from "node:fs";
+import path from "node:path";
+import { TOPICS } from "./memory.js";
 
 /**
  * @param slot  which check-in
@@ -51,6 +54,12 @@ export async function wakeContext(slot, s, late = 0) {
 
     paper
       ? `${paper}\nThe paper portfolio is pretend money for learning. Everything about it is MONEY and belongs in the adults part of the check-in, never the family part. Mention it at 07:00 and 17:00 only, one or two lines, and only if something moved or a watch-listed ticker did something notable.`
+      : "",
+
+    // Dinner is the 17:00 check-in's job, and the plan lives in the meals
+    // topic. Loaded only for this slot — the working set stays flat.
+    (slot === "17:00" && fs.existsSync(path.join(TOPICS, "meals.md")))
+      ? `----- memory/topics/meals.md -----\n${fs.readFileSync(path.join(TOPICS, "meals.md"), "utf8").slice(0, 4000)}\nTonight's dinner comes from the plan above, adjusted by anything in today's log (a swap said in the channel beats the plan). Soccer nights end 18:30 — call out when the plan fights the clock.`
       : "",
 
     fresh.length

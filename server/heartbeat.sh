@@ -45,7 +45,16 @@ js() { [ -f "$STATE" ] && node -e '
   const s=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));
   const f=process.argv[2];
   if(f==="counts") console.log(`messages ${(s.messages||[]).length} · reports ${(s.reports||[]).length} · push subs ${(s.subs||[]).length} · mail ${(s.mail||[]).length} · lastUid ${s.lastUid||0}`);
-  if(f==="runs") console.log(Object.entries(s.lastRun||{}).map(([k,v])=>`${k}=${v}`).join(" · ")||"never run");
+  if(f==="runs"){
+    // A slot that never fired must be VISIBLE, not absent: expected-vs-fired,
+    // not a list of successes. This line once counted a three-miss day as one.
+    const et=new Intl.DateTimeFormat("en-CA",{timeZone:"America/New_York",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hour12:false}).formatToParts(new Date()).reduce((a,x)=>(a[x.type]=x.value,a),{});
+    const today=`${et.year}-${et.month}-${et.day}`, now=`${et.hour}:${et.minute}`;
+    const slots=["07:00","12:00","17:00","22:00"].filter(t=>t<=now);
+    const fired=slots.filter(t=>(s.lastRun||{})[t]===today);
+    const missed=slots.filter(t=>(s.lastRun||{})[t]!==today);
+    console.log(slots.length?`${fired.length}/${slots.length} due so far today fired${missed.length?` — MISSED: ${missed.join(", ")}`:""}`:"none due yet today");
+  }
   if(f==="last") { const m=(s.messages||[]).slice(-1)[0]; console.log(m?`${m.who}: ${String(m.text).slice(0,80)}`:"none"); }
 ' "$STATE" "$1" 2>/dev/null || echo "unreadable"; }
 

@@ -20,10 +20,10 @@ account access.
   30s tick fires a push AT that time, to the right person's phone (subs are
   name-tagged now). "Remind me at 15:00" stops meaning "hear about it at 17:00".
   The single biggest gap between Hearth and an actual assistant.
-- **B2 · Meal planning** — todo. Sunday proposal from what this family actually
+- **B2 · Meal planning** — done(2026-08-23, design session; first plan drafts tonight, Sunday review). Sunday proposal from what this family actually
   eats, swap-a-night in chat, 17:00 carries tonight's plan. Grows a
   memory/topics/meals.md as taste data accumulates.
-- **B3 · Wake accounting honesty** — todo. A slot that never fired is invisible
+- **B3 · Wake accounting honesty** — done(2026-08-23, design session). A slot that never fired is invisible
   to the status report's "wakes" line; it undercounted a 3-miss day as 1. Count
   expected-vs-fired per day, name the misses.
 - **B4 · Suzan's iPhone push verified** — blocked(Suzan's two minutes: Safari →
