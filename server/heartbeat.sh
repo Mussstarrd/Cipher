@@ -85,6 +85,14 @@ done)
   echo "- wakes: $(js runs)"
   echo "- state: $(js counts)"
   echo "- last message: $(js last)"
+  TOK=$(node -e '
+    const f="server/data/usage.json";let a={};try{a=JSON.parse(require("fs").readFileSync(f,"utf8"))}catch{}
+    const d=Object.keys(a).sort().pop();if(!d){console.log("no calls recorded yet");process.exit(0)}
+    const t=Object.entries(a[d]).map(([k,v])=>`${k} ${v.calls}x in:${v.in} out:${v.out} cached:${v.cacheRead}`).join(" · ");
+    // Opus 5: $5/M in, $25/M out, cache reads $0.50/M, writes $6.25/M
+    let usd=0;for(const v of Object.values(a[d]))usd+=v.in*5e-6+v.out*25e-6+v.cacheRead*0.5e-6+v.cacheWrite*6.25e-6;
+    console.log(`${d}: ${t} · ~$${usd.toFixed(2)}`);' 2>/dev/null || echo "unreadable")
+  echo "- tokens: $TOK"
   # The adults passphrase can live in .env OR in the file a parent sets from the
   # app; reporting "unset" while the app file exists was a false alarm.
   ADULT_STATE=$(envset HEARTH_ADULT_PASSPHRASE)

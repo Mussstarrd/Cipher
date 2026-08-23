@@ -310,10 +310,17 @@ When neither applies, omit both fields — and neither applies almost always.`
  * and rewrites the long-lived memory layers. This is the only writer of memory.
  */
 export async function review() {
-  const system = `You are Hearth, reviewing your own day. Nobody reads this — it
-is you talking to your future self. Be honest rather than flattering.\n\n${context()}\n\n${VOICE}`;
+  // Byte-identical to wake()'s system on purpose: the review runs a minute
+  // after the 22:00 wake, inside the cache window, and this prefix is the
+  // day's biggest. A different framing sentence here forced the most
+  // expensive call of the day to re-read all of memory uncached; the framing
+  // lives in the user turn now.
+  const system = `You are Hearth, this household's assistant.\n\n${context()}\n\n${ROOMS}\n\n${VOICE}`;
 
-  const user = `Today is ${todayET()}. Here is everything that happened:
+  const user = `You are reviewing your own day. Nobody reads this — it is you
+talking to your future self. Be honest rather than flattering.
+
+Today is ${todayET()}. Here is everything that happened:
 
 ${readDaily() || "(nothing logged today)"}
 
@@ -379,7 +386,7 @@ Return ONLY a JSON object, no prose around it:
 Include a file ONLY if it actually changed. Each value must be the COMPLETE new
 file, not a diff. If nothing changed, return {"summary": "...", "files": {}, "topics": {}}.`;
 
-  const raw = await ask(system, user, 16000);
+  const raw = await ask(system, user, 16000, { kind: "review" });
   let out = tryParse(raw);
 
   // A review is an entire day's learning in one JSON object, and on 22 Aug the
@@ -393,6 +400,7 @@ file, not a diff. If nothing changed, return {"summary": "...", "files": {}, "to
 
 ${raw}`,
       16000,
+      { kind: "review" },
     );
     out = tryParse(fixed);
   }
