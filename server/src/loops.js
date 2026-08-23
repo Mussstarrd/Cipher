@@ -67,17 +67,35 @@ function parse() {
   return blocks.map((b) => ({ ...b, id: idOf(b.title) }));
 }
 
+const DUE = /^\s*due:\s*(\d{4}-\d{2}-\d{2})(?:\s+(\d{2}:\d{2}))?\s*$/im;
+const FOR = /^\s*for:\s*([A-Za-z][\w'-]{0,30})\s*$/im;
+
 /** What the app shows. Bodies are trimmed of blank tails, not of content. */
 export function list() {
-  return parse().map((b) => ({
-    id: b.id,
-    title: b.title,
-    section: b.done ? b.from || "Done" : b.section,
-    done: b.done,
-    by: b.by,
-    opened: b.opened,
-    detail: b.lines.slice(1).join("\n").replace(/\s+$/, "").replace(/^\s*\n/, ""),
-  }));
+  return parse().map((b) => {
+    const body = b.lines.slice(1).join("\n");
+    const due = body.match(DUE);
+    const who = body.match(FOR);
+    return {
+      id: b.id,
+      title: b.title,
+      section: b.done ? b.from || "Done" : b.section,
+      done: b.done,
+      by: b.by,
+      opened: b.opened,
+      // "2026-08-24 15:00" ET, or date-only which means 09:00 that morning —
+      // a reminder with no time still deserves to fire, not to be forgotten.
+      due: due ? `${due[1]} ${due[2] || "09:00"}` : null,
+      for: who ? who[1] : null,
+      detail: body.replace(/\s+$/, "").replace(/^\s*\n/, ""),
+    };
+  });
+}
+
+/** Everything that should fire at or before `now` ("YYYY-MM-DD HH:MM" ET).
+ *  Zero-padded strings compare correctly as strings — no Date math, no DST trap. */
+export function dueNow(now) {
+  return list().filter((l) => !l.done && l.due && l.due <= now);
 }
 
 /**
@@ -132,7 +150,7 @@ export function setDone(id, done, who, day) {
 }
 
 /** Open a new loop under a named section, creating the section if it is new. */
-export function add({ section = "This week", title, detail = "", day }) {
+export function add({ section = "This week", title, detail = "", day, due = "", for: person = "" }) {
   if (!title) return { ok: false, error: "title required" };
   const src = read() || "# Open loops\n";
   const lines = src.split("\n");
@@ -147,6 +165,9 @@ export function add({ section = "This week", title, detail = "", day }) {
   const body = detail
     ? detail.split("\n").map((l) => "  " + l.trim()).filter((l) => l.trim())
     : [];
+  const d = String(due).match(/^(\d{4}-\d{2}-\d{2})(?:[ T](\d{2}:\d{2}))?/);
+  if (d) body.push(`  due: ${d[1]}${d[2] ? ` ${d[2]}` : ""}`);
+  if (person && /^[A-Za-z][\w'-]{0,30}$/.test(person)) body.push(`  for: ${person}`);
   const block = [`- [opened ${day}] **${clean}**`, ...body, ""];
 
   let h = lines.findIndex((l) => (l.match(HEAD) || [])[1] === section);

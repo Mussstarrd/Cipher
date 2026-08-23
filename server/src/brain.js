@@ -152,7 +152,9 @@ WHAT YOU CAN AND CANNOT DO. Never claim more, never claim less:
   adult who wants it on Google Calendar adds it there by hand and you will see
   it in the feed within the hour.
 - You CAN remember things: return them in "loops" and they become tracked
-  open loops with your reminders behind them.
+  open loops. A loop with a "due" moment fires a real push notification at
+  that exact time, to the named person's phone — so "remind me at 3" genuinely
+  means 3, not the next check-in.
 - You read the household Gmail between wakes. You can draft mail; a human
   presses send.
 - You see the local weather (Lake of the Woods) and can answer weather
@@ -235,7 +237,9 @@ Return ONLY a JSON object, no prose around it:
 {"text": "<your answer>",
  "loops": [{"section": "Urgent" | "This week" | "Dated, further out",
             "title": "<one line, starts with who owes the action>",
-            "detail": "<when, what, and anything needed to actually do it>"}]${room === "adults" ? `,
+            "detail": "<when, what, and anything needed to actually do it>",
+            "due": "<YYYY-MM-DD HH:MM in 24h Eastern, ONLY when a real moment was named — \"at 3\", \"tomorrow morning\", \"before practice Thursday\". Date alone means 09:00. Omit when no time was meant.>",
+            "for": "<Jeffery | Suzan | Aiden | Abby — only when the reminder is clearly for one person; the push then goes to their phone alone>"}]${room === "adults" ? `,
  "trades": [{"op": "buy" | "sell" | "watch" | "unwatch", "symbol": "AAPL", "qty": 10, "reason": "<their reasoning, kept for the ledger>"}]` : ""}}${room === "adults" ? `
 
 "trades" is ONLY for an explicit paper-trading instruction from ${who} in this

@@ -16,7 +16,7 @@ account access.
 
 ## Now (this week)
 
-- **B1 · Timed reminders** — todo. Loops gain an optional due time; the server's
+- **B1 · Timed reminders** — done(2026-08-23, design session). Loops gain an optional due time; the server's
   30s tick fires a push AT that time, to the right person's phone (subs are
   name-tagged now). "Remind me at 15:00" stops meaning "hear about it at 17:00".
   The single biggest gap between Hearth and an actual assistant.

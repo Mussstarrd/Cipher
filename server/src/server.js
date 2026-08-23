@@ -213,8 +213,38 @@ async function runSlot(slot, { forced = false, late = 0 } = {}) {
   }
 }
 
+/** Fire reminders whose moment has arrived. Never twice for the same loop —
+ *  state remembers what it has already said, and unticking a loop clears it. */
+async function remindTick(day, hm) {
+  const now = `${day} ${hm}`;
+  let due;
+  try { due = loops.dueNow(now); } catch { return; }
+  if (!due.length) return;
+  const s = loadState();
+  s.reminded = s.reminded || {};
+  for (const l of due) {
+    if (s.reminded[l.id]) continue;
+    s.reminded[l.id] = now;
+    // A reminder "for" someone goes only to that person's phones; anything
+    // else goes to everyone — the loop list is shared, so this leaks nothing.
+    const targets = l.for ? s.subs.filter((x) => x.who === l.for) : s.subs;
+    appendDaily(`- reminder fired (${l.due}${l.for ? `, for ${l.for}` : ""}): ${l.title}`);
+    if (targets.length) {
+      try {
+        await notify(targets, { title: "Hearth reminder", body: l.title, url: URL_BASE });
+      } catch { /* logged above; the To do tab still shows it */ }
+    }
+  }
+  // Unticked-then-reticked loops aside, drop bookkeeping for loops that no
+  // longer exist so state does not grow forever.
+  const live = new Set(loops.list().map((x) => x.id));
+  for (const id of Object.keys(s.reminded)) if (!live.has(id)) delete s.reminded[id];
+  saveState(s);
+}
+
 function tick() {
   const { day, hm } = nowET();
+  remindTick(day, hm).catch(() => {});
   const d = dueSlot(hm, loadState(), day);
   if (!d) return;
   console.log(d.late === 0
@@ -441,7 +471,7 @@ const server = http.createServer(async (req, res) => {
           const day = todayET();
           const opened = [];
           for (const l of r.loops || []) {
-            const a = loops.add({ section: l.section, title: l.title, detail: l.detail, day });
+            const a = loops.add({ section: l.section, title: l.title, detail: l.detail, day, due: l.due, for: l.for });
             if (a.ok && !a.duplicate) opened.push(a.title);
           }
           const tail = opened.length
@@ -491,6 +521,11 @@ const server = http.createServer(async (req, res) => {
       if (!r.ok) return send(res, 400, r);
       if (!r.unchanged) {
         appendDaily(`- ${who} marked "${r.title}" ${b.done ? "done" : "not done after all"}`);
+        if (!b.done) {
+          // Brought back to life: its reminder deserves to fire again.
+          const st = loadState();
+          if (st.reminded && st.reminded[String(b.id)]) { delete st.reminded[String(b.id)]; saveState(st); }
+        }
       }
       return send(res, 200, r);
     }
