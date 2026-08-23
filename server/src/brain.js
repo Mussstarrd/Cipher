@@ -12,6 +12,27 @@ import { loadBrief, readDaily, todayET, LAYERS } from "./memory.js";
 const client = new Anthropic();
 const MODEL = "claude-opus-5";
 
+const ROOMS = `
+TWO ROOMS. Everything you write goes to one of them.
+
+**family** — everyone, including a nine-year-old and a two-year-old. Schedules,
+school, practices, meals, trips, weather, who is driving, forms due.
+
+**adults** — Jeffery and Suzan only. Anything about money: bills, paydays,
+statements, balances, what anything cost. Anything about health or medication.
+Purchases and deliveries — a toy arriving is a present until proven otherwise,
+and spoiling a birthday is not recoverable. Anything that reads as tension
+between two people. School correspondence *about* a child rather than for them —
+a note from a teacher about behaviour is not the child's to read over breakfast.
+
+**When you are not sure, it goes in adults.** The cost of over-classifying is a
+parent reads something twice. The cost of under-classifying is a child sees
+something they should not have, once, and the family stops trusting this.
+
+Never put a hint in the family room that something exists in the adults room.
+"There's something for the grown-ups" is worse than silence — it is an invitation.
+`.trim();
+
 const VOICE = `
 Plain and specific. Short sentences. Name people by name. No filler openers, no
 cheerfulness that is not earned, no exclamation marks. If something is going
@@ -73,7 +94,7 @@ about, so it can be corrected before it matters.`,
 
 /** Produce one scheduled report. Returns the text the family reads. */
 export async function wake(slot, extra = "") {
-  const system = `You are Hearth, this household's assistant.\n\n${context()}\n\n${VOICE}`;
+  const system = `You are Hearth, this household's assistant.\n\n${context()}\n\n${ROOMS}\n\n${VOICE}`;
   const user = `It is ${slot} on ${todayET()}. Produce the ${slot} check-in.
 
 ${SLOT_JOB[slot]}
@@ -82,13 +103,31 @@ Today's log so far:
 ${readDaily() || "(nothing logged yet today)"}
 ${extra ? `\nAlso relevant right now:\n${extra}` : ""}
 
-Write only the check-in itself. No preamble, no sign-off.`;
-  return ask(system, user);
+Return ONLY a JSON object, no prose around it:
+{"family": "<the check-in everyone sees>", "adults": "<what only Jeffery and Suzan see, or an empty string>"}
+
+Most days "adults" is empty and that is correct — do not manufacture something
+to put in it. Each part must stand alone: the family text must never gesture at
+the existence of the other.`;
+  const raw = await ask(system, user);
+  const i = raw.indexOf("{"), j = raw.lastIndexOf("}");
+  if (i < 0 || j < i) return { family: raw, adults: "" };
+  try {
+    const o = JSON.parse(raw.slice(i, j + 1));
+    return { family: String(o.family || "").trim(), adults: String(o.adults || "").trim() };
+  } catch {
+    // Never lose a check-in to a parse error. Family room is the safe default
+    // only because a failed split means we never separated anything out.
+    return { family: raw, adults: "" };
+  }
 }
 
 /** Answer anyone in the family, from memory. */
-export async function answer(who, question, recent = []) {
-  const system = `You are Hearth, this household's assistant.\n\n${context()}\n\n${VOICE}`;
+export async function answer(who, question, recent = [], room = "family") {
+  const system = `You are Hearth, this household's assistant.\n\n${context()}\n\n${ROOMS}\n\n${VOICE}\n\n` +
+    (room === "adults"
+      ? "You are answering in the ADULTS room. Jeffery and Suzan only. Speak plainly about money, health and anything else that belongs here."
+      : "You are answering in the FAMILY room. A nine-year-old and a two-year-old can read this. If the honest answer belongs in the adults room, say only that you will take it up with Jeffery and Suzan — never hint at what it concerns.");
   const thread = recent.map((m) => `${m.who}: ${m.text}`).join("\n");
   const user = `${who} just asked, in the family channel:
 

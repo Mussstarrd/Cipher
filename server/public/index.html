@@ -54,6 +54,8 @@ button{font:inherit;color:inherit;cursor:pointer}
   border-radius:0;background:var(--card);color:var(--ink);box-shadow:2px 2px 0 var(--ink);
   min-height:38px}
 .chip.on{background:var(--teal);color:#04231F}
+.chip.warn{background:var(--magenta);color:#fff}
+.chip.adult{background:var(--purple);color:#fff}
 .chip:active{transform:translate(2px,2px);box-shadow:none}
 .tabs{display:flex;gap:6px;margin-top:12px}
 .tab{background:var(--sunk);border:2px solid var(--ink);border-bottom:none;
@@ -125,6 +127,8 @@ let S = { reports: [], messages: [], slots: [], now: {}, vapid: null, needsPass:
 let me = localStorage.getItem("hearth.me") || "Jeffery";
 let pass = localStorage.getItem("hearth.pass") || "";
 let tab = "now";
+let room = "family";
+let apass = localStorage.getItem("hearth.apass") || "";
 const PEOPLE = ["Jeffery", "Suzan", "Aiden", "Abby"];
 const IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
   (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
@@ -147,7 +151,10 @@ async function load(force) {
   // exactly what it looked like: a box that "disappears if you're too slow".
   if (!force && isTyping()) return;
   try {
-    const r = await fetch("/api/state", { headers: pass ? { "x-hearth-pass": pass } : {} });
+    const h = {};
+    if (pass) h["x-hearth-pass"] = pass;
+    if (apass) h["x-hearth-apass"] = apass;
+    const r = await fetch("/api/state", { headers: h });
     if (r.status === 401) { askPass(); return; }
     S = await r.json(); render();
   } catch (e) { /* offline; keep the last view rather than blanking it */ }
@@ -199,8 +206,9 @@ function render() {
     ? { id: a.id, val: a.value, s: a.selectionStart, e: a.selectionEnd } : null;
   $("#root").innerHTML = `
   <div class="hd"><div class="row"><div class="mark">Hearth</div>
-    <div class="sub">${esc(S.now.hm || "")} &middot; ${S.slots.length} wakes daily</div>
-    <button class="chip ${notifState().cls}" id="notif">${notifState().label}</button></div>
+    <div class="sub">${esc(S.now.hm || "")} &middot; ${S.adult ? "adults + family" : "family"}</div>
+    <button class="chip ${notifState().cls}" id="notif">${notifState().label}</button>
+    ${S.adultRoomExists ? `<button class="chip ${S.adult ? "adult" : ""}" id="roomsw">${S.adult ? "adults" : "family"}</button>` : ""}</div>
     <div class="tabs">
       <button class="tab" data-t="now" aria-selected="${tab === "now"}">Reports</button>
       <button class="tab" data-t="chat" aria-selected="${tab === "chat"}">Channel</button>
@@ -232,6 +240,20 @@ function wire() {
     await post("/api/wake", { slot: b.dataset.wake }); await load(true);
   });
   $("#notif") && ($("#notif").onclick = enablePush);
+  const rs = $("#roomsw");
+  if (rs) rs.onclick = () => {
+    if (S.adult) {                       // leave: forget the secret on this device
+      apass = ""; room = "family";
+      try { localStorage.removeItem("hearth.apass"); } catch (e) {}
+      load(true);
+      return;
+    }
+    const v = prompt("Adults passphrase");
+    if (!v) return;
+    apass = v.trim(); room = "adults";
+    try { localStorage.setItem("hearth.apass", apass); } catch (e) {}
+    load(true);
+  };
   const ta = $("#msg"), snd = $("#send");
   if (ta) {
     ta.oninput = () => { snd.disabled = !ta.value.trim(); ta.style.height = "auto"; ta.style.height = Math.min(ta.scrollHeight, 120) + "px"; };
@@ -250,14 +272,20 @@ function wire() {
 async function post(url, data) {
   if (S.needsPass && !pass) { pass = prompt("Family passphrase") || ""; localStorage.setItem("hearth.pass", pass); }
   const r = await fetch(url, { method: "POST", headers: { "content-type": "application/json" },
-    body: JSON.stringify({ ...data, pass }) });
+    body: JSON.stringify({ ...data, pass, apass, room }) });
   if (r.status === 401) { localStorage.removeItem("hearth.pass"); pass = ""; alert("Wrong passphrase."); }
   return r.json().catch(() => ({}));
 }
 
 function notifState() {
-  const ok = typeof Notification !== "undefined" && Notification.permission === "granted";
-  if (ok) return { cls: "on", label: "notifying" };
+  const granted = typeof Notification !== "undefined" && Notification.permission === "granted";
+  let registered = false;
+  try { registered = localStorage.getItem("hearth.subscribed") === "1"; } catch (e) {}
+  // "notifying" used to mean only that the browser said yes — it said that even
+  // when the server never received the subscription, which is exactly what
+  // happened on the iPhone. It now requires the server to have accepted it.
+  if (granted && registered) return { cls: "on", label: "notifying" };
+  if (granted && !registered) return { cls: "warn", label: "not registered" };
   if (IS_IOS && !INSTALLED) return { cls: "", label: "add to home screen" };
   return { cls: "", label: "notify me" };
 }
@@ -288,7 +316,18 @@ async function enablePush() {
     userVisibleOnly: true,
     applicationServerKey: Uint8Array.from(atob(S.vapid.replace(/-/g, "+").replace(/_/g, "/")), (c) => c.charCodeAt(0)),
   });
-  await post("/api/subscribe", { sub });
+  const r = await post("/api/subscribe", { sub });
+  if (r && r.ok) {
+    try { localStorage.setItem("hearth.subscribed", "1"); } catch (e) {}
+  } else {
+    try { localStorage.removeItem("hearth.subscribed"); } catch (e) {}
+    alert(
+      "Your phone allowed notifications, but Hearth did not receive the registration, " +
+      "so nothing would ever arrive.\n\n" +
+      (r && r.error ? "Reason: " + r.error + "\n\n" : "") +
+      "Usually the passphrase. Close the app, reopen it, and try again."
+    );
+  }
   render();
 }
 

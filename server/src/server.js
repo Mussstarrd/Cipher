@@ -27,6 +27,10 @@ const PUB = path.resolve(here, "..", "public");
 const PORT = Number(process.env.PORT || 8787);
 const URL_BASE = process.env.HEARTH_URL || `http://localhost:${PORT}`;
 const PASS = process.env.HEARTH_PASSPHRASE || "";
+// A second passphrase is the whole boundary between the rooms. Without real
+// accounts, a name picked from a list is a label, not a wall — a nine-year-old
+// can tap "Jeffery". A separate secret the children do not have is a wall.
+const ADULT_PASS = process.env.HEARTH_ADULT_PASSPHRASE || "";
 const TZ = "America/New_York";
 
 /* ---------- the clock ---------- */
@@ -110,9 +114,10 @@ async function runSlot(slot, { forced = false, late = 0 } = {}) {
     const { extra, calTotal: total } = await wakeContext(slot, s, late);
     if (total !== null) calTotal = total;
 
-    const text = await wake(slot, extra);
+    const out = await wake(slot, extra);
+    const text = out.family;
 
-    appendDaily(`## ${slot} check-in\n\n${text}`);
+    appendDaily(`## ${slot} check-in\n\n${text}` + (out.adults ? `\n\n### adults only\n\n${out.adults}` : ""));
 
     const subs = await notify(loadState().subs, {
       title: `Hearth — ${slot}${late ? " (late)" : ""}`,
@@ -176,7 +181,7 @@ async function runSlot(slot, { forced = false, late = 0 } = {}) {
     st.reports.unshift({
       slot, at: new Date().toISOString(), day: todayET(),
       text: `I could not produce this check-in.\n\n${msg}\n\nThis is my failure, not a quiet day.`,
-      failed: true,
+      failed: true, room: "family",
     });
     saveState(st);
     return null;
@@ -214,10 +219,11 @@ const authed = (b) => !PASS || b.pass === PASS;
 // needs nothing installed. It also means the passphrase is the only door. Reads
 // must be gated too: a check-in naming the children, the schools and the day's
 // movements is not less sensitive than the ability to post.
-const authedRead = (u, req) =>
-  !PASS ||
-  u.searchParams.get("pass") === PASS ||
-  req.headers["x-hearth-pass"] === PASS;
+const given = (u, req) => u.searchParams.get("pass") || req.headers["x-hearth-pass"] || "";
+const adultGiven = (u, req) => u.searchParams.get("apass") || req.headers["x-hearth-apass"] || "";
+const authedRead = (u, req) => !PASS || given(u, req) === PASS || adultGiven(u, req) === ADULT_PASS && !!ADULT_PASS;
+// Adults-only content is served only to a request carrying the second secret.
+const isAdult = (u, req) => Boolean(ADULT_PASS) && adultGiven(u, req) === ADULT_PASS;
 
 const server = http.createServer(async (req, res) => {
   const u = new URL(req.url, URL_BASE);
@@ -227,9 +233,14 @@ const server = http.createServer(async (req, res) => {
       if (!authedRead(u, req)) return send(res, 401, { error: "passphrase required" });
       const s = loadState();
       const { brief } = loadBrief();
+      const adult = isAdult(u, req);
+      // Filtered server-side, never client-side: a hidden div is not a boundary.
+      const visible = (x) => adult || (x.room || "family") === "family";
       return send(res, 200, {
-        reports: s.reports.filter((r) => !r.internal).slice(0, 12),
-        messages: s.messages.slice(-80),
+        adult,
+        adultRoomExists: Boolean(ADULT_PASS),
+        reports: s.reports.filter((r) => !r.internal).filter(visible).slice(0, 12),
+        messages: s.messages.filter(visible).slice(-80),
         // Only the roster table's rows — not every bold word in the brief.
         household: [...brief.matchAll(/^\|\s*\*\*([\w'-]+)\*\*\s*\|/gm)].map((m) => m[1]),
         slots: SLOTS, now: nowET(), push: pushReady(),
@@ -257,26 +268,28 @@ const server = http.createServer(async (req, res) => {
       const who = String(b.who || "someone").slice(0, 40);
       const text = String(b.text || "").trim().slice(0, 4000);
       if (!text) return send(res, 400, { error: "empty" });
+      // Posting to the adults room requires the adult secret, not a claim.
+      const room = b.room === "adults" && ADULT_PASS && b.apass === ADULT_PASS ? "adults" : "family";
 
       const s = loadState();
-      s.messages.push({ id: `m${Date.now()}`, who, text, at: new Date().toISOString() });
+      s.messages.push({ id: `m${Date.now()}`, who, text, room, at: new Date().toISOString() });
       saveState(s);
       appendDaily(`- ${who}: ${text}`);
 
       // Answer in the background; the poster should not wait on a model call.
       (async () => {
         try {
-          const recent = loadState().messages.slice(-8);
-          const reply = await answer(who, text, recent);
+          const recent = loadState().messages.filter((m) => (m.room || "family") === room).slice(-8);
+          const reply = await answer(who, text, recent, room);
           const st = loadState();
-          st.messages.push({ id: `h${Date.now()}`, who: "Hearth", text: reply, at: new Date().toISOString() });
+          st.messages.push({ id: `h${Date.now()}`, who: "Hearth", text: reply, room, at: new Date().toISOString() });
           saveState(st);
           appendDaily(`- Hearth: ${reply}`);
         } catch (e) {
           const st = loadState();
           st.messages.push({
             id: `h${Date.now()}`, who: "Hearth", failed: true,
-            text: `I could not answer that: ${e?.message || e}`, at: new Date().toISOString(),
+            text: `I could not answer that: ${e?.message || e}`, room, at: new Date().toISOString(),
           });
           saveState(st);
         }
@@ -347,6 +360,7 @@ const server = http.createServer(async (req, res) => {
 server.listen(PORT, () => {
   console.log(`[hearth] awake on ${URL_BASE}`);
   console.log(`[hearth] slots ${SLOTS.join(" ")} ${TZ} (grace ${GRACE_MIN}m, ${MAX_TRIES} tries)`);
+  console.log(`[hearth] adults room ${ADULT_PASS ? "ON" : "OFF — set HEARTH_ADULT_PASSPHRASE"}`);
   console.log(`[hearth] push ${pushReady() ? "ready" : "OFF — run: npm run keys"}`);
   console.log(backupReady()
     ? `[hearth] backup ON — pushing to a remote after every wake`
