@@ -330,6 +330,23 @@ const repoNow = () => {
   return repoCache.info;
 };
 
+// When the updater will next look. The timer drifts on purpose (15min after
+// the last run, plus jitter), so the only honest source is systemd itself.
+let nextCache = { at: 0, when: null };
+const nextUpdateCheck = () => {
+  if (Date.now() - nextCache.at > 60e3) {
+    let when = null;
+    try {
+      const raw = execSync("systemctl show hearth-update.timer -p NextElapseUSecRealtime --value",
+        { timeout: 2000 }).toString().trim();
+      const d = new Date(raw.replace(/^\w+ /, ""));
+      if (raw && !Number.isNaN(d.getTime())) when = d.toISOString();
+    } catch { /* not on systemd (dev box) — the strip just omits it */ }
+    nextCache = { at: Date.now(), when };
+  }
+  return nextCache.when;
+};
+
 const server = http.createServer(async (req, res) => {
   const u = new URL(req.url, URL_BASE);
 
@@ -375,7 +392,8 @@ const server = http.createServer(async (req, res) => {
         loops: loops.list(),
         // Labels only. An ICS secret address is a password and never leaves here.
         calendars: feeds(),
-        build: { running: BOOT.rev, builtAt: BOOT.at, since: BOOT.started, repo: repoNow().rev },
+        build: { running: BOOT.rev, builtAt: BOOT.at, since: BOOT.started, repo: repoNow().rev,
+                 nextCheck: nextUpdateCheck() },
         needsPass: Boolean(PASS),
       });
     }

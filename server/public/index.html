@@ -428,7 +428,7 @@ function render() {
     <div class="sub">${esc(S.now.hm || "")} &middot; ${S.adult ? "adults + family" : "family"}</div>
     <button class="chip ${notifState().cls}" id="notif">${notifState().label}</button>
     ${S.adultRoomExists ? `<button class="chip ${S.adult ? "adult" : ""}" id="roomsw">${S.adult ? "adults: open" : "adults: locked"}</button>` : ""}</div>
-  ${S.build ? `<div class="bld">build <b>${esc(S.build.running)}</b>${S.build.builtAt ? ` &middot; ${esc(dayOf(S.build.builtAt))} ${esc(hhmm(S.build.builtAt))}` : ""} &middot; up since ${esc(hhmm(S.build.since))}${S.build.repo && S.build.repo !== S.build.running ? ` &middot; <span class="new">new ${esc(S.build.repo)} pulled</span>` : ""}</div>` : ""}
+  ${S.build ? `<div class="bld">build <b>${esc(S.build.running)}</b>${S.build.builtAt ? ` &middot; ${esc(dayOf(S.build.builtAt))} ${esc(hhmm(S.build.builtAt))}` : ""} &middot; up since ${esc(hhmm(S.build.since))}${S.build.repo && S.build.repo !== S.build.running ? ` &middot; <span class="new">new ${esc(S.build.repo)} pulled</span>` : ""}${S.build.nextCheck ? ` &middot; next check ${esc(hhmm(S.build.nextCheck))}` : ""}</div>` : ""}
     <div class="tabs">
       <button class="tab" data-t="now" aria-selected="${tab === "now"}">Reports</button>
       <button class="tab" data-t="loops" aria-selected="${tab === "loops"}">To do${openCount() ? ` <span style="font-family:Figtree">${openCount()}</span>` : ""}</button>
