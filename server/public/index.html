@@ -158,6 +158,13 @@ button{font:inherit;color:inherit;cursor:pointer}
   border:2px dashed var(--rule-2);background:var(--sunk);padding:8px;font-size:13px}
 .draft img{width:52px;height:52px;object-fit:cover;border:2px solid var(--ink);flex:none}
 .draft span{flex:1;color:var(--ink-2)}
+/* read messages fold to a two-line preview; tap to reopen */
+.bub.clip{max-height:3.1em;overflow:hidden;cursor:pointer;position:relative}
+.bub.clip::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1.4em;
+  background:linear-gradient(transparent,var(--card))}
+.post.me .bub.clip::after{background:linear-gradient(transparent,var(--teal))}
+.unfold{font-family:Silkscreen,monospace;font-size:9px;letter-spacing:.05em;
+  text-transform:uppercase;color:var(--purple);cursor:pointer}
 .empty{color:var(--ink-3);font-style:italic}
 </style>
 </head>
@@ -187,6 +194,24 @@ let draft = null;
 // but never yank someone who has deliberately scrolled up to read.
 let stick = false;
 let lastCount = -1;
+// What has been read, per thread: everything at or before this moment folds to
+// a preview once you move on. Persisted, so tomorrow's open starts tidy.
+let lastRead = {};
+try { lastRead = JSON.parse(localStorage.getItem("hearth.read") || "{}"); } catch (e) {}
+const unfolded = new Set();   // taps that reopened a folded message, this visit
+
+function markRead() {
+  const latest = (S.messages || []).filter((m) => (m.room || "family") === subtab).slice(-1)[0];
+  if (!latest) return;
+  if ((lastRead[subtab] || "") < latest.at) {
+    lastRead[subtab] = latest.at;
+    try { localStorage.setItem("hearth.read", JSON.stringify(lastRead)); } catch (e) {}
+  }
+}
+// Leaving the app counts as having read what was on screen.
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "hidden" && tab === "chat") markRead();
+});
 if (!device) {
   device = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random());
   try { localStorage.setItem("hearth.device", device); } catch (e) {}
@@ -348,12 +373,17 @@ function chatView() {
 
   const ms = S.messages.filter((m) => (m.room || "family") === subtab).map((m) => {
     const h = m.who === "Hearth", mine = !h && m.who === S.me;
+    // Fold only what is both long and already read. New content always shows
+    // in full; it folds after you have moved on, not while you are reading it.
+    const long = (m.text || "").length > 220 || (m.text || "").split("\n").length > 4;
+    const read = m.at <= (lastRead[subtab] || "");
+    const clip = long && read && !unfolded.has(m.id) && !m.photo;
     const img = m.photo
       ? `<img src="/api/photo?id=${encodeURIComponent(m.photo)}&pass=${encodeURIComponent(pass)}" alt="Photo ${esc(m.who)} sent" loading="lazy">`
       : "";
     return `<div class="post ${h ? "h" : mine ? "me" : ""}">
-      <div class="meta"><b>${esc(m.who)}</b><span>${esc(hhmm(m.at))}</span></div>
-      <div class="bub">${esc(m.text)}${img}</div></div>`;
+      <div class="meta"><b>${esc(m.who)}</b><span>${esc(hhmm(m.at))}</span>${long && read ? `<span class="unfold" data-fold="${m.id}">${clip ? "open" : "fold"}</span>` : ""}</div>
+      <div class="bub${clip ? " clip" : ""}"${clip ? ` data-fold="${m.id}"` : ""}>${esc(m.text)}${img}</div></div>`;
   }).join("");
   if (!S.me) return `<div class="wrap"><p class="empty">Say who this phone belongs to at the top, then you can post. Every message is stamped with that name — nobody can post as anybody else.</p></div>`;
   const empty = subtab === "me"
@@ -418,8 +448,14 @@ function render() {
 
 function wire() {
   document.querySelectorAll("[data-t]").forEach((b) => b.onclick = () => {
+    if (tab === "chat") markRead();     // leaving the thread = read it
     tab = b.dataset.t;
     if (tab === "chat") stick = true;
+    render();
+  });
+  document.querySelectorAll("[data-fold]").forEach((el) => el.onclick = () => {
+    const id = el.dataset.fold;
+    unfolded.has(id) ? unfolded.delete(id) : unfolded.add(id);
     render();
   });
   document.querySelectorAll("[data-claim]").forEach((b) => b.onclick = async () => {
@@ -529,6 +565,7 @@ function wire() {
   });
 
   document.querySelectorAll("[data-room]").forEach((b) => b.onclick = () => {
+    markRead();                          // switching threads = read this one
     subtab = b.dataset.room; stick = true; render();
   });
 
