@@ -25,6 +25,9 @@ explicitly abandoned — that is the whole point.
 
 ## This week
 
+- [opened 2026-08-22] **Jeffery — wash the Xbox-print cup, Sun 23 Aug 09:30**
+  Requested 2026-08-22 from a photo. Cup is on the green counter next to the stove, right of the cooktop. No calendar event exists — I could not create one and did not try. I will surface this at the Sunday 07:00 check-in. Unknown: whether this should repeat, and whether the cup is Aiden's.
+
 - [opened 2026-08-22] **Tuesday 25 Aug — OCPS dismisses 2 hours early.**
   Teacher professional development. Aiden needs collecting two hours early, and
   the same day is his first soccer practice at 17:30.
