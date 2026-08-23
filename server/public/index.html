@@ -58,36 +58,38 @@ button{font:inherit;color:inherit;cursor:pointer}
 /* header */
 .hd{position:sticky;top:0;z-index:9;background:var(--card);
   border-bottom:1px solid var(--rule);box-shadow:var(--shadow-2);
-  padding:calc(env(safe-area-inset-top,0px) + 14px) 16px 0;
-  border-radius:0 0 22px 22px}
-.row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-height:44px}
-.mark{font-family:Fredoka,system-ui,sans-serif;font-weight:600;font-size:24px;
+  padding:calc(env(safe-area-inset-top,0px) + 8px) 14px 0;
+  border-radius:0 0 18px 18px}
+.row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-height:34px}
+.mark{font-family:Fredoka,system-ui,sans-serif;font-weight:600;font-size:19px;
   letter-spacing:.01em;color:var(--purple);line-height:1.1}
-.sub{font-size:11px;font-weight:600;letter-spacing:.08em;
-  text-transform:uppercase;color:var(--ink-3);flex:1;min-width:70px}
-.chip{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
-  padding:9px 14px;border:1px solid var(--rule-2);border-radius:999px;
-  background:var(--sunk);color:var(--ink-2);min-height:38px}
+.sub{font-size:9.5px;font-weight:600;letter-spacing:.07em;
+  text-transform:uppercase;color:var(--ink-3);flex:1;min-width:60px}
+.chip{font-size:10px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;
+  padding:6px 11px;border:1px solid var(--rule-2);border-radius:999px;
+  background:var(--sunk);color:var(--ink-2);min-height:30px}
 .chip.on{background:var(--teal-soft);border-color:var(--teal);color:var(--ink)}
 .chip.warn{background:var(--magenta-soft);border-color:var(--magenta);color:var(--ink)}
 .chip.adult{background:var(--purple-soft);border-color:var(--purple);color:var(--ink)}
 .chip:active{transform:scale(.97)}
-.bld{font-size:9.5px;font-weight:600;letter-spacing:.07em;
-  text-transform:uppercase;color:var(--ink-3);margin-top:7px}
+.bld{font-size:9px;font-weight:600;letter-spacing:.07em;text-align:center;
+  text-transform:uppercase;color:var(--ink-3);
+  padding:18px 14px calc(env(safe-area-inset-bottom,0px) + 22px)}
 .bld b{color:var(--teal);font-weight:600}
 .bld .new{color:var(--magenta)}
-.tabs{display:flex;gap:8px;margin-top:12px;padding-bottom:12px}
+.tabs{display:flex;gap:6px;margin-top:7px;padding-bottom:8px}
 .tab{background:var(--sunk);border:1px solid var(--rule);
-  padding:10px 16px;font-family:Fredoka,sans-serif;font-weight:500;font-size:14px;
+  padding:7px 13px;font-family:Fredoka,sans-serif;font-weight:500;font-size:13px;
   color:var(--ink-3);border-radius:999px}
 .tab[aria-selected=true]{background:var(--purple);border-color:var(--purple);color:#fff}
 
-.who{display:flex;gap:8px;padding:12px 16px;background:var(--sunk);
-  border-bottom:1px solid var(--rule);flex-wrap:wrap;align-items:center}
-.who>span{font-size:10px;font-weight:600;letter-spacing:.07em;
+/* lives INSIDE the sticky header, so identity and the room switch never
+   scroll away with the thread */
+.who{display:flex;gap:6px;padding:0 0 8px;flex-wrap:wrap;align-items:center}
+.who>span{font-size:9px;font-weight:600;letter-spacing:.06em;
   text-transform:uppercase;color:var(--ink-3)}
 .pick{background:var(--card);border:1px solid var(--rule-2);border-radius:999px;
-  padding:8px 15px;font-size:13px;font-weight:600;min-height:38px;color:var(--ink-2)}
+  padding:5px 12px;font-size:12.5px;font-weight:600;min-height:30px;color:var(--ink-2)}
 .pick[aria-pressed=true]{background:var(--magenta);border-color:var(--magenta);color:#fff}
 
 .pane{display:none;flex:1;flex-direction:column}.pane.on{display:flex}
@@ -112,9 +114,9 @@ button{font:inherit;color:inherit;cursor:pointer}
 .meta{font-size:10px;font-weight:600;letter-spacing:.04em;color:var(--ink-3);
   display:flex;gap:8px;text-transform:uppercase}
 .meta b{color:var(--purple)}
-.bub{background:var(--card);border:1px solid var(--rule);padding:12px 15px;
-  border-radius:18px;border-bottom-left-radius:6px;box-shadow:var(--shadow-2);
-  white-space:pre-wrap;overflow-wrap:anywhere}
+.bub{background:var(--card);border:1px solid var(--rule);padding:11px 14px;
+  border-radius:16px;border-bottom-left-radius:6px;box-shadow:var(--shadow-2);
+  white-space:pre-wrap;overflow-wrap:anywhere;font-size:15.4px;line-height:1.5}
 .post.me .bub{background:var(--teal-soft);border-color:var(--teal-soft);
   border-radius:18px;border-bottom-right-radius:6px}
 .post.h .bub{border-left:5px solid var(--purple);border-top-left-radius:8px}
@@ -201,7 +203,7 @@ let S = { reports: [], messages: [], loops: [], calendars: [], slots: [], now: {
 const open = new Set();
 let me = localStorage.getItem("hearth.me") || "Jeffery";
 let pass = localStorage.getItem("hearth.pass") || "";
-let tab = "now";
+let tab = "chat";
 let apass = localStorage.getItem("hearth.apass") || "";
 // One id per phone, made once and kept. It is what lets the server say who
 // wrote something without taking the app's word for it.
@@ -398,13 +400,20 @@ function setupView() {
 const nearBottom = () =>
   window.innerHeight + window.scrollY >= document.body.scrollHeight - 220;
 
-function chatView() {
-  const rooms = [["family", "Family"], ["me", "Just me"]];
+function roomPills() {
+  const rooms = [["family", "Family"]];
   if (S.adult) rooms.push(["adults", "Adults"]);
+  rooms.push(["me", "Just me"]);
   if (!rooms.some(([k]) => k === subtab)) subtab = "family";
-  const pills = `<div class="who" style="border-top:none">${rooms.map(([k, l]) =>
-    `<button class="pick" data-room="${k}" aria-pressed="${subtab === k}">${l}</button>`).join("")}</div>`;
+  return rooms.map(([k, l]) =>
+    `<button class="pick" data-room="${k}" aria-pressed="${subtab === k}">${l}</button>`).join("");
+}
 
+function chatView() {
+  const rooms = [["family", "Family"]];
+  if (S.adult) rooms.push(["adults", "Adults"]);
+  rooms.push(["me", "Just me"]);
+  if (!rooms.some(([k]) => k === subtab)) subtab = "family";
   const ms = S.messages.filter((m) => (m.room || "family") === subtab).map((m) => {
     const h = m.who === "Hearth", mine = !h && m.who === S.me;
     // Fold only what is both long and already read. New content always shows
@@ -425,7 +434,7 @@ function chatView() {
     : subtab === "adults"
     ? '<p class="empty">Jeffery and Suzan only.</p>'
     : '<p class="empty">Ask Hearth anything.</p>';
-  return `${pills}<div class="wrap">${ms || empty}</div>
+  return `<div class="wrap">${ms || empty}</div>
     <form class="comp" id="comp">
     ${draft ? `<div class="draft"><img src="${draft}" alt="Photo ready to send">
       <span>Photo attached &mdash; add a note, then send.</span>
@@ -445,19 +454,18 @@ function render() {
   <div class="hd"><div class="row"><div class="mark">Hearth</div>
     <div class="sub">${esc(S.now.hm || "")} &middot; ${S.adult ? "adults + family" : "family"}</div>
     <button class="chip ${notifState().cls}" id="notif">${notifState().label}</button>
-    ${S.adultRoomExists ? `<button class="chip ${S.adult ? "adult" : ""}" id="roomsw">${S.adult ? "adults: open" : "adults: locked"}</button>` : ""}</div>
-  ${S.build ? `<div class="bld">build <b>${esc(S.build.running)}</b>${S.build.builtAt ? ` &middot; ${esc(dayOf(S.build.builtAt))} ${esc(hhmm(S.build.builtAt))}` : ""} &middot; up since ${esc(hhmm(S.build.since))}${S.build.repo && S.build.repo !== S.build.running ? ` &middot; <span class="new">new ${esc(S.build.repo)} pulled</span>` : ""}${S.build.nextCheck ? ` &middot; next check ${esc(hhmm(S.build.nextCheck))}` : ""}</div>` : ""}
+    ${S.adultRoomExists ? `<button class="chip ${S.adult ? "adult" : ""}" id="roomsw">${S.adult ? "adults" : "adults &#128274;"}</button>` : ""}</div>
     <div class="tabs">
-      <button class="tab" data-t="now" aria-selected="${tab === "now"}">Reports</button>
-      <button class="tab" data-t="loops" aria-selected="${tab === "loops"}">To do${openCount() ? ` <span style="font-family:Figtree">${openCount()}</span>` : ""}</button>
       <button class="tab" data-t="chat" aria-selected="${tab === "chat"}">Channel</button>
-    </div></div>
-  <div class="squig"></div>
+      <button class="tab" data-t="loops" aria-selected="${tab === "loops"}">To do${openCount() ? ` <span style="font-family:Figtree">${openCount()}</span>` : ""}</button>
+      <button class="tab" data-t="now" aria-selected="${tab === "now"}">Reports</button>
+    </div>
   ${S.me
-    ? `<div class="who"><span>Signed in as</span><b style="font-size:14px">${esc(S.me)}</b>
-        <button class="pick" id="unclaim" style="margin-left:auto;font-size:11px">not me</button></div>`
+    ? `<div class="who">${tab === "chat" ? roomPills() : `<span>Signed in as</span><b style="font-size:13px">${esc(S.me)}</b>`}
+        <button class="pick" id="unclaim" style="margin-left:auto;font-size:10.5px;min-height:26px;padding:3px 10px">${tab === "chat" ? esc(S.me) + " &middot; not me" : "not me"}</button></div>`
     : `<div class="who"><span>Who is this phone?</span>${PEOPLE.map((p) =>
-        `<button class="pick" data-claim="${p}">${p}</button>`).join("")}</div>`}
+        `<button class="pick" data-claim="${p}">${p}</button>`).join("")}</div>`}</div>
+  <div class="squig"></div>
   <div class="pane ${tab === "now" ? "on" : ""}"><div class="wrap">${setupView()}${reportsView()}</div>
     <div class="act">
       <button id="runnow">Update now</button>
@@ -465,7 +473,8 @@ function render() {
     </div>
     <p class="note">Hearth hibernates between wakes. At ${S.slots.join(", ")} Eastern it reads its own memory, works out what matters, writes down what it learned, and notifies everyone. The 22:00 wake also rewrites its memory — that is the one that makes tomorrow better than today.</p></div>
   <div class="pane ${tab === "loops" ? "on" : ""}">${loopsView()}</div>
-  <div class="pane ${tab === "chat" ? "on" : ""}">${chatView()}</div>`;
+  <div class="pane ${tab === "chat" ? "on" : ""}">${chatView()}</div>
+  ${S.build ? `<div class="bld">build <b>${esc(S.build.running)}</b>${S.build.builtAt ? ` &middot; ${esc(dayOf(S.build.builtAt))} ${esc(hhmm(S.build.builtAt))}` : ""} &middot; up since ${esc(hhmm(S.build.since))}${S.build.repo && S.build.repo !== S.build.running ? ` &middot; <span class="new">new ${esc(S.build.repo)} pulled</span>` : ""}${S.build.nextCheck ? ` &middot; next check ${esc(hhmm(S.build.nextCheck))}` : ""}</div>` : ""}`;
   wire();
   if (tab === "chat" && stick) {
     stick = false;
