@@ -129,6 +129,13 @@ let pass = localStorage.getItem("hearth.pass") || "";
 let tab = "now";
 let room = "family";
 let apass = localStorage.getItem("hearth.apass") || "";
+// One id per phone, made once and kept. It is what lets the server say who
+// wrote something without taking the app's word for it.
+let device = localStorage.getItem("hearth.device") || "";
+if (!device) {
+  device = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random());
+  try { localStorage.setItem("hearth.device", device); } catch (e) {}
+}
 const PEOPLE = ["Jeffery", "Suzan", "Aiden", "Abby"];
 const IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
   (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
@@ -154,6 +161,7 @@ async function load(force) {
     const h = {};
     if (pass) h["x-hearth-pass"] = pass;
     if (apass) h["x-hearth-apass"] = apass;
+    h["x-hearth-device"] = device;
     const r = await fetch("/api/state", { headers: h });
     if (r.status === 401) { askPass(); return; }
     S = await r.json(); render();
@@ -190,11 +198,12 @@ function reportsView() {
 
 function chatView() {
   const ms = S.messages.map((m) => {
-    const h = m.who === "Hearth", mine = !h && m.who === me;
+    const h = m.who === "Hearth", mine = !h && m.who === S.me;
     return `<div class="post ${h ? "h" : mine ? "me" : ""}">
       <div class="meta"><b>${esc(m.who)}</b><span>${esc(hhmm(m.at))}</span></div>
       <div class="bub">${esc(m.text)}</div></div>`;
   }).join("");
+  if (!S.me) return `<div class="wrap"><p class="empty">Say who this phone belongs to at the top, then you can post. Every message is stamped with that name — nobody can post as anybody else.</p></div>`;
   return `<div class="wrap">${ms || '<p class="empty">Ask Hearth anything.</p>'}</div>
     <form class="comp" id="comp"><textarea id="msg" rows="1" placeholder="Ask Hearth, or tell the family"></textarea>
     <button class="send" id="send" disabled aria-label="Send">&#8593;</button></form>`;
@@ -214,9 +223,16 @@ function render() {
       <button class="tab" data-t="chat" aria-selected="${tab === "chat"}">Channel</button>
     </div></div>
   <div class="squig"></div>
-  <div class="who"><span>You are</span>${PEOPLE.map((p) => `<button class="pick" data-me="${p}" aria-pressed="${p === me}">${p}</button>`).join("")}</div>
+  ${S.me
+    ? `<div class="who"><span>Signed in as</span><b style="font-size:14px">${esc(S.me)}</b>
+        <button class="pick" id="unclaim" style="margin-left:auto;font-size:11px">not me</button></div>`
+    : `<div class="who"><span>Who is this phone?</span>${PEOPLE.map((p) =>
+        `<button class="pick" data-claim="${p}">${p}</button>`).join("")}</div>`}
   <div class="pane ${tab === "now" ? "on" : ""}"><div class="wrap">${reportsView()}</div>
-    <div class="act">${S.slots.map((s) => `<button data-wake="${s}">Run ${s} now</button>`).join("")}</div>
+    <div class="act">
+      <button id="runnow">Update now</button>
+      ${S.adult ? '<button id="clearch" style="background:var(--magenta);color:#fff">Clear channel</button>' : ""}
+    </div>
     <p class="note">Hearth hibernates between wakes. At ${S.slots.join(", ")} Eastern it reads its own memory, works out what matters, writes down what it learned, and notifies everyone. The 22:00 wake also rewrites its memory — that is the one that makes tomorrow better than today.</p></div>
   <div class="pane ${tab === "chat" ? "on" : ""}">${chatView()}</div>`;
   wire();
@@ -232,13 +248,32 @@ function render() {
 
 function wire() {
   document.querySelectorAll("[data-t]").forEach((b) => b.onclick = () => { tab = b.dataset.t; render(); });
-  document.querySelectorAll("[data-me]").forEach((b) => b.onclick = () => {
-    me = b.dataset.me; localStorage.setItem("hearth.me", me); render();
+  document.querySelectorAll("[data-claim]").forEach((b) => b.onclick = async () => {
+    const r = await post("/api/claim", { who: b.dataset.claim });
+    if (r && r.ok) load(true);
+    else alert(r && r.error ? r.error : "Could not set who this phone belongs to.");
   });
-  document.querySelectorAll("[data-wake]").forEach((b) => b.onclick = async () => {
-    b.disabled = true; b.textContent = "thinking…";
-    await post("/api/wake", { slot: b.dataset.wake }); await load(true);
-  });
+  const un = $("#unclaim");
+  if (un) un.onclick = async () => {
+    const v = prompt("Changing who this phone belongs to needs the adults passphrase.");
+    if (!v) return;
+    const who = prompt("Whose phone is it now? Jeffery, Suzan, Aiden or Abby");
+    if (!who) return;
+    const r = await post("/api/claim", { who: who.trim(), apass: v.trim() });
+    if (r && r.ok) load(true); else alert(r && r.error ? r.error : "Refused.");
+  };
+  const rn = $("#runnow");
+  if (rn) rn.onclick = async () => {
+    rn.disabled = true; rn.textContent = "thinking…";
+    await post("/api/wake", {});          // the server knows which one is due
+    await load(true);
+  };
+  const cc = $("#clearch");
+  if (cc) cc.onclick = async () => {
+    if (!confirm("Clear every message in the channel?\n\nMemory is not touched — Hearth keeps everything it has learned.")) return;
+    const r = await post("/api/clear-channel", {});
+    if (r && r.ok) load(true); else alert(r && r.error ? r.error : "Refused.");
+  };
   $("#notif") && ($("#notif").onclick = enablePush);
   const rs = $("#roomsw");
   if (rs) rs.onclick = () => {
@@ -272,7 +307,7 @@ function wire() {
 async function post(url, data) {
   if (S.needsPass && !pass) { pass = prompt("Family passphrase") || ""; localStorage.setItem("hearth.pass", pass); }
   const r = await fetch(url, { method: "POST", headers: { "content-type": "application/json" },
-    body: JSON.stringify({ ...data, pass, apass, room }) });
+    body: JSON.stringify({ ...data, pass, apass, room, device }) });
   if (r.status === 401) { localStorage.removeItem("hearth.pass"); pass = ""; alert("Wrong passphrase."); }
   return r.json().catch(() => ({}));
 }

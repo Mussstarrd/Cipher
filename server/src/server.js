@@ -87,6 +87,14 @@ async function ingest() {
 setInterval(ingest, 10 * 60_000);
 setTimeout(ingest, 4000);
 
+/** The slot whose moment we are in or most recently passed. */
+function currentSlot() {
+  const { hm } = nowET();
+  let pick = SLOTS[SLOTS.length - 1];        // before 07:00, the night's close-out
+  for (const sl of SLOTS) if (hm >= sl) pick = sl;
+  return pick;
+}
+
 let running = false;
 
 // Last known total size of the calendar feeds, so /api/state can distinguish
@@ -225,6 +233,14 @@ const authedRead = (u, req) => !PASS || given(u, req) === PASS || adultGiven(u, 
 // Adults-only content is served only to a request carrying the second secret.
 const isAdult = (u, req) => Boolean(ADULT_PASS) && adultGiven(u, req) === ADULT_PASS;
 
+// Who a message is from is decided here, from the device it came from — never
+// from what the client says. A name chosen from a list is a costume: anyone can
+// wear anyone's. Binding it to the device is what makes "he said, she said"
+// answerable, and unclaiming a device needs the adult passphrase.
+function nameFor(state, device) {
+  return (state.devices || {})[String(device || "")] || null;
+}
+
 const server = http.createServer(async (req, res) => {
   const u = new URL(req.url, URL_BASE);
 
@@ -244,6 +260,8 @@ const server = http.createServer(async (req, res) => {
         // Only the roster table's rows — not every bold word in the brief.
         household: [...brief.matchAll(/^\|\s*\*\*([\w'-]+)\*\*\s*\|/gm)].map((m) => m[1]),
         slots: SLOTS, now: nowET(), push: pushReady(),
+        nextSlot: currentSlot(),
+        me: nameFor(s, u.searchParams.get("device") || req.headers["x-hearth-device"] || ""),
         vapid: process.env.VAPID_PUBLIC || null,
         calendar: {
           ready: calendarReady(),
@@ -265,7 +283,9 @@ const server = http.createServer(async (req, res) => {
     if (req.method === "POST" && u.pathname === "/api/message") {
       const b = await body(req);
       if (!authed(b)) return send(res, 401, { error: "wrong passphrase" });
-      const who = String(b.who || "someone").slice(0, 40);
+      const s0 = loadState();
+      const who = nameFor(s0, b.device);
+      if (!who) return send(res, 409, { error: "this device has not said who it belongs to" });
       const text = String(b.text || "").trim().slice(0, 4000);
       if (!text) return send(res, 400, { error: "empty" });
       // Posting to the adults room requires the adult secret, not a claim.
@@ -295,6 +315,37 @@ const server = http.createServer(async (req, res) => {
         }
       })();
       return send(res, 200, { ok: true });
+    }
+
+    if (req.method === "POST" && u.pathname === "/api/claim") {
+      const b = await body(req);
+      if (!authed(b)) return send(res, 401, { error: "wrong passphrase" });
+      const device = String(b.device || "").slice(0, 64);
+      const who = String(b.who || "").slice(0, 40);
+      if (!device || !who) return send(res, 400, { error: "device and who required" });
+      const s = loadState();
+      s.devices = s.devices || {};
+      const existing = s.devices[device];
+      // Reassigning a device is how attribution gets laundered. Adults only.
+      if (existing && existing !== who && !(ADULT_PASS && b.apass === ADULT_PASS)) {
+        return send(res, 403, { error: `this device is already ${existing}; an adult must change it` });
+      }
+      s.devices[device] = who;
+      saveState(s);
+      appendDaily(`- device claimed as ${who}`);
+      return send(res, 200, { ok: true, who });
+    }
+
+    if (req.method === "POST" && u.pathname === "/api/clear-channel") {
+      const b = await body(req);
+      if (!ADULT_PASS || b.apass !== ADULT_PASS) return send(res, 403, { error: "adults only" });
+      const s = loadState();
+      const n = s.messages.length;
+      s.messages = [];
+      saveState(s);
+      // Memory is untouched on purpose: the thread is scratch, memory is the product.
+      appendDaily(`- channel cleared by an adult (${n} messages). Memory untouched.`);
+      return send(res, 200, { ok: true, cleared: n });
     }
 
     if (req.method === "POST" && u.pathname === "/api/subscribe") {
@@ -332,7 +383,10 @@ const server = http.createServer(async (req, res) => {
     if (req.method === "POST" && u.pathname === "/api/wake") {
       const b = await body(req);
       if (!authed(b)) return send(res, 401, { error: "wrong passphrase" });
-      const slot = SLOTS.includes(b.slot) ? b.slot : "07:00";
+      // One button. Which check-in it is depends on the time of day, which the
+      // server already knows — asking a person to choose between four is asking
+      // them to understand the schedule to use the app.
+      const slot = SLOTS.includes(b.slot) ? b.slot : currentSlot();
       const text = await runSlot(slot, { forced: true });
       return send(res, 200, { ok: Boolean(text), text });
     }
