@@ -277,7 +277,7 @@ function askPass() {
 function reportsView() {
   if (!S.reports.length) return `<p class="empty">Nothing yet. Hearth wakes at ${S.slots.join(", ")} Eastern.</p>`;
   return S.reports.map((r) => `<div class="report${r.failed ? " fail" : ""}">
-    <span class="rmeta">${esc(r.slot)} &middot; ${esc(dayOf(r.at))}${r.failed ? " &middot; failed" : ""}</span>${esc(r.text)}</div>`).join("");
+    <span class="rmeta">${esc(r.slot)} &middot; ${esc(dayOf(r.at))}${r.room === "adults" ? " &middot; adults" : ""}${r.failed ? " &middot; failed" : ""}</span>${esc(r.text)}</div>`).join("");
 }
 
 const openCount = () => (S.loops || []).filter((l) => !l.done).length;

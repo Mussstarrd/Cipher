@@ -154,6 +154,16 @@ async function runSlot(slot, { forced = false, late = 0 } = {}) {
       slot, at: new Date().toISOString(), day: todayET(), text,
       ...(late ? { late } : {}),
     });
+    // The adults half was being written to the daily log and then nowhere —
+    // the room filter was ready for adults reports that were never stored, so
+    // the portfolio brief and every adults-only line simply vanished from the
+    // app. Found by the first deep scan.
+    if (out.adults) {
+      after.reports.unshift({
+        slot, at: new Date().toISOString(), day: todayET(),
+        text: out.adults, room: "adults",
+      });
+    }
     after.reports = after.reports.slice(0, 60);
     if (!forced) {
       after.lastRun[slot] = todayET();
@@ -227,7 +237,12 @@ async function remindTick(day, hm) {
     s.reminded[l.id] = now;
     // A reminder "for" someone goes only to that person's phones; anything
     // else goes to everyone — the loop list is shared, so this leaks nothing.
-    const targets = l.for ? s.subs.filter((x) => x.who === l.for) : s.subs;
+    let targets = l.for ? s.subs.filter((x) => x.who === l.for) : s.subs;
+    // Subscriptions from before name-tagging carry no owner. A reminder that
+    // fires to zero phones is a reminder that silently failed — fall back to
+    // everyone (the To do list is shared; this leaks nothing) rather than
+    // to nobody.
+    if (l.for && !targets.length) targets = s.subs;
     appendDaily(`- reminder fired (${l.due}${l.for ? `, for ${l.for}` : ""}): ${l.title}`);
     if (targets.length) {
       try {

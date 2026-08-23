@@ -65,6 +65,10 @@ account access.
   milk" should too. Investigate browser speech-to-text (standalone-safe).
 - **B17 · Memory compaction proof** — Sundays are meant to merge and prune.
   Verify the first one actually ran and memory got SMALLER, not just different.
+  First test is TONIGHT (Sun 2026-08-23, 22:00 ET); the 24th's deep scan checks.
+- **B18 · Adoption before capability** — from deepscan 08-23: this is still a
+  one-adult tool. Until Suzan and Aiden are genuinely on (B4, J1), weigh every
+  new feature against "who will actually touch this".
 
 ## Done
 

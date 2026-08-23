@@ -56,6 +56,17 @@ else
 fi
 
 say "updated to $(git log -1 --format='%h %s')"
+
+# Status and memory commits arrive every couple of hours; restarting a healthy
+# service for a commit that touched no code is downtime for nothing. Only a
+# change under server/ warrants a restart (the page and CLAUDE.md are read per
+# request; brain prompts and code are not).
+if ! git diff --name-only "$LOCAL" HEAD | grep -q '^server/'; then
+  say "no server changes — restart skipped"
+  git push --quiet origin "$BRANCH" 2>/dev/null && say "memory pushed" || true
+  exit 0
+fi
+
 if git diff --name-only "$LOCAL" HEAD | grep -q '^server/package.json'; then
   say "dependencies changed — installing"
   (cd server && npm install --omit=dev --no-audit --no-fund >/dev/null 2>&1)
