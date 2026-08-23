@@ -28,14 +28,15 @@ skip() {
 }
 
 DIRT=$(git status --porcelain | awk '{print $2}')
-OUTSIDE=$(echo "$DIRT" | grep -v '^memory/' | grep -v '^$' || true)
+OUTSIDE=$(echo "$DIRT" | grep -v '^memory/' | grep -v '^ops/status/' | grep -v '^$' || true)
 [ -n "$OUTSIDE" ] && skip "changes outside memory/ — a human or a session is mid-edit: $(echo $OUTSIDE | head -c 120)"
 
 if [ -n "$DIRT" ]; then
   # Only memory/ is dirty: that is the service doing its job. Commit it — it
   # belongs in git anyway, and this versions it every quarter hour rather than
   # twice a day.
-  git add memory/ && git commit -q -m "hearth memory $(date -u +%Y-%m-%dT%H:%MZ)" || true
+  git add memory/ ops/status/ 2>/dev/null
+  git commit -q -m "hearth memory $(date -u +%Y-%m-%dT%H:%MZ)" || true
 fi
 
 git fetch origin "$BRANCH" --quiet || skip "fetch failed (token? network?)"
@@ -47,7 +48,7 @@ BASE=$(git merge-base HEAD "origin/$BRANCH")
 # Unpushed commits are fine if they are only memory snapshots — replaying those
 # is safe. Anything else is somebody's work and is not ours to rebase.
 if [ "$LOCAL" != "$BASE" ]; then
-  CODE=$(git diff --name-only "$BASE" HEAD | grep -v '^memory/' || true)
+  CODE=$(git diff --name-only "$BASE" HEAD | grep -v '^memory/' | grep -v '^ops/status/' || true)
   [ -n "$CODE" ] && skip "unpushed commits touch code; push them yourself first"
   git pull --rebase --quiet origin "$BRANCH" || { git rebase --abort 2>/dev/null; skip "rebase failed"; }
 else
