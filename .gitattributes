@@ -1,0 +1,12 @@
+# Daily logs are append-only and written from two places at once — Hearth on the
+# droplet, and whoever is working on the design. Git's default merge treats two
+# appends to the same file as a conflict, which stops an unattended update dead
+# and needs a human in a rebase on a phone.
+#
+# union keeps both sides. For a log that is the correct resolution: nothing is
+# dropped, and order within the day is close enough to be useful.
+memory/daily/*.md merge=union
+ops/status/*.md   merge=union
+
+# Never mangle line endings in anything the shell executes.
+*.sh text eol=lf
