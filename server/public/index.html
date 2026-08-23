@@ -126,6 +126,9 @@ button{font:inherit;color:inherit;cursor:pointer}
 .post.me .bub.clip::after{background:linear-gradient(transparent,var(--teal-soft))}
 .unfold{font-size:9.5px;font-weight:700;letter-spacing:.05em;
   text-transform:uppercase;color:var(--purple);cursor:pointer}
+.say{background:var(--purple-soft);color:var(--purple);border:none;border-radius:999px;
+  width:24px;height:24px;font-size:11px;line-height:1;flex:none;padding:0}
+.say.on{background:var(--purple);color:#fff}
 .bub img{display:block;max-width:100%;border-radius:12px;margin-top:8px}
 
 .comp{position:sticky;bottom:0;background:var(--card);border-top:1px solid var(--rule);
@@ -266,6 +269,33 @@ async function healPush() {
   } catch (e) { /* offline; next open tries again */ }
 }
 
+// Read a message aloud with the phone's own built-in voice — free, offline,
+// standalone-safe. For a nine-year-old who reads slower than he listens, the
+// play button IS the accessibility feature.
+const CAN_SPEAK = "speechSynthesis" in window;
+let speakingId = null;
+function speak(id, text, btn) {
+  if (!CAN_SPEAK) return;
+  if (speakingId === id) {                       // tap again = stop
+    speechSynthesis.cancel(); speakingId = null;
+    btn.classList.remove("on"); btn.innerHTML = "&#9654;";
+    return;
+  }
+  speechSynthesis.cancel();
+  document.querySelectorAll(".say.on").forEach((b) => { b.classList.remove("on"); b.innerHTML = "&#9654;"; });
+  speakingId = id;
+  btn.classList.add("on"); btn.innerHTML = "&#9632;";
+  // iOS silently truncates long utterances — queue sentence-sized chunks.
+  const chunks = String(text).replace(/\s+/g, " ").match(/[^.!?]+[.!?]*/g) || [String(text)];
+  let left = chunks.length;
+  const done = () => { if (--left <= 0 && speakingId === id) { speakingId = null; btn.classList.remove("on"); btn.innerHTML = "&#9654;"; } };
+  for (const c of chunks) {
+    const u = new SpeechSynthesisUtterance(c.trim());
+    u.onend = done; u.onerror = done;
+    speechSynthesis.speak(u);
+  }
+}
+
 function isTyping() {
   const a = document.activeElement;
   return !!a && (a.tagName === "TEXTAREA" || a.tagName === "INPUT");
@@ -316,8 +346,8 @@ function askPass() {
 
 function reportsView() {
   if (!S.reports.length) return `<p class="empty">Nothing yet. Hearth wakes at ${S.slots.join(", ")} Eastern.</p>`;
-  return S.reports.map((r) => `<div class="report${r.failed ? " fail" : ""}">
-    <span class="rmeta">${esc(r.slot)} &middot; ${esc(dayOf(r.at))}${r.room === "adults" ? " &middot; adults" : ""}${r.failed ? " &middot; failed" : ""}</span>${esc(r.text)}</div>`).join("");
+  return S.reports.map((r, i) => `<div class="report${r.failed ? " fail" : ""}">
+    <span class="rmeta">${esc(r.slot)} &middot; ${esc(dayOf(r.at))}${r.room === "adults" ? " &middot; adults" : ""}${r.failed ? " &middot; failed" : ""}</span>${CAN_SPEAK ? `<button class="say" data-say="r${i}" style="float:right" aria-label="Read aloud">&#9654;</button>` : ""}${esc(r.text)}</div>`).join("");
 }
 
 const openCount = () => (S.loops || []).filter((l) => !l.done).length;
@@ -441,7 +471,7 @@ function chatView() {
       ? `<img src="/api/photo?id=${encodeURIComponent(m.photo)}&pass=${encodeURIComponent(pass)}" alt="Photo ${esc(m.who)} sent" loading="lazy">`
       : "";
     return `<div class="post ${h ? "h" : mine ? "me" : ""}">
-      <div class="meta"><b>${esc(m.who)}</b><span>${esc(hhmm(m.at))}</span>${long && read ? `<span class="unfold" data-fold="${m.id}">${clip ? "open" : "fold"}</span>` : ""}</div>
+      <div class="meta"><b>${esc(m.who)}</b><span>${esc(hhmm(m.at))}</span>${h && CAN_SPEAK ? `<button class="say" data-say="${m.id}" aria-label="Read aloud">&#9654;</button>` : ""}${long && read ? `<span class="unfold" data-fold="${m.id}">${clip ? "open" : "fold"}</span>` : ""}</div>
       <div class="bub${clip ? " clip" : ""}"${clip ? ` data-fold="${m.id}"` : ""}>${esc(m.text)}${img}</div></div>`;
   }).join("");
   if (!S.me) return `<div class="wrap"><p class="empty">Say who this phone belongs to at the top, then you can post. Every message is stamped with that name — nobody can post as anybody else.</p></div>`;
@@ -513,6 +543,14 @@ function wire() {
     tab = b.dataset.t;
     if (tab === "chat") stick = true;
     render();
+  });
+  document.querySelectorAll("[data-say]").forEach((b) => b.onclick = (e) => {
+    e.stopPropagation();
+    const id = b.dataset.say;
+    const text = id.startsWith("r")
+      ? (S.reports[Number(id.slice(1))] || {}).text || ""
+      : (S.messages.find((m) => m.id === id) || {}).text || "";
+    speak(id, text, b);
   });
   document.querySelectorAll("[data-fold]").forEach((el) => el.onclick = () => {
     const id = el.dataset.fold;
@@ -692,7 +730,8 @@ function wire() {
   if (ta) {
     snd.disabled = !draft;
     ta.oninput = () => { snd.disabled = !ta.value.trim() && !draft; ta.style.height = "auto"; ta.style.height = Math.min(ta.scrollHeight, 120) + "px"; };
-    ta.onkeydown = (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); if (ta.value.trim() || draft) $("#comp").requestSubmit(); } };
+    // Enter inserts a newline, on purpose: multi-line thoughts in one message
+    // beat five fragments (and five model calls). Send is the button alone.
     $("#comp").onsubmit = async (e) => {
       e.preventDefault();
       const text = ta.value.trim();
