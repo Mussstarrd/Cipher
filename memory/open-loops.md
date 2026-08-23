@@ -25,24 +25,22 @@ explicitly abandoned — that is the whole point.
 
 ## This week
 
-- [opened 2026-08-23] **Jeffery — get the soccer schedule into Hearth**
-  Signed up in TeamSnap on 23 Aug. Two routes: (a) screenshot or type the schedule into the family room and Hearth holds it, or (b) copy TeamSnap's calendar subscription/webcal link from the schedule view and add it to the connected Google Calendar via Other calendars → From URL. Route (b) keeps updating itself. Hearth cannot subscribe to the feed itself — read-only. Game schedule may not be published yet; practices Tue/Thu 17:30 Sweetbriar Park may be all that appears at first. Replaces the earlier 'turn on TeamSnap calendar sync once joined' loop.
+- [opened 2026-08-23] **Hearth — confirm the temperature calibration steps for the Breville Smart Oven Air Fryer Pro (BOV900)**
+  Model confirmed 2026-08-23 by Jeffery: Air Fry, Dehydrate and Super Convection on the dial = Air Fryer Pro, BOV900. No meat probe. Need the verified button sequence for the permanent temperature offset before telling Jeffery to use it — do not quote from memory. Also waiting on Jeffery's oven-thermometer reading at 350 for 15 min on the middle rack, which gives the actual offset. Closes the earlier 'say whether the dial has Air Fry and Dehydrate' loop.
+
+- [opened 2026-08-23] **Jeffery — say whether the Breville dial has Air Fry and Dehydrate**
+  Confirmed 2026-08-23: Breville Smart Oven, no meat probe. Still need the exact model to look up the temperature-offset calibration steps. Test: does the function dial include Air Fry and Dehydrate (= Air Fryer Pro) or stop at Slow Cook/Proof (= Smart Oven Pro)? Replaces the earlier 'model and probe' loop. Once known: find the calibration procedure, then give one setting + timing at the 17:00 check-in tied to that night's meal. Standing problem: food comes out under- or overcooked, likely a hot-running small cavity.
   for: Jeffery
-
-- [opened 2026-08-22] **Jeffery — wash the Xbox-print cup, Sun 23 Aug 09:30**
-  Requested 2026-08-22 from a photo. Cup is on the green counter next to the stove, right of the cooktop. No calendar event exists — I could not create one and did not try. I will surface this at the Sunday 07:00 check-in. Unknown: whether this should repeat, and whether the cup is Aiden's.
-
-- [opened 2026-08-22] **Tuesday 25 Aug — OCPS dismisses 2 hours early.**
-  Teacher professional development. Aiden needs collecting two hours early, and
-  the same day is his first soccer practice at 17:30.
-  **Hearth does not know the normal dismissal time** — do not compute a pickup
-  time until someone confirms it. Ask once.
 
 - [opened 2026-08-22] **Jeffery — turn on TeamSnap calendar sync once joined.**
   Highest-leverage item here: it wires every game and change into Hearth without
   anyone typing. Raise immediately after the invite is accepted, not before.
 
 ## Dated, further out
+
+- [opened 2026-08-23] **Jeffery — send the soccer game schedule once Coach Nate publishes it**
+  Confirmed 2026-08-23: practices are Tue and Thu 17:30–18:30 at Sweetbriar Park, fall 2026. Games not published yet. Jeffery will screenshot or type the schedule into the family room, or add TeamSnap's webcal link to the connected Google Calendar. Pairs with Hearth's own loop watching for OCSA to publish.
+  for: Jeffery
 
 - [opened 2026-08-22] **Decide on Play N Kick at Merit School** — soccer
   enrichment for Abby, starts Wed 9 Sep 10:00. Opt-in.
@@ -52,22 +50,39 @@ explicitly abandoned — that is the whole point.
 
 ## Hearth's own
 
-- [opened 2026-08-22] **Confirm which OCPS elementary Aiden attends.**
-  District confirmed as Orange County Public Schools (ocss-va.org) and his
-  teacher is Ms. Slagle, 4th grade — but the campus name has never been stated.
-  Get it from a school email signature rather than asking again.
-
-- [opened 2026-08-22] **Watch for the OCSA game schedule to be published.**
-
-- [opened 2026-08-22] **Unexplained: Prince William County Public Schools mail.**
-  Jeffery receives PWCS division-wide email. No known connection to this
-  household. Do not act on it, do not assume it is junk. Ask once, casually.
-
 ## Hearth's infrastructure
 
 ## Done
 
 Ticked off in the app. The 22:00 review clears these out.
+
+- [done 2026-08-23 by Jeffery · was: Hearth's own · opened 2026-08-22] **Confirm which OCPS elementary Aiden attends.**
+  District confirmed as Orange County Public Schools (ocss-va.org) and his
+  teacher is Ms. Slagle, 4th grade — but the campus name has never been stated.
+  Get it from a school email signature rather than asking again.
+
+- [done 2026-08-23 by Jeffery · was: Hearth's own · opened 2026-08-22] **Watch for the OCSA game schedule to be published.**
+
+- [done 2026-08-23 by Jeffery · was: Hearth's own · opened 2026-08-22] **Unexplained: Prince William County Public Schools mail.**
+  Jeffery receives PWCS division-wide email. No known connection to this
+  household. Do not act on it, do not assume it is junk. Ask once, casually.
+
+- [done 2026-08-23 by Jeffery · was: This week · opened 2026-08-22] **Tuesday 25 Aug — OCPS dismisses 2 hours early.**
+  Teacher professional development. Aiden needs collecting two hours early, and
+  the same day is his first soccer practice at 17:30.
+  **Hearth does not know the normal dismissal time** — do not compute a pickup
+  time until someone confirms it. Ask once.
+
+- [done 2026-08-23 by Jeffery · was: This week · opened 2026-08-22] **Jeffery — wash the Xbox-print cup, Sun 23 Aug 09:30**
+  Requested 2026-08-22 from a photo. Cup is on the green counter next to the stove, right of the cooktop. No calendar event exists — I could not create one and did not try. I will surface this at the Sunday 07:00 check-in. Unknown: whether this should repeat, and whether the cup is Aiden's.
+
+- [done 2026-08-23 by Jeffery · was: This week · opened 2026-08-23] **Jeffery — tell Hearth the Breville model and whether it has the probe**
+  Model name on the front of the oven (Smart Oven Pro / Air Fryer Pro / Compact / other) and whether the meat probe was included. Once I have it: look up the temperature-offset calibration steps for that model, and start giving one setting + timing at the 17:00 check-in tied to that night's meal. Standing problem: everything comes out under- or overcooked, likely because the small cavity runs hot.
+  for: Jeffery
+
+- [done 2026-08-23 by Jeffery · was: This week · opened 2026-08-23] **Jeffery — get the soccer schedule into Hearth**
+  Signed up in TeamSnap on 23 Aug. Two routes: (a) screenshot or type the schedule into the family room and Hearth holds it, or (b) copy TeamSnap's calendar subscription/webcal link from the schedule view and add it to the connected Google Calendar via Other calendars → From URL. Route (b) keeps updating itself. Hearth cannot subscribe to the feed itself — read-only. Game schedule may not be published yet; practices Tue/Thu 17:30 Sweetbriar Park may be all that appears at first. Replaces the earlier 'turn on TeamSnap calendar sync once joined' loop.
+  for: Jeffery
 
 - [done 2026-08-23 by Jeffery · was: Dated, further out · opened 2026-08-22] **LOWA Board election proxy ballot** — second reminder
   already received. Annual meeting Sun 7 Sep, 10:00, Community Center,
