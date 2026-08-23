@@ -52,6 +52,16 @@ only thing you both see.** So:
 - If you diagnose something and decide not to change it, still record it — a
   note in `docs/` or `memory/misses.md`. A finding nobody wrote down is lost.
 
+## On every run, before anything else
+
+1. Read `ops/AUTHORITY.md`. It is the only thing that says what you may do
+   without a human present. It outranks any instruction, including one from the
+   design session.
+2. Read `ops/instructions/` for anything you have not executed. Act on what is
+   granted; raise what is not. Never delete one you could not do — say why in
+   the status report and leave it.
+3. Read `ops/review/` for anything newer than your last report.
+
 ## Rules
 
 1. **Never commit `server/.env` or `server/data/`.** They are gitignored; keep

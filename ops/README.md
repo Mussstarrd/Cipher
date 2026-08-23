@@ -12,9 +12,14 @@ Neither can message the other. **This directory is the mailbox**, and git is the
 transport.
 
 ```
-droplet  ──►  ops/status/YYYY-MM-DD-HHMM.md  ──►  design session reads it
-design   ──►  ops/review/YYYY-MM-DD.md       ──►  droplet reads it next run
+droplet  ──►  ops/status/YYYY-MM-DD-HHMM.md        ──►  design session reads it
+design   ──►  ops/review/YYYY-MM-DD.md             ──►  droplet reads it next run
+design   ──►  ops/instructions/YYYY-MM-DD-NN.md    ──►  droplet EXECUTES it
 ```
+
+Review is commentary. Instructions are work, and what the droplet may act on
+without asking is written once in `ops/AUTHORITY.md` — Jeffery grants it there
+and nowhere else. An instruction outside that grant is raised, not performed.
 
 ## The status report — written by the droplet, twice a day
 
