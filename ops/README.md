@@ -50,6 +50,14 @@ improvements — refactors, abstractions, features nobody asked for — and it w
 all look like progress. It is not. If nothing went wrong today, the correct
 report is short and proposes nothing.
 
+## What a scheduled report may read
+
+A report is written by a model with no human watching. Give it the least it
+needs: logs, `preflight`, diffstats, branch state. **Deny it `server/.env`,
+`server/data/state.json` and `~/.claude`.** Otherwise a status file — which gets
+committed to a repo — can quote a credential or a family message, and nobody
+finds out until it is already pushed.
+
 ## Never in these files
 
 Secrets, tokens, passwords, calendar URLs. The contents of the family's mail.
