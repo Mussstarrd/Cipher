@@ -7,14 +7,6 @@ explicitly abandoned — that is the whole point.
 
 ## Urgent
 
-- [opened 2026-08-23] **Jeffery — push notifications may not be delivering at all**
-  06:38 Sun 23 Aug: coffee reminder loop was set and stored, no push received. I can't see delivery status from inside a session, so this needs the Claude Code side. Check alongside the unverified 07:00 trigger — likely the same pipeline. Diagnostic: did the coffee item appear in the To do tab? Yes = storage fine, delivery broken. No = it failed earlier.
-
-- [opened 2026-08-23] **Jeffery — check the coffee**
-  due: 2026-08-23 09:28
-  for: Jeffery
-  Asked at 06:33 Sunday 23 Aug for a five-minute reminder.
-
 - [opened 2026-08-22] **Jeffery — finish Abby's Lillio registration at Merit School.**
   **Her enrolment is not finalised and the school says it "may be delayed or
   forfeited" if this is not completed promptly.** She is attending daily right
@@ -33,6 +25,10 @@ explicitly abandoned — that is the whole point.
 
 ## This week
 
+- [opened 2026-08-23] **Jeffery — get the soccer schedule into Hearth**
+  Signed up in TeamSnap on 23 Aug. Two routes: (a) screenshot or type the schedule into the family room and Hearth holds it, or (b) copy TeamSnap's calendar subscription/webcal link from the schedule view and add it to the connected Google Calendar via Other calendars → From URL. Route (b) keeps updating itself. Hearth cannot subscribe to the feed itself — read-only. Game schedule may not be published yet; practices Tue/Thu 17:30 Sweetbriar Park may be all that appears at first. Replaces the earlier 'turn on TeamSnap calendar sync once joined' loop.
+  for: Jeffery
+
 - [opened 2026-08-22] **Jeffery — wash the Xbox-print cup, Sun 23 Aug 09:30**
   Requested 2026-08-22 from a photo. Cup is on the green counter next to the stove, right of the cooktop. No calendar event exists — I could not create one and did not try. I will surface this at the Sunday 07:00 check-in. Unknown: whether this should repeat, and whether the cup is Aiden's.
 
@@ -42,19 +38,11 @@ explicitly abandoned — that is the whole point.
   **Hearth does not know the normal dismissal time** — do not compute a pickup
   time until someone confirms it. Ask once.
 
-- [opened 2026-08-22] **Jeffery — accept the TeamSnap invite.**
-  Link: https://go.teamsnap.com/invitations/68ba0c041f3aee9dc8d2f6da/claim
-  Before Tue 25 Aug; the season schedule is published there and nowhere else.
-
 - [opened 2026-08-22] **Jeffery — turn on TeamSnap calendar sync once joined.**
   Highest-leverage item here: it wires every game and change into Hearth without
   anyone typing. Raise immediately after the invite is accepted, not before.
 
 ## Dated, further out
-
-- [opened 2026-08-22] **LOWA Board election proxy ballot** — second reminder
-  already received. Annual meeting Sun 7 Sep, 10:00, Community Center,
-  110 Sweetbriar Park Road. Decide whether to submit a proxy.
 
 - [opened 2026-08-22] **Decide on Play N Kick at Merit School** — soccer
   enrichment for Abby, starts Wed 9 Sep 10:00. Opt-in.
@@ -77,7 +65,15 @@ explicitly abandoned — that is the whole point.
 
 ## Hearth's infrastructure
 
-- [opened 2026-08-22] **Jeffery — attach connectors to the 07:00 routine.**
+## Done
+
+Ticked off in the app. The 22:00 review clears these out.
+
+- [done 2026-08-23 by Jeffery · was: Dated, further out · opened 2026-08-22] **LOWA Board election proxy ballot** — second reminder
+  already received. Annual meeting Sun 7 Sep, 10:00, Community Center,
+  110 Sweetbriar Park Road. Decide whether to submit a proxy.
+
+- [done 2026-08-23 by Jeffery · was: Hearth's infrastructure · opened 2026-08-22] **Jeffery — attach connectors to the 07:00 routine.**
   The trigger was created from inside a coding session and carries **no MCP
   connectors**, so the fired session runs without Gmail, Calendar or Drive. It
   will produce a brief from memory alone and will say so plainly rather than
@@ -86,10 +82,19 @@ explicitly abandoned — that is the whole point.
   attach Gmail (and Calendar if wanted). Until then the morning brief is
   memory-only — which is a fair test of standalone mode, but not the full thing.
 
-- [opened 2026-08-22] **Hearth — verify the first fire actually happened.**
+- [done 2026-08-23 by Jeffery · was: Hearth's infrastructure · opened 2026-08-22] **Hearth — verify the first fire actually happened.**
   If 07:00 passes with no push notification, the heartbeat did not work and that
   is the single most important thing to fix. Do not assume success.
 
-## Done
+- [done 2026-08-23 by Jeffery · was: This week · opened 2026-08-22] **Jeffery — accept the TeamSnap invite.**
+  Link: https://go.teamsnap.com/invitations/68ba0c041f3aee9dc8d2f6da/claim
+  Before Tue 25 Aug; the season schedule is published there and nowhere else.
 
-Ticked off in the app. The 22:00 review clears these out.
+- [done 2026-08-23 by Jeffery · was: Urgent · opened 2026-08-23] **Jeffery — check the coffee**
+  due: 2026-08-23 09:28
+  for: Jeffery
+  Asked at 06:33 Sunday 23 Aug for a five-minute reminder.
+
+- [done 2026-08-23 by Jeffery · was: Urgent · opened 2026-08-23] **Jeffery — push notifications may not be delivering at all**
+  06:38 Sun 23 Aug: coffee reminder loop was set and stored, no push received. I can't see delivery status from inside a session, so this needs the Claude Code side. Check alongside the unverified 07:00 trigger — likely the same pipeline. Diagnostic: did the coffee item appear in the To do tab? Yes = storage fine, delivery broken. No = it failed earlier.
+
