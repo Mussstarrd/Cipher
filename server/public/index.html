@@ -13,61 +13,107 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Hearth">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=DM+Mono:wght@400;500&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Figtree:wght@400;500;600;800&family=Silkscreen:wght@400;700&display=swap">
 <style>
-:root{--ground:#E8EAED;--surface:#FDFDFE;--surface-2:#DDE0E5;--bubble:#fff;
- --ink:#191C21;--ink-2:#434A54;--ink-3:#6F7883;--rule:#C9CDD4;--rule-2:#B0B6BF;
- --ember:#A83E24;--soft:#F5E4DF;--good:#276A4C}
-@media(prefers-color-scheme:dark){:root{--ground:#0F1216;--surface:#171B21;--surface-2:#20252D;
- --bubble:#1D2229;--ink:#E5E8EC;--ink-2:#AFB7C1;--ink-3:#7C8592;--rule:#272D36;--rule-2:#39414C;
- --ember:#E4805F;--soft:#2E211C;--good:#5FB58C}}
+/* Jazz cup: teal and purple brushstrokes on paper, 1992. */
+:root{
+  --paper:#F4F1E8; --card:#FFFFFF; --sunk:#E9E4D6;
+  --ink:#1B1B1B; --ink-2:#4A4A4A; --ink-3:#84806F;
+  --rule:#D8D3C4; --rule-2:#BDB6A2;
+  --teal:#00898D; --purple:#6E4B9E; --magenta:#C42B5E; --yellow:#E0A100;
+  --shadow:3px 3px 0 var(--ink);
+}
+@media(prefers-color-scheme:dark){:root{
+  --paper:#14121A; --card:#1E1B27; --sunk:#282334;
+  --ink:#F2EFE4; --ink-2:#BDB7C9; --ink-3:#8B849C;
+  --rule:#332D42; --rule-2:#463D5C;
+  --teal:#2FE3E3; --purple:#B98CFF; --magenta:#FF6F9C; --yellow:#FFD23F;
+  --shadow:3px 3px 0 #000;
+}}
 *{box-sizing:border-box}
-body{margin:0;background:var(--ground);color:var(--ink);font-family:Archivo,system-ui,sans-serif;font-size:15px;line-height:1.5}
+body{margin:0;background:var(--paper);color:var(--ink);
+  font-family:Figtree,system-ui,sans-serif;font-size:16px;line-height:1.5;
+  -webkit-text-size-adjust:100%}
 button{font:inherit;color:inherit;cursor:pointer}
-:focus-visible{outline:2px solid var(--ember);outline-offset:2px}
-.app{max-width:620px;margin:0 auto;min-height:100vh;background:var(--surface);
- border-inline:1px solid var(--rule);display:flex;flex-direction:column}
-.hd{position:sticky;top:0;z-index:9;background:var(--surface);border-bottom:1px solid var(--rule);padding:12px 16px 0}
-.row{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
-.mark{font-family:Newsreader,serif;font-size:23px}
-.sub{font-family:"DM Mono",monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);flex:1}
-.chip{font-family:"DM Mono",monospace;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;
- padding:3px 8px;border-radius:99px;border:1px solid var(--rule-2);color:var(--ink-3);background:none}
-.chip.on{color:var(--good);border-color:var(--good)}
-.tabs{display:flex;gap:2px;margin-top:10px}
-.tab{background:none;border:0;padding:9px 13px;font-size:13.5px;font-weight:500;color:var(--ink-3);border-bottom:2px solid transparent}
-.tab[aria-selected=true]{color:var(--ink);border-bottom-color:var(--ember)}
-.who{display:flex;gap:6px;padding:9px 16px;background:var(--surface-2);border-bottom:1px solid var(--rule);flex-wrap:wrap;align-items:center}
-.who>span{font-family:"DM Mono",monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
-.pick{background:var(--surface);border:1px solid var(--rule-2);border-radius:99px;padding:3px 11px;font-size:12.5px;font-weight:500}
-.pick[aria-pressed=true]{background:var(--ember);border-color:var(--ember);color:#fff}
+:focus-visible{outline:3px solid var(--magenta);outline-offset:2px}
+
+.app{max-width:620px;margin:0 auto;min-height:100dvh;background:var(--paper);
+  display:flex;flex-direction:column;border-inline:2px solid var(--ink)}
+
+/* header — sits clear of the iPhone status bar */
+.hd{position:sticky;top:0;z-index:9;background:var(--card);
+  border-bottom:3px solid var(--ink);
+  padding:calc(env(safe-area-inset-top,0px) + 14px) 14px 0}
+.row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-height:44px}
+.mark{font-family:Bungee,system-ui,sans-serif;font-size:22px;letter-spacing:.02em;
+  color:var(--purple);text-shadow:2px 2px 0 var(--teal);line-height:1.1}
+.sub{font-family:Silkscreen,monospace;font-size:9px;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--ink-3);flex:1;min-width:70px}
+.chip{font-family:Silkscreen,monospace;font-size:9px;letter-spacing:.05em;
+  text-transform:uppercase;padding:9px 11px;border:2px solid var(--ink);
+  border-radius:0;background:var(--card);color:var(--ink);box-shadow:2px 2px 0 var(--ink);
+  min-height:38px}
+.chip.on{background:var(--teal);color:#04231F}
+.chip:active{transform:translate(2px,2px);box-shadow:none}
+.tabs{display:flex;gap:6px;margin-top:12px}
+.tab{background:var(--sunk);border:2px solid var(--ink);border-bottom:none;
+  padding:10px 15px;font-family:Bungee,sans-serif;font-size:12px;color:var(--ink-3);
+  border-radius:6px 6px 0 0;position:relative;top:3px}
+.tab[aria-selected=true]{background:var(--purple);color:#fff;top:0;padding-bottom:13px}
+
+.who{display:flex;gap:7px;padding:11px 14px;background:var(--sunk);
+  border-bottom:2px solid var(--ink);flex-wrap:wrap;align-items:center}
+.who>span{font-family:Silkscreen,monospace;font-size:9px;letter-spacing:.05em;
+  text-transform:uppercase;color:var(--ink-3)}
+.pick{background:var(--card);border:2px solid var(--ink);border-radius:999px;
+  padding:8px 14px;font-size:13px;font-weight:600;min-height:38px}
+.pick[aria-pressed=true]{background:var(--magenta);color:#fff}
+
 .pane{display:none;flex:1;flex-direction:column}.pane.on{display:flex}
-.wrap{padding:16px;display:flex;flex-direction:column;gap:14px}
-.report{border:1px solid var(--rule);border-left:2px solid var(--ember);background:var(--soft);
- border-radius:4px 10px 10px 4px;padding:14px 16px;font-family:Newsreader,Georgia,serif;font-size:16px;line-height:1.55;white-space:pre-wrap}
-.report.fail{background:none;border-color:var(--ember)}
-.rmeta{font-family:"DM Mono",monospace;font-size:10px;letter-spacing:.06em;color:var(--ember);
- text-transform:uppercase;margin-bottom:7px;display:block}
+.wrap{padding:16px 14px;display:flex;flex-direction:column;gap:14px}
+
+/* the squiggle */
+.squig{height:18px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='18' viewBox='0 0 140 18'%3E%3Cpath d='M0 9 q17.5 -9 35 0 t35 0 t35 0 t35 0' fill='none' stroke='%2300A3A8' stroke-width='3.5' stroke-linecap='round'/%3E%3Cpath d='M0 14 q17.5 -9 35 0 t35 0 t35 0 t35 0' fill='none' stroke='%236E4B9E' stroke-width='3' stroke-linecap='round' opacity='.85'/%3E%3C/svg%3E");background-repeat:repeat-x;
+  background-position:center;flex:none}
+
+.report{border:3px solid var(--ink);background:var(--card);padding:15px;
+  box-shadow:var(--shadow);white-space:pre-wrap;font-size:16px;line-height:1.55}
+.report.fail{border-color:var(--magenta);box-shadow:3px 3px 0 var(--magenta)}
+.rmeta{font-family:Silkscreen,monospace;font-size:9px;letter-spacing:.06em;
+  color:#fff;background:var(--purple);display:inline-block;padding:5px 8px;
+  margin:-15px -15px 12px;border-bottom:3px solid var(--ink);
+  text-transform:uppercase;width:calc(100% + 30px)}
+.report.fail .rmeta{background:var(--magenta)}
+
 .post{display:flex;flex-direction:column;gap:5px;max-width:88%}
 .post.me{align-self:flex-end;align-items:flex-end}
 .post.h{max-width:100%;align-self:stretch}
-.meta{font-family:"DM Mono",monospace;font-size:10px;color:var(--ink-3);display:flex;gap:7px}
-.meta b{color:var(--ink-2);text-transform:uppercase;font-weight:500}
-.bub{background:var(--bubble);border:1px solid var(--rule);border-radius:13px;padding:10px 13px;white-space:pre-wrap;overflow-wrap:anywhere}
-.post.me .bub{background:var(--surface-2)}
-.post.h .bub{background:var(--soft);border-left:2px solid var(--ember);border-radius:4px 13px 13px 4px;font-family:Newsreader,serif;font-size:16px}
-.post.h .meta b{color:var(--ember)}
-.comp{position:sticky;bottom:0;background:var(--surface);border-top:1px solid var(--rule);padding:10px 12px;display:flex;gap:8px;align-items:flex-end}
-.comp textarea{flex:1;resize:none;background:var(--bubble);color:var(--ink);border:1px solid var(--rule-2);
- border-radius:18px;padding:10px 14px;font:inherit;min-height:40px;max-height:120px}
-.send{background:var(--ember);color:#fff;border:0;border-radius:99px;width:40px;height:40px;flex:none;font-size:17px}
-.send:disabled{opacity:.4}
-.act{display:flex;gap:8px;flex-wrap:wrap;padding:0 16px 16px}
-.act button{background:none;border:1px solid var(--rule-2);border-radius:5px;padding:9px 13px;font-size:13px;color:var(--ink-2)}
-.note{font-size:12px;color:var(--ink-3);padding:0 16px 28px;line-height:1.55}
+.meta{font-family:Silkscreen,monospace;font-size:9px;color:var(--ink-3);display:flex;gap:7px}
+.meta b{color:var(--purple)}
+.bub{background:var(--card);border:2px solid var(--ink);padding:11px 13px;
+  box-shadow:2px 2px 0 var(--ink);white-space:pre-wrap;overflow-wrap:anywhere}
+.post.me .bub{background:var(--teal);color:#04231F;border-color:var(--ink)}
+.post.h .bub{background:var(--card);border-left:7px solid var(--purple)}
+.post.h .meta b{color:var(--purple)}
+
+.comp{position:sticky;bottom:0;background:var(--card);border-top:3px solid var(--ink);
+  padding:10px 12px calc(env(safe-area-inset-bottom,0px) + 10px);
+  display:flex;gap:9px;align-items:flex-end}
+.comp textarea{flex:1;resize:none;background:var(--paper);color:var(--ink);
+  border:2px solid var(--ink);padding:11px 13px;font:inherit;font-size:16px;
+  min-height:46px;max-height:130px;border-radius:0}
+.send{background:var(--magenta);color:#fff;border:2px solid var(--ink);
+  width:48px;height:46px;flex:none;font-size:20px;box-shadow:2px 2px 0 var(--ink)}
+.send:active{transform:translate(2px,2px);box-shadow:none}
+.send:disabled{opacity:.45;box-shadow:none}
+
+.act{display:flex;gap:8px;flex-wrap:wrap;padding:0 14px 16px}
+.act button{background:var(--yellow);color:#241C00;border:2px solid var(--ink);
+  padding:11px 14px;font-family:Bungee,sans-serif;font-size:11px;
+  box-shadow:2px 2px 0 var(--ink);min-height:42px}
+.act button:active{transform:translate(2px,2px);box-shadow:none}
+.note{font-size:13px;color:var(--ink-3);padding:0 14px 30px;line-height:1.55}
 .empty{color:var(--ink-3);font-style:italic}
-dialog{border:1px solid var(--rule-2);border-radius:6px;background:var(--surface);color:var(--ink);padding:20px;max-width:320px}
-dialog input{width:100%;padding:9px;margin:10px 0;background:var(--bubble);color:var(--ink);border:1px solid var(--rule-2);border-radius:4px;font:inherit}
 </style>
 </head>
 <body>
@@ -90,7 +136,16 @@ const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&
 const hhmm = (iso) => new Date(iso).toLocaleTimeString("en-GB", { timeZone: "America/New_York", hour: "2-digit", minute: "2-digit" });
 const dayOf = (iso) => new Date(iso).toLocaleDateString("en-GB", { timeZone: "America/New_York", weekday: "short", day: "numeric", month: "short" });
 
-async function load() {
+function isTyping() {
+  const a = document.activeElement;
+  return !!a && (a.tagName === "TEXTAREA" || a.tagName === "INPUT");
+}
+
+async function load(force) {
+  // The background refresh rebuilds the page. Doing that while someone is
+  // mid-sentence deletes what they typed and drops the keyboard — which is
+  // exactly what it looked like: a box that "disappears if you're too slow".
+  if (!force && isTyping()) return;
   try {
     const r = await fetch("/api/state", { headers: pass ? { "x-hearth-pass": pass } : {} });
     if (r.status === 401) { askPass(); return; }
@@ -99,13 +154,18 @@ async function load() {
 }
 
 function askPass() {
+  if (document.getElementById("pi")) return;   // already showing; do not rebuild
   document.getElementById("root").innerHTML =
-    '<div class="hd"><div class="row"><div class="mark">Hearth</div></div></div>' +
-    '<div class="wrap"><p>This is the Fenn household. Enter the family passphrase.</p>' +
-    '<form id="pf"><input id="pi" type="password" autocomplete="current-password" ' +
-    'style="width:100%;padding:11px;border-radius:6px;border:1px solid var(--rule-2);' +
-    'background:var(--bubble);color:var(--ink);font:inherit" placeholder="Passphrase">' +
-    '<button class="send" style="width:auto;padding:0 18px;margin-top:10px;border-radius:6px">Open</button>' +
+    '<div class="hd"><div class="row"><div class="mark">HEARTH</div></div></div>' +
+    '<div class="squig"></div>' +
+    '<div class="wrap"><p style="font-weight:600">This is the Fenn household.</p>' +
+    '<p style="color:var(--ink-3);font-size:14px">Enter the family passphrase. You only ever do this once on this phone.</p>' +
+    '<form id="pf" style="display:flex;gap:9px;align-items:flex-end">' +
+    '<input id="pi" type="password" autocomplete="current-password" enterkeyhint="go" ' +
+    'style="flex:1;padding:13px;border:2px solid var(--ink);background:var(--card);' +
+    'color:var(--ink);font:inherit;font-size:16px;box-shadow:2px 2px 0 var(--ink)" ' +
+    'placeholder="Passphrase">' +
+    '<button class="send" style="width:auto;padding:0 18px">GO</button>' +
     '</form></div>';
   document.getElementById("pf").onsubmit = (e) => {
     e.preventDefault();
@@ -134,6 +194,9 @@ function chatView() {
 }
 
 function render() {
+  const a = document.activeElement;
+  const keep = a && (a.tagName === "TEXTAREA" || a.tagName === "INPUT") && a.id
+    ? { id: a.id, val: a.value, s: a.selectionStart, e: a.selectionEnd } : null;
   $("#root").innerHTML = `
   <div class="hd"><div class="row"><div class="mark">Hearth</div>
     <div class="sub">${esc(S.now.hm || "")} &middot; ${S.slots.length} wakes daily</div>
@@ -142,12 +205,21 @@ function render() {
       <button class="tab" data-t="now" aria-selected="${tab === "now"}">Reports</button>
       <button class="tab" data-t="chat" aria-selected="${tab === "chat"}">Channel</button>
     </div></div>
+  <div class="squig"></div>
   <div class="who"><span>You are</span>${PEOPLE.map((p) => `<button class="pick" data-me="${p}" aria-pressed="${p === me}">${p}</button>`).join("")}</div>
   <div class="pane ${tab === "now" ? "on" : ""}"><div class="wrap">${reportsView()}</div>
     <div class="act">${S.slots.map((s) => `<button data-wake="${s}">Run ${s} now</button>`).join("")}</div>
     <p class="note">Hearth hibernates between wakes. At ${S.slots.join(", ")} Eastern it reads its own memory, works out what matters, writes down what it learned, and notifies everyone. The 22:00 wake also rewrites its memory — that is the one that makes tomorrow better than today.</p></div>
   <div class="pane ${tab === "chat" ? "on" : ""}">${chatView()}</div>`;
   wire();
+  if (keep) {
+    const el = document.getElementById(keep.id);
+    if (el) {
+      el.value = keep.val;
+      el.focus({ preventScroll: true });
+      try { el.setSelectionRange(keep.s, keep.e); } catch (_) {}
+    }
+  }
 }
 
 function wire() {
@@ -157,7 +229,7 @@ function wire() {
   });
   document.querySelectorAll("[data-wake]").forEach((b) => b.onclick = async () => {
     b.disabled = true; b.textContent = "thinking…";
-    await post("/api/wake", { slot: b.dataset.wake }); await load();
+    await post("/api/wake", { slot: b.dataset.wake }); await load(true);
   });
   $("#notif") && ($("#notif").onclick = enablePush);
   const ta = $("#msg"), snd = $("#send");
@@ -169,8 +241,8 @@ function wire() {
       const text = ta.value.trim(); if (!text) return;
       ta.value = ""; snd.disabled = true;
       await post("/api/message", { who: me, text });
-      await load();
-      setTimeout(load, 4000); setTimeout(load, 9000);   // Hearth answers a moment later
+      await load(true);
+      setTimeout(() => load(true), 4000); setTimeout(() => load(true), 9000);   // Hearth answers a moment later
     };
   }
 }
