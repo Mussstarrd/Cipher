@@ -394,6 +394,9 @@ const server = http.createServer(async (req, res) => {
         calendars: feeds(),
         build: { running: BOOT.rev, builtAt: BOOT.at, since: BOOT.started, repo: repoNow().rev,
                  nextCheck: nextUpdateCheck() },
+        // The server's truth about which phones a push can actually reach —
+        // the phone-side flag lies the moment a subscription is pruned.
+        pushPhones: s.subs.map((x) => x.who || "an unnamed phone"),
         needsPass: Boolean(PASS),
       });
     }

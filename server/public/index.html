@@ -251,6 +251,21 @@ const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&
 const hhmm = (iso) => new Date(iso).toLocaleTimeString("en-GB", { timeZone: "America/New_York", hour: "2-digit", minute: "2-digit" });
 const dayOf = (iso) => new Date(iso).toLocaleDateString("en-GB", { timeZone: "America/New_York", weekday: "short", day: "numeric", month: "short" });
 
+// Push subscriptions die on the push service's schedule, and the server
+// prunes dead ones — so a phone can believe it is registered while the server
+// holds nothing. Re-register on every open: pruned heals, name-tags refresh,
+// and the chip stops guessing.
+async function healPush() {
+  try {
+    if (typeof Notification === "undefined" || Notification.permission !== "granted") return;
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.getSubscription();
+    if (!sub) { try { localStorage.removeItem("hearth.subscribed"); } catch (e) {} return; }
+    const r = await post("/api/subscribe", { sub });
+    if (r && r.ok) { try { localStorage.setItem("hearth.subscribed", "1"); } catch (e) {} }
+  } catch (e) { /* offline; next open tries again */ }
+}
+
 function isTyping() {
   const a = document.activeElement;
   return !!a && (a.tagName === "TEXTAREA" || a.tagName === "INPUT");
@@ -270,6 +285,7 @@ async function load(force) {
     if (r.status === 401) { askPass(); return; }
     const wasNear = nearBottom();
     S = await r.json();
+    if (!load.healed) { load.healed = true; healPush(); }
     if (lastCount >= 0 && S.messages.length > lastCount && wasNear) stick = true;
     lastCount = S.messages.length;
     render();
@@ -474,6 +490,7 @@ function render() {
     <p class="note">Hearth hibernates between wakes. At ${S.slots.join(", ")} Eastern it reads its own memory, works out what matters, writes down what it learned, and notifies everyone. The 22:00 wake also rewrites its memory — that is the one that makes tomorrow better than today.</p></div>
   <div class="pane ${tab === "loops" ? "on" : ""}">${loopsView()}</div>
   <div class="pane ${tab === "chat" ? "on" : ""}">${chatView()}</div>
+  ${S.pushPhones ? `<div class="bld" style="padding-bottom:0">notifications reach: <b>${S.pushPhones.length ? S.pushPhones.map(esc).join(", ") : "NOBODY — tap Notify me on each phone"}</b></div>` : ""}
   ${S.build ? `<div class="bld">build <b>${esc(S.build.running)}</b>${S.build.builtAt ? ` &middot; ${esc(dayOf(S.build.builtAt))} ${esc(hhmm(S.build.builtAt))}` : ""} &middot; up since ${esc(hhmm(S.build.since))}${S.build.repo && S.build.repo !== S.build.running ? ` &middot; <span class="new">new ${esc(S.build.repo)} pulled</span>` : ""}${S.build.nextCheck ? ` &middot; next check ${esc(hhmm(S.build.nextCheck))}` : ""}</div>` : ""}`;
   wire();
   if (tab === "chat" && stick) {
