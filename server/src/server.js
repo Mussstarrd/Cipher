@@ -435,6 +435,12 @@ const server = http.createServer(async (req, res) => {
             // from the model's prose, which had promised a 06:38 push over a
             // loop with no time at all.
             const a = loops.add({ section: l.section, title: l.title, detail: l.detail, day, due: l.due, for: l.for });
+            if (a.ok && a.due && a.id) {
+              // A fresh or corrected time must fire even if this loop fired
+              // before — the retry IS the request to fire again.
+              const st0 = loadState();
+              if (st0.reminded && st0.reminded[a.id]) { delete st0.reminded[a.id]; saveState(st0); }
+            }
             if (a.ok && !a.duplicate) opened.push(
               a.due ? `${a.title} — push at ${a.due}${l.for ? ` for ${l.for}` : ""}` :
               a.dueDropped ? `${a.title} — the time did not parse, NO push is set` : a.title);
@@ -534,6 +540,10 @@ const server = http.createServer(async (req, res) => {
           const opened = [];
           for (const l of r.loops || []) {
             const a = loops.add({ section: l.section, title: l.title, detail: l.detail, day, due: l.due, for: l.for });
+            if (a.ok && a.due && a.id) {
+              const st0 = loadState();
+              if (st0.reminded && st0.reminded[a.id]) { delete st0.reminded[a.id]; saveState(st0); }
+            }
             if (a.ok && !a.duplicate) opened.push(a.due ? `${a.title} — push at ${a.due}` : a.title);
           }
           const tail = opened.length

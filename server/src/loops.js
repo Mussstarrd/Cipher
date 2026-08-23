@@ -156,10 +156,18 @@ export function add({ section = "This week", title, detail = "", day, due = "", 
   const lines = src.split("\n");
   const clean = title.replace(/\*/g, "").replace(/\s+/g, " ").trim();
 
-  // Never open the same loop twice. Two identical reminders is how a list stops
-  // being read.
-  if (parse().some((b) => b.id === idOf(label(clean)))) {
-    return { ok: true, duplicate: true, title: clean };
+  // Never open the same loop twice — but a repeat WITH a time is not a
+  // duplicate, it is a correction. Jeffery asked for the coffee timer four
+  // times this morning; each retry matched the first loop's title, the
+  // dedupe threw the new time away, and nothing ever fired. A time on a
+  // repeat now updates the existing loop and re-opens it if it was ticked.
+  const id = idOf(label(clean));
+  const existing = parse().find((b) => b.id === id);
+  if (existing) {
+    const d = String(due).match(/^(\d{4}-\d{2}-\d{2})(?:[ T](\d{2}:\d{2}))?/) ||
+              String(due).match(/^(\d{1,2}):(\d{2})$/);
+    if (!d) return { ok: true, duplicate: true, id, title: clean };
+    return setDue(id, due, person, day);
   }
 
   const body = detail
@@ -192,5 +200,33 @@ export function add({ section = "This week", title, detail = "", day, due = "", 
   lines.splice(i, 0, ...block);
 
   fs.writeFileSync(FILE, lines.join("\n").replace(/\n{3,}/g, "\n\n"));
-  return { ok: true, title: clean, due: dueKept || null, dueDropped: Boolean(due && !dueKept) };
+  return { ok: true, id: idOf(label(clean)), title: clean, due: dueKept || null, dueDropped: Boolean(due && !dueKept) };
+}
+
+/** Re-time an existing loop: replace its due/for lines, reopen it if done. */
+export function setDue(id, due, person = "", day) {
+  const b = parse().find((x) => x.id === id);
+  if (!b) return { ok: false, error: "no such loop" };
+  if (b.done) setDone(id, false, person || "someone", day);
+
+  const full = String(due).match(/^(\d{4}-\d{2}-\d{2})(?:[ T](\d{2}:\d{2}))?/);
+  const bare = String(due).match(/^(\d{1,2}):(\d{2})$/);
+  const dueKept = full ? `${full[1]}${full[2] ? ` ${full[2]}` : ""}`
+    : bare ? `${day} ${bare[1].padStart(2, "0")}:${bare[2]}` : "";
+  if (!dueKept) return { ok: false, error: "unparseable time" };
+
+  const src = read();
+  const lines = src.split("\n");
+  const cur = parse().find((x) => x.id === id);   // re-parse after a possible reopen
+  const at = lines.findIndex((l) => l === cur.lines[0]);
+  if (at < 0) return { ok: false, error: "could not locate the loop" };
+  // strip old due:/for: from the body, insert fresh ones right under the head
+  let end = at + 1;
+  while (end < lines.length && !lines[end].startsWith("- [") && !HEAD.test(lines[end])) end++;
+  const body = lines.slice(at + 1, end).filter((l) => !DUE.test(l) && !FOR.test(l));
+  const fresh = [`  due: ${dueKept}`];
+  if (person && /^[A-Za-z][\w'-]{0,30}$/.test(person)) fresh.push(`  for: ${person}`);
+  lines.splice(at + 1, end - at - 1, ...fresh, ...body);
+  fs.writeFileSync(FILE, lines.join("\n").replace(/\n{3,}/g, "\n\n"));
+  return { ok: true, id, title: cur.title, due: dueKept, updated: true };
 }
