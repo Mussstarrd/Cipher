@@ -142,7 +142,7 @@ async function runSlot(slot, { forced = false, late = 0 } = {}) {
     const subs = await notify(loadState().subs, {
       title: `Hearth — ${slot}${late ? " (late)" : ""}`,
       body: text.split("\n").filter(Boolean)[0]?.slice(0, 140) || "Your check-in is ready.",
-      url: URL_BASE,
+      url: URL_BASE, tag: `hearth-checkin-${slot}`,
     });
 
     // Reload before writing. The wake is tens of seconds of model call, and
@@ -247,7 +247,7 @@ async function remindTick(day, hm) {
     appendDaily(`- reminder fired (${l.due}${l.for ? `, for ${l.for}` : ""}): ${l.title}`);
     if (targets.length) {
       try {
-        await notify(targets, { title: "Hearth reminder", body: l.title, url: URL_BASE });
+        await notify(targets, { title: "Hearth reminder", body: l.title, url: URL_BASE, tag: `hearth-remind-${l.id}` });
       } catch { /* logged above; the To do tab still shows it */ }
     }
   }
@@ -474,7 +474,7 @@ const server = http.createServer(async (req, res) => {
             // lock screen would be the exact leak the rooms exist to prevent.
             const parents = st.subs.filter((x) => x.who === "Jeffery" || x.who === "Suzan");
             if (parents.length) {
-              try { await notify(parents, { title: "Hearth", body: `A safety note about ${who} is in the Adults thread.`, url: URL_BASE }); }
+              try { await notify(parents, { title: "Hearth", body: `A safety note about ${who} is in the Adults thread.`, url: URL_BASE, tag: "hearth-adults" }); }
               catch { /* the message is still in the thread */ }
             }
           }
@@ -686,6 +686,7 @@ const server = http.createServer(async (req, res) => {
       if (!mine.length) return send(res, 404, { error: "this phone has no registered subscription here — tap Notify me first" });
       const results = await notifyVerbose(mine, {
         title: "Hearth test", body: "Push delivery works on this phone.", url: URL_BASE,
+        tag: "hearth-test",
       });
       appendDaily(`- push test by ${nameFor(s, b.device) || "someone"}: ${results.map((r) => r.ok ? `accepted by ${r.host}` : `FAILED ${r.status || r.error}`).join("; ")}`);
       return send(res, 200, { results });
