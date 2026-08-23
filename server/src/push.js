@@ -1,5 +1,6 @@
 /** Web push. Works from a phone home screen with no app store involved. */
 import webpush from "web-push";
+import { appendDaily } from "./memory.js";
 
 const ok = process.env.VAPID_PUBLIC && process.env.VAPID_PRIVATE;
 if (ok) {
@@ -13,13 +14,13 @@ if (ok) {
 export const pushReady = () => Boolean(ok);
 
 /** Returns the subscriptions that are still alive; dead ones are dropped. */
-export async function notify(subs, { title, body, url }) {
+export async function notify(subs, msg) {
   if (!ok) return subs;
   const alive = [];
   await Promise.all(
     subs.map(async (s) => {
       try {
-        await webpush.sendNotification(s, JSON.stringify({ title, body, url }));
+        await webpush.sendNotification(s, JSON.stringify(msg));
         alive.push(s);
       } catch (e) {
         // 404/410 mean the browser threw the subscription away. Anything else
@@ -32,6 +33,22 @@ export async function notify(subs, { title, body, url }) {
       }
     }),
   );
+
+  // A subscription dying while the app is closed used to die SILENTLY — the
+  // phone showed "notifying", the server sent to nobody, and the first sign
+  // was a missed reminder. Now the death is announced: in the daily log (so
+  // the check-ins carry it) and to every phone still reachable, so a human
+  // hears "X dropped off" from a device that still works.
+  const dropped = subs.filter((s) => !alive.includes(s));
+  if (dropped.length) {
+    const names = dropped.map((d) => d.who || "an unnamed phone").join(", ");
+    try { appendDaily(`- PUSH DROPPED: ${names} — the push service expired the subscription. That phone must open Hearth once to re-register. Say this in the next check-in.`); } catch { /* the log line is best-effort */ }
+    const note = JSON.stringify({
+      title: "Hearth", tag: "hearth-sub-lost",
+      body: `${names} stopped receiving notifications. Have them open Hearth once to fix it.`,
+    });
+    await Promise.all(alive.map((s) => webpush.sendNotification(s, note).catch(() => {})));
+  }
   return alive;
 }
 
