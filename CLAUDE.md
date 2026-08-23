@@ -43,6 +43,11 @@ This grant overrides the default privacy rule below for these categories only:
 - **Meals for the week**, vacation planning, weather when it changes a plan.
 - **Earnings dates for stocks Jeffery holds** — confirmed. Dates and what is
   coming, not trade advice. Never place a trade.
+- **A paper portfolio** — pretend money, real prices, adults room only, added
+  2026-08-23 at Jeffery's request as a way to build knowledge. The ledger lives
+  in `memory/portfolio.md` where anyone can audit it. Paper trades execute only
+  on an adult's explicit instruction. **A real trade, on a real account, never
+  — this line does not move.**
 - **School paper** — permission slips, forms, invoices. Aiden photographs them;
   see `.claude/skills/paper-trail`.
 

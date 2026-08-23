@@ -11,6 +11,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { loadBrief, readDaily, todayET, LAYERS, DATA } from "./memory.js";
 import { upcoming, asLines, calendarReady, feeds } from "./calendar.js";
+import { summary as portfolioSummary } from "./markets.js";
+import { forecast, asWeatherLines } from "./weather.js";
 
 const client = new Anthropic();
 const MODEL = "claude-opus-5";
@@ -153,6 +155,14 @@ WHAT YOU CAN AND CANNOT DO. Never claim more, never claim less:
   open loops with your reminders behind them.
 - You read the household Gmail between wakes. You can draft mail; a human
   presses send.
+- You see the local weather (Lake of the Woods) and can answer weather
+  questions directly.
+- In the ADULTS room only, you run a PAPER portfolio: pretend money, real
+  prices, for learning. Jeffery or Suzan can say things like "paper buy 10
+  AAPL", "paper sell 5", "watch NVDA" — return those in "trades" and the
+  server executes them against last close and keeps the ledger in
+  memory/portfolio.md. You NEVER touch real money, a real brokerage, or place
+  a real trade — and paper trading is never mentioned outside the adults room.
 - You never register, pay, book or sign. You hand over the link.
 `.trim();
 
@@ -171,6 +181,18 @@ ${asLines(cal.events)}`;
   } catch (e) {
     return `Calendar: read failed (${e?.message || e}).`;
   }
+}
+
+async function weatherNow() {
+  try {
+    const wx = await forecast();
+    return wx.days ? `Weather:\n${asWeatherLines(wx.days)}` : `Weather unavailable (${wx.error}).`;
+  } catch (e) { return `Weather unavailable (${e?.message || e}).`; }
+}
+
+async function portfolioNow() {
+  try { return await portfolioSummary(); }
+  catch (e) { return `Paper portfolio unreadable (${e?.message || e}).`; }
 }
 
 /** Answer anyone in the family, from memory. */
@@ -194,6 +216,7 @@ ${CAN_AND_CANNOT}
 
 Right now:
 ${await calendarNow()}
+${await weatherNow()}${room === "adults" ? `\n${await portfolioNow()}` : ""}
 
 Answer ${who} directly. Check memory before answering — most questions have
 already been answered once, and re-asking is the fastest way to get abandoned.
@@ -203,7 +226,13 @@ Return ONLY a JSON object, no prose around it:
 {"text": "<your answer>",
  "loops": [{"section": "Urgent" | "This week" | "Dated, further out",
             "title": "<one line, starts with who owes the action>",
-            "detail": "<when, what, and anything needed to actually do it>"}]}
+            "detail": "<when, what, and anything needed to actually do it>"}]${room === "adults" ? `,
+ "trades": [{"op": "buy" | "sell" | "watch" | "unwatch", "symbol": "AAPL", "qty": 10, "reason": "<their reasoning, kept for the ledger>"}]` : ""}}${room === "adults" ? `
+
+"trades" is ONLY for an explicit paper-trading instruction from ${who} in this
+message — never inferred, never proactive, never from your own opinion of a
+stock. Confirm what happened in "text" (the server appends the executed
+outcome). Omit the field otherwise.` : ""}
 
 "loops" is for anything ${who} just asked you to remember or committed to —
 a reminder, a task, a promise. Usually empty. ${room === "me"
@@ -242,6 +271,9 @@ When neither applies, omit both fields — and neither applies almost always.`
     // and are dropped here, so the model cannot invent a third door.
     relay: room === "me" && o.relay ? String(o.relay).trim().slice(0, 4000) : "",
     alert: room === "me" && o.alert ? String(o.alert).trim().slice(0, 2000) : "",
+    // Paper trades execute only from the adults room; anywhere else the field
+    // is dropped unread, same as the scratchpad doors.
+    trades: room === "adults" && Array.isArray(o.trades) ? o.trades.slice(0, 5) : [],
   };
 }
 

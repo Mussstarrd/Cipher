@@ -445,8 +445,18 @@ function wire() {
   const cc = $("#clearch");
   if (cc) cc.onclick = async () => {
     if (!confirm("Clear every message in the channel?\n\nMemory is not touched — Hearth keeps everything it has learned.")) return;
-    const r = await post("/api/clear-channel", {});
-    if (r && r.ok) load(true); else alert(r && r.error ? r.error : "Refused.");
+    let r = await post("/api/clear-channel", {});
+    // The stored adults passphrase can be stale (changed on another phone). A
+    // dead-end alert taught nobody anything — ask for the word and retry once.
+    if (r && r.error === "adults only") {
+      const v = prompt("Adults passphrase");
+      if (!v) return;
+      apass = v.trim();
+      try { localStorage.setItem("hearth.apass", apass); } catch (e) {}
+      r = await post("/api/clear-channel", {});
+    }
+    if (r && r.ok) { alert(`Cleared ${r.cleared} messages. Memory untouched.`); load(true); }
+    else alert(r && r.error ? r.error : "Refused.");
   };
   $("#notif") && ($("#notif").onclick = enablePush);
   // Unlocking the adults side happens ONCE per phone: the passphrase is kept

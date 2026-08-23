@@ -22,6 +22,7 @@ import {
 import { SLOTS, dueSlot, GRACE_MIN, MAX_TRIES } from "./schedule.js";
 import { wakeContext } from "./context.js";
 import * as loops from "./loops.js";
+import { paperTrade } from "./markets.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const PUB = path.resolve(here, "..", "public");
@@ -341,9 +342,18 @@ const server = http.createServer(async (req, res) => {
             const a = loops.add({ section: l.section, title: l.title, detail: l.detail, day });
             if (a.ok && !a.duplicate) opened.push(a.title);
           }
-          const reply = r.text + (opened.length
-            ? `\n\nOn the To do list now: ${opened.join("; ")}.`
-            : "");
+          // Paper trades: adults room only (brain drops the field elsewhere).
+          // Executed here so the ledger and the refusal lines are the server's,
+          // not the model's word for what happened.
+          const executed = [];
+          for (const t of r.trades || []) {
+            const out = await paperTrade({ ...t, who });
+            executed.push(out.line);
+            appendDaily(`- [adults] paper trade by ${who}: ${out.line}`);
+          }
+          const reply = r.text
+            + (executed.length ? `\n\n${executed.join("\n")}` : "")
+            + (opened.length ? `\n\nOn the To do list now: ${opened.join("; ")}.` : "");
           const st = loadState();
           st.messages.push({ id: `h${Date.now()}`, who: "Hearth", text: reply, room, ...(owner ? { owner } : {}), at: new Date().toISOString() });
 

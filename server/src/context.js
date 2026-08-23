@@ -9,6 +9,8 @@
  */
 import { upcoming, asLines, calendarReady } from "./calendar.js";
 import { backupReady } from "./backup.js";
+import { forecast, asWeatherLines } from "./weather.js";
+import { summary as portfolioSummary, loadBook } from "./markets.js";
 
 /**
  * @param slot  which check-in
@@ -20,6 +22,10 @@ export async function wakeContext(slot, s, late = 0) {
   const since = s.reports?.[0]?.at || new Date(Date.now() - 864e5).toISOString();
   const fresh = (s.mail || []).filter((m) => m.at > since);
   const cal = await upcoming(8);
+  const wx = await forecast();
+  const book = loadBook();
+  const hasPaper = Object.keys(book.positions).length > 0 || book.watch.length > 0;
+  const paper = hasPaper ? await portfolioSummary() : "";
 
   const extra = [
     calendarReady()
@@ -37,6 +43,14 @@ export async function wakeContext(slot, s, late = 0) {
 
     cal.error
       ? `WARNING: a calendar failed to load (${cal.error}). Say so; do not present this as an empty week.`
+      : "",
+
+    wx.days
+      ? `Weather, Lake of the Woods:\n${asWeatherLines(wx.days)}\nMention weather ONLY when it changes a plan — practice under a thunderstorm forecast, a pool party against rain, a hard freeze. A pleasant day is not a line in a check-in.`
+      : (wx.error ? `WARNING: weather could not be fetched (${wx.error}).` : ""),
+
+    paper
+      ? `${paper}\nThe paper portfolio is pretend money for learning. Everything about it is MONEY and belongs in the adults part of the check-in, never the family part. Mention it at 07:00 and 17:00 only, one or two lines, and only if something moved or a watch-listed ticker did something notable.`
       : "",
 
     fresh.length
