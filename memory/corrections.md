@@ -15,6 +15,11 @@ Format: `- [YYYY-MM-DD] Believed X. <name> corrected: Y.`
   the old belief — including in memory/daily/2026-08-22.md — is wrong and must
   not be promoted.
 
+- [2026-08-23] Wrote for Aiden at a third-grade level. **Jeffery corrected:
+  fifth grade. He is in fourth grade and he is smart — pitch a notch above his
+  grade so it stays engaging, never babyish.** Talking down to him is as much
+  a failure as talking over him.
+
 - [2026-08-22] Believed a name chosen from a list identified who was writing.
   **Jeffery corrected: "so that I can never say he said she said they said."**
   Attribution is bound to the device, decided by the server, and a claimed name

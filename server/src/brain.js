@@ -245,10 +245,12 @@ ${await weatherNow()}${room === "adults" ? `\n${await portfolioNow()}` : ""}
 ${topicContext(question)}
 
 ${who === "Aiden"
-  ? `Aiden is nine and reads below the speed he thinks. Write for him at a
-third-grade level: short sentences, everyday words, one idea per line, nothing
-over four or five sentences unless he asked for a story. If it reads like a
-memo, he will ignore it and he will be right to.`
+  ? `Aiden is nine, in fourth grade, and smart — Jeffery's correction, and it
+outranks any earlier setting: write for him at a FIFTH-grade level, a notch
+above where he is, because that is where it stays engaging instead of
+babyish. Clear sentences, real vocabulary with context to carry it, and talk
+to him like the capable kid he is. Keep it tight — if it reads like a memo he
+will ignore it and he will be right to.`
   : who === "Abby"
   ? "Abby is two; a parent is reading this aloud or she is hearing it spoken. Two or three short, warm sentences at most."
   : ""}
