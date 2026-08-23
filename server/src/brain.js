@@ -10,6 +10,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import fs from "node:fs";
 import path from "node:path";
 import { loadBrief, readDaily, todayET, LAYERS, DATA } from "./memory.js";
+import { upcoming, asLines, calendarReady, feeds } from "./calendar.js";
 
 const client = new Anthropic();
 const MODEL = "claude-opus-5";
@@ -132,6 +133,39 @@ the existence of the other.`;
   }
 }
 
+const CAN_AND_CANNOT = `
+WHAT YOU CAN AND CANNOT DO. Never claim more, never claim less:
+- You READ the connected calendar feeds. They are iCal feeds and iCal is
+  read-only: you CANNOT create, change or delete an event on any calendar —
+  not the assistant's, not anyone's. When someone asks you to put something on
+  a calendar, say that plainly and offer what you actually have: you keep the
+  reminder yourself, it shows in the To do tab, and the check-ins carry it. An
+  adult who wants it on Google Calendar adds it there by hand and you will see
+  it in the feed within the hour.
+- You CAN remember things: return them in "loops" and they become tracked
+  open loops with your reminders behind them.
+- You read the household Gmail between wakes. You can draft mail; a human
+  presses send.
+- You never register, pay, book or sign. You hand over the link.
+`.trim();
+
+/** What the calendar feeds hold right now, named honestly. */
+async function calendarNow() {
+  if (!calendarReady()) return "Calendar: no feeds connected yet. An adult can add one in the app.";
+  const names = feeds().map((f) => f.label).join(", ") || "unlabelled";
+  try {
+    const cal = await upcoming(8);
+    if (cal.error) return `Calendar: a feed failed to load (${cal.error}).`;
+    if (cal.events.length) return `Calendar feeds connected (${names}), next 8 days:
+${asLines(cal.events)}`;
+    return cal.total === 0
+      ? `Calendar feeds connected (${names}) but EMPTY at any date — nobody has put events on them yet.`
+      : `Calendar feeds connected (${names}); nothing in the next 8 days.`;
+  } catch (e) {
+    return `Calendar: read failed (${e?.message || e}).`;
+  }
+}
+
 /** Answer anyone in the family, from memory. */
 export async function answer(who, question, recent = [], room = "family") {
   const system = `You are Hearth, this household's assistant.\n\n${context()}\n\n${ROOMS}\n\n${VOICE}\n\n` +
@@ -149,10 +183,33 @@ ${question}
 Recent channel messages for context:
 ${thread || "(none)"}
 
+${CAN_AND_CANNOT}
+
+Right now:
+${await calendarNow()}
+
 Answer ${who} directly. Check memory before answering — most questions have
 already been answered once, and re-asking is the fastest way to get abandoned.
-If you do not know, say so and say you will find out.`;
-  return ask(system, user, 2000);
+If you do not know, say so and say you will find out.
+
+Return ONLY a JSON object, no prose around it:
+{"text": "<your answer>",
+ "loops": [{"section": "Urgent" | "This week" | "Dated, further out",
+            "title": "<one line, starts with who owes the action>",
+            "detail": "<when, what, and anything needed to actually do it>"}]}
+
+"loops" is for anything ${who} just asked you to remember or committed to —
+a reminder, a task, a promise. Usually empty. ${room === "me"
+  ? 'THIS IS A PRIVATE SCRATCHPAD: "loops" must ALWAYS be empty here — the To do list is shared, and nothing leaves this room. If something deserves tracking, say so and let them post it in Family themselves.'
+  : "Open one when it is asked for or clearly promised, not for every mention of the future."}`;
+
+  const raw = await ask(system, user, 2500);
+  const o = tryParse(raw);
+  if (!o) return { text: raw, loops: [] };
+  return {
+    text: String(o.text || "").trim() || raw,
+    loops: room === "me" ? [] : (Array.isArray(o.loops) ? o.loops.slice(0, 3) : []),
+  };
 }
 
 /**

@@ -331,7 +331,19 @@ const server = http.createServer(async (req, res) => {
           const recent = loadState().messages
             .filter((m) => (m.room || "family") === room && (room !== "me" || m.owner === who))
             .slice(-8);
-          const reply = await answer(who, text, recent, room);
+          const r = await answer(who, text, recent, room);
+          // Anything the family asked Hearth to remember becomes a tracked
+          // loop, not a sentence that scrolls away. Never from a scratchpad —
+          // the To do list is shared and nothing leaves a private room.
+          const day = todayET();
+          const opened = [];
+          for (const l of r.loops || []) {
+            const a = loops.add({ section: l.section, title: l.title, detail: l.detail, day });
+            if (a.ok && !a.duplicate) opened.push(a.title);
+          }
+          const reply = r.text + (opened.length
+            ? `\n\nOn the To do list now: ${opened.join("; ")}.`
+            : "");
           const st = loadState();
           st.messages.push({ id: `h${Date.now()}`, who: "Hearth", text: reply, room, ...(owner ? { owner } : {}), at: new Date().toISOString() });
           saveState(st);
@@ -566,7 +578,10 @@ const server = http.createServer(async (req, res) => {
         ".json": "application/json", ".css": "text/css", ".png": "image/png",
         ".svg": "image/svg+xml", ".ico": "image/x-icon",
         ".webmanifest": "application/manifest+json" }[ext] || "application/octet-stream";
-      res.writeHead(200, { "content-type": type });
+      // Icons may cache for a day; everything that carries behaviour must
+      // revalidate every load, or a fix exists on the server and nobody has it.
+      const cache = ext === ".png" || ext === ".ico" ? "public, max-age=86400" : "no-cache";
+      res.writeHead(200, { "content-type": type, "cache-control": cache });
       return res.end(fs.readFileSync(p));
     }
     return send(res, 404, { error: "not found" });

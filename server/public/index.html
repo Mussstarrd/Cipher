@@ -173,7 +173,6 @@ const open = new Set();
 let me = localStorage.getItem("hearth.me") || "Jeffery";
 let pass = localStorage.getItem("hearth.pass") || "";
 let tab = "now";
-let room = "family";
 let apass = localStorage.getItem("hearth.apass") || "";
 // One id per phone, made once and kept. It is what lets the server say who
 // wrote something without taking the app's word for it.
@@ -382,7 +381,7 @@ function render() {
   <div class="hd"><div class="row"><div class="mark">Hearth</div>
     <div class="sub">${esc(S.now.hm || "")} &middot; ${S.adult ? "adults + family" : "family"}</div>
     <button class="chip ${notifState().cls}" id="notif">${notifState().label}</button>
-    ${S.adultRoomExists ? `<button class="chip ${S.adult ? "adult" : ""}" id="roomsw">${S.adult ? "adults" : "family"}</button>` : ""}</div>
+    ${S.adultRoomExists ? `<button class="chip ${S.adult ? "adult" : ""}" id="roomsw">${S.adult ? "adults: open" : "adults: locked"}</button>` : ""}</div>
     <div class="tabs">
       <button class="tab" data-t="now" aria-selected="${tab === "now"}">Reports</button>
       <button class="tab" data-t="loops" aria-selected="${tab === "loops"}">To do${openCount() ? ` <span style="font-family:Figtree">${openCount()}</span>` : ""}</button>
@@ -450,18 +449,25 @@ function wire() {
     if (r && r.ok) load(true); else alert(r && r.error ? r.error : "Refused.");
   };
   $("#notif") && ($("#notif").onclick = enablePush);
+  // Unlocking the adults side happens ONCE per phone: the passphrase is kept
+  // and every later visit is already unlocked. The chip's click when open is a
+  // deliberate lock (handing the phone to a child), not a toggle — the first
+  // version treated it as a toggle and threw the secret away each tap, which
+  // meant retyping it forever.
   const rs = $("#roomsw");
   if (rs) rs.onclick = () => {
-    if (S.adult) {                       // leave: forget the secret on this device
-      apass = ""; room = "family";
+    if (S.adult) {
+      if (!confirm("Lock the adults side on this phone?\n\nYou would need the adults passphrase to open it again. Only do this if the phone is going into a child's hands.")) return;
+      apass = ""; subtab = "family";
       try { localStorage.removeItem("hearth.apass"); } catch (e) {}
       load(true);
       return;
     }
-    const v = prompt("Adults passphrase");
+    const v = prompt("Adults passphrase — you only do this once on this phone.");
     if (!v) return;
-    apass = v.trim(); room = "adults";
+    apass = v.trim();
     try { localStorage.setItem("hearth.apass", apass); } catch (e) {}
+    subtab = "adults"; stick = true;
     load(true);
   };
   document.querySelectorAll("[data-more]").forEach((b) => b.onclick = () => {
@@ -491,7 +497,7 @@ function wire() {
     if (r && r.ok) {
       // The device that set it is holding it: switch this phone into the
       // adults room immediately rather than asking for the word just typed.
-      apass = v; room = "adults";
+      apass = v; subtab = "adults";
       try { localStorage.setItem("hearth.apass", apass); } catch (err) {}
       load(true);
     } else alert(r && r.error ? r.error : "Refused.");
@@ -595,7 +601,7 @@ function shrink(file, max = 1600, quality = 0.75) {
 async function post(url, data) {
   if (S.needsPass && !pass) { pass = prompt("Family passphrase") || ""; localStorage.setItem("hearth.pass", pass); }
   const r = await fetch(url, { method: "POST", headers: { "content-type": "application/json" },
-    body: JSON.stringify({ ...data, pass, apass, room, device }) });
+    body: JSON.stringify({ pass, apass, device, ...data }) });
   if (r.status === 401) { localStorage.removeItem("hearth.pass"); pass = ""; alert("Wrong passphrase."); }
   return r.json().catch(() => ({}));
 }
