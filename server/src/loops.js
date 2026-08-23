@@ -165,8 +165,16 @@ export function add({ section = "This week", title, detail = "", day, due = "", 
   const body = detail
     ? detail.split("\n").map((l) => "  " + l.trim()).filter((l) => l.trim())
     : [];
-  const d = String(due).match(/^(\d{4}-\d{2}-\d{2})(?:[ T](\d{2}:\d{2}))?/);
-  if (d) body.push(`  due: ${d[1]}${d[2] ? ` ${d[2]}` : ""}`);
+  // "2026-08-23 06:38", "2026-08-23", or bare "06:38" (meaning today). The
+  // first coffee reminder died here: the model sent a bare time, this regex
+  // demanded a date, and the due was dropped WITHOUT A TRACE while the chat
+  // reply promised a push. Parse what people mean, and report what was kept.
+  let dueKept = "";
+  const full = String(due).match(/^(\d{4}-\d{2}-\d{2})(?:[ T](\d{2}:\d{2}))?/);
+  const bare = String(due).match(/^(\d{1,2}):(\d{2})$/);
+  if (full) dueKept = `${full[1]}${full[2] ? ` ${full[2]}` : ""}`;
+  else if (bare) dueKept = `${day} ${bare[1].padStart(2, "0")}:${bare[2]}`;
+  if (dueKept) body.push(`  due: ${dueKept}`);
   if (person && /^[A-Za-z][\w'-]{0,30}$/.test(person)) body.push(`  for: ${person}`);
   const block = [`- [opened ${day}] **${clean}**`, ...body, ""];
 
@@ -184,5 +192,5 @@ export function add({ section = "This week", title, detail = "", day, due = "", 
   lines.splice(i, 0, ...block);
 
   fs.writeFileSync(FILE, lines.join("\n").replace(/\n{3,}/g, "\n\n"));
-  return { ok: true, title: clean };
+  return { ok: true, title: clean, due: dueKept || null, dueDropped: Boolean(due && !dueKept) };
 }

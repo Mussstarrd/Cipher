@@ -511,7 +511,27 @@ function wire() {
     if (r && r.ok) { alert(`Cleared ${r.cleared} messages. Memory untouched.`); load(true); }
     else alert(r && r.error ? r.error : "Refused.");
   };
-  $("#notif") && ($("#notif").onclick = enablePush);
+  const nf = $("#notif");
+  if (nf) nf.onclick = async () => {
+    let registered = false;
+    try { registered = localStorage.getItem("hearth.subscribed") === "1"; } catch (e) {}
+    if (!registered) return enablePush();
+    // Already registered: tapping again is a live end-to-end delivery test.
+    nf.textContent = "testing…";
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.getSubscription();
+      if (!sub) { localStorage.removeItem("hearth.subscribed"); return enablePush(); }
+      const r = await post("/api/test-push", { endpoint: sub.endpoint });
+      const res = (r.results || [])[0];
+      alert(res && res.ok
+        ? "Test sent — the push service accepted it. The notification should appear on this phone within seconds. If it doesn't, the block is on this phone: check Android's notification settings for this app."
+        : "The push FAILED at the server: " + (res ? (res.status || res.error) : (r.error || "unknown")) + "\n\nScreenshot this for the fix.");
+    } catch (e) {
+      alert("Could not run the test: " + (e && e.message ? e.message : e));
+    }
+    load(true);
+  };
   // Unlocking the adults side happens ONCE per phone: the passphrase is kept
   // and every later visit is already unlocked. The chip's click when open is a
   // deliberate lock (handing the phone to a child), not a toggle — the first

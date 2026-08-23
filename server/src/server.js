@@ -13,7 +13,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { wake, answer, review, readPaper } from "./brain.js";
-import { notify, pushReady } from "./push.js";
+import { notify, notifyVerbose, pushReady } from "./push.js";
 import { fetchNew, send as sendMail, mailReady, credentialWarning } from "./mail.js";
 import { calendarReady, feeds, addFeed, removeFeed } from "./calendar.js";
 import { backup, backupReady, backupDir } from "./backup.js";
@@ -429,8 +429,15 @@ const server = http.createServer(async (req, res) => {
           const day = todayET();
           const opened = [];
           for (const l of r.loops || []) {
-            const a = loops.add({ section: l.section, title: l.title, detail: l.detail, day });
-            if (a.ok && !a.duplicate) opened.push(a.title);
+            // due/for were never passed on this path — the coffee reminder's
+            // real killer: the model could send a perfect time and storage
+            // dropped it. The tail below speaks from what was STORED, never
+            // from the model's prose, which had promised a 06:38 push over a
+            // loop with no time at all.
+            const a = loops.add({ section: l.section, title: l.title, detail: l.detail, day, due: l.due, for: l.for });
+            if (a.ok && !a.duplicate) opened.push(
+              a.due ? `${a.title} — push at ${a.due}${l.for ? ` for ${l.for}` : ""}` :
+              a.dueDropped ? `${a.title} — the time did not parse, NO push is set` : a.title);
           }
           // Paper trades: adults room only (brain drops the field elsewhere).
           // Executed here so the ledger and the refusal lines are the server's,
@@ -527,7 +534,7 @@ const server = http.createServer(async (req, res) => {
           const opened = [];
           for (const l of r.loops || []) {
             const a = loops.add({ section: l.section, title: l.title, detail: l.detail, day, due: l.due, for: l.for });
-            if (a.ok && !a.duplicate) opened.push(a.title);
+            if (a.ok && !a.duplicate) opened.push(a.due ? `${a.title} — push at ${a.due}` : a.title);
           }
           const tail = opened.length
             ? `\n\nOpen loop${opened.length > 1 ? "s" : ""} added: ${opened.join("; ")}.`
@@ -665,6 +672,23 @@ const server = http.createServer(async (req, res) => {
       // Memory is untouched on purpose: the thread is scratch, memory is the product.
       appendDaily(`- channel cleared by an adult (${n} messages). Memory untouched.`);
       return send(res, 200, { ok: true, cleared: n });
+    }
+
+    // The only real test of push is a push. The chip, once subscribed, sends
+    // one through the full pipeline to THIS phone and reports what the push
+    // service actually said — delivery stops being a matter of faith.
+    if (req.method === "POST" && u.pathname === "/api/test-push") {
+      const b = await body(req);
+      if (!authed(b)) return send(res, 401, { error: "wrong passphrase" });
+      if (!pushReady()) return send(res, 400, { error: "push is not configured on the server" });
+      const s = loadState();
+      const mine = s.subs.filter((x) => x.endpoint === String(b.endpoint || ""));
+      if (!mine.length) return send(res, 404, { error: "this phone has no registered subscription here — tap Notify me first" });
+      const results = await notifyVerbose(mine, {
+        title: "Hearth test", body: "Push delivery works on this phone.", url: URL_BASE,
+      });
+      appendDaily(`- push test by ${nameFor(s, b.device) || "someone"}: ${results.map((r) => r.ok ? `accepted by ${r.host}` : `FAILED ${r.status || r.error}`).join("; ")}`);
+      return send(res, 200, { results });
     }
 
     if (req.method === "POST" && u.pathname === "/api/subscribe") {
