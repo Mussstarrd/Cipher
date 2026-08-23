@@ -666,8 +666,13 @@ const server = http.createServer(async (req, res) => {
       s.devices = s.devices || {};
       const existing = s.devices[device];
       // Reassigning a device is how attribution gets laundered. Adults only.
-      if (existing && existing !== who && !(adultPass() && b.apass === adultPass())) {
-        return send(res, 403, { error: `this device is already ${existing}; an adult must change it` });
+      // Two different refusals, named apart: "you need the passphrase" and
+      // "the passphrase you gave is wrong" — collapsing them cost a morning of
+      // someone typing the right word into a misleading loop.
+      if (existing && existing !== who) {
+        if (!adultPass()) return send(res, 403, { error: "no adults passphrase is set yet" });
+        if (!b.apass) return send(res, 403, { error: `this device is already ${existing}; an adult must change it` });
+        if (b.apass !== adultPass()) return send(res, 403, { error: "wrong adults passphrase" });
       }
       s.devices[device] = who;
       saveState(s);

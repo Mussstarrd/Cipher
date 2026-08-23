@@ -221,6 +221,11 @@ let draft = null;
 // but never yank someone who has deliberately scrolled up to read.
 let stick = false;
 let lastCount = -1;
+// "not me" opens a proper picker instead of two typed prompts — free-typing a
+// name was silly, and iOS auto-capitalizes prompt() input, which turned the
+// adults passphrase into "Passphrase" and made reassignment a perpetual
+// refusal with a misleading alert.
+let reassign = false;
 // What has been read, per thread: everything at or before this moment folds to
 // a preview once you move on. Persisted, so tomorrow's open starts tidy.
 let lastRead = {};
@@ -285,15 +290,34 @@ function speak(id, text, btn) {
   document.querySelectorAll(".say.on").forEach((b) => { b.classList.remove("on"); b.innerHTML = "&#9654;"; });
   speakingId = id;
   btn.classList.add("on"); btn.innerHTML = "&#9632;";
+  const voice = chooseVoice();
   // iOS silently truncates long utterances — queue sentence-sized chunks.
   const chunks = String(text).replace(/\s+/g, " ").match(/[^.!?]+[.!?]*/g) || [String(text)];
   let left = chunks.length;
   const done = () => { if (--left <= 0 && speakingId === id) { speakingId = null; btn.classList.remove("on"); btn.innerHTML = "&#9654;"; } };
   for (const c of chunks) {
     const u = new SpeechSynthesisUtterance(c.trim());
+    if (voice) u.voice = voice;
+    u.rate = 0.98; u.pitch = 0.92;      // the default reads high and hurried
     u.onend = done; u.onerror = done;
     speechSynthesis.speak(u);
   }
+}
+
+// Androids default to a tinny robot when better voices sit right there.
+// Prefer the platform's natural voices; fall back gracefully.
+let pickedVoice;
+function chooseVoice() {
+  if (pickedVoice !== undefined) return pickedVoice;
+  const vs = speechSynthesis.getVoices();
+  if (!vs.length) { speechSynthesis.onvoiceschanged = () => { pickedVoice = undefined; }; return null; }
+  const score = (v) => (/en[-_]/i.test(v.lang) ? 4 : 0)
+    + (/natural|neural|premium|enhanced/i.test(v.name) ? 4 : 0)
+    + (/google/i.test(v.name) ? 3 : 0)
+    + (/samantha|siri/i.test(v.name) ? 3 : 0)
+    + (v.localService ? 1 : 0);
+  pickedVoice = vs.slice().sort((a, b) => score(b) - score(a))[0] || null;
+  return pickedVoice;
 }
 
 function isTyping() {
@@ -506,10 +530,16 @@ function render() {
       <button class="tab" data-t="loops" aria-selected="${tab === "loops"}">To do${openCount() ? ` <span style="font-family:Figtree">${openCount()}</span>` : ""}</button>
       <button class="tab" data-t="now" aria-selected="${tab === "now"}">Reports</button>
     </div>
-  ${S.me
+  ${reassign
+    ? `<div class="who"><span>Whose phone is this?</span>${(S.household && S.household.length ? S.household : PEOPLE).map((p) =>
+        `<button class="pick" data-reclaim="${p}">${p}</button>`).join("")}
+       <input id="rapass" type="password" autocapitalize="none" autocorrect="off" spellcheck="false"
+         placeholder="Adults passphrase" style="flex:1;min-width:120px;padding:6px 10px;border:1px solid var(--rule-2);border-radius:999px;background:var(--card);color:var(--ink);font:inherit;font-size:13px">
+       <button class="pick" id="rcancel">cancel</button></div>`
+    : S.me
     ? `<div class="who">${tab === "chat" ? roomPills() : `<span>Signed in as</span><b style="font-size:13px">${esc(S.me)}</b>`}
         <button class="pick" id="unclaim" style="margin-left:auto;font-size:10.5px;min-height:26px;padding:3px 10px">${tab === "chat" ? esc(S.me) + " &middot; not me" : "not me"}</button></div>`
-    : `<div class="who"><span>Who is this phone?</span>${PEOPLE.map((p) =>
+    : `<div class="who"><span>Who is this phone?</span>${(S.household && S.household.length ? S.household : PEOPLE).map((p) =>
         `<button class="pick" data-claim="${p}">${p}</button>`).join("")}</div>`}</div>
   <div class="squig"></div>
   <div class="pane ${tab === "now" ? "on" : ""}"><div class="wrap">${setupView()}${reportsView()}</div>
@@ -563,14 +593,25 @@ function wire() {
     else alert(r && r.error ? r.error : "Could not set who this phone belongs to.");
   });
   const un = $("#unclaim");
-  if (un) un.onclick = async () => {
-    const v = prompt("Changing who this phone belongs to needs the adults passphrase.");
-    if (!v) return;
-    const who = prompt("Whose phone is it now? Jeffery, Suzan, Aiden or Abby");
-    if (!who) return;
-    const r = await post("/api/claim", { who: who.trim(), apass: v.trim() });
-    if (r && r.ok) load(true); else alert(r && r.error ? r.error : "Refused.");
-  };
+  if (un) un.onclick = () => { reassign = true; render(); };
+  const rc = $("#rcancel");
+  if (rc) rc.onclick = () => { reassign = false; render(); };
+  document.querySelectorAll("[data-reclaim]").forEach((b) => b.onclick = async () => {
+    const typed = ($("#rapass") && $("#rapass").value.trim()) || "";
+    // The stored adults secret gets first try — a parent who already unlocked
+    // adults on this phone should not have to retype anything.
+    const r = await post("/api/claim", { who: b.dataset.reclaim, apass: typed || apass });
+    if (r && r.ok) {
+      if (typed) { apass = typed; try { localStorage.setItem("hearth.apass", apass); } catch (e) {} }
+      reassign = false;
+      await load(true);
+      healPush();                       // re-tag this phone's push sub with the new name
+      return;
+    }
+    alert(r && r.error === "wrong adults passphrase"
+      ? "That adults passphrase is not right. Type it in the box first — watch for the phone capitalizing the first letter."
+      : (r && r.error ? r.error : "Refused."));
+  });
   const rn = $("#runnow");
   if (rn) rn.onclick = async () => {
     rn.disabled = true; rn.textContent = "thinking…";
