@@ -7,6 +7,12 @@ explicitly abandoned — that is the whole point.
 
 ## Urgent
 
+- [opened 2026-08-23] **Jeffery — push notifications may not be delivering at all**
+  06:38 Sun 23 Aug: coffee reminder loop was set and stored, no push received. I can't see delivery status from inside a session, so this needs the Claude Code side. Check alongside the unverified 07:00 trigger — likely the same pipeline. Diagnostic: did the coffee item appear in the To do tab? Yes = storage fine, delivery broken. No = it failed earlier.
+
+- [opened 2026-08-23] **Jeffery — check the coffee**
+  Asked at 06:33 Sunday 23 Aug for a five-minute reminder.
+
 - [opened 2026-08-22] **Jeffery — finish Abby's Lillio registration at Merit School.**
   **Her enrolment is not finalised and the school says it "may be delayed or
   forfeited" if this is not completed promptly.** She is attending daily right
