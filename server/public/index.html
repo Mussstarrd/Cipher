@@ -57,6 +57,10 @@ button{font:inherit;color:inherit;cursor:pointer}
 .chip.warn{background:var(--magenta);color:#fff}
 .chip.adult{background:var(--purple);color:#fff}
 .chip:active{transform:translate(2px,2px);box-shadow:none}
+.bld{font-family:Silkscreen,monospace;font-size:8px;letter-spacing:.05em;
+  text-transform:uppercase;color:var(--ink-3);margin-top:6px}
+.bld b{color:var(--teal);font-weight:400}
+.bld .new{color:var(--magenta)}
 .tabs{display:flex;gap:6px;margin-top:12px}
 .tab{background:var(--sunk);border:2px solid var(--ink);border-bottom:none;
   padding:10px 15px;font-family:Bungee,sans-serif;font-size:12px;color:var(--ink-3);
@@ -424,6 +428,7 @@ function render() {
     <div class="sub">${esc(S.now.hm || "")} &middot; ${S.adult ? "adults + family" : "family"}</div>
     <button class="chip ${notifState().cls}" id="notif">${notifState().label}</button>
     ${S.adultRoomExists ? `<button class="chip ${S.adult ? "adult" : ""}" id="roomsw">${S.adult ? "adults: open" : "adults: locked"}</button>` : ""}</div>
+  ${S.build ? `<div class="bld">build <b>${esc(S.build.running)}</b>${S.build.builtAt ? ` &middot; ${esc(dayOf(S.build.builtAt))} ${esc(hhmm(S.build.builtAt))}` : ""} &middot; up since ${esc(hhmm(S.build.since))}${S.build.repo && S.build.repo !== S.build.running ? ` &middot; <span class="new">new ${esc(S.build.repo)} pulled</span>` : ""}</div>` : ""}
     <div class="tabs">
       <button class="tab" data-t="now" aria-selected="${tab === "now"}">Reports</button>
       <button class="tab" data-t="loops" aria-selected="${tab === "loops"}">To do${openCount() ? ` <span style="font-family:Figtree">${openCount()}</span>` : ""}</button>

@@ -8,6 +8,7 @@
  * No cron, no external scheduler, no platform. It owns its own clock.
  */
 import http from "node:http";
+import { execSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -309,6 +310,26 @@ function nameFor(state, device) {
   return (state.devices || {})[String(device || "")] || null;
 }
 
+/* ---------- the build stamp ---------- */
+// "Is the push live?" should be a glance at the page, not a question to a
+// terminal. `running` is the commit this process booted on; `repo` is what the
+// last pull brought in — when they differ, an update has landed and a restart
+// is pending (or was rightly skipped for a no-code commit).
+const gitInfo = () => {
+  try {
+    const [rev, ts] = execSync("git log -1 --format='%h %ct'", { cwd: ROOT })
+      .toString().trim().replace(/'/g, "").split(" ");
+    return { rev, at: new Date(Number(ts) * 1000).toISOString() };
+  } catch { return { rev: "unknown", at: null }; }
+};
+import { ROOT } from "./memory.js";
+const BOOT = { ...gitInfo(), started: new Date().toISOString() };
+let repoCache = { at: 0, info: BOOT };
+const repoNow = () => {
+  if (Date.now() - repoCache.at > 60e3) repoCache = { at: Date.now(), info: gitInfo() };
+  return repoCache.info;
+};
+
 const server = http.createServer(async (req, res) => {
   const u = new URL(req.url, URL_BASE);
 
@@ -354,6 +375,7 @@ const server = http.createServer(async (req, res) => {
         loops: loops.list(),
         // Labels only. An ICS secret address is a password and never leaves here.
         calendars: feeds(),
+        build: { running: BOOT.rev, builtAt: BOOT.at, since: BOOT.started, repo: repoNow().rev },
         needsPass: Boolean(PASS),
       });
     }
