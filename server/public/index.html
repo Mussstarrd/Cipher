@@ -274,9 +274,23 @@ function loopsView() {
   </div>`;
 }
 
-/** Shown only to an adult, and only while something is not connected yet. */
+/** Setup cards: shown while something is not connected yet, to whoever can fix it. */
 function setupView() {
-  if (!S.adult) return "";
+  const cards = [];
+  // The adults room, before it exists. A parent sets the second passphrase here
+  // — this used to require an SSH session, which on a phone meant it never
+  // happened. Shown only to a device claimed as a parent; that claim is soft,
+  // but the room it creates is not: the secret typed here is the wall.
+  if (!S.adultRoomExists && (S.me === "Jeffery" || S.me === "Suzan")) {
+    cards.push(`<div class="setup"><h3>Adults room &mdash; not set up</h3>
+      <p style="margin:0">Right now there is one room and everything in it is readable by everyone,
+      including Aiden. Pick a second passphrase only you and ${S.me === "Jeffery" ? "Suzan" : "Jeffery"} will know
+      &mdash; bills, money and anything not for the children go behind it.</p>
+      <form id="apf"><input id="apv" type="password" autocomplete="new-password"
+        placeholder="Adults passphrase &mdash; not the family one">
+      <button class="send" style="width:auto;padding:0 18px;margin-top:9px">Set it</button></form></div>`);
+  }
+  if (!S.adult) return cards.join("");
   const cals = S.calendars || [];
   const cal = `<div class="setup"><h3>Calendars ${cals.length ? `<span class="ok">&mdash; ${cals.length} connected</span>` : ""}</h3>
     ${cals.length
@@ -299,7 +313,8 @@ function setupView() {
       <input id="call" placeholder="What to call it &mdash; &ldquo;Jeffery&rsquo;s calendar&rdquo;">
       <button class="send" style="width:auto;padding:0 18px;margin-top:9px">Connect</button></form>
   </div>`;
-  return cal;
+  cards.push(cal);
+  return cards.join("");
 }
 
 function chatView() {
@@ -420,6 +435,21 @@ function wire() {
     if (!r || !r.ok) alert(r && r.error ? r.error : "Could not save that.");
     await load(true);
   });
+
+  const ap = $("#apf");
+  if (ap) ap.onsubmit = async (e) => {
+    e.preventDefault();
+    const v = $("#apv").value.trim();
+    if (!v) return;
+    const r = await post("/api/adult-pass", { value: v });
+    if (r && r.ok) {
+      // The device that set it is holding it: switch this phone into the
+      // adults room immediately rather than asking for the word just typed.
+      apass = v; room = "adults";
+      try { localStorage.setItem("hearth.apass", apass); } catch (err) {}
+      load(true);
+    } else alert(r && r.error ? r.error : "Refused.");
+  };
 
   const cf = $("#calf");
   if (cf) cf.onsubmit = async (e) => {

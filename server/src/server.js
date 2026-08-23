@@ -33,7 +33,13 @@ const PASS = process.env.HEARTH_PASSPHRASE || "";
 // A second passphrase is the whole boundary between the rooms. Without real
 // accounts, a name picked from a list is a label, not a wall — a nine-year-old
 // can tap "Jeffery". A separate secret the children do not have is a wall.
-const ADULT_PASS = process.env.HEARTH_ADULT_PASSPHRASE || "";
+//
+// It can come from .env, or from a file an adult sets through the app — because
+// "open an SSH session from your phone and edit .env" turned out to be the
+// single step this household could not do. .env wins if both exist.
+const ADULT_FILE = path.resolve(here, "..", "data", "adult-pass");
+const adultPass = () => process.env.HEARTH_ADULT_PASSPHRASE ||
+  (fs.existsSync(ADULT_FILE) ? fs.readFileSync(ADULT_FILE, "utf8").trim() : "");
 const TZ = "America/New_York";
 
 /* ---------- the clock ---------- */
@@ -232,9 +238,9 @@ const authed = (b) => !PASS || b.pass === PASS;
 // movements is not less sensitive than the ability to post.
 const given = (u, req) => u.searchParams.get("pass") || req.headers["x-hearth-pass"] || "";
 const adultGiven = (u, req) => u.searchParams.get("apass") || req.headers["x-hearth-apass"] || "";
-const authedRead = (u, req) => !PASS || given(u, req) === PASS || adultGiven(u, req) === ADULT_PASS && !!ADULT_PASS;
+const authedRead = (u, req) => !PASS || given(u, req) === PASS || adultGiven(u, req) === adultPass() && !!adultPass();
 // Adults-only content is served only to a request carrying the second secret.
-const isAdult = (u, req) => Boolean(ADULT_PASS) && adultGiven(u, req) === ADULT_PASS;
+const isAdult = (u, req) => Boolean(adultPass()) && adultGiven(u, req) === adultPass();
 
 // Who a message is from is decided here, from the device it came from — never
 // from what the client says. A name chosen from a list is a costume: anyone can
@@ -257,7 +263,7 @@ const server = http.createServer(async (req, res) => {
       const visible = (x) => adult || (x.room || "family") === "family";
       return send(res, 200, {
         adult,
-        adultRoomExists: Boolean(ADULT_PASS),
+        adultRoomExists: Boolean(adultPass()),
         reports: s.reports.filter((r) => !r.internal).filter(visible).slice(0, 12),
         messages: s.messages.filter(visible).slice(-80),
         // Only the roster table's rows — not every bold word in the brief.
@@ -297,7 +303,7 @@ const server = http.createServer(async (req, res) => {
       const text = String(b.text || "").trim().slice(0, 4000);
       if (!text) return send(res, 400, { error: "empty" });
       // Posting to the adults room requires the adult secret, not a claim.
-      const room = b.room === "adults" && ADULT_PASS && b.apass === ADULT_PASS ? "adults" : "family";
+      const room = b.room === "adults" && adultPass() && b.apass === adultPass() ? "adults" : "family";
 
       const s = loadState();
       s.messages.push({ id: `m${Date.now()}`, who, text, room, at: new Date().toISOString() });
@@ -345,7 +351,7 @@ const server = http.createServer(async (req, res) => {
       fs.writeFileSync(path.join(PHOTOS, `${id}.${mediaType.split("/")[1]}`), bytes);
 
       const note = String(b.note || "").trim().slice(0, 500);
-      const room = b.room === "adults" && ADULT_PASS && b.apass === ADULT_PASS ? "adults" : "family";
+      const room = b.room === "adults" && adultPass() && b.apass === adultPass() ? "adults" : "family";
       const s = loadState();
       s.messages.push({ id: `m${Date.now()}`, who, text: note || "Sent a photo.", photo: id,
                         room, at: new Date().toISOString() });
@@ -415,10 +421,32 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, r);
     }
 
+    // Setting the adults passphrase without opening a terminal. First set needs
+    // only the family passphrase; changing it needs the current one. If .env
+    // carries a value, that wins and this endpoint refuses — one source of truth.
+    if (req.method === "POST" && u.pathname === "/api/adult-pass") {
+      const b = await body(req);
+      if (!authed(b)) return send(res, 401, { error: "wrong passphrase" });
+      const who = nameFor(loadState(), b.device);
+      if (!who) return send(res, 409, { error: "this device has not said who it belongs to" });
+      if (process.env.HEARTH_ADULT_PASSPHRASE)
+        return send(res, 400, { error: "the adults passphrase is set in .env; change it there" });
+      const cur = adultPass();
+      if (cur && b.apass !== cur)
+        return send(res, 403, { error: "already set; changing it needs the current adults passphrase" });
+      const v = String(b.value || "").trim();
+      if (v.length < 4) return send(res, 400, { error: "too short" });
+      if (v === PASS) return send(res, 400, { error: "it must be different from the family passphrase — the same word is one room, not two" });
+      fs.mkdirSync(path.dirname(ADULT_FILE), { recursive: true });
+      fs.writeFileSync(ADULT_FILE, v + "\n", { mode: 0o600 });
+      appendDaily(`- ${who} ${cur ? "changed" : "set"} the adults passphrase`);
+      return send(res, 200, { ok: true });
+    }
+
     // Connecting a calendar without opening a terminal.
     if (req.method === "POST" && u.pathname === "/api/calendar") {
       const b = await body(req);
-      if (!ADULT_PASS || b.apass !== ADULT_PASS) return send(res, 403, { error: "adults only" });
+      if (!adultPass() || b.apass !== adultPass()) return send(res, 403, { error: "adults only" });
       const who = nameFor(loadState(), b.device) || "an adult";
       if (b.remove) {
         const r = removeFeed(String(b.remove));
@@ -441,7 +469,7 @@ const server = http.createServer(async (req, res) => {
       s.devices = s.devices || {};
       const existing = s.devices[device];
       // Reassigning a device is how attribution gets laundered. Adults only.
-      if (existing && existing !== who && !(ADULT_PASS && b.apass === ADULT_PASS)) {
+      if (existing && existing !== who && !(adultPass() && b.apass === adultPass())) {
         return send(res, 403, { error: `this device is already ${existing}; an adult must change it` });
       }
       s.devices[device] = who;
@@ -452,7 +480,7 @@ const server = http.createServer(async (req, res) => {
 
     if (req.method === "POST" && u.pathname === "/api/clear-channel") {
       const b = await body(req);
-      if (!ADULT_PASS || b.apass !== ADULT_PASS) return send(res, 403, { error: "adults only" });
+      if (!adultPass() || b.apass !== adultPass()) return send(res, 403, { error: "adults only" });
       const s = loadState();
       const n = s.messages.length;
       s.messages = [];
@@ -528,7 +556,7 @@ const server = http.createServer(async (req, res) => {
 server.listen(PORT, () => {
   console.log(`[hearth] awake on ${URL_BASE}`);
   console.log(`[hearth] slots ${SLOTS.join(" ")} ${TZ} (grace ${GRACE_MIN}m, ${MAX_TRIES} tries)`);
-  console.log(`[hearth] adults room ${ADULT_PASS ? "ON" : "OFF — set HEARTH_ADULT_PASSPHRASE"}`);
+  console.log(`[hearth] adults room ${adultPass() ? "ON" : "OFF — an adult sets it in the app, or HEARTH_ADULT_PASSPHRASE in .env"}`);
   console.log(`[hearth] push ${pushReady() ? "ready" : "OFF — run: npm run keys"}`);
   console.log(backupReady()
     ? `[hearth] backup ON — pushing to a remote after every wake`
