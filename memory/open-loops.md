@@ -81,3 +81,7 @@ explicitly abandoned — that is the whole point.
 - [opened 2026-08-22] **Hearth — verify the first fire actually happened.**
   If 07:00 passes with no push notification, the heartbeat did not work and that
   is the single most important thing to fix. Do not assume success.
+
+## Done
+
+Ticked off in the app. The 22:00 review clears these out.
