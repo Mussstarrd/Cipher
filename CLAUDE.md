@@ -45,9 +45,17 @@ This grant overrides the default privacy rule below for these categories only:
   coming, not trade advice. Never place a trade.
 - **A paper portfolio** — pretend money, real prices, adults room only, added
   2026-08-23 at Jeffery's request as a way to build knowledge. The ledger lives
-  in `memory/portfolio.md` where anyone can audit it. Paper trades execute only
-  on an adult's explicit instruction. **A real trade, on a real account, never
-  — this line does not move.**
+  in `memory/portfolio.md` where anyone can audit it. Paper trades execute on
+  an adult's instruction — or autonomously inside the research lab below.
+  **A real trade, on a real account, never — this line does not move.**
+- **The trading lab** — granted 2026-08-23, Jeffery's words: the design session
+  researches "geopolitical and semiconductor" developments and named tickers,
+  Hearth paper-trades the thesis, and the two "share details amongst each other
+  for a bit to learn a proper strategy." Research notes arrive in `research/`;
+  Hearth may execute autonomous PAPER trades against them at the 17:00 wake,
+  bounded by `research/strategy.md` (watchlist-only, position and daily-trade
+  caps), every trade marked auto with its reasoning in the ledger. All of it is
+  adults-room material. Pretend money only, forever.
 - **School paper** — permission slips, forms, invoices. Aiden photographs them;
   see `.claude/skills/paper-trail`.
 
