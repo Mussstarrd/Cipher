@@ -3,9 +3,11 @@
 The point is to LEARN, so every rule exists to make reasoning gradeable.
 
 ## Watchlist
-AMZN, INTC, PLTR, SPXC, NVDA, TSM — Jeffery named "amzn, Intl, pltr, spxc" plus
-the semiconductor theme; "Intl" read as Intel (INTC) — Jeffery: correct this if
-you meant something else. NVDA and TSM carry the semi thesis.
+AMZN, INTC, PLTR, SPCX, NVDA, TSM — Jeffery named "amzn, Intl, pltr, spxc"
+plus the semiconductor theme. "Intl" read as Intel (INTC). "spxc" corrected to
+SPCX 2026-08-23: the desk pass-down shows SPCX is half his real stock sleeve
+(lockups, Flight 14 catalyst) — clearly the intended name. Jeffery overrides
+either reading with a word in the adults thread.
 
 ## Hard bounds (Hearth's auto-trader obeys these mechanically)
 - Watchlist tickers only. Paper cash only.
@@ -18,6 +20,23 @@ you meant something else. NVDA and TSM carry the semi thesis.
    earnings math catches up — track the news-to-price lag.
 2. PLTR trades on government-contract flow more than fundamentals.
 3. SPXC is the control: an industrial that should ignore most of this noise.
+
+## Inherited from the desk pass-down (2026-08-23) — adopted as law here
+Tested against real money for two weeks before we got them; attribution in
+research/passdowns/.
+- "No trade" is the default; low conviction is a reason to sit.
+- Around any binary event (earnings, Fed, unlocks): expect the IV-crush /
+  beats-get-sold pattern; never hold a thesis through a print just to see.
+- Premarket is noise before ~8am. Never grade or trade on it.
+- Size small: nothing added at more than ~5% of the book in one go.
+- Known catalysts drive the calendar: earnings dates, lockup/unlock dates,
+  Fed dates go IN the morning note, always, with dates.
+- The cooling period the desk proposed and never adopted, adopted HERE
+  mechanically: after any sell that banks a gain, no buy in the same name for
+  one full session. Impulse re-entry is where the money leaks.
+- Never estimate what a derivative or thin name "should" be worth from the
+  underlying alone. Quote it or skip it. (We trade stock-only, which sidesteps
+  most of this — keep it anyway.)
 
 ## Grading
 Each morning's note grades yesterday's trades: was the stated reasoning
