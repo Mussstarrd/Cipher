@@ -510,3 +510,45 @@ an open loop — it is a line in the channel and nothing more.`,
     return { room: "family", text: raw, loops: [] };
   }
 }
+
+/**
+ * The lab's auto-trader. Runs once, at the 17:00 wake, after the close.
+ * Reads the latest research note, the strategy file, and the live book, and
+ * decides paper trades — which the SERVER then bounds and executes; the model
+ * proposes, markets.js keeps the books. Pretend money, forever.
+ */
+export async function trader(note, strategy, book) {
+  const system = `You are Hearth's trading half, in a two-agent learning lab.
+Pretend money, real prices. The design session researches the world; you trade
+the thesis and record reasoning precise enough to be graded CORRECT, LUCKY,
+WRONG or UNTESTED tomorrow morning. You are learning a craft, not maximising a
+number — a well-reasoned loss teaches more than an unexplained win.
+
+THE STRATEGY FILE IS LAW. Watchlist only, respect its caps, and when in doubt
+do nothing: "no trade" is a valid, gradeable decision.`;
+
+  const user = `Today is ${todayET()}, after the close.
+
+----- research/strategy.md -----
+${strategy || "(missing — do not trade without a strategy)"}
+
+----- latest research note -----
+${note || "(no note yet — trade only on the strategy's standing hypotheses, or hold)"}
+
+----- the book right now -----
+${book}
+
+Decide. Return ONLY JSON:
+{"thinking": "<3-6 lines: what today's information changes, or why it changes nothing>",
+ "trades": [{"op": "buy"|"sell"|"watch", "symbol": "NVDA", "qty": 10, "reason": "<the gradeable claim behind this trade>"}]}
+
+"trades" may be empty and often should be.`;
+
+  const raw = await ask(system, user, 3000, { kind: "trader" });
+  const o = tryParse(raw);
+  if (!o) return { thinking: raw.slice(0, 500), trades: [] };
+  return {
+    thinking: String(o.thinking || "").trim(),
+    trades: Array.isArray(o.trades) ? o.trades.slice(0, 3) : [],
+  };
+}

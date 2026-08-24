@@ -12,7 +12,7 @@ import { execSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { wake, answer, review, readPaper } from "./brain.js";
+import { wake, answer, review, readPaper, trader } from "./brain.js";
 import { notify, notifyVerbose, pushReady } from "./push.js";
 import { fetchNew, send as sendMail, mailReady, credentialWarning } from "./mail.js";
 import { calendarReady, feeds, addFeed, removeFeed } from "./calendar.js";
@@ -24,12 +24,13 @@ import {
 import { SLOTS, dueSlot, GRACE_MIN, MAX_TRIES } from "./schedule.js";
 import { wakeContext } from "./context.js";
 import * as loops from "./loops.js";
-import { paperTrade } from "./markets.js";
+import { paperTrade, loadBook, summary as bookSummary } from "./markets.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const PUB = path.resolve(here, "..", "public");
 // Photographs stay on this disk and out of git. They are of children's paperwork.
 const PHOTOS = path.resolve(here, "..", "data", "photos");
+const RESEARCH = path.resolve(here, "..", "..", "research");
 const PORT = Number(process.env.PORT || 8787);
 const URL_BASE = process.env.HEARTH_URL || `http://localhost:${PORT}`;
 const PASS = process.env.HEARTH_PASSPHRASE || "";
@@ -171,6 +172,58 @@ async function runSlot(slot, { forced = false, late = 0 } = {}) {
       if (after.wakeTries) delete after.wakeTries[slot];
     }
     saveState(after);
+
+    // After the close, the lab trades the morning's research — bounded here,
+    // not just in the prompt: watchlist-only, max 3, caps enforced by the
+    // strategy's numbers. CLAUDE.md carries the grant; the money is pretend.
+    if (slot === "17:00") {
+      try {
+        const strategy = fs.existsSync(path.join(RESEARCH, "strategy.md"))
+          ? fs.readFileSync(path.join(RESEARCH, "strategy.md"), "utf8") : "";
+        const noteFile = fs.existsSync(path.join(RESEARCH, "notes"))
+          ? fs.readdirSync(path.join(RESEARCH, "notes")).filter((f) => f.endsWith(".md")).sort().pop() : null;
+        const note = noteFile ? fs.readFileSync(path.join(RESEARCH, "notes", noteFile), "utf8").slice(0, 12000) : "";
+        if (strategy) {
+          const watch = (strategy.match(/^Watchlist\n([A-Z0-9, .]+)/mi) || strategy.match(/## Watchlist\s*\n([^\n]+)/i) || [, ""])[1]
+            .split(/[,\s]+/).map((t) => t.trim().toUpperCase()).filter((t) => /^[A-Z]{1,6}$/.test(t));
+          const d = await trader(note, strategy, await bookSummary());
+          const lines = [];
+          let executed = 0;
+          for (const t of d.trades || []) {
+            const sym = String(t.symbol || "").toUpperCase();
+            if (executed >= 3) break;
+            if (watch.length && !watch.includes(sym) && t.op !== "watch") {
+              lines.push(`refused ${t.op} ${sym}: not on the strategy watchlist`); continue;
+            }
+            // Position cap: no buy that would put one name over 25% of the book.
+            if (t.op === "buy") {
+              const b = loadBook();
+              const worth = b.cash + Object.values(b.positions).reduce((a, p) => a + p.cost, 0);
+              const q = await import("./markets.js").then((m) => m.quotes([sym]));
+              const px = q.quotes?.[sym]?.price;
+              const have = b.positions[sym]?.cost || 0;
+              if (px && have + px * Math.floor(Number(t.qty) || 0) > worth * 0.25) {
+                lines.push(`refused buy ${sym}: would exceed the 25% position cap`); continue;
+              }
+              if (px && b.cash - px * Math.floor(Number(t.qty) || 0) < worth * 0.10) {
+                lines.push(`refused buy ${sym}: would breach the 10% cash floor`); continue;
+              }
+            }
+            const out = await paperTrade({ ...t, symbol: sym, who: "Hearth (auto)" });
+            lines.push(out.line);
+            if (out.ok && t.op !== "watch") executed++;
+          }
+          appendDaily(`## Lab, after the close\n\n${d.thinking}\n\n${lines.map((l) => `- ${l}`).join("\n") || "- no trades"}`);
+          const st = loadState();
+          st.messages.push({ id: `h${Date.now()}`, who: "Hearth",
+            text: `Lab, after the close:\n${d.thinking}\n\n${lines.join("\n") || "No trades today."}`,
+            room: "adults", at: new Date().toISOString() });
+          saveState(st);
+        }
+      } catch (e) {
+        appendDaily(`- lab FAILED: ${e?.message || e}`);
+      }
+    }
 
     // The close-out is followed by the only pass that rewrites memory.
     if (slot === "22:00") {
