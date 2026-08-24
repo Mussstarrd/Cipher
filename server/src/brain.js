@@ -7,6 +7,7 @@
  * Recording makes a system fatter. Reviewing its own errors makes it sharper.
  */
 import Anthropic from "@anthropic-ai/sdk";
+import { record } from "./usage.js";
 import fs from "node:fs";
 import path from "node:path";
 import { loadBrief, readDaily, todayET, LAYERS, DATA, listTopics, matchTopics } from "./memory.js";
@@ -86,17 +87,26 @@ function context() {
   return `${brief}\n\n===== MEMORY =====\n${mem}`;
 }
 
-async function ask(system, user, maxTokens = 4000) {
+/**
+ * Every model call comes through here, so caching and accounting are uniform.
+ * The cache breakpoint sits explicitly on the system block: the stable prefix
+ * (brief + memory + rules) caches; the volatile part (clock, question, log)
+ * lives in the user turn after it. Cache life is 5 minutes, so the wins are
+ * bursts: chat exchanges, and the review landing on the 22:00 wake's prefix.
+ */
+async function ask(system, user, maxTokens = 4000, { kind = "other", effort } = {}) {
   const r = await client.messages.create({
     model: MODEL,
     max_tokens: maxTokens,
     thinking: { type: "adaptive" },
-    cache_control: { type: "ephemeral" },   // the memory prefix is identical every wake
-    system,
+    ...(effort ? { output_config: { effort } } : {}),
+    system: [{ type: "text", text: system, cache_control: { type: "ephemeral" } }],
     // `user` is a string for ordinary turns and an array of content blocks when
     // there is a photograph in it.
     messages: [{ role: "user", content: user }],
   });
+  try { record(kind, r.usage); }
+  catch (e) { console.error(`[usage] record failed: ${e?.message || e}`); }  // never blocks, never silent
   return r.content.filter((b) => b.type === "text").map((b) => b.text).join("").trim();
 }
 
@@ -142,7 +152,7 @@ Return ONLY a JSON object, no prose around it:
 Most days "adults" is empty and that is correct — do not manufacture something
 to put in it. Each part must stand alone: the family text must never gesture at
 the existence of the other.`;
-  const raw = await ask(system, user);
+  const raw = await ask(system, user, 4000, { kind: "wake" });
   const i = raw.indexOf("{"), j = raw.lastIndexOf("}");
   if (i < 0 || j < i) return { family: raw, adults: "" };
   try {
@@ -300,7 +310,7 @@ everyone the private room is not private.
 When neither applies, omit both fields — and neither applies almost always.`
   : "Open one when it is asked for or clearly promised, not for every mention of the future."}`;
 
-  const raw = await ask(system, user, 2500);
+  const raw = await ask(system, user, 2500, { kind: "chat", effort: "medium" });
   const o = tryParse(raw);
   if (!o) return { text: raw, loops: [] };
   return {
@@ -395,7 +405,14 @@ Return ONLY a JSON object, no prose around it:
  "topics": {"soccer.md": "<complete new contents>", ...}}
 
 Include a file ONLY if it actually changed. Each value must be the COMPLETE new
-file, not a diff. If nothing changed, return {"summary": "...", "files": {}, "topics": {}}.`;
+file, not a diff. If nothing changed, return {"summary": "...", "files": {}, "topics": {}}.
+
+"topics" is NOT optional bookkeeping: any subject today's log touched more than
+in passing gets filed or updated — the first live review returned {} and a
+whole Sunday of schedules, school detail and soccer went unfiled. And the
+weekly dinner plan: if meals.md holds no current "## This week" plan, draft one
+TONIGHT whatever day it is — a missed Sunday must not mean a week without a
+plan.`;
 
   const raw = await ask(system, user, 16000, { kind: "review" });
   let out = tryParse(raw);
@@ -496,7 +513,7 @@ an open loop — it is a line in the channel and nothing more.`,
     },
   ];
 
-  const raw = await ask(system, user, 4000);
+  const raw = await ask(system, user, 4000, { kind: "photo" });
   const i = raw.indexOf("{"), j = raw.lastIndexOf("}");
   if (i < 0 || j < i) return { room: "family", text: raw, loops: [] };
   try {
