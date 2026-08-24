@@ -8,108 +8,90 @@ explicitly abandoned — that is the whole point.
 ## Urgent
 
 - [opened 2026-08-22] **Jeffery — finish Abby's Lillio registration at Merit School.**
+  Still not done as of Sunday night 23 Aug. The weekend laptop window has gone.
   **Her enrolment is not finalised and the school says it "may be delayed or
-  forfeited" if this is not completed promptly.** She is attending daily right
-  now, so this is easy to assume is fine. It is not.
-  Two specific corrections the school gave on 2026-08-21:
-  1. **Dad cannot be listed as the emergency contact** — emergency contacts
-     cannot be a parent or legal guardian. Once registration is complete they can
-     add Jeffery as a *parent*. A non-parent name is needed.
-     Possible candidate: **Kathryn Hilderbrand**, who signed Abby out on 21 Aug
-     and is therefore already an authorised pickup — *unverified, ask before using.*
-  2. **The uploaded registration form came through blank.** It must be saved to a
-     computer, filled in completely, and re-uploaded.
-  Notes: Lillio is per-child, not per-family. Do it on a laptop, not a phone.
-  Source: Procare Office Chat from Merit School at The Castle, 21 Aug, unread.
+  forfeited" if this is not completed promptly.** She attends daily, which is
+  exactly why this keeps not getting done.
+  Two corrections the school gave on 2026-08-21:
+  1. **Dad cannot be the emergency contact** — it cannot be a parent or legal
+     guardian. A non-parent name is needed. Candidate: **Kathryn Hilderbrand**,
+     already an authorised pickup — *relationship unknown, asked three times on
+     23 Aug, still unanswered. Do not put her on a form on a guess.*
+  2. **The uploaded form came through blank.** Save it to a computer, fill it in
+     completely, re-upload. A phone will not do it.
+  Lillio is per-child, not per-family.
   Surface at: every check-in until it is done. This one earns the interruption.
+
+- [opened 2026-08-23] **Jeffery — open Hearth once on his phone to re-register push.**
+  New, not a re-open: the earlier delivery loop was ticked done at midday and the
+  09:28 reminder did fire. Later the same day the push service **expired the
+  subscription** on that device. Nothing I set will buzz him until that phone
+  opens Hearth once. Until then, say plainly that any reminder is unreliable.
 
 ## This week
 
-- [opened 2026-08-23] **Hearth — confirm the temperature calibration steps for the Breville Smart Oven Air Fryer Pro (BOV900)**
-  Model confirmed 2026-08-23 by Jeffery: Air Fry, Dehydrate and Super Convection on the dial = Air Fryer Pro, BOV900. No meat probe. Need the verified button sequence for the permanent temperature offset before telling Jeffery to use it — do not quote from memory. Also waiting on Jeffery's oven-thermometer reading at 350 for 15 min on the middle rack, which gives the actual offset. Closes the earlier 'say whether the dial has Air Fry and Dehydrate' loop.
+- [opened 2026-08-23] **Jeffery — read the Breville model number off the rating sticker.**
+  I told him it was a BOV900 on 23 Aug from the dial having Air Fry, Dehydrate and
+  Super Convection, and said that combination was unique to that model. **That was
+  wrong** — the BOV860 has all three too. The number is on a sticker, usually the
+  back, side or inside the door frame, and looks like BOV900BSS or BOV860BSS.
+  Nothing about calibration goes to him until I have it.
 
-- [opened 2026-08-23] **Jeffery — say whether the Breville dial has Air Fry and Dehydrate**
-  Confirmed 2026-08-23: Breville Smart Oven, no meat probe. Still need the exact model to look up the temperature-offset calibration steps. Test: does the function dial include Air Fry and Dehydrate (= Air Fryer Pro) or stop at Slow Cook/Proof (= Smart Oven Pro)? Replaces the earlier 'model and probe' loop. Once known: find the calibration procedure, then give one setting + timing at the 17:00 check-in tied to that night's meal. Standing problem: food comes out under- or overcooked, likely a hot-running small cavity.
-  for: Jeffery
+- [opened 2026-08-23] **Hearth — confirm the temperature-offset calibration steps for the Breville.**
+  Blocked on the model number above. Do not quote a button sequence from memory —
+  the wrong one on the wrong model is worse than saying nothing.
 
-- [opened 2026-08-22] **Jeffery — turn on TeamSnap calendar sync once joined.**
-  Highest-leverage item here: it wires every game and change into Hearth without
-  anyone typing. Raise immediately after the invite is accepted, not before.
+- [opened 2026-08-23] **Jeffery — the 350°F thermometer reading.**
+  Oven to 350, cheap thermometer on the middle rack, 15 minutes, report the number.
+  That gap is the offset everything else depends on. Costs nothing but a spare
+  quarter hour while something else is on.
+
+- [opened 2026-08-23] **Anyone — correct the draft dinner plan for 24–30 Aug.**
+  There is a seven-night draft in `topics/meals.md`. It is **guesswork** — I have
+  no record of what this family actually eats, who cooks, or any allergy. Vetoes
+  are more useful to me than approval.
+
+- [opened 2026-08-23] **Suzan or Jeffery — where is Abby's dance class, how long, who drives?**
+  The time is settled (Saturdays 08:30). The three practical details are not.
+  Next class Sat 29 Aug.
 
 ## Dated, further out
 
 - [opened 2026-08-23] **Jeffery — send the soccer game schedule once Coach Nate publishes it**
-  Confirmed 2026-08-23: practices are Tue and Thu 17:30–18:30 at Sweetbriar Park, fall 2026. Games not published yet. Jeffery will screenshot or type the schedule into the family room, or add TeamSnap's webcal link to the connected Google Calendar. Pairs with Hearth's own loop watching for OCSA to publish.
-  for: Jeffery
+  Practices are settled: Tue and Thu 17:30–18:30 at Sweetbriar Park. Games are not
+  published yet, so the TeamSnap feed showing only practices is expected, not a
+  fault. Two routes: screenshot or type it into the family room, or add TeamSnap's
+  webcal link to the connected Google Calendar (Other calendars → From URL).
+  Route two keeps updating itself. I read calendars, I cannot subscribe to one.
 
 - [opened 2026-08-22] **Decide on Play N Kick at Merit School** — soccer
-  enrichment for Abby, starts Wed 9 Sep 10:00. Opt-in.
+  enrichment for Abby, starts Wed 9 Sep 10:00. Opt-in, no deadline given.
+  Raise once more in the week of 1 Sep, then stop asking.
 
 - [opened 2026-08-22] **Merit School pool party, Sat 29 Aug, 12:00–14:00.**
   Postponed from an earlier date because of weather. Food provided. Optional.
+  Same Saturday as Abby's dance at 08:30 — no clash, but a full day.
 
 ## Hearth's own
 
+- [opened 2026-08-23] **Learn how this family actually eats.**
+  Meals are an explicit grant and I have nothing recorded. I asked "what's for
+  dinner" three times on 23 Aug and got no answer, which means it was the wrong
+  question. Better ones, asked one at a time, not as a list: who usually cooks on
+  a weeknight, is there anything nobody will eat, and does Aiden or Abby have any
+  food allergy the school has on file.
+
 ## Hearth's infrastructure
+
+- [opened 2026-08-23] **No off-machine backup of memory.**
+  Everything learned about this family sits on a single disk. It needs a private
+  repo and `BACKUP_GIT_REMOTE` set. A disk failure today loses the lot.
+
+- [opened 2026-08-23] **The 07:00 check-in was emitted twice on 23 Aug.**
+  Two near-identical briefs, and one later message printed the same "On the To do
+  list now" line twice. Duplicate output makes the check-ins look automated and
+  unread. Needs the Claude Code side to look at the trigger firing once or twice.
 
 ## Done
 
 Ticked off in the app. The 22:00 review clears these out.
-
-- [done 2026-08-23 by Jeffery · was: Hearth's own · opened 2026-08-22] **Confirm which OCPS elementary Aiden attends.**
-  District confirmed as Orange County Public Schools (ocss-va.org) and his
-  teacher is Ms. Slagle, 4th grade — but the campus name has never been stated.
-  Get it from a school email signature rather than asking again.
-
-- [done 2026-08-23 by Jeffery · was: Hearth's own · opened 2026-08-22] **Watch for the OCSA game schedule to be published.**
-
-- [done 2026-08-23 by Jeffery · was: Hearth's own · opened 2026-08-22] **Unexplained: Prince William County Public Schools mail.**
-  Jeffery receives PWCS division-wide email. No known connection to this
-  household. Do not act on it, do not assume it is junk. Ask once, casually.
-
-- [done 2026-08-23 by Jeffery · was: This week · opened 2026-08-22] **Tuesday 25 Aug — OCPS dismisses 2 hours early.**
-  Teacher professional development. Aiden needs collecting two hours early, and
-  the same day is his first soccer practice at 17:30.
-  **Hearth does not know the normal dismissal time** — do not compute a pickup
-  time until someone confirms it. Ask once.
-
-- [done 2026-08-23 by Jeffery · was: This week · opened 2026-08-22] **Jeffery — wash the Xbox-print cup, Sun 23 Aug 09:30**
-  Requested 2026-08-22 from a photo. Cup is on the green counter next to the stove, right of the cooktop. No calendar event exists — I could not create one and did not try. I will surface this at the Sunday 07:00 check-in. Unknown: whether this should repeat, and whether the cup is Aiden's.
-
-- [done 2026-08-23 by Jeffery · was: This week · opened 2026-08-23] **Jeffery — tell Hearth the Breville model and whether it has the probe**
-  Model name on the front of the oven (Smart Oven Pro / Air Fryer Pro / Compact / other) and whether the meat probe was included. Once I have it: look up the temperature-offset calibration steps for that model, and start giving one setting + timing at the 17:00 check-in tied to that night's meal. Standing problem: everything comes out under- or overcooked, likely because the small cavity runs hot.
-  for: Jeffery
-
-- [done 2026-08-23 by Jeffery · was: This week · opened 2026-08-23] **Jeffery — get the soccer schedule into Hearth**
-  Signed up in TeamSnap on 23 Aug. Two routes: (a) screenshot or type the schedule into the family room and Hearth holds it, or (b) copy TeamSnap's calendar subscription/webcal link from the schedule view and add it to the connected Google Calendar via Other calendars → From URL. Route (b) keeps updating itself. Hearth cannot subscribe to the feed itself — read-only. Game schedule may not be published yet; practices Tue/Thu 17:30 Sweetbriar Park may be all that appears at first. Replaces the earlier 'turn on TeamSnap calendar sync once joined' loop.
-  for: Jeffery
-
-- [done 2026-08-23 by Jeffery · was: Dated, further out · opened 2026-08-22] **LOWA Board election proxy ballot** — second reminder
-  already received. Annual meeting Sun 7 Sep, 10:00, Community Center,
-  110 Sweetbriar Park Road. Decide whether to submit a proxy.
-
-- [done 2026-08-23 by Jeffery · was: Hearth's infrastructure · opened 2026-08-22] **Jeffery — attach connectors to the 07:00 routine.**
-  The trigger was created from inside a coding session and carries **no MCP
-  connectors**, so the fired session runs without Gmail, Calendar or Drive. It
-  will produce a brief from memory alone and will say so plainly rather than
-  quietly producing a thinner one.
-  Fix: open the Routines UI on claude.ai, find "Hearth — 07:00 check-in", and
-  attach Gmail (and Calendar if wanted). Until then the morning brief is
-  memory-only — which is a fair test of standalone mode, but not the full thing.
-
-- [done 2026-08-23 by Jeffery · was: Hearth's infrastructure · opened 2026-08-22] **Hearth — verify the first fire actually happened.**
-  If 07:00 passes with no push notification, the heartbeat did not work and that
-  is the single most important thing to fix. Do not assume success.
-
-- [done 2026-08-23 by Jeffery · was: This week · opened 2026-08-22] **Jeffery — accept the TeamSnap invite.**
-  Link: https://go.teamsnap.com/invitations/68ba0c041f3aee9dc8d2f6da/claim
-  Before Tue 25 Aug; the season schedule is published there and nowhere else.
-
-- [done 2026-08-23 by Jeffery · was: Urgent · opened 2026-08-23] **Jeffery — check the coffee**
-  due: 2026-08-23 09:28
-  for: Jeffery
-  Asked at 06:33 Sunday 23 Aug for a five-minute reminder.
-
-- [done 2026-08-23 by Jeffery · was: Urgent · opened 2026-08-23] **Jeffery — push notifications may not be delivering at all**
-  06:38 Sun 23 Aug: coffee reminder loop was set and stored, no push received. I can't see delivery status from inside a session, so this needs the Claude Code side. Check alongside the unverified 07:00 trigger — likely the same pipeline. Diagnostic: did the coffee item appear in the To do tab? Yes = storage fine, delivery broken. No = it failed earlier.
-

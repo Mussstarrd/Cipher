@@ -12,22 +12,12 @@ needed for a form belongs in this file.
 
 ## People
 
-<!-- Full legal name, DOB, and for the children: grade, teacher, school.
-     Fill from intake or as it comes up. Never guess a spelling or a date. -->
+- **Jeffery** — dad. Account holder. Works from home unless travelling.
+- **Suzan** — mum, 35. Email Suzanmdodson@gmail.com.
+- **Aiden** — son, 9. 4th grade, Orange County Public Schools (ocss-va.org).
+  Teacher Ms. Slagle. Campus name not recorded.
+- **Abby** — daughter, 2. Merit School at The Castle, class Pre Explorers A.
+
+_Full legal names, dates of birth and spellings: not supplied. Do not guess one._
 
 ## Contact
-
-<!-- Address, each parent's mobile, work numbers, emergency contact outside
-     the household. -->
-
-## Medical
-
-<!-- Doctor and practice number, dentist, after-hours line, insurance carrier
-     and member number, allergies, current medications and doses, pharmacy. -->
-
-## Practical
-
-<!-- Clothing and shoe sizes (they change — date them), wifi password, water
-     shutoff, alarm code holder, vehicle plates, pet vet. -->
-
-_Empty. Populate from intake and from what surfaces naturally._
