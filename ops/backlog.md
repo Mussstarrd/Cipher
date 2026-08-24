@@ -60,6 +60,11 @@ account access.
   daily, bounded by research/strategy.md. Watch that the grading actually
   changes behaviour — that is the whole point.
 
+- **B21 · Review files topics reliably** — doing. First live review skipped
+  topic-filing and the Sunday meal draft entirely; prompt hardened 08-24, next
+  two reviews are the test. If prompting cannot carry it, split topic-filing
+  into its own 22:05 model call.
+
 ## Later
 
 - **B13 · Web fetch with guardrails** — school calendar pages, league sites,
@@ -70,9 +75,9 @@ account access.
 - **B15 · Grocery list from the meal plan** — wants B2 running a few weeks.
 - **B16 · Voice notes in** — a photographed page works; a spoken "we're out of
   milk" should too. Investigate browser speech-to-text (standalone-safe).
-- **B17 · Memory compaction proof** — Sundays are meant to merge and prune.
-  Verify the first one actually ran and memory got SMALLER, not just different.
-  First test is TONIGHT (Sun 2026-08-23, 22:00 ET); the 24th's deep scan checks.
+- **B17 · Memory compaction proof** — done(2026-08-24, deep scan): first Sunday
+  compaction ran, layers shrank ~40%, review self-caught a confident-invention
+  error. Caveat rolled into B21.
 - **B18 · Adoption before capability** — from deepscan 08-23: this is still a
   one-adult tool. Until Suzan and Aiden are genuinely on (B4, J1), weigh every
   new feature against "who will actually touch this".
