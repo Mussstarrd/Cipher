@@ -53,6 +53,13 @@ account access.
 - **B12 · Earnings dates** — blocked(Jeffery: list the tickers, Adults thread).
   Then wire dates into 07:00 within lead time.
 
+- **B19 · Update-now button in the app** — adults-only, triggers the droplet's
+  git pull without a terminal. From Jeffery's ask on 08-23.
+- **B20 · The trading lab** — doing(both sessions). Morning research notes
+  (design, weekdays 08:45 ET) ↔ auto paper-trader at 17:00 (Hearth), graded
+  daily, bounded by research/strategy.md. Watch that the grading actually
+  changes behaviour — that is the whole point.
+
 ## Later
 
 - **B13 · Web fetch with guardrails** — school calendar pages, league sites,
