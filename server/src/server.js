@@ -31,6 +31,12 @@ const PUB = path.resolve(here, "..", "public");
 // Photographs stay on this disk and out of git. They are of children's paperwork.
 const PHOTOS = path.resolve(here, "..", "data", "photos");
 const RESEARCH = path.resolve(here, "..", "..", "research");
+// ops/pause.md is Jeffery's stop switch, in the repo so either session can set
+// it and the droplet honours it within one update cycle. Read per call — a
+// pause must take effect on the next tick, never on the next restart.
+const PAUSE_FILE = path.resolve(here, "..", "..", "ops", "pause.md");
+const paused = () => fs.existsSync(PAUSE_FILE);
+const PAUSE_NOTICE = "Hearth is pausing after this brief. No more check-ins, reminders or notifications until Jeffery switches it back on — he is looking at what it costs to run. Nothing is lost: the app stays readable, everything it has learned stays put, and every open item keeps its place.";
 const PORT = Number(process.env.PORT || 8787);
 const URL_BASE = process.env.HEARTH_URL || `http://localhost:${PORT}`;
 const PASS = process.env.HEARTH_PASSPHRASE || "";
@@ -119,6 +125,14 @@ async function runSlot(slot, { forced = false, late = 0 } = {}) {
   if (running) return null;
   running = true;
   const s = loadState();
+  // Paused: every scheduled wake is skipped — no model call, no push — except
+  // the first one after the pause lands, which exists to tell the family.
+  const announcing = paused() && !forced && !s.pauseAnnounced;
+  if (paused() && !forced && !announcing) {
+    running = false;
+    console.log(`[hearth] paused — ${slot} skipped, no call made`);
+    return null;
+  }
   try {
     // Count the attempt before doing any work. A wake that takes the process
     // down with it must still count as a try, or a reliably-failing slot turns
@@ -136,7 +150,9 @@ async function runSlot(slot, { forced = false, late = 0 } = {}) {
     if (total !== null) calTotal = total;
 
     const out = await wake(slot, extra);
-    const text = out.family;
+    // Prepended, not requested: a promise to the family is storage-truth, not
+    // something to hope the model phrases well. It also becomes the push body.
+    const text = announcing ? `${PAUSE_NOTICE}\n\n${out.family}` : out.family;
 
     appendDaily(`## ${slot} check-in\n\n${text}` + (out.adults ? `\n\n### adults only\n\n${out.adults}` : ""));
 
@@ -171,12 +187,17 @@ async function runSlot(slot, { forced = false, late = 0 } = {}) {
       after.lastRun[slot] = todayET();
       if (after.wakeTries) delete after.wakeTries[slot];
     }
+    if (announcing) {
+      after.pauseAnnounced = new Date().toISOString();
+      appendDaily("- PAUSED by Jeffery: the family has been told; no further check-ins, reminders or notifications until ops/pause.md is removed.");
+      console.log("[hearth] pause announced — going quiet");
+    }
     saveState(after);
 
     // After the close, the lab trades the morning's research — bounded here,
     // not just in the prompt: watchlist-only, max 3, caps enforced by the
     // strategy's numbers. CLAUDE.md carries the grant; the money is pretend.
-    if (slot === "17:00") {
+    if (slot === "17:00" && !paused()) {
       try {
         const strategy = fs.existsSync(path.join(RESEARCH, "strategy.md"))
           ? fs.readFileSync(path.join(RESEARCH, "strategy.md"), "utf8") : "";
@@ -280,6 +301,7 @@ async function runSlot(slot, { forced = false, late = 0 } = {}) {
 /** Fire reminders whose moment has arrived. Never twice for the same loop —
  *  state remembers what it has already said, and unticking a loop clears it. */
 async function remindTick(day, hm) {
+  if (paused()) return;   // due times are kept; they simply do not buzz anyone
   const now = `${day} ${hm}`;
   let due;
   try { due = loops.dueNow(now); } catch { return; }
