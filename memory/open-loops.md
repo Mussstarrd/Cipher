@@ -7,21 +7,6 @@ explicitly abandoned — that is the whole point.
 
 ## Urgent
 
-- [opened 2026-08-22] **Jeffery — finish Abby's Lillio registration at Merit School.**
-  Still not done as of Sunday night 23 Aug. The weekend laptop window has gone.
-  **Her enrolment is not finalised and the school says it "may be delayed or
-  forfeited" if this is not completed promptly.** She attends daily, which is
-  exactly why this keeps not getting done.
-  Two corrections the school gave on 2026-08-21:
-  1. **Dad cannot be the emergency contact** — it cannot be a parent or legal
-     guardian. A non-parent name is needed. Candidate: **Kathryn Hilderbrand**,
-     already an authorised pickup — *relationship unknown, asked three times on
-     23 Aug, still unanswered. Do not put her on a form on a guess.*
-  2. **The uploaded form came through blank.** Save it to a computer, fill it in
-     completely, re-upload. A phone will not do it.
-  Lillio is per-child, not per-family.
-  Surface at: every check-in until it is done. This one earns the interruption.
-
 - [opened 2026-08-23] **Jeffery — open Hearth once on his phone to re-register push.**
   New, not a re-open: the earlier delivery loop was ticked done at midday and the
   09:28 reminder did fire. Later the same day the push service **expired the
@@ -95,3 +80,19 @@ explicitly abandoned — that is the whole point.
 ## Done
 
 Ticked off in the app. The 22:00 review clears these out.
+
+- [done 2026-08-26 by Suzan · was: Urgent · opened 2026-08-22] **Jeffery — finish Abby's Lillio registration at Merit School.**
+  Still not done as of Sunday night 23 Aug. The weekend laptop window has gone.
+  **Her enrolment is not finalised and the school says it "may be delayed or
+  forfeited" if this is not completed promptly.** She attends daily, which is
+  exactly why this keeps not getting done.
+  Two corrections the school gave on 2026-08-21:
+  1. **Dad cannot be the emergency contact** — it cannot be a parent or legal
+     guardian. A non-parent name is needed. Candidate: **Kathryn Hilderbrand**,
+     already an authorised pickup — *relationship unknown, asked three times on
+     23 Aug, still unanswered. Do not put her on a form on a guess.*
+  2. **The uploaded form came through blank.** Save it to a computer, fill it in
+     completely, re-upload. A phone will not do it.
+  Lillio is per-child, not per-family.
+  Surface at: every check-in until it is done. This one earns the interruption.
+
