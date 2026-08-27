@@ -1,0 +1,16 @@
+# Secrets & session tokens — NEVER commit these
+blink_session.json
+*.session.json
+.env
+
+# Live view scratch (HLS segments)
+hls_tmp/
+*.ts
+*.m3u8
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/

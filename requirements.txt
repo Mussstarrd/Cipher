@@ -1,0 +1,12 @@
+# Cipher - Blink home situational awareness
+# Python 3.11+
+
+blinkpy>=0.25.9          # unofficial Blink API client (auth, 2FA, cameras, livestream)
+fastapi>=0.110           # web backend
+uvicorn[standard]>=0.29  # ASGI server
+aiofiles>=23.2           # async file IO for HLS/snapshot handling
+
+# Runtime (NOT pip): ffmpeg must be installed and on PATH for live view.
+#   macOS:   brew install ffmpeg
+#   Debian:  sudo apt-get install ffmpeg
+#   Windows: winget install Gyan.FFmpeg
