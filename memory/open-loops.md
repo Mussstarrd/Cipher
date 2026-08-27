@@ -15,6 +15,10 @@ explicitly abandoned — that is the whole point.
 
 ## This week
 
+- [opened 2026-08-27] **Jeffery — tell Hearth the date and time of Aiden's dentist appointment**
+  Asked 27 Aug whether he'd already given it. He hadn't — nothing in memory, calendar feeds empty. Need date, time, and the practice name. Once given, set a push for the morning of.
+  for: Jeffery
+
 - [opened 2026-08-27] **Jeffery — confirm the Rapidan date (Sunday?)**
   27 September 2026 is a Sunday. Confirm whether the appointment is really that day or whether the date or day was misheard, before anything else is planned around it.
   for: Jeffery
