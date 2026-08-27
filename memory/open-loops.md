@@ -15,6 +15,10 @@ explicitly abandoned — that is the whole point.
 
 ## This week
 
+- [opened 2026-08-27] **Jeffery — confirm the Rapidan date (Sunday?)**
+  27 September 2026 is a Sunday. Confirm whether the appointment is really that day or whether the date or day was misheard, before anything else is planned around it.
+  for: Jeffery
+
 - [opened 2026-08-23] **Jeffery — read the Breville model number off the rating sticker.**
   I told him it was a BOV900 on 23 Aug from the dial having Air Fry, Dehydrate and
   Super Convection, and said that combination was unique to that model. **That was
@@ -41,6 +45,11 @@ explicitly abandoned — that is the whole point.
   Next class Sat 29 Aug.
 
 ## Dated, further out
+
+- [opened 2026-08-27] **Jeffery — Rapidan appointment, 09:30 on 27 Sep**
+  Jeffery said 9:30 on September 27th at Rapidan. Note: 2026-09-27 falls on a Sunday — date needs confirming. Prerequisite item to be completed beforehand; details to be taken up in the adults room, not here.
+  due: 2026-09-27 08:00
+  for: Jeffery
 
 - [opened 2026-08-23] **Jeffery — send the soccer game schedule once Coach Nate publishes it**
   Practices are settled: Tue and Thu 17:30–18:30 at Sweetbriar Park. Games are not
