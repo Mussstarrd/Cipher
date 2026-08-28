@@ -15,6 +15,10 @@ explicitly abandoned — that is the whole point.
 
 ## This week
 
+- [opened 2026-08-28] **Jeffery — give Hearth the dentist practice name and address**
+  For Aiden's 16 Sep 11:00 appointment. Needed to work out drive time from Locust Grove and when to collect him from school.
+  for: Jeffery
+
 - [opened 2026-08-27] **Jeffery — tell Hearth the date and time of Aiden's dentist appointment**
   Asked 27 Aug whether he'd already given it. He hadn't — nothing in memory, calendar feeds empty. Need date, time, and the practice name. Once given, set a push for the morning of.
   for: Jeffery
@@ -49,6 +53,11 @@ explicitly abandoned — that is the whole point.
   Next class Sat 29 Aug.
 
 ## Dated, further out
+
+- [opened 2026-08-28] **Jeffery — Aiden dentist, 11:00 Wed 16 Sep**
+  Aiden's dentist appointment, 11:00 on Wed 2026-09-16. School day: Aiden is normally on the bus, Suzan is at Geico 08:00–16:30, so Jeffery covers the pull-out and the drive. Practice name and location not yet supplied. Tell Ms. Slagle the day before.
+  due: 2026-09-16 09:00
+  for: Jeffery
 
 - [opened 2026-08-27] **Jeffery — Rapidan appointment, 09:30 on 27 Sep**
   Jeffery said 9:30 on September 27th at Rapidan. Note: 2026-09-27 falls on a Sunday — date needs confirming. Prerequisite item to be completed beforehand; details to be taken up in the adults room, not here.
