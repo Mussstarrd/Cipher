@@ -171,6 +171,100 @@ exists; it needs more data.
     0.5 points, the modelling path is finished. The honest response is to bet
     nothing, or to move to a market where the bar is lower.
 
+---
+
+## UPDATE, same day: P1 executed. The segments do not replicate.
+
+Two things were done immediately, because they were needed under every option.
+
+### The pre-2021 data concern was wrong
+
+I flagged above that `numberfire` and `teamrankings` are projection sites and
+might corrupt older data. That was worth checking and it is **not true of this
+feed**. Regressing margin on each provider's number over 2016/2018/2020:
+
+| provider | n | slope | intercept | residual |
+|---|---|---|---|---|
+| consensus | 1642 | 0.973 | −0.42 | 15.89 |
+| numberfire | 1551 | 0.980 | −0.40 | 15.98 |
+| teamrankings | 1542 | 0.980 | −0.39 | 15.99 |
+| Caesars | 902 | 0.976 | −0.45 | 15.59 |
+
+All behave like markets, and pairwise they agree to within **0.52–0.77 points**
+— book-to-book noise, not model-vs-market divergence. They are republishing
+market lines. Pre-2021 closing data is usable.
+
+### The segment hypotheses failed out-of-sample
+
+The weeks-5+ and P5-v-P5 patterns were found on 2023–2025, so 2021–2022 is
+clean out-of-sample data. Tested at the 3.0-point threshold:
+
+| Hypothesis | n | real edge | ATS | p |
+|---|---|---|---|---|
+| H1 weeks 1–4 are negative | 205 | **+0.538** | 49.27% | 0.832 |
+| H2 weeks 5+ are positive | 333 | +0.266 | 49.55% | 0.862 |
+| H3 P5 v P5 weeks 5+ is best | 148 | +0.296 | **51.35%** | 0.630 |
+
+**All three fail.** H1's sign flips outright. H3 — the cell that graded 55.76%
+in-sample — grades 51.35% out-of-sample, below break-even. The segmentation was
+noise, exactly as the "found after inspecting ~14 segments" caveat warned.
+
+### The five-season pooled estimate
+
+With 2021–2022 added, at the 3.0-point threshold:
+
+| | value |
+|---|---|
+| n | **1,603** |
+| Real edge (placebo-subtracted) | **+0.392 pts** |
+| Predicted win% from that edge | **51.04%** |
+| **Observed ATS** | **51.03%** |
+| Break-even at −110 | 52.38% |
+| Expected ROI at −110 | **−2.55%** |
+| Expected ROI at −105 | **−0.34%** |
+
+Per-season ATS: 47.8 / 51.5 / 51.9 / 50.3 / 53.2.
+
+The predicted and observed win rates agree **to two decimal places**. That is
+strong evidence the measurement framework is correct, and it settles the size of
+the effect: the edge is real, it is about +0.4 points, and it is smaller than
+the vig at any retail price.
+
+### What this changes
+
+The plan above ordered model work behind execution. That was right, but too
+gentle. The five-season number says the model edge is **+0.4 points against a
+0.91-point bar**, and no subset of games escapes it. Sections P1 and P2 as
+written are now largely answered:
+
+- P1 is **done**, and the answer is negative. More data will not help; the
+  effect is measured tightly (n = 1,603) and it is too small.
+- P2's segment-targeted work is **dead** — there is no segment to target.
+- P2's remaining live item is opponent-adjusted EPA (item 8), which is the only
+  proposal that could plausibly move the *size* of the edge rather than
+  reallocate it. Everything else in the queue is now a distraction.
+
+### The one direction the numbers actually point to
+
+At +0.392 points the strategy wins 51.04%. Break-even by price:
+
+| Price | Break-even | Result at 51.04% |
+|---|---|---|
+| −110 | 52.38% | −2.55% |
+| −105 | 51.22% | −0.34% |
+| −102 | 50.50% | +1.06% |
+| −100 (exchange) | 50.00% | **+2.08%** |
+
+**The edge only monetises at exchange-level pricing.** Betting exchanges and
+low-hold books (Prophet X, Sporttrade, Circa-style reduced juice) charge
+commission on winnings rather than a 4.5% spread. At 1–2% commission this
+strategy is marginally positive; at −110 it is reliably negative.
+
+That is a much more concrete conclusion than "improve the model". The question
+is no longer *can we predict better* — five seasons say we cannot, by enough —
+but *can we bet at a price where +0.4 points is enough*.
+
+
 ## 6. The question this plan cannot answer
 
 **Is a 1–3% ROI edge on CFB sides worth the effort?**
@@ -193,11 +287,15 @@ strategy decision, not a technical one.
 2. The market-drift coefficient is +0.078 with t = 6.78 — small but very
    significant. Is capturing opening-line error a durable edge, or does it
    disappear once you are betting into it at size?
-3. Is opponent-adjusted EPA likely to close a 0.3–0.5 point gap against a market
+3. Is opponent-adjusted EPA likely to close a 0.5-point gap against a market
    that already prices SP+, or is that gap structurally unbridgeable with public
-   data?
+   data? (Five seasons now put our edge at +0.392 pts against a 0.91-pt bar.)
 4. Are we wrong to demote the preseason-prior upgrades? The argument is that
    they improve weeks 1–4, which the evidence says not to bet — but a better
    prior also improves weeks 5–8 through the shrinkage term.
 5. Given break-even needs 0.91 points and price is worth 0.45, is there any
    argument for pursuing the model at all versus pure execution optimisation?
+6. The five-season estimate (+0.392 pts, 51.04% predicted vs 51.03% observed,
+   n = 1,603) says this only clears at exchange-level pricing. Is that a real
+   route — are exchange/low-hold prices actually obtainable at usable size on
+   CFB sides — or is the honest read that CFB sides are simply closed to us?
