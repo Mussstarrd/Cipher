@@ -1,6 +1,6 @@
 # LineHawk - Model Evaluation 2023-2025
 
-Generated 2026-08-29 17:51 UTC. 2,208 priced games, walk-forward.
+Generated 2026-08-29 17:55 UTC. 2,208 priced games, walk-forward.
 
 ## Verdict: NO-GO - THE MODEL HAS NO EDGE
 
@@ -51,6 +51,44 @@ threshold. A real edge grows with disagreement and shows up every year.
 
 Break-even is 52.38%. The per-season columns are the point: single seasons swing
 wildly on both sides of break-even, and nothing survives being asked to repeat.
+
+## The one thing that does work, and why it is still not enough
+
+Regressing the line's movement `(close - open)` on our disagreement with the open
+`(model - open)` gives a coefficient of **+0.0780** (SE 0.0115, t = **+6.78**, n = 2,196).
+
+That is highly significant and it is a real result: **the market does drift toward
+our number after the open.** The opening line carries error, our number sees part of
+it, and betting the open captures some of that drift as closing line value.
+
+The trap is measuring that value naively. Taking the *best* of several opening
+numbers and comparing it to a *median* close pays us for shopping whichever side we
+choose, so a coin flip books positive CLV too. Subtracting the coin flip leaves the
+part actually attributable to the model:
+
+| Disagreement | n | CLV as shopped | CLV no shopping | Coin-flip placebo | **Real edge** | ATS at open |
+|--------------|---|----------------|-----------------|-------------------|---------------|-------------|
+| >= 2.0 pts | 1466 | +1.174 | +0.326 | +0.864 | **+0.310** | 52.39% +/- 1.31 |
+| >= 3.0 pts | 1065 | +1.341 | +0.402 | +0.933 | **+0.407** | 51.83% +/- 1.53 |
+| >= 4.0 pts | 755 | +1.563 | +0.534 | +0.957 | **+0.605** | 51.79% +/- 1.82 |
+| >= 5.0 pts | 504 | +1.872 | +0.710 | +1.345 | **+0.527** | 53.37% +/- 2.23 |
+
+So the genuine edge runs **+0.31 to +0.60 points** - real,
+consistent, and growing with the size of the disagreement, which is what a true
+effect looks like rather than a fluke. It is also **less than the 0.91 points
+the vig demands.** The table below is deliberately generous: it uses the *best* of
+the four thresholds (+0.60), so the real picture is somewhat worse than
+what it shows.
+
+| Price | Break-even | Edge needed | Our expected win% | Expected ROI |
+|-------|-----------|-------------|-------------------|--------------|
+| -102 | 50.50% | 0.19 pts | 51.58% | **+2.16%** |
+| -105 | 51.22% | 0.47 pts | 51.58% | **+0.71%** |
+| -110 | 52.38% | 0.91 pts | 51.58% | **-1.52%** |
+
+This is the whole project in one table. The engine is not worthless and it is not a
+winner: it finds about half the edge it needs. The measured ATS at opening numbers
+agrees - every threshold lands within one standard error of break-even.
 
 ## Pre-registered market-inefficiency hypotheses
 

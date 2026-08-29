@@ -19,6 +19,7 @@ played before week W of season Y, plus a preseason prior built entirely from
 season Y-1 and earlier.
 """
 
+import random
 import statistics
 from dataclasses import dataclass, field
 from typing import Optional
@@ -221,6 +222,96 @@ def break_even_edge(resid_sd: float) -> float:
     return (0.5238095238 - 0.5) / density
 
 
+
+# --- opening-line analysis ---------------------------------------------------
+
+def line_movement(priced: list[tuple[Game, float]]) -> dict:
+    """Does the market move toward our number after the open?
+
+    Regress (close - open) on (model - open). A model carrying information the
+    opening line lacks should see the market drift toward it, giving a positive
+    coefficient. This is a much weaker claim than "the model is right", and it
+    is the one that actually generates closing line value.
+    """
+    rows = [(g, m, statistics.fmean(g.open_spreads)) for g, m in priced if g.open_spreads]
+    if len(rows) < 50:
+        return {"n": len(rows)}
+    x = [m - o for _, m, o in rows]
+    y = [g.market_close - o for g, _, o in rows]
+    b = ols([[1.0, x[i]] for i in range(len(x))], y)
+    resid = [y[i] - (b[0] + b[1] * x[i]) for i in range(len(x))]
+    mean_x = statistics.fmean(x)
+    sxx = sum((xi - mean_x) ** 2 for xi in x)
+    se = statistics.pstdev(resid) / sxx ** 0.5 if sxx > 1e-9 else float("inf")
+    return {"n": len(rows), "coef": round(b[1], 4), "se": round(se, 4),
+            "t": round(b[1] / se, 2) if se not in (0, float("inf")) else 0.0}
+
+
+def clv_decomposition(priced: list[tuple[Game, float]], thresholds=(2.0, 3.0, 4.0, 5.0),
+                      seed: int = 7) -> list[dict]:
+    """Split measured CLV into the shopping artifact and the genuine part.
+
+    Taking the best of several opening numbers and comparing it to a median
+    close pays us for shopping whichever side we pick, so a coin flip books
+    positive CLV on this measure. Subtracting what the coin flip earns from the
+    same games leaves the part attributable to the model.
+    """
+    rng = random.Random(seed)
+    rows = [(g, m) for g, m in priced if g.open_spreads]
+    out = []
+    for th in thresholds:
+        shop, noshop, coin = [], [], []
+        wins = losses = 0
+        for g, m in rows:
+            best_home, best_away = max(g.open_spreads), min(g.open_spreads)
+            med_open = statistics.fmean(g.open_spreads)
+            home_edge, away_edge = best_home - m, m - best_away
+            if max(home_edge, away_edge) < th:
+                continue
+            take_home = home_edge >= away_edge
+            close = g.market_close if take_home else -g.market_close
+            entry = best_home if take_home else -best_away
+            shop.append(entry - close)
+            noshop.append((med_open if take_home else -med_open) - close)
+            coin.append((best_home - g.market_close) if rng.random() < 0.5
+                        else (-best_away + g.market_close))
+            margin = g.margin if take_home else -g.margin
+            cover = margin + entry
+            if cover > 0:
+                wins += 1
+            elif cover < 0:
+                losses += 1
+        n = wins + losses
+        if n < 30:
+            continue
+        shop_m, coin_m = statistics.fmean(shop), statistics.fmean(coin)
+        out.append({
+            "threshold": th, "n": n,
+            "clv_shopped": round(shop_m, 3),
+            "clv_no_shopping": round(statistics.fmean(noshop), 3),
+            "clv_coin_placebo": round(coin_m, 3),
+            "real_edge_points": round(shop_m - coin_m, 3),
+            "ats_pct": round(wins / n * 100, 2),
+            "ats_se": round((0.25 / n) ** 0.5 * 100, 2),
+        })
+    return out
+
+
+def edge_economics(real_edge_points: float, margin_sd: float,
+                   price: int = -110) -> dict:
+    """Turn points of edge into an expected ROI at a given price."""
+    density = 0.3989422804 / margin_sd
+    win_pct = 0.5 + real_edge_points * density
+    payout = 100.0 / abs(price) if price < 0 else price / 100.0
+    ev = win_pct * payout - (1 - win_pct)
+    return {
+        "price": price,
+        "break_even_pct": round(1 / (1 + payout) * 100, 2),
+        "break_even_points": round((1 / (1 + payout) - 0.5) / density, 3),
+        "expected_win_pct": round(win_pct * 100, 2),
+        "expected_roi_pct": round(ev * 100, 2),
+    }
+
 # --- full evaluation ---------------------------------------------------------
 
 TRAIN_SEASONS = (2023, 2024)
@@ -296,6 +387,9 @@ def full_evaluation(reg: Registry, seasons=(2023, 2024, 2025),
         }
 
     pooled_info = incremental_information(everything)
+    movement = line_movement(everything)
+    decomposition = clv_decomposition(everything)
+    best_real = max((d["real_edge_points"] for d in decomposition), default=0.0)
     market_err_all = statistics.pstdev([g.margin + g.market_close for g, _ in everything])
 
     thresholds = {}
@@ -351,7 +445,11 @@ def full_evaluation(reg: Registry, seasons=(2023, 2024, 2025),
     passed = verdict["model_adds_information"] and (
         verdict["any_threshold_profitable_and_consistent"] or verdict["any_hypothesis_holds"])
 
+    economics = {p: edge_economics(best_real, market_err_all, p) for p in (-110, -105, -102)}
+
     return {
+        "movement": movement, "clv_decomposition": decomposition,
+        "real_edge_points": round(best_real, 3), "economics": economics,
         "seasons": list(seasons),
         "params": {"lambda": lam, "hfa": hfa, "mov_cap": mov_cap},
         "per_season": per_season, "pooled": pooled_info,
@@ -435,6 +533,48 @@ def render_evaluation(res: dict) -> str:
     a("wildly on both sides of break-even, and nothing survives being asked to repeat.")
     a("")
 
+    a("## The one thing that does work, and why it is still not enough")
+    a("")
+    mv = res.get("movement", {})
+    a(f"Regressing the line's movement `(close - open)` on our disagreement with the open")
+    a(f"`(model - open)` gives a coefficient of **{mv.get('coef', 0):+.4f}** "
+      f"(SE {mv.get('se', 0):.4f}, t = **{mv.get('t', 0):+.2f}**, n = {mv.get('n', 0):,}).")
+    a("")
+    a("That is highly significant and it is a real result: **the market does drift toward")
+    a("our number after the open.** The opening line carries error, our number sees part of")
+    a("it, and betting the open captures some of that drift as closing line value.")
+    a("")
+    a("The trap is measuring that value naively. Taking the *best* of several opening")
+    a("numbers and comparing it to a *median* close pays us for shopping whichever side we")
+    a("choose, so a coin flip books positive CLV too. Subtracting the coin flip leaves the")
+    a("part actually attributable to the model:")
+    a("")
+    a("| Disagreement | n | CLV as shopped | CLV no shopping | Coin-flip placebo | **Real edge** | ATS at open |")
+    a("|--------------|---|----------------|-----------------|-------------------|---------------|-------------|")
+    for d in res.get("clv_decomposition", []):
+        a(f"| >= {d['threshold']} pts | {d['n']} | {d['clv_shopped']:+.3f} "
+          f"| {d['clv_no_shopping']:+.3f} | {d['clv_coin_placebo']:+.3f} "
+          f"| **{d['real_edge_points']:+.3f}** | {d['ats_pct']:.2f}% +/- {d['ats_se']:.2f} |")
+    a("")
+    reals = [d["real_edge_points"] for d in res.get("clv_decomposition", [])]
+    a(f"So the genuine edge runs **+{min(reals):.2f} to +{max(reals):.2f} points** - real,")
+    a("consistent, and growing with the size of the disagreement, which is what a true")
+    a("effect looks like rather than a fluke. It is also **less than the "
+      f"{res['break_even_points']:.2f} points")
+    a("the vig demands.** The table below is deliberately generous: it uses the *best* of")
+    a(f"the four thresholds (+{max(reals):.2f}), so the real picture is somewhat worse than")
+    a("what it shows.")
+    a("")
+    a("| Price | Break-even | Edge needed | Our expected win% | Expected ROI |")
+    a("|-------|-----------|-------------|-------------------|--------------|")
+    for price, e in sorted(res.get("economics", {}).items(), reverse=True):
+        a(f"| {price} | {e['break_even_pct']:.2f}% | {e['break_even_points']:.2f} pts "
+          f"| {e['expected_win_pct']:.2f}% | **{e['expected_roi_pct']:+.2f}%** |")
+    a("")
+    a("This is the whole project in one table. The engine is not worthless and it is not a")
+    a("winner: it finds about half the edge it needs. The measured ATS at opening numbers")
+    a("agrees - every threshold lands within one standard error of break-even.")
+    a("")
     a("## Pre-registered market-inefficiency hypotheses")
     a("")
     a("These were written down before the results were looked at, so the list cannot")

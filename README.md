@@ -94,19 +94,40 @@ name for both teams and every book's number — the proof the joins are right.
 ## Betting posture
 
 Weeks 1–3 are **paper only**, and those cards are labelled `PAPER`. Real money
-additionally requires the historical backtest gate to pass:
+additionally requires a passing evaluation gate:
 
 ```bash
-python -m cfb_agent backtest --seasons 2023,2024,2025
+python -m cfb_agent evaluate --seasons 2023,2024,2025
 ```
 
-**As of the 2023–2025 run that gate FAILS** — see
-`reports/backtest-2023-2025.md`. The headline reason is worth knowing: mean CLV
-measured against the best opening number across books clears the +0.35
-threshold, but so does a coin flip (+0.675), because that measurement pays for
-line shopping rather than for model skill. Stripped of the shopping premium the
-model's CLV is negative. `backtest.gate()` therefore requires beating both
-placebos, not merely the literal threshold.
+`mode_for_week` needs *both* locks open, and the gate defaults to closed, so a
+missing or unreadable `data/gate_status.json` can never be mistaken for a pass.
+The system will not promote itself to live money on its own authority.
+
+**As of the 2023–2025 evaluation the gate FAILS** — see
+`reports/evaluation-2023-2025.md`. The finding is worth stating precisely,
+because it is not "the model is broken":
+
+- The model is well calibrated (slope ~0.98 against the market) and predicts
+  football reasonably. It is still a **worse** margin forecaster than the
+  closing line in all three seasons (15.5–16.2 vs 15.1–15.5 points).
+- Regressing actual margin on the market's number *and* ours gives
+  `beta_model = -0.018` (t = −0.22) over 2,208 walk-forward games. The closing
+  line already contains everything the model knows.
+- One real effect does survive: the market **drifts toward our number** after
+  the open (t = +6.78). Betting openers captures roughly **+0.3 to +0.6 points**
+  of genuine edge, once the line-shopping artifact is subtracted out via a
+  coin-flip placebo.
+- But margins scatter around the close with SD 15.2 points, so a point of
+  spread is worth 2.62% of cover probability and break-even at −110 demands
+  **0.91 points**. The engine finds about half the edge it needs: roughly
+  −1.5% ROI at −110, break-even around −105.
+
+Single seasons are not evidence. At the 2.5-point threshold the model graded
+47.5% / 46.4% / 53.9% across 2023 / 2024 / 2025 — read on 2025 alone it looks
+like a winning system, pooled it is 49.29%. The evaluator therefore requires a
+result to hold in *every* season and to clear significance, and its hypotheses
+are pre-registered so the list cannot grow to fit whatever happened to work.
 
 ## The Odds API budget
 
