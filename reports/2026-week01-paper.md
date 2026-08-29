@@ -6,7 +6,7 @@
 > plays are recorded to measure closing line value and pipeline latency.
 > **No money is to be placed on anything below.**
 
-Generated 2026-08-29 17:19 UTC. 50 games priced, 10 plays, 0 quarantined.
+Generated 2026-08-29 17:32 UTC. 50 games priced, 10 plays, 0 quarantined.
 
 Model: HFA **2** flat · minimum edge **2.5 pts** (week 1) · tiers A≥4.5 / B≥3.5 / C≥2.5.
 
@@ -16,6 +16,7 @@ Model: HFA **2** flat · minimum edge **2.5 pts** (week 1) · tiers A≥4.5 / B�
 - ✅ `cfbd:lines` — ok: 150/202 book-lines joined by game id
 - ✅ `cfbd:sp+` — ok: 138 teams (SP+ vintage 2026)
 - ✅ `cfbd:talent` — ok: 138 teams
+- ✅ `closing` — ok: marked 4 lines as closing
 - ✅ `espn:fpi` — ok: 138 teams
 - ✅ `espn:games` — ok: 99 games, 98 book-lines
 - ✅ `oddsapi:lines` — ok: 560 book-lines joined (25 rows for games not on this week's slate) — archived snapshot, spent 0 req; month 2/500, week snapshots 2/3

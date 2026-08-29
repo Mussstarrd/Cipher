@@ -5,7 +5,7 @@ output can never be mistaken for a real betting card.
 """
 
 import random
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from . import config, db
 
@@ -41,6 +41,11 @@ def seed_demo_week(week: int = 1, seed: int = 7) -> int:
 
         teams = TEAMS[:]
         rng.shuffle(teams)
+        # Kickoffs must be in the future: the edge finder refuses to price a
+        # game that has already started, so fixed 1999 dates would price nothing.
+        base = datetime.now(timezone.utc) + timedelta(days=1)
+        kickoffs = [(base + timedelta(hours=3 * k)).isoformat(timespec="seconds")
+                    for k in range(len(teams) // 2 + 1)]
         n_games = 0
         for i in range(0, len(teams), 2):
             home, away = teams[i], teams[i + 1]
@@ -49,7 +54,7 @@ def seed_demo_week(week: int = 1, seed: int = 7) -> int:
                 """INSERT OR REPLACE INTO games (game_id, season, week, kickoff, home_id,
                        away_id, home_team, away_team, neutral, completed)
                    VALUES (?,?,?,?,?,?,?,?,0,0)""",
-                (gid, DEMO_SEASON, week, f"1999-09-0{(i % 7) + 1}T19:30Z",
+                (gid, DEMO_SEASON, week, kickoffs[i // 2],
                  ids[home], ids[away], home, away),
             )
             # Market centers near truth with its own error, books shade around it.
