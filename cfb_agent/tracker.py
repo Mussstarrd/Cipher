@@ -1,13 +1,26 @@
-"""Bet log + settlement + season tracking (W/L, ROI, CLV)."""
+"""Bet log + settlement + season tracking (W/L, ROI, CLV).
+
+Every row carries a mode: PAPER rows are research and never represent money at
+risk. Weeks 1-3 are PAPER by construction (config.PAPER_ONLY_THROUGH_WEEK).
+"""
 
 from datetime import datetime, timezone
+from typing import Optional
 
 from . import config, db
 from .edges import Play
 
+KEY_NUMBERS = (3.0, 7.0)
 
-def log_plays(season: int, week: int, plays: list[Play]) -> int:
+
+def mode_for_week(week: int) -> str:
+    return "PAPER" if week <= config.PAPER_ONLY_THROUGH_WEEK else "LIVE"
+
+
+def log_plays(season: int, week: int, plays: list[Play],
+              mode: Optional[str] = None) -> int:
     """Record this week's card in the bet log (skips games already logged)."""
+    mode = mode or mode_for_week(week)
     now = datetime.now(timezone.utc).isoformat(timespec="seconds")
     logged = 0
     with db.connect() as conn:
@@ -19,14 +32,39 @@ def log_plays(season: int, week: int, plays: list[Play]) -> int:
             if exists:
                 continue
             conn.execute(
-                """INSERT INTO bets (season, week, game_id, pick_team, pick_spread,
-                       price, units, edge, placed_at)
-                   VALUES (?,?,?,?,?,?,?,?,?)""",
-                (season, week, p.game_id, p.pick_team, p.pick_spread,
-                 p.price, p.units, p.edge, now),
+                """INSERT INTO bets (season, week, game_id, pick_team_id, pick_team,
+                       pick_spread, book, price, units, edge, mode, placed_at)
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""",
+                (season, week, p.game_id, p.pick_team_id, p.pick_team, p.pick_spread,
+                 p.best_book, p.price, p.units, p.edge, mode, now),
             )
             logged += 1
     return logged
+
+
+def closing_consensus(conn, game_id: str) -> Optional[float]:
+    """Median closing home spread across books.
+
+    Prefers lines explicitly flagged as closing; otherwise falls back to the
+    latest number seen for each book. A single book is a quote, not a close.
+    """
+    rows = conn.execute(
+        "SELECT book, spread_home FROM lines WHERE game_id=? AND is_closing=1",
+        (game_id,),
+    ).fetchall()
+    if not rows:
+        rows = conn.execute(
+            """SELECT l.book, l.spread_home FROM lines l
+               JOIN (SELECT game_id, book, MAX(fetched_at) AS ft
+                       FROM lines WHERE game_id=? GROUP BY game_id, book) x
+                 ON x.game_id=l.game_id AND x.book=l.book AND x.ft=l.fetched_at""",
+            (game_id,),
+        ).fetchall()
+    spreads = sorted(r["spread_home"] for r in rows)
+    if not spreads:
+        return None
+    mid = len(spreads) // 2
+    return spreads[mid] if len(spreads) % 2 else (spreads[mid - 1] + spreads[mid]) / 2
 
 
 def settle(season: int, week: int) -> list[dict]:
@@ -34,16 +72,17 @@ def settle(season: int, week: int) -> list[dict]:
     results = []
     with db.connect() as conn:
         rows = conn.execute(
-            """SELECT b.*, g.home_team, g.away_team, g.home_score, g.away_score, g.completed
+            """SELECT b.*, g.home_id, g.away_id, g.home_score, g.away_score, g.completed
                FROM bets b JOIN games g ON b.game_id=g.game_id
                WHERE b.season=? AND b.week=? AND b.result IS NULL""",
             (season, week),
         ).fetchall()
         for b in rows:
-            if not b["completed"] or b["home_score"] is None:
+            if not b["completed"] or b["home_score"] is None or b["away_score"] is None:
                 continue
             margin_home = b["home_score"] - b["away_score"]
-            pick_margin = margin_home if b["pick_team"] == b["home_team"] else -margin_home
+            is_home = int(b["pick_team_id"]) == int(b["home_id"])
+            pick_margin = margin_home if is_home else -margin_home
             cover = pick_margin + b["pick_spread"]
             if cover > 0:
                 result, profit = "win", b["units"] * _payout(b["price"])
@@ -52,46 +91,53 @@ def settle(season: int, week: int) -> list[dict]:
             else:
                 result, profit = "push", 0.0
 
-            closing = conn.execute(
-                """SELECT spread_home FROM lines WHERE game_id=? ORDER BY fetched_at DESC LIMIT 1""",
-                (b["game_id"],),
-            ).fetchone()
-            clv = None
-            closing_spread = None
-            if closing:
-                closing_spread = (
-                    closing["spread_home"] if b["pick_team"] == b["home_team"] else -closing["spread_home"]
-                )
-                # Positive CLV: we got a better number than the close.
+            closing_home = closing_consensus(conn, b["game_id"])
+            closing_spread = clv = None
+            if closing_home is not None:
+                closing_spread = closing_home if is_home else -closing_home
+                # Positive CLV: we took a better number than the close.
                 clv = b["pick_spread"] - closing_spread
 
             conn.execute(
                 "UPDATE bets SET result=?, profit_units=?, closing_spread=?, clv_points=? WHERE bet_id=?",
                 (result, profit, closing_spread, clv, b["bet_id"]),
             )
-            results.append({"pick": f"{b['pick_team']} {b['pick_spread']:+g}",
-                            "result": result, "profit": profit, "clv": clv})
+            results.append({
+                "pick": f"{b['pick_team']} {b['pick_spread']:+g}",
+                "mode": b["mode"], "result": result, "profit": profit,
+                "clv": clv, "closing": closing_spread,
+                "score": f"{b['away_score']}-{b['home_score']}",
+            })
     return results
 
 
-def season_summary(season: int) -> dict:
+def season_summary(season: int, mode: Optional[str] = None) -> dict:
+    where = "season=? AND result IS NOT NULL"
+    params: list = [season]
+    if mode:
+        where += " AND mode=?"
+        params.append(mode)
     with db.connect() as conn:
         row = conn.execute(
-            """SELECT COUNT(*) n,
-                      SUM(result='win') w, SUM(result='loss') l, SUM(result='push') p,
-                      SUM(profit_units) profit, SUM(units) staked,
-                      AVG(clv_points) avg_clv
-               FROM bets WHERE season=? AND result IS NOT NULL""",
-            (season,),
+            f"""SELECT COUNT(*) n,
+                       SUM(result='win') w, SUM(result='loss') l, SUM(result='push') p,
+                       SUM(profit_units) profit, SUM(units) staked,
+                       AVG(clv_points) avg_clv,
+                       SUM(clv_points > 0) beat, SUM(clv_points IS NOT NULL) with_clv
+                FROM bets WHERE {where}""",
+            params,
         ).fetchone()
     n = row["n"] or 0
     staked = row["staked"] or 0.0
+    with_clv = row["with_clv"] or 0
     return {
         "settled": n,
         "record": f"{row['w'] or 0}-{row['l'] or 0}-{row['p'] or 0}",
         "profit_units": round(row["profit"] or 0.0, 2),
         "roi": round((row["profit"] or 0.0) / staked * 100, 1) if staked else 0.0,
         "avg_clv_points": round(row["avg_clv"], 2) if row["avg_clv"] is not None else None,
+        "beat_close_pct": round((row["beat"] or 0) / with_clv * 100, 1) if with_clv else None,
+        "clv_sample": with_clv,
     }
 
 

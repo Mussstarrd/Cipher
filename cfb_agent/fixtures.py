@@ -26,6 +26,8 @@ def seed_demo_week(week: int = 1, seed: int = 7) -> int:
     rng = random.Random(seed + week)
     now = datetime.now(timezone.utc).isoformat(timespec="seconds")
 
+    # Synthetic ids in a range no real ESPN/CFBD team occupies.
+    ids = {t: 900000 + i for i, t in enumerate(TEAMS)}
     true_ratings = {t: rng.gauss(0, 12) for t in TEAMS}
 
     with db.connect() as conn:
@@ -33,8 +35,8 @@ def seed_demo_week(week: int = 1, seed: int = 7) -> int:
         for source, noise in (("sp+", 2.0), ("fpi", 3.0)):
             for t, r in true_ratings.items():
                 conn.execute(
-                    "INSERT OR REPLACE INTO ratings (season, week, team, source, rating) VALUES (?,?,?,?,?)",
-                    (DEMO_SEASON, week, t, source, r + rng.gauss(0, noise)),
+                    "INSERT OR REPLACE INTO ratings (season, week, team_id, source, rating) VALUES (?,?,?,?,?)",
+                    (DEMO_SEASON, week, ids[t], source, r + rng.gauss(0, noise)),
                 )
 
         teams = TEAMS[:]
@@ -44,9 +46,11 @@ def seed_demo_week(week: int = 1, seed: int = 7) -> int:
             home, away = teams[i], teams[i + 1]
             gid = f"demo-{week}-{i // 2}"
             conn.execute(
-                """INSERT OR REPLACE INTO games (game_id, season, week, kickoff, home_team,
-                       away_team, neutral, completed) VALUES (?,?,?,?,?,?,0,0)""",
-                (gid, DEMO_SEASON, week, f"1999-09-0{(i % 7) + 1}T19:30Z", home, away),
+                """INSERT OR REPLACE INTO games (game_id, season, week, kickoff, home_id,
+                       away_id, home_team, away_team, neutral, completed)
+                   VALUES (?,?,?,?,?,?,?,?,0,0)""",
+                (gid, DEMO_SEASON, week, f"1999-09-0{(i % 7) + 1}T19:30Z",
+                 ids[home], ids[away], home, away),
             )
             # Market centers near truth with its own error, books shade around it.
             fair = -(true_ratings[home] - true_ratings[away] + config.HOME_FIELD_ADVANTAGE)
@@ -55,8 +59,9 @@ def seed_demo_week(week: int = 1, seed: int = 7) -> int:
                 shade = rng.choice([-1.0, -0.5, 0.0, 0.5, 1.0])
                 spread = round((market + shade) * 2) / 2
                 conn.execute(
-                    "INSERT OR REPLACE INTO lines (game_id, book, spread_home, price, fetched_at) VALUES (?,?,?,?,?)",
-                    (gid, book, spread, -110, now),
+                    """INSERT OR REPLACE INTO lines (game_id, book, spread_home, price,
+                           source, fetched_at) VALUES (?,?,?,?,?,?)""",
+                    (gid, book, spread, -110, "demo", now),
                 )
             n_games += 1
     return n_games
@@ -70,14 +75,14 @@ def simulate_results(week: int = 1, seed: int = 7) -> int:
             "SELECT * FROM games WHERE season=? AND week=?", (DEMO_SEASON, week)
         ).fetchall()
         ratings = {
-            r["team"]: r["rating"]
+            r["team_id"]: r["rating"]
             for r in conn.execute(
-                "SELECT team, rating FROM ratings WHERE season=? AND week=? AND source='sp+'",
+                "SELECT team_id, rating FROM ratings WHERE season=? AND week=? AND source='sp+'",
                 (DEMO_SEASON, week),
             )
         }
         for g in games:
-            margin = (ratings.get(g["home_team"], 0) - ratings.get(g["away_team"], 0)
+            margin = (ratings.get(g["home_id"], 0) - ratings.get(g["away_id"], 0)
                       + config.HOME_FIELD_ADVANTAGE + rng.gauss(0, 14))
             base = rng.randint(17, 34)
             home = max(0, round(base + margin / 2))
