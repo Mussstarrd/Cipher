@@ -14,6 +14,8 @@ from typing import Optional
 from .. import config, http
 from ..teams import Registry
 
+__all__ = ["http", "fetch_sp_ratings", "fetch_talent", "fetch_lines", "fetch_games"]
+
 BASE = "https://api.collegefootballdata.com"
 
 # /ratings/sp includes a synthetic row carrying league-wide means. It is not a

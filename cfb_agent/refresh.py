@@ -10,7 +10,7 @@ import statistics
 from datetime import datetime, timezone
 from typing import Optional
 
-from . import config, db
+from . import config, db, edges
 from .http import FetchError
 from .sources import cfbd, espn, oddsapi
 from .teams import Registry
@@ -246,21 +246,36 @@ def _talent_to_points(talent: dict[int, float],
 
 
 def _mark_closing(conn, season: int, week: int) -> int:
-    """Flag the last line seen for each (game, book) as that book's closing number."""
+    """Flag the last line seen for each (game, book) as that book's closing number.
+
+    Only games that have already kicked off are eligible: a game still days away
+    has no closing line yet, and stamping one would freeze a mid-week number as
+    the close and corrupt every CLV computed against it. Re-running is safe —
+    the flag is cleared and recomputed each time, so a game closes exactly once
+    the run happens after its kickoff.
+    """
+    moment = datetime.now(timezone.utc)
     conn.execute(
         """UPDATE lines SET is_closing=0
            WHERE game_id IN (SELECT game_id FROM games WHERE season=? AND week=?)""",
         (season, week),
     )
+    rows = conn.execute(
+        "SELECT game_id, kickoff FROM games WHERE season=? AND week=?", (season, week)
+    ).fetchall()
+    started = [r["game_id"] for r in rows
+               if (ko := edges.parse_kickoff(r["kickoff"])) is not None and ko <= moment]
+    if not started:
+        return 0
+    placeholders = ",".join("?" * len(started))
     cur = conn.execute(
-        """UPDATE lines SET is_closing=1
-           WHERE rowid IN (
-               SELECT l.rowid FROM lines l
-               JOIN games g ON g.game_id = l.game_id
-               JOIN (SELECT game_id, book, MAX(fetched_at) AS ft
-                       FROM lines GROUP BY game_id, book) x
-                 ON x.game_id = l.game_id AND x.book = l.book AND x.ft = l.fetched_at
-               WHERE g.season=? AND g.week=?)""",
-        (season, week),
+        f"""UPDATE lines SET is_closing=1
+            WHERE rowid IN (
+                SELECT l.rowid FROM lines l
+                JOIN (SELECT game_id, book, MAX(fetched_at) AS ft
+                        FROM lines GROUP BY game_id, book) x
+                  ON x.game_id = l.game_id AND x.book = l.book AND x.ft = l.fetched_at
+                WHERE l.game_id IN ({placeholders}))""",
+        started,
     )
     return cur.rowcount

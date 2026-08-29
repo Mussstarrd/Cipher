@@ -16,11 +16,12 @@
 import argparse
 import sys
 
-from . import card, config, db, edges, fixtures, ratings, refresh, tracker
+from . import backtest, card, config, db, edges, fixtures, ratings, refresh, tracker
 from .sources import oddsapi
 from .teams import Registry
 
-COMMANDS = ["refresh", "top", "mapping", "card", "settle", "summary", "budget", "demo"]
+COMMANDS = ["refresh", "top", "mapping", "card", "settle", "summary", "budget",
+            "backtest", "demo"]
 
 
 def main(argv=None) -> int:
@@ -36,6 +37,8 @@ def main(argv=None) -> int:
     ap.add_argument("--refresh-registry", action="store_true",
                     help="rebuild the team id registry from both providers")
     ap.add_argument("-n", type=int, default=15, help="top: how many teams to show")
+    ap.add_argument("--seasons", default="2023,2024,2025", help="backtest: seasons to test")
+    ap.add_argument("--max-week", type=int, default=15, help="backtest: last regular-season week")
     args = ap.parse_args(argv)
 
     if args.refresh_registry:
@@ -94,6 +97,9 @@ def main(argv=None) -> int:
         for t in st["snapshot_times"]:
             print(f"    - {t}")
         return 0
+
+    if args.command == "backtest":
+        return _cmd_backtest(args.seasons, args.max_week)
 
     if args.command == "demo":
         return _cmd_demo(args.week)
@@ -166,6 +172,27 @@ def _cmd_mapping(season: int, week: int) -> int:
             for r in rows:
                 print(f"     {r['source']:8s} {r['book']:22s} home {r['spread_home']:+6.1f} "
                       f"@ {r['price']}")
+    return 0
+
+
+def _cmd_backtest(seasons_arg: str, max_week: int) -> int:
+    seasons = [int(x) for x in seasons_arg.split(",") if x.strip()]
+    weeks = range(1, max_week + 1)
+    reg = Registry.load(config.SEASON)
+    print(f"Backtesting {seasons} weeks {weeks.start}-{weeks.stop - 1} ...")
+    rows, diag = backtest.run(seasons, weeks, reg)
+    content = backtest.render_report(seasons, weeks, rows, diag)
+    config.ensure_dirs()
+    path = config.REPORTS_DIR / f"backtest-{seasons[0]}-{seasons[-1]}.md"
+    path.write_text(content, encoding="utf-8")
+    g = backtest.gate(rows)
+    print()
+    print(f"{len(rows)} qualifying plays -> {path}")
+    print(f"  mean CLV {g['mean_clv']:+.3f} +/- {g['clv_se']:.3f} "
+          f"(no-shop {g['mean_clv_noshop']:+.3f}) | coin-flip placebo {g['placebo_coin_clv']:+.3f}")
+    print(f"  beat-close {g['beat_close_pct']:.1f}% | ROI {g['roi']:+.2f}% | ATS {g['win_pct']:.2f}%")
+    print(f"  literal criteria pass: {g['literal_criteria_pass']}")
+    print(f"  VERDICT: {'GO' if g['passed'] else 'NO-GO - DO NOT BET REAL MONEY'}")
     return 0
 
 

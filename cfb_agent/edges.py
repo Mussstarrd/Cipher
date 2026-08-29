@@ -147,17 +147,23 @@ def find_plays(season: int, week: int, reg: Optional[Registry] = None,
     return plays[: config.MAX_PLAYS_PER_WEEK], quarantined, priced
 
 
-def _is_upcoming(kickoff: Optional[str], now: datetime) -> bool:
-    """True if the game has not started. An unparseable kickoff is not bettable."""
+def parse_kickoff(kickoff: Optional[str]) -> Optional[datetime]:
+    """Parse a kickoff timestamp. Sources disagree on format — ESPN emits
+    '2026-08-29T19:00Z', CFBD '2026-09-05T17:00:00.000Z' — so both land in the
+    same column and must never be compared as strings."""
     if not kickoff:
-        return False
+        return None
     try:
         ko = datetime.fromisoformat(kickoff.replace("Z", "+00:00"))
     except ValueError:
-        return False
-    if ko.tzinfo is None:
-        ko = ko.replace(tzinfo=timezone.utc)
-    return ko > now
+        return None
+    return ko if ko.tzinfo else ko.replace(tzinfo=timezone.utc)
+
+
+def _is_upcoming(kickoff: Optional[str], now: datetime) -> bool:
+    """True if the game has not started. An unparseable kickoff is not bettable."""
+    ko = parse_kickoff(kickoff)
+    return ko is not None and ko > now
 
 
 def _median(xs: list[float]) -> float:
