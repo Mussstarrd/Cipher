@@ -4,6 +4,7 @@ Every row carries a mode: PAPER rows are research and never represent money at
 risk. Weeks 1-3 are PAPER by construction (config.PAPER_ONLY_THROUGH_WEEK).
 """
 
+import json
 from datetime import datetime, timezone
 from typing import Optional
 
@@ -13,8 +14,34 @@ from .edges import Play
 KEY_NUMBERS = (3.0, 7.0)
 
 
+def gate_status() -> dict:
+    """The recorded evaluation verdict. Missing or unreadable means not passed."""
+    try:
+        return json.loads(config.GATE_STATUS_PATH.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {"passed": False, "reason": "no evaluation has been recorded"}
+
+
 def mode_for_week(week: int) -> str:
-    return "PAPER" if week <= config.PAPER_ONLY_THROUGH_WEEK else "LIVE"
+    """PAPER unless the week is late enough AND the evaluation gate has passed.
+
+    Two independent locks. The week rule is a calendar guard; the gate is an
+    evidence guard. Either one alone keeps the card on paper, and the gate
+    defaults to closed, so a missing or stale evaluation cannot be mistaken for
+    a passing one.
+    """
+    if week <= config.PAPER_ONLY_THROUGH_WEEK:
+        return "PAPER"
+    return "LIVE" if gate_status().get("passed") else "PAPER"
+
+
+def mode_explanation(week: int) -> str:
+    if week <= config.PAPER_ONLY_THROUGH_WEEK:
+        return f"weeks 1-{config.PAPER_ONLY_THROUGH_WEEK} are paper only"
+    g = gate_status()
+    if g.get("passed"):
+        return "evaluation gate passed"
+    return f"evaluation gate NOT passed ({g.get('reason', 'unknown')})"
 
 
 def log_plays(season: int, week: int, plays: list[Play],

@@ -39,6 +39,11 @@ PRIOR_FADE_WEEK = 5
 # fall back to prior-season SP+ for weeks 1-4.
 USE_PRESEASON_SP = True
 
+# In-season rating fit (cfb_agent/model.py). RATING_SHRINKAGE is how many games
+# of evidence the preseason prior is worth; tuned on 2023-2024 and held fixed.
+RATING_SHRINKAGE = 3.0
+RATING_MOV_CAP = 35.0
+
 # Fallback scale for the talent prior when no SP+ ratings are available to
 # calibrate against (points per standard deviation of talent composite).
 TALENT_POINTS_PER_SD = 13.5
@@ -80,9 +85,12 @@ MAX_PLAYS_PER_WEEK = 10
 ABSURD_EDGE_POINTS = 7.0
 
 # --- Live-money gating -------------------------------------------------------
-# Weeks 1-3 are paper only, no exceptions. Real money additionally requires the
-# historical backtest gate to have passed (see backtest.py).
+# Weeks 1-3 are paper only, no exceptions. Real money additionally requires a
+# passing evaluation gate, recorded in data/gate_status.json by
+# `python -m cfb_agent evaluate`. Absent that file, everything stays PAPER:
+# the system will not promote itself to live on its own authority.
 PAPER_ONLY_THROUGH_WEEK = 3
+GATE_STATUS_PATH = DATA_DIR / "gate_status.json"
 
 # --- HTTP / budget -----------------------------------------------------------
 # Cache TTL for HTTP responses, seconds.

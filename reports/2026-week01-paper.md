@@ -6,7 +6,7 @@
 > plays are recorded to measure closing line value and pipeline latency.
 > **No money is to be placed on anything below.**
 
-Generated 2026-08-29 17:32 UTC. 50 games priced, 10 plays, 0 quarantined.
+Generated 2026-08-29 17:51 UTC. 50 games priced, 10 plays, 0 quarantined.
 
 Model: HFA **2** flat · minimum edge **2.5 pts** (week 1) · tiers A≥4.5 / B≥3.5 / C≥2.5.
 

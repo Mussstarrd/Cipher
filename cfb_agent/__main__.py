@@ -16,12 +16,13 @@
 import argparse
 import sys
 
-from . import backtest, card, config, db, edges, fixtures, ratings, refresh, tracker
+from . import (backtest, card, config, db, edges, evaluate, fixtures, ratings,
+               refresh, tracker)
 from .sources import oddsapi
 from .teams import Registry
 
 COMMANDS = ["refresh", "top", "mapping", "card", "settle", "summary", "budget",
-            "backtest", "demo"]
+            "backtest", "evaluate", "demo"]
 
 
 def main(argv=None) -> int:
@@ -98,6 +99,9 @@ def main(argv=None) -> int:
             print(f"    - {t}")
         return 0
 
+    if args.command == "evaluate":
+        return _cmd_evaluate(args.seasons)
+
     if args.command == "backtest":
         return _cmd_backtest(args.seasons, args.max_week)
 
@@ -172,6 +176,38 @@ def _cmd_mapping(season: int, week: int) -> int:
             for r in rows:
                 print(f"     {r['source']:8s} {r['book']:22s} home {r['spread_home']:+6.1f} "
                       f"@ {r['price']}")
+    return 0
+
+
+def _cmd_evaluate(seasons_arg: str) -> int:
+    import json
+    seasons = tuple(int(x) for x in seasons_arg.split(",") if x.strip())
+    reg = Registry.load(config.SEASON)
+    print(f"Evaluating {list(seasons)} walk-forward ...")
+    res = evaluate.full_evaluation(reg, seasons)
+    config.ensure_dirs()
+    path = config.REPORTS_DIR / f"evaluation-{seasons[0]}-{seasons[-1]}.md"
+    path.write_text(evaluate.render_evaluation(res), encoding="utf-8")
+    config.GATE_STATUS_PATH.write_text(json.dumps({
+        "passed": res["passed"],
+        "reason": "model adds no information beyond the closing line"
+                  if not res["passed"] else "evaluation passed",
+        "evaluated_seasons": res["seasons"],
+        "pooled_beta_model": res["pooled"]["beta_model"],
+        "pooled_t": res["pooled"]["t_model"],
+    }, indent=1), encoding="utf-8")
+    p = res["pooled"]
+    print()
+    print(f"  priced games: {res['n_total']:,}")
+    print(f"  edge needed to break even at -110: {res['break_even_points']:.2f} pts")
+    print(f"  incremental beta_model {p['beta_model']:+.4f} (t={p['t_model']:+.2f}) "
+          f"-> {'informative' if p['t_model'] > 2 else 'NO information beyond the close'}")
+    for th, d in sorted(res["thresholds"].items()):
+        print(f"  ATS >= {th:>3}: pooled {d['pooled_pct']:5.2f}% (n={d['pooled_w']+d['pooled_l']:4d}) "
+              f"every-year:{'yes' if d['all_seasons_profitable'] else 'no'}")
+    print()
+    print(f"  report -> {path}")
+    print(f"  VERDICT: {'GO' if res['passed'] else 'NO-GO - model has no edge; LIVE stays locked'}")
     return 0
 
 
