@@ -1,4 +1,21 @@
-# Cipher CFB
+# Cipher CFB — ARCHIVED
+
+> ## 🛑 This project is closed. The model has no edge. Do not bet it.
+>
+> Measured over five seasons and 1,603 walk-forward plays, the model finds
+> **+0.392 points** of genuine edge. Break-even at −110 requires **0.91 points**.
+> Expected ROI is **−2.55% at −110** and **−0.34% at −105**.
+>
+> The closing line already contains everything the model knows
+> (`beta_model = −0.018, t = −0.22`), and our own margin forecast is *worse*
+> than the market's in every season tested.
+>
+> **Read [`docs/POSTMORTEM.md`](docs/POSTMORTEM.md) first** — the verdict, the
+> six lessons, what transfers, and what would have to be true to restart.
+> [`docs/PLAN.md`](docs/PLAN.md) has the full evidential chain.
+>
+> Live betting is locked in code: `tracker.mode_for_week` requires a passing
+> evaluation gate that this model does not pass, and the gate defaults closed.
 
 A college football spread-betting research agent. Every week it pulls games,
 power ratings, and market lines; prices every FBS matchup; and writes a
