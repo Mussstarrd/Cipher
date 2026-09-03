@@ -54,6 +54,16 @@ explicitly abandoned — that is the whole point.
 
 ## Dated, further out
 
+- [opened 2026-09-03] **Jeffery — appointment 08:30 Fri 9 Oct, Fredericksburg**
+  Fri 2026-10-09, 08:30. 10432 Patriot Highway, second floor, Fredericksburg. Allow ~35 min from Locust Grove, so leaving by 07:45. Suzan is at Geico from 08:00 that day and Abby's drop-off is on her commute, so this is Jeffery's alone. Nature of the appointment is adults-room material — do not restate it in the family room.
+  due: 2026-10-09 07:00
+  for: Jeffery
+
+- [opened 2026-09-03] **Jeffery — St Louis, global IT forum, Mon 21 – Wed 23 Sep**
+  Away Mon 2026-09-21 through Wed 2026-09-23. House is empty on weekdays 07:00–16:30 while he's gone; Aiden home off the bus ~16:35 alone. Tue 22 Sep is soccer 17:30–18:30 at Sweetbriar — Suzan is off Geico 16:30 and has Abby's pickup, home ~17:05, so cover needs deciding. Travel and flight details not supplied.
+  due: 2026-09-21 09:00
+  for: Jeffery
+
 - [opened 2026-08-28] **Jeffery — Aiden dentist, 11:00 Wed 16 Sep**
   Aiden's dentist appointment, 11:00 on Wed 2026-09-16. School day: Aiden is normally on the bus, Suzan is at Geico 08:00–16:30, so Jeffery covers the pull-out and the drive. Practice name and location not yet supplied. Tell Ms. Slagle the day before.
   due: 2026-09-16 09:00
