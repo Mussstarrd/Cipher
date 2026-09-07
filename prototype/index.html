@@ -91,16 +91,18 @@ body{
 .stage{
   position: relative;
   flex: 0 0 auto;
+  align-self: center;
   width: 100%;
-  aspect-ratio: 16 / 9;
-  max-height: 64dvh;
-  min-height: 220px;
+  max-width: 460px;
+  aspect-ratio: 3 / 4;
+  max-height: 66dvh;
+  min-height: 260px;
   background: var(--ink);
   border: 1px solid var(--slate);
   overflow: hidden;
 }
 @media (max-width: 720px){
-  .stage{ aspect-ratio: 4 / 3; }
+  .stage{ aspect-ratio: 3 / 4; max-height: 62dvh; }
 }
 .stage > canvas{
   position: absolute;
@@ -110,6 +112,38 @@ body{
   height: 100%;
 }
 #hud{ pointer-events: none; }
+
+.fsbtn{
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  z-index: 5;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  font-size: 17px;
+  line-height: 1;
+  color: var(--gold);
+  background: rgba(11,12,16,.62);
+  border: 1px solid rgba(217,164,65,.5);
+  cursor: pointer;
+}
+.fsbtn:hover{ background: rgba(217,164,65,.18); }
+
+/* Immersive: once a run starts the chrome gets out of the way and the field
+   takes the whole viewport. This is the mode the game is meant to be in. */
+body.immersive .slate-strip,
+body.immersive .padzone{ display: none; }
+body.immersive .cabinet{ padding: 0; gap: 0; max-width: none; }
+body.immersive .stage{
+  aspect-ratio: auto;
+  max-width: none;
+  max-height: none;
+  height: 100vh;
+  height: 100dvh;
+  border: 0;
+}
 
 /* ---------- overlay screens ---------- */
 .screen{
@@ -371,19 +405,22 @@ body{
       <p class="eyebrow">Groove Kernel &middot; Vertical Slice 01</p>
       <h1 class="wordmark">Iron Shaolin<span>Running the Chambers</span></h1>
       <p class="blurb">
-        The track starts naked &mdash; one kick drum. Clear obstacles <em>on the beat</em>
-        and the mix builds itself: snare, hats, bass, chops, lead.
-        Take a hit and you <em>lose a layer</em>. Get touched on a bare kick and the
-        record stops. <em>Three chambers, then the plate</em> &mdash; about two and a
-        half minutes if you make it all the way.
+        You run north across the rooftops, three lanes wide, seen from above.
+        The track starts naked &mdash; one kick drum. Clear what comes
+        <em>on the beat</em> and the mix builds itself: snare, hats, bass, chops,
+        lead. Take a hit and you <em>lose a layer</em>. Get touched on a bare kick
+        and the record stops. <em>Three chambers, then the plate</em> &mdash; about
+        two and a half minutes if you make it all the way.
       </p>
       <div class="verbs">
-        <div class="verb"><b>Rise</b><i>Swipe up &middot; &uarr; / Space</i></div>
-        <div class="verb"><b>Sink</b><i>Swipe down &middot; &darr;</i></div>
+        <div class="verb"><b>Step</b><i>Swipe L/R &middot; &larr; &rarr;</i></div>
+        <div class="verb"><b>Vault</b><i>Swipe up / tap &middot; Space</i></div>
         <div class="verb"><b>Flow</b><i>Press &amp; hold &middot; Shift</i></div>
       </div>
       <p class="enter">Tap to enter the chamber</p>
     </section>
+
+    <button class="fsbtn" id="btn-fs" type="button" aria-label="Toggle full screen">&#9974;</button>
 
     <section class="screen" id="scr-over" hidden>
       <p class="eyebrow" id="over-eyebrow">The record stopped</p>
@@ -408,10 +445,10 @@ body{
     <div class="pad-inner">
       <p class="pad-title">Swipe anywhere on this screen</p>
       <div class="pad-verbs">
-        <span><b>Swipe up</b> Rise</span>
-        <span><b>Swipe down</b> Sink</span>
+        <span><b>Swipe left / right</b> Step lanes</span>
+        <span><b>Swipe up or tap</b> Vault</span>
         <span><b>Press &amp; hold</b> Flow Stance</span>
-        <span><b>Keys</b> &uarr; &darr; Shift &middot; P</span>
+        <span><b>Keys</b> &larr; &rarr; Space Shift &middot; P</span>
       </div>
       <p class="pad-note">Press about half a beat early &mdash; your move should <em>land</em> on the drum, not start on it. Headphones recommended; all audio is synthesized live in the browser.</p>
     </div>
@@ -439,17 +476,21 @@ const BPM_BASE   = 88;
 const BPM_CEIL   = 100;
 const SWING      = 0.16;      // fraction of a 16th that odd 16ths are pushed late
 
-const JUMP_BEATS = 1.05;      // airtime, in beats — apex lands on the drum
-const JUMP_H     = 132;
-const SLIDE_BEATS= 0.95;
-const LEAD_BEATS = 0.5;       // how far ahead of contact the input should land
+const VAULT_BEATS = 1.05;     // airtime, in beats — apex lands on the drum
+const VAULT_LIFT  = 120;      // how far the disciple rises off the tar
+const STEP_BEATS  = 0.5;      // a lane change completes half a beat after input
+const LEAD_BEATS  = 0.5;      // how far ahead of contact the input should land
 
 const W_PERFECT  = 0.070;     // seconds
 const W_ONTIME   = 0.155;
 
-const PPB        = 132;       // pixels per beat of world scroll
-const GROUND_Y   = 424;
-const VIEW_H     = 540;
+const PPB   = 140;            // pixels per beat, scrolling south
+const LANES = 3;
+
+// The play field is a fixed portrait rectangle, letterboxed into the canvas,
+// so three lanes are three lanes on every phone.
+const VIEW_W = 480;
+let VIEW_H = 960, FIELD_W = 400, FIELD_X = 40, LANE_W = 133, PLAYER_Y = 690;
 
 const STEMS = ["kick","snare","hat","bass","chop","lead"];
 const STEM_LABEL = ["KICK","SNARE","HATS","BASS","CHOPS","LEAD"];
@@ -1079,7 +1120,7 @@ const Game = {
   flow: 100,
   score: 0, wax: 0,
   genBar: 0,
-  obstacles: [], pickups: [], pops: [], sparks: [], birds: [],
+  obstacles: [], pickups: [], pops: [], sparks: [],
   invulnUntil: -1,
   pulseAt: 0, snareAt: 0,
   shake: 0, godMix: 0, flowMix: 0, hitFlash: 0,
@@ -1090,12 +1131,10 @@ const Game = {
 };
 
 const P = {
-  state: "run",      // run | air | slide
-  height: 0,
-  startBeat: 0,      // beat at which the current action began
-  inputBeat: 0,      // graded against obstacle.beat - LEAD_BEATS
-  flowing: false,
-  flowStartBeat: 0,
+  lane: 1, laneFrom: 1, stepStart: -9,   // lane transitions are timed in beats
+  vaulting: false, vaultStart: -9, lift: 0,
+  inputBeat: 0,
+  flowing: false, flowStartBeat: 0,
   trail: []
 };
 
@@ -1105,13 +1144,15 @@ function resetRun(){
   Game.flow = 100; Game.score = 0; Game.wax = 0;
   Game.genBar = 0;
   Game.obstacles.length = 0; Game.pickups.length = 0;
-  Game.pops.length = 0; Game.sparks.length = 0; Game.birds.length = 0;
+  Game.pops.length = 0; Game.sparks.length = 0;
   Game.invulnUntil = -1; Game.shake = 0;
-  Game.godMix = 0; Game.flowMix = 0; Game.hitFlash = 0;
   Game.district = 0; Game.districtShown = -1; Game.districtFade = 0;
   Game.won = false; Game.chamberIndex = 0; Game.phase = "intro";
+  Game.godMix = 0; Game.flowMix = 0; Game.hitFlash = 0;
   Game.bpm = BPM_BASE;
-  P.state = "run"; P.height = 0; P.flowing = false; P.trail.length = 0;
+  P.lane = 1; P.laneFrom = 1; P.stepStart = -9;
+  P.vaulting = false; P.vaultStart = -9; P.lift = 0;
+  P.flowing = false; P.trail.length = 0;
 }
 
 function applyStemMix(){
@@ -1125,17 +1166,15 @@ function applyStemMix(){
   }
 }
 
-function pop(text, color){
-  Game.pops.push({ text, color, life: 1 });
-}
+function pop(text, color){ Game.pops.push({ text, color, life: 1 }); }
 
 function burst(x, y, n, color){
   if (REDUCED) n = Math.min(n, 4);
   for (let i = 0; i < n; i++){
     Game.sparks.push({
       x, y,
-      vx: (Math.random() - 0.5) * 340,
-      vy: -Math.random() * 260 - 40,
+      vx: (Math.random() - 0.5) * 300,
+      vy: (Math.random() - 0.5) * 300 + 90,
       life: 1, color
     });
   }
@@ -1149,7 +1188,7 @@ function stemUp(){
   sfxStemUp(Game.stemLevel);
   pop(Game.stemLevel === 5 ? "GOD FLOW" : "GOT " + STEM_LABEL[Game.stemLevel],
       Game.stemLevel === 5 ? C.gold : C.jade);
-  burst(playerX(), GROUND_Y - P.height - 30, 16, C.jade);
+  burst(playerX(), PLAYER_Y, 16, C.jade);
   Game.shake = Math.max(Game.shake, Game.stemLevel === 5 ? 14 : 6);
 }
 
@@ -1159,7 +1198,7 @@ function takeHit(){
   Game.invulnUntil = b + 1.25;
   Game.chain = 0;
   Game.shake = 12; Game.hitFlash = 1;
-  burst(playerX(), GROUND_Y - P.height - 30, 14, C.seal);
+  burst(playerX(), PLAYER_Y, 14, C.seal);
 
   if (Game.stemLevel <= 0){ die(); return; }
   Game.stemLevel--;
@@ -1177,21 +1216,18 @@ function grade(obstacleBeat){
 }
 
 function clear(o){
-  const g = grade(o.beat);
+  const gr = grade(o.beat);
   const mult = Game.stemLevel + 1;
-  if (g === 2){
-    Game.score += 140 * mult;
-    Game.chain++;
+  if (gr === 2){
+    Game.score += 140 * mult; Game.chain++;
     Game.flow = Math.min(100, Game.flow + 14);
     pop("PERFECT", C.gold);
-  } else if (g === 1){
-    Game.score += 80 * mult;
-    Game.chain++;
+  } else if (gr === 1){
+    Game.score += 80 * mult; Game.chain++;
     Game.flow = Math.min(100, Game.flow + 8);
     pop("ON TIME", C.jade);
   } else {
-    Game.score += 30 * mult;
-    Game.chain = 0;
+    Game.score += 30 * mult; Game.chain = 0;
     Game.flow = Math.min(100, Game.flow + 3);
     pop("SLOPPY", C.creamDim);
   }
@@ -1199,21 +1235,25 @@ function clear(o){
   if (Game.chain > 0 && Game.chain % 3 === 0) stemUp();
 }
 
-/* -------- input verbs ----------------------------------------------------- */
-function doJump(){
+/* -------- input verbs -----------------------------------------------------
+   Three verbs, remapped for the overhead run: step across the lanes, vault
+   the gaps, hold your breath through the swarms.                          */
+function doStep(dir){
   if (Game.mode !== "play") return;
-  if (P.state === "air") return;
-  P.state = "air";
-  P.startBeat = Conductor.beat();
-  P.inputBeat = P.startBeat;
+  const target = Math.max(0, Math.min(LANES - 1, P.lane + dir));
+  if (target === P.lane) return;
+  P.laneFrom = laneNow();
+  P.lane = target;
+  P.stepStart = Conductor.beat();
+  P.inputBeat = P.stepStart;
   sfxWhoosh(false);
 }
 
-function doSlide(){
-  if (Game.mode !== "play") return;
-  P.state = "slide";
-  P.startBeat = Conductor.beat();
-  P.inputBeat = P.startBeat;
+function doVault(){
+  if (Game.mode !== "play" || P.vaulting) return;
+  P.vaulting = true;
+  P.vaultStart = Conductor.beat();
+  P.inputBeat = P.vaultStart;
   sfxWhoosh(true);
 }
 
@@ -1233,11 +1273,19 @@ function setFlow(on){
   }
 }
 
+// continuous lane position, eased across STEP_BEATS
+function laneNow(){
+  const u = (Conductor.beat() - P.stepStart) / STEP_BEATS;
+  if (u >= 1) return P.lane;
+  if (u <= 0) return P.laneFrom;
+  const e = u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2;
+  return P.laneFrom + (P.lane - P.laneFrom) * e;
+}
+
 /* -------- world generation ------------------------------------------------ */
 function generateBar(bar){
   const st = structAt(bar);
-  // intro, gates and the finish are all clear road
-  if (st.kind !== "chamber") return;
+  if (st.kind !== "chamber") return;             // intro, gates and the finish are clear road
   const tier = tierForBar(bar);
   const pool = CHUNKS.filter(c => c.tier <= tier && c.tier >= Math.max(0, tier - 1));
   const chunk = pool[Math.floor(Math.random() * pool.length)];
@@ -1245,21 +1293,31 @@ function generateBar(bar){
   let last = -99;
   for (const o of chunk.obs){
     const beat = bar * 4 + o.b;
-    if (beat - last < 1) continue;                      // never tighter than a beat
+    if (beat - last < 1) continue;               // never tighter than a beat
     last = beat;
-    Game.obstacles.push({ beat, type: o.t, done: false });
+    // the side-on verbs map onto the overhead ones: crates become lane
+    // blocks, hanging signs become roof gaps, swarms stay swarms
+    const type = o.t === "low" ? "block" : o.t === "high" ? "gap" : "swarm";
+    const ob = { beat, type, done: false };
+    if (type === "block"){
+      // block one or two lanes, never all three
+      const h = hashf(beat * 3.7 + bar);
+      const free = Math.floor(hashf(beat * 9.1) * LANES);
+      ob.lanes = (h > 0.55 && tier >= 2)
+        ? [0, 1, 2].filter(l => l !== free)       // squeeze: one way through
+        : [free];                                 // single obstruction
+    }
+    Game.obstacles.push(ob);
   }
-  // a wax fragment every few bars, always on a line that costs you something
   if (bar % 3 === 0){
-    const onJump = chunk.obs.some(o => o.t === "low");
-    const beat = bar * 4 + (onJump ? chunk.obs.find(o => o.t === "low").b : 1);
-    Game.pickups.push({ beat, y: onJump ? 118 : 22, got: false });
+    const beat = bar * 4 + 1;
+    Game.pickups.push({ beat, lane: Math.floor(hashf(bar * 5.3) * LANES), got: false });
   }
 }
 
 function ensureWorld(){
   const b = Conductor.beat();
-  while (Game.genBar * 4 < b + 16){
+  while (Game.genBar * 4 < b + 20){
     generateBar(Game.genBar);
     Game.genBar++;
   }
@@ -1269,19 +1327,13 @@ function ensureWorld(){
 function update(dt){
   const b = Conductor.beat();
 
-  // player state machine — arcs are measured in beats, never seconds
-  if (P.state === "air"){
-    const u = (b - P.startBeat) / JUMP_BEATS;
-    if (u >= 1){ P.state = "run"; P.height = 0; }
-    else P.height = JUMP_H * 4 * u * (1 - u);
-  } else if (P.state === "slide"){
-    if (b - P.startBeat >= SLIDE_BEATS) P.state = "run";
-    P.height = 0;
-  } else {
-    P.height = 0;
-  }
+  // the vault arc, measured in beats so the apex lands on the drum
+  if (P.vaulting){
+    const u = (b - P.vaultStart) / VAULT_BEATS;
+    if (u >= 1){ P.vaulting = false; P.lift = 0; }
+    else P.lift = VAULT_LIFT * 4 * u * (1 - u);
+  } else P.lift = 0;
 
-  // flow stance drains; good play pays it back
   if (P.flowing){
     Game.flow -= 26 * dt;
     if (Game.flow <= 0){ Game.flow = 0; setFlow(false); }
@@ -1289,9 +1341,8 @@ function update(dt){
     Game.flow = Math.min(100, Game.flow + 4 * dt);
   }
 
-  // afterimages while flowing
   if (P.flowing && !REDUCED){
-    P.trail.push({ beat: b, y: GROUND_Y - P.height, state: P.state, life: 1 });
+    P.trail.push({ beat: b, lane: laneNow(), lift: P.lift, life: 1 });
     if (P.trail.length > 14) P.trail.shift();
   }
   for (let i = P.trail.length - 1; i >= 0; i--){
@@ -1299,33 +1350,33 @@ function update(dt){
     if (P.trail[i].life <= 0) P.trail.splice(i, 1);
   }
 
-  // resolve obstacles at the contact beat
+  // resolve at the contact beat
+  const lane = laneNow();
   for (const o of Game.obstacles){
     if (o.done || b < o.beat) continue;
     o.done = true;
-    if (b < Game.invulnUntil) continue;                 // phasing after a hit
+    if (b < Game.invulnUntil) continue;
     let ok = false;
-    if (o.type === "low")   ok = P.height > 44;
-    if (o.type === "high")  ok = P.state === "slide";
-    if (o.type === "swarm") ok = P.flowing;
+    if (o.type === "block"){
+      // you are clear if your lane is not one of the blocked ones, or you vault it
+      const near = Math.round(lane);
+      ok = P.lift > 40 || (!o.lanes.includes(near) && Math.abs(lane - near) < 0.34);
+    } else if (o.type === "gap")   ok = P.lift > 40;
+    else                           ok = P.flowing;
     if (ok) clear(o); else takeHit();
   }
 
-  // wax fragments
   for (const w of Game.pickups){
     if (w.got || b < w.beat) continue;
     w.got = true;
-    const dy = Math.abs(P.height - w.y);
-    if (dy < 46){
+    if (Math.abs(lane - w.lane) < 0.45){
       w.taken = true;
-      Game.wax++;
-      Game.score += 500;
+      Game.wax++; Game.score += 500;
       sfxWax();
-      burst(playerX(), GROUND_Y - w.y, 10, C.gold);
+      burst(playerX(), PLAYER_Y, 10, C.gold);
     }
   }
 
-  // distance score
   Game.score += dt * 26 * (Game.stemLevel + 1);
 
   // structure: announce each chamber on its gate, and finish at the plate
@@ -1340,40 +1391,20 @@ function update(dt){
   Game.phase = st.kind;
   Game.districtFade = Math.max(0, Game.districtFade - dt * 0.34);
 
-  // cull
-  Game.obstacles = Game.obstacles.filter(o => o.beat > b - 4);
-  Game.pickups   = Game.pickups.filter(w => w.beat > b - 4);
+  Game.obstacles = Game.obstacles.filter(o => o.beat > b - 3);
+  Game.pickups   = Game.pickups.filter(w => w.beat > b - 3);
 
-  // fx
   for (let i = Game.pops.length - 1; i >= 0; i--){
     Game.pops[i].life -= dt * 1.5;
     if (Game.pops[i].life <= 0) Game.pops.splice(i, 1);
   }
   for (let i = Game.sparks.length - 1; i >= 0; i--){
     const s = Game.sparks[i];
-    s.x += s.vx * dt; s.y += s.vy * dt; s.vy += 900 * dt;
+    s.x += s.vx * dt; s.y += s.vy * dt; s.vy += 240 * dt;
     s.life -= dt * 1.4;
     if (s.life <= 0) Game.sparks.splice(i, 1);
   }
   Game.shake = Math.max(0, Game.shake - dt * 34);
-
-  // pigeons scatter on the snare
-  if (audioReady && ctx.currentTime - Game.snareAt < 0.05 && Math.random() < 0.4 && !REDUCED){
-    for (let i = 0; i < 4; i++){
-      Game.birds.push({
-        x: VIEW_W * (0.5 + Math.random() * 0.6),
-        y: 120 + Math.random() * 150,
-        vx: -120 - Math.random() * 90, vy: -40 - Math.random() * 70,
-        life: 1, ph: Math.random() * 6.28
-      });
-    }
-  }
-  for (let i = Game.birds.length - 1; i >= 0; i--){
-    const p = Game.birds[i];
-    p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 26 * dt;
-    p.life -= dt * 0.42;
-    if (p.life <= 0) Game.birds.splice(i, 1);
-  }
 
   ensureWorld();
 }
@@ -1389,6 +1420,7 @@ function startRun(endless){
   Game.mode = "play";
   el("scr-title").hidden = true;
   el("scr-over").hidden  = true;
+  goImmersive();
 }
 
 const KOANS = [
@@ -1422,7 +1454,7 @@ function win(){
   setFlow(false);
   sfxPlate();
   Game.score += 5000;
-  burst(playerX(), GROUND_Y - 70, 40, C.gold);
+  burst(playerX(), PLAYER_Y, 40, C.gold);
   showResults();
 }
 
@@ -1475,36 +1507,32 @@ let view = document.getElementById("game");
 let gl = null, usingGL = false, sceneCv = null, g = null;
 const hudCv = document.getElementById("hud");
 const hudG  = hudCv.getContext("2d");
-let VIEW_W = 960, DPR = 1;
+let DPR = 1;
 
 function el(id){ return document.getElementById(id); }
-function playerX(){ return VIEW_W * 0.26; }
+function playerX(){ return laneX(laneNow()); }
 
 /* ------------------------------------------------------------ post chain -- */
 const VS_QUAD = `
 attribute vec2 aPos; varying vec2 vUv;
 void main(){ vUv = aPos * 0.5 + 0.5; gl_Position = vec4(aPos, 0.0, 1.0); }`;
 
-// Wet tar: mirror the world below the ground line, wobble it, and let only the
-// bright things (neon, sodium, gold) survive the reflection.
-const FS_REFLECT = `
+// Seen from overhead there is no horizon to reflect. Instead: a radial smear
+// running back from the top of the frame, which is the direction of travel.
+const FS_SPEED = `
 precision mediump float;
 varying vec2 vUv; uniform sampler2D uTex;
-uniform float uGround, uTime;
+uniform float uSpeed;
 void main(){
-  vec3 col = texture2D(uTex, vUv).rgb;
-  if (vUv.y < uGround){
-    float d = uGround - vUv.y;
-    float wob = sin(vUv.x * 41.0 + uTime * 1.7) * 0.0015
-              + sin(vUv.x * 13.0 - uTime * 0.9) * 0.0030;
-    vec2 ruv = vec2(vUv.x + wob * (0.35 + d * 7.0),
-                    min(0.999, uGround + d * 0.94));
-    vec3 refl = texture2D(uTex, ruv).rgb;
-    float lum = dot(refl, vec3(0.299, 0.587, 0.114));
-    refl *= smoothstep(0.05, 0.34, lum) * 1.25;
-    col += refl * exp(-d * 8.0) * 0.62;
+  vec2 dir = (vUv - vec2(0.5, 1.0)) * uSpeed;
+  vec3 acc = texture2D(uTex, vUv).rgb;
+  float tot = 1.0, w = 1.0;
+  for (int i = 0; i < 5; i++){
+    w *= 0.78;
+    acc += texture2D(uTex, vUv - dir * (float(i) + 1.0) * 0.22).rgb * w;
+    tot += w;
   }
-  gl_FragColor = vec4(col, 1.0);
+  gl_FragColor = vec4(acc / tot, 1.0);
 }`;
 
 const FS_BRIGHT = `
@@ -1559,7 +1587,7 @@ void main(){
   col.g = texture2D(uScene, vUv).g;
   col.b = texture2D(uScene, vUv - c * ca).b;
 
-  col += texture2D(uBloom, vUv).rgb * (1.15 + uGod * 0.90);
+  col += texture2D(uBloom, vUv).rgb * (0.95 + uGod * 0.85);
   col += texture2D(uShaft, vUv).rgb * (0.26 + uGod * 0.20);
 
   col = mix(col, col * vec3(1.18, 1.03, 0.76), uGod * 0.62);
@@ -1631,7 +1659,7 @@ const Post = {
     gl.enableVertexAttribArray(0);
     gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
 
-    this.prog.reflect = this.program(FS_REFLECT);
+    this.prog.speed   = this.program(FS_SPEED);
     this.prog.bright  = this.program(FS_BRIGHT);
     this.prog.blur    = this.program(FS_BLUR);
     this.prog.shaft   = this.program(FS_SHAFT);
@@ -1699,15 +1727,14 @@ const Post = {
     gl.bindTexture(gl.TEXTURE_2D, this.texScene);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, sceneCv);
 
-    this.pass(this.prog.reflect, this.fb.scene, u => {
+    this.pass(this.prog.speed, this.fb.scene, u => {
       this.bind(this.texScene, 0, u.uTex);
-      gl.uniform1f(u.uGround, 1 - GROUND_Y / VIEW_H);
-      gl.uniform1f(u.uTime, p.time);
+      gl.uniform1f(u.uSpeed, p.speed || 0);
     });
 
     this.pass(this.prog.bright, this.fb.bright, u => {
       this.bind(this.fb.scene.t, 0, u.uTex);
-      gl.uniform1f(u.uThresh, 0.25);
+      gl.uniform1f(u.uThresh, 0.40);
     });
 
     let bloom = this.blur(this.fb.bright, this.fb.ping, 1.4);
@@ -1759,6 +1786,8 @@ function initRenderer(){
   g = view.getContext("2d");
 }
 
+let FIT = { s: 1, x: 0, y: 0 };
+
 function resize(){
   const r = view.getBoundingClientRect();
   DPR = Math.min(usingGL ? 1.5 : 2, window.devicePixelRatio || 1);
@@ -1771,9 +1800,46 @@ function resize(){
     Post.resize(w, h);
     if (!Post.ok) usingGL = false;   // nothing to composite with; scene stays hidden
   }
-  VIEW_W = VIEW_H * (r.width / Math.max(1, r.height));
+
+  // The play field is always portrait. On a wide screen it is letterboxed
+  // rather than stretched, so a lane change means the same thing everywhere.
+  const aspect = r.height / Math.max(1, r.width);
+  VIEW_H = Math.round(Math.max(720, Math.min(1200, VIEW_W * aspect)));
+  const s = Math.min(w / VIEW_W, h / VIEW_H);
+  FIT = { s, x: (w - VIEW_W * s) / 2, y: (h - VIEW_H * s) / 2 };
+
+  FIELD_W  = Math.min(VIEW_W - 148, 350);
+  FIELD_X  = (VIEW_W - FIELD_W) / 2;
+  LANE_W   = FIELD_W / LANES;
+  PLAYER_Y = VIEW_H * 0.72;
 }
 window.addEventListener("resize", resize);
+
+/* -------- immersive / full screen ----------------------------------------- */
+function goImmersive(){
+  document.body.classList.add("immersive");
+  resize();
+  try {
+    const d = document.documentElement;
+    if (!document.fullscreenElement && d.requestFullscreen){
+      const p = d.requestFullscreen();
+      if (p && p.catch) p.catch(() => {});   // an iframe may not be allowed it
+    }
+  } catch (e){ /* not permitted here; the in-page immersive mode still applies */ }
+}
+
+function toggleFullscreen(){
+  try {
+    if (document.fullscreenElement){
+      if (document.exitFullscreen) document.exitFullscreen();
+      document.body.classList.remove("immersive");
+    } else {
+      goImmersive();
+    }
+  } catch (e){ /* ignore */ }
+  setTimeout(resize, 60);
+}
+document.addEventListener("fullscreenchange", () => setTimeout(resize, 60));
 
 function hashf(i){
   const x = Math.sin(i * 127.1 + 3.7) * 43758.5453;
@@ -1781,232 +1847,137 @@ function hashf(i){
 }
 
 function scrollPx(){ return Conductor.beat() * PPB; }
+function beatToY(beat){ return PLAYER_Y - (beat - Conductor.beat()) * PPB; }
 
 function runProgress(){
   const total = INTRO_BARS + CHAMBERS.length * (CH_BARS + GATE_BARS) - GATE_BARS;
   return Math.max(0, Math.min(1, (Conductor.beat() / 4) / total));
 }
+/* -------- the rooftops, seen from above -----------------------------------
+   The world scrolls south past the disciple, who runs north up three lanes.
+   Everything is placed by beat, so the roof itself is on the grid.          */
 
-/* -------- background layers ----------------------------------------------- */
-function drawSky(pulse){
-  const sky = g.createLinearGradient(0, 0, 0, GROUND_Y + 60);
-  sky.addColorStop(0,    "#080A0F");
-  sky.addColorStop(0.55, "#111726");
-  sky.addColorStop(0.86, "#2A2130");
-  sky.addColorStop(1,    "#3A2A26");
-  g.fillStyle = sky;
-  g.fillRect(0, 0, VIEW_W, GROUND_Y + 60);
+function laneX(l){ return FIELD_X + LANE_W * (l + 0.5); }
 
-  // sodium haze on the horizon, breathing with the kick
-  const hz = g.createRadialGradient(VIEW_W * 0.7, GROUND_Y - 30, 10,
-                                    VIEW_W * 0.7, GROUND_Y - 30, 320 + pulse * 40);
-  hz.addColorStop(0, "rgba(255,122,60," + (0.16 + pulse * 0.07).toFixed(3) + ")");
-  hz.addColorStop(1, "rgba(255,122,60,0)");
-  g.fillStyle = hz;
-  g.fillRect(0, 0, VIEW_W, GROUND_Y + 60);
+function drawVoid(){
+  // the street, far below, on both sides of the roof run
+  g.fillStyle = "#05070B";
+  g.fillRect(0, 0, VIEW_W, VIEW_H);
+  const sc = scrollPx();
 
-  // full moon behind the smog
-  g.fillStyle = "rgba(237,228,208,0.10)";
-  g.beginPath(); g.arc(VIEW_W * 0.78, 96, 44, 0, 6.2832); g.fill();
-}
-
-function drawSkyline(sc, par, colW, baseY, hMin, hMax, fill, seed, windows){
-  const off = sc * par;
-  const first = Math.floor(off / colW) - 1;
-  const cols = Math.ceil(VIEW_W / colW) + 3;
-  g.fillStyle = fill;
-  for (let i = 0; i < cols; i++){
-    const idx = first + i;
-    const x = idx * colW - off;
-    const h = hMin + hashf(idx * 1.3 + seed) * (hMax - hMin);
-    g.fillRect(x, baseY - h, colW - 3, h);
-
-    if (windows){
-      const rows = Math.floor(h / 26);
-      const cells = Math.floor((colW - 3) / 17);
-      for (let r = 0; r < rows; r++){
-        for (let c = 0; c < cells; c++){
-          const hv = hashf(idx * 91.7 + r * 13.1 + c * 5.7 + seed);
-          if (hv > 0.86){
-            g.fillStyle = hv > 0.965 ? "rgba(63,217,160,0.26)"
-                        : hv > 0.925 ? "rgba(255,122,60,0.22)"
-                                     : "rgba(217,164,65,0.14)";
-            g.fillRect(x + 6 + c * 17, baseY - h + 10 + r * 26, 7, 11);
-          }
-        }
+  // deep city: slower parallax because it is further down
+  const off = sc * 0.28, colH = 190;
+  const first = Math.floor((PLAYER_Y + off - VIEW_H) / colH) - 1;
+  for (let side = 0; side < 2; side++){
+    const x0 = side ? FIELD_X + FIELD_W : 0;
+    const w  = side ? VIEW_W - (FIELD_X + FIELD_W) : FIELD_X;
+    if (w <= 0) continue;
+    for (let i = 0; i < Math.ceil(VIEW_H / colH) + 3; i++){
+      const idx = first + i + side * 37;
+      const y = PLAYER_Y - idx * colH + off;
+      const h = colH * (0.4 + hashf(idx * 3.1) * 0.5);
+      g.fillStyle = "#0A0F17";
+      g.fillRect(x0 + w * 0.08, y, w * 0.84, h);
+      // windows and street neon seen from overhead
+      const n = 2 + Math.floor(hashf(idx * 7.7) * 3);
+      for (let k = 0; k < n; k++){
+        const hv = hashf(idx * 13.3 + k * 5.1);
+        g.fillStyle = hv > 0.7 ? "rgba(63,217,160,0.30)"
+                    : hv > 0.4 ? "rgba(255,122,60,0.26)"
+                               : "rgba(217,164,65,0.16)";
+        g.fillRect(x0 + w * (0.14 + hv * 0.62), y + h * (0.12 + hashf(idx + k) * 0.7),
+                   Math.max(3, w * 0.07), 5);
       }
-
-      // A vertical neon hanging off the face. Invented glyphs — no real script,
-      // no real words. These are the brightest thing in the frame and they are
-      // what the bloom and the wet floor feed on.
-      if (hashf(idx * 31.4 + seed) > 0.58){
-        const nx = x + colW * 0.52;
-        const ny = baseY - h + 30;
-        const rows = 2 + Math.floor(hashf(idx * 17.9 + seed) * 3);
-        const neon = hashf(idx * 23.3 + seed) > 0.5 ? "#3FD9A0" : "#FF7A3C";
-        g.fillStyle = "rgba(6,9,14,0.85)";
-        g.fillRect(nx - 14, ny - 10, 28, rows * 24 + 16);
-        g.fillStyle = neon;
-        for (let k = 0; k < rows; k++){
-          const gy = ny + k * 24, v = hashf(idx * 7.1 + k * 3.3 + seed);
-          g.fillRect(nx - 9, gy, 18, 3);
-          g.fillRect(nx - 2, gy, 3, 16);
-          if (v > 0.5) g.fillRect(nx - 9, gy + 13, 18, 3);
-          if (v > 0.75){ g.fillRect(nx - 9, gy + 5, 5, 3); g.fillRect(nx + 4, gy + 5, 5, 3); }
-        }
-      }
-      g.fillStyle = fill;
     }
   }
-}
-
-// Haze sitting between the parallax planes. Cheap, and it is most of what
-// separates "layered flats" from "there is air in this city".
-function fogBand(topY, h, rgb, alpha){
-  const f = g.createLinearGradient(0, topY, 0, topY + h);
-  f.addColorStop(0, "rgba(" + rgb + ",0)");
-  f.addColorStop(1, "rgba(" + rgb + "," + alpha + ")");
-  g.fillStyle = f;
-  g.fillRect(0, topY, VIEW_W, h);
-}
-
-// Near-black shapes crossing in front of everything, including the disciple.
-// Kept low so they never hide the play line.
-function drawForeground(sc){
-  const par = 1.75, off = sc * par, colW = 1150;
-  const first = Math.floor(off / colW) - 1;
-  for (let i = 0; i < Math.ceil(VIEW_W / colW) + 3; i++){
-    const idx = first + i;
-    const x = idx * colW - off;
-    g.fillStyle = "#04060A";
-    if (hashf(idx * 11.7) > 0.5){
-      g.fillRect(x, VIEW_H - 58, 170, 58);            // a parapet corner
-      g.fillRect(x - 16, VIEW_H - 70, 202, 14);
-      g.fillStyle = "rgba(56,68,90,0.5)";
-      g.fillRect(x - 16, VIEW_H - 71, 202, 1.5);
-    } else {
-      g.beginPath();                                   // a satellite dish rim
-      g.arc(x + 90, VIEW_H + 26, 86, Math.PI, 0);
-      g.fill();
-      g.fillRect(x + 82, VIEW_H - 78, 16, 60);
-    }
+  // haze rising out of the drop
+  for (let side = 0; side < 2; side++){
+    const x0 = side ? FIELD_X + FIELD_W : 0;
+    const w  = side ? VIEW_W - (FIELD_X + FIELD_W) : FIELD_X;
+    if (w <= 0) continue;
+    const f = g.createLinearGradient(side ? x0 : x0 + w, 0, side ? x0 + w : x0, 0);
+    f.addColorStop(0, "rgba(11,12,16,0.92)");
+    f.addColorStop(1, "rgba(11,12,16,0.15)");
+    g.fillStyle = f;
+    g.fillRect(x0, 0, w, VIEW_H);
   }
 }
 
-function drawProps(sc){
-  const par = 0.66, off = sc * par, colW = 420;
-  const first = Math.floor(off / colW) - 1;
-  for (let i = 0; i < Math.ceil(VIEW_W / colW) + 3; i++){
-    const idx = first + i;
-    const x = idx * colW - off;
-    const kind = Math.floor(hashf(idx * 7.3) * 3);
-    g.strokeStyle = "#0D1017"; g.fillStyle = "#0D1017"; g.lineWidth = 3;
-
-    if (kind === 0){                                   // water tower
-      const bx = x + 60, by = GROUND_Y - 96;
-      g.fillRect(bx - 30, by - 62, 60, 58);
-      g.beginPath();
-      g.moveTo(bx - 34, by - 62); g.lineTo(bx, by - 88); g.lineTo(bx + 34, by - 62);
-      g.closePath(); g.fill();
-      g.beginPath();
-      g.moveTo(bx - 22, by - 4); g.lineTo(bx - 30, by + 62);
-      g.moveTo(bx + 22, by - 4); g.lineTo(bx + 30, by + 62);
-      g.stroke();
-    } else if (kind === 1){                            // antenna mast
-      const bx = x + 180;
-      g.beginPath(); g.moveTo(bx, GROUND_Y - 40); g.lineTo(bx, GROUND_Y - 210); g.stroke();
-      for (let k = 0; k < 4; k++){
-        const yy = GROUND_Y - 90 - k * 34;
-        g.beginPath(); g.moveTo(bx - 16 + k * 2, yy); g.lineTo(bx + 16 - k * 2, yy); g.stroke();
-      }
-      g.fillStyle = C.seal;
-      g.beginPath(); g.arc(bx, GROUND_Y - 214, 3.5, 0, 6.2832); g.fill();
-    } else {                                           // billboard for a fake fight film
-      const bx = x + 250, by = GROUND_Y - 150;
-      g.fillStyle = "#151A24"; g.fillRect(bx, by, 176, 104);
-      g.strokeStyle = "#0A0D13"; g.lineWidth = 4; g.strokeRect(bx, by, 176, 104);
-      g.fillStyle = "rgba(200,52,43,0.55)";
-      g.fillRect(bx + 12, by + 16, 100, 13);
-      g.fillRect(bx + 12, by + 36, 148, 9);
-      g.fillStyle = "rgba(217,164,65,0.30)";
-      g.fillRect(bx + 12, by + 58, 66, 9);
-      g.fillStyle = "#0D1017";
-      g.fillRect(bx + 20, by + 104, 6, 46);
-      g.fillRect(bx + 150, by + 104, 6, 46);
-    }
+function drawRoof(){
+  const sc = scrollPx();
+  g.fillStyle = "#161B25";
+  g.fillRect(FIELD_X, 0, FIELD_W, VIEW_H);
+  // tar felt: rolled strips laid across the run
+  const strip = 74, s0 = Math.floor((PLAYER_Y + scrollPx() - VIEW_H) / strip) - 1;
+  for (let i = 0; i < Math.ceil(VIEW_H / strip) + 3; i++){
+    const idx = s0 + i, yy = PLAYER_Y - idx * strip + scrollPx();
+    g.fillStyle = (idx % 2) ? "rgba(10,14,20,0.30)" : "rgba(30,38,50,0.22)";
+    g.fillRect(FIELD_X, yy, FIELD_W, strip * 0.5);
   }
-}
 
-function drawGround(sc){
-  g.fillStyle = "#0F131A";
-  g.fillRect(0, GROUND_Y, VIEW_W, VIEW_H - GROUND_Y);
-
-  // rooftop lip
-  g.fillStyle = "#1C232E";
-  g.fillRect(0, GROUND_Y - 6, VIEW_W, 6);
-  g.fillStyle = C.slateHi;
-  g.fillRect(0, GROUND_Y - 7, VIEW_W, 1.5);
-
-  // scrolling tar seams
-  const off = sc % 96;
-  g.strokeStyle = "rgba(56,68,90,0.35)"; g.lineWidth = 1.5;
-  for (let x = -off; x < VIEW_W + 96; x += 96){
-    g.beginPath(); g.moveTo(x, GROUND_Y + 2); g.lineTo(x - 22, VIEW_H); g.stroke();
-  }
-  // wet reflection
-  const wet = g.createLinearGradient(0, GROUND_Y, 0, VIEW_H);
-  wet.addColorStop(0, "rgba(255,122,60,0.10)");
-  wet.addColorStop(1, "rgba(255,122,60,0)");
-  g.fillStyle = wet;
-  g.fillRect(0, GROUND_Y, VIEW_W, VIEW_H - GROUND_Y);
-
-  // standing water catching the signage
-  const colW = 330, first = Math.floor(sc / colW) - 1;
-  for (let i = 0; i < Math.ceil(VIEW_W / colW) + 3; i++){
-    const idx = first + i;
-    const x  = idx * colW - sc + hashf(idx * 2.9) * 170;
-    const y  = GROUND_Y + 26 + hashf(idx * 3.1) * 58;
-    const rx = 42 + hashf(idx * 5.7) * 56;
-    g.fillStyle = "rgba(9,12,18,0.80)";
-    g.beginPath(); g.ellipse(x, y, rx, rx * 0.17, 0, 0, 6.2832); g.fill();
-    g.fillStyle = hashf(idx * 8.3) > 0.5
-      ? "rgba(255,122,60,0.22)" : "rgba(63,217,160,0.16)";
-    g.beginPath(); g.ellipse(x - rx * 0.15, y, rx * 0.5, rx * 0.05, 0, 0, 6.2832); g.fill();
-  }
-}
-
-// The grid, drawn on the tar: a tick per beat, tall on the downbeat, plus the
-// contact line where the world meets the disciple. This is the notation —
-// obstacles are notes, and the player can read the bar before it arrives.
-function drawBeatRuler(){
+  // tar sheets, laid on the beat grid so the roof itself keeps time
   const b = Conductor.beat();
-  const start = Math.floor(b) - 1;
-  for (let i = 0; i < 14; i++){
+  const start = Math.floor(b) - 2;
+  for (let i = 0; i < Math.ceil(VIEW_H / PPB) + 5; i++){
     const bt = start + i;
-    const x = beatToX(bt);
-    if (x < -20 || x > VIEW_W + 20) continue;
+    const y = beatToY(bt);
+    if (y < -PPB || y > VIEW_H + PPB) continue;
     const down = ((bt % 4) + 4) % 4 === 0;
-    g.fillStyle = down ? "rgba(217,164,65,0.85)" : "rgba(150,166,190,0.42)";
-    g.fillRect(x - 1, GROUND_Y + 5, down ? 3 : 2, down ? 18 : 9);
+    g.fillStyle = down ? "rgba(217,164,65,0.20)" : "rgba(56,68,90,0.32)";
+    g.fillRect(FIELD_X, y, FIELD_W, down ? 2.5 : 1.4);
+    if (down){
+      g.fillStyle = "rgba(217,164,65,0.5)";
+      g.fillRect(FIELD_X, y, 16, 2.5);
+      g.fillRect(FIELD_X + FIELD_W - 16, y, 16, 2.5);
+    }
   }
-  g.fillStyle = "rgba(237,228,208,0.13)";
-  g.fillRect(playerX() - 1, GROUND_Y - 196, 2, 196);
+
+  // lane seams
+  g.fillStyle = "rgba(90,108,138,0.42)";
+  for (let l = 1; l < LANES; l++){
+    const lx = FIELD_X + LANE_W * l - 1;
+    for (let y = -((scrollPx() * 0.999) % 40); y < VIEW_H; y += 40) g.fillRect(lx, y, 2, 22);
+  }
+
+  // gravel and standing water, scrolling with the roof
+  const cell = 150;
+  const firstC = Math.floor((PLAYER_Y + sc - VIEW_H) / cell) - 1;
+  for (let i = 0; i < Math.ceil(VIEW_H / cell) + 3; i++){
+    const idx = firstC + i;
+    const yy = PLAYER_Y - idx * cell + sc;
+    const x = FIELD_X + hashf(idx * 2.9) * FIELD_W;
+    const rx = 26 + hashf(idx * 5.7) * 46;
+    g.fillStyle = "rgba(8,11,16,0.80)";
+    g.beginPath(); g.ellipse(x, yy, rx, rx * 0.62, 0, 0, 6.2832); g.fill();
+    g.fillStyle = hashf(idx * 8.3) > 0.5
+      ? "rgba(255,122,60,0.13)" : "rgba(63,217,160,0.10)";
+    g.beginPath(); g.ellipse(x - rx * 0.2, yy - rx * 0.1, rx * 0.45, rx * 0.22, 0, 0, 6.2832); g.fill();
+  }
+
+  // parapets down both edges of the run
+  g.fillStyle = "#1C232E";
+  g.fillRect(FIELD_X - 14, 0, 14, VIEW_H);
+  g.fillRect(FIELD_X + FIELD_W, 0, 14, VIEW_H);
+  g.fillStyle = C.slateHi;
+  g.fillRect(FIELD_X - 15, 0, 1.5, VIEW_H);
+  g.fillRect(FIELD_X + FIELD_W + 13.5, 0, 1.5, VIEW_H);
 }
 
+/* -------- weather and air -------------------------------------------------- */
 let rain = [], motes = [], steam = [], splash = [];
 function initRain(){
   rain = [];
-  const n = REDUCED ? 22 : 110;
+  const n = REDUCED ? 20 : 100;
   for (let i = 0; i < n; i++){
-    rain.push({ x: Math.random() * 1400, y: Math.random() * VIEW_H,
-                s: 380 + Math.random() * 420, l: 12 + Math.random() * 20 });
+    rain.push({ x: Math.random() * 900, y: Math.random() * 1200,
+                s: 900 + Math.random() * 700, l: 16 + Math.random() * 26 });
   }
   motes = [];
-  const m = REDUCED ? 8 : 40;
+  const m = REDUCED ? 8 : 34;
   for (let i = 0; i < m; i++){
-    motes.push({ x: Math.random() * 1400, y: Math.random() * GROUND_Y,
+    motes.push({ x: Math.random() * 900, y: Math.random() * 1200,
                  r: 0.8 + Math.random() * 1.9,
-                 vx: -14 - Math.random() * 26, vy: -3 - Math.random() * 9,
+                 vx: (Math.random() - 0.5) * 14, vy: 40 + Math.random() * 60,
                  ph: Math.random() * 6.2832 });
   }
   steam.length = 0; splash.length = 0;
@@ -2014,116 +1985,110 @@ function initRain(){
 
 function puffSteam(){
   if (REDUCED || steam.length > 40) return;
-  const x = VIEW_W * (0.12 + Math.random() * 0.95);
+  const x = FIELD_X + Math.random() * FIELD_W;
+  const y = Math.random() * VIEW_H;
   for (let i = 0; i < 3; i++){
-    steam.push({ x: x + (Math.random() - 0.5) * 22, y: GROUND_Y - 4,
-                 r: 5 + Math.random() * 8, v: 22 + Math.random() * 28,
-                 d: -10 - Math.random() * 16, life: 1 });
+    steam.push({ x: x + (Math.random() - 0.5) * 24, y: y + (Math.random() - 0.5) * 24,
+                 r: 6 + Math.random() * 10, v: 30 + Math.random() * 40, life: 1 });
   }
 }
 
-function drawAtmos(dt){
-  // dust hanging in the sodium light
-  for (const m of motes){
-    m.x += m.vx * dt; m.y += m.vy * dt; m.ph += dt * 1.4;
-    if (m.x < -20){ m.x = VIEW_W + 20; m.y = Math.random() * GROUND_Y; }
-    if (m.y < -20){ m.y = GROUND_Y; }
-    g.fillStyle = "rgba(214,188,142," + (0.10 + Math.sin(m.ph) * 0.06).toFixed(3) + ")";
-    g.beginPath();
-    g.arc(m.x, m.y + Math.sin(m.ph) * 6, m.r, 0, 6.2832);
-    g.fill();
-  }
-  // roof vents breathing on the downbeat
-  for (let i = steam.length - 1; i >= 0; i--){
-    const s = steam[i];
-    s.y -= s.v * dt; s.x += s.d * dt; s.r += dt * 26; s.life -= dt * 0.42;
-    if (s.life <= 0){ steam.splice(i, 1); continue; }
-    g.fillStyle = "rgba(148,168,196," + (s.life * 0.07).toFixed(3) + ")";
-    g.beginPath(); g.arc(s.x, s.y, s.r, 0, 6.2832); g.fill();
-  }
-  // where the rain lands
-  for (let i = splash.length - 1; i >= 0; i--){
-    const s = splash[i];
-    s.life -= dt * 4.6;
-    if (s.life <= 0){ splash.splice(i, 1); continue; }
-    g.strokeStyle = "rgba(186,212,240," + (s.life * 0.32).toFixed(3) + ")";
-    g.lineWidth = 1.2;
-    g.beginPath();
-    g.arc(s.x, s.y, (1 - s.life) * 9 + 1, 0, Math.PI, true);
-    g.stroke();
-  }
-}
 function drawRain(dt){
-  g.strokeStyle = "rgba(180,205,230,0.16)"; g.lineWidth = 1;
+  g.strokeStyle = "rgba(180,205,230,0.15)"; g.lineWidth = 1.4;
   g.beginPath();
   for (const d of rain){
-    d.y += d.s * dt; d.x -= d.s * 0.22 * dt;
-    if (d.y > VIEW_H){
-      d.y = -20;
-      if (!REDUCED && splash.length < 30 && Math.random() < 0.5){
-        splash.push({ x: d.x, y: GROUND_Y + Math.random() * (VIEW_H - GROUND_Y),
-                      life: 1 });
+    d.y += d.s * dt;
+    if (d.y > VIEW_H + 30){
+      d.y = -30; d.x = Math.random() * VIEW_W;
+      if (!REDUCED && splash.length < 26 && Math.random() < 0.45){
+        splash.push({ x: Math.random() * VIEW_W, y: Math.random() * VIEW_H, life: 1 });
       }
-      d.x = Math.random() * (VIEW_W + 300);
     }
-    if (d.x < -30) d.x = VIEW_W + 30;
-    g.moveTo(d.x, d.y); g.lineTo(d.x - d.l * 0.22, d.y + d.l);
+    g.moveTo(d.x, d.y); g.lineTo(d.x - 1.5, d.y + d.l);
   }
   g.stroke();
 }
 
-/* -------- world objects --------------------------------------------------- */
-function beatToX(beat){ return playerX() + (beat - Conductor.beat()) * PPB; }
+function drawAtmos(dt){
+  for (const m of motes){
+    m.x += m.vx * dt; m.y += m.vy * dt; m.ph += dt * 1.4;
+    if (m.y > VIEW_H + 20){ m.y = -20; m.x = Math.random() * VIEW_W; }
+    g.fillStyle = "rgba(214,188,142," + (0.10 + Math.sin(m.ph) * 0.06).toFixed(3) + ")";
+    g.beginPath(); g.arc(m.x, m.y, m.r, 0, 6.2832); g.fill();
+  }
+  for (let i = steam.length - 1; i >= 0; i--){
+    const s = steam[i];
+    s.y += s.v * dt; s.r += dt * 30; s.life -= dt * 0.5;
+    if (s.life <= 0){ steam.splice(i, 1); continue; }
+    g.fillStyle = "rgba(148,168,196," + (s.life * 0.07).toFixed(3) + ")";
+    g.beginPath(); g.arc(s.x, s.y, s.r, 0, 6.2832); g.fill();
+  }
+  for (let i = splash.length - 1; i >= 0; i--){
+    const s = splash[i];
+    s.life -= dt * 4.6;
+    if (s.life <= 0){ splash.splice(i, 1); continue; }
+    g.strokeStyle = "rgba(186,212,240," + (s.life * 0.3).toFixed(3) + ")";
+    g.lineWidth = 1.2;
+    g.beginPath(); g.arc(s.x, s.y, (1 - s.life) * 8 + 1, 0, 6.2832); g.stroke();
+  }
+}
 
+/* -------- obstacles -------------------------------------------------------- */
 function drawObstacles(){
   for (const o of Game.obstacles){
-    const x = beatToX(o.beat);
-    if (x < -160 || x > VIEW_W + 160) continue;
+    const y = beatToY(o.beat);
+    if (y < -220 || y > VIEW_H + 160) continue;
 
-    if (o.type === "low"){
-      // rooftop vent unit — jump it
-      const w = 62, h = 50, y = GROUND_Y - h;
-      g.fillStyle = "rgba(0,0,0,0.5)";
-      g.beginPath(); g.ellipse(x, GROUND_Y + 5, w * 0.62, 7, 0, 0, 6.2832); g.fill();
-      g.fillStyle = "#232C3A"; g.fillRect(x - w / 2, y, w, h);
-      g.strokeStyle = "#05070B"; g.lineWidth = 5; g.strokeRect(x - w / 2, y, w, h);
-      g.strokeStyle = C.sodium; g.lineWidth = 3;
-      for (let i = 0; i < 3; i++){
-        g.beginPath();
-        g.moveTo(x - w / 2 + 11, y + 13 + i * 12);
-        g.lineTo(x + w / 2 - 11, y + 13 + i * 12);
-        g.stroke();
+    if (o.type === "block"){
+      for (const l of o.lanes){
+        const x = laneX(l), w = LANE_W - 16, h = 62;
+        g.fillStyle = "rgba(0,0,0,0.55)";
+        g.fillRect(x - w / 2 + 5, y - h / 2 + 7, w, h);
+        g.fillStyle = "#242D3C";
+        g.fillRect(x - w / 2, y - h / 2, w, h);
+        g.strokeStyle = "#05070B"; g.lineWidth = 5;
+        g.strokeRect(x - w / 2, y - h / 2, w, h);
+        g.strokeStyle = C.sodium; g.lineWidth = 3;
+        for (let i = 0; i < 3; i++){
+          g.beginPath();
+          g.moveTo(x - w / 2 + 12, y - h / 2 + 15 + i * 15);
+          g.lineTo(x + w / 2 - 12, y - h / 2 + 15 + i * 15);
+          g.stroke();
+        }
+        g.fillStyle = C.sodium;
+        g.fillRect(x - w / 2 - 2, y + h / 2, w + 4, 4);
       }
-      g.fillStyle = C.sodium; g.fillRect(x - w / 2 - 2, y - 5, w + 4, 5);
 
-    } else if (o.type === "high"){
-      // hanging chamber sign — slide under it
-      const w = 78, top = GROUND_Y - 168, h = 100;
-      g.strokeStyle = "#0D1017"; g.lineWidth = 3;
-      g.beginPath(); g.moveTo(x, 0); g.lineTo(x, top); g.stroke();
-      g.fillStyle = "#1B2330"; g.fillRect(x - w / 2, top, w, h);
-      g.strokeStyle = "#05070B"; g.lineWidth = 5; g.strokeRect(x - w / 2, top, w, h);
-      g.strokeStyle = C.jade; g.lineWidth = 3.5;
-      g.strokeRect(x - w / 2 + 9, top + 9, w - 18, h - 18);
+    } else if (o.type === "gap"){
+      // the roof ends: a chasm the full width, with the street glowing below
+      const h = 96;
+      g.fillStyle = "#04060A";
+      g.fillRect(FIELD_X - 14, y - h / 2, FIELD_W + 28, h);
+      const glow = g.createLinearGradient(0, y - h / 2, 0, y + h / 2);
+      glow.addColorStop(0,   "rgba(255,122,60,0)");
+      glow.addColorStop(0.5, "rgba(255,122,60,0.20)");
+      glow.addColorStop(1,   "rgba(255,122,60,0)");
+      g.fillStyle = glow;
+      g.fillRect(FIELD_X, y - h / 2, FIELD_W, h);
+      for (let i = 0; i < 5; i++){
+        const hv = hashf(o.beat * 7.3 + i);
+        g.fillStyle = hv > 0.5 ? "rgba(63,217,160,0.5)" : "rgba(217,164,65,0.4)";
+        g.fillRect(FIELD_X + hv * (FIELD_W - 10), y - 8 + hashf(o.beat + i) * 16, 5, 4);
+      }
       g.fillStyle = C.jade;
-      g.font = '700 38px "Big Shoulders Display", sans-serif';
-      g.textAlign = "center"; g.textBaseline = "middle";
-      g.fillText("九", x, top + h / 2 + 2);
-      // the gap it leaves you — lit so the slide line is unmistakable
-      g.fillStyle = "rgba(63,217,160,0.22)";
-      g.fillRect(x - w / 2, top + h, w, 3);
+      g.fillRect(FIELD_X, y - h / 2 - 4, FIELD_W, 4);
+      g.fillRect(FIELD_X, y + h / 2, FIELD_W, 4);
 
     } else {
-      // drone swarm — breathe through it
-      const cy = GROUND_Y - 74;
-      for (let i = 0; i < 13; i++){
+      // drone swarm filling every lane
+      for (let i = 0; i < 16; i++){
         const a = i * 1.7 + Conductor.beat() * 2.1;
-        const px = x + Math.cos(a) * 40;
-        const py = cy + Math.sin(a * 1.4) * 52;
+        const px = FIELD_X + FIELD_W * (0.10 + 0.80 * hashf(i * 3.7 + Math.floor(o.beat))) + Math.cos(a) * 16;
+        const py = y + Math.sin(a * 1.4) * 44;
         g.fillStyle = i % 3 === 0 ? C.seal : "#2B3444";
-        g.beginPath(); g.arc(px, py, 5.5, 0, 6.2832); g.fill();
-        g.strokeStyle = "rgba(200,52,43,0.30)"; g.lineWidth = 1;
-        g.beginPath(); g.arc(px, py, 11, 0, 6.2832); g.stroke();
+        g.beginPath(); g.arc(px, py, 6, 0, 6.2832); g.fill();
+        g.strokeStyle = "rgba(200,52,43,0.32)"; g.lineWidth = 1;
+        g.beginPath(); g.arc(px, py, 12, 0, 6.2832); g.stroke();
       }
     }
   }
@@ -2132,17 +2097,16 @@ function drawObstacles(){
 function drawPickups(){
   for (const w of Game.pickups){
     if (w.taken) continue;
-    const x = beatToX(w.beat);
-    if (x < -60 || x > VIEW_W + 60) continue;
-    const y = GROUND_Y - w.y - 26;
+    const y = beatToY(w.beat), x = laneX(w.lane);
+    if (y < -60 || y > VIEW_H + 60) continue;
     const spin = Math.abs(Math.cos(Conductor.beat() * 3.1));
     g.save();
     g.translate(x, y);
-    g.scale(0.35 + spin * 0.65, 1);
+    g.scale(1, 0.4 + spin * 0.6);
     g.fillStyle = "#12161D";
-    g.beginPath(); g.arc(0, 0, 16, 0, 6.2832); g.fill();
+    g.beginPath(); g.arc(0, 0, 17, 0, 6.2832); g.fill();
     g.strokeStyle = C.gold; g.lineWidth = 2.5;
-    g.beginPath(); g.arc(0, 0, 16, 0, 6.2832); g.stroke();
+    g.beginPath(); g.arc(0, 0, 17, 0, 6.2832); g.stroke();
     g.strokeStyle = "rgba(217,164,65,0.55)"; g.lineWidth = 1;
     g.beginPath(); g.arc(0, 0, 10, 0, 6.2832); g.stroke();
     g.fillStyle = C.gold;
@@ -2151,10 +2115,9 @@ function drawPickups(){
   }
 }
 
-/* -------- the disciple ----------------------------------------------------
-   Built as a segment list, then rendered in two passes — a heavy rim, then
-   the ink fill. That's what gives the brush-drawn cel look, and it's the only
-   way a black silhouette stays legible against a black city at speed.       */
+/* -------- the disciple, from above ----------------------------------------
+   Two passes again: a heavy rim, then the ink. Seen from overhead the read
+   is the shoulders and the headband streaming south behind the run.        */
 function seg(S, x1, y1, x2, y2, w){ S.push([x1, y1, x2, y2, w]); }
 
 function strokeSegs(S, color, pad){
@@ -2165,177 +2128,108 @@ function strokeSegs(S, color, pad){
   }
 }
 
-function drawDisciple(x, baseY, state, phase, alpha, god){
+function drawDisciple(x, y, lift, phase, alpha, god, lean){
   const ink  = "#080A0E";
   const rim  = god ? C.gold : "#E4DBC6";
   const band = god ? C.cream : C.seal;
   const slit = god ? C.cream : C.jade;
 
-  const S = [];
-  let head, bandRoot, sparks = false;
-
-  if (state === "slide"){
-    // knee-slide under the sign: low, forward, one guard hand up
-    const hipX = x - 8,  hipY = baseY - 18;
-    const shoX = x + 14, shoY = baseY - 36;
-    seg(S, hipX, hipY, x + 12, baseY - 4, 11);        // front thigh to knee
-    seg(S, x + 12, baseY - 4, x + 32, baseY - 7, 9);  // shin, foot forward
-    seg(S, hipX, hipY, x - 28, baseY - 9, 11);        // trailing thigh
-    seg(S, x - 28, baseY - 9, x - 47, baseY - 2, 9);  // trailing shin
-    seg(S, hipX, hipY, shoX, shoY, 16);               // torso, raked forward
-    seg(S, shoX, shoY, x + 36, baseY - 26, 8);        // lead arm
-    seg(S, shoX, shoY, x - 4, baseY - 46, 8);         // guard arm up
-    head = { x: x + 27, y: baseY - 46, r: 12, tilt: -0.32 };
-    bandRoot = { x: x + 16, y: baseY - 52 };
-    sparks = true;
-
-  } else if (state === "air"){
-    const hip = baseY - 42, sho = baseY - 78;
-    seg(S, x, hip, x - 15, hip + 21, 11);             // front leg tucked
-    seg(S, x - 15, hip + 21, x - 33, hip + 13, 9);
-    seg(S, x, hip, x + 20, hip + 20, 11);             // back leg trailing
-    seg(S, x + 20, hip + 20, x + 39, hip + 30, 9);
-    seg(S, x, hip, x - 2, sho, 16);
-    seg(S, x - 2, sho + 6, x + 24, sho + 16, 8);      // lead hand, spear-fingers
-    seg(S, x - 2, sho + 6, x - 24, sho + 26, 8);
-    head = { x: x - 1, y: sho - 13, r: 13, tilt: -0.12 };
-    bandRoot = { x: x - 12, y: sho - 18 };
-
-  } else {
-    const hip = baseY - 42, sho = baseY - 78;
-    const sw  = Math.sin(phase * 6.2832);
-    const sw2 = -sw;
-    seg(S, x, hip, x + sw * 21, hip + 23, 11);
-    seg(S, x + sw * 21, hip + 23, x + sw * 30, baseY - 1, 9);
-    seg(S, x, hip, x + sw2 * 21, hip + 23, 11);
-    seg(S, x + sw2 * 21, hip + 23, x + sw2 * 30, baseY - 1, 9);
-    seg(S, x, hip, x - 2, sho, 16);
-    seg(S, x - 2, sho + 6, x + sw2 * 20, sho + 25, 8);
-    seg(S, x - 2, sho + 6, x + sw  * 20, sho + 25, 8);
-    head = { x: x - 1, y: sho - 13, r: 13, tilt: -0.08 };
-    bandRoot = { x: x - 12, y: sho - 18 };
-  }
-
+  // shadow on the tar — it separates from you when you vault
+  g.globalAlpha = alpha * 0.5;
+  g.fillStyle = "rgba(0,0,0,0.75)";
+  g.beginPath();
+  g.ellipse(x + lift * 0.22, y + lift * 0.55, 20 - lift * 0.02, 11 - lift * 0.01, 0, 0, 6.2832);
+  g.fill();
   g.globalAlpha = alpha;
 
-  // pass 1 — the rim
-  strokeSegs(S, rim, 6);
-  g.fillStyle = rim;
-  g.beginPath(); g.arc(head.x, head.y, head.r + 3, 0, 6.2832); g.fill();
+  const s = 1.26 + lift / 210;              // height reads as scale from overhead
+  const cy = y - lift * 0.28;
+  const sw = Math.sin(phase * 6.2832), sw2 = -sw;
 
-  // pass 2 — the ink
+  g.save();
+  g.translate(x, cy);
+  g.rotate(lean * 0.32);
+  g.scale(s, s);
+
+  const S = [];
+  seg(S, -16, 12 + sw * 5, -9, -4, 11);     // left leg, striding
+  seg(S,  16, 12 + sw2 * 5,  9, -4, 11);    // right leg
+  seg(S, -11, -2, 11, -2, 17);              // shoulders
+  seg(S, -14, -1, -22, 12 + sw2 * 7, 8);    // arms swinging opposite
+  seg(S,  14, -1,  22, 12 + sw  * 7, 8);
+  seg(S,  0, -2, 0, 8, 13);                 // spine
+
+  strokeSegs(S, rim, 8);
+  g.fillStyle = rim;
+  g.beginPath(); g.arc(0, -12, 16, 0, 6.2832); g.fill();
   strokeSegs(S, ink, 0);
   g.fillStyle = ink;
-  g.beginPath(); g.arc(head.x, head.y, head.r, 0, 6.2832); g.fill();
+  g.beginPath(); g.arc(0, -12, 12, 0, 6.2832); g.fill();
 
-  // the mask slit
-  g.save();
-  g.translate(head.x, head.y); g.rotate(head.tilt);
+  // the mask, pointing north
   g.fillStyle = slit;
-  g.fillRect(-head.r + 1, -5, head.r * 1.7, 5.5);
-  g.restore();
+  g.fillRect(-6, -22, 12, 5);
 
-  // headband, streaming off the beat
-  const wob = Math.sin(Conductor.beat() * 5.2) * 6;
+  // headband streaming behind
+  const wob = Math.sin(Conductor.beat() * 5.2) * 7;
   g.strokeStyle = band; g.lineCap = "round";
   g.lineWidth = 5;
   g.beginPath();
-  g.moveTo(bandRoot.x, bandRoot.y);
-  g.quadraticCurveTo(bandRoot.x - 22, bandRoot.y + wob,
-                     bandRoot.x - 44, bandRoot.y - 6 - wob);
+  g.moveTo(-9, -13);
+  g.quadraticCurveTo(-16 + wob, 12, -10 + wob * 1.4, 40);
   g.stroke();
-  g.lineWidth = 3.5;
+  g.lineWidth = 4;
   g.beginPath();
-  g.moveTo(bandRoot.x - 44, bandRoot.y - 6 - wob);
-  g.quadraticCurveTo(bandRoot.x - 58, bandRoot.y - 2 - wob,
-                     bandRoot.x - 72, bandRoot.y + 4 + wob);
+  g.moveTo(9, -13);
+  g.quadraticCurveTo(17 - wob, 14, 12 - wob * 1.2, 44);
   g.stroke();
 
-  if (sparks){
-    g.strokeStyle = "rgba(255,122,60,0.7)"; g.lineWidth = 2.5;
-    for (let i = 0; i < 3; i++){
-      const sx0 = x - 30 - i * 14;
-      g.beginPath();
-      g.moveTo(sx0, baseY - 2);
-      g.lineTo(sx0 - 20 - i * 6, baseY - 12 - i * 5);
-      g.stroke();
-    }
-  }
-
+  g.restore();
   g.globalAlpha = 1;
 }
 
-/* -------- HUD ------------------------------------------------------------- */
+/* -------- HUD -------------------------------------------------------------- */
 function drawHUD(pulse){
   const god = Game.stemLevel >= 5;
   g.textBaseline = "alphabetic";
 
-  // score
   g.textAlign = "left";
   g.fillStyle = C.cream;
-  g.font = '900 44px "Big Shoulders Display", sans-serif';
-  g.fillText(Math.floor(Game.score).toLocaleString(), 22, 52);
+  g.font = '900 42px "Big Shoulders Display", sans-serif';
+  g.fillText(Math.floor(Game.score).toLocaleString(), 20, 50);
   g.fillStyle = C.creamDim;
-  g.font = '400 13px "DM Mono", monospace';
+  g.font = '400 12px "DM Mono", monospace';
   g.fillText(Math.floor(Conductor.beat() * 4.2) + "M   ×" + (Game.stemLevel + 1) +
-             "   WAX " + Game.wax, 23, 72);
+             "   WAX " + Game.wax, 21, 69);
 
-  // stem stack, top right — the mix, as a rack of faders.
-  // Label sits left of its fader so nothing ever overlaps the fill.
-  const sx = VIEW_W - 22, sy = 30, rowH = 17, barW = 66;
+  // the mix, stacked down the right edge
+  const sx = VIEW_W - 18, sy = 26, rowH = 16, barW = 46;
   for (let i = 5; i >= 0; i--){
     const on = i <= Game.stemLevel;
     const y = sy + (5 - i) * rowH;
     g.textAlign = "right";
-    g.font = '400 10px "DM Mono", monospace';
+    g.font = '400 9px "DM Mono", monospace';
     g.fillStyle = on ? C.cream : "rgba(142,139,128,0.5)";
-    g.fillText(STEM_LABEL[i], sx - barW - 10, y + 9);
+    g.fillText(STEM_LABEL[i], sx - barW - 8, y + 8);
     g.fillStyle = "rgba(35,43,55,0.8)";
-    g.fillRect(sx - barW, y, barW, 9);
+    g.fillRect(sx - barW, y, barW, 8);
     if (on){
       g.fillStyle = i === 5 ? C.gold : C.jade;
-      g.fillRect(sx - barW, y, barW, 9);
+      g.fillRect(sx - barW, y, barW, 8);
     } else {
       g.fillStyle = "rgba(56,68,90,0.9)";
-      g.fillRect(sx - barW, y, 14, 9);
+      g.fillRect(sx - barW, y, 12, 8);
     }
   }
-  g.textAlign = "right";
-  g.fillStyle = "rgba(142,139,128,0.75)";
-  g.font = '400 9px "DM Mono", monospace';
-  g.fillText("THE MIX", sx, sy - 7);
 
-  // flow meter, bottom left
-  g.textAlign = "left";                       // the rack above leaves this "right"
-  const fx = 22, fy = VIEW_H - 34, fw = 190;
-  g.fillStyle = "rgba(35,43,55,0.85)"; g.fillRect(fx, fy, fw, 10);
-  const fg = g.createLinearGradient(fx, 0, fx + fw, 0);
-  fg.addColorStop(0, C.jade); fg.addColorStop(1, C.gold);
-  g.fillStyle = P.flowing ? C.gold : fg;
-  g.fillRect(fx, fy, fw * (Game.flow / 100), 10);
-  g.fillStyle = C.creamDim;
-  g.font = '400 9px "DM Mono", monospace';
-  g.fillText("FLOW STANCE", fx, fy - 6);
-
-  // beat lamps, bottom center
-  const beat = Conductor.beat();
-  const inBar = Math.floor(beat) % 4;
-  const frac = beat - Math.floor(beat);
-  for (let i = 0; i < 4; i++){
-    const bx = VIEW_W / 2 - 42 + i * 28, by = VIEW_H - 28;
-    const hot = i === inBar;
-    const r = hot ? 6 + (1 - frac) * 4 : 4.5;
-    g.fillStyle = hot ? (god ? C.gold : C.cream) : "rgba(56,68,90,0.8)";
-    g.beginPath(); g.arc(bx, by, r, 0, 6.2832); g.fill();
-  }
-
-  // run structure, top centre — three chambers and how far through you are
-  const rw = 250, rx = VIEW_W / 2 - rw / 2, ry = 20, segW = rw / CHAMBERS.length;
+  // run structure along the bottom
   g.textAlign = "center";
+  const rw = Math.min(300, VIEW_W - 48), rx = VIEW_W / 2 - rw / 2;
+  const ry = VIEW_H - 26, segW = rw / CHAMBERS.length;
   if (Game.endless){
     g.fillStyle = C.gold;
-    g.font = '400 10px "DM Mono", monospace';
-    g.fillText("ENDLESS · NO PLATE AT THE END OF THIS ONE", VIEW_W / 2, 30);
+    g.font = '400 11px "DM Mono", monospace';
+    g.fillText("ENDLESS · NO PLATE AT THE END OF THIS ONE", VIEW_W / 2, ry + 8);
   } else {
     const prog = runProgress();
     for (let i = 0; i < CHAMBERS.length; i++){
@@ -2353,40 +2247,50 @@ function drawHUD(pulse){
     g.fillText(Game.phase === "gate"
       ? "ENTERING CHAMBER " + (Game.chamberIndex + 1) + " OF " + CHAMBERS.length
       : "CHAMBER " + (Game.chamberIndex + 1) + " OF " + CHAMBERS.length +
-        "  ·  " + CHAMBERS[Game.chamberIndex].name, VIEW_W / 2, 40);
+        "  ·  " + CHAMBERS[Game.chamberIndex].name, VIEW_W / 2, ry - 9);
   }
 
-  // chain
+  // flow meter, just above the structure rail
+  const fw = Math.min(300, VIEW_W - 48), fx = VIEW_W / 2 - fw / 2, fy = VIEW_H - 68;
+  g.fillStyle = "rgba(35,43,55,0.85)"; g.fillRect(fx, fy, fw, 8);
+  const fg = g.createLinearGradient(fx, 0, fx + fw, 0);
+  fg.addColorStop(0, C.jade); fg.addColorStop(1, C.gold);
+  g.fillStyle = P.flowing ? C.gold : fg;
+  g.fillRect(fx, fy, fw * (Game.flow / 100), 8);
+
+  // beat lamps
+  const beat = Conductor.beat();
+  const inBar = ((Math.floor(beat) % 4) + 4) % 4;
+  const frac = beat - Math.floor(beat);
+  for (let i = 0; i < 4; i++){
+    const bx = VIEW_W / 2 - 42 + i * 28, by = VIEW_H - 92;
+    const hot = i === inBar;
+    g.fillStyle = hot ? (god ? C.gold : C.cream) : "rgba(56,68,90,0.8)";
+    g.beginPath(); g.arc(bx, by, hot ? 6 + (1 - frac) * 4 : 4.5, 0, 6.2832); g.fill();
+  }
+
   if (Game.chain > 1){
     g.fillStyle = god ? C.gold : C.jade;
-    g.font = '700 26px "Big Shoulders Display", sans-serif';
-    g.fillText("CHAIN ×" + Game.chain, VIEW_W / 2, 68);
+    g.font = '700 24px "Big Shoulders Display", sans-serif';
+    g.fillText("CHAIN ×" + Game.chain, VIEW_W / 2, 46);
   }
 
-  // grade popups
-  g.textAlign = "center";
   Game.pops.forEach((p, i) => {
     g.globalAlpha = Math.max(0, Math.min(1, p.life));
     g.fillStyle = p.color;
-    g.font = '900 34px "Big Shoulders Display", sans-serif';
-    g.fillText(p.text, VIEW_W / 2, 118 + (1 - p.life) * -26 + i * 30);
+    g.font = '900 32px "Big Shoulders Display", sans-serif';
+    g.fillText(p.text, VIEW_W / 2, VIEW_H * 0.46 + (1 - p.life) * -26 + i * 30);
   });
   g.globalAlpha = 1;
 
-  // district card — stacked above the flow meter, never over it
   if (Game.districtFade > 0){
     g.globalAlpha = Math.min(1, Game.districtFade * 1.6);
-    g.textAlign = "left";
     g.fillStyle = C.gold;
-    g.font = '700 22px "Big Shoulders Display", sans-serif';
-    g.fillText(CHAMBERS[Game.districtShown].name, 22, VIEW_H - 78);
-    g.fillStyle = "rgba(142,139,128,0.9)";
-    g.font = '400 10px "DM Mono", monospace';
-    g.fillText("CHAMBER 01 · " + Game.bpm.toFixed(1) + " BPM", 22, VIEW_H - 63);
+    g.font = '700 26px "Big Shoulders Display", sans-serif';
+    g.fillText(CHAMBERS[Game.districtShown].name, VIEW_W / 2, VIEW_H * 0.20);
     g.globalAlpha = 1;
   }
 }
-
 /* -------- frame ----------------------------------------------------------- */
 let lastT = performance.now();
 let lastPuffAt = -1;
@@ -2397,67 +2301,46 @@ function frame(now){
 
   if (Game.mode === "play") update(dt);
 
-  // The pulse is anchored to a *scheduled* time, which is up to a lookahead
-  // ahead of now — so it must not fire (or exceed 1) before the drum lands.
   let pulse = 0;
   if (audioReady && Game.mode === "play"){
     const since = ctx.currentTime - Game.pulseAt;
     pulse = since < 0 ? 0 : Math.max(0, Math.min(1, 1 - since * 5.5));
   }
-
-  // steam on the downbeat — one puff per scheduled kick, not per frame
   if (Game.mode === "play" && Game.pulseAt !== lastPuffAt && pulse > 0.4){
     lastPuffAt = Game.pulseAt;
     puffSteam();
   }
 
-  g.setTransform(DPR, 0, 0, DPR, 0, 0);
-  const scale = (sceneCv.width / DPR) / VIEW_W;
-  g.scale(scale, scale);
+  // the portrait field is letterboxed into whatever canvas we were handed
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  g.fillStyle = C.ink;
+  g.fillRect(0, 0, sceneCv.width, sceneCv.height);
+  g.setTransform(FIT.s, 0, 0, FIT.s, FIT.x, FIT.y);
 
   const sh = REDUCED ? 0 : Game.shake;
   g.save();
   if (sh > 0.5) g.translate((Math.random() - 0.5) * sh, (Math.random() - 0.5) * sh);
 
-  const sc = scrollPx();
-  drawSky(pulse);
-  drawSkyline(sc, 0.14, 96,  GROUND_Y - 22, 70,  190, "#0C1119", 0.0, false);
-  fogBand(GROUND_Y - 210, 210, "26,34,52", 0.30);
-  drawSkyline(sc, 0.38, 134, GROUND_Y - 8,  90,  228, "#10161F", 4.2, true);
-  fogBand(GROUND_Y - 150, 150, "48,32,30", 0.20);
-  drawProps(sc);
-  drawGround(sc);
-  if (Game.mode === "play" || Game.mode === "over") drawBeatRuler();
-
-  // pigeons
-  for (const p of Game.birds){
-    g.globalAlpha = Math.max(0, p.life);
-    g.strokeStyle = "#0A0C11"; g.lineWidth = 2;
-    const f = Math.sin(p.ph + performance.now() * 0.02) * 5;
-    g.beginPath();
-    g.moveTo(p.x - 7, p.y + f); g.lineTo(p.x, p.y - 2); g.lineTo(p.x + 7, p.y + f);
-    g.stroke();
-  }
-  g.globalAlpha = 1;
-
+  drawVoid();
+  drawRoof();
   drawObstacles();
   drawPickups();
 
-  // afterimages, then the disciple
-  const px = playerX();
   const phase = Conductor.beat() * 2;
   for (const t of P.trail){
-    // afterimages stay put in world space, so they streak out behind you
-    drawDisciple(px - (Conductor.beat() - t.beat) * PPB * 0.55, t.y, t.state,
-                 phase, Math.max(0, t.life) * 0.20, Game.stemLevel >= 5);
+    // afterimages hold their world position, so they stream out behind you
+    drawDisciple(laneX(t.lane), PLAYER_Y + (Conductor.beat() - t.beat) * PPB * 0.5,
+                 t.lift, phase, Math.max(0, t.life) * 0.20, Game.stemLevel >= 5, 0);
   }
   if (Game.mode === "play" || Game.mode === "over"){
     const blink = Conductor.beat() < Game.invulnUntil
       ? (Math.floor(Conductor.beat() * 8) % 2 ? 0.35 : 1) : 1;
-    drawDisciple(px, GROUND_Y - P.height, P.state, phase, blink, Game.stemLevel >= 5);
+    const lean = (P.lane - P.laneFrom) *
+      Math.max(0, 1 - (Conductor.beat() - P.stepStart) / STEP_BEATS);
+    drawDisciple(laneX(laneNow()), PLAYER_Y, P.lift, phase, blink,
+                 Game.stemLevel >= 5, lean);
   }
 
-  // sparks
   for (const s of Game.sparks){
     g.globalAlpha = Math.max(0, s.life);
     g.fillStyle = s.color;
@@ -2468,19 +2351,16 @@ function frame(now){
   drawAtmos(dt);
   drawRain(dt);
 
-  // GOD FLOW — gold ink blooms out of the disciple. Kept restrained here
-  // because the composite shader adds the bloom and the gold bias on top.
   if (Game.stemLevel >= 5 && Game.mode === "play"){
-    const cx = playerX(), cy = GROUND_Y - P.height - 60;
+    const cx = laneX(laneNow()), cy = PLAYER_Y;
     g.globalCompositeOperation = "screen";
-    const bloom = g.createRadialGradient(cx, cy, 10, cx, cy, VIEW_W * 0.5);
+    const bloom = g.createRadialGradient(cx, cy, 10, cx, cy, VIEW_H * 0.42);
     bloom.addColorStop(0,    "rgba(217,164,65," + (0.13 + pulse * 0.10).toFixed(3) + ")");
     bloom.addColorStop(0.34, "rgba(217,164,65,0.035)");
     bloom.addColorStop(1,    "rgba(200,52,43,0)");
     g.fillStyle = bloom;
     g.fillRect(0, 0, VIEW_W, VIEW_H);
     g.globalCompositeOperation = "source-over";
-
     if (pulse > 0.04 && !REDUCED){
       g.strokeStyle = "rgba(217,164,65," + (pulse * 0.30).toFixed(3) + ")";
       g.lineWidth = 2.5 * pulse + 0.5;
@@ -2490,12 +2370,9 @@ function frame(now){
     }
   }
 
-  drawForeground(sc);
-
-  // Only paint a vignette by hand when there is no shader to do it properly.
   if (!usingGL){
-    const vg = g.createRadialGradient(VIEW_W / 2, VIEW_H / 2, VIEW_H * 0.34,
-                                      VIEW_W / 2, VIEW_H / 2, VIEW_H * 0.95);
+    const vg = g.createRadialGradient(VIEW_W / 2, VIEW_H / 2, VIEW_H * 0.30,
+                                      VIEW_W / 2, VIEW_H / 2, VIEW_H * 0.80);
     vg.addColorStop(0, "rgba(0,0,0,0)");
     vg.addColorStop(1, "rgba(0,0,0,0.62)");
     g.fillStyle = vg;
@@ -2517,16 +2394,15 @@ function frame(now){
       god:   Game.godMix,
       flow:  Game.flowMix,
       hit:   Game.hitFlash,
-      // the record is dustier when the mix is bare — grain clears as you build
+      speed: Game.mode === "play" ? 0.016 + Game.godMix * 0.016 : 0,
       grain: (REDUCED ? 0.02 : 0.048) - Game.stemLevel * 0.005
     });
   }
 
-  // The HUD lives on its own layer above the post chain. Text stays crisp,
-  // and the bright pass never gets to chew on the UI.
-  hudG.setTransform(DPR, 0, 0, DPR, 0, 0);
+  // HUD on its own layer above the post chain, in the same letterboxed space
+  hudG.setTransform(1, 0, 0, 1, 0, 0);
   hudG.clearRect(0, 0, hudCv.width, hudCv.height);
-  hudG.scale(scale, scale);
+  hudG.setTransform(FIT.s, 0, 0, FIT.s, FIT.x, FIT.y);
   if (Game.mode === "play" || Game.mode === "over"){
     const worldG = g; g = hudG; drawHUD(pulse); g = worldG;
   }
@@ -2537,7 +2413,6 @@ function frame(now){
 
   requestAnimationFrame(frame);
 }
-
 /* ============================================================== 6. INPUT === */
 function primaryAction(){
   if (Game.mode === "title" || Game.mode === "over") startRun();
@@ -2546,11 +2421,13 @@ function primaryAction(){
 document.addEventListener("keydown", e => {
   if (e.repeat) return;
   const k = e.code;
-  if (k === "ArrowUp" || k === "Space" || k === "KeyW"){
+  if (k === "ArrowLeft" || k === "KeyA"){
+    e.preventDefault(); doStep(-1);
+  } else if (k === "ArrowRight" || k === "KeyD"){
+    e.preventDefault(); doStep(1);
+  } else if (k === "ArrowUp" || k === "Space" || k === "KeyW"){
     e.preventDefault();
-    if (Game.mode === "play") doJump(); else primaryAction();
-  } else if (k === "ArrowDown" || k === "KeyS"){
-    e.preventDefault(); doSlide();
+    if (Game.mode === "play") doVault(); else primaryAction();
   } else if (k === "ShiftLeft" || k === "ShiftRight" || k === "KeyF"){
     e.preventDefault(); setFlow(true);
   } else if (k === "KeyP"){
@@ -2582,18 +2459,19 @@ function onDown(x, y){
 }
 function onMove(x, y){
   if (!touch || touch.used) return;
-  const dy = y - touch.y;
-  if (Math.abs(dy) > SWIPE_PX){
-    clearTimeout(touch.holdT);
-    touch.used = "swipe";
-    if (dy < 0) doJump(); else doSlide();
-  }
+  const dx = x - touch.x, dy = y - touch.y;
+  if (Math.abs(dx) < SWIPE_PX && Math.abs(dy) < SWIPE_PX) return;
+  clearTimeout(touch.holdT);
+  touch.used = "swipe";
+  if (Math.abs(dx) > Math.abs(dy)) doStep(dx < 0 ? -1 : 1);
+  else if (dy < 0) doVault();
+  else doVault();                     // a downward flick still reads as "get off the roof"
 }
 function onUp(){
   if (!touch) return;
   clearTimeout(touch.holdT);
   if (touch.used === "hold") setFlow(false);
-  else if (!touch.used) doJump();       // a quick tap is a jump
+  else if (!touch.used) doVault();      // a quick tap vaults
   touch = null;
 }
 
@@ -2613,6 +2491,14 @@ document.addEventListener("touchcancel", () => onUp());
 document.addEventListener("mousedown", e => { onDown(e.clientX, e.clientY); });
 window.addEventListener("mousemove", e => { onMove(e.clientX, e.clientY); });
 window.addEventListener("mouseup", () => onUp());
+
+el("btn-fs").addEventListener("click", e => {
+  e.preventDefault(); e.stopPropagation(); toggleFullscreen();
+});
+el("btn-fs").addEventListener("mousedown", e => e.stopPropagation());
+el("btn-fs").addEventListener("touchstart", e => {
+  e.stopPropagation(); e.preventDefault(); toggleFullscreen();
+}, { passive: false });
 
 ["btn-again", "btn-endless"].forEach(id => {
   const b = el(id);

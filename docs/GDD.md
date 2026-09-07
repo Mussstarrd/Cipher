@@ -1,12 +1,13 @@
 # IRON SHAOLIN: RUNNING THE CHAMBERS
-## Game Design Document — v0.1 (The Blueprint)
+## Game Design Document — v0.2 (The Blueprint)
 
 > "Lateral thinking with withered technology. The endless runner is the withered
 > technology — a decade old, understood by every thumb on Earth. The lateral move
 > is this: the level IS the music. Nobody has made the breakbeat itself the level
 > designer."
 
-**Genre:** Rhythm-infused endless runner (2.5D)
+**Genre:** Rhythm-infused lane runner — top-down, portrait (2.5D)
+**Revision:** v0.2 — pivoted from side-on to overhead after playtest (see §6)
 **Platforms:** iOS / Android
 **Session length target:** 90 seconds – 4 minutes per run
 **Rating target:** E10+ / PEGI 7 (stylized action, no blood, no licensed content)
@@ -21,10 +22,10 @@ trademarks, samples, or likenesses from any real-world artist or group.
 (Short form / app icon brand: **IRON SHAOLIN**)
 
 ### The Hook (one breath):
-*"Temple Run had legs. Ours has FLOW. An endless runner where the beat builds the
-world — every obstacle lands on the snare, every wall-run rides the bassline, and
-the better you run, the fatter the track gets. You don't play a level. You play
-a record."*
+*"Temple Run had legs. Ours has FLOW. A one-thumb runner, held in portrait, where
+the beat builds the world — every obstacle lands on the snare, every lane change
+rides the bassline, and the better you run, the fatter the track gets. You don't
+play a level. You play a record."*
 
 ### The Hook (thirty seconds):
 You are a masked disciple of the Iron Shaolin Syndicate, running the rooftops and
@@ -56,11 +57,13 @@ a god-tier run sounds *incredible* on a phone speaker.
 ## 2. Core Gameplay Loop
 
 ### The 90-Second Loop (moment to moment)
-Three verbs, one thumb:
-1. **Swipe up — RISE** (jump / wall-run when near a wall)
-2. **Swipe down — SINK** (slide / drop through grates into the subway layer)
-3. **Hold — FLOW STANCE** (slow-mo focus, drains the Flow meter, lets you thread
-   impossible gaps; releasing on-beat grants a burst)
+The camera looks straight down. The disciple runs north across the rooftops in
+three lanes; the world scrolls south. Three verbs, one thumb, phone held upright:
+1. **Swipe left / right — STEP** (change lane; the core verb, and the one that
+   makes the beat physical — you are placing yourself on the grid)
+2. **Swipe up or tap — VAULT** (leap the gaps where the roof ends)
+3. **Press & hold — FLOW STANCE** (breath control; phase through drone swarms at
+   full tempo, drains the Flow meter)
 
 The lateral mechanic — **THE BUILD**:
 - The instrumental starts stripped: kick drum only.
@@ -97,8 +100,8 @@ The lateral mechanic — **THE BUILD**:
 - **Styles (cosmetics):** masks, jackets, sneaker trails, spray-tag victory
   animations, and **turntable skins** for the results screen.
 - **The 36 Chambers Trials:** handcrafted challenge runs unlocked by Plates —
-  finite, authored content that teaches advanced tech (wall-run chains,
-  beat-juggle scoring). Completing a trial row unlocks a Disciple.
+  finite, authored content that teaches advanced tech (lane-juggle chains,
+  double-step scoring). Completing a trial row unlocks a Disciple.
 
 ---
 
@@ -249,3 +252,30 @@ game, not the engine.
 
 *Document status: v0.1 blueprint for team review. Next revision after the
 playable groove-kernel proves the core feel.*
+
+---
+
+## 6. Revision log
+
+### v0.2 — the overhead pivot
+Playtested the v0.1 groove kernel with kids. Two notes, both acted on:
+
+1. **"It should be top-down, north-south, not side-on."** They are right, and the
+   reasons are commercial as much as aesthetic. Portrait is the dominant mobile
+   posture and the only genuinely one-handed one; a vertical field uses the whole
+   phone instead of letterboxing a widescreen strip into the middle of it; and
+   rooftops seen from above is a more distinctive look than another side-scroller
+   silhouette. The pivot also *improved* the core mechanic: lane-stepping is a
+   discrete three-state choice landed on a beat, which is a truer rhythm input
+   than a binary jump/slide. Everything underneath — the Conductor, the stem
+   build, the chamber structure, the grading windows — carried across untouched.
+
+2. **"It needs to open full screen."** The game now enters an immersive mode the
+   moment a run starts: the chrome folds away, the field takes the whole viewport,
+   and it requests real fullscreen where the host permits it. There is also a
+   manual toggle in the corner of the stage.
+
+**Consequences to carry into Unity:** the play field is a fixed portrait rectangle
+letterboxed into whatever screen it gets, so three lanes mean the same thing on
+every device. Do not stretch it to fit — a lane must be a lane everywhere, or the
+grading windows stop meaning anything across the install base.
