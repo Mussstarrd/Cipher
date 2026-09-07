@@ -1,5 +1,5 @@
 # IRON SHAOLIN: RUNNING THE CHAMBERS
-## Game Design Document — v0.2 (The Blueprint)
+## Game Design Document — v0.3 (The Blueprint)
 
 > "Lateral thinking with withered technology. The endless runner is the withered
 > technology — a decade old, understood by every thumb on Earth. The lateral move
@@ -7,7 +7,7 @@
 > designer."
 
 **Genre:** Rhythm-infused lane runner — top-down, portrait (2.5D)
-**Revision:** v0.2 — pivoted from side-on to overhead after playtest (see §6)
+**Revision:** v0.3 — record-collecting core, vault reserved for chasms (see §6)
 **Platforms:** iOS / Android
 **Session length target:** 90 seconds – 4 minutes per run
 **Rating target:** E10+ / PEGI 7 (stylized action, no blood, no licensed content)
@@ -59,11 +59,24 @@ a god-tier run sounds *incredible* on a phone speaker.
 ### The 90-Second Loop (moment to moment)
 The camera looks straight down. The disciple runs north across the rooftops in
 three lanes; the world scrolls south. Three verbs, one thumb, phone held upright:
-1. **Swipe left / right — STEP** (change lane; the core verb, and the one that
-   makes the beat physical — you are placing yourself on the grid)
-2. **Swipe up or tap — VAULT** (leap the gaps where the roof ends)
-3. **Press & hold — FLOW STANCE** (breath control; phase through drone swarms at
-   full tempo, drains the Flow meter)
+1. **Swipe left / right — STEP** (change lane). This is the game. Roughly nine
+   obstacles in ten are solved with it.
+2. **Swipe up or tap — VAULT** (only when the roof gives out and all three lanes
+   are a chasm; also an escape hatch over a block if you read it late)
+3. **Press & hold — FLOW STANCE** (breath control through a drone swarm; rare,
+   chamber three onward)
+
+**There is no swipe-down.** From directly overhead there is no "under" to slide
+into, and a downward flick has nothing legible to mean. Three verbs became two
+and a half, and the game got clearer for it.
+
+**Follow the records.** Eight spinning records to the bar, laid half a beat
+apart along the safe route. The trail *is* the notation: it always runs through
+the lane that will still be open when the obstacle arrives, and it starts
+steering a bar early. Grab it and you live. Each record in a streak rings a step
+higher up the pentatonic, so a clean line plays a phrase; miss one and it drops
+back to the root. Gold records are worth a Wax Fragment. Records over a chasm
+are strung in the air and only collectible mid-vault.
 
 The lateral mechanic — **THE BUILD**:
 - The instrumental starts stripped: kick drum only.
@@ -279,3 +292,28 @@ Playtested the v0.1 groove kernel with kids. Two notes, both acted on:
 letterboxed into whatever screen it gets, so three lanes mean the same thing on
 every device. Do not stretch it to fit — a lane must be a lane everywhere, or the
 grading windows stop meaning anything across the install base.
+
+### v0.3 — records, and the vault demoted
+More playtest notes, same testers:
+
+1. **"It needs to be coin collecting, but spinning records."** Taken, and it
+   solved a problem I had not named: lane choice was previously *only* about
+   avoidance, which is a negative motivation. Records give the lane a reason to
+   want. Better still, routing the trail through the safe lane makes the
+   collectible double as the read-ahead — the player learns the correct line by
+   chasing the reward rather than by being punished. Follow the records and you
+   live.
+
+2. **"Swipe up only when all three lanes are blocked."** Correct. The vault is
+   now reserved for full-width chasms (about one obstacle in nine), plus as a
+   late-read escape over a block. Everything else is left and right. Measured
+   over a full run the mix is ~53 single blocks, ~33 two-lane squeezes, ~11
+   chasms, and a couple of swarms in chamber three.
+
+3. **Swipe-down is gone entirely**, as above.
+
+**Engineering note worth carrying to Unity:** obstacle planning has to run a bar
+*ahead* of the record trail. Laying the trail bar-by-bar without lookahead
+leaves it in the wrong lane right up to the bar line and then demands two lanes
+in half a beat — unfair in a way players blame on themselves rather than on the
+generator. Plan ahead, lay behind.
