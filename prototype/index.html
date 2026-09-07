@@ -220,11 +220,14 @@ body{
 /* ---------- results ---------- */
 .result-grid{
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(112px, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 1px;
   background: var(--slate);
   border: 1px solid var(--slate);
   max-width: 640px;
+}
+@media (max-width: 560px){
+  .result-grid{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 .result-grid div{
   background: var(--asphalt);
@@ -248,6 +251,27 @@ body{
   font-variant-numeric: tabular-nums;
 }
 .result-grid dd.hot{ color: var(--gold); }
+
+.actions{ display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.btn{
+  font-family: var(--f-display);
+  font-weight: 700;
+  font-size: clamp(14px, 1.9vw, 18px);
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--ink);
+  background: var(--gold);
+  border: 0;
+  padding: 10px 20px;
+  cursor: pointer;
+}
+.btn.ghost{
+  background: transparent;
+  color: var(--gold);
+  box-shadow: inset 0 0 0 2px var(--gold);
+}
+.btn:hover{ background: var(--cream); }
+.btn.ghost:hover{ background: rgba(217,164,65,.14); color: var(--cream); }
 
 .verdict{
   font-family: var(--f-display);
@@ -326,7 +350,8 @@ body.touch .touchpad{ display: block; }
         The track starts naked &mdash; one kick drum. Clear obstacles <em>on the beat</em>
         and the mix builds itself: snare, hats, bass, chops, lead.
         Take a hit and you <em>lose a layer</em>. Get touched on a bare kick and the
-        record stops.
+        record stops. <em>Three chambers, then the plate</em> &mdash; about two and a
+        half minutes if you make it all the way.
       </p>
       <div class="verbs">
         <div class="verb"><b>Rise</b><i>Swipe up &middot; &uarr; / Space</i></div>
@@ -348,7 +373,10 @@ body.touch .touchpad{ display: block; }
         <div><dt>Best</dt><dd id="r-best">0</dd></div>
       </div>
       <p class="koan" id="over-koan">The beat was always there. You just arrived late.</p>
-      <p class="enter">Tap to run it back</p>
+      <div class="actions">
+        <button class="btn" id="btn-again" type="button">Run it back</button>
+        <button class="btn ghost" id="btn-endless" type="button">Endless run</button>
+      </div>
     </section>
   </div>
 
@@ -398,14 +426,32 @@ const STEMS = ["kick","snare","hat","bass","chop","lead"];
 const STEM_LABEL = ["KICK","SNARE","HATS","BASS","CHOPS","LEAD"];
 const STEM_VOL = { kick:1.00, snare:0.80, hat:0.42, bass:0.85, chop:0.50, lead:0.42 };
 
-const DISTRICTS = [
-  "ROOFTOP DOJO ROW",
-  "SODIUM ALLEY",
-  "LINE 9 — SUBWAY VEIN",
-  "THE WAX CRATES",
-  "FOG TERRACE",
-  "HOLLOW SUIT PLAZA"
+/* A run is a record, not a treadmill. Three chambers, a gate between each
+   where the drums break down and the next one is announced, and at the end
+   an actual finish: Wax Plate I, recovered. Endless mode is opt-in after. */
+const INTRO_BARS = 4, CH_BARS = 16, GATE_BARS = 2;
+const CHAMBERS = [
+  { name: "ROOFTOP DOJO ROW",      bpm: 88,  tier: 1, kick: 0, roots: [33, 33, 29, 31] },
+  { name: "SODIUM ALLEY",          bpm: 94,  tier: 2, kick: 1, roots: [31, 31, 28, 26] },
+  { name: "LINE 9 — SUBWAY VEIN",  bpm: 100, tier: 3, kick: 3, roots: [29, 29, 33, 31] }
 ];
+
+// What is happening at a given bar: the whole structure lives in this one place.
+function structAt(bar){
+  if (bar < INTRO_BARS) return { kind: "intro", ci: 0 };
+  const span = CH_BARS + GATE_BARS;
+  const k = bar - INTRO_BARS;
+  let ci = Math.floor(k / span);
+  const within = k % span;
+  if (ci >= CHAMBERS.length){
+    if (!Game.endless) return { kind: "plate", ci: CHAMBERS.length - 1 };
+    ci = ci % CHAMBERS.length;
+  }
+  if (within < CH_BARS) return { kind: "chamber", ci, within };
+  if (!Game.endless && ci === CHAMBERS.length - 1) return { kind: "plate", ci };
+  return { kind: "gate", ci, next: (ci + 1) % CHAMBERS.length, within: within - CH_BARS };
+}
+function chamberOf(bar){ return CHAMBERS[structAt(bar).ci]; }
 
 const C = {
   ink:"#0B0C10", asphalt:"#14181F", slate:"#232B37", slateHi:"#38445A",
@@ -417,6 +463,8 @@ const REDUCED = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 /* ============================================================== 1. AUDIO ==== */
 let ctx = null, master = null, masterLP = null, noiseBuf = null;
+let drumBus = null, duck = null, verbSend = null, delaySend = null;
+let delayNode = null, vinylSrc = null;
 const stemGain = {};
 let audioReady = false;
 
@@ -427,159 +475,320 @@ function buildAudio(){
   const AC = window.AudioContext || window.webkitAudioContext;
   ctx = new AC({ latencyHint: "interactive" });
 
-  // noise source used by snare / hats / scrapes
   const len = ctx.sampleRate * 2;
   noiseBuf = ctx.createBuffer(1, len, ctx.sampleRate);
   const nd = noiseBuf.getChannelData(0);
   for (let i = 0; i < len; i++) nd[i] = Math.random() * 2 - 1;
 
-  // master chain: [stems] -> masterLP -> saturation -> compressor -> out
-  const comp = ctx.createDynamicsCompressor();
-  comp.threshold.value = -14; comp.knee.value = 22;
-  comp.ratio.value = 4; comp.attack.value = 0.004; comp.release.value = 0.16;
+  /* ---- master chain: glue, air, tape drive, then a catch-all limiter ---- */
+  const limiter = ctx.createDynamicsCompressor();
+  limiter.threshold.value = -6; limiter.knee.value = 2;
+  limiter.ratio.value = 14; limiter.attack.value = 0.002; limiter.release.value = 0.12;
 
   const sat = ctx.createWaveShaper();
   const curve = new Float32Array(1024);
   for (let i = 0; i < 1024; i++){
     const x = (i / 1023) * 2 - 1;
-    curve[i] = Math.tanh(x * 1.7) * 0.86;      // gentle tape-ish glue
+    curve[i] = Math.tanh(x * 1.9) * 0.90;
   }
   sat.curve = curve; sat.oversample = "2x";
 
+  const air = ctx.createBiquadFilter();
+  air.type = "highshelf"; air.frequency.value = 7200; air.gain.value = 3.2;
+
+  const rumble = ctx.createBiquadFilter();
+  rumble.type = "highpass"; rumble.frequency.value = 26;
+
   masterLP = ctx.createBiquadFilter();
   masterLP.type = "lowpass";
-  masterLP.frequency.value = 1400;             // muffled until the mix builds
+  masterLP.frequency.value = 1400;
   masterLP.Q.value = 0.4;
 
   master = ctx.createGain();
-  master.gain.value = 0.85;
+  master.gain.value = 0.9;
 
-  masterLP.connect(sat); sat.connect(comp); comp.connect(ctx.destination);
-  master.connect(masterLP);
+  master.connect(masterLP); masterLP.connect(rumble); rumble.connect(air);
+  air.connect(sat); sat.connect(limiter); limiter.connect(ctx.destination);
 
-  // a short plate for glue — generated, not loaded
-  const rl = Math.floor(ctx.sampleRate * 1.1);
+  /* ---- drum bus: its own compressor, which is most of "produced" ---- */
+  const drumComp = ctx.createDynamicsCompressor();
+  drumComp.threshold.value = -18; drumComp.knee.value = 8;
+  drumComp.ratio.value = 4.5; drumComp.attack.value = 0.003; drumComp.release.value = 0.13;
+  drumBus = ctx.createGain(); drumBus.gain.value = 1.0;
+  drumBus.connect(drumComp); drumComp.connect(master);
+
+  /* ---- everything melodic ducks under the kick. This one node is the
+         difference between "synth demo" and "beat". ---- */
+  duck = ctx.createGain(); duck.gain.value = 1.0;
+  duck.connect(master);
+
+  /* ---- plate and a dotted slap delay, both generated ---- */
+  const rl = Math.floor(ctx.sampleRate * 1.4);
   const ir = ctx.createBuffer(2, rl, ctx.sampleRate);
   for (let ch = 0; ch < 2; ch++){
     const d = ir.getChannelData(ch);
-    for (let i = 0; i < rl; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / rl, 2.6);
+    for (let i = 0; i < rl; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / rl, 2.4);
   }
   const verb = ctx.createConvolver(); verb.buffer = ir;
-  const verbSend = ctx.createGain(); verbSend.gain.value = 0.16;
-  verbSend.connect(verb); verb.connect(master);
+  const verbDamp = ctx.createBiquadFilter();
+  verbDamp.type = "lowpass"; verbDamp.frequency.value = 3600;
+  verbSend = ctx.createGain(); verbSend.gain.value = 0.22;
+  verbSend.connect(verb); verb.connect(verbDamp); verbDamp.connect(master);
+
+  delayNode = ctx.createDelay(1.5);
+  delayNode.delayTime.value = (60 / BPM_BASE) * 0.75;
+  const fb = ctx.createGain(); fb.gain.value = 0.34;
+  const fbDamp = ctx.createBiquadFilter();
+  fbDamp.type = "lowpass"; fbDamp.frequency.value = 2400;
+  delaySend = ctx.createGain(); delaySend.gain.value = 0.20;
+  delaySend.connect(delayNode);
+  delayNode.connect(fbDamp); fbDamp.connect(fb); fb.connect(delayNode);
+  delayNode.connect(master);
+
+  /* ---- the record itself: hiss and crackle under everything, always on,
+         even when the mix is stripped to a bare kick ---- */
+  const vl = ctx.sampleRate * 4;
+  const vb = ctx.createBuffer(2, vl, ctx.sampleRate);
+  for (let ch = 0; ch < 2; ch++){
+    const d = vb.getChannelData(ch);
+    for (let i = 0; i < vl; i++) d[i] = (Math.random() * 2 - 1) * 0.018;
+    let i = 0;
+    while (i < vl){
+      i += Math.floor(Math.random() * ctx.sampleRate * 0.075) + 180;
+      if (i >= vl) break;
+      const amp = 0.05 + Math.random() * 0.30;
+      const dur = 12 + Math.floor(Math.random() * 55);
+      for (let k = 0; k < dur && i + k < vl; k++){
+        d[i + k] += (Math.random() * 2 - 1) * amp * Math.pow(1 - k / dur, 3);
+      }
+    }
+  }
+  vinylSrc = ctx.createBufferSource();
+  vinylSrc.buffer = vb; vinylSrc.loop = true;
+  const vHP = ctx.createBiquadFilter(); vHP.type = "highpass"; vHP.frequency.value = 240;
+  const vLP = ctx.createBiquadFilter(); vLP.type = "lowpass";  vLP.frequency.value = 7600;
+  const vG  = ctx.createGain(); vG.gain.value = 0.5;
+  vinylSrc.connect(vHP); vHP.connect(vLP); vLP.connect(vG); vG.connect(master);
+  vinylSrc.start();
 
   for (const k of STEMS){
     const g = ctx.createGain();
     g.gain.value = 0.0001;
-    g.connect(master);
-    if (k !== "kick" && k !== "bass") g.connect(verbSend);
+    if (k === "kick" || k === "snare" || k === "hat") g.connect(drumBus);
+    else g.connect(duck);
+    if (k === "snare" || k === "chop" || k === "lead") g.connect(verbSend);
+    if (k === "chop"  || k === "lead") g.connect(delaySend);
     stemGain[k] = g;
   }
   audioReady = true;
 }
 
-/* -------- voices ---------------------------------------------------------- */
+function panned(t_unused){
+  const p = ctx.createStereoPanner ? ctx.createStereoPanner() : null;
+  return p;
+}
+
+/* -------- voices -----------------------------------------------------------
+   Every drum is layered the way a real one is: a sub, a body, and a
+   transient. A single oscillator is what makes a synth kick sound like a
+   synth kick.                                                              */
 function vKick(t, vel){
+  // sub
   const o = ctx.createOscillator(), g = ctx.createGain();
   o.type = "sine";
-  o.frequency.setValueAtTime(165, t);
-  o.frequency.exponentialRampToValueAtTime(43, t + 0.10);
+  o.frequency.setValueAtTime(140, t);
+  o.frequency.exponentialRampToValueAtTime(41, t + 0.085);
   g.gain.setValueAtTime(0.0001, t);
-  g.gain.linearRampToValueAtTime(vel, t + 0.004);
-  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.42);
+  g.gain.linearRampToValueAtTime(vel, t + 0.005);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.46);
   o.connect(g); g.connect(stemGain.kick);
-  o.start(t); o.stop(t + 0.45);
+  o.start(t); o.stop(t + 0.5);
 
+  // body — gives it a chest thump instead of just a boom
+  const b = ctx.createOscillator(), bg = ctx.createGain();
+  b.type = "triangle";
+  b.frequency.setValueAtTime(230, t);
+  b.frequency.exponentialRampToValueAtTime(62, t + 0.05);
+  bg.gain.setValueAtTime(vel * 0.45, t);
+  bg.gain.exponentialRampToValueAtTime(0.0001, t + 0.13);
+  b.connect(bg); bg.connect(stemGain.kick);
+  b.start(t); b.stop(t + 0.15);
+
+  // beater click
   const n = ctx.createBufferSource(); n.buffer = noiseBuf;
-  const hp = ctx.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 1800;
-  const g2 = ctx.createGain();
-  g2.gain.setValueAtTime(vel * 0.16, t);
-  g2.gain.exponentialRampToValueAtTime(0.0001, t + 0.03);
-  n.connect(hp); hp.connect(g2); g2.connect(stemGain.kick);
-  n.start(t); n.stop(t + 0.04);
+  n.playbackRate.value = 1.4;
+  const hp = ctx.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 2400;
+  const ng = ctx.createGain();
+  ng.gain.setValueAtTime(vel * 0.22, t);
+  ng.gain.exponentialRampToValueAtTime(0.0001, t + 0.022);
+  n.connect(hp); hp.connect(ng); ng.connect(stemGain.kick);
+  n.start(t); n.stop(t + 0.03);
+
+  // duck everything melodic under it — the pump
+  if (duck){
+    duck.gain.setValueAtTime(1.0, t);
+    duck.gain.linearRampToValueAtTime(0.44, t + 0.014);
+    duck.gain.linearRampToValueAtTime(1.0, t + 0.20);
+  }
 }
 
 function vSnare(t, vel){
+  // crack
   const n = ctx.createBufferSource(); n.buffer = noiseBuf;
-  n.playbackRate.value = 0.9 + Math.random() * 0.2;
-  const bp = ctx.createBiquadFilter(); bp.type = "bandpass";
-  bp.frequency.value = 1850; bp.Q.value = 0.7;
-  const g = ctx.createGain();
-  g.gain.setValueAtTime(vel * 0.75, t);
-  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.17);
-  n.connect(bp); bp.connect(g); g.connect(stemGain.snare);
-  n.start(t); n.stop(t + 0.19);
+  n.playbackRate.value = 1.1 + Math.random() * 0.25;
+  const hp = ctx.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 3600;
+  const cg = ctx.createGain();
+  cg.gain.setValueAtTime(vel * 0.55, t);
+  cg.gain.exponentialRampToValueAtTime(0.0001, t + 0.045);
+  n.connect(hp); hp.connect(cg); cg.connect(stemGain.snare);
+  n.start(t); n.stop(t + 0.06);
 
-  const o = ctx.createOscillator(); o.type = "triangle";
-  o.frequency.setValueAtTime(195, t);
-  o.frequency.exponentialRampToValueAtTime(122, t + 0.07);
-  const g2 = ctx.createGain();
-  g2.gain.setValueAtTime(vel * 0.42, t);
-  g2.gain.exponentialRampToValueAtTime(0.0001, t + 0.11);
-  o.connect(g2); g2.connect(stemGain.snare);
-  o.start(t); o.stop(t + 0.13);
+  // tail
+  const n2 = ctx.createBufferSource(); n2.buffer = noiseBuf;
+  n2.playbackRate.value = 0.85 + Math.random() * 0.2;
+  const bp = ctx.createBiquadFilter(); bp.type = "bandpass";
+  bp.frequency.value = 1750; bp.Q.value = 0.6;
+  const tg = ctx.createGain();
+  tg.gain.setValueAtTime(vel * 0.62, t);
+  tg.gain.exponentialRampToValueAtTime(0.0001, t + 0.19);
+  n2.connect(bp); bp.connect(tg); tg.connect(stemGain.snare);
+  n2.start(t); n2.stop(t + 0.21);
+
+  // two tuned shells, the way a real drum has a fundamental and an overtone
+  [188, 247].forEach((f, i) => {
+    const o = ctx.createOscillator(); o.type = "triangle";
+    o.frequency.setValueAtTime(f, t);
+    o.frequency.exponentialRampToValueAtTime(f * 0.66, t + 0.075);
+    const g2 = ctx.createGain();
+    g2.gain.setValueAtTime(vel * (i ? 0.22 : 0.38), t);
+    g2.gain.exponentialRampToValueAtTime(0.0001, t + 0.115);
+    o.connect(g2); g2.connect(stemGain.snare);
+    o.start(t); o.stop(t + 0.13);
+  });
 }
 
+// 808-style metallic hat: six detuned squares through a bandpass. Pure noise
+// reads as "shh"; this reads as a hi-hat.
+const HAT_RATIOS = [2.0, 3.0, 4.16, 5.43, 6.79, 8.21];
 function vHat(t, vel, open){
-  const n = ctx.createBufferSource(); n.buffer = noiseBuf;
-  n.playbackRate.value = 1.3;
-  const hp = ctx.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 7400;
+  const d = open ? 0.24 : 0.048;
+  const bp = ctx.createBiquadFilter(); bp.type = "bandpass";
+  bp.frequency.value = 9800; bp.Q.value = 0.9;
+  const hp = ctx.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 7200;
   const g = ctx.createGain();
-  const d = open ? 0.17 : 0.042;
-  g.gain.setValueAtTime(vel, t);
+  g.gain.setValueAtTime(vel * 0.5, t);
   g.gain.exponentialRampToValueAtTime(0.0001, t + d);
-  n.connect(hp); hp.connect(g); g.connect(stemGain.hat);
+  bp.connect(hp); hp.connect(g);
+
+  if (ctx.createStereoPanner){
+    const pan = ctx.createStereoPanner();
+    pan.pan.value = (Math.random() - 0.5) * 0.5;
+    g.connect(pan); pan.connect(stemGain.hat);
+  } else g.connect(stemGain.hat);
+
+  for (const r of HAT_RATIOS){
+    const o = ctx.createOscillator(); o.type = "square";
+    o.frequency.value = 40 * r;
+    o.connect(bp); o.start(t); o.stop(t + d + 0.02);
+  }
+  // a breath of air over the metal
+  const n = ctx.createBufferSource(); n.buffer = noiseBuf;
+  n.playbackRate.value = 1.5;
+  const nh = ctx.createBiquadFilter(); nh.type = "highpass"; nh.frequency.value = 9000;
+  const ng = ctx.createGain();
+  ng.gain.setValueAtTime(vel * 0.2, t);
+  ng.gain.exponentialRampToValueAtTime(0.0001, t + d * 0.8);
+  n.connect(nh); nh.connect(ng); ng.connect(stemGain.hat);
   n.start(t); n.stop(t + d + 0.02);
 }
 
 function vBass(t, midi, durBeats, spb){
   const f = mtof(midi), dur = durBeats * spb;
-  const o = ctx.createOscillator(); o.type = "sawtooth"; o.frequency.value = f;
-  const sub = ctx.createOscillator(); sub.type = "sine"; sub.frequency.value = f / 2;
-  const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.Q.value = 7;
-  lp.frequency.setValueAtTime(Math.min(4200, f * 9), t);
-  lp.frequency.exponentialRampToValueAtTime(Math.max(95, f * 1.7), t + dur * 0.7);
   const g = ctx.createGain();
   g.gain.setValueAtTime(0.0001, t);
-  g.gain.linearRampToValueAtTime(0.9, t + 0.014);
+  g.gain.linearRampToValueAtTime(0.95, t + 0.016);
   g.gain.setTargetAtTime(0.0001, t + dur * 0.72, 0.07);
-  o.connect(lp); sub.connect(lp); lp.connect(g); g.connect(stemGain.bass);
-  o.start(t); sub.start(t);
-  o.stop(t + dur + 0.3); sub.stop(t + dur + 0.3);
+
+  const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.Q.value = 6;
+  lp.frequency.setValueAtTime(Math.min(4000, f * 9), t);
+  lp.frequency.exponentialRampToValueAtTime(Math.max(95, f * 1.8), t + dur * 0.7);
+  lp.connect(g); g.connect(stemGain.bass);
+
+  // detuned saw pair over a clean sub — width up top, mono weight underneath
+  [-6, 6].forEach(cents => {
+    const o = ctx.createOscillator(); o.type = "sawtooth";
+    o.frequency.value = f * Math.pow(2, cents / 1200);
+    o.connect(lp); o.start(t); o.stop(t + dur + 0.3);
+  });
+  const sub = ctx.createOscillator(); sub.type = "sine"; sub.frequency.value = f / 2;
+  const sg = ctx.createGain(); sg.gain.value = 0.8;
+  sub.connect(sg); sg.connect(g);
+  sub.start(t); sub.stop(t + dur + 0.3);
 }
 
 function vChop(t, midi, vel){
   const f = mtof(midi);
-  const o = ctx.createOscillator(); o.type = "square";   o.frequency.value = f * 1.006;
-  const o2 = ctx.createOscillator(); o2.type = "sawtooth"; o2.frequency.value = f * 0.994;
   const bp = ctx.createBiquadFilter(); bp.type = "bandpass";
-  bp.frequency.value = f * 2.4; bp.Q.value = 2.2;
+  bp.frequency.setValueAtTime(f * 3.0, t);
+  bp.frequency.exponentialRampToValueAtTime(f * 1.5, t + 0.2);
+  bp.Q.value = 1.8;
   const g = ctx.createGain();
   g.gain.setValueAtTime(0.0001, t);
-  g.gain.linearRampToValueAtTime(vel, t + 0.007);
-  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.24);
-  o.connect(bp); o2.connect(bp); bp.connect(g); g.connect(stemGain.chop);
-  o.start(t); o2.start(t); o.stop(t + 0.26); o2.stop(t + 0.26);
+  g.gain.linearRampToValueAtTime(vel, t + 0.006);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.30);
+  bp.connect(g);
+
+  if (ctx.createStereoPanner){
+    const pan = ctx.createStereoPanner();
+    pan.pan.value = (Math.random() - 0.5) * 0.7;
+    g.connect(pan); pan.connect(stemGain.chop);
+  } else g.connect(stemGain.chop);
+
+  // a stacked, slightly out-of-tune triad reads as a lifted sample, not a synth
+  [[1, "square"], [1.5, "sawtooth"], [2.004, "triangle"]].forEach(([m, ty], i) => {
+    const o = ctx.createOscillator(); o.type = ty;
+    o.frequency.setValueAtTime(f * m * (1 + (i - 1) * 0.004), t);
+    // vinyl wobble — the pitch sags a hair as the note decays
+    o.frequency.linearRampToValueAtTime(f * m * 0.994, t + 0.28);
+    const og = ctx.createGain(); og.gain.value = i === 0 ? 1 : 0.42;
+    o.connect(og); og.connect(bp);
+    o.start(t); o.stop(t + 0.32);
+  });
 }
 
 function vLead(t, midi, durBeats, spb){
   const f = mtof(midi), dur = durBeats * spb;
-  const o = ctx.createOscillator(); o.type = "sawtooth"; o.frequency.setValueAtTime(f, t);
-  const lfo = ctx.createOscillator(); lfo.frequency.value = 5.4;
-  const lg = ctx.createGain();
-  lg.gain.setValueAtTime(0, t);
-  lg.gain.linearRampToValueAtTime(f * 0.013, t + Math.min(0.28, dur * 0.5));
-  lfo.connect(lg); lg.connect(o.frequency);
   const lp = ctx.createBiquadFilter(); lp.type = "lowpass";
-  lp.frequency.value = 2300; lp.Q.value = 3.4;
+  lp.frequency.setValueAtTime(1500, t);
+  lp.frequency.linearRampToValueAtTime(2700, t + Math.min(0.4, dur));
+  lp.Q.value = 3.2;
   const g = ctx.createGain();
   g.gain.setValueAtTime(0.0001, t);
-  g.gain.linearRampToValueAtTime(0.42, t + 0.05);
+  g.gain.linearRampToValueAtTime(0.40, t + 0.055);
   g.gain.setTargetAtTime(0.0001, t + dur * 0.8, 0.09);
-  o.connect(lp); lp.connect(g); g.connect(stemGain.lead);
-  o.start(t); lfo.start(t);
-  o.stop(t + dur + 0.4); lfo.stop(t + dur + 0.4);
+  lp.connect(g); g.connect(stemGain.lead);
+
+  const lfo = ctx.createOscillator(); lfo.frequency.value = 5.3;
+  const lg = ctx.createGain();
+  lg.gain.setValueAtTime(0, t);
+  lg.gain.linearRampToValueAtTime(f * 0.014, t + Math.min(0.3, dur * 0.5));
+  lfo.connect(lg);
+  lfo.start(t); lfo.stop(t + dur + 0.4);
+
+  // two voices spread hard, which is what gives the erhu line its air
+  [-7, 7].forEach(cents => {
+    const o = ctx.createOscillator(); o.type = "sawtooth";
+    o.frequency.setValueAtTime(f * Math.pow(2, cents / 1200), t);
+    lg.connect(o.frequency);
+    if (ctx.createStereoPanner){
+      const pan = ctx.createStereoPanner();
+      pan.pan.value = cents < 0 ? -0.45 : 0.45;
+      o.connect(pan); pan.connect(lp);
+    } else o.connect(lp);
+    o.start(t); o.stop(t + dur + 0.4);
+  });
 }
+
 
 /* -------- one-shot sfx (routed past the stem bus so they always speak) ----- */
 function sfxWhoosh(down){
@@ -726,9 +935,15 @@ const Conductor = {
 
   retempo(){
     const bar = this.step / 16;
-    const bpm = Math.min(BPM_CEIL, BPM_BASE + bar * 0.16);
+    const st = structAt(bar);
+    // each chamber has its own tempo; inside one it creeps up a touch
+    const bpm = Math.min(BPM_CEIL + 6,
+      CHAMBERS[st.ci].bpm + (st.kind === "chamber" ? st.within * 0.10 : 0));
     this.spb = 60 / bpm;
     Game.bpm = bpm;
+    if (delayNode){
+      delayNode.delayTime.setTargetAtTime(this.spb * 0.75, ctx.currentTime, 0.12);
+    }
   },
 
   // swing lives here and only here: odd 16ths are pushed late.
@@ -741,12 +956,28 @@ const Conductor = {
     const st  = t + sw;
     const lvl = Game.stemLevel;
 
-    const kick = KICK_VARS[bar % KICK_VARS.length];
-    if (kick.includes(s)) vKick(st, s === 0 ? 1.0 : 0.82);
+    const struct = structAt(bar);
+    const cham = CHAMBERS[struct.ci];
+
+    // GATE: the drums drop out and the room opens up. This is the breath
+    // between chambers, and it is what makes the next one land.
+    if (struct.kind === "gate"){
+      if (s === 0) vChop(st, 81 - struct.ci * 2, 0.5);
+      if (s === 8) vChop(st, 76, 0.38);
+      if (struct.within === GATE_BARS - 1 && s >= 8 && s % 2 === 0){
+        vSnare(st, 0.16 + (s - 8) * 0.10);          // roll back in
+      }
+      if (lvl >= 3 && s === 0) vBass(st, cham.roots[0], 3.4, this.spb);
+      if (s % 4 === 0) Game.pulseAt = t;
+      return;
+    }
+
+    const kick = KICK_VARS[(cham.kick + bar) % KICK_VARS.length];
+    if (kick.includes(s)) vKick(st, s === 0 ? 1.0 : 0.80 + Math.random() * 0.08);
 
     if (lvl >= 1){
-      if (SNARE_HITS.includes(s)) vSnare(st, 0.9);
-      else if (s === 15 && bar % 4 === 3) vSnare(st, 0.28);
+      if (SNARE_HITS.includes(s)) vSnare(st, 0.88 + Math.random() * 0.1);
+      else if (s === 15 && bar % 4 === 3) vSnare(st, 0.26);
     }
     if (lvl >= 2 && s % 2 === 0){
       vHat(st, s % 4 === 0 ? 0.26 : 0.17, s === 14);
@@ -755,7 +986,7 @@ const Conductor = {
       vHat(st, 0.09, false);
     }
     if (lvl >= 3){
-      const root = BAR_ROOT[bar % 4];
+      const root = cham.roots[bar % 4];
       for (const [bs, off, d] of BASS_HITS){
         if (bs === s) vBass(st, root + off, d, this.spb);
       }
@@ -804,9 +1035,9 @@ const CHUNKS = [
 ];
 
 function tierForBar(bar){
-  if (bar < 12) return 1;
-  if (bar < 26) return 2;
-  return 3;
+  const st = structAt(bar);
+  // the first bars of a chamber ease you in before its full tier bites
+  return Math.max(1, CHAMBERS[st.ci].tier - (st.within < 4 ? 1 : 0));
 }
 
 /* ============================================================== 4. PLAY ===== */
@@ -823,6 +1054,7 @@ const Game = {
   invulnUntil: -1,
   pulseAt: 0, snareAt: 0,
   shake: 0, godMix: 0, flowMix: 0, hitFlash: 0,
+  endless: false, won: false, chamberIndex: 0, phase: "intro",
   district: 0,
   districtShown: -1, districtFade: 0,
   best: 0
@@ -848,6 +1080,7 @@ function resetRun(){
   Game.invulnUntil = -1; Game.shake = 0;
   Game.godMix = 0; Game.flowMix = 0; Game.hitFlash = 0;
   Game.district = 0; Game.districtShown = -1; Game.districtFade = 0;
+  Game.won = false; Game.chamberIndex = 0; Game.phase = "intro";
   Game.bpm = BPM_BASE;
   P.state = "run"; P.height = 0; P.flowing = false; P.trail.length = 0;
 }
@@ -973,7 +1206,9 @@ function setFlow(on){
 
 /* -------- world generation ------------------------------------------------ */
 function generateBar(bar){
-  if (bar < 4) return;                                  // four bars of pure groove
+  const st = structAt(bar);
+  // intro, gates and the finish are all clear road
+  if (st.kind !== "chamber") return;
   const tier = tierForBar(bar);
   const pool = CHUNKS.filter(c => c.tier <= tier && c.tier >= Math.max(0, tier - 1));
   const chunk = pool[Math.floor(Math.random() * pool.length)];
@@ -1064,9 +1299,16 @@ function update(dt){
   // distance score
   Game.score += dt * 26 * (Game.stemLevel + 1);
 
-  // district markers every 16 bars
-  const d = Math.floor(b / 64) % DISTRICTS.length;
-  if (d !== Game.districtShown){ Game.districtShown = d; Game.districtFade = 1; }
+  // structure: announce each chamber on its gate, and finish at the plate
+  const st = structAt(Math.floor(b / 4));
+  if (st.kind === "plate"){ win(); return; }
+  const showCi = st.kind === "gate" ? st.next : st.ci;
+  if (showCi !== Game.districtShown){
+    Game.districtShown = showCi;
+    Game.districtFade = 1;
+    Game.chamberIndex = showCi;
+  }
+  Game.phase = st.kind;
   Game.districtFade = Math.max(0, Game.districtFade - dt * 0.34);
 
   // cull
@@ -1108,10 +1350,11 @@ function update(dt){
 }
 
 /* -------- life cycle ------------------------------------------------------ */
-function startRun(){
+function startRun(endless){
   buildAudio();
   if (ctx.state === "suspended") ctx.resume();
   resetRun();
+  Game.endless = !!endless;
   applyStemMix();
   Conductor.start();
   Game.mode = "play";
@@ -1128,13 +1371,44 @@ const KOANS = [
   ["Iron Shaolin",      "The mix was complete. For a moment, so were you."]
 ];
 
+// Wax Plate I, recovered. The mix rings out instead of stopping dead.
+function sfxPlate(){
+  const t = ctx.currentTime;
+  for (const k of STEMS){
+    stemGain[k].gain.setTargetAtTime(0.0001, t + 1.5, 0.55);
+  }
+  masterLP.frequency.setTargetAtTime(16000, t, 0.2);
+  [69, 72, 76, 81, 84].forEach((m, i) => {
+    vChop(t + i * 0.075, m, 0.42);
+    if (i < 3) vLead(t + 0.35 + i * 0.22, m + 12, 1.4, Conductor.spb);
+  });
+  vKick(t, 1.0); vSnare(t + 0.02, 0.7);
+}
+
+function win(){
+  if (Game.mode !== "play") return;
+  Conductor.stop();
+  Game.mode = "over";
+  Game.won = true;
+  setFlow(false);
+  sfxPlate();
+  Game.score += 5000;
+  burst(playerX(), GROUND_Y - 70, 40, C.gold);
+  showResults();
+}
+
 function die(){
   Conductor.stop();
   Game.mode = "over";
+  Game.won = false;
   sfxRecordStop();
   setFlow(false);
   Game.shake = 18;
+  showResults();
+}
 
+function showResults(){
+  Game.pops.length = 0;              // nothing left hanging over the card
   const score = Math.floor(Game.score);
   try {
     const prev = parseInt(localStorage.getItem("ironshaolin.best") || "0", 10) || 0;
@@ -1143,8 +1417,14 @@ function die(){
   } catch (e){ Game.best = Math.max(Game.best, score); }
 
   const [verdict, koan] = KOANS[Math.min(5, Game.peakStem)];
-  el("over-verdict").textContent = verdict;
-  el("over-koan").textContent    = koan;
+  el("over-eyebrow").textContent = Game.won
+    ? (Game.endless ? "The record ran out" : "Wax Plate I — recovered")
+    : "The record stopped";
+  el("over-verdict").textContent = Game.won && !Game.endless
+    ? "Chamber Nine Opened" : verdict;
+  el("over-koan").textContent = Game.won && !Game.endless
+    ? "Three chambers, one plate. Thirty-five still out there in the dark."
+    : koan;
   el("r-score").textContent = score.toLocaleString();
   el("r-dist").textContent  = Math.floor(Conductor.beat() * 4.2) + "m";
   el("r-stem").textContent  = STEM_LABEL[Game.peakStem].charAt(0) +
@@ -1472,6 +1752,11 @@ function hashf(i){
 }
 
 function scrollPx(){ return Conductor.beat() * PPB; }
+
+function runProgress(){
+  const total = INTRO_BARS + CHAMBERS.length * (CH_BARS + GATE_BARS) - GATE_BARS;
+  return Math.max(0, Math.min(1, (Conductor.beat() / 4) / total));
+}
 
 /* -------- background layers ----------------------------------------------- */
 function drawSky(pulse){
@@ -2015,12 +2300,38 @@ function drawHUD(pulse){
     g.beginPath(); g.arc(bx, by, r, 0, 6.2832); g.fill();
   }
 
+  // run structure, top centre — three chambers and how far through you are
+  const rw = 250, rx = VIEW_W / 2 - rw / 2, ry = 20, segW = rw / CHAMBERS.length;
+  g.textAlign = "center";
+  if (Game.endless){
+    g.fillStyle = C.gold;
+    g.font = '400 10px "DM Mono", monospace';
+    g.fillText("ENDLESS · NO PLATE AT THE END OF THIS ONE", VIEW_W / 2, 30);
+  } else {
+    const prog = runProgress();
+    for (let i = 0; i < CHAMBERS.length; i++){
+      g.fillStyle = "rgba(35,43,55,0.9)";
+      g.fillRect(rx + i * segW, ry, segW - 4, 5);
+    }
+    g.fillStyle = god ? C.gold : C.jade;
+    const fill = prog * rw;
+    for (let i = 0; i < CHAMBERS.length; i++){
+      const a = i * segW, w = Math.max(0, Math.min(segW - 4, fill - a));
+      if (w > 0) g.fillRect(rx + a, ry, w, 5);
+    }
+    g.fillStyle = "rgba(142,139,128,0.95)";
+    g.font = '400 10px "DM Mono", monospace';
+    g.fillText(Game.phase === "gate"
+      ? "ENTERING CHAMBER " + (Game.chamberIndex + 1) + " OF " + CHAMBERS.length
+      : "CHAMBER " + (Game.chamberIndex + 1) + " OF " + CHAMBERS.length +
+        "  ·  " + CHAMBERS[Game.chamberIndex].name, VIEW_W / 2, 40);
+  }
+
   // chain
   if (Game.chain > 1){
-    g.textAlign = "center";
     g.fillStyle = god ? C.gold : C.jade;
     g.font = '700 26px "Big Shoulders Display", sans-serif';
-    g.fillText("CHAIN ×" + Game.chain, VIEW_W / 2, 46);
+    g.fillText("CHAIN ×" + Game.chain, VIEW_W / 2, 68);
   }
 
   // grade popups
@@ -2039,7 +2350,7 @@ function drawHUD(pulse){
     g.textAlign = "left";
     g.fillStyle = C.gold;
     g.font = '700 22px "Big Shoulders Display", sans-serif';
-    g.fillText(DISTRICTS[Game.districtShown], 22, VIEW_H - 78);
+    g.fillText(CHAMBERS[Game.districtShown].name, 22, VIEW_H - 78);
     g.fillStyle = "rgba(142,139,128,0.9)";
     g.font = '400 10px "DM Mono", monospace';
     g.fillText("CHAMBER 01 · " + Game.bpm.toFixed(1) + " BPM", 22, VIEW_H - 63);
@@ -2271,6 +2582,17 @@ stage.addEventListener("touchcancel", () => onUp());
 stage.addEventListener("mousedown", e => { onDown(e.clientX, e.clientY); });
 window.addEventListener("mousemove", e => { onMove(e.clientX, e.clientY); });
 window.addEventListener("mouseup", () => onUp());
+
+["btn-again", "btn-endless"].forEach(id => {
+  const b = el(id);
+  const go = e => {
+    e.preventDefault(); e.stopPropagation();
+    startRun(id === "btn-endless");
+  };
+  b.addEventListener("click", go);
+  b.addEventListener("mousedown", e => e.stopPropagation());
+  b.addEventListener("touchstart", e => { e.stopPropagation(); go(e); }, { passive: false });
+});
 
 document.addEventListener("visibilitychange", () => {
   if (document.hidden && Game.mode === "play"){
