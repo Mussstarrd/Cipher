@@ -1,0 +1,1845 @@
+<title>Iron Shaolin Groove Kernel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;900&family=Barlow+Condensed:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap">
+
+<style>
+/* ============================================================
+   IRON SHAOLIN — GROOVE KERNEL
+   Single committed visual world: a rain-slick rooftop at night.
+   No theme switching by design; every color painted explicitly.
+   ============================================================ */
+:root{
+  --ink:      #0B0C10;
+  --asphalt:  #14181F;
+  --slate:    #232B37;
+  --slate-hi: #38445A;
+  --gold:     #D9A441;
+  --jade:     #3FD9A0;
+  --sodium:   #FF7A3C;
+  --cream:    #EDE4D0;
+  --cream-dim:#8E8B80;
+  --seal:     #C8342B;
+
+  --f-display: "Big Shoulders Display", "Arial Narrow", sans-serif;
+  --f-body:    "Barlow Condensed", "Helvetica Neue", sans-serif;
+  --f-mono:    "DM Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+
+*{ box-sizing: border-box; }
+
+body{
+  margin:0;
+  background: var(--ink);
+  color: var(--cream);
+  font-family: var(--f-body);
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
+  touch-action: manipulation;
+}
+
+.cabinet{
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 14px 14px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ---------- production slate strip ---------- */
+.slate-strip{
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 1px;
+  background: var(--slate);
+  border: 1px solid var(--slate);
+  font-family: var(--f-mono);
+  font-size: 10px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.slate-strip div{
+  background: var(--asphalt);
+  padding: 6px 10px;
+  color: var(--cream-dim);
+  flex: 1 1 auto;
+  white-space: nowrap;
+}
+.slate-strip div b{
+  color: var(--cream);
+  font-weight: 500;
+}
+.slate-strip div.mark{ color: var(--gold); }
+
+/* ---------- stage ---------- */
+.stage{
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  min-height: 300px;
+  background: var(--ink);
+  border: 1px solid var(--slate);
+  overflow: hidden;
+}
+@media (max-width: 720px){
+  .stage{ aspect-ratio: 4 / 3; }
+}
+#game{
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* ---------- overlay screens ---------- */
+.screen{
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: clamp(8px, 1.6vw, 16px);
+  padding: clamp(16px, 4vw, 44px);
+  background:
+    radial-gradient(120% 90% at 22% 30%, rgba(217,164,65,.10), transparent 62%),
+    linear-gradient(180deg, rgba(11,12,16,.90), rgba(11,12,16,.97));
+  cursor: pointer;
+}
+.screen[hidden]{ display: none !important; }
+
+.eyebrow{
+  font-family: var(--f-mono);
+  font-size: clamp(9px, 1.1vw, 11px);
+  letter-spacing: .34em;
+  text-transform: uppercase;
+  color: var(--jade);
+  margin: 0;
+}
+
+.wordmark{
+  font-family: var(--f-display);
+  font-weight: 900;
+  font-size: clamp(38px, 8.4vw, 104px);
+  line-height: .82;
+  letter-spacing: -.01em;
+  text-transform: uppercase;
+  margin: 0;
+  color: var(--cream);
+  text-wrap: balance;
+}
+.wordmark span{
+  display: block;
+  font-size: .40em;
+  font-weight: 700;
+  letter-spacing: .14em;
+  color: var(--gold);
+  margin-top: .28em;
+}
+
+/* off-register chop seal — the one loud flourish */
+.seal{
+  position: absolute;
+  top: clamp(14px, 4vw, 40px);
+  right: clamp(14px, 4vw, 46px);
+  width: clamp(58px, 9vw, 92px);
+  height: clamp(58px, 9vw, 92px);
+  border: 3px solid var(--seal);
+  display: grid;
+  place-items: center;
+  text-align: center;
+  transform: rotate(9deg);
+  color: var(--seal);
+  font-family: var(--f-display);
+  font-weight: 900;
+  font-size: clamp(9px, 1.1vw, 12px);
+  line-height: 1.15;
+  letter-spacing: .04em;
+  opacity: .92;
+  pointer-events: none;
+  padding: 4px;
+}
+.seal b{
+  display: block;
+  font-size: 2.1em;
+  line-height: 1;
+  font-weight: 900;
+}
+
+.blurb{
+  max-width: 46ch;
+  margin: 0;
+  font-size: clamp(13px, 1.6vw, 16px);
+  line-height: 1.45;
+  color: var(--cream-dim);
+}
+.blurb em{ color: var(--cream); font-style: normal; }
+
+.verbs{
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0,1fr));
+  gap: 8px;
+  max-width: 560px;
+}
+.verb{
+  border-left: 2px solid var(--gold);
+  padding: 6px 0 6px 9px;
+}
+.verb b{
+  display: block;
+  font-family: var(--f-display);
+  font-weight: 700;
+  font-size: clamp(15px, 2.2vw, 21px);
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--cream);
+}
+.verb i{
+  font-style: normal;
+  font-family: var(--f-mono);
+  font-size: clamp(9px, 1.1vw, 11px);
+  letter-spacing: .07em;
+  color: var(--cream-dim);
+  text-transform: uppercase;
+}
+
+.enter{
+  font-family: var(--f-mono);
+  font-size: clamp(11px, 1.4vw, 13px);
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin: 4px 0 0;
+}
+.enter::after{ content:" _"; animation: blink 1.1s steps(1,end) infinite; }
+@keyframes blink{ 50%{ opacity: 0; } }
+
+/* ---------- results ---------- */
+.result-grid{
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(112px, 1fr));
+  gap: 1px;
+  background: var(--slate);
+  border: 1px solid var(--slate);
+  max-width: 640px;
+}
+.result-grid div{
+  background: var(--asphalt);
+  padding: 9px 11px;
+}
+.result-grid dt{
+  margin: 0 0 3px;
+  font-family: var(--f-mono);
+  font-size: 9px;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--cream-dim);
+}
+.result-grid dd{
+  margin: 0;
+  font-family: var(--f-display);
+  font-weight: 700;
+  font-size: clamp(21px, 3.4vw, 32px);
+  line-height: 1;
+  color: var(--cream);
+  font-variant-numeric: tabular-nums;
+}
+.result-grid dd.hot{ color: var(--gold); }
+
+.verdict{
+  font-family: var(--f-display);
+  font-weight: 900;
+  font-size: clamp(26px, 5.4vw, 56px);
+  line-height: .9;
+  text-transform: uppercase;
+  margin: 0;
+  color: var(--gold);
+}
+.koan{
+  max-width: 44ch;
+  margin: 0;
+  font-size: clamp(13px, 1.6vw, 16px);
+  color: var(--cream-dim);
+  line-height: 1.4;
+}
+
+/* ---------- controls rig ---------- */
+.rig{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 22px;
+  align-items: baseline;
+  font-family: var(--f-mono);
+  font-size: 10px;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--cream-dim);
+}
+.rig b{ color: var(--gold); font-weight: 500; }
+.rig .note{
+  flex: 1 1 240px;
+  text-transform: none;
+  letter-spacing: 0;
+  font-family: var(--f-body);
+  font-size: 12px;
+  color: var(--slate-hi);
+}
+
+.touchpad{
+  position: absolute;
+  inset: 0;
+  display: none;
+}
+body.touch .touchpad{ display: block; }
+
+:focus-visible{ outline: 2px solid var(--jade); outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce){
+  .enter::after{ animation: none; }
+}
+</style>
+
+<div class="cabinet">
+
+  <div class="slate-strip">
+    <div class="mark">Iron Shaolin Syndicate</div>
+    <div>Prod <b>Chamber&nbsp;01</b></div>
+    <div>Track <b>Wax&nbsp;Plate&nbsp;I &mdash; "Dust&nbsp;&amp;&nbsp;Sodium"</b></div>
+    <div>Tempo <b id="slate-bpm">88.0</b> bpm</div>
+    <div>Grid <b>4/4 &middot; 16ths &middot; 58% swing</b></div>
+    <div>Build <b>groove-kernel 0.1</b></div>
+  </div>
+
+  <div class="stage">
+    <canvas id="game"></canvas>
+    <div class="touchpad" id="touchpad"></div>
+
+    <section class="screen" id="scr-title">
+      <div class="seal"><b>九</b>CHAMBER<br>NINE</div>
+      <p class="eyebrow">Groove Kernel &middot; Vertical Slice 01</p>
+      <h1 class="wordmark">Iron Shaolin<span>Running the Chambers</span></h1>
+      <p class="blurb">
+        The track starts naked &mdash; one kick drum. Clear obstacles <em>on the beat</em>
+        and the mix builds itself: snare, hats, bass, chops, lead.
+        Take a hit and you <em>lose a layer</em>. Get touched on a bare kick and the
+        record stops.
+      </p>
+      <div class="verbs">
+        <div class="verb"><b>Rise</b><i>Swipe up &middot; &uarr; / Space</i></div>
+        <div class="verb"><b>Sink</b><i>Swipe down &middot; &darr;</i></div>
+        <div class="verb"><b>Flow</b><i>Press &amp; hold &middot; Shift</i></div>
+      </div>
+      <p class="enter">Tap to enter the chamber</p>
+    </section>
+
+    <section class="screen" id="scr-over" hidden>
+      <p class="eyebrow" id="over-eyebrow">The record stopped</p>
+      <h2 class="verdict" id="over-verdict">Student of Dust</h2>
+      <div class="result-grid">
+        <div><dt>Score</dt><dd id="r-score">0</dd></div>
+        <div><dt>Distance</dt><dd id="r-dist">0m</dd></div>
+        <div><dt>Peak Mix</dt><dd class="hot" id="r-stem">Kick</dd></div>
+        <div><dt>Best Chain</dt><dd id="r-chain">0</dd></div>
+        <div><dt>Wax</dt><dd id="r-wax">0</dd></div>
+        <div><dt>Best</dt><dd id="r-best">0</dd></div>
+      </div>
+      <p class="koan" id="over-koan">The beat was always there. You just arrived late.</p>
+      <p class="enter">Tap to run it back</p>
+    </section>
+  </div>
+
+  <div class="rig">
+    <span><b>&uarr;/Space</b> Rise</span>
+    <span><b>&darr;</b> Sink</span>
+    <span><b>Shift (hold)</b> Flow Stance</span>
+    <span><b>P</b> Pause</span>
+    <span class="note">Press about half a beat early &mdash; your move should <em>land</em> on the drum, not start on it. Headphones recommended; all audio is synthesized live in the browser.</span>
+  </div>
+
+</div>
+
+<script>
+"use strict";
+/* ============================================================================
+   IRON SHAOLIN — GROOVE KERNEL
+   A playable proof of the core mechanic: the music is the level, and the
+   player's accuracy is the mix engineer.
+
+   Systems, in dependency order:
+     1. Audio     — synthesized boom-bap stems (no assets, all DSP)
+     2. Conductor — sample-accurate beat clock w/ tempo anchoring
+     3. Chunks    — hand-authored bar patterns stitched by intensity
+     4. Play      — three verbs, beat-graded, stem-building
+     5. Render    — 2.5D parallax canvas, everything pulses on the grid
+   ========================================================================== */
+
+/* ---------------------------------------------------------------- constants */
+const BPM_BASE   = 88;
+const BPM_CEIL   = 100;
+const SWING      = 0.16;      // fraction of a 16th that odd 16ths are pushed late
+
+const JUMP_BEATS = 1.05;      // airtime, in beats — apex lands on the drum
+const JUMP_H     = 132;
+const SLIDE_BEATS= 0.95;
+const LEAD_BEATS = 0.5;       // how far ahead of contact the input should land
+
+const W_PERFECT  = 0.070;     // seconds
+const W_ONTIME   = 0.155;
+
+const PPB        = 132;       // pixels per beat of world scroll
+const GROUND_Y   = 424;
+const VIEW_H     = 540;
+
+const STEMS = ["kick","snare","hat","bass","chop","lead"];
+const STEM_LABEL = ["KICK","SNARE","HATS","BASS","CHOPS","LEAD"];
+const STEM_VOL = { kick:1.00, snare:0.80, hat:0.42, bass:0.85, chop:0.50, lead:0.42 };
+
+const DISTRICTS = [
+  "ROOFTOP DOJO ROW",
+  "SODIUM ALLEY",
+  "LINE 9 — SUBWAY VEIN",
+  "THE WAX CRATES",
+  "FOG TERRACE",
+  "HOLLOW SUIT PLAZA"
+];
+
+const C = {
+  ink:"#0B0C10", asphalt:"#14181F", slate:"#232B37", slateHi:"#38445A",
+  gold:"#D9A441", jade:"#3FD9A0", sodium:"#FF7A3C",
+  cream:"#EDE4D0", creamDim:"#8E8B80", seal:"#C8342B"
+};
+
+const REDUCED = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* ============================================================== 1. AUDIO ==== */
+let ctx = null, master = null, masterLP = null, noiseBuf = null;
+const stemGain = {};
+let audioReady = false;
+
+const mtof = m => 440 * Math.pow(2, (m - 69) / 12);
+
+function buildAudio(){
+  if (ctx) return;
+  const AC = window.AudioContext || window.webkitAudioContext;
+  ctx = new AC({ latencyHint: "interactive" });
+
+  // noise source used by snare / hats / scrapes
+  const len = ctx.sampleRate * 2;
+  noiseBuf = ctx.createBuffer(1, len, ctx.sampleRate);
+  const nd = noiseBuf.getChannelData(0);
+  for (let i = 0; i < len; i++) nd[i] = Math.random() * 2 - 1;
+
+  // master chain: [stems] -> masterLP -> saturation -> compressor -> out
+  const comp = ctx.createDynamicsCompressor();
+  comp.threshold.value = -14; comp.knee.value = 22;
+  comp.ratio.value = 4; comp.attack.value = 0.004; comp.release.value = 0.16;
+
+  const sat = ctx.createWaveShaper();
+  const curve = new Float32Array(1024);
+  for (let i = 0; i < 1024; i++){
+    const x = (i / 1023) * 2 - 1;
+    curve[i] = Math.tanh(x * 1.7) * 0.86;      // gentle tape-ish glue
+  }
+  sat.curve = curve; sat.oversample = "2x";
+
+  masterLP = ctx.createBiquadFilter();
+  masterLP.type = "lowpass";
+  masterLP.frequency.value = 1400;             // muffled until the mix builds
+  masterLP.Q.value = 0.4;
+
+  master = ctx.createGain();
+  master.gain.value = 0.85;
+
+  masterLP.connect(sat); sat.connect(comp); comp.connect(ctx.destination);
+  master.connect(masterLP);
+
+  // a short plate for glue — generated, not loaded
+  const rl = Math.floor(ctx.sampleRate * 1.1);
+  const ir = ctx.createBuffer(2, rl, ctx.sampleRate);
+  for (let ch = 0; ch < 2; ch++){
+    const d = ir.getChannelData(ch);
+    for (let i = 0; i < rl; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / rl, 2.6);
+  }
+  const verb = ctx.createConvolver(); verb.buffer = ir;
+  const verbSend = ctx.createGain(); verbSend.gain.value = 0.16;
+  verbSend.connect(verb); verb.connect(master);
+
+  for (const k of STEMS){
+    const g = ctx.createGain();
+    g.gain.value = 0.0001;
+    g.connect(master);
+    if (k !== "kick" && k !== "bass") g.connect(verbSend);
+    stemGain[k] = g;
+  }
+  audioReady = true;
+}
+
+/* -------- voices ---------------------------------------------------------- */
+function vKick(t, vel){
+  const o = ctx.createOscillator(), g = ctx.createGain();
+  o.type = "sine";
+  o.frequency.setValueAtTime(165, t);
+  o.frequency.exponentialRampToValueAtTime(43, t + 0.10);
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.linearRampToValueAtTime(vel, t + 0.004);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.42);
+  o.connect(g); g.connect(stemGain.kick);
+  o.start(t); o.stop(t + 0.45);
+
+  const n = ctx.createBufferSource(); n.buffer = noiseBuf;
+  const hp = ctx.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 1800;
+  const g2 = ctx.createGain();
+  g2.gain.setValueAtTime(vel * 0.16, t);
+  g2.gain.exponentialRampToValueAtTime(0.0001, t + 0.03);
+  n.connect(hp); hp.connect(g2); g2.connect(stemGain.kick);
+  n.start(t); n.stop(t + 0.04);
+}
+
+function vSnare(t, vel){
+  const n = ctx.createBufferSource(); n.buffer = noiseBuf;
+  n.playbackRate.value = 0.9 + Math.random() * 0.2;
+  const bp = ctx.createBiquadFilter(); bp.type = "bandpass";
+  bp.frequency.value = 1850; bp.Q.value = 0.7;
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(vel * 0.75, t);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.17);
+  n.connect(bp); bp.connect(g); g.connect(stemGain.snare);
+  n.start(t); n.stop(t + 0.19);
+
+  const o = ctx.createOscillator(); o.type = "triangle";
+  o.frequency.setValueAtTime(195, t);
+  o.frequency.exponentialRampToValueAtTime(122, t + 0.07);
+  const g2 = ctx.createGain();
+  g2.gain.setValueAtTime(vel * 0.42, t);
+  g2.gain.exponentialRampToValueAtTime(0.0001, t + 0.11);
+  o.connect(g2); g2.connect(stemGain.snare);
+  o.start(t); o.stop(t + 0.13);
+}
+
+function vHat(t, vel, open){
+  const n = ctx.createBufferSource(); n.buffer = noiseBuf;
+  n.playbackRate.value = 1.3;
+  const hp = ctx.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 7400;
+  const g = ctx.createGain();
+  const d = open ? 0.17 : 0.042;
+  g.gain.setValueAtTime(vel, t);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+  n.connect(hp); hp.connect(g); g.connect(stemGain.hat);
+  n.start(t); n.stop(t + d + 0.02);
+}
+
+function vBass(t, midi, durBeats, spb){
+  const f = mtof(midi), dur = durBeats * spb;
+  const o = ctx.createOscillator(); o.type = "sawtooth"; o.frequency.value = f;
+  const sub = ctx.createOscillator(); sub.type = "sine"; sub.frequency.value = f / 2;
+  const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.Q.value = 7;
+  lp.frequency.setValueAtTime(Math.min(4200, f * 9), t);
+  lp.frequency.exponentialRampToValueAtTime(Math.max(95, f * 1.7), t + dur * 0.7);
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.linearRampToValueAtTime(0.9, t + 0.014);
+  g.gain.setTargetAtTime(0.0001, t + dur * 0.72, 0.07);
+  o.connect(lp); sub.connect(lp); lp.connect(g); g.connect(stemGain.bass);
+  o.start(t); sub.start(t);
+  o.stop(t + dur + 0.3); sub.stop(t + dur + 0.3);
+}
+
+function vChop(t, midi, vel){
+  const f = mtof(midi);
+  const o = ctx.createOscillator(); o.type = "square";   o.frequency.value = f * 1.006;
+  const o2 = ctx.createOscillator(); o2.type = "sawtooth"; o2.frequency.value = f * 0.994;
+  const bp = ctx.createBiquadFilter(); bp.type = "bandpass";
+  bp.frequency.value = f * 2.4; bp.Q.value = 2.2;
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.linearRampToValueAtTime(vel, t + 0.007);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.24);
+  o.connect(bp); o2.connect(bp); bp.connect(g); g.connect(stemGain.chop);
+  o.start(t); o2.start(t); o.stop(t + 0.26); o2.stop(t + 0.26);
+}
+
+function vLead(t, midi, durBeats, spb){
+  const f = mtof(midi), dur = durBeats * spb;
+  const o = ctx.createOscillator(); o.type = "sawtooth"; o.frequency.setValueAtTime(f, t);
+  const lfo = ctx.createOscillator(); lfo.frequency.value = 5.4;
+  const lg = ctx.createGain();
+  lg.gain.setValueAtTime(0, t);
+  lg.gain.linearRampToValueAtTime(f * 0.013, t + Math.min(0.28, dur * 0.5));
+  lfo.connect(lg); lg.connect(o.frequency);
+  const lp = ctx.createBiquadFilter(); lp.type = "lowpass";
+  lp.frequency.value = 2300; lp.Q.value = 3.4;
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.linearRampToValueAtTime(0.42, t + 0.05);
+  g.gain.setTargetAtTime(0.0001, t + dur * 0.8, 0.09);
+  o.connect(lp); lp.connect(g); g.connect(stemGain.lead);
+  o.start(t); lfo.start(t);
+  o.stop(t + dur + 0.4); lfo.stop(t + dur + 0.4);
+}
+
+/* -------- one-shot sfx (routed past the stem bus so they always speak) ----- */
+function sfxWhoosh(down){
+  const t = ctx.currentTime;
+  const n = ctx.createBufferSource(); n.buffer = noiseBuf;
+  const bp = ctx.createBiquadFilter(); bp.type = "bandpass"; bp.Q.value = 1.1;
+  bp.frequency.setValueAtTime(down ? 2200 : 700, t);
+  bp.frequency.exponentialRampToValueAtTime(down ? 500 : 3000, t + 0.16);
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(0.13, t);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
+  n.connect(bp); bp.connect(g); g.connect(master);
+  n.start(t); n.stop(t + 0.2);
+}
+
+function sfxStemUp(level){
+  const t = ctx.currentTime;
+  const o = ctx.createOscillator(); o.type = "triangle";
+  const base = mtof(69 + level * 3);
+  o.frequency.setValueAtTime(base, t);
+  o.frequency.exponentialRampToValueAtTime(base * 2, t + 0.14);
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.linearRampToValueAtTime(0.22, t + 0.01);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.3);
+  o.connect(g); g.connect(master);
+  o.start(t); o.stop(t + 0.32);
+}
+
+function sfxStemDown(){
+  const t = ctx.currentTime;
+  const n = ctx.createBufferSource(); n.buffer = noiseBuf;
+  n.playbackRate.setValueAtTime(1.6, t);
+  n.playbackRate.exponentialRampToValueAtTime(0.35, t + 0.22);
+  const bp = ctx.createBiquadFilter(); bp.type = "bandpass";
+  bp.frequency.value = 1200; bp.Q.value = 3;
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(0.28, t);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.26);
+  n.connect(bp); bp.connect(g); g.connect(master);
+  n.start(t); n.stop(t + 0.28);
+}
+
+function sfxWax(){
+  const t = ctx.currentTime;
+  [76, 83].forEach((m, i) => {
+    const o = ctx.createOscillator(); o.type = "sine"; o.frequency.value = mtof(m);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t + i * 0.05);
+    g.gain.linearRampToValueAtTime(0.16, t + i * 0.05 + 0.008);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + i * 0.05 + 0.26);
+    o.connect(g); g.connect(master);
+    o.start(t + i * 0.05); o.stop(t + i * 0.05 + 0.28);
+  });
+}
+
+function sfxRecordStop(){
+  const t = ctx.currentTime;
+  for (const k of STEMS) stemGain[k].gain.setTargetAtTime(0.0001, t, 0.18);
+  masterLP.frequency.setTargetAtTime(220, t, 0.22);
+
+  const o = ctx.createOscillator(); o.type = "sawtooth";
+  o.frequency.setValueAtTime(190, t);
+  o.frequency.exponentialRampToValueAtTime(21, t + 0.8);
+  const lp = ctx.createBiquadFilter(); lp.type = "lowpass";
+  lp.frequency.setValueAtTime(2400, t);
+  lp.frequency.exponentialRampToValueAtTime(160, t + 0.8);
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(0.4, t);
+  g.gain.setTargetAtTime(0.0001, t + 0.62, 0.18);
+  o.connect(lp); lp.connect(g); g.connect(master);
+  o.start(t); o.stop(t + 1.15);
+
+  const n = ctx.createBufferSource(); n.buffer = noiseBuf;
+  n.playbackRate.setValueAtTime(1, t);
+  n.playbackRate.exponentialRampToValueAtTime(0.05, t + 0.75);
+  const bp = ctx.createBiquadFilter(); bp.type = "bandpass";
+  bp.frequency.value = 1500; bp.Q.value = 1.2;
+  const g2 = ctx.createGain();
+  g2.gain.setValueAtTime(0.2, t);
+  g2.gain.setTargetAtTime(0.0001, t + 0.5, 0.2);
+  n.connect(bp); bp.connect(g2); g2.connect(master);
+  n.start(t); n.stop(t + 1.0);
+}
+
+/* ---------------------------------------------- the record: patterns & keys */
+// A minor. Bass roots per bar of a 4-bar loop: Am Am F G.
+const BAR_ROOT   = [33, 33, 29, 31];
+const BASS_HITS  = [[0,0,0.55],[6,0,0.28],[10,7,0.42],[13,12,0.26]];  // [16th, semis, beats]
+const KICK_VARS  = [[0,6,10],[0,6,10,11],[0,3,10],[0,6,10,14]];
+const SNARE_HITS = [4, 12];
+const CHOP_HITS  = [[3,81],[7,76],[11,79],[14,72]];
+// 4-bar lead phrase: [absolute 16th within phrase, midi, beats]
+const LEAD_PHRASE = [
+  [0,76,1.0],[6,74,0.5],[8,72,1.25],
+  [18,69,0.9],[24,72,1.0],[29,74,0.5],
+  [32,76,0.75],[36,79,1.25],[44,76,1.0],
+  [50,72,0.5],[54,69,1.5],[60,72,1.0]
+];
+
+/* ========================================================== 2. CONDUCTOR ==== */
+const Conductor = {
+  step: 0,          // absolute 16th index of the next step to schedule
+  stepTime: 0,      // audio time of that step
+  spb: 60 / BPM_BASE,
+  aStep: 0, aTime: 0, aDur: 0,   // anchor for continuous beat position
+  timer: null,
+  running: false,
+
+  stepDur(){ return this.spb / 4; },
+
+  start(){
+    this.step = 0;
+    this.spb = 60 / BPM_BASE;
+    this.stepTime = ctx.currentTime + 0.14;
+    this.aStep = 0; this.aTime = this.stepTime; this.aDur = this.stepDur();
+    this.running = true;
+    this.tick();
+    this.timer = setInterval(() => this.tick(), 25);
+  },
+
+  stop(){
+    this.running = false;
+    if (this.timer) clearInterval(this.timer);
+    this.timer = null;
+  },
+
+  // continuous beat position, extrapolated from the last scheduled anchor
+  beat(){
+    if (!this.running && !this.aDur) return 0;
+    return (this.aStep + (ctx.currentTime - this.aTime) / this.aDur) / 4;
+  },
+
+  tick(){
+    if (!this.running) return;
+    while (this.stepTime < ctx.currentTime + 0.12){
+      this.schedule(this.step, this.stepTime);
+      this.aStep = this.step; this.aTime = this.stepTime; this.aDur = this.stepDur();
+      this.stepTime += this.stepDur();
+      this.step++;
+      if (this.step % 16 === 0) this.retempo();
+    }
+  },
+
+  retempo(){
+    const bar = this.step / 16;
+    const bpm = Math.min(BPM_CEIL, BPM_BASE + bar * 0.16);
+    this.spb = 60 / bpm;
+    Game.bpm = bpm;
+  },
+
+  // swing lives here and only here: odd 16ths are pushed late.
+  // The anchor grid stays unswung so gameplay beats remain exact.
+  schedule(abs, t){
+    const s   = abs % 16;
+    const bar = Math.floor(abs / 16);
+    const ph  = abs % 64;                       // position in the 4-bar phrase
+    const sw  = (s % 2 === 1) ? SWING * this.stepDur() : 0;
+    const st  = t + sw;
+    const lvl = Game.stemLevel;
+
+    const kick = KICK_VARS[bar % KICK_VARS.length];
+    if (kick.includes(s)) vKick(st, s === 0 ? 1.0 : 0.82);
+
+    if (lvl >= 1){
+      if (SNARE_HITS.includes(s)) vSnare(st, 0.9);
+      else if (s === 15 && bar % 4 === 3) vSnare(st, 0.28);
+    }
+    if (lvl >= 2 && s % 2 === 0){
+      vHat(st, s % 4 === 0 ? 0.26 : 0.17, s === 14);
+    }
+    if (lvl >= 2 && s % 2 === 1 && bar % 2 === 1){
+      vHat(st, 0.09, false);
+    }
+    if (lvl >= 3){
+      const root = BAR_ROOT[bar % 4];
+      for (const [bs, off, d] of BASS_HITS){
+        if (bs === s) vBass(st, root + off, d, this.spb);
+      }
+    }
+    if (lvl >= 4){
+      for (const [cs, m] of CHOP_HITS){
+        if (cs === s) vChop(st, m, 0.42);
+      }
+    }
+    if (lvl >= 5){
+      for (const [ls, m, d] of LEAD_PHRASE){
+        if (ls === ph) vLead(st, m, d, this.spb);
+      }
+    }
+
+    // visual beat pulse, fired at the unswung grid time
+    if (s % 4 === 0) Game.pulseAt = t;
+    if (s === 4 || s === 12) Game.snareAt = t;
+  }
+};
+
+/* ============================================================== 3. CHUNKS === */
+// Hand-authored one-bar phrases, tagged by intensity. The stitcher picks by
+// tier so difficulty rides the energy curve of the track, not a timer.
+// beat = offset in beats within the bar; t = required verb.
+const CHUNKS = [
+  // tier 0 — teach one verb at a time
+  { tier:0, obs:[{b:0,t:"low"}] },
+  { tier:0, obs:[{b:2,t:"low"}] },
+  { tier:0, obs:[{b:0,t:"high"}] },
+  { tier:0, obs:[] },
+  // tier 1 — alternate verbs, still one bar of air between
+  { tier:1, obs:[{b:0,t:"low"},{b:2,t:"high"}] },
+  { tier:1, obs:[{b:0,t:"high"},{b:2,t:"low"}] },
+  { tier:1, obs:[{b:1,t:"low"},{b:3,t:"low"}] },
+  { tier:1, obs:[{b:0,t:"swarm"}] },
+  // tier 2 — quarter-note pressure, swarms in traffic
+  { tier:2, obs:[{b:0,t:"low"},{b:1,t:"high"},{b:3,t:"low"}] },
+  { tier:2, obs:[{b:0,t:"swarm"},{b:2.5,t:"low"}] },
+  { tier:2, obs:[{b:0,t:"high"},{b:1.5,t:"low"},{b:3,t:"high"}] },
+  { tier:2, obs:[{b:0,t:"low"},{b:2,t:"low"},{b:3,t:"high"}] },
+  // tier 3 — the full bar, on the grid
+  { tier:3, obs:[{b:0,t:"low"},{b:1,t:"high"},{b:2,t:"low"},{b:3,t:"high"}] },
+  { tier:3, obs:[{b:0,t:"swarm"},{b:1.5,t:"low"},{b:3,t:"high"}] },
+  { tier:3, obs:[{b:0,t:"high"},{b:1,t:"low"},{b:2,t:"swarm"}] },
+];
+
+function tierForBar(bar){
+  if (bar < 12) return 1;
+  if (bar < 26) return 2;
+  return 3;
+}
+
+/* ============================================================== 4. PLAY ===== */
+const Game = {
+  mode: "title",           // title | play | over | paused
+  bpm: BPM_BASE,
+  stemLevel: 0,
+  peakStem: 0,
+  chain: 0, bestChain: 0,
+  flow: 100,
+  score: 0, wax: 0,
+  genBar: 0,
+  obstacles: [], pickups: [], pops: [], sparks: [], birds: [],
+  invulnUntil: -1,
+  pulseAt: 0, snareAt: 0,
+  shake: 0,
+  district: 0,
+  districtShown: -1, districtFade: 0,
+  best: 0
+};
+
+const P = {
+  state: "run",      // run | air | slide
+  height: 0,
+  startBeat: 0,      // beat at which the current action began
+  inputBeat: 0,      // graded against obstacle.beat - LEAD_BEATS
+  flowing: false,
+  flowStartBeat: 0,
+  trail: []
+};
+
+function resetRun(){
+  Game.stemLevel = 0; Game.peakStem = 0;
+  Game.chain = 0; Game.bestChain = 0;
+  Game.flow = 100; Game.score = 0; Game.wax = 0;
+  Game.genBar = 0;
+  Game.obstacles.length = 0; Game.pickups.length = 0;
+  Game.pops.length = 0; Game.sparks.length = 0; Game.birds.length = 0;
+  Game.invulnUntil = -1; Game.shake = 0;
+  Game.district = 0; Game.districtShown = -1; Game.districtFade = 0;
+  Game.bpm = BPM_BASE;
+  P.state = "run"; P.height = 0; P.flowing = false; P.trail.length = 0;
+}
+
+function applyStemMix(){
+  if (!audioReady) return;
+  const t = ctx.currentTime;
+  STEMS.forEach((k, i) => {
+    stemGain[k].gain.setTargetAtTime(i <= Game.stemLevel ? STEM_VOL[k] : 0.0001, t, 0.07);
+  });
+  if (!P.flowing){
+    masterLP.frequency.setTargetAtTime(1300 + Game.stemLevel * 2600, t, 0.14);
+  }
+}
+
+function pop(text, color){
+  Game.pops.push({ text, color, life: 1 });
+}
+
+function burst(x, y, n, color){
+  if (REDUCED) n = Math.min(n, 4);
+  for (let i = 0; i < n; i++){
+    Game.sparks.push({
+      x, y,
+      vx: (Math.random() - 0.5) * 340,
+      vy: -Math.random() * 260 - 40,
+      life: 1, color
+    });
+  }
+}
+
+function stemUp(){
+  if (Game.stemLevel >= 5) return;
+  Game.stemLevel++;
+  Game.peakStem = Math.max(Game.peakStem, Game.stemLevel);
+  applyStemMix();
+  sfxStemUp(Game.stemLevel);
+  pop(Game.stemLevel === 5 ? "GOD FLOW" : "+ " + STEM_LABEL[Game.stemLevel],
+      Game.stemLevel === 5 ? C.gold : C.jade);
+  burst(playerX(), GROUND_Y - P.height - 30, 16, C.jade);
+  Game.shake = Math.max(Game.shake, Game.stemLevel === 5 ? 14 : 6);
+}
+
+function takeHit(){
+  const b = Conductor.beat();
+  if (b < Game.invulnUntil) return;
+  Game.invulnUntil = b + 1.25;
+  Game.chain = 0;
+  Game.shake = 12;
+  burst(playerX(), GROUND_Y - P.height - 30, 14, C.seal);
+
+  if (Game.stemLevel <= 0){ die(); return; }
+  Game.stemLevel--;
+  applyStemMix();
+  sfxStemDown();
+  pop("− " + STEM_LABEL[Game.stemLevel + 1], C.seal);
+}
+
+function grade(obstacleBeat){
+  const ideal = obstacleBeat - LEAD_BEATS;
+  const dSec = Math.abs(P.inputBeat - ideal) * Conductor.spb;
+  if (dSec <= W_PERFECT) return 2;
+  if (dSec <= W_ONTIME)  return 1;
+  return 0;
+}
+
+function clear(o){
+  const g = grade(o.beat);
+  const mult = Game.stemLevel + 1;
+  if (g === 2){
+    Game.score += 140 * mult;
+    Game.chain++;
+    Game.flow = Math.min(100, Game.flow + 14);
+    pop("PERFECT", C.gold);
+  } else if (g === 1){
+    Game.score += 80 * mult;
+    Game.chain++;
+    Game.flow = Math.min(100, Game.flow + 8);
+    pop("ON TIME", C.jade);
+  } else {
+    Game.score += 30 * mult;
+    Game.chain = 0;
+    Game.flow = Math.min(100, Game.flow + 3);
+    pop("SLOPPY", C.creamDim);
+  }
+  Game.bestChain = Math.max(Game.bestChain, Game.chain);
+  if (Game.chain > 0 && Game.chain % 3 === 0) stemUp();
+}
+
+/* -------- input verbs ----------------------------------------------------- */
+function doJump(){
+  if (Game.mode !== "play") return;
+  if (P.state === "air") return;
+  P.state = "air";
+  P.startBeat = Conductor.beat();
+  P.inputBeat = P.startBeat;
+  sfxWhoosh(false);
+}
+
+function doSlide(){
+  if (Game.mode !== "play") return;
+  P.state = "slide";
+  P.startBeat = Conductor.beat();
+  P.inputBeat = P.startBeat;
+  sfxWhoosh(true);
+}
+
+function setFlow(on){
+  if (Game.mode !== "play"){ P.flowing = false; return; }
+  if (on && !P.flowing && Game.flow > 6){
+    P.flowing = true;
+    P.flowStartBeat = Conductor.beat();
+    P.inputBeat = P.flowStartBeat;
+  } else if (!on && P.flowing){
+    P.flowing = false;
+  }
+  if (audioReady){
+    const t = ctx.currentTime;
+    masterLP.frequency.setTargetAtTime(
+      P.flowing ? 780 : 1300 + Game.stemLevel * 2600, t, 0.08);
+  }
+}
+
+/* -------- world generation ------------------------------------------------ */
+function generateBar(bar){
+  if (bar < 4) return;                                  // four bars of pure groove
+  const tier = tierForBar(bar);
+  const pool = CHUNKS.filter(c => c.tier <= tier && c.tier >= Math.max(0, tier - 1));
+  const chunk = pool[Math.floor(Math.random() * pool.length)];
+
+  let last = -99;
+  for (const o of chunk.obs){
+    const beat = bar * 4 + o.b;
+    if (beat - last < 1) continue;                      // never tighter than a beat
+    last = beat;
+    Game.obstacles.push({ beat, type: o.t, done: false });
+  }
+  // a wax fragment every few bars, always on a line that costs you something
+  if (bar % 3 === 0){
+    const onJump = chunk.obs.some(o => o.t === "low");
+    const beat = bar * 4 + (onJump ? chunk.obs.find(o => o.t === "low").b : 1);
+    Game.pickups.push({ beat, y: onJump ? 118 : 22, got: false });
+  }
+}
+
+function ensureWorld(){
+  const b = Conductor.beat();
+  while (Game.genBar * 4 < b + 16){
+    generateBar(Game.genBar);
+    Game.genBar++;
+  }
+}
+
+/* -------- per-frame simulation -------------------------------------------- */
+function update(dt){
+  const b = Conductor.beat();
+
+  // player state machine — arcs are measured in beats, never seconds
+  if (P.state === "air"){
+    const u = (b - P.startBeat) / JUMP_BEATS;
+    if (u >= 1){ P.state = "run"; P.height = 0; }
+    else P.height = JUMP_H * 4 * u * (1 - u);
+  } else if (P.state === "slide"){
+    if (b - P.startBeat >= SLIDE_BEATS) P.state = "run";
+    P.height = 0;
+  } else {
+    P.height = 0;
+  }
+
+  // flow stance drains; good play pays it back
+  if (P.flowing){
+    Game.flow -= 26 * dt;
+    if (Game.flow <= 0){ Game.flow = 0; setFlow(false); }
+  } else {
+    Game.flow = Math.min(100, Game.flow + 4 * dt);
+  }
+
+  // afterimages while flowing
+  if (P.flowing && !REDUCED){
+    P.trail.push({ beat: b, y: GROUND_Y - P.height, state: P.state, life: 1 });
+    if (P.trail.length > 14) P.trail.shift();
+  }
+  for (let i = P.trail.length - 1; i >= 0; i--){
+    P.trail[i].life -= dt * 3.2;
+    if (P.trail[i].life <= 0) P.trail.splice(i, 1);
+  }
+
+  // resolve obstacles at the contact beat
+  for (const o of Game.obstacles){
+    if (o.done || b < o.beat) continue;
+    o.done = true;
+    if (b < Game.invulnUntil) continue;                 // phasing after a hit
+    let ok = false;
+    if (o.type === "low")   ok = P.height > 44;
+    if (o.type === "high")  ok = P.state === "slide";
+    if (o.type === "swarm") ok = P.flowing;
+    if (ok) clear(o); else takeHit();
+  }
+
+  // wax fragments
+  for (const w of Game.pickups){
+    if (w.got || b < w.beat) continue;
+    w.got = true;
+    const dy = Math.abs(P.height - w.y);
+    if (dy < 46){
+      w.taken = true;
+      Game.wax++;
+      Game.score += 500;
+      sfxWax();
+      burst(playerX(), GROUND_Y - w.y, 10, C.gold);
+    }
+  }
+
+  // distance score
+  Game.score += dt * 26 * (Game.stemLevel + 1);
+
+  // district markers every 16 bars
+  const d = Math.floor(b / 64) % DISTRICTS.length;
+  if (d !== Game.districtShown){ Game.districtShown = d; Game.districtFade = 1; }
+  Game.districtFade = Math.max(0, Game.districtFade - dt * 0.34);
+
+  // cull
+  Game.obstacles = Game.obstacles.filter(o => o.beat > b - 4);
+  Game.pickups   = Game.pickups.filter(w => w.beat > b - 4);
+
+  // fx
+  for (let i = Game.pops.length - 1; i >= 0; i--){
+    Game.pops[i].life -= dt * 1.5;
+    if (Game.pops[i].life <= 0) Game.pops.splice(i, 1);
+  }
+  for (let i = Game.sparks.length - 1; i >= 0; i--){
+    const s = Game.sparks[i];
+    s.x += s.vx * dt; s.y += s.vy * dt; s.vy += 900 * dt;
+    s.life -= dt * 1.4;
+    if (s.life <= 0) Game.sparks.splice(i, 1);
+  }
+  Game.shake = Math.max(0, Game.shake - dt * 34);
+
+  // pigeons scatter on the snare
+  if (audioReady && ctx.currentTime - Game.snareAt < 0.05 && Math.random() < 0.4 && !REDUCED){
+    for (let i = 0; i < 4; i++){
+      Game.birds.push({
+        x: VIEW_W * (0.5 + Math.random() * 0.6),
+        y: 120 + Math.random() * 150,
+        vx: -120 - Math.random() * 90, vy: -40 - Math.random() * 70,
+        life: 1, ph: Math.random() * 6.28
+      });
+    }
+  }
+  for (let i = Game.birds.length - 1; i >= 0; i--){
+    const p = Game.birds[i];
+    p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 26 * dt;
+    p.life -= dt * 0.42;
+    if (p.life <= 0) Game.birds.splice(i, 1);
+  }
+
+  ensureWorld();
+}
+
+/* -------- life cycle ------------------------------------------------------ */
+function startRun(){
+  buildAudio();
+  if (ctx.state === "suspended") ctx.resume();
+  resetRun();
+  applyStemMix();
+  Conductor.start();
+  Game.mode = "play";
+  el("scr-title").hidden = true;
+  el("scr-over").hidden  = true;
+}
+
+const KOANS = [
+  ["Student of Dust",   "You heard the kick. You did not yet hear the room."],
+  ["Crate Digger",      "Two layers deep. The bassline is still a rumor."],
+  ["Breath Keeper",     "The low end answered you. Keep asking."],
+  ["Chop Handler",      "You started editing the track instead of surviving it."],
+  ["Second Chamber",    "One layer from the whole record. One."],
+  ["Iron Shaolin",      "The mix was complete. For a moment, so were you."]
+];
+
+function die(){
+  Conductor.stop();
+  Game.mode = "over";
+  sfxRecordStop();
+  setFlow(false);
+  Game.shake = 18;
+
+  const score = Math.floor(Game.score);
+  try {
+    const prev = parseInt(localStorage.getItem("ironshaolin.best") || "0", 10) || 0;
+    Game.best = Math.max(prev, score);
+    localStorage.setItem("ironshaolin.best", String(Game.best));
+  } catch (e){ Game.best = Math.max(Game.best, score); }
+
+  const [verdict, koan] = KOANS[Math.min(5, Game.peakStem)];
+  el("over-verdict").textContent = verdict;
+  el("over-koan").textContent    = koan;
+  el("r-score").textContent = score.toLocaleString();
+  el("r-dist").textContent  = Math.floor(Conductor.beat() * 4.2) + "m";
+  el("r-stem").textContent  = STEM_LABEL[Game.peakStem].charAt(0) +
+                              STEM_LABEL[Game.peakStem].slice(1).toLowerCase();
+  el("r-chain").textContent = Game.bestChain;
+  el("r-wax").textContent   = Game.wax;
+  el("r-best").textContent  = Game.best.toLocaleString();
+  el("scr-over").hidden = false;
+}
+
+/* ============================================================== 5. RENDER === */
+const cv = document.getElementById("game");
+const g  = cv.getContext("2d");
+let VIEW_W = 960, DPR = 1;
+
+function el(id){ return document.getElementById(id); }
+function playerX(){ return VIEW_W * 0.26; }
+
+function resize(){
+  const r = cv.getBoundingClientRect();
+  DPR = Math.min(2, window.devicePixelRatio || 1);
+  cv.width  = Math.max(1, Math.round(r.width  * DPR));
+  cv.height = Math.max(1, Math.round(r.height * DPR));
+  VIEW_W = VIEW_H * (r.width / Math.max(1, r.height));
+}
+window.addEventListener("resize", resize);
+
+function hashf(i){
+  const x = Math.sin(i * 127.1 + 3.7) * 43758.5453;
+  return x - Math.floor(x);
+}
+
+function scrollPx(){ return Conductor.beat() * PPB; }
+
+/* -------- background layers ----------------------------------------------- */
+function drawSky(pulse){
+  const sky = g.createLinearGradient(0, 0, 0, GROUND_Y + 60);
+  sky.addColorStop(0,    "#080A0F");
+  sky.addColorStop(0.55, "#111726");
+  sky.addColorStop(0.86, "#2A2130");
+  sky.addColorStop(1,    "#3A2A26");
+  g.fillStyle = sky;
+  g.fillRect(0, 0, VIEW_W, GROUND_Y + 60);
+
+  // sodium haze on the horizon, breathing with the kick
+  const hz = g.createRadialGradient(VIEW_W * 0.7, GROUND_Y - 30, 10,
+                                    VIEW_W * 0.7, GROUND_Y - 30, 320 + pulse * 40);
+  hz.addColorStop(0, "rgba(255,122,60," + (0.16 + pulse * 0.07).toFixed(3) + ")");
+  hz.addColorStop(1, "rgba(255,122,60,0)");
+  g.fillStyle = hz;
+  g.fillRect(0, 0, VIEW_W, GROUND_Y + 60);
+
+  // full moon behind the smog
+  g.fillStyle = "rgba(237,228,208,0.10)";
+  g.beginPath(); g.arc(VIEW_W * 0.78, 96, 44, 0, 6.2832); g.fill();
+}
+
+function drawSkyline(sc, par, colW, baseY, hMin, hMax, fill, seed, windows){
+  const off = sc * par;
+  const first = Math.floor(off / colW) - 1;
+  const cols = Math.ceil(VIEW_W / colW) + 3;
+  g.fillStyle = fill;
+  for (let i = 0; i < cols; i++){
+    const idx = first + i;
+    const x = idx * colW - off;
+    const h = hMin + hashf(idx * 1.3 + seed) * (hMax - hMin);
+    g.fillRect(x, baseY - h, colW - 3, h);
+
+    if (windows){
+      const rows = Math.floor(h / 26);
+      const cells = Math.floor((colW - 3) / 17);
+      for (let r = 0; r < rows; r++){
+        for (let c = 0; c < cells; c++){
+          const hv = hashf(idx * 91.7 + r * 13.1 + c * 5.7 + seed);
+          if (hv > 0.86){
+            g.fillStyle = hv > 0.965 ? "rgba(63,217,160,0.26)"
+                        : hv > 0.925 ? "rgba(255,122,60,0.22)"
+                                     : "rgba(217,164,65,0.14)";
+            g.fillRect(x + 6 + c * 17, baseY - h + 10 + r * 26, 7, 11);
+          }
+        }
+      }
+      g.fillStyle = fill;
+    }
+  }
+}
+
+function drawProps(sc){
+  const par = 0.66, off = sc * par, colW = 420;
+  const first = Math.floor(off / colW) - 1;
+  for (let i = 0; i < Math.ceil(VIEW_W / colW) + 3; i++){
+    const idx = first + i;
+    const x = idx * colW - off;
+    const kind = Math.floor(hashf(idx * 7.3) * 3);
+    g.strokeStyle = "#0D1017"; g.fillStyle = "#0D1017"; g.lineWidth = 3;
+
+    if (kind === 0){                                   // water tower
+      const bx = x + 60, by = GROUND_Y - 96;
+      g.fillRect(bx - 30, by - 62, 60, 58);
+      g.beginPath();
+      g.moveTo(bx - 34, by - 62); g.lineTo(bx, by - 88); g.lineTo(bx + 34, by - 62);
+      g.closePath(); g.fill();
+      g.beginPath();
+      g.moveTo(bx - 22, by - 4); g.lineTo(bx - 30, by + 62);
+      g.moveTo(bx + 22, by - 4); g.lineTo(bx + 30, by + 62);
+      g.stroke();
+    } else if (kind === 1){                            // antenna mast
+      const bx = x + 180;
+      g.beginPath(); g.moveTo(bx, GROUND_Y - 40); g.lineTo(bx, GROUND_Y - 210); g.stroke();
+      for (let k = 0; k < 4; k++){
+        const yy = GROUND_Y - 90 - k * 34;
+        g.beginPath(); g.moveTo(bx - 16 + k * 2, yy); g.lineTo(bx + 16 - k * 2, yy); g.stroke();
+      }
+      g.fillStyle = C.seal;
+      g.beginPath(); g.arc(bx, GROUND_Y - 214, 3.5, 0, 6.2832); g.fill();
+    } else {                                           // billboard for a fake fight film
+      const bx = x + 250, by = GROUND_Y - 150;
+      g.fillStyle = "#151A24"; g.fillRect(bx, by, 176, 104);
+      g.strokeStyle = "#0A0D13"; g.lineWidth = 4; g.strokeRect(bx, by, 176, 104);
+      g.fillStyle = "rgba(200,52,43,0.55)";
+      g.fillRect(bx + 12, by + 16, 100, 13);
+      g.fillRect(bx + 12, by + 36, 148, 9);
+      g.fillStyle = "rgba(217,164,65,0.30)";
+      g.fillRect(bx + 12, by + 58, 66, 9);
+      g.fillStyle = "#0D1017";
+      g.fillRect(bx + 20, by + 104, 6, 46);
+      g.fillRect(bx + 150, by + 104, 6, 46);
+    }
+  }
+}
+
+function drawGround(sc){
+  g.fillStyle = "#0F131A";
+  g.fillRect(0, GROUND_Y, VIEW_W, VIEW_H - GROUND_Y);
+
+  // rooftop lip
+  g.fillStyle = "#1C232E";
+  g.fillRect(0, GROUND_Y - 6, VIEW_W, 6);
+  g.fillStyle = C.slateHi;
+  g.fillRect(0, GROUND_Y - 7, VIEW_W, 1.5);
+
+  // scrolling tar seams
+  const off = sc % 96;
+  g.strokeStyle = "rgba(56,68,90,0.35)"; g.lineWidth = 1.5;
+  for (let x = -off; x < VIEW_W + 96; x += 96){
+    g.beginPath(); g.moveTo(x, GROUND_Y + 2); g.lineTo(x - 22, VIEW_H); g.stroke();
+  }
+  // wet reflection
+  const wet = g.createLinearGradient(0, GROUND_Y, 0, VIEW_H);
+  wet.addColorStop(0, "rgba(255,122,60,0.10)");
+  wet.addColorStop(1, "rgba(255,122,60,0)");
+  g.fillStyle = wet;
+  g.fillRect(0, GROUND_Y, VIEW_W, VIEW_H - GROUND_Y);
+
+  // standing water catching the signage
+  const colW = 330, first = Math.floor(sc / colW) - 1;
+  for (let i = 0; i < Math.ceil(VIEW_W / colW) + 3; i++){
+    const idx = first + i;
+    const x  = idx * colW - sc + hashf(idx * 2.9) * 170;
+    const y  = GROUND_Y + 26 + hashf(idx * 3.1) * 58;
+    const rx = 42 + hashf(idx * 5.7) * 56;
+    g.fillStyle = "rgba(9,12,18,0.80)";
+    g.beginPath(); g.ellipse(x, y, rx, rx * 0.17, 0, 0, 6.2832); g.fill();
+    g.fillStyle = hashf(idx * 8.3) > 0.5
+      ? "rgba(255,122,60,0.22)" : "rgba(63,217,160,0.16)";
+    g.beginPath(); g.ellipse(x - rx * 0.15, y, rx * 0.5, rx * 0.05, 0, 0, 6.2832); g.fill();
+  }
+}
+
+// The grid, drawn on the tar: a tick per beat, tall on the downbeat, plus the
+// contact line where the world meets the disciple. This is the notation —
+// obstacles are notes, and the player can read the bar before it arrives.
+function drawBeatRuler(){
+  const b = Conductor.beat();
+  const start = Math.floor(b) - 1;
+  for (let i = 0; i < 14; i++){
+    const bt = start + i;
+    const x = beatToX(bt);
+    if (x < -20 || x > VIEW_W + 20) continue;
+    const down = ((bt % 4) + 4) % 4 === 0;
+    g.fillStyle = down ? "rgba(217,164,65,0.85)" : "rgba(150,166,190,0.42)";
+    g.fillRect(x - 1, GROUND_Y + 5, down ? 3 : 2, down ? 18 : 9);
+  }
+  g.fillStyle = "rgba(237,228,208,0.13)";
+  g.fillRect(playerX() - 1, GROUND_Y - 196, 2, 196);
+}
+
+let rain = [];
+function initRain(){
+  rain = [];
+  const n = REDUCED ? 22 : 110;
+  for (let i = 0; i < n; i++){
+    rain.push({ x: Math.random() * 1400, y: Math.random() * VIEW_H,
+                s: 380 + Math.random() * 420, l: 12 + Math.random() * 20 });
+  }
+}
+function drawRain(dt){
+  g.strokeStyle = "rgba(180,205,230,0.16)"; g.lineWidth = 1;
+  g.beginPath();
+  for (const d of rain){
+    d.y += d.s * dt; d.x -= d.s * 0.22 * dt;
+    if (d.y > VIEW_H){ d.y = -20; d.x = Math.random() * (VIEW_W + 300); }
+    if (d.x < -30) d.x = VIEW_W + 30;
+    g.moveTo(d.x, d.y); g.lineTo(d.x - d.l * 0.22, d.y + d.l);
+  }
+  g.stroke();
+}
+
+/* -------- world objects --------------------------------------------------- */
+function beatToX(beat){ return playerX() + (beat - Conductor.beat()) * PPB; }
+
+function drawObstacles(){
+  for (const o of Game.obstacles){
+    const x = beatToX(o.beat);
+    if (x < -160 || x > VIEW_W + 160) continue;
+
+    if (o.type === "low"){
+      // rooftop vent unit — jump it
+      const w = 62, h = 50, y = GROUND_Y - h;
+      g.fillStyle = "rgba(0,0,0,0.5)";
+      g.beginPath(); g.ellipse(x, GROUND_Y + 5, w * 0.62, 7, 0, 0, 6.2832); g.fill();
+      g.fillStyle = "#232C3A"; g.fillRect(x - w / 2, y, w, h);
+      g.strokeStyle = "#05070B"; g.lineWidth = 5; g.strokeRect(x - w / 2, y, w, h);
+      g.strokeStyle = C.sodium; g.lineWidth = 3;
+      for (let i = 0; i < 3; i++){
+        g.beginPath();
+        g.moveTo(x - w / 2 + 11, y + 13 + i * 12);
+        g.lineTo(x + w / 2 - 11, y + 13 + i * 12);
+        g.stroke();
+      }
+      g.fillStyle = C.sodium; g.fillRect(x - w / 2 - 2, y - 5, w + 4, 5);
+
+    } else if (o.type === "high"){
+      // hanging chamber sign — slide under it
+      const w = 78, top = GROUND_Y - 168, h = 100;
+      g.strokeStyle = "#0D1017"; g.lineWidth = 3;
+      g.beginPath(); g.moveTo(x, 0); g.lineTo(x, top); g.stroke();
+      g.fillStyle = "#1B2330"; g.fillRect(x - w / 2, top, w, h);
+      g.strokeStyle = "#05070B"; g.lineWidth = 5; g.strokeRect(x - w / 2, top, w, h);
+      g.strokeStyle = C.jade; g.lineWidth = 3.5;
+      g.strokeRect(x - w / 2 + 9, top + 9, w - 18, h - 18);
+      g.fillStyle = C.jade;
+      g.font = '700 38px "Big Shoulders Display", sans-serif';
+      g.textAlign = "center"; g.textBaseline = "middle";
+      g.fillText("九", x, top + h / 2 + 2);
+      // the gap it leaves you — lit so the slide line is unmistakable
+      g.fillStyle = "rgba(63,217,160,0.22)";
+      g.fillRect(x - w / 2, top + h, w, 3);
+
+    } else {
+      // drone swarm — breathe through it
+      const cy = GROUND_Y - 74;
+      for (let i = 0; i < 13; i++){
+        const a = i * 1.7 + Conductor.beat() * 2.1;
+        const px = x + Math.cos(a) * 40;
+        const py = cy + Math.sin(a * 1.4) * 52;
+        g.fillStyle = i % 3 === 0 ? C.seal : "#2B3444";
+        g.beginPath(); g.arc(px, py, 5.5, 0, 6.2832); g.fill();
+        g.strokeStyle = "rgba(200,52,43,0.30)"; g.lineWidth = 1;
+        g.beginPath(); g.arc(px, py, 11, 0, 6.2832); g.stroke();
+      }
+    }
+  }
+}
+
+function drawPickups(){
+  for (const w of Game.pickups){
+    if (w.taken) continue;
+    const x = beatToX(w.beat);
+    if (x < -60 || x > VIEW_W + 60) continue;
+    const y = GROUND_Y - w.y - 26;
+    const spin = Math.abs(Math.cos(Conductor.beat() * 3.1));
+    g.save();
+    g.translate(x, y);
+    g.scale(0.35 + spin * 0.65, 1);
+    g.fillStyle = "#12161D";
+    g.beginPath(); g.arc(0, 0, 16, 0, 6.2832); g.fill();
+    g.strokeStyle = C.gold; g.lineWidth = 2.5;
+    g.beginPath(); g.arc(0, 0, 16, 0, 6.2832); g.stroke();
+    g.strokeStyle = "rgba(217,164,65,0.55)"; g.lineWidth = 1;
+    g.beginPath(); g.arc(0, 0, 10, 0, 6.2832); g.stroke();
+    g.fillStyle = C.gold;
+    g.beginPath(); g.arc(0, 0, 3.5, 0, 6.2832); g.fill();
+    g.restore();
+  }
+}
+
+/* -------- the disciple ----------------------------------------------------
+   Built as a segment list, then rendered in two passes — a heavy rim, then
+   the ink fill. That's what gives the brush-drawn cel look, and it's the only
+   way a black silhouette stays legible against a black city at speed.       */
+function seg(S, x1, y1, x2, y2, w){ S.push([x1, y1, x2, y2, w]); }
+
+function strokeSegs(S, color, pad){
+  g.strokeStyle = color; g.lineCap = "round"; g.lineJoin = "round";
+  for (const s of S){
+    g.lineWidth = s[4] + pad;
+    g.beginPath(); g.moveTo(s[0], s[1]); g.lineTo(s[2], s[3]); g.stroke();
+  }
+}
+
+function drawDisciple(x, baseY, state, phase, alpha, god){
+  const ink  = "#080A0E";
+  const rim  = god ? C.gold : "#E4DBC6";
+  const band = god ? C.cream : C.seal;
+  const slit = god ? C.cream : C.jade;
+
+  const S = [];
+  let head, bandRoot, sparks = false;
+
+  if (state === "slide"){
+    // knee-slide under the sign: low, forward, one guard hand up
+    const hipX = x - 8,  hipY = baseY - 18;
+    const shoX = x + 14, shoY = baseY - 36;
+    seg(S, hipX, hipY, x + 12, baseY - 4, 11);        // front thigh to knee
+    seg(S, x + 12, baseY - 4, x + 32, baseY - 7, 9);  // shin, foot forward
+    seg(S, hipX, hipY, x - 28, baseY - 9, 11);        // trailing thigh
+    seg(S, x - 28, baseY - 9, x - 47, baseY - 2, 9);  // trailing shin
+    seg(S, hipX, hipY, shoX, shoY, 16);               // torso, raked forward
+    seg(S, shoX, shoY, x + 36, baseY - 26, 8);        // lead arm
+    seg(S, shoX, shoY, x - 4, baseY - 46, 8);         // guard arm up
+    head = { x: x + 27, y: baseY - 46, r: 12, tilt: -0.32 };
+    bandRoot = { x: x + 16, y: baseY - 52 };
+    sparks = true;
+
+  } else if (state === "air"){
+    const hip = baseY - 42, sho = baseY - 78;
+    seg(S, x, hip, x - 15, hip + 21, 11);             // front leg tucked
+    seg(S, x - 15, hip + 21, x - 33, hip + 13, 9);
+    seg(S, x, hip, x + 20, hip + 20, 11);             // back leg trailing
+    seg(S, x + 20, hip + 20, x + 39, hip + 30, 9);
+    seg(S, x, hip, x - 2, sho, 16);
+    seg(S, x - 2, sho + 6, x + 24, sho + 16, 8);      // lead hand, spear-fingers
+    seg(S, x - 2, sho + 6, x - 24, sho + 26, 8);
+    head = { x: x - 1, y: sho - 13, r: 13, tilt: -0.12 };
+    bandRoot = { x: x - 12, y: sho - 18 };
+
+  } else {
+    const hip = baseY - 42, sho = baseY - 78;
+    const sw  = Math.sin(phase * 6.2832);
+    const sw2 = -sw;
+    seg(S, x, hip, x + sw * 21, hip + 23, 11);
+    seg(S, x + sw * 21, hip + 23, x + sw * 30, baseY - 1, 9);
+    seg(S, x, hip, x + sw2 * 21, hip + 23, 11);
+    seg(S, x + sw2 * 21, hip + 23, x + sw2 * 30, baseY - 1, 9);
+    seg(S, x, hip, x - 2, sho, 16);
+    seg(S, x - 2, sho + 6, x + sw2 * 20, sho + 25, 8);
+    seg(S, x - 2, sho + 6, x + sw  * 20, sho + 25, 8);
+    head = { x: x - 1, y: sho - 13, r: 13, tilt: -0.08 };
+    bandRoot = { x: x - 12, y: sho - 18 };
+  }
+
+  g.globalAlpha = alpha;
+
+  // pass 1 — the rim
+  strokeSegs(S, rim, 6);
+  g.fillStyle = rim;
+  g.beginPath(); g.arc(head.x, head.y, head.r + 3, 0, 6.2832); g.fill();
+
+  // pass 2 — the ink
+  strokeSegs(S, ink, 0);
+  g.fillStyle = ink;
+  g.beginPath(); g.arc(head.x, head.y, head.r, 0, 6.2832); g.fill();
+
+  // the mask slit
+  g.save();
+  g.translate(head.x, head.y); g.rotate(head.tilt);
+  g.fillStyle = slit;
+  g.fillRect(-head.r + 1, -5, head.r * 1.7, 5.5);
+  g.restore();
+
+  // headband, streaming off the beat
+  const wob = Math.sin(Conductor.beat() * 5.2) * 6;
+  g.strokeStyle = band; g.lineCap = "round";
+  g.lineWidth = 5;
+  g.beginPath();
+  g.moveTo(bandRoot.x, bandRoot.y);
+  g.quadraticCurveTo(bandRoot.x - 22, bandRoot.y + wob,
+                     bandRoot.x - 44, bandRoot.y - 6 - wob);
+  g.stroke();
+  g.lineWidth = 3.5;
+  g.beginPath();
+  g.moveTo(bandRoot.x - 44, bandRoot.y - 6 - wob);
+  g.quadraticCurveTo(bandRoot.x - 58, bandRoot.y - 2 - wob,
+                     bandRoot.x - 72, bandRoot.y + 4 + wob);
+  g.stroke();
+
+  if (sparks){
+    g.strokeStyle = "rgba(255,122,60,0.7)"; g.lineWidth = 2.5;
+    for (let i = 0; i < 3; i++){
+      const sx0 = x - 30 - i * 14;
+      g.beginPath();
+      g.moveTo(sx0, baseY - 2);
+      g.lineTo(sx0 - 20 - i * 6, baseY - 12 - i * 5);
+      g.stroke();
+    }
+  }
+
+  g.globalAlpha = 1;
+}
+
+/* -------- HUD ------------------------------------------------------------- */
+function drawHUD(pulse){
+  const god = Game.stemLevel >= 5;
+  g.textBaseline = "alphabetic";
+
+  // score
+  g.textAlign = "left";
+  g.fillStyle = C.cream;
+  g.font = '900 44px "Big Shoulders Display", sans-serif';
+  g.fillText(Math.floor(Game.score).toLocaleString(), 22, 52);
+  g.fillStyle = C.creamDim;
+  g.font = '400 13px "DM Mono", monospace';
+  g.fillText(Math.floor(Conductor.beat() * 4.2) + "M   ×" + (Game.stemLevel + 1) +
+             "   WAX " + Game.wax, 23, 72);
+
+  // stem stack, top right — the mix, as a rack of faders.
+  // Label sits left of its fader so nothing ever overlaps the fill.
+  const sx = VIEW_W - 22, sy = 30, rowH = 17, barW = 66;
+  for (let i = 5; i >= 0; i--){
+    const on = i <= Game.stemLevel;
+    const y = sy + (5 - i) * rowH;
+    g.textAlign = "right";
+    g.font = '400 10px "DM Mono", monospace';
+    g.fillStyle = on ? C.cream : "rgba(142,139,128,0.5)";
+    g.fillText(STEM_LABEL[i], sx - barW - 10, y + 9);
+    g.fillStyle = "rgba(35,43,55,0.8)";
+    g.fillRect(sx - barW, y, barW, 9);
+    if (on){
+      g.fillStyle = i === 5 ? C.gold : C.jade;
+      g.fillRect(sx - barW, y, barW, 9);
+    } else {
+      g.fillStyle = "rgba(56,68,90,0.9)";
+      g.fillRect(sx - barW, y, 14, 9);
+    }
+  }
+  g.textAlign = "right";
+  g.fillStyle = "rgba(142,139,128,0.75)";
+  g.font = '400 9px "DM Mono", monospace';
+  g.fillText("THE MIX", sx, sy - 7);
+
+  // flow meter, bottom left
+  g.textAlign = "left";                       // the rack above leaves this "right"
+  const fx = 22, fy = VIEW_H - 34, fw = 190;
+  g.fillStyle = "rgba(35,43,55,0.85)"; g.fillRect(fx, fy, fw, 10);
+  const fg = g.createLinearGradient(fx, 0, fx + fw, 0);
+  fg.addColorStop(0, C.jade); fg.addColorStop(1, C.gold);
+  g.fillStyle = P.flowing ? C.gold : fg;
+  g.fillRect(fx, fy, fw * (Game.flow / 100), 10);
+  g.fillStyle = C.creamDim;
+  g.font = '400 9px "DM Mono", monospace';
+  g.fillText("FLOW STANCE", fx, fy - 6);
+
+  // beat lamps, bottom center
+  const beat = Conductor.beat();
+  const inBar = Math.floor(beat) % 4;
+  const frac = beat - Math.floor(beat);
+  for (let i = 0; i < 4; i++){
+    const bx = VIEW_W / 2 - 42 + i * 28, by = VIEW_H - 28;
+    const hot = i === inBar;
+    const r = hot ? 6 + (1 - frac) * 4 : 4.5;
+    g.fillStyle = hot ? (god ? C.gold : C.cream) : "rgba(56,68,90,0.8)";
+    g.beginPath(); g.arc(bx, by, r, 0, 6.2832); g.fill();
+  }
+
+  // chain
+  if (Game.chain > 1){
+    g.textAlign = "center";
+    g.fillStyle = god ? C.gold : C.jade;
+    g.font = '700 26px "Big Shoulders Display", sans-serif';
+    g.fillText("CHAIN ×" + Game.chain, VIEW_W / 2, 46);
+  }
+
+  // grade popups
+  g.textAlign = "center";
+  Game.pops.forEach((p, i) => {
+    g.globalAlpha = Math.max(0, Math.min(1, p.life));
+    g.fillStyle = p.color;
+    g.font = '900 34px "Big Shoulders Display", sans-serif';
+    g.fillText(p.text, VIEW_W / 2, 118 + (1 - p.life) * -26 + i * 2);
+  });
+  g.globalAlpha = 1;
+
+  // district card — stacked above the flow meter, never over it
+  if (Game.districtFade > 0){
+    g.globalAlpha = Math.min(1, Game.districtFade * 1.6);
+    g.textAlign = "left";
+    g.fillStyle = C.gold;
+    g.font = '700 22px "Big Shoulders Display", sans-serif';
+    g.fillText(DISTRICTS[Game.districtShown], 22, VIEW_H - 78);
+    g.fillStyle = "rgba(142,139,128,0.9)";
+    g.font = '400 10px "DM Mono", monospace';
+    g.fillText("CHAMBER 01 · " + Game.bpm.toFixed(1) + " BPM", 22, VIEW_H - 63);
+    g.globalAlpha = 1;
+  }
+}
+
+/* -------- frame ----------------------------------------------------------- */
+let lastT = performance.now();
+
+function frame(now){
+  const dt = Math.min(0.05, (now - lastT) / 1000);
+  lastT = now;
+
+  if (Game.mode === "play") update(dt);
+
+  // The pulse is anchored to a *scheduled* time, which is up to a lookahead
+  // ahead of now — so it must not fire (or exceed 1) before the drum lands.
+  let pulse = 0;
+  if (audioReady && Game.mode === "play"){
+    const since = ctx.currentTime - Game.pulseAt;
+    pulse = since < 0 ? 0 : Math.max(0, Math.min(1, 1 - since * 5.5));
+  }
+
+  g.setTransform(DPR, 0, 0, DPR, 0, 0);
+  const scale = (cv.width / DPR) / VIEW_W;
+  g.scale(scale, scale);
+
+  const sh = REDUCED ? 0 : Game.shake;
+  g.save();
+  if (sh > 0.5) g.translate((Math.random() - 0.5) * sh, (Math.random() - 0.5) * sh);
+
+  const sc = scrollPx();
+  drawSky(pulse);
+  drawSkyline(sc, 0.14, 96,  GROUND_Y - 22, 70,  190, "#0C1119", 0.0, false);
+  drawSkyline(sc, 0.38, 134, GROUND_Y - 8,  90,  228, "#10161F", 4.2, true);
+  drawProps(sc);
+  drawGround(sc);
+  if (Game.mode === "play" || Game.mode === "over") drawBeatRuler();
+
+  // pigeons
+  for (const p of Game.birds){
+    g.globalAlpha = Math.max(0, p.life);
+    g.strokeStyle = "#0A0C11"; g.lineWidth = 2;
+    const f = Math.sin(p.ph + performance.now() * 0.02) * 5;
+    g.beginPath();
+    g.moveTo(p.x - 7, p.y + f); g.lineTo(p.x, p.y - 2); g.lineTo(p.x + 7, p.y + f);
+    g.stroke();
+  }
+  g.globalAlpha = 1;
+
+  drawObstacles();
+  drawPickups();
+
+  // afterimages, then the disciple
+  const px = playerX();
+  const phase = Conductor.beat() * 2;
+  for (const t of P.trail){
+    // afterimages stay put in world space, so they streak out behind you
+    drawDisciple(px - (Conductor.beat() - t.beat) * PPB * 0.55, t.y, t.state,
+                 phase, Math.max(0, t.life) * 0.20, Game.stemLevel >= 5);
+  }
+  if (Game.mode === "play" || Game.mode === "over"){
+    const blink = Conductor.beat() < Game.invulnUntil
+      ? (Math.floor(Conductor.beat() * 8) % 2 ? 0.35 : 1) : 1;
+    drawDisciple(px, GROUND_Y - P.height, P.state, phase, blink, Game.stemLevel >= 5);
+  }
+
+  // sparks
+  for (const s of Game.sparks){
+    g.globalAlpha = Math.max(0, s.life);
+    g.fillStyle = s.color;
+    g.fillRect(s.x, s.y, 3.5, 3.5);
+  }
+  g.globalAlpha = 1;
+
+  drawRain(dt);
+
+  // GOD FLOW — gold ink blooms out of the disciple and floods the chamber
+  if (Game.stemLevel >= 5 && Game.mode === "play"){
+    const cx = playerX(), cy = GROUND_Y - P.height - 60;
+    g.globalCompositeOperation = "screen";
+    const bloom = g.createRadialGradient(cx, cy, 10, cx, cy, VIEW_W * 0.55);
+    bloom.addColorStop(0,    "rgba(217,164,65," + (0.20 + pulse * 0.14).toFixed(3) + ")");
+    bloom.addColorStop(0.34, "rgba(217,164,65,0.055)");
+    bloom.addColorStop(1,    "rgba(200,52,43,0)");
+    g.fillStyle = bloom;
+    g.fillRect(0, 0, VIEW_W, VIEW_H);
+    g.globalCompositeOperation = "source-over";
+
+    // ink ring struck on each downbeat
+    if (pulse > 0.04 && !REDUCED){
+      g.strokeStyle = "rgba(217,164,65," + (pulse * 0.34).toFixed(3) + ")";
+      g.lineWidth = 2.5 * pulse + 0.5;
+      g.beginPath();
+      g.arc(cx, cy, (1 - pulse) * 130 + 22, 0, 6.2832);
+      g.stroke();
+    }
+  }
+  // flow stance tint
+  if (P.flowing){
+    g.fillStyle = "rgba(63,217,160,0.07)";
+    g.fillRect(0, 0, VIEW_W, VIEW_H);
+  }
+
+  // vignette
+  const vg = g.createRadialGradient(VIEW_W / 2, VIEW_H / 2, VIEW_H * 0.34,
+                                    VIEW_W / 2, VIEW_H / 2, VIEW_H * 0.95);
+  vg.addColorStop(0, "rgba(0,0,0,0)");
+  vg.addColorStop(1, "rgba(0,0,0,0.62)");
+  g.fillStyle = vg;
+  g.fillRect(0, 0, VIEW_W, VIEW_H);
+
+  g.restore();
+
+  if (Game.mode === "play" || Game.mode === "over") drawHUD(pulse);
+
+  if (Game.mode === "play"){
+    el("slate-bpm").textContent = Game.bpm.toFixed(1);
+  }
+
+  requestAnimationFrame(frame);
+}
+
+/* ============================================================== 6. INPUT === */
+function primaryAction(){
+  if (Game.mode === "title" || Game.mode === "over") startRun();
+}
+
+document.addEventListener("keydown", e => {
+  if (e.repeat) return;
+  const k = e.code;
+  if (k === "ArrowUp" || k === "Space" || k === "KeyW"){
+    e.preventDefault();
+    if (Game.mode === "play") doJump(); else primaryAction();
+  } else if (k === "ArrowDown" || k === "KeyS"){
+    e.preventDefault(); doSlide();
+  } else if (k === "ShiftLeft" || k === "ShiftRight" || k === "KeyF"){
+    e.preventDefault(); setFlow(true);
+  } else if (k === "KeyP"){
+    if (Game.mode === "play"){ Conductor.stop(); Game.mode = "paused"; ctx.suspend(); }
+    else if (Game.mode === "paused"){ ctx.resume(); Conductor.start(); Game.mode = "play"; }
+  } else if (k === "Enter"){
+    primaryAction();
+  }
+});
+
+document.addEventListener("keyup", e => {
+  const k = e.code;
+  if (k === "ShiftLeft" || k === "ShiftRight" || k === "KeyF") setFlow(false);
+});
+
+/* -------- touch: swipe up / swipe down / press-and-hold ------------------- */
+let touch = null;
+const stage = document.querySelector(".stage");
+
+function onDown(x, y){
+  if (Game.mode === "title" || Game.mode === "over"){ primaryAction(); return; }
+  touch = { x, y, t: performance.now(), used: false, holdT: null };
+  touch.holdT = setTimeout(() => {
+    if (touch && !touch.used){ touch.used = "hold"; setFlow(true); }
+  }, 130);
+}
+function onMove(x, y){
+  if (!touch || touch.used) return;
+  const dy = y - touch.y;
+  if (Math.abs(dy) > 26){
+    clearTimeout(touch.holdT);
+    touch.used = "swipe";
+    if (dy < 0) doJump(); else doSlide();
+  }
+}
+function onUp(){
+  if (!touch) return;
+  clearTimeout(touch.holdT);
+  if (touch.used === "hold") setFlow(false);
+  else if (!touch.used) doJump();       // a quick tap is a jump
+  touch = null;
+}
+
+stage.addEventListener("touchstart", e => {
+  document.body.classList.add("touch");
+  e.preventDefault();
+  const t = e.changedTouches[0];
+  onDown(t.clientX, t.clientY);
+}, { passive: false });
+stage.addEventListener("touchmove", e => {
+  e.preventDefault();
+  const t = e.changedTouches[0];
+  onMove(t.clientX, t.clientY);
+}, { passive: false });
+stage.addEventListener("touchend", e => { e.preventDefault(); onUp(); }, { passive: false });
+stage.addEventListener("touchcancel", () => onUp());
+
+stage.addEventListener("mousedown", e => { onDown(e.clientX, e.clientY); });
+window.addEventListener("mousemove", e => { onMove(e.clientX, e.clientY); });
+window.addEventListener("mouseup", () => onUp());
+
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden && Game.mode === "play"){
+    Conductor.stop(); Game.mode = "paused"; if (ctx) ctx.suspend();
+  }
+});
+
+/* -------- go -------------------------------------------------------------- */
+resize();
+initRain();
+try {
+  Game.best = parseInt(localStorage.getItem("ironshaolin.best") || "0", 10) || 0;
+  el("r-best").textContent = Game.best.toLocaleString();
+} catch (e){ /* private mode — best stays in memory */ }
+requestAnimationFrame(frame);
+</script>
