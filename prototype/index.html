@@ -86,11 +86,14 @@ body{
 @media (max-width: 720px){
   .stage{ aspect-ratio: 4 / 3; }
 }
-#game{
+.stage > canvas{
+  position: absolute;
+  inset: 0;
   display: block;
   width: 100%;
   height: 100%;
 }
+#hud{ pointer-events: none; }
 
 /* ---------- overlay screens ---------- */
 .screen{
@@ -312,6 +315,7 @@ body.touch .touchpad{ display: block; }
 
   <div class="stage">
     <canvas id="game"></canvas>
+    <canvas id="hud"></canvas>
     <div class="touchpad" id="touchpad"></div>
 
     <section class="screen" id="scr-title">
@@ -818,7 +822,7 @@ const Game = {
   obstacles: [], pickups: [], pops: [], sparks: [], birds: [],
   invulnUntil: -1,
   pulseAt: 0, snareAt: 0,
-  shake: 0,
+  shake: 0, godMix: 0, flowMix: 0, hitFlash: 0,
   district: 0,
   districtShown: -1, districtFade: 0,
   best: 0
@@ -842,6 +846,7 @@ function resetRun(){
   Game.obstacles.length = 0; Game.pickups.length = 0;
   Game.pops.length = 0; Game.sparks.length = 0; Game.birds.length = 0;
   Game.invulnUntil = -1; Game.shake = 0;
+  Game.godMix = 0; Game.flowMix = 0; Game.hitFlash = 0;
   Game.district = 0; Game.districtShown = -1; Game.districtFade = 0;
   Game.bpm = BPM_BASE;
   P.state = "run"; P.height = 0; P.flowing = false; P.trail.length = 0;
@@ -880,7 +885,7 @@ function stemUp(){
   Game.peakStem = Math.max(Game.peakStem, Game.stemLevel);
   applyStemMix();
   sfxStemUp(Game.stemLevel);
-  pop(Game.stemLevel === 5 ? "GOD FLOW" : "+ " + STEM_LABEL[Game.stemLevel],
+  pop(Game.stemLevel === 5 ? "GOD FLOW" : "GOT " + STEM_LABEL[Game.stemLevel],
       Game.stemLevel === 5 ? C.gold : C.jade);
   burst(playerX(), GROUND_Y - P.height - 30, 16, C.jade);
   Game.shake = Math.max(Game.shake, Game.stemLevel === 5 ? 14 : 6);
@@ -891,14 +896,14 @@ function takeHit(){
   if (b < Game.invulnUntil) return;
   Game.invulnUntil = b + 1.25;
   Game.chain = 0;
-  Game.shake = 12;
+  Game.shake = 12; Game.hitFlash = 1;
   burst(playerX(), GROUND_Y - P.height - 30, 14, C.seal);
 
   if (Game.stemLevel <= 0){ die(); return; }
   Game.stemLevel--;
   applyStemMix();
   sfxStemDown();
-  pop("− " + STEM_LABEL[Game.stemLevel + 1], C.seal);
+  pop("LOST " + STEM_LABEL[Game.stemLevel + 1], C.seal);
 }
 
 function grade(obstacleBeat){
@@ -1151,18 +1156,312 @@ function die(){
 }
 
 /* ============================================================== 5. RENDER === */
-const cv = document.getElementById("game");
-const g  = cv.getContext("2d");
+/* The world is still drawn with Canvas2D — that code is proven and it is what
+   makes the silhouettes. What changed is that it now draws to an offscreen
+   buffer, which we then push through a WebGL post chain: wet-floor reflection,
+   bright-pass bloom, moonlight shafts, chromatic aberration, grain, vignette.
+   Same drawing, different lens. If WebGL is missing we draw straight to screen
+   and the game plays identically, just flatter. */
+let view = document.getElementById("game");
+let gl = null, usingGL = false, sceneCv = null, g = null;
+const hudCv = document.getElementById("hud");
+const hudG  = hudCv.getContext("2d");
 let VIEW_W = 960, DPR = 1;
 
 function el(id){ return document.getElementById(id); }
 function playerX(){ return VIEW_W * 0.26; }
 
+/* ------------------------------------------------------------ post chain -- */
+const VS_QUAD = `
+attribute vec2 aPos; varying vec2 vUv;
+void main(){ vUv = aPos * 0.5 + 0.5; gl_Position = vec4(aPos, 0.0, 1.0); }`;
+
+// Wet tar: mirror the world below the ground line, wobble it, and let only the
+// bright things (neon, sodium, gold) survive the reflection.
+const FS_REFLECT = `
+precision mediump float;
+varying vec2 vUv; uniform sampler2D uTex;
+uniform float uGround, uTime;
+void main(){
+  vec3 col = texture2D(uTex, vUv).rgb;
+  if (vUv.y < uGround){
+    float d = uGround - vUv.y;
+    float wob = sin(vUv.x * 41.0 + uTime * 1.7) * 0.0015
+              + sin(vUv.x * 13.0 - uTime * 0.9) * 0.0030;
+    vec2 ruv = vec2(vUv.x + wob * (0.35 + d * 7.0),
+                    min(0.999, uGround + d * 0.94));
+    vec3 refl = texture2D(uTex, ruv).rgb;
+    float lum = dot(refl, vec3(0.299, 0.587, 0.114));
+    refl *= smoothstep(0.05, 0.34, lum) * 1.25;
+    col += refl * exp(-d * 8.0) * 0.62;
+  }
+  gl_FragColor = vec4(col, 1.0);
+}`;
+
+const FS_BRIGHT = `
+precision mediump float;
+varying vec2 vUv; uniform sampler2D uTex; uniform float uThresh;
+void main(){
+  vec3 c = texture2D(uTex, vUv).rgb;
+  float l = dot(c, vec3(0.299, 0.587, 0.114));
+  gl_FragColor = vec4(c * smoothstep(uThresh, uThresh + 0.26, l), 1.0);
+}`;
+
+const FS_BLUR = `
+precision mediump float;
+varying vec2 vUv; uniform sampler2D uTex; uniform vec2 uDir;
+void main(){
+  vec3 s = texture2D(uTex, vUv).rgb * 0.2270270;
+  s += texture2D(uTex, vUv + uDir * 1.3846154).rgb * 0.3162162;
+  s += texture2D(uTex, vUv - uDir * 1.3846154).rgb * 0.3162162;
+  s += texture2D(uTex, vUv + uDir * 3.2307692).rgb * 0.0702703;
+  s += texture2D(uTex, vUv - uDir * 3.2307692).rgb * 0.0702703;
+  gl_FragColor = vec4(s, 1.0);
+}`;
+
+// Moonlight raked through the rain — a radial smear out of the bright pass.
+const FS_SHAFT = `
+precision mediump float;
+varying vec2 vUv; uniform sampler2D uTex; uniform vec2 uOrigin;
+void main(){
+  vec2 step = (vUv - uOrigin) * 0.055;
+  vec2 uv = vUv; vec3 acc = vec3(0.0); float w = 1.0, tot = 0.0;
+  for (int i = 0; i < 12; i++){
+    uv -= step;
+    acc += texture2D(uTex, uv).rgb * w;
+    tot += w; w *= 0.87;
+  }
+  gl_FragColor = vec4(acc / tot, 1.0);
+}`;
+
+const FS_COMP = `
+precision mediump float;
+varying vec2 vUv;
+uniform sampler2D uScene, uBloom, uShaft;
+uniform vec2 uRes;
+uniform float uTime, uGod, uFlow, uHit, uGrain;
+float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+void main(){
+  vec2 c = vUv - 0.5;
+  float r2 = dot(c, c);
+  float ca = (0.0005 + uGod * 0.0026 + uHit * 0.0026) * r2 * 4.0;
+  vec3 col;
+  col.r = texture2D(uScene, vUv + c * ca).r;
+  col.g = texture2D(uScene, vUv).g;
+  col.b = texture2D(uScene, vUv - c * ca).b;
+
+  col += texture2D(uBloom, vUv).rgb * (1.15 + uGod * 0.90);
+  col += texture2D(uShaft, vUv).rgb * (0.26 + uGod * 0.20);
+
+  col = mix(col, col * vec3(1.18, 1.03, 0.76), uGod * 0.62);
+  col = mix(col, col * vec3(0.84, 1.12, 1.04), uFlow * 0.55);
+  col = mix(col, col * vec3(1.30, 0.78, 0.72), uHit * 0.42);
+
+  col += (hash(vUv * uRes + fract(uTime) * 431.0) - 0.5) * uGrain;
+  col *= smoothstep(1.42, 0.30, r2 * 1.40);
+  gl_FragColor = vec4(col, 1.0);
+}`;
+
+const Post = {
+  ok: false, W: 1, H: 1, bW: 1, bH: 1,
+  prog: {}, fb: {}, texScene: null, quad: null,
+
+  compile(src, type){
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src); gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)){
+      console.warn("shader:", gl.getShaderInfoLog(s)); return null;
+    }
+    return s;
+  },
+
+  program(fsSrc){
+    const v = this.compile(VS_QUAD, gl.VERTEX_SHADER);
+    const f = this.compile(fsSrc, gl.FRAGMENT_SHADER);
+    if (!v || !f) return null;
+    const p = gl.createProgram();
+    gl.attachShader(p, v); gl.attachShader(p, f);
+    gl.bindAttribLocation(p, 0, "aPos");
+    gl.linkProgram(p);
+    if (!gl.getProgramParameter(p, gl.LINK_STATUS)){
+      console.warn("link:", gl.getProgramInfoLog(p)); return null;
+    }
+    const u = {}, n = gl.getProgramParameter(p, gl.ACTIVE_UNIFORMS);
+    for (let i = 0; i < n; i++){
+      const nm = gl.getActiveUniform(p, i).name;
+      u[nm] = gl.getUniformLocation(p, nm);
+    }
+    return { p, u };
+  },
+
+  makeTex(w, h){
+    const t = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, t);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    return t;
+  },
+
+  makeTarget(w, h){
+    const t = this.makeTex(w, h), f = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, f);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, t, 0);
+    const done = gl.checkFramebufferStatus(gl.FRAMEBUFFER) === gl.FRAMEBUFFER_COMPLETE;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    return done ? { t, f, w, h } : null;
+  },
+
+  init(){
+    this.quad = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.quad);
+    gl.bufferData(gl.ARRAY_BUFFER,
+      new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+
+    this.prog.reflect = this.program(FS_REFLECT);
+    this.prog.bright  = this.program(FS_BRIGHT);
+    this.prog.blur    = this.program(FS_BLUR);
+    this.prog.shaft   = this.program(FS_SHAFT);
+    this.prog.comp    = this.program(FS_COMP);
+
+    this.texScene = this.makeTex(2, 2);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+    gl.disable(gl.DEPTH_TEST);
+    gl.disable(gl.BLEND);
+
+    this.ok = Object.keys(this.prog).every(k => this.prog[k]);
+    return this.ok;
+  },
+
+  resize(w, h){
+    if (!this.ok) return;
+    this.W = w; this.H = h;
+    this.bW = Math.max(2, w >> 1); this.bH = Math.max(2, h >> 1);
+    for (const k in this.fb){
+      if (this.fb[k]){ gl.deleteTexture(this.fb[k].t); gl.deleteFramebuffer(this.fb[k].f); }
+    }
+    this.fb = {
+      scene:  this.makeTarget(w, h),
+      bright: this.makeTarget(this.bW, this.bH),
+      ping:   this.makeTarget(this.bW, this.bH),
+      pong:   this.makeTarget(this.bW, this.bH),
+      shaft:  this.makeTarget(this.bW, this.bH)
+    };
+    if (Object.keys(this.fb).some(k => !this.fb[k])) this.ok = false;
+  },
+
+  bind(tex, unit, loc){
+    gl.activeTexture(gl.TEXTURE0 + unit);
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.uniform1i(loc, unit);
+  },
+
+  pass(prog, target, setup){
+    gl.bindFramebuffer(gl.FRAMEBUFFER, target ? target.f : null);
+    gl.viewport(0, 0, target ? target.w : this.W, target ? target.h : this.H);
+    gl.useProgram(prog.p);
+    setup(prog.u);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+  },
+
+  blur(src, dst, radius){
+    this.pass(this.prog.blur, dst, u => {
+      this.bind(src.t, 0, u.uTex);
+      gl.uniform2f(u.uDir, radius / this.bW, 0);
+    });
+    const tmp = dst === this.fb.ping ? this.fb.pong : this.fb.ping;
+    this.pass(this.prog.blur, tmp, u => {
+      this.bind(dst.t, 0, u.uTex);
+      gl.uniform2f(u.uDir, 0, radius / this.bH);
+    });
+    return tmp;
+  },
+
+  render(p){
+    if (!this.ok) return;
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.quad);
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+
+    gl.bindTexture(gl.TEXTURE_2D, this.texScene);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, sceneCv);
+
+    this.pass(this.prog.reflect, this.fb.scene, u => {
+      this.bind(this.texScene, 0, u.uTex);
+      gl.uniform1f(u.uGround, 1 - GROUND_Y / VIEW_H);
+      gl.uniform1f(u.uTime, p.time);
+    });
+
+    this.pass(this.prog.bright, this.fb.bright, u => {
+      this.bind(this.fb.scene.t, 0, u.uTex);
+      gl.uniform1f(u.uThresh, 0.25);
+    });
+
+    let bloom = this.blur(this.fb.bright, this.fb.ping, 1.4);
+    bloom = this.blur(bloom, bloom === this.fb.ping ? this.fb.pong : this.fb.ping, 3.4);
+
+    this.pass(this.prog.shaft, this.fb.shaft, u => {
+      this.bind(this.fb.bright.t, 0, u.uTex);
+      gl.uniform2f(u.uOrigin, 0.78, 1 - 96 / VIEW_H);
+    });
+
+    this.pass(this.prog.comp, null, u => {
+      this.bind(this.fb.scene.t, 0, u.uScene);
+      this.bind(bloom.t,         1, u.uBloom);
+      this.bind(this.fb.shaft.t, 2, u.uShaft);
+      gl.uniform2f(u.uRes, this.W, this.H);
+      gl.uniform1f(u.uTime,  p.time);
+      gl.uniform1f(u.uGod,   p.god);
+      gl.uniform1f(u.uFlow,  p.flow);
+      gl.uniform1f(u.uHit,   p.hit);
+      gl.uniform1f(u.uGrain, p.grain);
+    });
+  }
+};
+
+/* A canvas can never hand back a 2D context once it has given out a WebGL one,
+   so the fallback has to swap in a fresh element rather than re-ask this one. */
+function initRenderer(){
+  try {
+    gl = view.getContext("webgl", {
+      alpha: false, antialias: false, depth: false, stencil: false,
+      preserveDrawingBuffer: false, powerPreference: "high-performance"
+    });
+  } catch (e){ gl = null; }
+
+  if (gl && Post.init()){
+    usingGL = true;
+    view.addEventListener("webglcontextlost", e => e.preventDefault());
+    sceneCv = document.createElement("canvas");
+    g = sceneCv.getContext("2d");
+    return;
+  }
+
+  gl = null; usingGL = false;
+  const fresh = document.createElement("canvas");
+  fresh.id = "game";
+  view.parentNode.replaceChild(fresh, view);
+  view = fresh;
+  sceneCv = view;
+  g = view.getContext("2d");
+}
+
 function resize(){
-  const r = cv.getBoundingClientRect();
-  DPR = Math.min(2, window.devicePixelRatio || 1);
-  cv.width  = Math.max(1, Math.round(r.width  * DPR));
-  cv.height = Math.max(1, Math.round(r.height * DPR));
+  const r = view.getBoundingClientRect();
+  DPR = Math.min(usingGL ? 1.5 : 2, window.devicePixelRatio || 1);
+  const w = Math.max(1, Math.round(r.width  * DPR));
+  const h = Math.max(1, Math.round(r.height * DPR));
+  view.width = w; view.height = h;
+  hudCv.width = w; hudCv.height = h;
+  if (usingGL){
+    sceneCv.width = w; sceneCv.height = h;
+    Post.resize(w, h);
+    if (!Post.ok) usingGL = false;   // nothing to composite with; scene stays hidden
+  }
   VIEW_W = VIEW_H * (r.width / Math.max(1, r.height));
 }
 window.addEventListener("resize", resize);
@@ -1222,7 +1521,60 @@ function drawSkyline(sc, par, colW, baseY, hMin, hMax, fill, seed, windows){
           }
         }
       }
+
+      // A vertical neon hanging off the face. Invented glyphs — no real script,
+      // no real words. These are the brightest thing in the frame and they are
+      // what the bloom and the wet floor feed on.
+      if (hashf(idx * 31.4 + seed) > 0.58){
+        const nx = x + colW * 0.52;
+        const ny = baseY - h + 30;
+        const rows = 2 + Math.floor(hashf(idx * 17.9 + seed) * 3);
+        const neon = hashf(idx * 23.3 + seed) > 0.5 ? "#3FD9A0" : "#FF7A3C";
+        g.fillStyle = "rgba(6,9,14,0.85)";
+        g.fillRect(nx - 14, ny - 10, 28, rows * 24 + 16);
+        g.fillStyle = neon;
+        for (let k = 0; k < rows; k++){
+          const gy = ny + k * 24, v = hashf(idx * 7.1 + k * 3.3 + seed);
+          g.fillRect(nx - 9, gy, 18, 3);
+          g.fillRect(nx - 2, gy, 3, 16);
+          if (v > 0.5) g.fillRect(nx - 9, gy + 13, 18, 3);
+          if (v > 0.75){ g.fillRect(nx - 9, gy + 5, 5, 3); g.fillRect(nx + 4, gy + 5, 5, 3); }
+        }
+      }
       g.fillStyle = fill;
+    }
+  }
+}
+
+// Haze sitting between the parallax planes. Cheap, and it is most of what
+// separates "layered flats" from "there is air in this city".
+function fogBand(topY, h, rgb, alpha){
+  const f = g.createLinearGradient(0, topY, 0, topY + h);
+  f.addColorStop(0, "rgba(" + rgb + ",0)");
+  f.addColorStop(1, "rgba(" + rgb + "," + alpha + ")");
+  g.fillStyle = f;
+  g.fillRect(0, topY, VIEW_W, h);
+}
+
+// Near-black shapes crossing in front of everything, including the disciple.
+// Kept low so they never hide the play line.
+function drawForeground(sc){
+  const par = 1.75, off = sc * par, colW = 1150;
+  const first = Math.floor(off / colW) - 1;
+  for (let i = 0; i < Math.ceil(VIEW_W / colW) + 3; i++){
+    const idx = first + i;
+    const x = idx * colW - off;
+    g.fillStyle = "#04060A";
+    if (hashf(idx * 11.7) > 0.5){
+      g.fillRect(x, VIEW_H - 58, 170, 58);            // a parapet corner
+      g.fillRect(x - 16, VIEW_H - 70, 202, 14);
+      g.fillStyle = "rgba(56,68,90,0.5)";
+      g.fillRect(x - 16, VIEW_H - 71, 202, 1.5);
+    } else {
+      g.beginPath();                                   // a satellite dish rim
+      g.arc(x + 90, VIEW_H + 26, 86, Math.PI, 0);
+      g.fill();
+      g.fillRect(x + 82, VIEW_H - 78, 16, 60);
     }
   }
 }
@@ -1327,7 +1679,7 @@ function drawBeatRuler(){
   g.fillRect(playerX() - 1, GROUND_Y - 196, 2, 196);
 }
 
-let rain = [];
+let rain = [], motes = [], steam = [], splash = [];
 function initRain(){
   rain = [];
   const n = REDUCED ? 22 : 110;
@@ -1335,13 +1687,71 @@ function initRain(){
     rain.push({ x: Math.random() * 1400, y: Math.random() * VIEW_H,
                 s: 380 + Math.random() * 420, l: 12 + Math.random() * 20 });
   }
+  motes = [];
+  const m = REDUCED ? 8 : 40;
+  for (let i = 0; i < m; i++){
+    motes.push({ x: Math.random() * 1400, y: Math.random() * GROUND_Y,
+                 r: 0.8 + Math.random() * 1.9,
+                 vx: -14 - Math.random() * 26, vy: -3 - Math.random() * 9,
+                 ph: Math.random() * 6.2832 });
+  }
+  steam.length = 0; splash.length = 0;
+}
+
+function puffSteam(){
+  if (REDUCED || steam.length > 40) return;
+  const x = VIEW_W * (0.12 + Math.random() * 0.95);
+  for (let i = 0; i < 3; i++){
+    steam.push({ x: x + (Math.random() - 0.5) * 22, y: GROUND_Y - 4,
+                 r: 5 + Math.random() * 8, v: 22 + Math.random() * 28,
+                 d: -10 - Math.random() * 16, life: 1 });
+  }
+}
+
+function drawAtmos(dt){
+  // dust hanging in the sodium light
+  for (const m of motes){
+    m.x += m.vx * dt; m.y += m.vy * dt; m.ph += dt * 1.4;
+    if (m.x < -20){ m.x = VIEW_W + 20; m.y = Math.random() * GROUND_Y; }
+    if (m.y < -20){ m.y = GROUND_Y; }
+    g.fillStyle = "rgba(214,188,142," + (0.10 + Math.sin(m.ph) * 0.06).toFixed(3) + ")";
+    g.beginPath();
+    g.arc(m.x, m.y + Math.sin(m.ph) * 6, m.r, 0, 6.2832);
+    g.fill();
+  }
+  // roof vents breathing on the downbeat
+  for (let i = steam.length - 1; i >= 0; i--){
+    const s = steam[i];
+    s.y -= s.v * dt; s.x += s.d * dt; s.r += dt * 26; s.life -= dt * 0.42;
+    if (s.life <= 0){ steam.splice(i, 1); continue; }
+    g.fillStyle = "rgba(148,168,196," + (s.life * 0.07).toFixed(3) + ")";
+    g.beginPath(); g.arc(s.x, s.y, s.r, 0, 6.2832); g.fill();
+  }
+  // where the rain lands
+  for (let i = splash.length - 1; i >= 0; i--){
+    const s = splash[i];
+    s.life -= dt * 4.6;
+    if (s.life <= 0){ splash.splice(i, 1); continue; }
+    g.strokeStyle = "rgba(186,212,240," + (s.life * 0.32).toFixed(3) + ")";
+    g.lineWidth = 1.2;
+    g.beginPath();
+    g.arc(s.x, s.y, (1 - s.life) * 9 + 1, 0, Math.PI, true);
+    g.stroke();
+  }
 }
 function drawRain(dt){
   g.strokeStyle = "rgba(180,205,230,0.16)"; g.lineWidth = 1;
   g.beginPath();
   for (const d of rain){
     d.y += d.s * dt; d.x -= d.s * 0.22 * dt;
-    if (d.y > VIEW_H){ d.y = -20; d.x = Math.random() * (VIEW_W + 300); }
+    if (d.y > VIEW_H){
+      d.y = -20;
+      if (!REDUCED && splash.length < 30 && Math.random() < 0.5){
+        splash.push({ x: d.x, y: GROUND_Y + Math.random() * (VIEW_H - GROUND_Y),
+                      life: 1 });
+      }
+      d.x = Math.random() * (VIEW_W + 300);
+    }
     if (d.x < -30) d.x = VIEW_W + 30;
     g.moveTo(d.x, d.y); g.lineTo(d.x - d.l * 0.22, d.y + d.l);
   }
@@ -1619,7 +2029,7 @@ function drawHUD(pulse){
     g.globalAlpha = Math.max(0, Math.min(1, p.life));
     g.fillStyle = p.color;
     g.font = '900 34px "Big Shoulders Display", sans-serif';
-    g.fillText(p.text, VIEW_W / 2, 118 + (1 - p.life) * -26 + i * 2);
+    g.fillText(p.text, VIEW_W / 2, 118 + (1 - p.life) * -26 + i * 30);
   });
   g.globalAlpha = 1;
 
@@ -1639,6 +2049,7 @@ function drawHUD(pulse){
 
 /* -------- frame ----------------------------------------------------------- */
 let lastT = performance.now();
+let lastPuffAt = -1;
 
 function frame(now){
   const dt = Math.min(0.05, (now - lastT) / 1000);
@@ -1654,8 +2065,14 @@ function frame(now){
     pulse = since < 0 ? 0 : Math.max(0, Math.min(1, 1 - since * 5.5));
   }
 
+  // steam on the downbeat — one puff per scheduled kick, not per frame
+  if (Game.mode === "play" && Game.pulseAt !== lastPuffAt && pulse > 0.4){
+    lastPuffAt = Game.pulseAt;
+    puffSteam();
+  }
+
   g.setTransform(DPR, 0, 0, DPR, 0, 0);
-  const scale = (cv.width / DPR) / VIEW_W;
+  const scale = (sceneCv.width / DPR) / VIEW_W;
   g.scale(scale, scale);
 
   const sh = REDUCED ? 0 : Game.shake;
@@ -1665,7 +2082,9 @@ function frame(now){
   const sc = scrollPx();
   drawSky(pulse);
   drawSkyline(sc, 0.14, 96,  GROUND_Y - 22, 70,  190, "#0C1119", 0.0, false);
+  fogBand(GROUND_Y - 210, 210, "26,34,52", 0.30);
   drawSkyline(sc, 0.38, 134, GROUND_Y - 8,  90,  228, "#10161F", 4.2, true);
+  fogBand(GROUND_Y - 150, 150, "48,32,30", 0.20);
   drawProps(sc);
   drawGround(sc);
   if (Game.mode === "play" || Game.mode === "over") drawBeatRuler();
@@ -1706,46 +2125,71 @@ function frame(now){
   }
   g.globalAlpha = 1;
 
+  drawAtmos(dt);
   drawRain(dt);
 
-  // GOD FLOW — gold ink blooms out of the disciple and floods the chamber
+  // GOD FLOW — gold ink blooms out of the disciple. Kept restrained here
+  // because the composite shader adds the bloom and the gold bias on top.
   if (Game.stemLevel >= 5 && Game.mode === "play"){
     const cx = playerX(), cy = GROUND_Y - P.height - 60;
     g.globalCompositeOperation = "screen";
-    const bloom = g.createRadialGradient(cx, cy, 10, cx, cy, VIEW_W * 0.55);
-    bloom.addColorStop(0,    "rgba(217,164,65," + (0.20 + pulse * 0.14).toFixed(3) + ")");
-    bloom.addColorStop(0.34, "rgba(217,164,65,0.055)");
+    const bloom = g.createRadialGradient(cx, cy, 10, cx, cy, VIEW_W * 0.5);
+    bloom.addColorStop(0,    "rgba(217,164,65," + (0.13 + pulse * 0.10).toFixed(3) + ")");
+    bloom.addColorStop(0.34, "rgba(217,164,65,0.035)");
     bloom.addColorStop(1,    "rgba(200,52,43,0)");
     g.fillStyle = bloom;
     g.fillRect(0, 0, VIEW_W, VIEW_H);
     g.globalCompositeOperation = "source-over";
 
-    // ink ring struck on each downbeat
     if (pulse > 0.04 && !REDUCED){
-      g.strokeStyle = "rgba(217,164,65," + (pulse * 0.34).toFixed(3) + ")";
+      g.strokeStyle = "rgba(217,164,65," + (pulse * 0.30).toFixed(3) + ")";
       g.lineWidth = 2.5 * pulse + 0.5;
       g.beginPath();
       g.arc(cx, cy, (1 - pulse) * 130 + 22, 0, 6.2832);
       g.stroke();
     }
   }
-  // flow stance tint
-  if (P.flowing){
-    g.fillStyle = "rgba(63,217,160,0.07)";
+
+  drawForeground(sc);
+
+  // Only paint a vignette by hand when there is no shader to do it properly.
+  if (!usingGL){
+    const vg = g.createRadialGradient(VIEW_W / 2, VIEW_H / 2, VIEW_H * 0.34,
+                                      VIEW_W / 2, VIEW_H / 2, VIEW_H * 0.95);
+    vg.addColorStop(0, "rgba(0,0,0,0)");
+    vg.addColorStop(1, "rgba(0,0,0,0.62)");
+    g.fillStyle = vg;
     g.fillRect(0, 0, VIEW_W, VIEW_H);
   }
 
-  // vignette
-  const vg = g.createRadialGradient(VIEW_W / 2, VIEW_H / 2, VIEW_H * 0.34,
-                                    VIEW_W / 2, VIEW_H / 2, VIEW_H * 0.95);
-  vg.addColorStop(0, "rgba(0,0,0,0)");
-  vg.addColorStop(1, "rgba(0,0,0,0.62)");
-  g.fillStyle = vg;
-  g.fillRect(0, 0, VIEW_W, VIEW_H);
-
   g.restore();
 
-  if (Game.mode === "play" || Game.mode === "over") drawHUD(pulse);
+  // ease the grade shifts so they read as lighting, not as a switch
+  const godT  = Game.stemLevel >= 5 && Game.mode === "play" ? 1 : 0;
+  const flowT = P.flowing ? 1 : 0;
+  Game.godMix  += (godT  - Game.godMix)  * Math.min(1, dt * 4.5);
+  Game.flowMix += (flowT - Game.flowMix) * Math.min(1, dt * 9);
+  Game.hitFlash = Math.max(0, Game.hitFlash - dt * 3.4);
+
+  if (usingGL){
+    Post.render({
+      time:  now / 1000,
+      god:   Game.godMix,
+      flow:  Game.flowMix,
+      hit:   Game.hitFlash,
+      // the record is dustier when the mix is bare — grain clears as you build
+      grain: (REDUCED ? 0.02 : 0.048) - Game.stemLevel * 0.005
+    });
+  }
+
+  // The HUD lives on its own layer above the post chain. Text stays crisp,
+  // and the bright pass never gets to chew on the UI.
+  hudG.setTransform(DPR, 0, 0, DPR, 0, 0);
+  hudG.clearRect(0, 0, hudCv.width, hudCv.height);
+  hudG.scale(scale, scale);
+  if (Game.mode === "play" || Game.mode === "over"){
+    const worldG = g; g = hudG; drawHUD(pulse); g = worldG;
+  }
 
   if (Game.mode === "play"){
     el("slate-bpm").textContent = Game.bpm.toFixed(1);
@@ -1835,6 +2279,7 @@ document.addEventListener("visibilitychange", () => {
 });
 
 /* -------- go -------------------------------------------------------------- */
+initRenderer();
 resize();
 initRain();
 try {
