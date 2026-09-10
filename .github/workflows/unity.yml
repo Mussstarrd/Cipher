@@ -3,21 +3,27 @@ name: Unity
 # Compiles game/ in the real editor and produces a playable Windows build as a
 # CI artifact (hard rule 6: releases are tagged CI artifacts only).
 #
-# Requires three repo secrets (see game/README.md "CI license"):
-#   UNITY_LICENSE  — contents of the Unity_v6000.x.ulf file
-#   UNITY_EMAIL    — Unity ID email
+# Licensing: Unity removed manual (.alf/.ulf) activation for Personal seats, so the
+# classic game-ci UNITY_LICENSE route is dead. We use the buildalon actions, which
+# activate a Personal license through the Unity Licensing Client with just:
+#   UNITY_USERNAME — Unity ID email
 #   UNITY_PASSWORD — Unity ID password
-# Until they exist the build job is skipped (not failed) so the branch stays green.
+# Until those repo secrets exist the build job is skipped (not failed).
+# See game/README.md "CI license".
 
 on:
   push:
     branches: ["**"]
     tags: ["v*"]
   pull_request:
+  workflow_dispatch:
 
 concurrency:
   group: unity-${{ github.ref }}
   cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
   gate:
@@ -28,52 +34,64 @@ jobs:
     steps:
       - id: check
         env:
-          HAS_LICENSE: ${{ secrets.UNITY_LICENSE != '' && secrets.UNITY_EMAIL != '' && secrets.UNITY_PASSWORD != '' }}
+          HAS_LICENSE: ${{ secrets.UNITY_USERNAME != '' && secrets.UNITY_PASSWORD != '' }}
         run: |
           echo "ready=$HAS_LICENSE" >> "$GITHUB_OUTPUT"
           if [ "$HAS_LICENSE" != "true" ]; then
-            echo "::warning::UNITY_LICENSE / UNITY_EMAIL / UNITY_PASSWORD not set — Unity build skipped."
+            echo "::warning::UNITY_USERNAME / UNITY_PASSWORD not set — Unity build skipped."
           fi
 
   build:
-    name: Build ${{ matrix.targetPlatform }}
+    name: Build ${{ matrix.build-target }}
     needs: gate
     if: needs.gate.outputs.ready == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
-        targetPlatform:
-          - StandaloneWindows64
+        include:
+          - os: windows-latest
+            build-target: StandaloneWindows64
     steps:
       - uses: actions/checkout@v4
+
+      - name: Install Unity (version from ProjectVersion.txt)
+        uses: buildalon/unity-setup@v2
+        id: unity-setup
         with:
-          fetch-depth: 0 # semantic versioning reads tag history
+          version-file: game/ProjectSettings/ProjectVersion.txt
+          build-targets: ${{ matrix.build-target }}
+          cache-installation: true
+
+      - name: Activate Unity Personal license
+        uses: buildalon/activate-unity-license@v2
+        with:
+          license: Personal
+          username: ${{ secrets.UNITY_USERNAME }}
+          password: ${{ secrets.UNITY_PASSWORD }}
 
       - name: Cache Library
         uses: actions/cache@v4
         with:
           path: game/Library
-          key: unity-library-${{ matrix.targetPlatform }}-${{ hashFiles('game/Packages/packages-lock.json', 'game/ProjectSettings/**') }}
+          key: unity-library-${{ matrix.build-target }}-${{ hashFiles('game/Packages/packages-lock.json', 'game/ProjectSettings/**') }}
           restore-keys: |
-            unity-library-${{ matrix.targetPlatform }}-
+            unity-library-${{ matrix.build-target }}-
 
-      - name: Build
-        uses: game-ci/unity-builder@v4
-        env:
-          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
-          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
-          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+      - name: Build player
+        uses: buildalon/unity-action@v3
         with:
-          projectPath: game
-          targetPlatform: ${{ matrix.targetPlatform }}
-          buildName: CipherDeadTurf
-          versioning: Semantic
-          allowDirtyBuild: true
+          editor-path: ${{ steps.unity-setup.outputs.unity-editor-path }}
+          project-path: ${{ github.workspace }}/game
+          build-target: ${{ matrix.build-target }}
+          log-name: Build-${{ matrix.build-target }}
+          args: -quit -batchmode -nographics -executeMethod Cipher.Game.Editor.CiBuild.BuildWindows -buildPath "${{ github.workspace }}/Builds/${{ matrix.build-target }}"
 
       - name: Upload build
         uses: actions/upload-artifact@v4
         with:
-          name: CipherDeadTurf-${{ matrix.targetPlatform }}-${{ github.sha }}
-          path: build/${{ matrix.targetPlatform }}
+          name: CipherDeadTurf-${{ matrix.build-target }}-${{ github.sha }}
+          path: Builds/${{ matrix.build-target }}
           retention-days: 14
+          if-no-files-found: error

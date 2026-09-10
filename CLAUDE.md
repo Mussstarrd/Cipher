@@ -47,6 +47,7 @@ dotnet run --project sim/tools/Cipher.Sim.Bench -c Release -- --smoke
 - **`GridMap.CellIndex` throws on out-of-bounds** (silent aliasing corrupted the opposite edge pre-review). Bounds-check before calling with untrusted coordinates.
 - Movement mirrors the flow field's corner-cut rule (`AgentWorld.CanTravel`) and caps displacement at 0.9 cells/tick — don't "optimize" either away; regression tests in `ReviewRegressionTests.cs`.
 - Unity's default New Scene template ships its own MainCamera — the bootstrap disables foreign cameras and must aim through its own camera reference, never `Camera.main`.
+- **Unity Personal has no manual (.alf/.ulf) activation any more** — game-ci's `UNITY_LICENSE` path is dead. CI activates with `buildalon/activate-unity-license` (email + password only, no 2FA on the ID). `Shader.Find("Standard")` needs Standard in Always Included Shaders or player builds go magenta (done in `GraphicsSettings.asset`).
 - Adversarial review process (3 parallel agents: sim QA, scaffold audit, design red-team) found 1 compile blocker + 3 sim bugs + 12 design holes on first run — rerun this pattern after every major layer lands.
 
 ## Open decisions
@@ -61,4 +62,5 @@ dotnet run --project sim/tools/Cipher.Sim.Bench -c Release -- --smoke
 - **`game/` compiled clean on first open (2026-09-10, Unity 6000.0.83f1)** — zero code fixes. Owner's laptop: Hub 3.21 (MSIX, lives under `WindowsApps`, not Program Files), editor at `C:\Program Files\Unity\Hub\Editor\6000.0.83f1\Editor\Unity.exe`, Android SDK/NDK/JDK installed. No .NET SDK locally — `dotnet test` still runs only in CI. Headless import/compile recipe is in `game/README.md`; use it to verify `game/` edits before handing the owner a build.
 - ProjectSettings, `packages-lock.json`, all `.meta`s and `Assets/Scenes/Flood.unity` are committed. Active Input Handling = Input System Package. Package Manager resolved Input System to 1.19.0 / test-framework 1.6.0.
 - **First owner playtest recorded:** `docs/feedback/2026-09-10-m1-flood-first-play.md` (**~1,000 fps at 1,000 agents** in Editor Play mode on the owner laptop; airstrike "feel" not yet described).
-- **Next engineering:** game-ci workflow (license secret from owner) → hero capsule with movement/aim on right stick → barricade build-mode with live path preview (Milestone 2).
+- **Unity CI:** `.github/workflows/unity.yml` builds a Windows player artifact (verified locally: 87 MB, ~80 s) and self-skips until `UNITY_USERNAME`/`UNITY_PASSWORD` secrets exist.
+- **Next engineering:** owner sets the two secrets → first green Unity build → hero capsule with movement/aim on right stick → barricade build-mode with live path preview (Milestone 2).

@@ -29,19 +29,20 @@ Unity.exe -batchmode -nographics -projectPath game -executeMethod Cipher.Game.Ed
 
 ## CI license (one-time owner setup)
 
-`.github/workflows/unity.yml` builds a Windows executable in game-ci Docker images and uploads it as an artifact. It skips itself until three repo secrets exist:
+`.github/workflows/unity.yml` installs the editor on a Windows runner, activates a **Unity Personal** license, runs `Cipher.Game.Editor.CiBuild.BuildWindows`, and uploads the result as an artifact. It skips itself until two repo secrets exist:
 
 | Secret | Value |
 | --- | --- |
-| `UNITY_LICENSE` | full contents of `Unity_v6000.x.ulf` (from https://license.unity3d.com/manual, fed the `.alf` produced by `Unity.exe -batchmode -nographics -createManualActivationFile`) |
-| `UNITY_EMAIL` | Unity ID email |
+| `UNITY_USERNAME` | Unity ID email |
 | `UNITY_PASSWORD` | Unity ID password |
 
-Set them with `gh secret set NAME < file` / `gh secret set NAME` (prompts). The `.ulf` is tied to the machine that made the `.alf`; regenerate both if it stops activating. Personal licenses need re-issuing roughly yearly.
+Set them with `gh secret set UNITY_USERNAME` / `gh secret set UNITY_PASSWORD` (each prompts for the value). **Unity no longer offers manual `.alf`/`.ulf` activation for Personal seats** (the manual page now says "not eligible to activate your license offline"), which is why the game-ci `UNITY_LICENSE` route is not used. If the Unity ID has two-factor auth enabled, activation in CI will fail — use an ID without it, or a dedicated CI Unity ID.
+
+`CiBuild` also has a `BuildAndroid` entry point (menu **Cipher/Build/Android APK**); the workflow matrix grows an Android row once the first APK is validated on a device.
 
 ## Known first-APK caveats (handled when we get there)
 
-- The `Standard` shader is referenced by code (`Shader.Find`); device builds need it in *Project Settings → Graphics → Always Included Shaders* or it strips to magenta. Editor Play mode is unaffected.
+- The `Standard` shader is referenced by code (`Shader.Find`), so it is pinned in *Project Settings → Graphics → Always Included Shaders* (fileID 46 in `GraphicsSettings.asset`). Remove it and every player build renders magenta while Editor Play mode looks fine.
 - Android build settings (IL2CPP/ARM64, landscape, target SDK) get committed as ProjectSettings once the editor has generated them.
 
 ## Layout
@@ -50,4 +51,5 @@ Set them with `gh secret set NAME < file` / `gh secret set NAME` (prompts). The 
 - `Assets/Scripts/Cipher.Game.asmdef` — game assembly; references `Cipher.Sim` + Input System
 - `Assets/Scripts/Bootstrap/FloodBootstrap.cs` — Milestone 1 entry point (procedural scene, fixed-tick sim loop, instanced rendering, input)
 - `Assets/Editor/FirstOpenSetup.cs` — headless scene creation / Build Settings registration
+- `Assets/Editor/CiBuild.cs` — player build entry points used by CI (`-executeMethod … -buildPath <dir>`)
 - `Assets/Scenes/Flood.unity` — empty scene; the bootstrap populates it at Play
