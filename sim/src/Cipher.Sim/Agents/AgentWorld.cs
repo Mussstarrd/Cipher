@@ -292,6 +292,31 @@ namespace Cipher.Sim.Agents
             return best;
         }
 
+        /// <summary>
+        /// The living agent physically closest to a point (lowest id on ties), or -1. Mobile shooters
+        /// want the nearest body; static turrets want the one closest to the vault (FindFirstInRange).
+        /// </summary>
+        public int FindNearestInRange(Vec2 center, float radius)
+        {
+            RebuildHashIfDirty();
+            _queryScratch.Clear();
+            _hash.QueryCircle(center, radius, _queryScratch);
+            int best = -1;
+            float bestDistSq = float.PositiveInfinity;
+            foreach (int hashId in _queryScratch)
+            {
+                int id = _hashToAgent[hashId];
+                if (!_alive[id]) continue;
+                float distSq = Vec2.DistanceSquared(center, new Vec2(_posX[id], _posY[id]));
+                if (distSq < bestDistSq || (distSq == bestDistSq && id < best))
+                {
+                    bestDistSq = distSq;
+                    best = id;
+                }
+            }
+            return best;
+        }
+
         /// <summary>The grid this world walks on (build validation, preview).</summary>
         public GridMap Map => _map;
 
