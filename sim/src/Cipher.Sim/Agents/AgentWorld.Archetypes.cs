@@ -76,6 +76,7 @@ namespace Cipher.Sim.Agents
         private readonly Dictionary<int, SapperPlan> _plans = new Dictionary<int, SapperPlan>();
         private readonly List<Breach> _breaches = new List<Breach>(8);
         private readonly List<SimEvent> _events = new List<SimEvent>(32);
+        private readonly List<int> _planScratch = new List<int>(8);
         private int[]? _bfsDist;
         private int[]? _bfsParent;
         private int[]? _bfsQueue;
@@ -365,8 +366,50 @@ namespace Cipher.Sim.Agents
 
         // ---------------------------------------------------------------- breaches
 
+        /// <summary>Drops plans belonging to Sappers that died (or finished and became runners).</summary>
+        private void PruneDeadPlans()
+        {
+            if (_plans.Count == 0) return;
+            _planScratch.Clear();
+            foreach (var kv in _plans)
+                if (!_alive[kv.Key] || _archetype[kv.Key] != (byte)Archetype.Sapper) _planScratch.Add(kv.Key);
+            foreach (int id in _planScratch) _plans.Remove(id);
+        }
+
+        /// <summary>
+        /// Every gated cell on the map must be widening, whoever opened it. Tracking only what the
+        /// Sapper registered left holes that never progressed (and so could never be understood or
+        /// repaired) whenever a breach arrived by another route. The invariant is cheap to check:
+        /// one tracked breach per gate cell.
+        /// </summary>
+        private void ReconcileBreaches()
+        {
+            if (_breaches.Count == _map.GateCount) return;
+
+            for (int b = _breaches.Count - 1; b >= 0; b--)
+            {
+                int c = _breaches[b].Cell;
+                if (!_map.IsGate(c % _map.Width, c / _map.Width)) _breaches.RemoveAt(b);
+            }
+            if (_breaches.Count == _map.GateCount) return;
+
+            for (int y = 0; y < _map.Height; y++)
+            {
+                for (int x = 0; x < _map.Width; x++)
+                {
+                    if (!_map.IsGate(x, y)) continue;
+                    int cell = y * _map.Width + x;
+                    bool tracked = false;
+                    foreach (var b in _breaches) if (b.Cell == cell) { tracked = true; break; }
+                    if (!tracked) _breaches.Add(new Breach { Cell = cell, Timer = _config.BreachStageSeconds });
+                }
+            }
+        }
+
         private void AdvanceBreaches(float dt)
         {
+            ReconcileBreaches();
+
             for (int b = _breaches.Count - 1; b >= 0; b--)
             {
                 var br = _breaches[b];

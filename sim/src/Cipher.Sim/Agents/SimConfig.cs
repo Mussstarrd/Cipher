@@ -18,6 +18,13 @@ namespace Cipher.Sim.Agents
 
         public float RunnerHealth { get; set; } = 10f;
 
+        /// <summary>
+        /// Neighbours sampled per spatial-hash cell when computing separation. Bounds the swarm's
+        /// per-agent cost when a throttled breach piles the whole wave into a few cells; without it
+        /// the cost is quadratic in the pile size and the frame loop death-spirals.
+        /// </summary>
+        public int SeparationNeighborsPerCell { get; set; } = 4;
+
         // ---- Sapper (docs/design/breach-and-repair.md) ----
         public float SapperHealth { get; set; } = 60f;
         public float SapperSpeed { get; set; } = 2.4f;

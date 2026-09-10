@@ -139,6 +139,8 @@ namespace Cipher.Game
         private bool _wasDown;
         private bool _strikeWasInbound;
         private float _hurtCooldown;
+        private float _hordePollTimer;
+        private float _hordeIntensity;
 
         // ---- ui ----
         private float _smoothedFps = 60f;
@@ -395,7 +397,8 @@ namespace Cipher.Game
             // Fixed-tick sim, decoupled from render rate.
             _tickAccumulator += dt;
             int safety = 0;
-            while (_tickAccumulator >= TickDt && safety++ < 8)
+            // At most 4 catch-up ticks: a slow frame must never buy itself more sim work than it can pay for.
+            while (_tickAccumulator >= TickDt && safety++ < 4)
             {
                 _tickAccumulator -= TickDt;
                 FixedTick();
@@ -432,10 +435,16 @@ namespace Cipher.Game
             if (_hero.StrikeInbound && !_strikeWasInbound) _sfx.Play(Sfx.StrikeWhistle, 0.8f, 0.03f);
             _strikeWasInbound = _hero.StrikeInbound;
 
-            // Horde bed: how much of the flood is close to the hero.
-            int near = _world.CountWithin(_hero.Position, 14f);
-            float intensity = Mathf.Clamp01(near / 60f) * 0.75f + Mathf.Clamp01(_world.AliveCount / 1000f) * 0.25f;
-            _sfx.SetHordeIntensity(intensity);
+            // Horde bed: how much of the flood is close to the hero. The wide query touches many
+            // hash cells, so it runs 4x a second, not every frame.
+            _hordePollTimer -= dt;
+            if (_hordePollTimer <= 0f)
+            {
+                _hordePollTimer = 0.25f;
+                int near = _world.CountWithin(_hero.Position, 14f);
+                _hordeIntensity = Mathf.Clamp01(near / 60f) * 0.75f + Mathf.Clamp01(_world.AliveCount / 1000f) * 0.25f;
+            }
+            _sfx.SetHordeIntensity(_hordeIntensity);
             _sfx.Update(dt);
         }
 

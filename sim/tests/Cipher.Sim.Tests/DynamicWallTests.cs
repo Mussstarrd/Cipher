@@ -80,7 +80,14 @@ namespace Cipher.Sim.Tests
         [InlineData(BreachStage.Broken, 3f)]
         public void Gate_AdmitsAtMostRatePerSecond(BreachStage stage, float ratePerSecond)
         {
-            var (map, _, world) = Corridor();
+            // Isolate admission rate: freeze the stage so widening cannot muddy the count.
+            var map = new GridMap(20, 5);
+            for (int y = 0; y < 5; y++) map.SetWall(10, y, WallKind.Barricade, GridMap.DefaultWallHp);
+            var field = new FlowField(map);
+            field.Compute(18, 2);
+            var world = new AgentWorld(map, field,
+                new SimConfig { BreachStageSeconds = 10_000f, TrafficShaveSeconds = 0f }, initialCapacity: 256);
+
             map.Breach(10, 2);
             if (stage == BreachStage.Broken) map.Breach(10, 2);
             Assert.Equal(stage, map.StageAt(10, 2));

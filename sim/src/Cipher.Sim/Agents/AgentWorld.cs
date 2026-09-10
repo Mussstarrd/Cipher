@@ -132,6 +132,7 @@ namespace Cipher.Sim.Agents
             }
 
             AdvanceBreaches(dt);
+            PruneDeadPlans();
 
             // Positions changed; neighbor queries next tick need a fresh hash.
             _hashDirty = true;
@@ -363,7 +364,7 @@ namespace Cipher.Sim.Agents
         private Vec2 ComputeSeparation(int selfIndex, Vec2 pos)
         {
             _queryScratch.Clear();
-            _hash.QueryCircle(pos, _config.SeparationRadius, _queryScratch);
+            _hash.QueryCircle(pos, _config.SeparationRadius, _queryScratch, _config.SeparationNeighborsPerCell);
 
             Vec2 push = Vec2.Zero;
             foreach (int hashId in _queryScratch)

@@ -51,8 +51,17 @@ namespace Cipher.Sim.Spatial
             bucket.Add(id);
         }
 
-        /// <summary>Appends ids of all items within <paramref name="radius"/> of <paramref name="center"/> to <paramref name="results"/> (not cleared), in ascending id order per bucket scan.</summary>
-        public void QueryCircle(Vec2 center, float radius, List<int> results)
+        /// <summary>
+        /// Appends ids of all items within <paramref name="radius"/> of <paramref name="center"/> to
+        /// <paramref name="results"/> (not cleared), in ascending id order per bucket scan.
+        ///
+        /// <paramref name="maxPerCell"/> caps how many hits each grid cell may contribute. Queries that
+        /// need completeness (damage, ray casts, occupancy) leave it unbounded; the swarm's neighbour
+        /// avoidance caps it, because a throttled breach can pile hundreds of agents into one cell and
+        /// an uncapped scan there is quadratic in the pile size (it froze a live build on 2026-09-10).
+        /// Capping per cell rather than per query keeps neighbours sampled from every direction.
+        /// </summary>
+        public void QueryCircle(Vec2 center, float radius, List<int> results, int maxPerCell = int.MaxValue)
         {
             float radiusSq = radius * radius;
             int minX = CellCoord(center.X - radius);
@@ -65,10 +74,15 @@ namespace Cipher.Sim.Spatial
                 for (int cx = minX; cx <= maxX; cx++)
                 {
                     if (!_buckets.TryGetValue(Combine(cx, cy), out var bucket)) continue;
+                    int taken = 0;
                     foreach (int id in bucket)
                     {
+                        if (taken >= maxPerCell) break;
                         if (Vec2.DistanceSquared(_positions[id], center) <= radiusSq)
+                        {
                             results.Add(id);
+                            taken++;
+                        }
                     }
                 }
             }
