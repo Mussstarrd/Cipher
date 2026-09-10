@@ -12,10 +12,11 @@ are committed, so an open is just: Unity Hub → **Add → `game/`** → open wi
 set to *Input System Package*. Press **Play** in `Flood.unity` — the bootstrap builds the whole
 graybox at runtime.
 
-- **Xbox controller:** left stick move, right stick look (chase) / aim (tactical), **RT** fire, **Y** airstrike on the orange line where you are looking (6-24 cells; right stick tilts the camera), **hold LB** for the tactical overhead camera (look only, weapons hold — ADR-002), **Menu** pause, **A** restart when down. In the pause menu: stick / d-pad picks Resume or Quit, A confirms, B or Menu backs out.
-- **Keyboard / mouse:** WASD move, mouse look / aim, LMB fire, RMB or Q airstrike, hold Tab for tactical, Esc pause, Enter restart.
-- **The loop:** you are the gold capsule at the exit. Runners chew on you when they touch you (HP bar top-left). LMG kills a runner in two taps. Airstrike: look at the ground where you want it, press Y; after 1.2 s six bombs walk a 14x4 line from the far end toward you (8 s cooldown; standing in it hurts). The marker shrinks while it recharges and pulses while bombs are inbound. Down = "run it back".
-- **HUD** (top-left): fps, alive, breached, swarm kills (all sources), your kills, HP, airstrike readiness, camera mode. Desktop tops up toward 1,000 agents.
+- **Xbox controller (combat):** left stick move, right stick look, **RT** fire, **Y** airstrike on the orange line where you are looking (6-24 cells), **View** start the wave early, **Menu** pause, **A** get back up / run it back.
+- **Build mode:** tap **LB** to enter (overhead camera, weapons holstered). Left stick or d-pad moves the grid cursor, **A** places (hold and sweep to paint), **X** sells, **RB** switches Barricade / Sentry .50, **B** or LB leaves. Green dots are where each of the five spawns will path; red means that spawn cannot reach the vault (a full seal, allowed but you were warned).
+- **Keyboard / mouse:** WASD, mouse look, LMB fire, RMB or Q airstrike, Tab build (arrows, Space place, X sell, Q next item), Enter start wave, Esc pause.
+- **The loop:** five waves march from the left edge to the green vault on the right. Every runner that reaches the vault takes one point off it; at zero you lose. Kills from any source pay $5, clearing wave N pays $100 x N, you start with $400. Barricades $20, Sentry .50 $150 (range 10, 60 dps, shoots the runner closest to the vault). Selling refunds 100% between waves, 50% x remaining health mid-wave. You are the gold capsule: runners chew you on contact, LMG kills in two taps, airstrike walks six bombs down a 14x4 line.
+- **HUD** (top-left): fps / alive / breached / kills by source; cash, wave, phase and vault; HP and airstrike bars; build-mode item, cost and placement message.
 - Commit any new `.meta` files Unity generates (including inside `../sim/src/Cipher.Sim/`).
 
 ### Headless first-open / CI recipe
@@ -53,6 +54,8 @@ Set them with `gh secret set UNITY_USERNAME` / `gh secret set UNITY_PASSWORD` (e
 - `Packages/manifest.json` — dependencies; the sim core mounts as a local package (`com.cipher.sim`)
 - `Assets/Scripts/Cipher.Game.asmdef` — game assembly; references `Cipher.Sim` + Input System
 - `Assets/Scripts/Bootstrap/FloodBootstrap.cs` — Milestone 1 entry point (procedural scene, fixed-tick sim loop, instanced rendering, input, pause menu)
+- `Assets/Scripts/Match/MatchRules.cs` — cash, wave table, vault, win/lose (pure C#, tested)
+- `Assets/Scripts/Build/BuildModel.cs` — build cursor, place/sell/refund, route preview via the sim BuildValidator (pure C#, tested)
 - `Assets/Scripts/Hero/HeroModel.cs` — the Enforcer as pure state (movement via the shared `Movement` wall rule, hitscan via `AgentWorld.Raycast`, contact damage, airstrike); unit-tested
 - `Assets/Scripts/UI/PauseMenuModel.cs` — pause menu state, no UnityEngine, unit-tested
 - `Assets/Tests/EditMode/` — EditMode tests (`Cipher.Game.Tests.EditMode`); CI runs them before the build. Locally: `Unity.exe -batchmode -nographics -projectPath game -runTests -testPlatform EditMode -testResults out.xml`
