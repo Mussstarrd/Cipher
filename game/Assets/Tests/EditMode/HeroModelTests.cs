@@ -98,23 +98,71 @@ namespace Cipher.Game.Tests
         }
 
         [Test]
-        public void Airstrike_LandsAheadOnFacing_ThenCoolsDown()
+        public void AimStrike_ClampsToRangeBand_AndSetsAxis()
         {
-            var (_, world) = World();
             var cfg = new HeroConfig();
-            var hero = new HeroModel(cfg, new Vec2(5f, 5f));
-            hero.Aim(new Vec2(1f, 0f));
-            int inBlast = world.Spawn(new Vec2(5f + cfg.AirstrikeLead, 5f), 10f);
-            int outside = world.Spawn(new Vec2(5f + cfg.AirstrikeLead + cfg.AirstrikeRadius + 1f, 5f), 10f);
+            var hero = new HeroModel(cfg, new Vec2(10f, 10f));
 
-            Assert.IsTrue(hero.AirstrikeReady);
-            Assert.IsTrue(hero.TryAirstrike(world, out var center, out int kills));
-            Assert.AreEqual(1, kills);
-            Assert.AreEqual(5f + cfg.AirstrikeLead, center.X, 1e-4f);
-            Assert.IsFalse(world.IsAlive(inBlast));
-            Assert.IsTrue(world.IsAlive(outside));
+            hero.AimStrike(new Vec2(11f, 10f)); // 1 cell away: too close
+            Assert.AreEqual(10f + cfg.AirstrikeMinRange, hero.StrikeTarget.X, 1e-4f);
+
+            hero.AimStrike(new Vec2(10f, 100f)); // 90 cells away: too far
+            Assert.AreEqual(10f + cfg.AirstrikeMaxRange, hero.StrikeTarget.Y, 1e-4f);
+            Assert.AreEqual(0f, hero.StrikeAxis.X, 1e-5f);
+            Assert.AreEqual(1f, hero.StrikeAxis.Y, 1e-5f);
+
+            hero.AimStrike(new Vec2(22f, 10f)); // inside the band: exact
+            Assert.AreEqual(22f, hero.StrikeTarget.X, 1e-4f);
+        }
+
+        [Test]
+        public void Strike_WaitsForInboundDelay_ThenWalksBombsFarToNear()
+        {
+            var (_, world) = World(64);
+            var cfg = new HeroConfig();
+            var hero = new HeroModel(cfg, new Vec2(10f, 30f));
+            hero.AimStrike(new Vec2(30f, 30f)); // centre at x=30, line spans x=23..37
+            int farAgent = world.Spawn(new Vec2(37f, 30f), 10f);
+            int nearAgent = world.Spawn(new Vec2(23f, 30f), 10f);
+            int offLine = world.Spawn(new Vec2(30f, 34f), 10f); // 4 cells off-axis, radius is 2
+
+            Assert.IsTrue(hero.TryAirstrike());
+            Assert.IsTrue(hero.StrikeInbound);
+            Assert.IsFalse(hero.AirstrikeReady, "cooldown starts at the call");
+
+            var impacts = new System.Collections.Generic.List<StrikeImpact>();
+            Assert.AreEqual(0, hero.TickStrike(world, cfg.AirstrikeInboundDelay - 0.01f, impacts), "nothing lands before the delay");
+            Assert.IsTrue(world.IsAlive(farAgent));
+
+            Assert.AreEqual(1, hero.TickStrike(world, 0.02f, impacts), "first bomb lands at the far end");
+            Assert.IsFalse(world.IsAlive(farAgent));
+            Assert.IsTrue(world.IsAlive(nearAgent));
+            Assert.AreEqual(1, impacts.Count);
+            Assert.AreEqual(37f, impacts[0].Center.X, 1e-3f);
+
+            hero.TickStrike(world, cfg.AirstrikeBombInterval * (cfg.AirstrikeBombCount + 1), impacts);
+            Assert.IsFalse(hero.StrikeInbound);
+            Assert.AreEqual(cfg.AirstrikeBombCount, impacts.Count);
+            Assert.IsFalse(world.IsAlive(nearAgent), "last bomb lands at the near end");
+            Assert.IsTrue(world.IsAlive(offLine), "the line is only 4 cells wide");
+            Assert.AreEqual(2, hero.Kills);
+            Assert.AreEqual(23f, impacts[impacts.Count - 1].Center.X, 1e-3f);
+        }
+
+        [Test]
+        public void Strike_CannotDoubleCall_AndCoolsDown_AndHurtsHeroStandingInIt()
+        {
+            var (_, world) = World(64);
+            var cfg = new HeroConfig();
+            var hero = new HeroModel(cfg, new Vec2(10f, 30f));
+            hero.AimStrike(new Vec2(16f, 30f)); // min range: line spans x=9..23, hero at 10 is inside
+
+            Assert.IsTrue(hero.TryAirstrike());
+            Assert.IsFalse(hero.TryAirstrike(), "no second call while one is inbound");
+            hero.TickStrike(world, 10f, null);
+            Assert.IsFalse(hero.StrikeInbound);
+            Assert.Less(hero.Health, cfg.MaxHealth, "standing in your own strike hurts");
             Assert.IsFalse(hero.AirstrikeReady);
-            Assert.IsFalse(hero.TryAirstrike(world, out _, out _));
 
             hero.Tick(cfg.AirstrikeCooldown);
             Assert.IsTrue(hero.AirstrikeReady);
@@ -127,7 +175,7 @@ namespace Cipher.Game.Tests
             var (_, world) = World();
             var hero = new HeroModel(new HeroConfig(), new Vec2(5f, 5f));
             hero.TryFire(world, 0f, out _);
-            hero.TryAirstrike(world, out _, out _);
+            hero.TryAirstrike();
             for (int i = 0; i < 3; i++) world.Spawn(new Vec2(5f, 5f), 10f);
             hero.ApplyContact(world, 1000f);
             Assert.IsTrue(hero.IsDown);
@@ -137,6 +185,7 @@ namespace Cipher.Game.Tests
             Assert.AreEqual(1f, hero.HealthFraction, 1e-5f);
             Assert.AreEqual(1f, hero.Position.X, 1e-5f);
             Assert.IsTrue(hero.AirstrikeReady);
+            Assert.IsFalse(hero.StrikeInbound, "respawn cancels an inbound strike");
             Assert.AreEqual(0f, hero.FireCooldown);
         }
     }

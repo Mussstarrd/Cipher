@@ -1,5 +1,6 @@
 #nullable enable
 using System;
+using System.Collections.Generic;
 using Cipher.Sim.Agents;
 using Cipher.Sim.Core;
 using Cipher.Sim.Grid;
@@ -18,10 +19,17 @@ namespace Cipher.Game.Hero
         public float ContactRadius { get; set; } = 0.9f;      // runners inside this chew on you
         public float ContactDamagePerAgentPerSecond { get; set; } = 6f;
         public int ContactAgentCap { get; set; } = 8;         // being buried is lethal, not instant
-        public float AirstrikeCooldown { get; set; } = 6f;
-        public float AirstrikeRadius { get; set; } = 3.5f;
-        public float AirstrikeDamage { get; set; } = 50f;
-        public float AirstrikeLead { get; set; } = 8f;        // marker lands this far along facing
+        // Airstrike ultimate: a line of bombs along the look axis, aimed by looking (ROADMAP-2026-09 #1).
+        public float AirstrikeCooldown { get; set; } = 8f;
+        public float AirstrikeMinRange { get; set; } = 6f;    // marker clamps to this band from the hero
+        public float AirstrikeMaxRange { get; set; } = 24f;
+        public float AirstrikeLineLength { get; set; } = 14f; // bombs walk the line far to near
+        public int AirstrikeBombCount { get; set; } = 6;
+        public float AirstrikeBombRadius { get; set; } = 2f;  // 4-cell-wide line
+        public float AirstrikeBombDamage { get; set; } = 50f;
+        public float AirstrikeInboundDelay { get; set; } = 1.2f;
+        public float AirstrikeBombInterval { get; set; } = 0.12f;
+        public float AirstrikeSelfDamage { get; set; } = 25f; // standing in your own strike hurts
     }
 
     public readonly struct ShotResult
@@ -36,6 +44,15 @@ namespace Cipher.Game.Hero
         {
             Origin = origin; End = end; HitId = hitId; Killed = killed;
         }
+    }
+
+    /// <summary>One bomb of a strike that has landed this tick; the game layer draws it.</summary>
+    public readonly struct StrikeImpact
+    {
+        public readonly Vec2 Center;
+        public readonly float Radius;
+        public readonly int Kills;
+        public StrikeImpact(Vec2 center, float radius, int kills) { Center = center; Radius = radius; Kills = kills; }
     }
 
     /// <summary>
@@ -59,14 +76,28 @@ namespace Cipher.Game.Hero
         public float HealthFraction => Math.Max(0f, Health / _cfg.MaxHealth);
         public float AirstrikeReadyFraction => 1f - Math.Clamp(AirstrikeCooldown / _cfg.AirstrikeCooldown, 0f, 1f);
         public bool AirstrikeReady => AirstrikeCooldown <= 0f && !IsDown;
-        public Vec2 AirstrikeMarker => Position + Facing * _cfg.AirstrikeLead;
-        public float AirstrikeRadius => _cfg.AirstrikeRadius;
+
+        /// <summary>Where the strike line is centred: the last aim point, clamped to the range band.</summary>
+        public Vec2 StrikeTarget { get; private set; }
+        /// <summary>Unit axis of the strike line (hero toward target).</summary>
+        public Vec2 StrikeAxis { get; private set; } = new Vec2(1f, 0f);
+        public float StrikeLineLength => _cfg.AirstrikeLineLength;
+        public float StrikeLineWidth => _cfg.AirstrikeBombRadius * 2f;
+        /// <summary>True from the call until the last bomb lands.</summary>
+        public bool StrikeInbound => _strikeBombsLeft > 0;
+        public float StrikeTimeToImpact => Math.Max(0f, _strikeTimer);
+
+        private int _strikeBombsLeft;
+        private float _strikeTimer;   // counts down to the next bomb
+        private Vec2 _strikeFar;      // first bomb lands here
+        private Vec2 _strikeStep;     // per-bomb displacement toward the hero
 
         public HeroModel(HeroConfig config, Vec2 spawn)
         {
             _cfg = config ?? throw new ArgumentNullException(nameof(config));
             Position = spawn;
             Health = config.MaxHealth;
+            StrikeTarget = spawn + Facing * config.AirstrikeMinRange;
         }
 
         /// <summary>Cooldowns tick down here; call once per frame or sim tick with that dt.</summary>
@@ -131,16 +162,63 @@ namespace Cipher.Game.Hero
             return true;
         }
 
-        /// <summary>Airstrike ultimate stub: radial damage at the marker ahead of the hero.</summary>
-        public bool TryAirstrike(AgentWorld world, out Vec2 center, out int kills)
+        /// <summary>
+        /// Aim the strike at a world point (where the camera looks at the ground). The target is
+        /// clamped to the [min, max] range band from the hero; the line axis follows hero toward target.
+        /// </summary>
+        public void AimStrike(Vec2 aimPoint)
         {
-            center = AirstrikeMarker;
-            kills = 0;
-            if (!AirstrikeReady) return false;
+            Vec2 rel = aimPoint - Position;
+            float d = rel.Length;
+            Vec2 axis = d > 1e-4f ? rel * (1f / d) : Facing;
+            float clamped = Math.Clamp(d, _cfg.AirstrikeMinRange, _cfg.AirstrikeMaxRange);
+            StrikeAxis = axis;
+            StrikeTarget = Position + axis * clamped;
+        }
+
+        /// <summary>
+        /// Calls the strike on the current StrikeTarget: after the inbound delay, bombs walk the
+        /// line from the far end toward the hero. Returns false if not ready. Damage is applied
+        /// by <see cref="TickStrike"/> as each bomb lands.
+        /// </summary>
+        public bool TryAirstrike()
+        {
+            if (!AirstrikeReady || StrikeInbound) return false;
             AirstrikeCooldown = _cfg.AirstrikeCooldown;
-            kills = world.ApplyRadialDamage(center, _cfg.AirstrikeRadius, _cfg.AirstrikeDamage);
-            Kills += kills;
+
+            int n = Math.Max(1, _cfg.AirstrikeBombCount);
+            float half = _cfg.AirstrikeLineLength * 0.5f;
+            _strikeFar = StrikeTarget + StrikeAxis * half;
+            _strikeStep = n > 1 ? StrikeAxis * (-_cfg.AirstrikeLineLength / (n - 1)) : Vec2.Zero;
+            _strikeBombsLeft = n;
+            _strikeTimer = _cfg.AirstrikeInboundDelay;
             return true;
+        }
+
+        /// <summary>
+        /// Advances an inbound strike. Bombs that land this call are appended to
+        /// <paramref name="impacts"/> (may be null). Returns kills this call.
+        /// </summary>
+        public int TickStrike(AgentWorld world, float dt, List<StrikeImpact>? impacts)
+        {
+            if (_strikeBombsLeft <= 0 || dt <= 0f) return 0;
+            _strikeTimer -= dt;
+            int kills = 0;
+            int total = Math.Max(1, _cfg.AirstrikeBombCount);
+            while (_strikeBombsLeft > 0 && _strikeTimer <= 0f)
+            {
+                int index = total - _strikeBombsLeft;
+                Vec2 center = _strikeFar + _strikeStep * index;
+                int k = world.ApplyRadialDamage(center, _cfg.AirstrikeBombRadius, _cfg.AirstrikeBombDamage);
+                kills += k;
+                if (!IsDown && Vec2.DistanceSquared(center, Position) <= _cfg.AirstrikeBombRadius * _cfg.AirstrikeBombRadius)
+                    Health = Math.Max(0f, Health - _cfg.AirstrikeSelfDamage);
+                impacts?.Add(new StrikeImpact(center, _cfg.AirstrikeBombRadius, k));
+                _strikeBombsLeft--;
+                _strikeTimer += _cfg.AirstrikeBombInterval;
+            }
+            Kills += kills;
+            return kills;
         }
 
         /// <summary>Runners in contact chew on the hero. Returns damage taken this call.</summary>
@@ -160,6 +238,8 @@ namespace Cipher.Game.Hero
             Health = _cfg.MaxHealth;
             FireCooldown = 0f;
             AirstrikeCooldown = 0f;
+            _strikeBombsLeft = 0;
+            StrikeTarget = at + Facing * _cfg.AirstrikeMinRange;
         }
 
         private static Vec2 Rotate(Vec2 v, float degrees)

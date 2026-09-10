@@ -16,10 +16,11 @@ namespace Cipher.Game
     /// assets need authoring. Sim runs at a fixed 30Hz tick (deterministic core); the
     /// hero moves per frame but every effect on the swarm goes through AgentWorld.
     ///
-    /// Controls (Xbox): left stick move, right stick orbit camera (chase) / aim (tactical),
-    /// RT fire, Y airstrike at the marker ahead, hold LB for the tactical overhead camera
-    /// (look only — ADR-002: combat is chase-only), Menu pause, A restart when down. Keyboard/mouse: WASD, mouse orbit / aim, LMB fire,
-    /// RMB or Q airstrike, hold Tab tactical, Esc pause, Enter restart.
+    /// Controls (Xbox): left stick move, right stick orbit + tilt camera (chase) / aim (tactical),
+    /// RT fire, Y airstrike on the line marker where you are looking (6-24 cells), hold LB for
+    /// the tactical overhead camera (look only — ADR-002: combat is chase-only), Menu pause,
+    /// A restart when down. Keyboard/mouse: WASD, mouse look, LMB fire, RMB or Q airstrike,
+    /// hold Tab tactical, Esc pause, Enter restart.
     /// </summary>
     public static class FloodEntryPoint
     {
@@ -55,6 +56,7 @@ namespace Cipher.Game
         private Transform _heroT = null!;
         private Transform _barrelT = null!;
         private Transform _markerT = null!;
+        private readonly List<StrikeImpact> _impactScratch = new List<StrikeImpact>(8);
 
         private struct Tracer { public Vector3 A, B; public float Ttl; }
         private struct Blast { public Vector3 Center; public float Radius; public float Ttl; }
@@ -79,9 +81,11 @@ namespace Cipher.Game
         private enum CameraMode { Chase, Tactical }
         private Camera _camera = null!;
         private CameraMode _camMode = CameraMode.Chase;
-        private float _camYaw = -90f; // degrees; forward = (sin, 0, cos): -90 looks down -X, toward the flood
-        private const float ChaseDistance = 9f, ChaseHeight = 5f, ChaseLookHeight = 1.2f;
-        private const float StickYawSpeed = 170f, MouseYawPerPixel = 0.15f;
+        private float _camYaw = -90f;  // degrees; forward = (sin, 0, cos): -90 looks down -X, toward the flood
+        private float _camPitch = 22f; // degrees above horizontal; RS-Y tilts it (memo: -10..+55)
+        private const float ChaseDistance = 9f, ChaseLookHeight = 1.2f;
+        private const float PitchMin = -10f, PitchMax = 55f;
+        private const float StickYawSpeed = 170f, StickPitchSpeed = 90f, MouseYawPerPixel = 0.15f, MousePitchPerPixel = 0.1f;
 
         // ---- ui ----
         private float _smoothedFps = 60f;
@@ -174,8 +178,8 @@ namespace Cipher.Game
             barrel.GetComponent<Renderer>().material = MakeMaterial(new Color(0.12f, 0.12f, 0.12f), instanced: false);
             _barrelT = barrel.transform;
 
-            // Airstrike marker: flat orange disc where Y will land.
-            var marker = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            // Airstrike marker: flat orange bar showing the bomb line where Y will land.
+            var marker = GameObject.CreatePrimitive(PrimitiveType.Cube);
             marker.name = "StrikeMarker";
             Destroy(marker.GetComponent<Collider>());
             marker.GetComponent<Renderer>().material = MakeMaterial(new Color(1f, 0.55f, 0.1f), instanced: false);
@@ -286,10 +290,17 @@ namespace Cipher.Game
 
             if (_camMode == CameraMode.Chase)
             {
-                // Right stick / mouse X orbits; hero faces where the camera looks; movement is camera-relative.
+                // Right stick / mouse orbits and tilts; hero faces where the camera looks; movement is camera-relative.
                 float yawDelta = look.x * StickYawSpeed * dt;
-                if (mouse != null) yawDelta += mouse.delta.ReadValue().x * MouseYawPerPixel;
+                float pitchDelta = -look.y * StickPitchSpeed * dt;
+                if (mouse != null)
+                {
+                    Vector2 md = mouse.delta.ReadValue();
+                    yawDelta += md.x * MouseYawPerPixel;
+                    pitchDelta -= md.y * MousePitchPerPixel;
+                }
                 _camYaw += yawDelta;
+                _camPitch = Mathf.Clamp(_camPitch + pitchDelta, PitchMin, PitchMax);
                 camFwd = CameraForward();
                 camRight = new Vector3(camFwd.z, 0f, -camFwd.x);
 
@@ -322,6 +333,11 @@ namespace Cipher.Game
             }
 
             _hero.Tick(dt);
+            _hero.AimStrike(StrikeAimPoint());
+            _impactScratch.Clear();
+            _hero.TickStrike(_world, dt, _impactScratch);
+            foreach (var imp in _impactScratch)
+                _blasts.Add(new Blast { Center = ToWorld(imp.Center, 0.05f), Radius = imp.Radius, Ttl = BlastLife });
 
             // ADR-002: combat happens in chase. Tactical is for looking (and, next milestone, building).
             bool canFight = _camMode == CameraMode.Chase;
@@ -340,10 +356,24 @@ namespace Cipher.Game
             bool strike = canFight && ((pad != null && pad.buttonNorth.wasPressedThisFrame)
                        || (mouse != null && mouse.rightButton.wasPressedThisFrame)
                        || (kb != null && kb.qKey.wasPressedThisFrame));
-            if (strike && _hero.TryAirstrike(_world, out Vec2 center, out _))
+            if (strike) _hero.TryAirstrike();
+        }
+
+        /// <summary>Where the camera looks at the ground; falls back to max range along the look axis when looking at the sky.</summary>
+        private Vec2 StrikeAimPoint()
+        {
+            Vector3 origin = _camera.transform.position;
+            Vector3 dir = _camera.transform.forward;
+            if (dir.y < -1e-3f)
             {
-                _blasts.Add(new Blast { Center = ToWorld(center, 0.05f), Radius = _hero.AirstrikeRadius, Ttl = BlastLife });
+                float t = -origin.y / dir.y;
+                Vector3 hit = origin + dir * t;
+                return new Vec2(hit.x, hit.z);
             }
+            Vector3 flat = new Vector3(dir.x, 0f, dir.z);
+            if (flat.sqrMagnitude < 1e-6f) flat = CameraForward();
+            flat.Normalize();
+            return _hero.Position + new Vec2(flat.x, flat.z) * 100f; // clamped by AimStrike
         }
 
         private bool RestartPressed()
@@ -360,6 +390,7 @@ namespace Cipher.Game
             _hero.Respawn(HeroSpawn);
             _hero.Aim(new Vec2(-1f, 0f));
             _camYaw = -90f;
+            _camPitch = 22f;
             _tracers.Clear();
             _blasts.Clear();
             _tickAccumulator = 0f;
@@ -412,14 +443,18 @@ namespace Cipher.Game
             _heroT.gameObject.SetActive(true);
             _barrelT.gameObject.SetActive(!_hero.IsDown);
 
-            bool showMarker = !_hero.IsDown;
+            bool showMarker = !_hero.IsDown && _camMode == CameraMode.Chase;
             _markerT.gameObject.SetActive(showMarker);
             if (showMarker)
             {
-                Vec2 m = _hero.AirstrikeMarker;
-                float r = _hero.AirstrikeReady ? _hero.AirstrikeRadius : _hero.AirstrikeRadius * (0.25f + 0.75f * _hero.AirstrikeReadyFraction);
+                Vec2 m = _hero.StrikeTarget;
+                Vec2 ax = _hero.StrikeAxis;
+                // Full-size bar when ready; shrinks while charging; pulses while bombs are inbound.
+                float scale = _hero.StrikeInbound ? 1f + 0.15f * Mathf.Sin(Time.time * 40f)
+                            : _hero.AirstrikeReady ? 1f : 0.3f + 0.7f * _hero.AirstrikeReadyFraction;
                 _markerT.position = ToWorld(m, 0.03f);
-                _markerT.localScale = new Vector3(r * 2f, 0.01f, r * 2f);
+                _markerT.rotation = Quaternion.LookRotation(new Vector3(ax.X, 0f, ax.Y), Vector3.up);
+                _markerT.localScale = new Vector3(_hero.StrikeLineWidth * scale, 0.02f, _hero.StrikeLineLength * scale);
             }
         }
 
@@ -432,8 +467,12 @@ namespace Cipher.Game
             if (_camMode == CameraMode.Chase)
             {
                 Vector3 fwd = CameraForward();
-                targetPos = heroPos - fwd * ChaseDistance + Vector3.up * ChaseHeight;
-                targetRot = Quaternion.LookRotation((heroPos + Vector3.up * ChaseLookHeight) - targetPos, Vector3.up);
+                float pr = _camPitch * Mathf.Deg2Rad;
+                Vector3 pivot = heroPos + Vector3.up * ChaseLookHeight;
+                Vector3 offset = -fwd * (ChaseDistance * Mathf.Cos(pr)) + Vector3.up * (ChaseDistance * Mathf.Sin(pr));
+                targetPos = pivot + offset;
+                if (targetPos.y < 0.6f) targetPos.y = 0.6f; // never dip under the ground plane
+                targetRot = Quaternion.LookRotation(pivot - targetPos, Vector3.up);
             }
             else
             {
@@ -562,14 +601,14 @@ namespace Cipher.Game
             GUI.Label(new Rect(12, 8, 900, 28),
                 $"CIPHER graybox — fps {_smoothedFps:F0} | alive {_world.AliveCount} | breached {_world.ReachedCount} | swarm kills {_world.TotalKills} | your kills {_hero.Kills}");
             GUI.Label(new Rect(12, 32, 900, 28),
-                pad ? "LS move  RS look/aim  RT fire  Y airstrike  hold LB tactical cam  Menu pause"
-                    : "WASD move  mouse look/aim  LMB fire  RMB/Q airstrike  hold Tab tactical cam  Esc pause");
+                pad ? "LS move  RS look  RT fire  Y airstrike where you look  hold LB tactical cam  Menu pause"
+                    : "WASD move  mouse look  LMB fire  RMB/Q airstrike where you look  hold Tab tactical cam  Esc pause");
 
             // Health bar.
             DrawBar(new Rect(12, 60, 260, 18), _hero.HealthFraction, new Color(0.2f, 0.85f, 0.3f), new Color(0.6f, 0.1f, 0.1f), $"HP {_hero.Health:F0}");
             // Airstrike cooldown bar.
             DrawBar(new Rect(12, 84, 260, 14), _hero.AirstrikeReadyFraction, new Color(1f, 0.6f, 0.15f), new Color(0.3f, 0.2f, 0.1f),
-                _hero.AirstrikeReady ? "AIRSTRIKE READY" : "airstrike…");
+                _hero.StrikeInbound ? "STRIKE INBOUND" : _hero.AirstrikeReady ? "AIRSTRIKE READY — look, press Y" : "airstrike recharging");
 
             GUI.Label(new Rect(12, 104, 500, 24), _camMode == CameraMode.Chase ? "cam: chase (combat)" : "cam: tactical — look only, weapons hold (build mode lives here next)");
 
