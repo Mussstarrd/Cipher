@@ -7,20 +7,39 @@ using Cipher.Sim.Grid;
 
 namespace Cipher.Sim.Emplacements
 {
-    /// <summary>Graybox Sentry .50 numbers (docs/design/economy-towers-and-aiming.md B).</summary>
-    public sealed class TurretConfig
+    /// <summary>How a family delivers damage.</summary>
+    public enum FireMode
     {
-        public float Range { get; set; } = 10f;
-        public float DamagePerShot { get; set; } = 5f;
-        public float ShotsPerSecond { get; set; } = 12f;   // 60 dps
-        public ushort MaxHp { get; set; } = 300;
+        /// <summary>One target per shot: the living agent closest to the vault by flow-field cost.</summary>
+        Single = 0,
+        /// <summary>Everything inside the radius, every shot, no target cap.</summary>
+        Area = 1,
+    }
 
-        /// <summary>Upgrade ladder (Trap 7: data, so tiers can grow without touching code). Index = tier - 1.</summary>
-        public TurretTier[] Tiers { get; set; } =
+    /// <summary>
+    /// A tower family as data (docs/design/arsenal-and-terrain.md section 1). Adding a tower is a
+    /// catalogue entry, not code — Trap 7 in the blueprint is content-scaling debt, and the way out
+    /// is to keep every tower's numbers and upgrade ladder in a table.
+    /// </summary>
+    public sealed class TurretFamily
+    {
+        public string Name { get; }
+        public int Cost { get; }
+        public float Range { get; }
+        public float DamagePerShot { get; }
+        public float ShotsPerSecond { get; }
+        public ushort MaxHp { get; }
+        public FireMode Mode { get; }
+        public TurretTier[] Tiers { get; }
+
+        public float DamagePerSecond => DamagePerShot * ShotsPerSecond;
+
+        public TurretFamily(string name, int cost, float range, float damagePerShot, float shotsPerSecond,
+                            ushort maxHp, FireMode mode, TurretTier[] tiers)
         {
-            new TurretTier("Twin .50", cost: 120, damageMultiplier: 1.6f, rangeBonus: 0f, hpBonus: 100),
-            new TurretTier("Overwatch", cost: 200, damageMultiplier: 1f, rangeBonus: 4f, hpBonus: 100),
-        };
+            Name = name; Cost = cost; Range = range; DamagePerShot = damagePerShot;
+            ShotsPerSecond = shotsPerSecond; MaxHp = maxHp; Mode = mode; Tiers = tiers;
+        }
     }
 
     public sealed class TurretTier
@@ -37,10 +56,35 @@ namespace Cipher.Sim.Emplacements
         }
     }
 
+    /// <summary>The graybox tower catalogue. Replace with a loaded data file once scenarios land.</summary>
+    public static class TurretCatalog
+    {
+        /// <summary>Long reach, single target, picks the runner nearest the vault. Answers leakers down a lane.</summary>
+        public static TurretFamily Sentry { get; } = new TurretFamily(
+            "Sentry .50", cost: 150, range: 10f, damagePerShot: 5f, shotsPerSecond: 12f, maxHp: 300, FireMode.Single,
+            new[]
+            {
+                new TurretTier("Twin .50", cost: 120, damageMultiplier: 1.6f, rangeBonus: 0f, hpBonus: 100),
+                new TurretTier("Overwatch", cost: 200, damageMultiplier: 1f, rangeBonus: 4f, hpBonus: 100),
+            });
+
+        /// <summary>Short, all-round, hits everything at once. Wants to sit at a corner where the crowd bunches.</summary>
+        public static TurretFamily Grinder { get; } = new TurretFamily(
+            "Chop-Shop Rotor", cost: 120, range: 2.2f, damagePerShot: 2.75f, shotsPerSecond: 8f, maxHp: 260, FireMode.Area,
+            new[]
+            {
+                new TurretTier("Barbed Drum", cost: 110, damageMultiplier: 1.7f, rangeBonus: 0f, hpBonus: 90),
+                new TurretTier("Wide Throw", cost: 180, damageMultiplier: 1f, rangeBonus: 1f, hpBonus: 90),
+            });
+
+        public static TurretFamily[] All { get; } = { Sentry, Grinder };
+    }
+
     public sealed class Turret
     {
         public int X { get; }
         public int Y { get; }
+        public int Family { get; }
         public Vec2 Center => GridMap.CellCenter(X, Y);
         public ushort Hp { get; internal set; }
         public ushort MaxHp { get; internal set; }
@@ -53,7 +97,10 @@ namespace Cipher.Sim.Emplacements
         public int Invested { get; internal set; }
         public bool Alive => Hp > 0;
 
-        internal Turret(int x, int y, ushort hp, float range, float damage) { X = x; Y = y; Hp = hp; MaxHp = hp; Range = range; DamagePerShot = damage; }
+        internal Turret(int x, int y, int family, ushort hp, float range, float damage)
+        {
+            X = x; Y = y; Family = family; Hp = hp; MaxHp = hp; Range = range; DamagePerShot = damage;
+        }
     }
 
     /// <summary>A turret shot that happened this tick; the game layer draws it.</summary>
@@ -63,43 +110,54 @@ namespace Cipher.Sim.Emplacements
         public readonly Vec2 From;
         public readonly Vec2 To;
         public readonly bool Killed;
-        public TurretShot(int turretIndex, Vec2 from, Vec2 to, bool killed) { TurretIndex = turretIndex; From = from; To = to; Killed = killed; }
+        /// <summary>Area families sweep rather than fire a tracer; the game draws these differently.</summary>
+        public readonly bool Area;
+
+        public TurretShot(int turretIndex, Vec2 from, Vec2 to, bool killed, bool area = false)
+        {
+            TurretIndex = turretIndex; From = from; To = to; Killed = killed; Area = area;
+        }
     }
 
     /// <summary>
-    /// Player emplacements. Deterministic: turrets step in placement order, target "first"
-    /// (the living runner closest to the exit by flow-field cost, lowest id on ties), and all
-    /// damage goes through AgentWorld. Turrets occupy a Structure cell so pathing routes around them.
+    /// Player emplacements. Deterministic: turrets step in placement order, single-fire families
+    /// target "first" (the living runner closest to the vault, lowest id on ties), and all damage
+    /// goes through AgentWorld. Turrets occupy a Structure cell so pathing routes around them.
     /// </summary>
     public sealed class TurretSystem
     {
-        private readonly TurretConfig _cfg;
+        private readonly TurretFamily[] _families;
         private readonly List<Turret> _turrets = new List<Turret>(32);
 
-        public TurretSystem(TurretConfig config)
+        public TurretSystem(TurretFamily[]? families = null)
         {
-            _cfg = config ?? throw new ArgumentNullException(nameof(config));
+            _families = families ?? TurretCatalog.All;
+            if (_families.Length == 0) throw new ArgumentException("Need at least one turret family.", nameof(families));
         }
 
         public IReadOnlyList<Turret> Turrets => _turrets;
-        public TurretConfig Config => _cfg;
+        public IReadOnlyList<TurretFamily> Families => _families;
+        public TurretFamily FamilyOf(int index) => _families[Math.Clamp(index, 0, _families.Length - 1)];
+        public TurretFamily FamilyOfTurret(int turretIndex) => FamilyOf(_turrets[turretIndex].Family);
 
         /// <summary>Occupies the cell as a Structure. Caller validates buildability first (BuildValidator).</summary>
-        public int Place(GridMap map, int x, int y)
+        public int Place(GridMap map, int x, int y, int family = 0)
         {
-            map.SetWall(x, y, WallKind.Structure, _cfg.MaxHp);
-            _turrets.Add(new Turret(x, y, _cfg.MaxHp, _cfg.Range, _cfg.DamagePerShot));
+            TurretFamily f = FamilyOf(family);
+            map.SetWall(x, y, WallKind.Structure, f.MaxHp);
+            _turrets.Add(new Turret(x, y, Math.Clamp(family, 0, _families.Length - 1), f.MaxHp, f.Range, f.DamagePerShot));
             return _turrets.Count - 1;
         }
 
         /// <summary>The next tier for a turret, or null at max.</summary>
         public TurretTier? NextTier(int index)
         {
+            var f = FamilyOfTurret(index);
             int tier = _turrets[index].Tier;
-            return tier < _cfg.Tiers.Length ? _cfg.Tiers[tier] : null;
+            return tier < f.Tiers.Length ? f.Tiers[tier] : null;
         }
 
-        /// <summary>Applies the next tier (caller pays). Returns false at max tier. Heals by the hp bonus of the tier.</summary>
+        /// <summary>Applies the next tier (caller pays). Returns false at max tier. Heals by the tier's hp bonus.</summary>
         public bool Upgrade(GridMap map, int index)
         {
             var next = NextTier(index);
@@ -145,19 +203,33 @@ namespace Cipher.Sim.Emplacements
             return true;
         }
 
-        /// <summary>Fires every ready turret at its "first" target. Shots are appended to <paramref name="shots"/> (may be null).</summary>
+        /// <summary>Fires every ready turret. Shots are appended to <paramref name="shots"/> (may be null).</summary>
         public int Step(AgentWorld world, float dt, List<TurretShot>? shots)
         {
             int kills = 0;
-            float interval = 1f / Math.Max(0.01f, _cfg.ShotsPerSecond);
             for (int i = 0; i < _turrets.Count; i++)
             {
                 var t = _turrets[i];
+                var family = FamilyOf(t.Family);
+                float interval = 1f / Math.Max(0.01f, family.ShotsPerSecond);
+
                 t.FireCooldown -= dt;
                 // Catch up at most a few shots after a hitch; never an unbounded burst.
                 int burst = 0;
                 while (t.FireCooldown <= 0f && burst++ < 4)
                 {
+                    if (family.Mode == FireMode.Area)
+                    {
+                        if (world.CountWithin(t.Center, t.Range) == 0) { t.FireCooldown = 0f; break; }
+                        t.FireCooldown += interval;
+                        t.ShotsFired++;
+                        int k = world.ApplyRadialDamage(t.Center, t.Range, t.DamagePerShot);
+                        t.Kills += k;
+                        kills += k;
+                        shots?.Add(new TurretShot(i, t.Center, t.Center, k > 0, area: true));
+                        continue;
+                    }
+
                     int target = world.FindFirstInRange(t.Center, t.Range);
                     if (target < 0) { t.FireCooldown = 0f; break; }
                     t.FireCooldown += interval;
@@ -183,7 +255,7 @@ namespace Cipher.Sim.Emplacements
             public Vec2 PositionAt(int index) => _owner._turrets[index].Center;
         }
 
-        /// <summary>FNV-1a over turret cells, hp and cooldowns; mix into the match hash.</summary>
+        /// <summary>FNV-1a over turret cells, family, hp, tier and cooldowns; mix into the match hash.</summary>
         public ulong StateHash()
         {
             const ulong prime = 1099511628211UL;
@@ -194,6 +266,7 @@ namespace Cipher.Sim.Emplacements
                 {
                     h = (h ^ (uint)t.X) * prime;
                     h = (h ^ (uint)t.Y) * prime;
+                    h = (h ^ (uint)t.Family) * prime;
                     h = (h ^ t.Hp) * prime;
                     h = (h ^ (uint)t.Tier) * prime;
                     h = (h ^ (uint)BitConverter.SingleToInt32Bits(t.FireCooldown)) * prime;

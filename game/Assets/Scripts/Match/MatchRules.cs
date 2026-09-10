@@ -11,7 +11,7 @@ namespace Cipher.Game.Match
         public int CashPerKill { get; set; } = 5;
         public int WaveClearBonusPerWave { get; set; } = 100;   // x wave number
         public int BarricadeCost { get; set; } = 20;
-        public int TurretCost { get; set; } = 150;
+        // Turret prices live on the turret family in the sim catalogue, not here.
         public int DroneCost { get; set; } = 150;
         public float SetupRefund { get; set; } = 1f;            // between waves
         public float CombatRefund { get; set; } = 0.5f;         // mid-wave, times remaining health

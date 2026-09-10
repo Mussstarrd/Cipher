@@ -11,6 +11,21 @@ namespace Cipher.Game.Build
 {
     public enum BuildItem { Barricade = 0, Turret = 1, RepairDrone = 2 }
 
+    /// <summary>One entry in the build bar. Turret families come from the sim catalogue, so a new tower is data.</summary>
+    public readonly struct BuildOption
+    {
+        public readonly BuildItem Item;
+        /// <summary>Turret family index; -1 for anything that is not a turret.</summary>
+        public readonly int Family;
+        public readonly string Name;
+        public readonly int Cost;
+
+        public BuildOption(BuildItem item, int family, string name, int cost)
+        {
+            Item = item; Family = family; Name = name; Cost = cost;
+        }
+    }
+
     /// <summary>
     /// Build mode as pure state: a grid cursor, an item, and the place/sell rules. Every
     /// placement question goes through the sim's BuildValidator, so the overlay the player
@@ -19,7 +34,8 @@ namespace Cipher.Game.Build
     /// </summary>
     public sealed class BuildModel
     {
-        public static readonly BuildItem[] Items = { BuildItem.Barricade, BuildItem.Turret, BuildItem.RepairDrone };
+        /// <summary>Barricade, then one entry per turret family, then the drone.</summary>
+        public IReadOnlyList<BuildOption> Options { get; }
 
         private readonly GridMap _map;
         private readonly AgentWorld _world;
@@ -33,7 +49,10 @@ namespace Cipher.Game.Build
         public BuildValidator Validator { get; }
         public int CursorX { get; private set; }
         public int CursorY { get; private set; }
-        public BuildItem Item { get; private set; } = BuildItem.Barricade;
+        /// <summary>Index into <see cref="Options"/>.</summary>
+        public int Selected { get; private set; }
+        public BuildOption Option => Options[Selected];
+        public BuildItem Item => Option.Item;
         public PlacementResult LastResult { get; private set; } = PlacementResult.Ok;
         public string Message { get; private set; } = "";
         public int Placed { get; private set; }
@@ -47,14 +66,19 @@ namespace Cipher.Game.Build
         {
             _map = map; _world = world; _turrets = turrets; _match = match; _eco = eco;
             _spawns = spawns; _goalX = goalX; _goalY = goalY;
+
+            var options = new List<BuildOption> { new BuildOption(BuildItem.Barricade, -1, "Barricade", eco.BarricadeCost) };
+            for (int f = 0; f < turrets.Families.Count; f++)
+                options.Add(new BuildOption(BuildItem.Turret, f, turrets.Families[f].Name, turrets.Families[f].Cost));
+            options.Add(new BuildOption(BuildItem.RepairDrone, -1, "Repair Drone", eco.DroneCost));
+            Options = options;
+
             Validator = new BuildValidator(map);
             SetCursor(cursorX, cursorY);
         }
 
-        public int ItemCost => Item switch { BuildItem.Turret => _eco.TurretCost, BuildItem.RepairDrone => _eco.DroneCost, _ => _eco.BarricadeCost };
-        public string ItemName => Item switch { BuildItem.Turret => "Sentry .50", BuildItem.RepairDrone => "Repair Drone", _ => "Barricade" };
-        public static string NameOf(BuildItem item) => item switch { BuildItem.Turret => "Sentry .50", BuildItem.RepairDrone => "Repair Drone", _ => "Barricade" };
-        public int CostOf(BuildItem item) => item switch { BuildItem.Turret => _eco.TurretCost, BuildItem.RepairDrone => _eco.DroneCost, _ => _eco.BarricadeCost };
+        public int ItemCost => Option.Cost;
+        public string ItemName => Option.Name;
         public bool CanAfford => _match.Bank.CanAfford(ItemCost);
 
         /// <summary>Turret under the cursor, or -1.</summary>
@@ -115,9 +139,14 @@ namespace Cipher.Game.Build
 
         public void CycleItem(int direction)
         {
-            int n = Items.Length;
-            int i = Array.IndexOf(Items, Item);
-            Item = Items[((i + direction) % n + n) % n];
+            int n = Options.Count;
+            Selected = ((Selected + direction) % n + n) % n;
+        }
+
+        /// <summary>Jumps straight to an option (d-pad quick-select).</summary>
+        public void SelectOption(int index)
+        {
+            if (index >= 0 && index < Options.Count) Selected = index;
         }
 
         /// <summary>
@@ -141,7 +170,7 @@ namespace Cipher.Game.Build
 
             _oneCell[0] = (CursorX, CursorY);
             WallKind kind = Item == BuildItem.Turret ? WallKind.Structure : WallKind.Barricade;
-            ushort hp = Item == BuildItem.Turret ? _turrets.Config.MaxHp : GridMap.DefaultWallHp;
+            ushort hp = Item == BuildItem.Turret ? _turrets.FamilyOf(Option.Family).MaxHp : GridMap.DefaultWallHp;
             LastResult = Validator.Validate(_world, _oneCell, kind, hp, _goalX, _goalY, _spawns);
             if (LastResult != PlacementResult.Ok && LastResult != PlacementResult.SealsSpawn)
             {
@@ -196,7 +225,7 @@ namespace Cipher.Game.Build
 
             switch (Item)
             {
-                case BuildItem.Turret: _turrets.Place(_map, CursorX, CursorY); break;
+                case BuildItem.Turret: _turrets.Place(_map, CursorX, CursorY, Option.Family); break;
                 case BuildItem.RepairDrone: Drones.Add(new RepairDrone(DroneTarget.X, DroneTarget.Y)); break;
                 default: _map.SetWall(CursorX, CursorY, WallKind.Barricade, GridMap.DefaultWallHp); break;
             }
@@ -214,7 +243,7 @@ namespace Cipher.Game.Build
             {
                 int i = _turrets.IndexAt(CursorX, CursorY);
                 if (i < 0) return false;
-                int invested = _eco.TurretCost + _turrets.Turrets[i].Invested;
+                int invested = _turrets.FamilyOfTurret(i).Cost + _turrets.Turrets[i].Invested;
                 float hpFraction = _turrets.Remove(_map, i);
                 refund = (int)MathF.Round(invested * _match.RefundMultiplier * hpFraction);
             }

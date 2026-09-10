@@ -112,6 +112,7 @@ namespace Cipher.Game
         private Material _routeOkMaterial = null!;
         private Material _routeBadMaterial = null!;
         private Material _turretMaterial = null!;
+        private Material _grinderMaterial = null!;
         private Matrix4x4[] _instanceBuffer = null!;
         private Matrix4x4[] _wallMatrices = System.Array.Empty<Matrix4x4>();
         private Matrix4x4[] _barricadeMatrices = System.Array.Empty<Matrix4x4>();
@@ -179,7 +180,7 @@ namespace Cipher.Game
             _field = new FlowField(_map);
             _field.Compute(GoalX, GoalY);
             _world = new AgentWorld(_map, _field, new SimConfig(), initialCapacity: 4096);
-            _turrets = new TurretSystem(new TurretConfig());
+            _turrets = new TurretSystem();
             _match = new MatchState(WaveTable.Default, _eco);
             _build = new BuildModel(_map, _world, _turrets, _match, _eco, SpawnCells, GoalX, GoalY, GridW - 12, GridH / 2);
             _world.Structures = _turrets.AsStructureQuery();
@@ -249,6 +250,7 @@ namespace Cipher.Game
             _routeOkMaterial = MakeMaterial(new Color(0.3f, 0.9f, 0.45f), instanced: true);
             _routeBadMaterial = MakeMaterial(new Color(1f, 0.2f, 0.15f), instanced: true);
             _turretMaterial = MakeMaterial(new Color(0.25f, 0.55f, 0.85f), instanced: false);
+            _grinderMaterial = MakeMaterial(new Color(0.85f, 0.35f, 0.75f), instanced: false);
             _sapperMaterial = MakeMaterial(new Color(1f, 0.45f, 0.05f), instanced: true);
             _spitterMaterial = MakeMaterial(new Color(0.35f, 0.9f, 0.25f), instanced: true);
             _droneMaterial = MakeMaterial(new Color(0.4f, 0.95f, 1f), instanced: true);
@@ -361,6 +363,7 @@ namespace Cipher.Game
             {
                 var go = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
                 go.name = "Turret";
+                go.name = "Turret";
                 Destroy(go.GetComponent<Collider>());
                 go.GetComponent<Renderer>().material = _turretMaterial;
                 var head = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -375,8 +378,16 @@ namespace Cipher.Game
             {
                 var t = list[i];
                 float hp = (float)t.Hp / t.MaxHp;
-                _turretGos[i].transform.position = new Vector3(t.X + 0.5f, 0.7f, t.Y + 0.5f);
-                _turretGos[i].transform.localScale = new Vector3(0.9f + 0.15f * t.Tier, 0.4f + 0.6f * hp, 0.9f + 0.15f * t.Tier);
+                bool area = _turrets.FamilyOfTurret(i).Mode == FireMode.Area;
+                var go = _turretGos[i];
+                go.transform.position = new Vector3(t.X + 0.5f, 0.7f, t.Y + 0.5f);
+                go.transform.localScale = new Vector3(0.9f + 0.15f * t.Tier, 0.4f + 0.6f * hp, 0.9f + 0.15f * t.Tier);
+                // Grinders spin and wear a different colour so the two families read apart at a glance.
+                go.GetComponent<Renderer>().material = area ? _grinderMaterial : _turretMaterial;
+                var head = go.transform.GetChild(0);
+                head.GetComponent<Renderer>().material = area ? _grinderMaterial : _turretMaterial;
+                head.localScale = area ? new Vector3(1.5f, 0.25f, 0.35f) : new Vector3(0.6f, 0.45f, 1.2f);
+                head.localRotation = area ? Quaternion.Euler(0f, Time.time * 520f, 0f) : Quaternion.identity;
             }
         }
 
@@ -496,6 +507,15 @@ namespace Cipher.Game
             _turrets.Step(_world, TickDt, _shotScratch);
             foreach (var s in _shotScratch)
             {
+                if (s.Area)
+                {
+                    // A grinder sweeps rather than fires: show the bite radius, not a tracer.
+                    var t = _turrets.Turrets.Count > s.TurretIndex ? _turrets.Turrets[s.TurretIndex] : null;
+                    if (t != null)
+                        _blasts.Add(new Blast { Center = new Vector3(t.X + 0.5f, 0.05f, t.Y + 0.5f), Radius = t.Range, Ttl = BlastLife * 0.28f });
+                    _sfx.PlayAt(Sfx.TurretShot, ToWorld(s.From, 1f), 0.4f, 0.2f, minInterval: 0.11f);
+                    continue;
+                }
                 _tracers.Add(new Tracer { A = ToWorld(s.From, 1.1f), B = ToWorld(s.To, 0.6f), Ttl = TracerLife * 0.7f, Turret = true });
                 _sfx.PlayAt(Sfx.TurretShot, ToWorld(s.From, 1f), 0.6f, 0.1f, minInterval: 0.045f);
             }
@@ -1190,10 +1210,11 @@ namespace Cipher.Game
             if (_buildMode)
             {
                 var items = new System.Text.StringBuilder("[BUILD]  ");
-                foreach (var it in BuildModel.Items)
+                for (int i = 0; i < _build.Options.Count; i++)
                 {
-                    bool sel = it == _build.Item;
-                    items.Append(sel ? "[ " : "  ").Append(BuildModel.NameOf(it)).Append(" $").Append(_build.CostOf(it)).Append(sel ? " ]" : "  ");
+                    var opt = _build.Options[i];
+                    bool sel = i == _build.Selected;
+                    items.Append(sel ? "[ " : "  ").Append(opt.Name).Append(" $").Append(opt.Cost).Append(sel ? " ]" : "  ");
                 }
                 GUI.Label(new Rect(12, 108, 1200, 28), items.ToString());
                 GUI.Label(new Rect(12, 130, 1200, 28),

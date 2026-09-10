@@ -29,13 +29,13 @@ namespace Cipher.Game.Tests
             var r = new Rig
             {
                 Map = new GridMap(24, 12),
-                Eco = new EconomyConfig { StartCash = cash, BarricadeCost = 20, TurretCost = 150 },
+                Eco = new EconomyConfig { StartCash = cash, BarricadeCost = 20 },
                 Spawns = new List<(int X, int Y)> { (1, 6) },
             };
             r.Field = new FlowField(r.Map);
             r.Field.Compute(22, 6);
             r.World = new AgentWorld(r.Map, r.Field, new SimConfig());
-            r.Turrets = new TurretSystem(new TurretConfig());
+            r.Turrets = new TurretSystem();
             r.Match = new MatchState(WaveTable.Default, r.Eco);
             r.Build = new BuildModel(r.Map, r.World, r.Turrets, r.Match, r.Eco, r.Spawns, 22, 6, 12, 6);
             return r;
@@ -52,9 +52,15 @@ namespace Cipher.Game.Tests
             Assert.AreEqual(3, r.Build.CursorX);
             Assert.AreEqual(0, r.Build.CursorY);
 
+            // Barricade, one entry per turret family, then the drone.
+            Assert.AreEqual(r.Turrets.Families.Count + 2, r.Build.Options.Count);
             Assert.AreEqual(BuildItem.Barricade, r.Build.Item);
             r.Build.CycleItem(1);
             Assert.AreEqual(BuildItem.Turret, r.Build.Item);
+            Assert.AreEqual("Sentry .50", r.Build.ItemName);
+            r.Build.CycleItem(1);
+            Assert.AreEqual(BuildItem.Turret, r.Build.Item);
+            Assert.AreEqual("Chop-Shop Rotor", r.Build.ItemName);
             r.Build.CycleItem(1);
             Assert.AreEqual(BuildItem.RepairDrone, r.Build.Item);
             r.Build.CycleItem(1);
@@ -105,7 +111,7 @@ namespace Cipher.Game.Tests
             Assert.IsTrue(r.Map.IsBuildable(12, 6));
             Assert.IsEmpty(r.Turrets.Turrets);
 
-            r.Build.CycleItem(-1);
+            r.Build.SelectOption(0);
             r.Build.TryPlace();                       // barricade -20 → 380
             r.Match.StartWaveNow();
             r.Match.Tick(0.01f, 0, 0);
@@ -181,7 +187,7 @@ namespace Cipher.Game.Tests
             r.Build.SetCursor(12, 6);
             r.Build.TryPlace();                                // barricade, 380
             r.Map.Breach(12, 6);                               // someone cracked it
-            r.Build.CycleItem(1); r.Build.CycleItem(1);        // drone
+            r.Build.CycleItem(1); r.Build.CycleItem(1); r.Build.CycleItem(1);  // past both turret families to the drone
             Assert.AreEqual(BuildItem.RepairDrone, r.Build.Item);
             r.Build.SetCursor(12, 7);
             Assert.AreEqual(PlacementResult.Ok, r.Build.Refresh(), "a cell away still snaps onto the breach");

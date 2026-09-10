@@ -85,7 +85,7 @@ namespace Cipher.Game.Tests
             r.Field = new FlowField(r.Map);
             r.Field.Compute(GoalX, GoalY);
             r.World = new AgentWorld(r.Map, r.Field, new SimConfig(), 4096);
-            r.Turrets = new TurretSystem(new TurretConfig());
+            r.Turrets = new TurretSystem();
             r.World.Structures = r.Turrets.AsStructureQuery();
             var eco = new EconomyConfig();
             r.Match = new MatchState(waves ?? WaveTable.Default, eco, vaultHp);
