@@ -10,15 +10,19 @@
 
 > airstrike does an AoE thing around my red ball. fps stays right between 950-1025. played and killed 1000 or so and let it run another 20 seconds
 
+Follow-up when asked to confirm fps vs. the alive count:
+
+> i was reading rhe fps correctly. i understand the metrics behind alive and breach (enemies on board vs got through exit). the fps is averaging right at 1000 it is a constant faster than human eye from 975-1050 while the living enemies are actively moving the track
+
 ## Engineering annotations
 
 - Session length: ~1,000 kills plus a further ~20 s at steady state, so the flood reached its 1,000-agent top-up density.
-- The "950-1025" figure: the HUD reads `fps N | alive N | breached N | kills N`. 950–1,025 is also exactly the band the *alive* count sits in once the trickle spawner saturates. Asked the owner to re-read the first number; if confirmed as fps, this laptop is far above the PC target and the next density step (2,000–4,000) is safe to try. If it was the alive count, fps is still unrecorded. **Resolution below once the owner replies.**
+- The "950-1025" figure: the HUD reads `fps N | alive N | breached N | kills N`. 950–1,025 is also exactly the band the *alive* count sits in once the trickle spawner saturates. Owner confirmed it is fps. **Result: ~1,000 fps (975–1,050) at 1,000 live agents, Editor Play mode, vsync off.** That is roughly 16× the 60 fps desktop bar with the swarm saturated, so the desktop density step to 2,000–4,000 agents is safe to try; the interesting ceiling on this machine is the sim's 30 Hz step cost, not rendering.
 - "red ball": the strike cursor is authored orange (1, 0.65, 0.1). Reads as red to the owner under the current dark palette / Standard shader lighting — note for when the cursor gets real art (Trap: cursor must be unambiguous against the red flood).
 - No exceptions, errors, or shader-missing warnings in Editor.log during the session.
 - First open required **zero code fixes**: sim + game + editor assemblies compiled clean headlessly before the editor GUI was ever launched.
 
 ## Follow-ups
 
-- [ ] Confirm fps vs alive reading (owner).
+- [x] Confirm fps vs alive reading (owner) — confirmed ~1,000 fps.
 - [ ] Airstrike feel: owner described *what* it does, not yet *how it feels* — ask directed questions next session (impact readability, cooldown, radius vs horde width).
