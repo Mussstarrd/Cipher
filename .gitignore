@@ -16,3 +16,9 @@ game/MemoryCaptures/
 # OS noise
 .DS_Store
 Thumbs.db
+
+# API tokens for the concept-art tooling. Never commit these.
+.secrets/
+
+# Generated concept art: reference only, regenerate rather than version it.
+art/concept/

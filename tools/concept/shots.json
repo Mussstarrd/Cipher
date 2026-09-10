@@ -1,0 +1,48 @@
+{
+  "_note": "Concept-art shot list for CIPHER: DEAD TURF. One entry per thing the owner needs to see before the art phase commits. 'style' is appended to every prompt so the set reads as one film.",
+
+  "style": "cinematic video game concept art, third person action game, night, sodium vapour streetlight as the single key light, wet asphalt reflecting orange, volumetric haze and smoke, strong rim lighting separating figures from the dark, heavy readable silhouettes, gritty grounded realism, dense detail, dramatic contrast, film grain, colour palette of sodium orange, deep blue-black shadow and blood red, painted by a senior concept artist, ultra detailed, 8k",
+
+  "shots": [
+    {
+      "id": "street",
+      "title": "Over the shoulder, wave in progress",
+      "prompt": "Over-the-shoulder third-person view from behind a heavily built man in a long dark coat holding a light machine gun, standing in the middle of a ruined city street at night. A hundred infected people sprint toward him down the street between burnt-out buildings, backlit, faces lit red. Muzzle flash lights the wet road. Spent shell casings in the air, blood spray and impact debris, bodies on the asphalt, overturned cars burning in the background"
+    },
+    {
+      "id": "horde",
+      "title": "The flood at street width",
+      "prompt": "A tidal wave of a thousand infected people flooding down a narrow city street at night toward the viewer, packed shoulder to shoulder, climbing over wrecked cars and each other, lit from behind by burning wreckage so they read as a single moving mass of silhouettes with red-lit faces, dust and ash in the air, sheer scale and density, a horror of numbers"
+    },
+    {
+      "id": "barricade",
+      "title": "The maze holds, barely",
+      "prompt": "A hand-built defensive maze of scrap metal barricades and concrete blocks welded across a city street at night, a mounted automatic turret firing tracer rounds from behind it, infected piling against the barricade and being torn apart, gore and viscera splashed across the metal, sparks, smoke, orange emergency lighting, seen from a slightly elevated three-quarter angle"
+    },
+    {
+      "id": "airstrike",
+      "title": "The airstrike lands",
+      "prompt": "A line of six explosions walking down a city street at night toward the viewer, each blast a column of fire and pulverised asphalt throwing bodies and debris into the air, shockwave dust rings, buildings lit orange, a lone armed figure silhouetted in the foreground watching it come, apocalyptic scale, cinematic destruction"
+    },
+    {
+      "id": "sapper",
+      "title": "The one that stops",
+      "prompt": "A single infected man in filthy work clothes kneeling at the base of a scrap metal barricade in a dark street, deliberately placing a satchel of explosives against it, calm and methodical while other infected sprint past him in the blurred background, his face intelligent and wrong, harsh flashlight beam catching him, tense horror, close mid-shot"
+    },
+    {
+      "id": "goon",
+      "title": "The one they make room for",
+      "prompt": "A massive hulking infected brute, twice human size, wearing torn riot armour fused into swollen flesh, wading up a burning street at night while the smaller infected crowd parts around him, backlit by fire, steam rising off him, blood and grime, low camera angle looking up to make him enormous, boss enemy reveal shot"
+    },
+    {
+      "id": "kit",
+      "title": "Field kit deploys",
+      "prompt": "A rugged military counter-drone equipment case sitting open on wet asphalt at night, unfolding and deploying into an automated sentry gun on a telescoping mast, status lights glowing cyan, hydraulic arms extending, steam and rain, close product-hero angle with the ruined street out of focus behind it, believable hard-surface military hardware design"
+    },
+    {
+      "id": "operators",
+      "title": "Somebody up there is still giving orders",
+      "prompt": "Four military quadcopter drones hovering low over a ruined night street with searchlights and underslung weapons, a masked human operator in tactical gear crouched on a rooftop above controlling them, infected crowd surging in the street far below, cold white searchlight beams cutting through smoke against the warm sodium street glow"
+    }
+  ]
+}
