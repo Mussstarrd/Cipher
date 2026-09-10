@@ -56,9 +56,11 @@ namespace Cipher.Game.Tests
             r.Build.CycleItem(1);
             Assert.AreEqual(BuildItem.Turret, r.Build.Item);
             r.Build.CycleItem(1);
+            Assert.AreEqual(BuildItem.RepairDrone, r.Build.Item);
+            r.Build.CycleItem(1);
             Assert.AreEqual(BuildItem.Barricade, r.Build.Item);
             r.Build.CycleItem(-1);
-            Assert.AreEqual(BuildItem.Turret, r.Build.Item);
+            Assert.AreEqual(BuildItem.RepairDrone, r.Build.Item);
         }
 
         [Test]
@@ -148,6 +150,52 @@ namespace Cipher.Game.Tests
             Assert.Greater(route.Count, 20);
             var (gx, gy) = r.Map.WorldToCell(route[route.Count - 1]);
             Assert.AreEqual((22, 6), (gx, gy));
+        }
+
+        [Test]
+        public void Upgrade_OnHoveredTurret_SpendsCash_AndSellRefundsInvestment()
+        {
+            var r = Make(cash: 600);
+            r.Build.CycleItem(1);
+            Assert.IsTrue(r.Build.TryPlace());                 // 450
+            Assert.AreEqual(0, r.Build.HoveredTurret);
+            StringAssert.Contains("Twin .50 $120", r.Build.UpgradeOffer);
+            Assert.AreEqual(PlacementResult.NotBuildable, r.Build.Refresh());
+            StringAssert.Contains("Y upgrade", r.Build.Message);
+
+            Assert.IsTrue(r.Build.TryUpgrade());               // 330
+            Assert.AreEqual(330, r.Match.Bank.Cash);
+            Assert.AreEqual(1, r.Turrets.Turrets[0].Tier);
+            Assert.IsTrue(r.Build.TryUpgrade());               // 130
+            Assert.IsFalse(r.Build.TryUpgrade(), "max tier");
+            Assert.AreEqual("MAX tier", r.Build.Message);
+
+            Assert.IsTrue(r.Build.TrySell());                  // setup refund: (150 + 320) x 1.0 x full hp
+            Assert.AreEqual(600, r.Match.Bank.Cash);
+        }
+
+        [Test]
+        public void Drone_OnlyOnBreachedCell_RepairsWithHeroNearby_ThenIsPruned()
+        {
+            var r = Make(cash: 400);
+            r.Build.SetCursor(12, 6);
+            r.Build.TryPlace();                                // barricade, 380
+            r.Map.Breach(12, 6);                               // someone cracked it
+            r.Build.CycleItem(1); r.Build.CycleItem(1);        // drone
+            Assert.AreEqual(BuildItem.RepairDrone, r.Build.Item);
+            r.Build.SetCursor(12, 7);
+            Assert.AreEqual(PlacementResult.NotBuildable, r.Build.Refresh());
+            Assert.IsFalse(r.Build.TryPlace(), "open floor is not a breach");
+            r.Build.SetCursor(12, 6);
+            Assert.AreEqual(PlacementResult.Ok, r.Build.Refresh());
+            Assert.IsTrue(r.Build.TryPlace());
+            Assert.AreEqual(230, r.Match.Bank.Cash);
+            Assert.AreEqual(1, r.Build.Drones.Count);
+
+            Assert.AreEqual(0, r.Build.TickDrones(new Vec2(40f, 6f), 10f), "hero too far");
+            Assert.AreEqual(1, r.Build.TickDrones(new Vec2(11f, 6f), 4.1f));
+            Assert.AreEqual(BreachStage.Intact, r.Map.StageAt(12, 6));
+            Assert.IsEmpty(r.Build.Drones);
         }
 
         [Test]
