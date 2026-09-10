@@ -12,7 +12,6 @@ game/Logs/
 game/UserSettings/
 game/Build/
 game/MemoryCaptures/
-*.csproj.meta
 
 # OS noise
 .DS_Store

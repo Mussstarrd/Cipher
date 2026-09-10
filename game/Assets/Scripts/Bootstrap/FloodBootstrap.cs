@@ -46,6 +46,7 @@ namespace Cipher.Game
         private Matrix4x4[] _instanceBuffer = null!;
         private Matrix4x4[] _wallMatrices = null!;
 
+        private Camera _camera = null!;
         private Transform _cursor = null!;
         private Vector2 _cursorPos;
         private float _strikeCooldown;
@@ -78,9 +79,15 @@ namespace Cipher.Game
 
         private void BuildSceneObjects()
         {
+            // The default scene template ships its own MainCamera; ours must be the only
+            // active one or Camera-based input mapping goes through the wrong view.
+            foreach (var existing in FindObjectsByType<Camera>(FindObjectsSortMode.None))
+                existing.gameObject.SetActive(false);
+
             // Camera: high tilted view covering the arena.
             var camGo = new GameObject("Main Camera") { tag = "MainCamera" };
-            var cam = camGo.AddComponent<Camera>();
+            _camera = camGo.AddComponent<Camera>();
+            var cam = _camera;
             cam.transform.position = new Vector3(GridW / 2f, 52f, -8f);
             cam.transform.rotation = Quaternion.Euler(62f, 0f, 0f);
             cam.backgroundColor = new Color(0.05f, 0.05f, 0.07f);
@@ -170,6 +177,8 @@ namespace Cipher.Game
                 SpawnTrickle();
                 _world.Step(TickDt);
             }
+            // Drop unpayable tick debt after a hitch so the loop never death-spirals.
+            _tickAccumulator = Mathf.Min(_tickAccumulator, TickDt);
 
             DrawInstanced(_wallMesh, _wallMaterial, _wallMatrices, _wallMatrices.Length);
             DrawAgents();
@@ -185,7 +194,7 @@ namespace Cipher.Game
             }
             else if (Mouse.current != null)
             {
-                var cam = Camera.main;
+                var cam = _camera;
                 if (cam != null)
                 {
                     Ray ray = cam.ScreenPointToRay(Mouse.current.position.ReadValue());

@@ -9,10 +9,10 @@ scene is built procedurally at Play — no scene authoring needed.
 1. Install **Unity Hub**, then **Unity 6 LTS (6000.0.x)** with the **Android Build Support** module (IL2CPP + SDK/NDK boxes checked). If Hub offers a slightly different 6000.0 patch than `ProjectSettings/ProjectVersion.txt`, accept the upgrade prompt.
 2. In Hub: **Add → `game/` folder** of this repo, open it. First import takes a few minutes (packages restore automatically, including the sim core from `../sim/src/Cipher.Sim`).
 3. If prompted to **enable the new Input System backend and restart the editor — click Yes.** (If not prompted: Edit → Project Settings → Player → Active Input Handling → *Input System Package*.)
-4. `File → New Scene` (any empty scene), then press **Play**. You should see a dark arena, a red flood snaking an S-route, and an orange cursor.
+4. `File → New Scene` (pick the **Empty** template if offered; the Basic template's default camera gets auto-disabled by the bootstrap either way), then press **Play**. You should see a dark arena, a red flood snaking an S-route, and an orange cursor.
 5. Plug in / pair the Xbox controller: **left stick** moves the cursor, **A** drops an airstrike. No controller? Mouse + left click works.
 6. **Report back:** the FPS number in the top-left at steady state (it targets 1,000 agents on desktop), and how the strike *feels*.
-7. Commit the `.meta` files Unity generates on first open (plus `game/Assets/Scenes/` if you saved a scene) — they're identity cards for assets and belong in git.
+7. Commit everything Unity generated: the `.meta` files (including inside `../sim/src/Cipher.Sim/`), `game/Packages/packages-lock.json`, and `game/Assets/Scenes/` if you saved a scene — they're asset identity cards and belong in git.
 
 ## Known first-APK caveats (handled when we get there)
 
