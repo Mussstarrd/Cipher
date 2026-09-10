@@ -1,5 +1,6 @@
 #nullable enable
 using System.Collections.Generic;
+using Cipher.Game.Audio;
 using Cipher.Game.Build;
 using Cipher.Game.Hero;
 using Cipher.Game.Match;
@@ -132,6 +133,13 @@ namespace Cipher.Game
         private const float PitchMin = -10f, PitchMax = 55f;
         private const float StickYawSpeed = 170f, StickPitchSpeed = 90f, MouseYawPerPixel = 0.15f, MousePitchPerPixel = 0.1f;
 
+        // ---- audio ----
+        private SoundBank _sfx = null!;
+        private MatchPhase _lastPhase = MatchPhase.Setup;
+        private bool _wasDown;
+        private bool _strikeWasInbound;
+        private float _hurtCooldown;
+
         // ---- ui ----
         private float _smoothedFps = 60f;
         private readonly PauseMenuModel _pauseMenu = new PauseMenuModel();
@@ -168,6 +176,9 @@ namespace Cipher.Game
             _pickups = new PickupSystem(_map, seed ^ 0xC1FE, minX: 34, maxX: GridW - 4);
             _matchSeconds = 0f;
             _alerts.Clear();
+            _lastPhase = MatchPhase.Setup;
+            _wasDown = false;
+            _strikeWasInbound = false;
             GunTiers.Apply(_heroCfg, 0);
 
             _hero = new HeroModel(_heroCfg, HeroSpawn);
@@ -197,6 +208,8 @@ namespace Cipher.Game
             _camera.clearFlags = CameraClearFlags.SolidColor;
             _camera.nearClipPlane = 0.2f;
             _camera.farClipPlane = 300f;
+            camGo.AddComponent<AudioListener>();
+            _sfx = new SoundBank(transform) { MasterVolume = 0.8f };
 
             var lightGo = new GameObject("Sun");
             var light = lightGo.AddComponent<Light>();
@@ -390,10 +403,40 @@ namespace Cipher.Game
             _tickAccumulator = Mathf.Min(_tickAccumulator, TickDt);
 
             UpdateEffects(dt);
+            UpdateAudio(dt);
             UpdateHeroVisual();
             UpdateBuildVisual();
             UpdateCamera(dt);
             DrawWorld();
+        }
+
+        private void UpdateAudio(float dt)
+        {
+            _hurtCooldown -= dt;
+
+            if (_match.Phase != _lastPhase)
+            {
+                switch (_match.Phase)
+                {
+                    case MatchPhase.Wave: _sfx.Play(Sfx.WaveHorn, 0.9f, 0.02f); break;
+                    case MatchPhase.Setup: _sfx.Play(Sfx.WaveClear, 0.9f, 0.01f); break;
+                    case MatchPhase.Won: _sfx.Play(Sfx.Win, 1f, 0f); break;
+                    case MatchPhase.Lost: _sfx.Play(Sfx.Lose, 1f, 0f); break;
+                }
+                _lastPhase = _match.Phase;
+            }
+
+            if (_hero.IsDown && !_wasDown) _sfx.Play(Sfx.Down, 1f, 0.02f);
+            _wasDown = _hero.IsDown;
+
+            if (_hero.StrikeInbound && !_strikeWasInbound) _sfx.Play(Sfx.StrikeWhistle, 0.8f, 0.03f);
+            _strikeWasInbound = _hero.StrikeInbound;
+
+            // Horde bed: how much of the flood is close to the hero.
+            int near = _world.CountWithin(_hero.Position, 14f);
+            float intensity = Mathf.Clamp01(near / 60f) * 0.75f + Mathf.Clamp01(_world.AliveCount / 1000f) * 0.25f;
+            _sfx.SetHordeIntensity(intensity);
+            _sfx.Update(dt);
         }
 
         private void FixedTick()
@@ -427,13 +470,23 @@ namespace Cipher.Game
             _shotScratch.Clear();
             _turrets.Step(_world, TickDt, _shotScratch);
             foreach (var s in _shotScratch)
+            {
                 _tracers.Add(new Tracer { A = ToWorld(s.From, 1.1f), B = ToWorld(s.To, 0.6f), Ttl = TracerLife * 0.7f, Turret = true });
+                _sfx.PlayAt(Sfx.TurretShot, ToWorld(s.From, 1f), 0.6f, 0.1f, minInterval: 0.045f);
+            }
 
-            _hero.ApplyContact(_world, TickDt);
+            if (_hero.ApplyContact(_world, TickDt) > 0f && _hurtCooldown <= 0f)
+            {
+                _sfx.Play(Sfx.Hurt, 0.8f, 0.1f);
+                _hurtCooldown = 0.35f;
+            }
             HandleSimEvents();
             _build.TickDrones(_hero.Position, TickDt);
             if (_pickups.Tick(_matchSeconds, TickDt, _hero.Position, _heroCfg))
+            {
                 Alert($"GUN UPGRADE: {_pickups.GunName}", 3f);
+                _sfx.Play(Sfx.Pickup, 1f, 0f);
+            }
 
             // Kills from any source pay out (hero, turrets, airstrike).
             int kills = (int)(_world.TotalKills - _lastKills);
@@ -452,35 +505,43 @@ namespace Cipher.Game
                 {
                     case SimEventKind.SapperTargeted:
                         Alert("SAPPER SPOTTED — it is heading for your wall", 4f);
+                        _sfx.Play(Sfx.SapperSpotted, 0.9f, 0f, minInterval: 2f);
                         break;
                     case SimEventKind.BreachPlanting:
                         Alert($"BREACH IN {e.F:F0}s — kill the Sapper or bring a drone", 4f);
+                        _sfx.PlayAt(Sfx.BreachPlanting, CellWorld(e.B, 1f), 1f, 0f, minInterval: 1f);
                         break;
                     case SimEventKind.BreachStage:
-                        if (e.A >= 0) Alert("WALL BREACHED — they are coming through", 4f);
-                        else if ((int)e.F > (int)BreachStage.Cracked) Alert("BREACH WIDENING", 3f);
+                        if (e.A >= 0) { Alert("WALL BREACHED — they are coming through", 4f); _sfx.PlayAt(Sfx.BreachOpened, CellWorld(e.B, 1f), 1f, 0.03f); }
+                        else if ((int)e.F > (int)BreachStage.Cracked) { Alert("BREACH WIDENING", 3f); _sfx.PlayAt(Sfx.BreachOpened, CellWorld(e.B, 1f), 0.7f, 0.08f); }
                         break;
                     case SimEventKind.BreachCollapsed:
                         Alert("WALL COLLAPSED", 4f);
+                        _sfx.PlayAt(Sfx.WallCollapsed, CellWorld(e.B, 1f), 1f, 0.02f);
                         break;
                     case SimEventKind.BreachRepaired:
                         Alert("wall repaired", 2f);
+                        _sfx.PlayAt(Sfx.Repaired, CellWorld(e.B, 1f), 0.9f, 0.02f);
                         break;
                     case SimEventKind.SpitterEngaged:
                         Alert("SPITTER — it is going for a turret", 3f);
+                        _sfx.Play(Sfx.SpitterSeen, 0.8f, 0.05f, minInterval: 1.5f);
                         break;
                     case SimEventKind.StructureHit:
                         if (e.B >= 0 && e.B < _turrets.Turrets.Count)
                         {
                             var t = _turrets.Turrets[e.B];
                             _blasts.Add(new Blast { Center = new Vector3(t.X + 0.5f, 0.05f, t.Y + 0.5f), Radius = 0.7f, Ttl = BlastLife * 0.5f });
-                            if (_turrets.Damage(_map, e.B, (int)e.F)) { Alert("TURRET DESTROYED", 4f); turretsChanged = true; }
+                            _sfx.PlayAt(Sfx.Hit, new Vector3(t.X + 0.5f, 1f, t.Y + 0.5f), 0.7f, 0.15f, minInterval: 0.2f);
+                            if (_turrets.Damage(_map, e.B, (int)e.F)) { Alert("TURRET DESTROYED", 4f); _sfx.PlayAt(Sfx.TurretDestroyed, new Vector3(t.X + 0.5f, 1f, t.Y + 0.5f), 1f, 0.02f); turretsChanged = true; }
                         }
                         break;
                 }
             }
             if (turretsChanged) SyncTurretObjects();
         }
+
+        private static Vector3 CellWorld(int cell, float height) => new Vector3(cell % GridW + 0.5f, height, cell / GridW + 0.5f);
 
         private void Alert(string text, float seconds)
         {
@@ -497,7 +558,7 @@ namespace Cipher.Game
             var pad = Gamepad.current;
             var kb = Keyboard.current;
             bool toggle = (pad != null && pad.leftShoulder.wasPressedThisFrame) || (kb != null && kb.tabKey.wasPressedThisFrame);
-            if (toggle) SetBuildMode(!_buildMode);
+            if (toggle) { SetBuildMode(!_buildMode); _sfx.Play(_buildMode ? Sfx.MenuOpen : Sfx.MenuConfirm, 0.7f, 0f); }
 
             bool startWave = (pad != null && pad.selectButton.wasPressedThisFrame) || (kb != null && kb.enterKey.wasPressedThisFrame);
             if (startWave && _match.Phase == MatchPhase.Setup) _match.StartWaveNow();
@@ -523,7 +584,7 @@ namespace Cipher.Game
             var pad = Gamepad.current;
             var kb = Keyboard.current;
 
-            if (pad != null && pad.buttonEast.wasPressedThisFrame) { SetBuildMode(false); return; }
+            if (pad != null && pad.buttonEast.wasPressedThisFrame) { SetBuildMode(false); _sfx.Play(Sfx.MenuConfirm, 0.7f, 0f); return; }
 
             // Stepped cursor: first step immediately, then 8 cells/s, 16 cells/s after 0.6 s held.
             Vector2 dir = Vector2.zero;
@@ -552,6 +613,7 @@ namespace Cipher.Game
                 {
                     _build.MoveCursor(dx, dy);
                     moved = true;
+                    _sfx.Play(Sfx.CursorTick, 0.5f, 0.15f, minInterval: 0.04f);
                     _cursorRepeatTimer = _cursorHeldTime > 0.6f ? 1f / 16f : 1f / 8f;
                 }
                 _cursorHeldTime += dt;
@@ -564,10 +626,14 @@ namespace Cipher.Game
 
             bool cycle = (pad != null && (pad.rightShoulder.wasPressedThisFrame || pad.dpad.right.wasPressedThisFrame)) || (kb != null && kb.qKey.wasPressedThisFrame);
             bool cycleBack = pad != null && pad.dpad.left.wasPressedThisFrame;
-            if (cycle) { _build.CycleItem(1); moved = true; }
-            else if (cycleBack) { _build.CycleItem(-1); moved = true; }
+            if (cycle) { _build.CycleItem(1); moved = true; _sfx.Play(Sfx.MenuTick, 0.7f, 0f); }
+            else if (cycleBack) { _build.CycleItem(-1); moved = true; _sfx.Play(Sfx.MenuTick, 0.7f, 0f); }
             bool upgrade = (pad != null && pad.buttonNorth.wasPressedThisFrame) || (kb != null && kb.uKey.wasPressedThisFrame);
-            if (upgrade && _build.TryUpgrade()) SyncTurretObjects();
+            if (upgrade)
+            {
+                if (_build.TryUpgrade()) { SyncTurretObjects(); _sfx.Play(Sfx.Upgrade, 0.9f, 0f); }
+                else if (_build.HoveredTurret >= 0) _sfx.Play(Sfx.Refuse, 0.6f, 0f);
+            }
 
             bool placePressed = (pad != null && pad.buttonSouth.wasPressedThisFrame) || (kb != null && kb.spaceKey.wasPressedThisFrame);
             bool placeHeld = (pad != null && pad.buttonSouth.isPressed) || (kb != null && kb.spaceKey.isPressed);
@@ -578,11 +644,16 @@ namespace Cipher.Game
             var cell = (_build.CursorX, _build.CursorY);
             if (placePressed || (placeHeld && moved && cell != _lastPaintCell))
             {
-                if (_build.TryPlace()) { _lastPaintCell = cell; SyncTurretObjects(); }
+                if (_build.TryPlace()) { _lastPaintCell = cell; SyncTurretObjects(); _sfx.Play(Sfx.Place, 0.8f, 0.1f, minInterval: 0.03f); }
+                else if (placePressed) _sfx.Play(Sfx.Refuse, 0.6f, 0f, minInterval: 0.2f);
             }
             if (!placeHeld) _lastPaintCell = (-1, -1);
 
-            if (sell && _build.TrySell()) SyncTurretObjects();
+            if (sell)
+            {
+                if (_build.TrySell()) { SyncTurretObjects(); _sfx.Play(Sfx.Sell, 0.8f, 0.03f); }
+                else _sfx.Play(Sfx.Refuse, 0.5f, 0f, minInterval: 0.2f);
+            }
 
             // Keep the preview honest against a moving swarm even when the cursor is still.
             if (!moved && Time.frameCount % 6 == 0) _build.Refresh();
@@ -634,7 +705,10 @@ namespace Cipher.Game
             _impactScratch.Clear();
             _hero.TickStrike(_world, dt, _impactScratch);
             foreach (var imp in _impactScratch)
+            {
                 _blasts.Add(new Blast { Center = ToWorld(imp.Center, 0.05f), Radius = imp.Radius, Ttl = BlastLife });
+                _sfx.PlayAt(Sfx.Bomb, ToWorld(imp.Center, 0.5f), 1f, 0.12f);
+            }
 
             bool fire = (pad != null && pad.rightTrigger.isPressed) || (mouse != null && mouse.leftButton.isPressed);
             if (fire && _hero.TryFire(_world, Random.Range(-2.5f, 2.5f), out ShotResult shot))
@@ -645,12 +719,19 @@ namespace Cipher.Game
                     B = ToWorld(shot.End, shot.Hit ? 0.6f : 0.75f),
                     Ttl = TracerLife,
                 });
+                _sfx.Play(Sfx.Shot, 0.75f, 0.08f);
+                if (shot.Killed) _sfx.PlayAt(Sfx.Kill, ToWorld(shot.End, 0.6f), 0.8f, 0.12f);
+                else if (shot.Hit) _sfx.Play(Sfx.Hit, 0.5f, 0.15f, minInterval: 0.05f);
             }
 
             bool strike = (pad != null && pad.buttonNorth.wasPressedThisFrame)
                        || (mouse != null && mouse.rightButton.wasPressedThisFrame)
                        || (kb != null && kb.qKey.wasPressedThisFrame);
-            if (strike) _hero.TryAirstrike();
+            if (strike)
+            {
+                if (_hero.TryAirstrike()) _sfx.Play(Sfx.StrikeCall, 0.9f, 0f);
+                else _sfx.Play(Sfx.Refuse, 0.5f, 0f, minInterval: 0.3f);
+            }
         }
 
         /// <summary>Where the camera looks at the ground; falls back to max range along the look axis when looking at the sky.</summary>
@@ -917,29 +998,33 @@ namespace Cipher.Game
 
             if (!_pauseMenu.IsOpen)
             {
-                if (toggle) SetPaused(true);
+                if (toggle) { SetPaused(true); _sfx.Play(Sfx.MenuOpen, 0.7f, 0f); }
                 return;
             }
 
             bool cancel = toggle || (gamepad != null && gamepad.buttonEast.wasPressedThisFrame);
-            if (cancel) { Apply(_pauseMenu.Cancel()); return; }
+            if (cancel) { Apply(_pauseMenu.Cancel()); _sfx.Play(Sfx.MenuConfirm, 0.7f, 0f); return; }
+
+            bool mute = (gamepad != null && gamepad.buttonNorth.wasPressedThisFrame) || (keyboard != null && keyboard.mKey.wasPressedThisFrame);
+            if (mute) { _sfx.Muted = !_sfx.Muted; if (!_sfx.Muted) _sfx.Play(Sfx.MenuConfirm, 0.7f, 0f); }
 
             bool up = (gamepad != null && (gamepad.dpad.up.wasPressedThisFrame || gamepad.leftStick.up.wasPressedThisFrame))
                    || (keyboard != null && (keyboard.upArrowKey.wasPressedThisFrame || keyboard.wKey.wasPressedThisFrame));
             bool down = (gamepad != null && (gamepad.dpad.down.wasPressedThisFrame || gamepad.leftStick.down.wasPressedThisFrame))
                      || (keyboard != null && (keyboard.downArrowKey.wasPressedThisFrame || keyboard.sKey.wasPressedThisFrame));
-            if (up) _pauseMenu.MoveUp();
-            if (down) _pauseMenu.MoveDown();
+            if (up) { _pauseMenu.MoveUp(); _sfx.Play(Sfx.MenuTick, 0.7f, 0f); }
+            if (down) { _pauseMenu.MoveDown(); _sfx.Play(Sfx.MenuTick, 0.7f, 0f); }
 
             bool confirm = (gamepad != null && gamepad.buttonSouth.wasPressedThisFrame)
                         || (keyboard != null && (keyboard.enterKey.wasPressedThisFrame || keyboard.spaceKey.wasPressedThisFrame));
-            if (confirm) Apply(_pauseMenu.Confirm());
+            if (confirm) { _sfx.Play(Sfx.MenuConfirm, 0.7f, 0f); Apply(_pauseMenu.Confirm()); }
         }
 
         private void SetPaused(bool paused)
         {
             if (paused) _pauseMenu.Open(); else _pauseMenu.Close();
             Time.timeScale = paused ? 0f : 1f;
+            AudioListener.pause = paused;
         }
 
         private void Apply(PauseMenuAction action)
@@ -948,6 +1033,7 @@ namespace Cipher.Game
             {
                 case PauseMenuAction.Resume:
                     Time.timeScale = 1f;
+                    AudioListener.pause = false;
                     break;
                 case PauseMenuAction.Quit:
                     Time.timeScale = 1f;
@@ -1097,8 +1183,8 @@ namespace Cipher.Game
             GUI.backgroundColor = Color.white;
 
             GUI.Label(new Rect(0, top + PauseMenuModel.Items.Length * (itemH + gap) + 10f, w, 30f),
-                Gamepad.current != null ? "stick / d-pad: choose   A: confirm   B or Menu: back"
-                                        : "arrows: choose   Enter: confirm   Esc: back",
+                (Gamepad.current != null ? "stick / d-pad: choose   A: confirm   B or Menu: back   Y: sound "
+                                         : "arrows: choose   Enter: confirm   Esc: back   M: sound ") + (_sfx.Muted ? "OFF" : "on"),
                 new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter });
         }
     }

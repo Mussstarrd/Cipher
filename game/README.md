@@ -18,6 +18,7 @@ graybox at runtime.
 - **The loop:** five waves march from the left edge to the green vault on the right. Every runner that reaches the vault takes one point off it; at zero you lose. Kills from any source pay $5, clearing wave N pays $100 x N, you start with $400. Selling refunds 100% between waves, 50% x remaining health mid-wave. You are the gold capsule: runners chew you on contact, LMG kills in two taps, airstrike walks six bombs down a 14x4 line.
 - **Sappers** (tall orange) walk to the wall that shortcuts most, plant for 4 s, and open a hole that widens every 20 s until the wall collapses (traffic through it speeds that up). A pulsing orange marker floats over the wall they picked. Kill them on the walk, or drop a **Repair Drone** on the hole and stand within 8 cells while it works (one stage per 4 s). If you seal the maze completely, a Sapper is forced.
 - **Spitters** (squat green) go for turrets: they close to 9 cells and lob acid every 1.5 s. Turrets out-range them but do not prioritise them; you do.
+- **Sound** is fully procedural (synthesized at startup from `Assets/Scripts/Audio/SoundRecipes.cs`: no audio files). Gunfire, hits and kills, airstrike call-in / whistle / bombs, turret fire (positional), build clicks, Sapper siren and breach countdown, breach and collapse impacts, Spitter blip, pickups, wave horn, wave-clear and win/lose stings, hurt and down, a wind bed and a horde rumble that swells with how many runners are near you. Pause menu: **Y** (pad) or **M** (keyboard) toggles sound.
 - **Gun crates** (spinning yellow) appear every 45 s on your side of the arena and last 30 s. Walk over one: LMG Mk2, Mk3, then Gold-plated.
 - **HUD** (top-left): fps / alive / breached / kills by source; cash, wave, phase and vault; HP and airstrike bars; build-mode item, cost and placement message.
 - Commit any new `.meta` files Unity generates (including inside `../sim/src/Cipher.Sim/`).
@@ -62,6 +63,7 @@ Set them with `gh secret set UNITY_USERNAME` / `gh secret set UNITY_PASSWORD` (e
 - `Assets/Scripts/Build/BuildModel.cs` — build cursor, place/sell/refund, route preview via the sim BuildValidator (pure C#, tested)
 - `Assets/Scripts/Hero/HeroModel.cs` — the Enforcer as pure state (movement via the shared `Movement` wall rule, hitscan via `AgentWorld.Raycast`, contact damage, airstrike); unit-tested
 - `Assets/Scripts/UI/PauseMenuModel.cs` — pause menu state, no UnityEngine, unit-tested
+- `Assets/Scripts/Audio/` — `Waveforms` (pure DSP, tested), `SoundRecipes` (one recipe per sound, tested for level/length/NaN), `SoundBank` (Unity clips, pooled 2D/3D sources, rate limits, ambience)
 - `Assets/Tests/EditMode/` — EditMode tests (`Cipher.Game.Tests.EditMode`); CI runs them before the build. Locally: `Unity.exe -batchmode -nographics -projectPath game -runTests -testPlatform EditMode -testResults out.xml`
 - `Assets/Editor/FirstOpenSetup.cs` — headless scene creation / Build Settings registration
 - `Assets/Editor/CiBuild.cs` — player build entry points used by CI (`-executeMethod … -buildPath <dir>`)
