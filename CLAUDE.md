@@ -40,6 +40,19 @@ dotnet run --project sim/tools/Cipher.Sim.Bench -c Release -- --smoke
 
 (No .NET SDK in some remote containers — CI on GitHub Actions is the source of truth; verify runs after pushing.)
 
+## Hard-won gotchas (keep current)
+
+- **Unity ignores csproj settings** (`Nullable`, `LangVersion`, `TreatWarningsAsErrors` do nothing in-editor): sim sources carry `#nullable enable` inline — keep it on new files.
+- **A hand-authored `Packages/manifest.json` gets NO implicit built-in modules** — `com.unity.modules.physics` etc. must be listed explicitly or `Collider`/`CreatePrimitive` fail to compile. The full module block is in the manifest; don't prune it.
+- **`GridMap.CellIndex` throws on out-of-bounds** (silent aliasing corrupted the opposite edge pre-review). Bounds-check before calling with untrusted coordinates.
+- Movement mirrors the flow field's corner-cut rule (`AgentWorld.CanTravel`) and caps displacement at 0.9 cells/tick — don't "optimize" either away; regression tests in `ReviewRegressionTests.cs`.
+- Unity's default New Scene template ships its own MainCamera — the bootstrap disables foreign cameras and must aim through its own camera reference, never `Camera.main`.
+- Adversarial review process (3 parallel agents: sim QA, scaffold audit, design red-team) found 1 compile blocker + 3 sim bugs + 12 design holes on first run — rerun this pattern after every major layer lands.
+
+## Open decisions
+
+`docs/decisions/OPEN-DECISIONS.md` is the live register (camera model, Android's purpose, v1 cut-list, DOTS reconciliation, preview covenant wording, gamepad tree UX, playtesters). Don't build against undecided items; surface them to the owner instead.
+
 ## Current state / next steps
 
 - Founding docs 01–05 + ADR-001 committed. Sim core v0 committed and CI-green (18 tests).

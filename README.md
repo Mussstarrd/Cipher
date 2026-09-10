@@ -6,12 +6,13 @@ Studio flagship project. Working title: **CIPHER: DEAD TURF** — a third-person
 
 | Doc | Contents |
 |---|---|
-| [01 — Tech Stack Audit](docs/01-TECH-STACK-AUDIT.md) | Engine decision (UE5 + Mass Entity + VAT horde rendering), AI/generative tooling reality check, infrastructure & backend architecture |
+| [01 — Tech Stack Audit](docs/01-TECH-STACK-AUDIT.md) | AI/generative tooling reality check + architecture principles (engine sections superseded by ADR-001) |
 | [02 — Flagship Pitch](docs/02-FLAGSHIP-PITCH.md) | High concept, core gameplay loop, progression & dopamine systems, enemy design and threat scaling |
 | [03 — Day-1 Execution Blueprint](docs/03-DAY1-EXECUTION-BLUEPRINT.md) | The three 30-day MVP milestones and the eight technical feasibility traps with decisions installed now |
 | [04 — Operating Model & Wish Lists](docs/04-OPERATING-MODEL-AND-WISHLIST.md) | How the human+AI studio runs; tiered subscription/hardware wish lists |
 | [05 — Engineering Standards](docs/05-ENGINEERING-STANDARDS.md) | SOLID-at-the-seams architecture, testing gates, release discipline, the self-improving ratchet |
 | [ADR-001 — Engine: Unity 6](docs/decisions/ADR-001-engine-unity6.md) | Reverses the UE5 call: Android + Xbox controller + AI-driven pipeline → Unity 6 / URP / ECS |
+| [Open Decisions](docs/decisions/OPEN-DECISIONS.md) | Live register of pending calls from the first adversarial design review |
 
 ## Headline decisions
 

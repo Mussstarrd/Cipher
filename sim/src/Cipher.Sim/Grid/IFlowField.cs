@@ -1,3 +1,4 @@
+#nullable enable
 using Cipher.Sim.Core;
 
 namespace Cipher.Sim.Grid

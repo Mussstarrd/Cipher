@@ -1,3 +1,4 @@
+#nullable enable
 using System;
 using Cipher.Sim.Core;
 
@@ -32,7 +33,13 @@ namespace Cipher.Sim.Grid
             for (int i = 0; i < _cost.Length; i++) _cost[i] = MinCost;
         }
 
-        public int CellIndex(int x, int y) => y * Width + x;
+        /// <summary>Linear index for a cell. Out-of-range coordinates throw — silent linearization would alias to a different valid cell and corrupt it.</summary>
+        public int CellIndex(int x, int y)
+        {
+            if (!InBounds(x, y))
+                throw new ArgumentOutOfRangeException(nameof(x), $"Cell ({x},{y}) is outside the {Width}x{Height} grid.");
+            return y * Width + x;
+        }
 
         public bool InBounds(int x, int y) => x >= 0 && x < Width && y >= 0 && y < Height;
 

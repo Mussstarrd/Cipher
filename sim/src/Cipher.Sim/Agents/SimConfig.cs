@@ -1,3 +1,4 @@
+#nullable enable
 namespace Cipher.Sim.Agents
 {
     /// <summary>Tunables for agent movement. Immutable per-archetype data; balance lives in data tables, not code.</summary>

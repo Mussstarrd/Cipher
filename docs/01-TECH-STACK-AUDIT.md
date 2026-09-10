@@ -1,3 +1,5 @@
+> **⚠️ PARTIALLY SUPERSEDED (2026-09-10):** the engine decision and all UE5-specific machinery below (Mass Entity, Niagara, Nanite/Lumen, VAT-in-UE5, EOS, Perforce/team-scale infra) are superseded by **[ADR-001](decisions/ADR-001-engine-unity6.md)** — the engine is **Unity 6**, and docs/04–05 define the actual (solo-owner + AI) operating model. Still valid here: the AI-tooling assessment (§2), the architectural principles (flow fields, instanced crowds, snapshot netcode, CI perf gates), and the reasoning trail. Do not implement UE5-specific guidance from this doc.
+
 # Part 1 — The Modern Game Dev Pipeline Audit
 
 *CTO assessment. Written to be acted on, not admired. Every recommendation here assumes a small senior team (3–8 people), a hybrid action/tower-defense game with extreme enemy density, and a mandate to ship fast without enterprise bloat.*

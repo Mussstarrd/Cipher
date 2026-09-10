@@ -1,3 +1,5 @@
+> **⚠️ PARTIALLY SUPERSEDED (2026-09-10):** written pre-pivot for UE5. The milestone *structure* (Flood → Maze → Gun), the trap list's architectural decisions (flow fields, VFX budgets, no networked physics, preview honesty, data-driven upgrades), and the "one more wave" gate all stand. Superseded specifics: engine bindings (Niagara/Mass/Animation Budget Allocator → Unity/URP equivalents), and the perf exit criteria, which must be restated **per platform** (PC target ~1,000 agents; Android target set by a 30-minute thermal soak on real hardware, not by this doc). See [ADR-001](decisions/ADR-001-engine-unity6.md) and [decisions/OPEN-DECISIONS.md](decisions/OPEN-DECISIONS.md).
+
 # Part 3 — The Day-1 Execution Blueprint
 
 *The next 30 days exist to answer one question: **is the core loop fun at density?** Everything below is scoped to produce that answer with the fewest lines of code and zero art debt. Graybox everything; the only "juice" allowed is the cheap juice that changes the answer (camera shake, hitstop, sound).*

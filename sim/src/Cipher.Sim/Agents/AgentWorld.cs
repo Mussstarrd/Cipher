@@ -1,3 +1,4 @@
+#nullable enable
 using System;
 using System.Collections.Generic;
 using Cipher.Sim.Core;
@@ -37,10 +38,11 @@ namespace Cipher.Sim.Agents
             _flowField = flowField ?? throw new ArgumentNullException(nameof(flowField));
             _config = config ?? throw new ArgumentNullException(nameof(config));
             _hash = new SpatialHash(Math.Max(0.25f, config.SeparationRadius));
-            _posX = new float[initialCapacity];
-            _posY = new float[initialCapacity];
-            _health = new float[initialCapacity];
-            _alive = new bool[initialCapacity];
+            int capacity = Math.Max(1, initialCapacity);
+            _posX = new float[capacity];
+            _posY = new float[capacity];
+            _health = new float[capacity];
+            _alive = new bool[capacity];
         }
 
         public Vec2 PositionOf(int id) => new Vec2(_posX[id], _posY[id]);
@@ -54,7 +56,7 @@ namespace Cipher.Sim.Agents
 
             if (Count == _posX.Length)
             {
-                int newSize = _posX.Length * 2;
+                int newSize = Math.Max(4, _posX.Length * 2);
                 Array.Resize(ref _posX, newSize);
                 Array.Resize(ref _posY, newSize);
                 Array.Resize(ref _health, newSize);
@@ -99,7 +101,10 @@ namespace Cipher.Sim.Agents
                 Vec2 separation = ComputeSeparation(i, pos);
                 Vec2 desired = (flowDir + separation * _config.SeparationWeight).Normalized();
 
-                Vec2 next = pos + desired * (_config.MoveSpeed * dt);
+                // Displacement is capped below one cell per tick so agents can never
+                // tunnel a wall between two cells CanTravel never gets to inspect.
+                float stepLength = MathF.Min(_config.MoveSpeed * dt, 0.9f);
+                Vec2 next = pos + desired * stepLength;
                 (_posX[i], _posY[i]) = ResolveWalls(pos, next);
             }
 
@@ -206,15 +211,32 @@ namespace Cipher.Sim.Agents
         /// <summary>Blocked-cell collision with axis sliding: try full move, then x-only, then y-only, else stay.</summary>
         private (float X, float Y) ResolveWalls(Vec2 from, Vec2 to)
         {
-            if (IsOpen(to)) return (to.X, to.Y);
+            if (CanTravel(from, to)) return (to.X, to.Y);
 
             var slideX = new Vec2(to.X, from.Y);
-            if (IsOpen(slideX)) return (slideX.X, slideX.Y);
+            if (CanTravel(from, slideX)) return (slideX.X, slideX.Y);
 
             var slideY = new Vec2(from.X, to.Y);
-            if (IsOpen(slideY)) return (slideY.X, slideY.Y);
+            if (CanTravel(from, slideY)) return (slideY.X, slideY.Y);
 
             return (from.X, from.Y);
+        }
+
+        /// <summary>
+        /// The destination must be open AND, for a diagonal cell transition, both shared
+        /// orthogonal cells must be open — mirroring FlowField's corner-cut rule so agents
+        /// can never squeeze through a sealed wall corner the field treats as impassable.
+        /// </summary>
+        private bool CanTravel(Vec2 from, Vec2 to)
+        {
+            if (!IsOpen(to)) return false;
+
+            var (fx, fy) = _map.WorldToCell(from);
+            var (tx, ty) = _map.WorldToCell(to);
+            if (tx != fx && ty != fy && (_map.IsBlocked(tx, fy) || _map.IsBlocked(fx, ty)))
+                return false;
+
+            return true;
         }
 
         private bool IsOpen(Vec2 pos)
