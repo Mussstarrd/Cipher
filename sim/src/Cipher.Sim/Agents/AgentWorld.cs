@@ -12,7 +12,7 @@ namespace Cipher.Sim.Agents
     /// float arrays, not scattered objects (docs/05 §1 — SOLID at the seams, DOD inside).
     /// Fixed-tick, fixed iteration order, no RNG: Step is deterministic, guarded by StateHash.
     /// </summary>
-    public sealed class AgentWorld
+    public sealed partial class AgentWorld
     {
         private readonly GridMap _map;
         private readonly IFlowField _flowField;
@@ -26,6 +26,10 @@ namespace Cipher.Sim.Agents
         private float[] _posY;
         private float[] _health;
         private bool[] _alive;
+        private byte[] _archetype;
+        private byte[] _state;
+        private float[] _timer;
+        private int[] _target;
 
         public int Count { get; private set; }
         public int AliveCount { get; private set; }
@@ -43,13 +47,20 @@ namespace Cipher.Sim.Agents
             _posY = new float[capacity];
             _health = new float[capacity];
             _alive = new bool[capacity];
+            _archetype = new byte[capacity];
+            _state = new byte[capacity];
+            _timer = new float[capacity];
+            _target = new int[capacity];
         }
 
         public Vec2 PositionOf(int id) => new Vec2(_posX[id], _posY[id]);
         public bool IsAlive(int id) => _alive[id];
         public float HealthOf(int id) => _health[id];
 
-        public int Spawn(Vec2 position, float health)
+        /// <summary>Spawns a plain runner.</summary>
+        public int Spawn(Vec2 position, float health) => SpawnInternal(position, health, Archetype.Runner);
+
+        private int SpawnInternal(Vec2 position, float health, Archetype archetype)
         {
             if (health <= 0f)
                 throw new ArgumentOutOfRangeException(nameof(health), "Spawn health must be positive.");
@@ -61,6 +72,10 @@ namespace Cipher.Sim.Agents
                 Array.Resize(ref _posY, newSize);
                 Array.Resize(ref _health, newSize);
                 Array.Resize(ref _alive, newSize);
+                Array.Resize(ref _archetype, newSize);
+                Array.Resize(ref _state, newSize);
+                Array.Resize(ref _timer, newSize);
+                Array.Resize(ref _target, newSize);
             }
 
             int id = Count++;
@@ -68,6 +83,10 @@ namespace Cipher.Sim.Agents
             _posY[id] = position.Y;
             _health[id] = health;
             _alive[id] = true;
+            _archetype[id] = (byte)archetype;
+            _state[id] = 0;
+            _timer[id] = 0f;
+            _target[id] = -1;
             AliveCount++;
             _hashDirty = true;
             return id;
@@ -92,39 +111,64 @@ namespace Cipher.Sim.Agents
 
                 if (Vec2.DistanceSquared(pos, goalCenter) <= goalRadiusSq)
                 {
-                    // Arrived: leaves the sim. (Vault damage hookup comes with the wave system.)
+                    // Arrived: leaves the sim. The match layer turns ReachedCount deltas into vault damage.
                     _alive[i] = false;
                     AliveCount--;
                     ReachedCount++;
                     continue;
                 }
 
-                var (cx, cy) = _map.WorldToCell(pos);
-                Vec2 flowDir = _flowField.DirectionAt(cx, cy);
-                Vec2 separation = ComputeSeparation(i, pos);
-                Vec2 desired = (flowDir + separation * _config.SeparationWeight).Normalized();
-
-                // Displacement is capped below one cell per tick so agents can never
-                // tunnel a wall between two cells CanTravel never gets to inspect.
-                float stepLength = MathF.Min(_config.MoveSpeed * dt, 0.9f);
-                Vec2 next = pos + desired * stepLength;
-                Vec2 resolved = Movement.ResolveWalls(_map, pos, next);
-
-                if (gates)
+                switch ((Archetype)_archetype[i])
                 {
-                    // Entering a breach hole from outside it costs a gate token; refused agents
-                    // hold position and bunch at the mouth (the "1 per second" throttle).
-                    var (rx, ry) = _map.WorldToCell(resolved);
-                    if ((rx != cx || ry != cy) && _map.IsGate(rx, ry) && !_map.IsGate(cx, cy) && !_map.TryEnterGate(rx, ry))
-                        resolved = pos;
+                    case Archetype.Sapper:
+                        if (StepSapper(i, pos, dt, gates)) continue;
+                        break; // no plan: walks like a runner
+                    case Archetype.Spitter:
+                        if (StepSpitter(i, pos, dt, gates)) continue;
+                        break;
                 }
 
-                _posX[i] = resolved.X;
-                _posY[i] = resolved.Y;
+                StepRunner(i, pos, dt, gates, _config.MoveSpeed);
             }
+
+            AdvanceBreaches(dt);
 
             // Positions changed; neighbor queries next tick need a fresh hash.
             _hashDirty = true;
+        }
+
+        /// <summary>Field-following movement with separation, wall sliding and gate throttling.</summary>
+        private void StepRunner(int i, Vec2 pos, float dt, bool gates, float speed)
+        {
+            var (cx, cy) = _map.WorldToCell(pos);
+            Vec2 flowDir = _flowField.DirectionAt(cx, cy);
+            Vec2 separation = ComputeSeparation(i, pos);
+            Vec2 desired = (flowDir + separation * _config.SeparationWeight).Normalized();
+
+            // Displacement is capped below one cell per tick so agents can never
+            // tunnel a wall between two cells CanTravel never gets to inspect.
+            float stepLength = MathF.Min(speed * dt, 0.9f);
+            MoveResolved(i, pos, pos + desired * stepLength, gates);
+        }
+
+        /// <summary>Applies a move through the wall rule and, when holes exist, the gate rule.</summary>
+        private void MoveResolved(int i, Vec2 pos, Vec2 next, bool gates)
+        {
+            Vec2 resolved = Movement.ResolveWalls(_map, pos, next);
+            if (gates)
+            {
+                // Entering a breach hole from outside it costs a gate token; refused agents
+                // hold position and bunch at the mouth (the "1 per second" throttle).
+                var (cx, cy) = _map.WorldToCell(pos);
+                var (rx, ry) = _map.WorldToCell(resolved);
+                if ((rx != cx || ry != cy) && _map.IsGate(rx, ry) && !_map.IsGate(cx, cy))
+                {
+                    if (_map.TryEnterGate(rx, ry)) OnGatePassed(_map.CellIndex(rx, ry));
+                    else resolved = pos;
+                }
+            }
+            _posX[i] = resolved.X;
+            _posY[i] = resolved.Y;
         }
 
         /// <summary>Damages every living agent within the circle. Returns kills. O(neighbors), not O(agents).</summary>
@@ -281,9 +325,13 @@ namespace Cipher.Sim.Agents
                 hash = Mix(hash, BitConverter.SingleToInt32Bits(_posX[i]));
                 hash = Mix(hash, BitConverter.SingleToInt32Bits(_posY[i]));
                 hash = Mix(hash, BitConverter.SingleToInt32Bits(_health[i]));
+                hash = Mix(hash, _archetype[i] | (_state[i] << 8));
+                hash = Mix(hash, BitConverter.SingleToInt32Bits(_timer[i]));
+                hash = Mix(hash, _target[i]);
             }
 
             hash = Mix(hash, ReachedCount);
+            hash = Mix(hash, (int)(BreachHash() & 0xFFFFFFFF));
             return hash ^ _map.StateHash();
 
             static ulong Mix(ulong h, int value)

@@ -208,6 +208,18 @@ namespace Cipher.Sim.Grid
             Version++;
         }
 
+        /// <summary>Repairs one stage toward Intact (Collapsed → Broken → Cracked → Intact). Returns the new stage.</summary>
+        public BreachStage RepairStage(int x, int y, ushort hp = DefaultWallHp)
+        {
+            int i = CellIndex(x, y);
+            if (_kind[i] == (byte)WallKind.None || _stage[i] == (byte)BreachStage.Intact) return (BreachStage)_stage[i];
+            var next = (BreachStage)(_stage[i] - 1);
+            ApplyStage(i, next);
+            if (next == BreachStage.Intact) _hp[i] = hp;
+            Version++;
+            return next;
+        }
+
         private void ApplyStage(int i, BreachStage stage)
         {
             LeaveGateIfAny(i);

@@ -15,5 +15,27 @@ namespace Cipher.Sim.Agents
 
         /// <summary>Agents within this distance of the goal cell center count as arrived.</summary>
         public float GoalRadius { get; set; } = 0.75f;
+
+        public float RunnerHealth { get; set; } = 10f;
+
+        // ---- Sapper (docs/design/breach-and-repair.md) ----
+        public float SapperHealth { get; set; } = 60f;
+        public float SapperSpeed { get; set; } = 2.4f;
+        /// <summary>Seconds standing at the wall before the hole opens.</summary>
+        public float SapperPlantSeconds { get; set; } = 4f;
+        /// <summary>A wall is only worth breaching if it shortens the route by this many cells (ignored when sealed in).</summary>
+        public float SapperMinGain { get; set; } = 12f;
+        /// <summary>Seconds per breach stage (Cracked → Broken → Collapsed) with no traffic.</summary>
+        public float BreachStageSeconds { get; set; } = 20f;
+        /// <summary>Each agent admitted through a hole shaves this off the current stage timer.</summary>
+        public float TrafficShaveSeconds { get; set; } = 0.5f;
+
+        // ---- Spitter (docs/design/economy-towers-and-aiming.md C) ----
+        public float SpitterHealth { get; set; } = 60f;
+        public float SpitterSpeed { get; set; } = 2.4f;
+        public float SpitterAcquireRange { get; set; } = 12f;
+        public float SpitterAttackRange { get; set; } = 9f;
+        public float SpitterDamage { get; set; } = 15f;
+        public float SpitterAttackInterval { get; set; } = 1.5f;
     }
 }
