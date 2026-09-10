@@ -752,6 +752,12 @@ namespace Cipher.Game
                 _sfx.Play(Sfx.Shot, 0.75f, 0.08f);
                 if (shot.Killed) _sfx.PlayAt(Sfx.Kill, ToWorld(shot.End, 0.6f), 0.8f, 0.12f);
                 else if (shot.Hit) _sfx.Play(Sfx.Hit, 0.5f, 0.15f, minInterval: 0.05f);
+                else if (shot.HitWall)
+                {
+                    _sfx.PlayAt(Sfx.Place, ToWorld(shot.End, 0.8f), 0.35f, 0.2f, minInterval: 0.09f);
+                    if (_map.KindAt(shot.WallX, shot.WallY) == WallKind.Barricade)
+                        Alert("careful — that is your own wall", 1.2f);
+                }
             }
 
             bool strike = (pad != null && pad.buttonNorth.wasPressedThisFrame)

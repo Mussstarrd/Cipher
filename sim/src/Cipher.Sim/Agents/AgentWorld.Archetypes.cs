@@ -364,6 +364,50 @@ namespace Cipher.Sim.Agents
             return true; // holds position while spitting
         }
 
+        // ---------------------------------------------------------------- terrain damage
+
+        /// <summary>
+        /// Damages one wall cell. Player-built walls (Barricade, Structure) take
+        /// <paramref name="friendlyScale"/> of it so a firefight at your own maze costs something
+        /// without a stray round ruining a run. Reaching zero advances a breach stage, exactly as a
+        /// Sapper's kit does, so everything downstream (widening, repair, preview) already works.
+        /// Returns true when the cell advanced a stage.
+        /// </summary>
+        public bool DamageWall(int x, int y, float damage, float friendlyScale)
+        {
+            WallKind kind = _map.KindAt(x, y);
+            if (kind == WallKind.None || kind == WallKind.Rock) return false;
+            if (_map.StageAt(x, y) == BreachStage.Collapsed) return false;
+
+            bool friendly = kind == WallKind.Barricade || kind == WallKind.Structure;
+            int amount = (int)MathF.Round(damage * (friendly ? friendlyScale : 1f));
+            if (amount <= 0) return false;
+            if (!_map.Damage(x, y, amount)) return false;
+
+            BreachStage stage = _map.Breach(x, y);
+            int cell = _map.CellIndex(x, y);
+            _events.Add(stage == BreachStage.Collapsed
+                ? new SimEvent(SimEventKind.BreachCollapsed, -1, cell, 0f)
+                : new SimEvent(SimEventKind.BreachStage, -1, cell, (float)stage));
+            return true;
+        }
+
+        /// <summary>Damages every wall cell whose centre is inside the circle. Returns cells that advanced a stage.</summary>
+        public int DamageWallsInRadius(Vec2 center, float radius, float damage, float friendlyScale)
+        {
+            int advanced = 0;
+            int minX = Math.Max(0, (int)MathF.Floor(center.X - radius));
+            int maxX = Math.Min(_map.Width - 1, (int)MathF.Ceiling(center.X + radius));
+            int minY = Math.Max(0, (int)MathF.Floor(center.Y - radius));
+            int maxY = Math.Min(_map.Height - 1, (int)MathF.Ceiling(center.Y + radius));
+            float rSq = radius * radius;
+            for (int y = minY; y <= maxY; y++)
+                for (int x = minX; x <= maxX; x++)
+                    if (Vec2.DistanceSquared(center, GridMap.CellCenter(x, y)) <= rSq && DamageWall(x, y, damage, friendlyScale))
+                        advanced++;
+            return advanced;
+        }
+
         // ---------------------------------------------------------------- breaches
 
         /// <summary>Drops plans belonging to Sappers that died (or finished and became runners).</summary>

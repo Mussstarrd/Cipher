@@ -53,6 +53,47 @@ namespace Cipher.Game.Tests
         }
 
         [Test]
+        public void Fire_StopsAtAWall_ChipsIt_AndSparesTheAgentBehind()
+        {
+            var map = new GridMap(32, 32);
+            for (int y = 0; y < 32; y++) map.SetWall(12, y, WallKind.Wall, GridMap.DefaultWallHp);
+            var field = new FlowField(map);
+            field.Compute(30, 16);
+            var world = new AgentWorld(map, field, new SimConfig());
+            var cfg = new HeroConfig();
+            var hero = new HeroModel(cfg, new Vec2(5f, 16.5f));
+            int behindTheWall = world.Spawn(new Vec2(18f, 16.5f), 10f);
+
+            Assert.IsTrue(hero.TryFire(world, 0f, out var shot));
+            Assert.IsTrue(shot.HitWall, "walls block line of fire");
+            Assert.IsFalse(shot.Hit);
+            Assert.AreEqual(12, shot.WallX);
+            Assert.AreEqual(10f, world.HealthOf(behindTheWall), 1e-3f);
+            Assert.AreEqual(GridMap.DefaultWallHp - (int)cfg.GunWallDamage, map.HpAt(12, 16));
+        }
+
+        [Test]
+        public void Strike_OpensWalls_ButOnlyChipsYourOwn()
+        {
+            var map = new GridMap(64, 32);
+            for (int y = 0; y < 32; y++) map.SetWall(30, y, WallKind.Wall, GridMap.DefaultWallHp);
+            map.SetWall(31, 16, WallKind.Barricade, GridMap.DefaultWallHp);
+            var field = new FlowField(map);
+            field.Compute(62, 16);
+            var world = new AgentWorld(map, field, new SimConfig());
+            var cfg = new HeroConfig();
+            var hero = new HeroModel(cfg, new Vec2(20f, 16.5f));
+            hero.Aim(new Vec2(1f, 0f));
+            hero.AimStrike(new Vec2(30f, 16.5f));
+
+            Assert.IsTrue(hero.TryAirstrike());
+            hero.TickStrike(world, 10f, null);
+
+            Assert.AreNotEqual(BreachStage.Intact, map.StageAt(30, 16), "map walls give way to bombs");
+            Assert.Greater(map.HpAt(31, 16), 0, "your own barricade takes only the friendly share");
+        }
+
+        [Test]
         public void Aim_IgnoresZeroInput_KeepsLastFacing()
         {
             var hero = new HeroModel(new HeroConfig(), new Vec2(5f, 5f));

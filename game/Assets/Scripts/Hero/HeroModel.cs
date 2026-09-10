@@ -30,6 +30,12 @@ namespace Cipher.Game.Hero
         public float AirstrikeInboundDelay { get; set; } = 1.2f;
         public float AirstrikeBombInterval { get; set; } = 0.12f;
         public float AirstrikeSelfDamage { get; set; } = 25f; // standing in your own strike hurts
+
+        // Terrain damage (docs/design/arsenal-and-terrain.md section 2). Your own walls take a
+        // quarter, so holding a line at your barricade erodes it without a stray round griefing you.
+        public float GunWallDamage { get; set; } = 3f;
+        public float AirstrikeWallDamage { get; set; } = 120f;
+        public float FriendlyWallDamageScale { get; set; } = 0.25f;
     }
 
     public readonly struct ShotResult
@@ -38,11 +44,15 @@ namespace Cipher.Game.Hero
         public readonly Vec2 End;
         public readonly int HitId;
         public readonly bool Killed;
+        /// <summary>The wall cell the round stopped in, or (-1,-1). Walls block line of fire.</summary>
+        public readonly int WallX;
+        public readonly int WallY;
         public bool Hit => HitId >= 0;
+        public bool HitWall => WallX >= 0;
 
-        public ShotResult(Vec2 origin, Vec2 end, int hitId, bool killed)
+        public ShotResult(Vec2 origin, Vec2 end, int hitId, bool killed, int wallX = -1, int wallY = -1)
         {
-            Origin = origin; End = end; HitId = hitId; Killed = killed;
+            Origin = origin; End = end; HitId = hitId; Killed = killed; WallX = wallX; WallY = wallY;
         }
     }
 
@@ -145,20 +155,27 @@ namespace Cipher.Game.Hero
 
             Vec2 dir = Rotate(Facing, spreadDegrees);
             Vec2 origin = Position;
-            bool hit = world.Raycast(origin, dir, _cfg.GunRange, _cfg.GunHitRadius, out int hitId, out float dist);
-            bool killed = false;
-            Vec2 end;
-            if (hit)
+
+            // Whichever comes first along the ray wins: a body, or the wall behind it.
+            bool hitAgent = world.Raycast(origin, dir, _cfg.GunRange, _cfg.GunHitRadius, out int hitId, out float agentDist);
+            bool hitWall = Movement.FirstBlockedCell(world.Map, origin, dir, _cfg.GunRange, out int wx, out int wy, out float wallDist);
+
+            if (hitAgent && (!hitWall || agentDist <= wallDist))
             {
-                killed = world.ApplyDamage(hitId, _cfg.GunDamage);
+                bool killed = world.ApplyDamage(hitId, _cfg.GunDamage);
                 if (killed) Kills++;
-                end = origin + dir * dist;
+                shot = new ShotResult(origin, origin + dir * agentDist, hitId, killed);
+                return true;
             }
-            else
+
+            if (hitWall)
             {
-                end = origin + dir * _cfg.GunRange;
+                world.DamageWall(wx, wy, _cfg.GunWallDamage, _cfg.FriendlyWallDamageScale);
+                shot = new ShotResult(origin, origin + dir * wallDist, -1, false, wx, wy);
+                return true;
             }
-            shot = new ShotResult(origin, end, hit ? hitId : -1, killed);
+
+            shot = new ShotResult(origin, origin + dir * _cfg.GunRange, -1, false);
             return true;
         }
 
@@ -211,6 +228,8 @@ namespace Cipher.Game.Hero
                 Vec2 center = _strikeFar + _strikeStep * index;
                 int k = world.ApplyRadialDamage(center, _cfg.AirstrikeBombRadius, _cfg.AirstrikeBombDamage);
                 kills += k;
+                // The street erupts: bombs open walls too, including one you were relying on.
+                world.DamageWallsInRadius(center, _cfg.AirstrikeBombRadius, _cfg.AirstrikeWallDamage, _cfg.FriendlyWallDamageScale);
                 if (!IsDown && Vec2.DistanceSquared(center, Position) <= _cfg.AirstrikeBombRadius * _cfg.AirstrikeBombRadius)
                     Health = Math.Max(0f, Health - _cfg.AirstrikeSelfDamage);
                 impacts?.Add(new StrikeImpact(center, _cfg.AirstrikeBombRadius, k));
