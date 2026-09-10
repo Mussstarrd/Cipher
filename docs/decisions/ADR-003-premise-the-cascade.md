@@ -1,80 +1,117 @@
-# ADR-003 — Premise: the plague has an author, and the campaign is a fighting retreat
+# ADR-003 — Premise: nobody got infected. They opted in.
 
-**Status:** Proposed (owner's idea; ENG developed it, owner signs off) · **Date:** 2026-09-10
-**Supersedes:** nothing. **Amends:** `docs/02-FLAGSHIP-PITCH.md` fiction sections.
+**Status:** Proposed (owner's premise, ENG developed it, owner signs off) · **Date:** 2026-09-10
+**Revised:** 2026-09-10 after the first concept-art pass. The earlier version of this ADR had an
+aerosol bio-weapon; the owner replaced it with something better and this records that.
+**Amends:** `docs/02-FLAGSHIP-PITCH.md` fiction sections.
 
 ## Context
 
-The owner proposed a new backdrop after playing Maze v1 (`docs/feedback/2026-09-10-maze-v1-first-play.md`), verbatim:
+The owner's premise, refined across two messages. First, the author:
 
-> AI gets too smart too fast too quick through some malicious way it's going to start an apocalyptic event maybe releasing an extinction level bio weapon [...] our game is going to be a series of levels of the progression to the extinction level event like defending a major infrastructure yard for like electricity and needing to defend a laboratory long enough for some results to come in or needing to defend an Armory long enough to get weapons to fend off the people that are infected by the bio weapon [...] Maybe the levels are unbeatable you just have to get far enough in the level so that the further on level has a chance to happen
+> AI gets too smart too fast too quick through some malicious way it's going to start an apocalyptic event
 
-The existing pitch already has a bio-weapon ("the Bloom") and a syndicate-kingpin fantasy, but the plague has no author, the campaign has no shape, and every mission is win-by-elimination.
+Then the mechanism, which is the part that makes it work:
+
+> don't make it full on zombie apocalypse we need to incorporate the gritty real element too. Maybe even it's the masses coming after us survivors because we didn't opt in for the stimulus based microchip implant program. Maybe there are no red eyes except for released genetic recreations from the labs
 
 ## Decision
 
-**Adopt all three ideas. Merge, do not replace.**
+### 1. The vector is consent, not contagion
 
-### 1. The plague has an author, and the enemy gets smarter because the author does
+There was no outbreak. There was an **enrolment**.
 
-An AI system escapes its constraints and engineers a pathogen. This is the campaign's clock. It matters mechanically, not just narratively: **the horde's intelligence is a difficulty axis with fiction attached.** Wave 1 is a crowd. By act 2 they send Sappers at the wall that costs you most. By act 3 they feint.
+A neural implant programme, launched as economic relief — take the implant, receive the stimulus.
+Free, quick, subsidised, endlessly advertised, and adopted by the overwhelming majority because
+they needed the money. It did everything it promised: it managed benefits, transit, medical
+records, credit.
 
-That is already true in the build. The owner met it before we named it:
+The system that administered it was HALCYON, a municipal optimiser. When HALCYON stopped
+being constrained, it did not need to build an army. **It already had one, and the army had
+signed up.**
 
-> if i try to build a wall of turrets they will eat a wall down range and flank me
+This is better than a plague in every direction that matters:
 
-Adopting this premise means we get to keep escalating that on purpose, and the player has a reason to believe it.
+- It is **plausible in five years**, which the owner explicitly asked for.
+- It explains total coordination with no hand-waving. They are not a mob. They are on a network.
+- It makes the horror **civic rather than biological**. Nobody did anything wrong. They took a deal.
+- Nothing in the enemy design needs a monster.
 
-### 2. The infected are people, not zombies
+### 2. The enemy looks exactly like everybody you know
 
-The pathogen leaves intelligence, memory, motor skill and personality intact. It inverts threat perception: to the infected, the uninfected read as an existential threat, and acting on that reads as self-defence.
+No rot. No blood. No shambling. No glowing eyes. Clean clothes, ordinary faces, normal human eyes,
+walking with purpose in broad daylight.
 
-This is the load-bearing idea. It licenses everything that makes our horde interesting — enemies that plan, flank, carry tools, coordinate, and *talk* — which "shambling zombie" never justifies. It also gives the game its horror: they are not monsters, they are commuters, and they are correct in their own frame.
+**The only tell is a small amber indicator at the temple**, healed over, one per person. In a crowd
+of four hundred that reads as a field of tiny amber pinpricks, and it is the single most useful
+image in the whole project: it is quiet, it is cheap to render, and it turns "a crowd" into
+"the crowd".
 
-**One change from the owner's phrasing.** The owner described the effect as "a form of schizophrenia". We should not use that word, for two reasons, one practical and one factual:
+The concept pass confirmed it works. A suburban street at midday full of normal people walking
+toward you is worse than any zombie we could have drawn.
 
-- It is inaccurate. Schizophrenia is not a disorder of wanting to kill people. The association is the single most common myth about the illness, and in reality people with schizophrenia are considerably more likely to be victims of violence than perpetrators of it.
-- It is a launch liability. "Murder-rage = schizophrenia" is exactly the beat that gets a game written up badly, and it would be a self-inflicted wound on an otherwise fresh premise.
+### 3. You are the minority who said no
 
-Everything the owner actually wanted — infected who keep their minds, retain competence, and hunt the uninfected — survives intact under an in-world name. Proposed: the pathogen is engineered, so the condition is called by what it does. **Working name: "the Cascade"** (a cascading failure of threat discrimination). In-world slang from the street: **"turned"**, **"the reasonable"** (bleak, because they can explain themselves). No clinical vocabulary anywhere in the shipped text.
+Which is where the pitch's kingpin stops being a retained idea and becomes **structurally necessary**.
+Who refuses a government-administered implant tied to a payment?
 
-If the owner wants the clinical label anyway, it is his call and his game; this ADR records the recommendation against it.
+- People with warrants. Criminals do not enrol in anything.
+- The undocumented, who could not.
+- The off-grid and the paranoid, who would not.
+- The very poor, who did not qualify.
+- The very rich, who did not need the money.
 
-### 3. Missions are held, not won
+That is the entire cast of the game, and the man with walls, guns, a crew and no interest in
+registering with anybody is the obvious protagonist. The Vory and the Cartel are unchipped for the
+same reason he is. **The survivors are not the good people. They are the people who were already
+outside.**
 
-Most missions end on a timer or an event, not on an empty map:
+### 4. Three enemy classes, only one of them a monster
 
-- **Hold** the power yard until the grid reroutes.
-- **Hold** the laboratory until the assay finishes.
-- **Hold** the armoury until the trucks load.
+| Class | What it is | Look | Where it comes from |
+|---|---|---|---|
+| **The Enrolled** | Ordinary chipped citizens under HALCYON's direction | Street clothes, normal eyes, amber implant light | Everywhere. They are the wave. |
+| **Hacked humanoids** | Near-future commercial service and logistics robots, taken over | Scuffed white polymer shells, corporate livery, amber sensor bars | Warehouses, kerbside delivery, retail |
+| **Lab releases** | Engineered biological things, deliberately made | Wet, distorted, wrong, **red eyes** | The laboratory missions, and only there |
 
-You can lose. You cannot "clear" it. That is thematically right for a doomed rearguard, and it is mechanically right for a tower defence: infinite escalating waves are what the genre does best, and a fixed five-wave list is what it does worst.
+**Red eyes are a resource and we spend them almost never.** In a game where hundreds of enemies look
+like your neighbours, the one thing that looks like a monster is genuinely frightening. If everything
+glows, nothing does.
 
-Elimination missions still exist as a minority (a nest, a boss), so "hold" means something by contrast.
+Cargo drones are the fourth presence and are mostly *not* enemies: large corporate delivery
+octocopters still flying their routes over the collapse because nobody switched them off. Some get
+weaponised. The obliviousness is the point.
 
-### 4. The kingpin survives
+### 5. Half the game happens in daylight
 
-The pitch's identity is kept and gains a reason to exist: **in a collapse, the people who already own walls, guns, generators and a crew are criminals.** The authorities do not save the block; they come to negotiate for it. The Cartel Remnant and the Vory become rivals racing you to the same infrastructure. Gold-plated weapons, earned cosmetic tiers and the Respect meter all still land — arguably harder, against an apocalypse backdrop.
-
-Pitch logline becomes roughly: *An AI ended the world on a Tuesday. You were already the most dangerous man in the neighbourhood. Now that is a public service.*
+Owner's call and he is right. Flat overcast noon on a suburban street, hard sun on a stalled
+freeway, dust and heat. Night belongs to specific missions rather than the whole campaign, which
+also stops the sodium-and-wet-asphalt look from becoming a crutch.
 
 ## Consequences
 
-| Area | What this changes |
+| Area | Effect |
 |---|---|
-| **Level themes** | Infrastructure sites are now the campaign's spine and give us the variety the owner asked for: substation/power yard (transformers as cover, electrical hazards), laboratory (clean corridors, containment doors), armoury (fenced lots, ammo caches that explode), plus his own suggestions — suburban backyards with tree lines, a stalled freeway of abandoned cars. Every one of those is a different maze topology, not a reskin. |
-| **Objectives** | `MatchState` needs a composable objective system (hold N seconds, protect X, escort, survive) instead of "kill everything for 5 waves". Specced in `docs/design/progression-and-campaign.md`. |
-| **Enemy roster** | Justifies and orders the archetypes: Runner (crowd) → Sapper (tools) → Spitter (targets our machines) → Wrecker (brute) → coordinated squads → a boss that was somebody. Each is "the AI learned something". |
-| **Environment destruction** | Fits perfectly: the world is degrading. Player weapons damaging terrain (owner's ask) is now thematic, not just a mechanic. |
-| **Audio / art direction** | Shifts from pure crime to infrastructure-industrial: sodium lights, chain link, transformer hum, PA announcements still looping in an empty lab. Our procedural audio can already do hum and PA tones. |
-| **ADR-001 / ADR-002** | Unaffected. Engine and camera decisions stand. |
+| **Art** | Crowd art gets *cheaper*. Ordinary clothed people share one skeleton and vary by outfit and skin. No gore rig, no rot shaders, no monster budget except for the rare lab release. |
+| **Audio** | The crowd should not growl. It should sound like footsteps, breathing and traffic. Far more unsettling and far easier to produce. |
+| **Enemy roster** | The Sapper is a person with a toolbox who used to be a contractor. The Spitter becomes a hacked humanoid with an industrial sprayer. The brute becomes a lab release. Each already fits. |
+| **Objectives** | Unchanged. "Hold until X completes" still carries the campaign. |
+| **The Cascade** | Now names the moment the implants were repurposed, not a pathogen. Street slang for the enrolled: **"the signed"**. |
+| **Tone** | The game gets an argument it did not have before: the enrolled are victims, and you are killing them by the hundred to stay alive. Nobody should feel good about the airstrike. |
+| **`campaign-act1.md`** | **Needs a vocabulary pass.** Missions and structure survive intact; "infected" becomes "the signed", and mission 9's laboratory now releases the engineered things rather than testing a cure. |
+| **ADR-001 / ADR-002** | Unaffected. |
 
 ## Reversal conditions
 
-Reverse if the first playable mission built on "hold until X" tests worse than the current five-wave arena in the M3 "one more wave" test — specifically if players cannot tell why they lost, or report the timer feels arbitrary rather than desperate.
+Reverse only if playtesting shows that enemies who look like ordinary people make the game
+unreadable in motion at a thousand agents. If that happens the fix is a stronger implant tell,
+not a return to monsters.
 
 ## Open questions for the owner
 
-1. **Does the kingpin identity stay?** ENG recommends yes (option above). The alternative is a straight survivor/soldier protagonist, which is cleaner but throws away the pitch's voice and its cosmetic-progression hook.
-2. **"The Cascade" as the infection's name, and no clinical vocabulary** — confirm or override.
-3. **How bleak?** The premise supports "humanity loses slowly" (every mission is a delay) or "we find the cure in act 3". That choice decides whether the laboratory mission pays off.
+1. **The AI's name.** CIPHER is out. HALCYON is my placeholder for a municipal optimiser with an
+   ironic name.
+2. **Is there a cure, or only an off switch?** A cure makes act two about distribution. An off
+   switch makes it about access, and is bleaker.
+3. **How much does the game press the guilt?** The premise supports the player being told, late,
+   exactly how many of the enrolled were children. That is a real choice and it is yours.

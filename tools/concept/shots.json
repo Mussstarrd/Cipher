@@ -1,48 +1,48 @@
 {
-  "_note": "Concept-art shot list for CIPHER: DEAD TURF. One entry per thing the owner needs to see before the art phase commits. 'style' is appended to every prompt so the set reads as one film.",
+  "_note": "Concept-art shot list for CIPHER: DEAD TURF. Premise per docs/decisions/ADR-003. The crowd are ordinary chipped citizens, NOT zombies: no rot, no blood-soaked horror, no glowing eyes. Their only tell is a small amber implant indicator at the temple or nape. Red eyes are reserved exclusively for the rare engineered things released from the labs. Half these shots are daylight on purpose.",
 
-  "style": "cinematic video game concept art, third person action game, night, sodium vapour streetlight as the single key light, wet asphalt reflecting orange, volumetric haze and smoke, strong rim lighting separating figures from the dark, heavy readable silhouettes, gritty grounded realism, dense detail, dramatic contrast, film grain, colour palette of sodium orange, deep blue-black shadow and blood red, painted by a senior concept artist, ultra detailed, 8k",
+  "style": "cinematic video game concept art, near-future grounded realism set about five years from now, third person action game, believable real-world detail, photographic depth of field, volumetric atmosphere, dense detail, film grain, painted by a senior concept artist, ultra detailed, 8k",
 
   "shots": [
     {
-      "id": "street",
-      "title": "Over the shoulder, wave in progress",
-      "prompt": "Over-the-shoulder third-person view from behind a heavily built man in a long dark coat holding a light machine gun, standing in the middle of a ruined city street at night. A hundred infected people sprint toward him down the street between burnt-out buildings, backlit, faces lit red. Muzzle flash lights the wet road. Spent shell casings in the air, blood spray and impact debris, bodies on the asphalt, overturned cars burning in the background"
+      "id": "day-crowd",
+      "title": "Midday. They look like anybody.",
+      "prompt": "Bright overcast midday on an ordinary suburban American street. A dense crowd of several hundred completely normal-looking people advancing steadily toward the viewer between parked cars and clipped lawns: office workers in shirtsleeves, a delivery courier still in uniform, a woman in gym clothes, an old man in a cardigan. Clean clothes, no blood, no wounds, no rot, normal human eyes. Every single one has a tiny amber indicator light glowing at the temple, a field of small amber pinpricks across the whole crowd. Blank, calm, purposeful faces all aimed the same way. Utterly ordinary and deeply wrong"
     },
     {
-      "id": "horde",
-      "title": "The flood at street width",
-      "prompt": "A tidal wave of a thousand infected people flooding down a narrow city street at night toward the viewer, packed shoulder to shoulder, climbing over wrecked cars and each other, lit from behind by burning wreckage so they read as a single moving mass of silhouettes with red-lit faces, dust and ash in the air, sheer scale and density, a horror of numbers"
+      "id": "implant",
+      "title": "The tell",
+      "prompt": "Tight cinematic portrait of an ordinary middle-aged man in a supermarket polo shirt, harsh daylight, shot from three-quarter angle. A small surgical implant sits just behind his temple under the skin with a single amber status LED glowing through a healed scar. His eyes are completely normal human eyes, calm and unfocused, looking slightly past the camera. No blood, no injury, no horror makeup. The horror is entirely in how ordinary he is"
     },
     {
-      "id": "barricade",
-      "title": "The maze holds, barely",
-      "prompt": "A hand-built defensive maze of scrap metal barricades and concrete blocks welded across a city street at night, a mounted automatic turret firing tracer rounds from behind it, infected piling against the barricade and being torn apart, gore and viscera splashed across the metal, sparks, smoke, orange emergency lighting, seen from a slightly elevated three-quarter angle"
+      "id": "freeway-day",
+      "title": "The stalled freeway, hard sun",
+      "prompt": "A multi-lane freeway in harsh bright afternoon sun, jammed solid with thousands of abandoned cars, doors hanging open, heat shimmer and dust haze. A vast crowd of ordinary clothed people picks its way steadily between the vehicles toward the viewer, hundreds deep, tiny amber implant lights visible on temples. A few large white corporate cargo drones still fly a delivery route overhead, oblivious. Dry grass, concrete, sun-bleached colour, no blood"
     },
     {
-      "id": "airstrike",
-      "title": "The airstrike lands",
-      "prompt": "A line of six explosions walking down a city street at night toward the viewer, each blast a column of fire and pulverised asphalt throwing bodies and debris into the air, shockwave dust rings, buildings lit orange, a lone armed figure silhouetted in the foreground watching it come, apocalyptic scale, cinematic destruction"
+      "id": "humanoids",
+      "title": "Hacked humanoids in the crowd",
+      "prompt": "Three near-future commercial humanoid service robots walking amid a crowd of ordinary people on a daylight city street. Scuffed white and grey polymer shells, exposed cable runs at the joints, corporate logistics livery, one still gripping a delivery tote. Their heads track the viewer in perfect unison, amber sensor bars lit. Industrial and believable hard-surface robot design, real proportions, the same size as the people around them, harsh natural daylight, dust and debris"
     },
     {
-      "id": "sapper",
-      "title": "The one that stops",
-      "prompt": "A single infected man in filthy work clothes kneeling at the base of a scrap metal barricade in a dark street, deliberately placing a satchel of explosives against it, calm and methodical while other infected sprint past him in the blurred background, his face intelligent and wrong, harsh flashlight beam catching him, tense horror, close mid-shot"
+      "id": "cargo-drones",
+      "title": "The logistics network never stopped",
+      "prompt": "Two large white corporate cargo delivery drones the size of small cars flying low over a ruined daylight city street, heavy lift octocopter design with slung parcel containers and worn brand livery, rotor downwash kicking up dust and litter. One has been crudely modified with a bolted-on weapon mount and armour plate. Below them a crowd of ordinary people moves down the street. Grounded near-future industrial design, overcast daylight"
     },
     {
-      "id": "goon",
-      "title": "The one they make room for",
-      "prompt": "A massive hulking infected brute, twice human size, wearing torn riot armour fused into swollen flesh, wading up a burning street at night while the smaller infected crowd parts around him, backlit by fire, steam rising off him, blood and grime, low camera angle looking up to make him enormous, boss enemy reveal shot"
+      "id": "hero-day",
+      "title": "Holding the lot in daylight",
+      "prompt": "A heavily built man in a worn jacket and body armour standing behind a hand-welded scrap metal barricade across the entrance to a chop shop yard, seen over his shoulder in flat overcast daylight. He is firing a light machine gun into an advancing crowd of ordinary clothed civilians thirty metres out. Spent brass in the air, muzzle smoke, sandbags and welded car doors, oil drums. The violence is grounded and awful rather than heroic, real weapon handling, no gore spectacle"
     },
     {
-      "id": "kit",
-      "title": "Field kit deploys",
-      "prompt": "A rugged military counter-drone equipment case sitting open on wet asphalt at night, unfolding and deploying into an automated sentry gun on a telescoping mast, status lights glowing cyan, hydraulic arms extending, steam and rain, close product-hero angle with the ruined street out of focus behind it, believable hard-surface military hardware design"
+      "id": "lab-thing",
+      "title": "The only thing with red eyes",
+      "prompt": "A single engineered creature emerging from a shattered biological containment door in a wrecked laboratory corridor, harsh flickering white strip lighting and emergency red beacons. Wet grey-pink hairless musculature over an elongated distorted human frame, surgical ports and tags still fixed to it, and burning red eyes. Genuinely monstrous and biological. Blood and torn containment plastic. This is the rare exception in a world of ordinary-looking enemies, boss reveal shot"
     },
     {
-      "id": "operators",
-      "title": "Somebody up there is still giving orders",
-      "prompt": "Four military quadcopter drones hovering low over a ruined night street with searchlights and underslung weapons, a masked human operator in tactical gear crouched on a rooftop above controlling them, infected crowd surging in the street far below, cold white searchlight beams cutting through smoke against the warm sodium street glow"
+      "id": "night-street",
+      "title": "Night, sodium, the wave",
+      "prompt": "Over-the-shoulder third person view behind a heavily built man in a long coat holding a light machine gun on a ruined city street at night, sodium vapour streetlight, wet asphalt reflecting orange, volumetric haze. A large crowd of ordinary clothed people advances toward him, backlit, small amber implant lights at their temples, normal eyes. Muzzle flash, spent casings, burning cars, bodies on the road. Strong rim lighting and heavy silhouettes"
     }
   ]
 }
