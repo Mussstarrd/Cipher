@@ -1,0 +1,12 @@
+<Project>
+  <!--
+    Redirect bin/obj OUT of the source tree into sim/.artifacts/.
+    The Unity editor imports sim/src/Cipher.Sim as a package (see game/Packages/manifest.json)
+    and would otherwise try to import stale build artifacts; dot-prefixed folders are
+    invisible to Unity's importer.
+  -->
+  <PropertyGroup>
+    <BaseIntermediateOutputPath>$(MSBuildThisFileDirectory).artifacts/obj/$(MSBuildProjectName)/</BaseIntermediateOutputPath>
+    <BaseOutputPath>$(MSBuildThisFileDirectory).artifacts/bin/$(MSBuildProjectName)/</BaseOutputPath>
+  </PropertyGroup>
+</Project>

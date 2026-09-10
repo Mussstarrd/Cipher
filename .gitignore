@@ -2,6 +2,7 @@
 bin/
 obj/
 *.user
+sim/.artifacts/
 
 # Unity (game/ project, when it lands)
 game/Library/

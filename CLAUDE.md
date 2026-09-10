@@ -42,6 +42,9 @@ dotnet run --project sim/tools/Cipher.Sim.Bench -c Release -- --smoke
 
 ## Current state / next steps
 
-- Founding docs 01–05 + ADR-001 committed.
-- Sim core v0 committed: GridMap, FlowField (Dijkstra + direction field), SpatialHash, AgentWorld (SoA, separation steering, radial damage), tests + bench.
-- **Next:** Unity 6 project scaffold in `game/` (owner's laptop or CI), controller-first input map, sim↔Unity adapter rendering agents as instanced quads → Milestone 1 "The Flood" per docs/03.
+- Founding docs 01–05 + ADR-001 committed. Sim core v0 committed and CI-green (18 tests).
+- Unity scaffold committed in `game/`: manifest mounts `sim/src/Cipher.Sim` as local package `com.cipher.sim` (it carries `package.json` + `Cipher.Sim.asmdef` with `noEngineReferences: true`); `FloodBootstrap.cs` builds the whole Milestone-1 graybox procedurally (no scene assets); gamepad-first input via Input System. First-open checklist for the owner: `game/README.md`.
+- `sim/Directory.Build.props` redirects bin/obj to `sim/.artifacts/` so Unity's importer never sees build artifacts. Don't remove it.
+- **`game/` C# has NOT yet been compiled by any pipeline** (no Unity in remote containers; game-ci needs a Unity license secret — owner action). Until Unity CI exists, treat `game/` edits as unverified: keep them small, stick to long-stable APIs, and expect the first editor open to surface fixes.
+- **Waiting on owner:** open the project per `game/README.md`, report FPS + feel, commit generated `.meta` files.
+- **Next engineering:** fix whatever first-open surfaces → game-ci workflow (license secret from owner) → hero capsule with movement/aim on right stick → barricade build-mode with live path preview (Milestone 2).

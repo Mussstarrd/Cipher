@@ -1,0 +1,7 @@
+{
+  "name": "com.cipher.sim",
+  "version": "0.1.0",
+  "displayName": "Cipher Sim Core",
+  "description": "Engine-agnostic deterministic simulation core for CIPHER: flow fields, spatial hash, swarm agents. No UnityEngine references — enforced by the asmdef.",
+  "unity": "6000.0"
+}
