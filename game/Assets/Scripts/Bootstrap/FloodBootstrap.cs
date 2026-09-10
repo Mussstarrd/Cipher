@@ -1185,8 +1185,25 @@ namespace Cipher.Game
 
         // ------------------------------------------------------------------ hud
 
+        /// <summary>
+        /// Virtual UI size. The HUD is authored against an 800-tall screen and scaled up, so a
+        /// phone at 1080p landscape gets readable text instead of ant-sized labels. Everything in
+        /// OnGUI must use _uiW/_uiH, never Screen.width/height, or it lands outside the scaled space.
+        /// </summary>
+        private float _uiW, _uiH;
+
+        private void BeginScaledUi()
+        {
+            float scale = Mathf.Clamp(Screen.height / 800f, 1f, 3f);
+            if (Application.isMobilePlatform) scale *= 1.5f;
+            GUI.matrix = Matrix4x4.TRS(Vector3.zero, Quaternion.identity, new Vector3(scale, scale, 1f));
+            _uiW = Screen.width / scale;
+            _uiH = Screen.height / scale;
+        }
+
         private void OnGUI()
         {
+            BeginScaledUi();
             bool pad = Gamepad.current != null;
             _subStyle ??= new GUIStyle(GUI.skin.label) { fontSize = 22, alignment = TextAnchor.MiddleCenter };
 
@@ -1241,7 +1258,7 @@ namespace Cipher.Game
                 var alertStyle = new GUIStyle(GUI.skin.label) { fontSize = 20, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter };
                 alertStyle.normal.textColor = new Color(1f, 0.55f, 0.1f);
                 for (int i = 0; i < _alerts.Count; i++)
-                    GUI.Label(new Rect(0, 60 + i * 28, Screen.width, 28), _alerts[i].Text, alertStyle);
+                    GUI.Label(new Rect(0, 60 + i * 28, _uiW, 28), _alerts[i].Text, alertStyle);
             }
 
             if (_match.IsOver && !_pauseMenu.IsOpen)
@@ -1264,9 +1281,9 @@ namespace Cipher.Game
         private void DrawMinimap()
         {
             const float pad = 12f;
-            float w = Mathf.Min(300f, Screen.width * 0.22f);
+            float w = Mathf.Min(300f, _uiW * 0.22f);
             float h = w * GridH / GridW;
-            var rect = new Rect(Screen.width - w - pad, Screen.height - h - pad, w, h);
+            var rect = new Rect(_uiW - w - pad, _uiH - h - pad, w, h);
 
             var prev = GUI.color;
             GUI.color = new Color(0f, 0f, 0f, 0.55f);
@@ -1291,10 +1308,10 @@ namespace Cipher.Game
             _centerStyle ??= new GUIStyle(GUI.skin.label) { fontSize = 40, alignment = TextAnchor.MiddleCenter, fontStyle = FontStyle.Bold };
             var prev = GUI.color;
             GUI.color = tint;
-            GUI.DrawTexture(new Rect(0, 0, Screen.width, Screen.height), Texture2D.whiteTexture);
+            GUI.DrawTexture(new Rect(0, 0, _uiW, _uiH), Texture2D.whiteTexture);
             GUI.color = prev;
-            GUI.Label(new Rect(0, Screen.height * 0.38f, Screen.width, 60), title, _centerStyle);
-            GUI.Label(new Rect(0, Screen.height * 0.38f + 64, Screen.width, 70), sub, _subStyle);
+            GUI.Label(new Rect(0, _uiH * 0.38f, _uiW, 60), title, _centerStyle);
+            GUI.Label(new Rect(0, _uiH * 0.38f + 64, _uiW, 70), sub, _subStyle);
         }
 
         private static void DrawBar(Rect r, float fraction, Color fill, Color back, string label)
@@ -1313,7 +1330,7 @@ namespace Cipher.Game
             _menuTitleStyle ??= new GUIStyle(GUI.skin.label) { fontSize = 36, alignment = TextAnchor.MiddleCenter, fontStyle = FontStyle.Bold };
             _menuItemStyle ??= new GUIStyle(GUI.skin.button) { fontSize = 26, alignment = TextAnchor.MiddleCenter };
 
-            float w = Screen.width, h = Screen.height;
+            float w = _uiW, h = _uiH;
             var prev = GUI.color;
             GUI.color = new Color(0f, 0f, 0f, 0.6f);
             GUI.DrawTexture(new Rect(0, 0, w, h), Texture2D.whiteTexture);

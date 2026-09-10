@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using UnityEditor;
 using UnityEditor.Build;
+
 using UnityEditor.Build.Reporting;
 using UnityEngine;
 
@@ -24,8 +25,38 @@ namespace Cipher.Game.Editor
             Build(BuildTarget.StandaloneWindows64, BuildTargetGroup.Standalone, ProductName + ".exe");
 
         [MenuItem("Cipher/Build/Android APK")]
-        public static void BuildAndroid() =>
+        public static void BuildAndroid()
+        {
+            ConfigureAndroid();
             Build(BuildTarget.Android, BuildTargetGroup.Android, ProductName + ".apk");
+        }
+
+        /// <summary>
+        /// Android player settings applied from code so a headless build never depends on whatever
+        /// the last person left in the inspector. Landscape and a gamepad are the design centre
+        /// (ADR-001); debug signing is fine for sideloading and is replaced before any store upload.
+        /// </summary>
+        private static void ConfigureAndroid()
+        {
+            PlayerSettings.applicationIdentifier = "com.cipher.deadturf";
+            PlayerSettings.companyName = "Cipher";
+            PlayerSettings.productName = ProductName;
+
+            PlayerSettings.Android.targetArchitectures = AndroidArchitecture.ARM64;
+            PlayerSettings.SetScriptingBackend(NamedBuildTarget.Android, ScriptingImplementation.IL2CPP);
+            PlayerSettings.Android.minSdkVersion = AndroidSdkVersions.AndroidApiLevel26;
+            PlayerSettings.Android.useCustomKeystore = false;
+
+            // Landscape only: this is a controller game held sideways, never a portrait one.
+            PlayerSettings.defaultInterfaceOrientation = UIOrientation.LandscapeLeft;
+            PlayerSettings.allowedAutorotateToPortrait = false;
+            PlayerSettings.allowedAutorotateToPortraitUpsideDown = false;
+            PlayerSettings.allowedAutorotateToLandscapeLeft = true;
+            PlayerSettings.allowedAutorotateToLandscapeRight = true;
+
+            // The graybox draws with Shader.Find("Standard"); device builds strip it without this.
+            PlayerSettings.SetGraphicsAPIs(BuildTarget.Android, new[] { UnityEngine.Rendering.GraphicsDeviceType.Vulkan, UnityEngine.Rendering.GraphicsDeviceType.OpenGLES3 });
+        }
 
         private static void Build(BuildTarget target, BuildTargetGroup group, string fileName)
         {
