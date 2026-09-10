@@ -88,6 +88,11 @@ namespace Cipher.Game
         private Transform _cursorT = null!;
         private Material _cursorMaterial = null!;
         private float _cursorRepeatTimer, _cursorHeldTime;
+        // Held-to-scroll ramp: a nudge steps one cell, holding accelerates so crossing the arena is quick.
+        private static readonly (float AfterSeconds, float CellsPerSecond)[] CursorRamp =
+        {
+            (0f, 7f), (0.30f, 15f), (0.85f, 28f), (1.8f, 46f),
+        };
         private (int X, int Y) _lastPaintCell = (-1, -1);
         private readonly List<Vec2> _routeScratch = new List<Vec2>(600);
         private readonly List<Matrix4x4> _routeOk = new List<Matrix4x4>(2048);
@@ -115,6 +120,11 @@ namespace Cipher.Game
         private readonly List<GameObject> _turretGos = new List<GameObject>(32);
         private Transform _vaultT = null!;
         private Transform _crateT = null!;
+        private Texture2D _minimap = null!;
+        private Color32[] _minimapPixels = null!;
+        private int[] _minimapAgents = null!;
+        private float _minimapTimer;
+        private bool _showMinimap = true;
         private Material _sapperMaterial = null!;
         private Material _spitterMaterial = null!;
         private Material _droneMaterial = null!;
@@ -244,6 +254,11 @@ namespace Cipher.Game
             _droneMaterial = MakeMaterial(new Color(0.4f, 0.95f, 1f), instanced: true);
             _sapperTargetMaterial = MakeMaterial(new Color(1f, 0.3f, 0.05f), instanced: true);
             _instanceBuffer = new Matrix4x4[MaxInstancesPerDraw];
+
+            // Minimap: one pixel per grid cell, repainted a few times a second (cheap at any density).
+            _minimap = new Texture2D(GridW, GridH, TextureFormat.RGBA32, mipChain: false) { filterMode = FilterMode.Point };
+            _minimapPixels = new Color32[GridW * GridH];
+            _minimapAgents = new int[GridW * GridH];
 
             var heroGo = GameObject.CreatePrimitive(PrimitiveType.Capsule);
             heroGo.name = "Hero";
@@ -406,6 +421,7 @@ namespace Cipher.Game
             _tickAccumulator = Mathf.Min(_tickAccumulator, TickDt);
 
             UpdateEffects(dt);
+            UpdateMinimap(dt);
             UpdateAudio(dt);
             UpdateHeroVisual();
             UpdateBuildVisual();
@@ -569,6 +585,9 @@ namespace Cipher.Game
             bool toggle = (pad != null && pad.leftShoulder.wasPressedThisFrame) || (kb != null && kb.tabKey.wasPressedThisFrame);
             if (toggle) { SetBuildMode(!_buildMode); _sfx.Play(_buildMode ? Sfx.MenuOpen : Sfx.MenuConfirm, 0.7f, 0f); }
 
+            if ((pad != null && pad.rightStickButton.wasPressedThisFrame) || (kb != null && kb.nKey.wasPressedThisFrame))
+                _showMinimap = !_showMinimap;
+
             bool startWave = (pad != null && pad.selectButton.wasPressedThisFrame) || (kb != null && kb.enterKey.wasPressedThisFrame);
             if (startWave && _match.Phase == MatchPhase.Setup) _match.StartWaveNow();
         }
@@ -623,7 +642,9 @@ namespace Cipher.Game
                     _build.MoveCursor(dx, dy);
                     moved = true;
                     _sfx.Play(Sfx.CursorTick, 0.5f, 0.15f, minInterval: 0.04f);
-                    _cursorRepeatTimer = _cursorHeldTime > 0.6f ? 1f / 16f : 1f / 8f;
+                    float rate = CursorRamp[0].CellsPerSecond;
+                    foreach (var step in CursorRamp) if (_cursorHeldTime >= step.AfterSeconds) rate = step.CellsPerSecond;
+                    _cursorRepeatTimer = 1f / rate;
                 }
                 _cursorHeldTime += dt;
             }
@@ -800,6 +821,76 @@ namespace Cipher.Game
             }
         }
 
+        private static readonly Color32 MapGround = new Color32(24, 24, 30, 210);
+        private static readonly Color32 MapWall = new Color32(120, 116, 105, 255);
+        private static readonly Color32 MapBarricade = new Color32(170, 140, 80, 255);
+        private static readonly Color32 MapBreach = new Color32(255, 110, 20, 255);
+        private static readonly Color32 MapTurret = new Color32(70, 150, 230, 255);
+        private static readonly Color32 MapVault = new Color32(50, 230, 130, 255);
+        private static readonly Color32 MapHero = new Color32(255, 215, 60, 255);
+        private static readonly Color32 MapSapper = new Color32(255, 150, 30, 255);
+        private static readonly Color32 MapSpitter = new Color32(110, 240, 80, 255);
+
+        /// <summary>Repaints the minimap 5x a second: terrain, structures, threat density, you.</summary>
+        private void UpdateMinimap(float dt)
+        {
+            _minimapTimer -= dt;
+            if (_minimapTimer > 0f) return;
+            _minimapTimer = 0.2f;
+
+            System.Array.Clear(_minimapAgents, 0, _minimapAgents.Length);
+            for (int id = 0; id < _world.Count; id++)
+            {
+                if (!_world.IsAlive(id)) continue;
+                Vec2 p = _world.PositionOf(id);
+                var (ax, ay) = _map.WorldToCell(p);
+                int idx = ay * GridW + ax;
+                // Rare archetypes are flagged with big negative-free sentinels so they always win the pixel.
+                switch (_world.ArchetypeOf(id))
+                {
+                    case Archetype.Sapper: _minimapAgents[idx] = 100000; break;
+                    case Archetype.Spitter: if (_minimapAgents[idx] < 100000) _minimapAgents[idx] = 50000; break;
+                    default: if (_minimapAgents[idx] < 50000) _minimapAgents[idx]++; break;
+                }
+            }
+
+            for (int y = 0; y < GridH; y++)
+            {
+                for (int x = 0; x < GridW; x++)
+                {
+                    int i = y * GridW + x;
+                    Color32 c = MapGround;
+
+                    WallKind kind = _map.KindAt(x, y);
+                    BreachStage stage = _map.StageAt(x, y);
+                    if (kind == WallKind.Structure) c = MapTurret;
+                    else if (kind != WallKind.None && stage != BreachStage.Collapsed)
+                        c = stage != BreachStage.Intact ? MapBreach : kind == WallKind.Barricade ? MapBarricade : MapWall;
+
+                    int agents = _minimapAgents[i];
+                    if (agents >= 100000) c = MapSapper;
+                    else if (agents >= 50000) c = MapSpitter;
+                    else if (agents > 0)
+                    {
+                        byte heat = (byte)Mathf.Clamp(90 + agents * 45, 90, 255);
+                        c = new Color32(heat, (byte)Mathf.Max(20, 70 - agents * 12), 40, 255);
+                    }
+
+                    if (x == GoalX && y == GoalY) c = MapVault;
+                    // Unity textures are bottom-up; the sim's +Y is "north", so flip the row.
+                    _minimapPixels[(GridH - 1 - y) * GridW + x] = c;
+                }
+            }
+
+            var (hx, hy) = _map.WorldToCell(_hero.Position);
+            _minimapPixels[(GridH - 1 - hy) * GridW + hx] = MapHero;
+            if (_buildMode)
+                _minimapPixels[(GridH - 1 - _build.CursorY) * GridW + _build.CursorX] = new Color32(255, 255, 255, 255);
+
+            _minimap.SetPixels32(_minimapPixels);
+            _minimap.Apply(false);
+        }
+
         private void UpdateHeroVisual()
         {
             _heroT.position = ToWorld(_hero.Position, 0.9f);
@@ -838,7 +929,10 @@ namespace Cipher.Game
             _routeBad.Clear();
             if (!_buildMode) return;
 
-            _cursorT.position = new Vector3(_build.CursorX + 0.5f, 0.06f, _build.CursorY + 0.5f);
+            bool snapped = _build.Item == BuildItem.RepairDrone && _build.DroneTarget.X >= 0;
+            _cursorT.position = snapped
+                ? new Vector3(_build.DroneTarget.X + 0.5f, 0.4f, _build.DroneTarget.Y + 0.5f)
+                : new Vector3(_build.CursorX + 0.5f, 0.06f, _build.CursorY + 0.5f);
             Color c = _build.LastResult switch
             {
                 PlacementResult.Ok => _build.CanAfford ? new Color(0.3f, 1f, 0.4f) : new Color(0.6f, 0.6f, 0.6f),
@@ -1014,6 +1108,9 @@ namespace Cipher.Game
             bool cancel = toggle || (gamepad != null && gamepad.buttonEast.wasPressedThisFrame);
             if (cancel) { Apply(_pauseMenu.Cancel()); _sfx.Play(Sfx.MenuConfirm, 0.7f, 0f); return; }
 
+            bool toggleMap = (gamepad != null && gamepad.rightStickButton.wasPressedThisFrame) || (keyboard != null && keyboard.nKey.wasPressedThisFrame);
+            if (toggleMap) _showMinimap = !_showMinimap;
+
             bool mute = (gamepad != null && gamepad.buttonNorth.wasPressedThisFrame) || (keyboard != null && keyboard.mKey.wasPressedThisFrame);
             if (mute) { _sfx.Muted = !_sfx.Muted; if (!_sfx.Muted) _sfx.Play(Sfx.MenuConfirm, 0.7f, 0f); }
 
@@ -1132,7 +1229,27 @@ namespace Cipher.Game
                 Overlay(new Color(0.4f, 0f, 0f, 0.55f), "DOWN", pad ? "A: get back up" : "Enter: get back up");
             }
 
+            if (_showMinimap && !_pauseMenu.IsOpen) DrawMinimap();
+
             if (_pauseMenu.IsOpen) DrawPauseMenu();
+        }
+
+        private void DrawMinimap()
+        {
+            const float pad = 12f;
+            float w = Mathf.Min(300f, Screen.width * 0.22f);
+            float h = w * GridH / GridW;
+            var rect = new Rect(Screen.width - w - pad, Screen.height - h - pad, w, h);
+
+            var prev = GUI.color;
+            GUI.color = new Color(0f, 0f, 0f, 0.55f);
+            GUI.DrawTexture(new Rect(rect.x - 3f, rect.y - 3f, rect.width + 6f, rect.height + 6f), Texture2D.whiteTexture);
+            GUI.color = Color.white;
+            GUI.DrawTexture(rect, _minimap);
+            GUI.color = prev;
+
+            GUI.Label(new Rect(rect.x, rect.y - 22f, rect.width, 20f),
+                Gamepad.current != null ? "map (RS click: hide)" : "map (M: hide)");
         }
 
         private int TurretKills()

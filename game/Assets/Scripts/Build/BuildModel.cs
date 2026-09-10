@@ -72,7 +72,38 @@ namespace Cipher.Game.Build
             }
         }
 
-        private bool CursorOnBreach => _map.KindAt(CursorX, CursorY) != WallKind.None && _map.StageAt(CursorX, CursorY) != BreachStage.Intact;
+        /// <summary>Cells this far from the cursor are close enough for a drone to snap onto a breach.</summary>
+        public const int DroneSnapRadius = 3;
+
+        /// <summary>The breach a drone would be dropped on, or (-1,-1). Snaps so the player never has to hit one cell exactly.</summary>
+        public (int X, int Y) DroneTarget { get; private set; } = (-1, -1);
+
+        private bool IsBreached(int x, int y)
+            => _map.KindAt(x, y) != WallKind.None && _map.StageAt(x, y) != BreachStage.Intact;
+
+        private bool HasDroneAt(int x, int y)
+        {
+            foreach (var d in Drones) if (d.X == x && d.Y == y) return true;
+            return false;
+        }
+
+        /// <summary>Nearest un-droned breach within <see cref="DroneSnapRadius"/>; ties resolve deterministically.</summary>
+        private (int X, int Y) FindNearestBreach()
+        {
+            (int X, int Y) best = (-1, -1);
+            int bestDistSq = int.MaxValue;
+            for (int dy = -DroneSnapRadius; dy <= DroneSnapRadius; dy++)
+            {
+                for (int dx = -DroneSnapRadius; dx <= DroneSnapRadius; dx++)
+                {
+                    int x = CursorX + dx, y = CursorY + dy;
+                    if (!_map.InBounds(x, y) || !IsBreached(x, y) || HasDroneAt(x, y)) continue;
+                    int distSq = dx * dx + dy * dy;
+                    if (distSq < bestDistSq) { bestDistSq = distSq; best = (x, y); }
+                }
+            }
+            return best;
+        }
 
         public void SetCursor(int x, int y)
         {
@@ -99,10 +130,14 @@ namespace Cipher.Game.Build
             {
                 // Drones go on breached cells, which are never "buildable"; the preview shows live routing.
                 Validator.Validate(_world, Array.Empty<(int X, int Y)>(), WallKind.Barricade, GridMap.DefaultWallHp, _goalX, _goalY, _spawns);
-                LastResult = CursorOnBreach ? PlacementResult.Ok : PlacementResult.NotBuildable;
-                Message = LastResult == PlacementResult.Ok ? (CanAfford ? "drop drone here" : $"need ${ItemCost}") : "drone needs a breached wall";
+                DroneTarget = FindNearestBreach();
+                LastResult = DroneTarget.X >= 0 ? PlacementResult.Ok : PlacementResult.NotBuildable;
+                Message = LastResult == PlacementResult.Ok
+                    ? (CanAfford ? $"drop drone on the breach at {DroneTarget.X},{DroneTarget.Y}" : $"need ${ItemCost}")
+                    : "no breach within reach — move the cursor next to an orange wall";
                 return LastResult;
             }
+            DroneTarget = (-1, -1);
 
             _oneCell[0] = (CursorX, CursorY);
             WallKind kind = Item == BuildItem.Turret ? WallKind.Structure : WallKind.Barricade;
@@ -162,7 +197,7 @@ namespace Cipher.Game.Build
             switch (Item)
             {
                 case BuildItem.Turret: _turrets.Place(_map, CursorX, CursorY); break;
-                case BuildItem.RepairDrone: Drones.Add(new RepairDrone(CursorX, CursorY)); break;
+                case BuildItem.RepairDrone: Drones.Add(new RepairDrone(DroneTarget.X, DroneTarget.Y)); break;
                 default: _map.SetWall(CursorX, CursorY, WallKind.Barricade, GridMap.DefaultWallHp); break;
             }
             Placed++;

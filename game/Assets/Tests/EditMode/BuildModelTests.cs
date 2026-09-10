@@ -184,9 +184,12 @@ namespace Cipher.Game.Tests
             r.Build.CycleItem(1); r.Build.CycleItem(1);        // drone
             Assert.AreEqual(BuildItem.RepairDrone, r.Build.Item);
             r.Build.SetCursor(12, 7);
-            Assert.AreEqual(PlacementResult.NotBuildable, r.Build.Refresh());
-            Assert.IsFalse(r.Build.TryPlace(), "open floor is not a breach");
-            r.Build.SetCursor(12, 6);
+            Assert.AreEqual(PlacementResult.Ok, r.Build.Refresh(), "a cell away still snaps onto the breach");
+            Assert.AreEqual((12, 6), r.Build.DroneTarget);
+            r.Build.SetCursor(1, 1);
+            Assert.AreEqual(PlacementResult.NotBuildable, r.Build.Refresh(), "far from any breach: refused");
+            Assert.IsFalse(r.Build.TryPlace());
+            r.Build.SetCursor(12, 8);
             Assert.AreEqual(PlacementResult.Ok, r.Build.Refresh());
             Assert.IsTrue(r.Build.TryPlace());
             Assert.AreEqual(230, r.Match.Bank.Cash);
