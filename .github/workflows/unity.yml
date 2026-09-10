@@ -6,8 +6,8 @@ name: Unity
 # Licensing: Unity removed manual (.alf/.ulf) activation for Personal seats, so the
 # classic game-ci UNITY_LICENSE route is dead. We use the buildalon actions, which
 # activate a Personal license through the Unity Licensing Client with just:
-#   UNITY_USERNAME â€” Unity ID email
-#   UNITY_PASSWORD â€” Unity ID password
+#   UNITY_USERNAME — Unity ID email
+#   UNITY_PASSWORD — Unity ID password
 # Until those repo secrets exist the build job is skipped (not failed).
 # See game/README.md "CI license".
 
@@ -44,7 +44,7 @@ jobs:
         run: |
           echo "ready=$HAS_LICENSE" >> "$GITHUB_OUTPUT"
           if [ "$HAS_LICENSE" != "true" ]; then
-            echo "::warning::UNITY_USERNAME / UNITY_PASSWORD not set â€” Unity build skipped."
+            echo "::warning::UNITY_USERNAME / UNITY_PASSWORD not set — Unity build skipped."
           fi
 
   build:
@@ -117,5 +117,8 @@ jobs:
         with:
           name: CipherDeadTurf-${{ matrix.build-target }}-${{ github.sha }}
           path: Builds/${{ matrix.build-target }}
-          retention-days: 14
+          # A player build is ~90 MB and GitHub's free artifact allowance is 500 MB total, so
+          # storage bills long before Actions minutes do. Three days is enough to pull a build
+          # down; tagged releases get kept deliberately, not by accident.
+          retention-days: 3
           if-no-files-found: error

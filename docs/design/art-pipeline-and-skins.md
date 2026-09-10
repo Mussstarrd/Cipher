@@ -35,7 +35,7 @@
 
 | Source | Licence | Use |
 |---|---|---|
-| [Quaternius](https://quaternius.com/packs/animatedzombie.html) | CC0 | **Runner:** Animated Zombie Pack (FBX, atlas-textured) + Universal Animation Library; Universal Base Characters as hero backup. Cleanest licence. |
+| [Quaternius](https://quaternius.com/packs/animatedzombie.html) | CC0 (**stale — see docs/ACCOUNTS.md: Quaternius moved to a custom licence; free commercial use, no attribution, but no redistribution of raw assets**) | **Runner:** Animated Zombie Pack (FBX, atlas-textured) + Universal Animation Library; Universal Base Characters as hero backup. Cleanest licence. |
 | [Mixamo](https://www.licenseorg.com/guide/3d-assets/mixamo) | Free, commercial use OK, no attribution, no standalone redistribution; governed by Adobe's general Terms of Use (some publishers flag the ambiguity) | **Hero:** a Mixamo humanoid + rifle run/strafe/aim/fire/idle, auto-rigged. Fine for placeholder; re-check before shipping. |
 | Kenney | CC0 | Props, barricades, cars — not characters. |
 | Unity Asset Store free packs | Per-pack Standard EULA | Ship-in-game OK; check each pack. |
