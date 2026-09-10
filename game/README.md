@@ -4,15 +4,28 @@ Graybox density prototype: the deterministic sim from `../sim` rendered as an
 instanced horde, with an Xbox-controller-driven airstrike cursor. The whole
 scene is built procedurally at Play — no scene authoring needed.
 
-## First open (owner checklist, ~30 min mostly download time)
+## Opening the project
 
-1. Install **Unity Hub**, then **Unity 6 LTS (6000.0.x)** with the **Android Build Support** module (IL2CPP + SDK/NDK boxes checked). If Hub offers a slightly different 6000.0 patch than `ProjectSettings/ProjectVersion.txt`, accept the upgrade prompt.
-2. In Hub: **Add → `game/` folder** of this repo, open it. First import takes a few minutes (packages restore automatically, including the sim core from `../sim/src/Cipher.Sim`).
-3. If prompted to **enable the new Input System backend and restart the editor — click Yes.** (If not prompted: Edit → Project Settings → Player → Active Input Handling → *Input System Package*.)
-4. `File → New Scene` (pick the **Empty** template if offered; the Basic template's default camera gets auto-disabled by the bootstrap either way), then press **Play**. You should see a dark arena, a red flood snaking an S-route, and an orange cursor.
-5. Plug in / pair the Xbox controller: **left stick** moves the cursor, **A** drops an airstrike. No controller? Mouse + left click works.
-6. **Report back:** the FPS number in the top-left at steady state (it targets 1,000 agents on desktop), and how the strike *feels*.
-7. Commit everything Unity generated: the `.meta` files (including inside `../sim/src/Cipher.Sim/`), `game/Packages/packages-lock.json`, and `game/Assets/Scenes/` if you saved a scene — they're asset identity cards and belong in git.
+Project files (`ProjectSettings/`, `packages-lock.json`, `.meta`s, `Assets/Scenes/Flood.unity`)
+are committed, so an open is just: Unity Hub → **Add → `game/`** → open with **Unity 6000.0.83f1**
+(or the newest 6000.0.x LTS patch; accept the upgrade prompt). Active Input Handling is already
+set to *Input System Package*. Press **Play** in `Flood.unity` — the bootstrap builds the whole
+graybox at runtime.
+
+- **Xbox controller:** left stick moves the cursor, **A** drops an airstrike. Mouse + left click works without one.
+- **HUD** (top-left): `fps N | alive N | breached N | kills N` — desktop tops up toward 1,000 agents.
+- Commit any new `.meta` files Unity generates (including inside `../sim/src/Cipher.Sim/`).
+
+### Headless first-open / CI recipe
+
+Everything above can be reproduced without touching the GUI (this is how the first open was done on 2026-09-10 — zero code fixes were needed):
+
+```
+Unity.exe -batchmode -nographics -projectPath game -quit -logFile import.log
+Unity.exe -batchmode -nographics -projectPath game -executeMethod Cipher.Game.Editor.FirstOpenSetup.CreateFloodScene -quit -logFile setup.log
+```
+
+`FirstOpenSetup` (in `Assets/Editor/`, also under the **Cipher** menu) creates `Assets/Scenes/Flood.unity` if missing and registers it in Build Settings. Idempotent.
 
 ## Known first-APK caveats (handled when we get there)
 
@@ -24,3 +37,5 @@ scene is built procedurally at Play — no scene authoring needed.
 - `Packages/manifest.json` — dependencies; the sim core mounts as a local package (`com.cipher.sim`)
 - `Assets/Scripts/Cipher.Game.asmdef` — game assembly; references `Cipher.Sim` + Input System
 - `Assets/Scripts/Bootstrap/FloodBootstrap.cs` — Milestone 1 entry point (procedural scene, fixed-tick sim loop, instanced rendering, input)
+- `Assets/Editor/FirstOpenSetup.cs` — headless scene creation / Build Settings registration
+- `Assets/Scenes/Flood.unity` — empty scene; the bootstrap populates it at Play
