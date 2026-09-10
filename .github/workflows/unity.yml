@@ -129,14 +129,18 @@ jobs:
           if-no-files-found: error
 
   # Android is opt-in: IL2CPP plus the Standard shader's variant explosion makes it a long build,
-  # and it ran the owner's 16 GB laptop out of memory locally. Linux runners bill at 1x minutes
-  # (Windows is 2x), so the APK is built here and downloaded straight onto the phone from the
-  # run's artifact list. Trigger from the Actions tab: "Run workflow" with Android ticked.
+  # and it ran the owner's 16 GB laptop out of memory locally. The APK is built here and downloaded
+  # straight onto the phone from the run's artifact list. Trigger from the Actions tab:
+  # "Run workflow" with Android ticked.
+  #
+  # Windows runner, despite billing at 2x Actions minutes: ubuntu-latest cannot install Unity Hub
+  # (buildalon/unity-setup aborts on a missing /opt/unityhub/unityhub after the .deb postinst fails
+  # for want of update-desktop-database). Revisit if that action gains a working Linux path.
   android:
     name: Build Android APK
     needs: gate
     if: needs.gate.outputs.ready == 'true' && inputs.android
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
