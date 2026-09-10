@@ -50,21 +50,47 @@ image in the whole project: it is quiet, it is cheap to render, and it turns "a 
 The concept pass confirmed it works. A suburban street at midday full of normal people walking
 toward you is worse than any zombie we could have drawn.
 
-### 3. You are the minority who said no
+### 3. You are the minority who said no, and you are not a criminal
 
-Which is where the pitch's kingpin stops being a retained idea and becomes **structurally necessary**.
-Who refuses a government-administered implant tied to a payment?
+**Revised 2026-09-10, second pass. This retires the pitch's kingpin.** The owner cast the
+protagonist himself, in his own words:
 
-- People with warrants. Criminals do not enrol in anything.
-- The undocumented, who could not.
-- The off-grid and the paranoid, who would not.
-- The very poor, who did not qualify.
-- The very rich, who did not need the money.
+> Not a gangster just an unregistered non-voter self-aware and educated enough to know that my
+> time in the service was just a service the politicians. I'm not getting your f****** implant and
+> I don't want your money. I'll take my VA check and you can have a nice glass of f*** off government.
 
-That is the entire cast of the game, and the man with walls, guns, a crew and no interest in
-registering with anybody is the obvious protagonist. The Vory and the Cartel are unchipped for the
-same reason he is. **The survivors are not the good people. They are the people who were already
-outside.**
+That is a better character than the kingpin in every way that matters, and it is the voice the
+whole script should be written in: dry, profane, educated, entirely without self-pity.
+
+**Who he is.** Early forties. Lean and rangy rather than built. Served, came home, understood
+exactly what the service was and who it was for. Doesn't vote, doesn't register, doesn't take the
+money, does take the VA cheque he is owed and feels no contradiction about it. Ordinary suburban
+house, garage full of tools, competent with a weapon because he was taught to be, not because he
+is a fantasy of one.
+
+**Why the refusal is better than a criminal's.** A gangster refuses the implant because he is
+hiding. This man refuses it because he read the terms. That makes the premise an argument rather
+than a plot device, and it makes him the only kind of person who could see it coming and still be
+ignored.
+
+**Who else is unchipped**, and therefore who the survivors are: the off-grid and the principled,
+people with warrants, the undocumented, the very poor who did not qualify, the very rich who did
+not need it, and the paranoid who turned out to be right. A ragged, unsympathetic, mutually
+suspicious cast, which is correct.
+
+### What this retires from the pitch
+
+`docs/02-FLAGSHIP-PITCH.md` is now substantially wrong and needs a rewrite pass:
+
+| Pitch element | Status |
+|---|---|
+| "Last kingpin standing", Scarface framing | **Dead.** Replaced by the veteran above. |
+| Gold-plated weapons, signet rings, visual bling as progression | **Dead.** His progression is scavenged, maintained, personal kit that gets better because he keeps it working, not shinier. |
+| The Respect meter as criminal reputation | **Repurposed.** Same mechanic, different fiction: it is competence under pressure, not standing. |
+| Cartel Remnant, Vory as rival syndicates | **Survive, demoted.** They are two unchipped factions among several, not the player's peers. |
+| City map, claimable blocks, passive income | **Survives**, reframed from turf to territory held by whoever is left. |
+| "Dead Turf" as a title | **Open question.** "Turf" reads gang. It still works as the ground he refuses to leave, but the owner should decide. |
+| The Hold mission structure, enemy roster, everything mechanical | **Untouched.** |
 
 ### 4. Three enemy classes, only one of them a monster
 
@@ -111,7 +137,9 @@ not a return to monsters.
 
 1. **The AI's name.** CIPHER is out. HALCYON is my placeholder for a municipal optimiser with an
    ironic name.
-2. **Is there a cure, or only an off switch?** A cure makes act two about distribution. An off
+2. **Does the title survive?** "Dead Turf" was written for a gangster. It can be reread as the
+   ground he will not give up, but that is a reread, not the original intent.
+3. **Is there a cure, or only an off switch?** A cure makes act two about distribution. An off
    switch makes it about access, and is bleaker.
-3. **How much does the game press the guilt?** The premise supports the player being told, late,
+4. **How much does the game press the guilt?** The premise supports the player being told, late,
    exactly how many of the enrolled were children. That is a real choice and it is yours.

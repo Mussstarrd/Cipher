@@ -1,8 +1,6 @@
 {
-  "_note": "Concept-art shot list for CIPHER: DEAD TURF. Premise per docs/decisions/ADR-003. The crowd are ordinary chipped citizens, NOT zombies: no rot, no blood-soaked horror, no glowing eyes. Their only tell is a small amber implant indicator at the temple or nape. Red eyes are reserved exclusively for the rare engineered things released from the labs. Half these shots are daylight on purpose.",
-
+  "_note": "Concept-art shot list for CIPHER: DEAD TURF. Premise per docs/decisions/ADR-003. The crowd are ordinary chipped citizens, NOT zombies: no rot, no blood-soaked horror, no glowing eyes. Their only tell is a small amber implant indicator at the temple. Red eyes belong exclusively to the rare engineered things released from the labs. The protagonist is a veteran, NOT a gangster. Half these shots are daylight.",
   "style": "cinematic video game concept art, near-future grounded realism set about five years from now, third person action game, believable real-world detail, photographic depth of field, volumetric atmosphere, dense detail, film grain, painted by a senior concept artist, ultra detailed, 8k",
-
   "shots": [
     {
       "id": "day-crowd",
@@ -21,8 +19,8 @@
     },
     {
       "id": "humanoids",
-      "title": "Hacked humanoids in the crowd",
-      "prompt": "Three near-future commercial humanoid service robots walking amid a crowd of ordinary people on a daylight city street. Scuffed white and grey polymer shells, exposed cable runs at the joints, corporate logistics livery, one still gripping a delivery tote. Their heads track the viewer in perfect unison, amber sensor bars lit. Industrial and believable hard-surface robot design, real proportions, the same size as the people around them, harsh natural daylight, dust and debris"
+      "title": "Hacked humanoids, industrial",
+      "prompt": "Three near-future commercial humanoid robots walking down a daylight city street among ordinary people. Sleek matte white and light grey moulded polymer panels over dark grey articulated joints, smooth featureless head with a single thin dark sensor visor and NO eyes and no face, clean minimal consumer-industrial design language like a modern electric car, exact human proportions and height. A single thin amber status light strip on the chest. Slightly scuffed and dusty from work. One carries a delivery tote. Restrained, plausible, almost boring industrial design, harsh natural daylight"
     },
     {
       "id": "cargo-drones",
@@ -43,6 +41,21 @@
       "id": "night-street",
       "title": "Night, sodium, the wave",
       "prompt": "Over-the-shoulder third person view behind a heavily built man in a long coat holding a light machine gun on a ruined city street at night, sodium vapour streetlight, wet asphalt reflecting orange, volumetric haze. A large crowd of ordinary clothed people advances toward him, backlit, small amber implant lights at their temples, normal eyes. Muzzle flash, spent casings, burning cars, bodies on the road. Strong rim lighting and heavy silhouettes"
+    },
+    {
+      "id": "hero-portrait",
+      "title": "The protagonist",
+      "prompt": "Cinematic character portrait of a lean wiry American man in his early forties, tall and rangy rather than muscular, short dark brown hair grown out from a military high-and-tight, blue-grey eyes, several days of stubble, weathered honest face with a flat unimpressed expression. He wears a faded olive drab field jacket over a plain t-shirt, no patches, no tacticool gear, no gang jewellery. A working-class veteran who kept his kit and his opinions. Flat overcast daylight, shallow depth of field, suburban garage out of focus behind him, grounded and real"
+    },
+    {
+      "id": "hero-full",
+      "title": "Standing in his own driveway",
+      "prompt": "Full body character concept of a tall lean American veteran in his early forties standing in the driveway of an ordinary suburban house in flat daylight, holding a light machine gun low at his side. Faded army surplus field jacket, worn jeans, scuffed boots, a plain plate carrier pulled on over a t-shirt, no insignia. Everything about his kit is old, personal and practical rather than military-issue or tactical fashion. Calm, tired, resolute posture. Character sheet lighting, neutral background, grounded realism"
+    },
+    {
+      "id": "safehouse",
+      "title": "The safe zone",
+      "prompt": "Interior of an ordinary suburban American garage converted into a defensive base in daylight, seen wide. Workbench with cleaned rifle parts and ammunition laid out on a towel, welded scrap barricade sections leaning against the wall, a pegboard of tools, sandbags stacked by the roller door, a folding camp chair, a laptop, coffee. Utterly domestic and utterly practical. Dust in shafts of daylight through a dirty window. No gang imagery, no neon, no military base aesthetic, just a competent man's garage"
     }
   ]
 }
