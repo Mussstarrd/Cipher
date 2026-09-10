@@ -79,6 +79,24 @@ jobs:
           restore-keys: |
             unity-library-${{ matrix.build-target }}-
 
+      - name: EditMode tests
+        uses: buildalon/unity-action@v3
+        with:
+          editor-path: ${{ steps.unity-setup.outputs.unity-editor-path }}
+          project-path: ${{ github.workspace }}/game
+          build-target: ${{ matrix.build-target }}
+          log-name: Tests-EditMode
+          args: -batchmode -nographics -runTests -testPlatform EditMode -testResults "${{ github.workspace }}/TestResults/EditMode.xml"
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: TestResults-EditMode-${{ github.sha }}
+          path: TestResults
+          if-no-files-found: ignore
+          retention-days: 14
+
       - name: Build player
         uses: buildalon/unity-action@v3
         with:

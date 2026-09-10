@@ -1,6 +1,8 @@
+#nullable enable
 using Cipher.Sim.Agents;
 using Cipher.Sim.Core;
 using Cipher.Sim.Grid;
+using Cipher.Game.UI;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -13,7 +15,9 @@ namespace Cipher.Game
     /// rendering interpolates per frame via instanced draws.
     ///
     /// Input: left stick / mouse moves the strike cursor, A (button south) / left click
-    /// calls in an airstrike. This is a placeholder loop to validate feel + density.
+    /// calls in an airstrike. Start (Menu) / Esc opens the pause menu: stick or d-pad
+    /// to pick Resume / Quit, A or Enter confirms, B or Esc backs out, mouse clicks work.
+    /// This is a placeholder loop to validate feel + density.
     /// </summary>
     public static class FloodEntryPoint
     {
@@ -53,6 +57,9 @@ namespace Cipher.Game
         private float _tickAccumulator;
         private int _targetDensity;
         private float _smoothedFps = 60f;
+        private readonly PauseMenuModel _pauseMenu = new PauseMenuModel();
+        private GUIStyle? _menuTitleStyle;
+        private GUIStyle? _menuItemStyle;
 
         private void Awake()
         {
@@ -166,6 +173,15 @@ namespace Cipher.Game
         {
             _smoothedFps = Mathf.Lerp(_smoothedFps, 1f / Mathf.Max(Time.unscaledDeltaTime, 1e-5f), 0.05f);
 
+            ReadPauseInput();
+            if (_pauseMenu.IsOpen)
+            {
+                // Freeze the world but keep drawing it behind the menu.
+                DrawInstanced(_wallMesh, _wallMaterial, _wallMatrices, _wallMatrices.Length);
+                DrawAgents();
+                return;
+            }
+
             ReadInput();
 
             // Fixed-tick sim, decoupled from render rate.
@@ -182,6 +198,65 @@ namespace Cipher.Game
 
             DrawInstanced(_wallMesh, _wallMaterial, _wallMatrices, _wallMatrices.Length);
             DrawAgents();
+        }
+
+        private void ReadPauseInput()
+        {
+            var gamepad = Gamepad.current;
+            var keyboard = Keyboard.current;
+
+            bool toggle = (gamepad != null && gamepad.startButton.wasPressedThisFrame)
+                       || (keyboard != null && keyboard.escapeKey.wasPressedThisFrame);
+
+            if (!_pauseMenu.IsOpen)
+            {
+                if (toggle) SetPaused(true);
+                return;
+            }
+
+            // Esc / Start while open = back out. B also backs out.
+            bool cancel = toggle || (gamepad != null && gamepad.buttonEast.wasPressedThisFrame);
+            if (cancel) { Apply(_pauseMenu.Cancel()); return; }
+
+            bool up = (gamepad != null && (gamepad.dpad.up.wasPressedThisFrame || gamepad.leftStick.up.wasPressedThisFrame))
+                   || (keyboard != null && (keyboard.upArrowKey.wasPressedThisFrame || keyboard.wKey.wasPressedThisFrame));
+            bool down = (gamepad != null && (gamepad.dpad.down.wasPressedThisFrame || gamepad.leftStick.down.wasPressedThisFrame))
+                     || (keyboard != null && (keyboard.downArrowKey.wasPressedThisFrame || keyboard.sKey.wasPressedThisFrame));
+            if (up) _pauseMenu.MoveUp();
+            if (down) _pauseMenu.MoveDown();
+
+            bool confirm = (gamepad != null && gamepad.buttonSouth.wasPressedThisFrame)
+                        || (keyboard != null && (keyboard.enterKey.wasPressedThisFrame || keyboard.spaceKey.wasPressedThisFrame));
+            if (confirm) Apply(_pauseMenu.Confirm());
+        }
+
+        private void SetPaused(bool paused)
+        {
+            if (paused) _pauseMenu.Open(); else _pauseMenu.Close();
+            Time.timeScale = paused ? 0f : 1f;
+        }
+
+        private void Apply(PauseMenuAction action)
+        {
+            switch (action)
+            {
+                case PauseMenuAction.Resume:
+                    Time.timeScale = 1f;
+                    break;
+                case PauseMenuAction.Quit:
+                    Time.timeScale = 1f;
+#if UNITY_EDITOR
+                    UnityEditor.EditorApplication.ExitPlaymode();
+#else
+                    Application.Quit();
+#endif
+                    break;
+            }
+        }
+
+        private void OnDestroy()
+        {
+            Time.timeScale = 1f;
         }
 
         private void ReadInput()
@@ -267,10 +342,51 @@ namespace Cipher.Game
         {
             GUI.Label(new Rect(12, 8, 640, 28),
                 $"CIPHER flood graybox — fps {_smoothedFps:F0} | alive {_world.AliveCount} | breached {_world.ReachedCount} | kills {_world.TotalKills}");
-            GUI.Label(new Rect(12, 32, 640, 28),
+            GUI.Label(new Rect(12, 32, 720, 28),
                 Gamepad.current != null
-                    ? "Gamepad: left stick = cursor, A = airstrike"
-                    : "No gamepad — mouse: move = cursor, left click = airstrike");
+                    ? "Gamepad: left stick = cursor, A = airstrike, Menu = pause"
+                    : "No gamepad — mouse: move = cursor, left click = airstrike, Esc = pause");
+
+            if (_pauseMenu.IsOpen) DrawPauseMenu();
+        }
+
+        private void DrawPauseMenu()
+        {
+            _menuTitleStyle ??= new GUIStyle(GUI.skin.label)
+            {
+                fontSize = 36, alignment = TextAnchor.MiddleCenter, fontStyle = FontStyle.Bold,
+            };
+            _menuItemStyle ??= new GUIStyle(GUI.skin.button)
+            {
+                fontSize = 26, alignment = TextAnchor.MiddleCenter,
+            };
+
+            float w = Screen.width, h = Screen.height;
+            var prev = GUI.color;
+            GUI.color = new Color(0f, 0f, 0f, 0.6f);
+            GUI.DrawTexture(new Rect(0, 0, w, h), Texture2D.whiteTexture);
+            GUI.color = prev;
+
+            const float itemW = 320f, itemH = 56f, gap = 14f;
+            float top = h * 0.5f - (PauseMenuModel.Items.Length * (itemH + gap)) * 0.5f;
+
+            GUI.Label(new Rect(0, top - 90f, w, 60f), "PAUSED", _menuTitleStyle);
+
+            for (int i = 0; i < PauseMenuModel.Items.Length; i++)
+            {
+                bool selected = i == _pauseMenu.SelectedIndex;
+                var rect = new Rect(w * 0.5f - itemW * 0.5f, top + i * (itemH + gap), itemW, itemH);
+                GUI.backgroundColor = selected ? new Color(1f, 0.65f, 0.1f) : Color.white;
+                string label = selected ? $"> {PauseMenuModel.Items[i]} <" : PauseMenuModel.Items[i];
+                if (GUI.Button(rect, label, _menuItemStyle))
+                    Apply(_pauseMenu.Select(i));
+            }
+            GUI.backgroundColor = Color.white;
+
+            GUI.Label(new Rect(0, top + PauseMenuModel.Items.Length * (itemH + gap) + 10f, w, 30f),
+                Gamepad.current != null ? "stick / d-pad: choose   A: confirm   B or Menu: back"
+                                        : "arrows: choose   Enter: confirm   Esc: back",
+                new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter });
         }
     }
 }

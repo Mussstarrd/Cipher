@@ -38,3 +38,13 @@ Photos: a light-gray ground plane, the orange cursor sphere, HUD `fps 60 | alive
 - Diagnosis: instanced draws (agents, walls) were stripped from the player — `m_InstancingStripping` was "Strip Unused" and the instanced materials are created at runtime, so the stripper saw no user. Fixed by Keep All; Standard FORWARD variant count doubled in the build log (256 → 512 vp, 4096 → 8192 fp).
 - `fps 60` in the player is vsync (QualitySettings default), not a perf regression.
 - Kills still counted because the sim doesn't care whether anything is drawn — "preview never lies" cuts both ways: the HUD was truthful, the picture wasn't.
+
+## Addendum — fixed CI player (run for 885bfab), same day
+
+Owner ran the rebuilt exe, sent two photos (walls + red flood visible, HUD `fps 60 | alive 998 | breached 326 | kills 2038`) and wrote:
+
+> Seems to be working. The AOA thing I guess that's going to be like a swinging sword or something and not a shot off my body AOE like grenade type thing because if so we're going to have to incorporate aiming and all of that but I'm sure you have that covered. anyway keep rolling with it but I would like you to incorporate a polls in an exit menu so that I don't have to alt f4 every time
+
+- Instancing fix confirmed in the wild — first end-to-end proof of push → CI → playable exe.
+- Airstrike question: per the pitch the hero is a third-person gunfighter (hitscan/projectile, right-stick aim) and the airstrike is an *ultimate* dropped on a marker. Today's cursor is a stand-in for that marker; aiming arrives with the hero capsule milestone. Owner's instinct that a body-centred AoE would need aiming is right — it will have it.
+- Request actioned same day: pause/exit menu (Menu button / Esc; Resume / Quit; gamepad, keyboard and mouse).

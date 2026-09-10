@@ -12,7 +12,7 @@ are committed, so an open is just: Unity Hub → **Add → `game/`** → open wi
 set to *Input System Package*. Press **Play** in `Flood.unity` — the bootstrap builds the whole
 graybox at runtime.
 
-- **Xbox controller:** left stick moves the cursor, **A** drops an airstrike. Mouse + left click works without one.
+- **Xbox controller:** left stick moves the cursor, **A** drops an airstrike, **Menu** (start) pauses. In the pause menu: stick / d-pad picks Resume or Quit, **A** confirms, **B** or Menu backs out. Keyboard: Esc / arrows / Enter; mouse clicks work too.
 - **HUD** (top-left): `fps N | alive N | breached N | kills N` — desktop tops up toward 1,000 agents.
 - Commit any new `.meta` files Unity generates (including inside `../sim/src/Cipher.Sim/`).
 
@@ -50,7 +50,9 @@ Set them with `gh secret set UNITY_USERNAME` / `gh secret set UNITY_PASSWORD` (e
 
 - `Packages/manifest.json` — dependencies; the sim core mounts as a local package (`com.cipher.sim`)
 - `Assets/Scripts/Cipher.Game.asmdef` — game assembly; references `Cipher.Sim` + Input System
-- `Assets/Scripts/Bootstrap/FloodBootstrap.cs` — Milestone 1 entry point (procedural scene, fixed-tick sim loop, instanced rendering, input)
+- `Assets/Scripts/Bootstrap/FloodBootstrap.cs` — Milestone 1 entry point (procedural scene, fixed-tick sim loop, instanced rendering, input, pause menu)
+- `Assets/Scripts/UI/PauseMenuModel.cs` — pause menu state, no UnityEngine, unit-tested
+- `Assets/Tests/EditMode/` — EditMode tests (`Cipher.Game.Tests.EditMode`); CI runs them before the build. Locally: `Unity.exe -batchmode -nographics -projectPath game -runTests -testPlatform EditMode -testResults out.xml`
 - `Assets/Editor/FirstOpenSetup.cs` — headless scene creation / Build Settings registration
 - `Assets/Editor/CiBuild.cs` — player build entry points used by CI (`-executeMethod … -buildPath <dir>`)
 - `Assets/Scenes/Flood.unity` — empty scene; the bootstrap populates it at Play
