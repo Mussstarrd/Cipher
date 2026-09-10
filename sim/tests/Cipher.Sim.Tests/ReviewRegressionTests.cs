@@ -49,6 +49,7 @@ namespace Cipher.Sim.Tests
             public Vec2 DirectionAt(int x, int y) => new Vec2(1f, 1f).Normalized();
             public bool HasPath(int x, int y) => true;
             public float IntegrationCostAt(int x, int y) => 0f;
+            public void EnsureFresh() { }
         }
 
         [Fact]

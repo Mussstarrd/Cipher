@@ -22,5 +22,8 @@ namespace Cipher.Sim.Grid
 
         /// <summary>Accumulated travel cost from this cell to the goal (float.PositiveInfinity when unreachable).</summary>
         float IntegrationCostAt(int x, int y);
+
+        /// <summary>Recompute if the map changed since the last compute. The sim calls this once per tick.</summary>
+        void EnsureFresh();
     }
 }

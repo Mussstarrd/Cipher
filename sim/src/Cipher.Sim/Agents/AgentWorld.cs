@@ -76,7 +76,10 @@ namespace Cipher.Sim.Agents
         /// <summary>Advances the sim one fixed tick.</summary>
         public void Step(float dt)
         {
+            _flowField.EnsureFresh();
             RebuildHashIfDirty();
+            _map.RefillGates(dt);
+            bool gates = _map.GateCount > 0;
 
             Vec2 goalCenter = GridMap.CellCenter(_flowField.GoalX, _flowField.GoalY);
             float goalRadiusSq = _config.GoalRadius * _config.GoalRadius;
@@ -106,6 +109,16 @@ namespace Cipher.Sim.Agents
                 float stepLength = MathF.Min(_config.MoveSpeed * dt, 0.9f);
                 Vec2 next = pos + desired * stepLength;
                 Vec2 resolved = Movement.ResolveWalls(_map, pos, next);
+
+                if (gates)
+                {
+                    // Entering a breach hole from outside it costs a gate token; refused agents
+                    // hold position and bunch at the mouth (the "1 per second" throttle).
+                    var (rx, ry) = _map.WorldToCell(resolved);
+                    if ((rx != cx || ry != cy) && _map.IsGate(rx, ry) && !_map.IsGate(cx, cy) && !_map.TryEnterGate(rx, ry))
+                        resolved = pos;
+                }
+
                 _posX[i] = resolved.X;
                 _posY[i] = resolved.Y;
             }
@@ -208,7 +221,27 @@ namespace Cipher.Sim.Agents
             return hitId >= 0;
         }
 
-        /// <summary>FNV-1a over live agent state. Two worlds fed identical inputs must match — the determinism regression guard.</summary>
+        /// <summary>The grid this world walks on (build validation, preview).</summary>
+        public GridMap Map => _map;
+
+        /// <summary>True when any living agent stands in the cell (placement must never entomb an agent).</summary>
+        public bool IsCellOccupied(int x, int y)
+        {
+            if (AliveCount == 0) return false;
+            RebuildHashIfDirty();
+            _queryScratch.Clear();
+            _hash.QueryCircle(GridMap.CellCenter(x, y), 0.71f, _queryScratch);
+            foreach (int hashId in _queryScratch)
+            {
+                int id = _hashToAgent[hashId];
+                if (!_alive[id]) continue;
+                var (ax, ay) = _map.WorldToCell(new Vec2(_posX[id], _posY[id]));
+                if (ax == x && ay == y) return true;
+            }
+            return false;
+        }
+
+        /// <summary>FNV-1a over live agent state and wall state. Two worlds fed identical inputs must match — the determinism regression guard.</summary>
         public ulong StateHash()
         {
             const ulong offsetBasis = 14695981039346656037UL;
@@ -224,7 +257,8 @@ namespace Cipher.Sim.Agents
                 hash = Mix(hash, BitConverter.SingleToInt32Bits(_health[i]));
             }
 
-            return Mix(hash, ReachedCount);
+            hash = Mix(hash, ReachedCount);
+            return hash ^ _map.StateHash();
 
             static ulong Mix(ulong h, int value)
             {

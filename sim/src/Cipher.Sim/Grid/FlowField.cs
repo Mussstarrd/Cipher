@@ -42,6 +42,35 @@ namespace Cipher.Sim.Grid
 
         public float IntegrationCostAt(int x, int y) => _integration[_map.CellIndex(x, y)];
 
+        /// <summary>True once <see cref="Compute"/> has run at least once (a goal exists).</summary>
+        public bool HasGoal => ComputedForMapVersion >= 0;
+
+        /// <summary>Number of full recomputes performed; tests use it to prove coalescing.</summary>
+        public int ComputeCount { get; private set; }
+
+        /// <summary>
+        /// Recomputes toward the existing goal if the map changed since the last compute.
+        /// Called once per sim tick, so any number of mutations in a tick cost one compute.
+        /// No-op until the first explicit <see cref="Compute"/>.
+        /// </summary>
+        public void EnsureFresh()
+        {
+            if (!HasGoal || ComputedForMapVersion == _map.Version) return;
+            Compute(GoalX, GoalY);
+        }
+
+        /// <summary>Cell-for-cell equality of integration and direction buffers (preview covenant test helper).</summary>
+        public bool Equals(FlowField other)
+        {
+            if (other._integration.Length != _integration.Length) return false;
+            for (int i = 0; i < _integration.Length; i++)
+            {
+                if (!_integration[i].Equals(other._integration[i])) return false;
+                if (!_direction[i].Equals(other._direction[i])) return false;
+            }
+            return true;
+        }
+
         /// <summary>Full recompute from a goal cell. (Incremental dirty-region recompute is a planned optimization; the API will not change.)</summary>
         public void Compute(int goalX, int goalY)
         {
@@ -60,6 +89,7 @@ namespace Cipher.Sim.Grid
             BakeDirections();
 
             ComputedForMapVersion = _map.Version;
+            ComputeCount++;
         }
 
         private void RunDijkstra(int goalX, int goalY)
