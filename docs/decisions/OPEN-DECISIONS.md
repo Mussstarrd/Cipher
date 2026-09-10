@@ -10,6 +10,8 @@ The pitch promises overview mazing AND third-person combat; no doc says what the
 - **(c) Zoom hybrid** (over-the-shoulder ⇄ overhead on a shoulder-button hold).
 ENG recommendation to be drafted as ADR-002 with a graybox test of (b) vs (c); M3's exit test must score the mode *transition*, not just the gun.
 
+**2026-09-10 status:** ADR-002 drafted as *Proposed*. The hero graybox ships both candidates in one build (chase by default, hold LB for tactical overhead). Owner decides by playing; ADR-002 lists the three outcomes and what each commits us to.
+
 ## 2. What is Android FOR (OWNER) — one paragraph, decides half the budgets
 
 Premium + controller-required on Google Play is a tiny market; the same ADR that made Android the perf floor admits PC is the revenue platform. If Android's honest role is "owner plays nightly builds on the couch" (legitimate!), it becomes a dev/test target: PC becomes the design floor, and Android density is whatever falls out of the soak test. Engine choice is unaffected either way.

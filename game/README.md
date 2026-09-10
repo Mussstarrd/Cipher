@@ -12,8 +12,10 @@ are committed, so an open is just: Unity Hub → **Add → `game/`** → open wi
 set to *Input System Package*. Press **Play** in `Flood.unity` — the bootstrap builds the whole
 graybox at runtime.
 
-- **Xbox controller:** left stick moves the cursor, **A** drops an airstrike, **Menu** (start) pauses. In the pause menu: stick / d-pad picks Resume or Quit, **A** confirms, **B** or Menu backs out. Keyboard: Esc / arrows / Enter; mouse clicks work too.
-- **HUD** (top-left): `fps N | alive N | breached N | kills N` — desktop tops up toward 1,000 agents.
+- **Xbox controller:** left stick move, right stick look (chase) / aim (tactical), **RT** fire, **Y** airstrike on the orange marker ahead of you, **hold LB** for the tactical overhead camera, **Menu** pause, **A** restart when down. In the pause menu: stick / d-pad picks Resume or Quit, A confirms, B or Menu backs out.
+- **Keyboard / mouse:** WASD move, mouse look / aim, LMB fire, RMB or Q airstrike, hold Tab for tactical, Esc pause, Enter restart.
+- **The loop:** you are the gold capsule at the exit. Runners chew on you when they touch you (HP bar top-left). LMG kills a runner in two taps. Airstrike has a 6 s cooldown; the marker shrinks while it recharges. Down = "run it back".
+- **HUD** (top-left): fps, alive, breached, swarm kills (all sources), your kills, HP, airstrike readiness, camera mode. Desktop tops up toward 1,000 agents.
 - Commit any new `.meta` files Unity generates (including inside `../sim/src/Cipher.Sim/`).
 
 ### Headless first-open / CI recipe
@@ -51,6 +53,7 @@ Set them with `gh secret set UNITY_USERNAME` / `gh secret set UNITY_PASSWORD` (e
 - `Packages/manifest.json` — dependencies; the sim core mounts as a local package (`com.cipher.sim`)
 - `Assets/Scripts/Cipher.Game.asmdef` — game assembly; references `Cipher.Sim` + Input System
 - `Assets/Scripts/Bootstrap/FloodBootstrap.cs` — Milestone 1 entry point (procedural scene, fixed-tick sim loop, instanced rendering, input, pause menu)
+- `Assets/Scripts/Hero/HeroModel.cs` — the Enforcer as pure state (movement via the shared `Movement` wall rule, hitscan via `AgentWorld.Raycast`, contact damage, airstrike); unit-tested
 - `Assets/Scripts/UI/PauseMenuModel.cs` — pause menu state, no UnityEngine, unit-tested
 - `Assets/Tests/EditMode/` — EditMode tests (`Cipher.Game.Tests.EditMode`); CI runs them before the build. Locally: `Unity.exe -batchmode -nographics -projectPath game -runTests -testPlatform EditMode -testResults out.xml`
 - `Assets/Editor/FirstOpenSetup.cs` — headless scene creation / Build Settings registration

@@ -3,6 +3,7 @@
     "rootNamespace": "Cipher.Game.Tests",
     "references": [
         "Cipher.Game",
+        "Cipher.Sim",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],
