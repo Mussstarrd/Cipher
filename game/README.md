@@ -27,6 +27,18 @@ Unity.exe -batchmode -nographics -projectPath game -executeMethod Cipher.Game.Ed
 
 `FirstOpenSetup` (in `Assets/Editor/`, also under the **Cipher** menu) creates `Assets/Scenes/Flood.unity` if missing and registers it in Build Settings. Idempotent.
 
+## CI license (one-time owner setup)
+
+`.github/workflows/unity.yml` builds a Windows executable in game-ci Docker images and uploads it as an artifact. It skips itself until three repo secrets exist:
+
+| Secret | Value |
+| --- | --- |
+| `UNITY_LICENSE` | full contents of `Unity_v6000.x.ulf` (from https://license.unity3d.com/manual, fed the `.alf` produced by `Unity.exe -batchmode -nographics -createManualActivationFile`) |
+| `UNITY_EMAIL` | Unity ID email |
+| `UNITY_PASSWORD` | Unity ID password |
+
+Set them with `gh secret set NAME < file` / `gh secret set NAME` (prompts). The `.ulf` is tied to the machine that made the `.alf`; regenerate both if it stops activating. Personal licenses need re-issuing roughly yearly.
+
 ## Known first-APK caveats (handled when we get there)
 
 - The `Standard` shader is referenced by code (`Shader.Find`); device builds need it in *Project Settings → Graphics → Always Included Shaders* or it strips to magenta. Editor Play mode is unaffected.
