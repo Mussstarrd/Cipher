@@ -6,8 +6,8 @@ name: Unity
 # Licensing: Unity removed manual (.alf/.ulf) activation for Personal seats, so the
 # classic game-ci UNITY_LICENSE route is dead. We use the buildalon actions, which
 # activate a Personal license through the Unity Licensing Client with just:
-#   UNITY_USERNAME — Unity ID email
-#   UNITY_PASSWORD — Unity ID password
+#   UNITY_USERNAME - Unity ID email
+#   UNITY_PASSWORD - Unity ID password
 # Until those repo secrets exist the build job is skipped (not failed).
 # See game/README.md "CI license".
 
@@ -23,6 +23,11 @@ on:
       - "docs/**"
       - "**.md"
   workflow_dispatch:
+    inputs:
+      android:
+        description: "Also build an Android APK (slow: IL2CPP + shader variants)"
+        type: boolean
+        default: false
 
 concurrency:
   group: unity-${{ github.ref }}
@@ -44,7 +49,7 @@ jobs:
         run: |
           echo "ready=$HAS_LICENSE" >> "$GITHUB_OUTPUT"
           if [ "$HAS_LICENSE" != "true" ]; then
-            echo "::warning::UNITY_USERNAME / UNITY_PASSWORD not set — Unity build skipped."
+            echo "::warning::UNITY_USERNAME / UNITY_PASSWORD not set - Unity build skipped."
           fi
 
   build:
@@ -121,4 +126,49 @@ jobs:
           # storage bills long before Actions minutes do. Three days is enough to pull a build
           # down; tagged releases get kept deliberately, not by accident.
           retention-days: 3
+          if-no-files-found: error
+
+  # Android is opt-in: IL2CPP plus the Standard shader's variant explosion makes it a long build,
+  # and it ran the owner's 16 GB laptop out of memory locally. Linux runners bill at 1x minutes
+  # (Windows is 2x), so the APK is built here and downloaded straight onto the phone from the
+  # run's artifact list. Trigger from the Actions tab: "Run workflow" with Android ticked.
+  android:
+    name: Build Android APK
+    needs: gate
+    if: needs.gate.outputs.ready == 'true' && inputs.android
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Unity with Android support
+        uses: buildalon/unity-setup@v2
+        id: unity-setup
+        with:
+          version-file: game/ProjectSettings/ProjectVersion.txt
+          build-targets: Android
+          cache-installation: false
+
+      - name: Activate Unity Personal license
+        uses: buildalon/activate-unity-license@v2
+        with:
+          license: Personal
+          username: ${{ secrets.UNITY_USERNAME }}
+          password: ${{ secrets.UNITY_PASSWORD }}
+
+      - name: Build APK
+        uses: buildalon/unity-action@v3
+        with:
+          editor-path: ${{ steps.unity-setup.outputs.unity-editor-path }}
+          project-path: ${{ github.workspace }}/game
+          build-target: Android
+          log-name: Build-Android
+          args: -quit -batchmode -nographics -executeMethod Cipher.Game.Editor.CiBuild.BuildAndroid -buildPath "${{ github.workspace }}/Builds/Android"
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: CipherDeadTurf-Android-${{ github.sha }}
+          path: Builds/Android/*.apk
+          retention-days: 7
           if-no-files-found: error

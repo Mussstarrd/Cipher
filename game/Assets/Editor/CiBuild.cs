@@ -54,8 +54,11 @@ namespace Cipher.Game.Editor
             PlayerSettings.allowedAutorotateToLandscapeLeft = true;
             PlayerSettings.allowedAutorotateToLandscapeRight = true;
 
-            // The graybox draws with Shader.Find("Standard"); device builds strip it without this.
-            PlayerSettings.SetGraphicsAPIs(BuildTarget.Android, new[] { UnityEngine.Rendering.GraphicsDeviceType.Vulkan, UnityEngine.Rendering.GraphicsDeviceType.OpenGLES3 });
+            // Vulkan alone. Every extra graphics API multiplies the Standard shader's variant count,
+            // and with instancing stripping on Keep All that is the dominant cost of an Android build
+            // (~98k variants across two APIs). Vulkan covers Android 8+ hardware; the real fix is to
+            // stop shipping Standard for the instanced draws, which lands with the URP migration.
+            PlayerSettings.SetGraphicsAPIs(BuildTarget.Android, new[] { UnityEngine.Rendering.GraphicsDeviceType.Vulkan });
         }
 
         private static void Build(BuildTarget target, BuildTargetGroup group, string fileName)

@@ -51,6 +51,15 @@ Set them with `gh secret set UNITY_USERNAME` / `gh secret set UNITY_PASSWORD` (e
 
 `CiBuild` also has a `BuildAndroid` entry point (menu **Cipher/Build/Android APK**); the workflow matrix grows an Android row once the first APK is validated on a device.
 
+## Playing it on a phone
+
+Two ways, both real.
+
+1. **Stream from this laptop (works today, no build).** Steam Link or Moonlight/Sunshine on Android; the controller pairs to the phone, the laptop runs the game. Needs the laptop awake and on the same network (or port-forwarded).
+2. **Native APK from CI.** Actions tab -> Unity workflow -> *Run workflow* -> tick **Android**. It builds on a Linux runner (Windows runners bill double) and uploads `CipherDeadTurf-Android-<sha>` as an artifact you can download straight onto the phone and sideload. A paired Bluetooth controller is required: there are no touch controls. Landscape only, ARM64, Vulkan, min Android 8.
+
+**Do not build Android locally on a 16 GB machine while doing anything else.** IL2CPP plus the Standard shader's variant explosion ran the owner's laptop out of memory on 2026-09-10.
+
 ## Known first-APK caveats (handled when we get there)
 
 - The `Standard` shader is referenced by code (`Shader.Find`), so it is pinned in *Project Settings → Graphics → Always Included Shaders* (fileID 46 in `GraphicsSettings.asset`). Remove it and every player build renders magenta while Editor Play mode looks fine.
