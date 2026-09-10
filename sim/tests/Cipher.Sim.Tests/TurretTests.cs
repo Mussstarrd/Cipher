@@ -100,6 +100,54 @@ namespace Cipher.Sim.Tests
         }
 
         [Fact]
+        public void Upgrade_AppliesTierStats_HealsAndTracksInvestment_ThenCapsAtMax()
+        {
+            var (map, _, world) = OpenField();
+            var cfg = new TurretConfig();
+            var turrets = new TurretSystem(cfg);
+            turrets.Place(map, 10, 16);
+            turrets.Damage(map, 0, 150);
+            Assert.Equal(150, turrets.Turrets[0].Hp);
+
+            Assert.Equal("Twin .50", turrets.NextTier(0)!.Name);
+            Assert.True(turrets.Upgrade(map, 0));
+            var t = turrets.Turrets[0];
+            Assert.Equal(1, t.Tier);
+            Assert.Equal(cfg.DamagePerShot * 1.6f, t.DamagePerShot, 3);
+            Assert.Equal(cfg.Range, t.Range, 3);
+            Assert.Equal(250, t.Hp);
+            Assert.Equal(400, t.MaxHp);
+            Assert.Equal(120, t.Invested);
+
+            Assert.True(turrets.Upgrade(map, 0));
+            Assert.Equal(cfg.Range + 4f, turrets.Turrets[0].Range, 3);
+            Assert.Null(turrets.NextTier(0));
+            Assert.False(turrets.Upgrade(map, 0));
+
+            // Upgraded stats are what fire.
+            int far = world.Spawn(new Vec2(23.5f, 16.5f), 100f); // 13 cells: only in range after Overwatch
+            var shots = new List<TurretShot>();
+            turrets.Step(world, Dt, shots);
+            Assert.Single(shots);
+            Assert.Equal(100f - cfg.DamagePerShot * 1.6f, world.HealthOf(far), 2);
+        }
+
+        [Fact]
+        public void StructureQuery_ExposesTurretsToSpitters()
+        {
+            var (map, _, _) = OpenField();
+            var turrets = new TurretSystem(new TurretConfig());
+            turrets.Place(map, 4, 4);
+            turrets.Place(map, 8, 8);
+            var q = turrets.AsStructureQuery();
+            Assert.Equal(2, q.Count);
+            Assert.Equal(8.5f, q.PositionAt(1).X, 3);
+            turrets.Remove(map, 0);
+            Assert.Equal(1, q.Count);
+            Assert.Equal(8.5f, q.PositionAt(0).X, 3);
+        }
+
+        [Fact]
         public void Turrets_AreDeterministic_AcrossRuns()
         {
             ulong Run()
