@@ -105,7 +105,9 @@ namespace Cipher.Sim.Agents
                 // tunnel a wall between two cells CanTravel never gets to inspect.
                 float stepLength = MathF.Min(_config.MoveSpeed * dt, 0.9f);
                 Vec2 next = pos + desired * stepLength;
-                (_posX[i], _posY[i]) = ResolveWalls(pos, next);
+                Vec2 resolved = Movement.ResolveWalls(_map, pos, next);
+                _posX[i] = resolved.X;
+                _posY[i] = resolved.Y;
             }
 
             // Positions changed; neighbor queries next tick need a fresh hash.
@@ -136,6 +138,74 @@ namespace Cipher.Sim.Agents
 
             TotalKills += kills;
             return kills;
+        }
+
+        /// <summary>Damages one agent. Returns true if this call killed it. Dead agents are ignored.</summary>
+        public bool ApplyDamage(int id, float damage)
+        {
+            if (id < 0 || id >= Count || !_alive[id]) return false;
+            _health[id] -= damage;
+            if (_health[id] > 0f) return false;
+            _alive[id] = false;
+            AliveCount--;
+            TotalKills++;
+            _hashDirty = true;
+            return true;
+        }
+
+        /// <summary>Number of living agents within the circle (hero contact damage, trap triggers).</summary>
+        public int CountWithin(Vec2 center, float radius)
+        {
+            RebuildHashIfDirty();
+            _queryScratch.Clear();
+            _hash.QueryCircle(center, radius, _queryScratch);
+            float rSq = radius * radius;
+            int n = 0;
+            foreach (int hashId in _queryScratch)
+            {
+                int id = _hashToAgent[hashId];
+                if (!_alive[id]) continue;
+                if (Vec2.DistanceSquared(center, new Vec2(_posX[id], _posY[id])) <= rSq) n++;
+            }
+            return n;
+        }
+
+        /// <summary>
+        /// Hitscan: the first living agent whose center lies within <paramref name="hitRadius"/>
+        /// of the segment origin → origin + dir * maxDistance. Ties resolve to the lower id
+        /// (deterministic). Returns false on a miss. Does not mutate state.
+        /// </summary>
+        public bool Raycast(Vec2 origin, Vec2 direction, float maxDistance, float hitRadius, out int hitId, out float hitDistance)
+        {
+            hitId = -1;
+            hitDistance = float.PositiveInfinity;
+            if (maxDistance <= 0f) return false;
+            Vec2 dir = direction.Normalized();
+            if (dir.LengthSquared < 0.5f) return false; // zero direction
+
+            RebuildHashIfDirty();
+            _queryScratch.Clear();
+            // One broad-phase circle covering the whole segment plus the hit radius.
+            Vec2 mid = origin + dir * (maxDistance * 0.5f);
+            _hash.QueryCircle(mid, maxDistance * 0.5f + hitRadius, _queryScratch);
+
+            float rSq = hitRadius * hitRadius;
+            foreach (int hashId in _queryScratch)
+            {
+                int id = _hashToAgent[hashId];
+                if (!_alive[id]) continue;
+                Vec2 rel = new Vec2(_posX[id], _posY[id]) - origin;
+                float t = Vec2.Dot(rel, dir);
+                if (t < 0f || t > maxDistance) continue;
+                Vec2 closest = dir * t;
+                if (Vec2.DistanceSquared(rel, closest) > rSq) continue;
+                if (t < hitDistance || (t == hitDistance && id < hitId))
+                {
+                    hitDistance = t;
+                    hitId = id;
+                }
+            }
+            return hitId >= 0;
         }
 
         /// <summary>FNV-1a over live agent state. Two worlds fed identical inputs must match — the determinism regression guard.</summary>
@@ -206,45 +276,6 @@ namespace Cipher.Sim.Agents
             }
 
             return push.Normalized();
-        }
-
-        /// <summary>Blocked-cell collision with axis sliding: try full move, then x-only, then y-only, else stay.</summary>
-        private (float X, float Y) ResolveWalls(Vec2 from, Vec2 to)
-        {
-            if (CanTravel(from, to)) return (to.X, to.Y);
-
-            var slideX = new Vec2(to.X, from.Y);
-            if (CanTravel(from, slideX)) return (slideX.X, slideX.Y);
-
-            var slideY = new Vec2(from.X, to.Y);
-            if (CanTravel(from, slideY)) return (slideY.X, slideY.Y);
-
-            return (from.X, from.Y);
-        }
-
-        /// <summary>
-        /// The destination must be open AND, for a diagonal cell transition, both shared
-        /// orthogonal cells must be open — mirroring FlowField's corner-cut rule so agents
-        /// can never squeeze through a sealed wall corner the field treats as impassable.
-        /// </summary>
-        private bool CanTravel(Vec2 from, Vec2 to)
-        {
-            if (!IsOpen(to)) return false;
-
-            var (fx, fy) = _map.WorldToCell(from);
-            var (tx, ty) = _map.WorldToCell(to);
-            if (tx != fx && ty != fy && (_map.IsBlocked(tx, fy) || _map.IsBlocked(fx, ty)))
-                return false;
-
-            return true;
-        }
-
-        private bool IsOpen(Vec2 pos)
-        {
-            if (pos.X < 0f || pos.Y < 0f || pos.X >= _map.Width || pos.Y >= _map.Height)
-                return false;
-            var (x, y) = _map.WorldToCell(pos);
-            return !_map.IsBlocked(x, y);
         }
     }
 }

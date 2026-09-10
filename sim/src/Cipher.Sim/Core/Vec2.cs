@@ -36,6 +36,7 @@ namespace Cipher.Sim.Core
         public static Vec2 operator *(Vec2 a, float s) => new Vec2(a.X * s, a.Y * s);
 
         public static float DistanceSquared(Vec2 a, Vec2 b) => (a - b).LengthSquared;
+        public static float Dot(Vec2 a, Vec2 b) => a.X * b.X + a.Y * b.Y;
 
         public bool Equals(Vec2 other) => X.Equals(other.X) && Y.Equals(other.Y);
         public override bool Equals(object? obj) => obj is Vec2 other && Equals(other);
