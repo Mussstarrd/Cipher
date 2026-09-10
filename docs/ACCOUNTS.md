@@ -3,9 +3,7 @@
 **Date:** 2026-09-10 · **Type:** decision memo · **Status:** proposal, no code changed
 **Answers:** the owner's ask in [feedback/2026-09-10-maze-v1-first-play.md](feedback/2026-09-10-maze-v1-first-play.md) — *"let me know what accounts I may need to make to get you repositories for ai generation for graphics or backgrounds or sounds or droplet or AWS resources, whatever makes sense."*
 
-**The most important column below is "Can we ship it?"** CIPHER is meant to sell on Steam. A tool that makes beautiful output we are not licensed to distribute is worth nothing to us. Every licence claim links to the vendor's own terms; where a vendor blocked verification it says **UNVERIFIED**, which means unknown, not yes.
-
-**Verified on this machine:** RTX 4060 Laptop GPU, **8 GB VRAM**, 16 GB RAM. That number drives §4.
+**The most important column below is "Can we ship it?"** CIPHER is meant to sell on Steam, and a tool that makes beautiful output we are not licensed to distribute is worth nothing to us. Every licence claim links to the vendor's own terms; where a vendor blocked verification it says **UNVERIFIED**, meaning unknown, not yes. **Measured on this machine:** RTX 4060 Laptop GPU, **8 GB VRAM**, 16 GB RAM — that number drives §4.
 
 ---
 
@@ -18,16 +16,13 @@
 | **Steamworks** | Store page, playtest, cloud saves, **Remote Play Together** | **$100 once**, recoupable | Yes | **Now** |
 | **ComfyUI, local** | Textures, backdrops, UI, concept art | **$0**, unlimited | **Yes** — Apache/MIT models | **Now** |
 | **Quaternius + Mixamo** | The actual runner & hero meshes | **$0** | Yes | **Now** |
-| **Sonniss GDC 2026 + Freesound CC0** | Real SFX, replacing synthesis | **$0** | Yes, royalty-free | **Now** |
-| **FilmCow SFX** | 4,000 more clean sounds | **$0** (name your price) | Yes | **Now** |
+| **Sonniss GDC 2026, FilmCow, Freesound CC0** | Real SFX, replacing synthesis | **$0** | Yes, royalty-free | **Now** |
 | **ElevenLabs Starter** | Bespoke SFX, later voice | **$6** | Yes, paid tier only | Soon |
-| **ambientCG / Poly Haven** | CC0 PBR materials + HDRIs | **$0** | Yes, CC0 | Soon |
-| **Material Maker / Materialize** | Author & convert PBR maps | **$0** MIT / GPL-3 | Yes | Soon |
+| **ambientCG / Poly Haven / Material Maker** | CC0 materials, HDRIs, PBR authoring | **$0** | Yes, CC0 / MIT | Soon |
 | **Sloyd** | Static props, barricades, crates | **$15** | Yes, paid tier | Soon |
 | **Meshy or Rodin** | Hero *blockout* only | $20–30 | Needs retopo | Later |
 | **Scenario / Midjourney** | Hosted image gen if local chafes | $10–15 | Yes, paid tier | Later |
-| **Sentry** | Crash reports from playtesters | **$0** (5k events) | n/a | Later |
-| **itch.io** | Private playtest builds + patching | **$0** | n/a | Later |
+| **Sentry / itch.io** | Crash reports, playtest distribution | **$0** | n/a | Later |
 | **Composer buyout** | Soundtrack, adaptive stems | $400–800/min once | Yes, with warranty | Later |
 | **Suno / Udio** | Music | $10–30 | **Risky / No** | **Skip** |
 | **Hunyuan3D** | Local 3D gen | $0 | **No** — barred in EU/UK | **Skip** |
@@ -67,24 +62,17 @@ Where AI 3D *does* pay off: **static props** (barricades, crates, turret housing
 
 **Materials — all free.** [ambientCG](https://docs.ambientcg.com/license) and [Poly Haven](https://polyhaven.com/license) are CC0 (*"free to use without attribution — even in commercial circumstances"*); Poly Haven's HDRIs will do real work for URP lighting. For authoring: **Material Maker** (MIT) and **Materialize** (GPL-3, photo→PBR, outputs Unity's Smoothness convention natively). Skip Substance ($60/mo) — its text-to-texture AI appears *removed* in v5.0. `withpoly.com` is dead; `armorlab.org` has lapsed and now serves casino spam — do not download from it.
 
-**Audio — the easiest win on this page, and it is nearly all free.**
-- **[Sonniss GDC 2026 bundle](https://gdc.sonniss.com/)** — free, 7.47 GB of professional library SFX. [Licence v2.0](https://sonniss.com/gdc-bundle-license/): *"Licensee may use and modify the licensed sound effects for personal and commercial projects without attribution."* You may not resell them as a sound library or ship them inside an asset pack/SDK. **Note:** there was no 2025 bundle, and the licence version is **pinned to your download date** — so we log download dates.
-- **[FilmCow SFX](https://filmcow.itch.io/filmcow-sfx)** — ~4,000 24-bit/48 kHz WAVs, name-your-price: *"completely royalty-free… You are not required to credit me."*
-- **[Freesound](https://freesound.org/help/faq/)** — filter to **CC0** for zero paperwork. Avoid CC-BY-NC entirely (bars commercial use). CC-BY is usable but adds a credits obligation per file.
-- **[Kenney](https://kenney.nl/support)** — CC0, thin but clean.
-- **[ElevenLabs](https://elevenlabs.io/terms-of-use) Starter, $6** for bespoke SFX and later voice. Free tier is non-commercial; paid is *"for commercial purposes"* and *"you retain all rights in and to your Output."* Two traps: your SFX are sublicensed to other users unless you **opt out**, and **Eleven Music is governed separately** with UNVERIFIED terms that may exclude downloadable games. Use it for SFX, not soundtrack.
+**Audio — the easiest win on this page, and nearly all free.** The **[Sonniss GDC 2026 bundle](https://gdc.sonniss.com/)** is 7.47 GB of professional library SFX; [licence v2.0](https://sonniss.com/gdc-bundle-license/) reads *"Licensee may use and modify the licensed sound effects for personal and commercial projects without attribution"* (no reselling them as a library). The licence version is **pinned to your download date**, so we log dates. Add **[FilmCow](https://filmcow.itch.io/filmcow-sfx)** (~4,000 WAVs, *"completely royalty-free… not required to credit me"*), **[Freesound](https://freesound.org/help/faq/)** filtered to **CC0** — avoid CC-BY-NC, which bars commercial use — and **[Kenney](https://kenney.nl/support)** (CC0). For bespoke sounds, **[ElevenLabs](https://elevenlabs.io/terms-of-use) Starter ($6)**: free tier is non-commercial, paid is *"for commercial purposes"* with *"you retain all rights in and to your Output."* Two traps — your SFX are sublicensed to other users unless you **opt out**, and **Eleven Music is governed separately** on UNVERIFIED terms that may exclude downloadable games. Use it for SFX, not soundtrack.
 
-**Music: skip Suno and Udio.** **Udio is impossible, not merely risky** — current terms say *"You may not download copies of any Output"* and grant personal, non-commercial use only. **Suno** is contractually cleaner (rights are perpetual and survive cancellation) but *"makes no representation or warranty… that any copyright will vest in any Output,"* gives **no indemnity**, UMG and Sony remain active plaintiffs, and in July 2026 a Munich court ruled against Suno **at the output level** — precisely the exposure that reaches a game selling into the EU. Also skip **Epidemic Sound** and **Artlist**: Epidemic's licence forbids *"any interactivity with the Licensed Work"* (fatal to an adaptive combat score) and excludes game UGC (fatal to streamer coverage); Artlist routes games to Enterprise. For a soundtrack the only route that moves risk off the studio is a **composer buyout with an IP warranty and indemnity** — budget $400–800/min, so roughly $12–25k for a full score. Use [Incompetech](https://incompetech.com/music/royalty-free/licenses/) (CC-BY, or ~$30/track to drop attribution) as greybox placeholder. None of this is needed yet.
+**Music: skip Suno and Udio.** **Udio is impossible, not merely risky** — its terms say *"You may not download copies of any Output"* and grant personal, non-commercial use only. **Suno** is contractually cleaner (rights are perpetual and survive cancellation) but *"makes no representation or warranty… that any copyright will vest in any Output,"* gives **no indemnity**, UMG and Sony remain active plaintiffs, and in July 2026 a Munich court ruled against Suno **at the output level** — precisely the exposure that reaches a game selling into the EU. Also skip **Epidemic Sound**, whose licence forbids *"any interactivity with the Licensed Work"* (fatal to an adaptive combat score) and excludes game UGC (fatal to streamer coverage), and **Artlist**, which routes games to Enterprise. The only route that moves risk off the studio is a **composer buyout with an IP warranty and indemnity** — $400–800/min, roughly $12–25k for a full score. [Incompetech](https://incompetech.com/music/royalty-free/licenses/) (CC-BY, or ~$30/track to drop attribution) works as greybox placeholder. None of this is needed yet.
 
-**One compliance item regardless of tool:** Valve **requires disclosure of AI-generated content that ships in the build** ([content survey](https://partner.steamgames.com/doc/gettingstarted/contentsurvey)). AI textures must be declared. Our use of Claude to write C# does **not** require disclosure — Valve explicitly exempts dev tooling. Separately, purely AI-generated art is **not copyrightable**, so anything we want to defend needs human paint-over. I'll keep a per-asset provenance log (source, URL, licence, licence *version*, download date) from the first sourced asset — Sonniss's version-pinning makes the download date legally load-bearing, and retrofitting such a log is miserable.
+**One compliance item regardless of tool:** Valve **requires disclosure of AI-generated content that ships in the build** ([content survey](https://partner.steamgames.com/doc/gettingstarted/contentsurvey)), so AI textures must be declared — but our use of Claude to write C# does **not**, since Valve explicitly exempts dev tooling. Separately, purely AI-generated art is **not copyrightable**, so anything we want to defend needs human paint-over. I'll keep a per-asset provenance log (source, URL, licence, licence *version*, download date) from the first sourced asset; Sonniss's version-pinning makes the download date legally load-bearing, and retrofitting such a log is miserable.
 
 ---
 
 ## 4. Local vs cloud generation — run it locally
 
-**Recommendation: install ComfyUI on the laptop and generate images locally.** Free, unlimited, private, and it removes a whole category of licence ambiguity — no subscription to lapse, no terms changing under us, no public gallery exposing our art direction pre-launch, and no per-image cost when a texture takes forty attempts.
-
-With **8 GB VRAM**:
+**Recommendation: install ComfyUI on the laptop and generate images locally.** Free, unlimited, private, and it removes a whole category of licence ambiguity — no subscription to lapse, no terms changing under us, no public gallery exposing our art direction pre-launch, and no per-image cost when a texture takes forty attempts. With **8 GB VRAM**:
 
 | Model | Licence | On 8 GB |
 |---|---|---|
@@ -94,13 +82,13 @@ With **8 GB VRAM**:
 | FLUX.1 [dev] | ambiguous | Q4 only — **avoid on licence grounds** |
 | SD 3.x | terminates at $1M revenue | Avoid |
 
-Use **[ComfyUI](https://github.com/comfyanonymous/ComfyUI)** (Automatic1111 has been abandoned since Feb 2025). Stick to **Apache-2.0 / MIT / RAIL** weights, which grant output rights outright with no revenue cliff and no registration. Avoid FLUX **[dev]**, whose terms simultaneously permit commercial output and define commercial use as excluded; **[klein] 4B** and **[schnell]** are Apache-2.0 and unambiguous. 8 GB is enough for tiling textures, backdrops and UI at our resolutions. If we ever need big photoreal output, *that* is the moment to rent a cloud GPU by the hour — not before.
+Use **[ComfyUI](https://github.com/comfyanonymous/ComfyUI)** (Automatic1111 has been abandoned since Feb 2025). Stick to **Apache-2.0 / MIT / RAIL** weights, which grant output rights outright with no revenue cliff and no registration. Avoid FLUX **[dev]**, whose terms simultaneously permit commercial output and define commercial use as excluded. 8 GB is enough for tiling textures, backdrops and UI at our resolutions; if we ever need big photoreal output, *that* is the moment to rent a cloud GPU by the hour — not before.
 
 ---
 
 ## 5. Cloud / infra — do not buy any of this yet
 
-**You mentioned a droplet or AWS. We need neither today, and probably not for a year.** GitHub already hosts the repo, runs CI, and stores artifacts. A server adds a bill, a machine to patch, and secrets to manage, in exchange for nothing we currently lack.
+**You mentioned a droplet or AWS. We need neither today, and probably not for a year.** GitHub already hosts the repo, runs CI, and stores artifacts. A server adds a bill, a machine to patch, and secrets to manage, in exchange for nothing we lack.
 
 | Don't buy | Why not | Trigger that changes it |
 |---|---|---|
@@ -132,18 +120,11 @@ Use **[ComfyUI](https://github.com/comfyanonymous/ComfyUI)** (Automatic1111 has 
 
 ### What to hand me, and what never to hand anyone
 
-**Safe in GitHub repo secrets** (Settings → Secrets and variables → Actions) — encrypted, never printed in logs, unreadable even by you once saved:
-- `UNITY_USERNAME` / `UNITY_PASSWORD` — already required; the Unity build stays skipped until they exist.
-- Later: a Steam build-upload credential, an itch.io butler API key.
+**Safe in GitHub repo secrets** (Settings → Secrets and variables → Actions) — encrypted, never printed in logs, unreadable even by you once saved: `UNITY_USERNAME` / `UNITY_PASSWORD` (already required; the Unity build stays skipped until they exist), and later a Steam build-upload credential or itch.io butler key.
 
-**Never paste into a chat window — including to me:**
-- **Any password, ever.** Unity's goes into the GitHub secrets UI directly, not through chat.
-- Bank details, tax IDs, card numbers, government ID.
-- Steam account-recovery codes or Steamworks partner credentials.
+**Never paste into a chat window — including to me:** any password, ever (Unity's goes into the GitHub secrets UI directly, not through chat); bank details, tax IDs, card numbers, government ID; Steam account-recovery codes or Steamworks partner credentials.
 
-**The rule that covers every case:** put credentials into the *system that needs them*, never into a message. If a key does leak into a chat, a log, or a commit, assume it is public and rotate it immediately — rotating takes two minutes and is always cheaper than hoping.
-
-Most tools above are used through their websites and need no API key at all. If we ever automate one, the key goes in GitHub secrets, never in the repo.
+**The rule that covers every case:** put credentials into the *system that needs them*, never into a message. If a key does leak into a chat, a log, or a commit, assume it is public and rotate it immediately — rotating takes two minutes and is always cheaper than hoping. Most tools above are used through their websites and need no API key at all.
 
 ---
 
