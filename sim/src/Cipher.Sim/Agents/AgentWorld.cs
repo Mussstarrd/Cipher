@@ -221,6 +221,32 @@ namespace Cipher.Sim.Agents
             return hitId >= 0;
         }
 
+        /// <summary>
+        /// "First" targeting: the living agent inside the circle that is closest to the goal by
+        /// flow-field cost (ties: lower id). Returns -1 when none. Deterministic; does not mutate.
+        /// </summary>
+        public int FindFirstInRange(Vec2 center, float radius)
+        {
+            RebuildHashIfDirty();
+            _queryScratch.Clear();
+            _hash.QueryCircle(center, radius, _queryScratch);
+            int best = -1;
+            float bestCost = float.PositiveInfinity;
+            foreach (int hashId in _queryScratch)
+            {
+                int id = _hashToAgent[hashId];
+                if (!_alive[id]) continue;
+                var (cx, cy) = _map.WorldToCell(new Vec2(_posX[id], _posY[id]));
+                float cost = _flowField.IntegrationCostAt(cx, cy);
+                if (cost < bestCost || (cost == bestCost && id < best))
+                {
+                    bestCost = cost;
+                    best = id;
+                }
+            }
+            return best;
+        }
+
         /// <summary>The grid this world walks on (build validation, preview).</summary>
         public GridMap Map => _map;
 
