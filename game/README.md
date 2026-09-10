@@ -13,9 +13,12 @@ set to *Input System Package*. Press **Play** in `Flood.unity` — the bootstrap
 graybox at runtime.
 
 - **Xbox controller (combat):** left stick move, right stick look, **RT** fire, **Y** airstrike on the orange line where you are looking (6-24 cells), **View** start the wave early, **Menu** pause, **A** get back up / run it back.
-- **Build mode:** tap **LB** to enter (overhead camera, weapons holstered). Left stick or d-pad moves the grid cursor, **A** places (hold and sweep to paint), **X** sells, **RB** switches Barricade / Sentry .50, **B** or LB leaves. Green dots are where each of the five spawns will path; red means that spawn cannot reach the vault (a full seal, allowed but you were warned).
+- **Build mode:** tap **LB** to enter (overhead camera, weapons holstered). Left stick moves the grid cursor, **A** places (hold and sweep to paint), **X** sells, **RB** or d-pad left/right switches Barricade $20 / Sentry .50 $150 / Repair Drone $150, **Y** upgrades the turret under the cursor (Twin .50 $120, then Overwatch $200), **B** or LB leaves. Green dots are where each of the five spawns will path; red means that spawn cannot reach the vault (a full seal, allowed but you were warned).
 - **Keyboard / mouse:** WASD, mouse look, LMB fire, RMB or Q airstrike, Tab build (arrows, Space place, X sell, Q next item), Enter start wave, Esc pause.
-- **The loop:** five waves march from the left edge to the green vault on the right. Every runner that reaches the vault takes one point off it; at zero you lose. Kills from any source pay $5, clearing wave N pays $100 x N, you start with $400. Barricades $20, Sentry .50 $150 (range 10, 60 dps, shoots the runner closest to the vault). Selling refunds 100% between waves, 50% x remaining health mid-wave. You are the gold capsule: runners chew you on contact, LMG kills in two taps, airstrike walks six bombs down a 14x4 line.
+- **The loop:** five waves march from the left edge to the green vault on the right. Every runner that reaches the vault takes one point off it; at zero you lose. Kills from any source pay $5, clearing wave N pays $100 x N, you start with $400. Selling refunds 100% between waves, 50% x remaining health mid-wave. You are the gold capsule: runners chew you on contact, LMG kills in two taps, airstrike walks six bombs down a 14x4 line.
+- **Sappers** (tall orange) walk to the wall that shortcuts most, plant for 4 s, and open a hole that widens every 20 s until the wall collapses (traffic through it speeds that up). A pulsing orange marker floats over the wall they picked. Kill them on the walk, or drop a **Repair Drone** on the hole and stand within 8 cells while it works (one stage per 4 s). If you seal the maze completely, a Sapper is forced.
+- **Spitters** (squat green) go for turrets: they close to 9 cells and lob acid every 1.5 s. Turrets out-range them but do not prioritise them; you do.
+- **Gun crates** (spinning yellow) appear every 45 s on your side of the arena and last 30 s. Walk over one: LMG Mk2, Mk3, then Gold-plated.
 - **HUD** (top-left): fps / alive / breached / kills by source; cash, wave, phase and vault; HP and airstrike bars; build-mode item, cost and placement message.
 - Commit any new `.meta` files Unity generates (including inside `../sim/src/Cipher.Sim/`).
 
@@ -55,6 +58,7 @@ Set them with `gh secret set UNITY_USERNAME` / `gh secret set UNITY_PASSWORD` (e
 - `Assets/Scripts/Cipher.Game.asmdef` — game assembly; references `Cipher.Sim` + Input System
 - `Assets/Scripts/Bootstrap/FloodBootstrap.cs` — Milestone 1 entry point (procedural scene, fixed-tick sim loop, instanced rendering, input, pause menu)
 - `Assets/Scripts/Match/MatchRules.cs` — cash, wave table, vault, win/lose (pure C#, tested)
+- `Assets/Scripts/Match/Directors.cs` — SpawnDirector (seeded archetype rolls, pity timers, forced Sapper on seal), RepairDrone, gun tiers and crate pickups (pure C#, tested)
 - `Assets/Scripts/Build/BuildModel.cs` — build cursor, place/sell/refund, route preview via the sim BuildValidator (pure C#, tested)
 - `Assets/Scripts/Hero/HeroModel.cs` — the Enforcer as pure state (movement via the shared `Movement` wall rule, hitscan via `AgentWorld.Raycast`, contact damage, airstrike); unit-tested
 - `Assets/Scripts/UI/PauseMenuModel.cs` — pause menu state, no UnityEngine, unit-tested

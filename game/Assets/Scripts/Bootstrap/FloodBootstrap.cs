@@ -21,8 +21,9 @@ namespace Cipher.Game
     ///
     /// Xbox: LS move, RS look, RT fire, Y airstrike where you look, LB build mode (toggle),
     /// View start the wave early, Menu pause, A restart when down / after the match.
-    /// Build mode: LS/d-pad move the cursor, A place (hold to paint), X sell, RB next item,
-    /// B or LB done. Keyboard: WASD, mouse, LMB, RMB/Q, Tab build, Enter start wave,
+    /// Build mode: LS/d-pad move the cursor, A place (hold to paint), X sell, Y upgrade a turret,
+    /// RB / d-pad left-right next item, B or LB done. Sappers breach walls, Spitters hunt turrets,
+    /// repair drones close holes while you stand near, gun crates upgrade your LMG. Keyboard: WASD, mouse, LMB, RMB/Q, Tab build, Enter start wave,
     /// arrows cursor, Space place, X sell, Q next item, Esc pause.
     /// </summary>
     public static class FloodEntryPoint
@@ -54,6 +55,11 @@ namespace Cipher.Game
         private MatchState _match = null!;
         private readonly EconomyConfig _eco = new EconomyConfig();
         private BuildModel _build = null!;
+        private SpawnDirector _director = null!;
+        private PickupSystem _pickups = null!;
+        private float _matchSeconds;
+        private readonly List<SimEvent> _eventScratch = new List<SimEvent>(32);
+        private readonly List<(string Text, float Ttl)> _alerts = new List<(string, float)>(8);
         private static readonly (int X, int Y)[] SpawnCells = { (1, 4), (1, 14), (1, 24), (1, 34), (1, 44) };
         private int _spawnCursor;
         private float _tickAccumulator;
@@ -107,6 +113,14 @@ namespace Cipher.Game
         private int _bakedMapVersion = -1;
         private readonly List<GameObject> _turretGos = new List<GameObject>(32);
         private Transform _vaultT = null!;
+        private Transform _crateT = null!;
+        private Material _sapperMaterial = null!;
+        private Material _spitterMaterial = null!;
+        private Material _droneMaterial = null!;
+        private Material _sapperTargetMaterial = null!;
+        private readonly List<Matrix4x4> _sapperMatrices = new List<Matrix4x4>(16);
+        private readonly List<Matrix4x4> _spitterMatrices = new List<Matrix4x4>(16);
+        private readonly List<Matrix4x4> _fxMatrices = new List<Matrix4x4>(32);
 
         // ---- camera ----
         private enum CameraMode { Chase, Tactical }
@@ -148,6 +162,13 @@ namespace Cipher.Game
             _turrets = new TurretSystem(new TurretConfig());
             _match = new MatchState(WaveTable.Default, _eco);
             _build = new BuildModel(_map, _world, _turrets, _match, _eco, SpawnCells, GoalX, GoalY, GridW - 12, GridH / 2);
+            _world.Structures = _turrets.AsStructureQuery();
+            ulong seed = (ulong)System.DateTime.UtcNow.Ticks;
+            _director = new SpawnDirector(new DirectorConfig(), seed);
+            _pickups = new PickupSystem(_map, seed ^ 0xC1FE, minX: 34, maxX: GridW - 4);
+            _matchSeconds = 0f;
+            _alerts.Clear();
+            GunTiers.Apply(_heroCfg, 0);
 
             _hero = new HeroModel(_heroCfg, HeroSpawn);
             _hero.Aim(new Vec2(-1f, 0f));
@@ -203,6 +224,10 @@ namespace Cipher.Game
             _routeOkMaterial = MakeMaterial(new Color(0.3f, 0.9f, 0.45f), instanced: true);
             _routeBadMaterial = MakeMaterial(new Color(1f, 0.2f, 0.15f), instanced: true);
             _turretMaterial = MakeMaterial(new Color(0.25f, 0.55f, 0.85f), instanced: false);
+            _sapperMaterial = MakeMaterial(new Color(1f, 0.45f, 0.05f), instanced: true);
+            _spitterMaterial = MakeMaterial(new Color(0.35f, 0.9f, 0.25f), instanced: true);
+            _droneMaterial = MakeMaterial(new Color(0.4f, 0.95f, 1f), instanced: true);
+            _sapperTargetMaterial = MakeMaterial(new Color(1f, 0.3f, 0.05f), instanced: true);
             _instanceBuffer = new Matrix4x4[MaxInstancesPerDraw];
 
             var heroGo = GameObject.CreatePrimitive(PrimitiveType.Capsule);
@@ -243,6 +268,14 @@ namespace Cipher.Game
             vault.transform.localScale = new Vector3(1.6f, 1.2f, 1.6f);
             vault.GetComponent<Renderer>().material = MakeMaterial(new Color(0.2f, 0.9f, 0.5f), instanced: false);
             _vaultT = vault.transform;
+
+            var crate = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            crate.name = "GunCrate";
+            Destroy(crate.GetComponent<Collider>());
+            crate.transform.localScale = new Vector3(0.9f, 0.6f, 0.9f);
+            crate.GetComponent<Renderer>().material = MakeMaterial(new Color(1f, 0.9f, 0.2f), instanced: false);
+            _crateT = crate.transform;
+            crate.SetActive(false);
         }
 
         private static Mesh HarvestMesh(PrimitiveType type)
@@ -311,9 +344,9 @@ namespace Cipher.Game
             for (int i = 0; i < list.Count; i++)
             {
                 var t = list[i];
-                float hp = (float)t.Hp / _turrets.Config.MaxHp;
+                float hp = (float)t.Hp / t.MaxHp;
                 _turretGos[i].transform.position = new Vector3(t.X + 0.5f, 0.7f, t.Y + 0.5f);
-                _turretGos[i].transform.localScale = new Vector3(0.9f, 0.4f + 0.6f * hp, 0.9f);
+                _turretGos[i].transform.localScale = new Vector3(0.9f + 0.15f * t.Tier, 0.4f + 0.6f * hp, 0.9f + 0.15f * t.Tier);
             }
         }
 
@@ -367,14 +400,25 @@ namespace Cipher.Game
         {
             if (!_match.IsOver)
             {
+                _matchSeconds += TickDt;
                 int breached = _world.ReachedCount - _lastReached;
                 int toSpawn = _match.Tick(TickDt, _world.AliveCount, breached);
                 _lastReached = _world.ReachedCount;
-                for (int i = 0; i < toSpawn; i++)
+                if (toSpawn > 0)
                 {
-                    var (sx, sy) = SpawnCells[_spawnCursor % SpawnCells.Length];
-                    _spawnCursor++;
-                    _world.Spawn(new Vec2(sx + 0.5f + (_spawnCursor % 3) * 0.3f, sy + 0.5f + (_spawnCursor % 5) * 0.2f), health: 10f);
+                    bool sealedIn = false;
+                    foreach (var sc in SpawnCells) if (!_field.HasPath(sc.X, sc.Y)) { sealedIn = true; break; }
+                    for (int i = 0; i < toSpawn; i++)
+                    {
+                        var (sx, sy) = SpawnCells[_spawnCursor % SpawnCells.Length];
+                        _spawnCursor++;
+                        var pos = new Vec2(sx + 0.5f + (_spawnCursor % 3) * 0.3f, sy + 0.5f + (_spawnCursor % 5) * 0.2f);
+                        var view = new DirectorView(_matchSeconds, _world.ActiveSapperCount, _world.ActiveBreachCount,
+                                                    _world.CountAlive(Archetype.Spitter), sealedIn, _turrets.Turrets.Count);
+                        Archetype a = _director.Decide(view);
+                        if (a == Archetype.Runner) _world.Spawn(pos, health: 10f);
+                        else _world.SpawnArchetype(pos, a);
+                    }
                 }
             }
 
@@ -386,11 +430,64 @@ namespace Cipher.Game
                 _tracers.Add(new Tracer { A = ToWorld(s.From, 1.1f), B = ToWorld(s.To, 0.6f), Ttl = TracerLife * 0.7f, Turret = true });
 
             _hero.ApplyContact(_world, TickDt);
+            HandleSimEvents();
+            _build.TickDrones(_hero.Position, TickDt);
+            if (_pickups.Tick(_matchSeconds, TickDt, _hero.Position, _heroCfg))
+                Alert($"GUN UPGRADE: {_pickups.GunName}", 3f);
 
             // Kills from any source pay out (hero, turrets, airstrike).
             int kills = (int)(_world.TotalKills - _lastKills);
             _lastKills = (int)_world.TotalKills;
             _match.ReportKills(kills);
+        }
+
+        private void HandleSimEvents()
+        {
+            _eventScratch.Clear();
+            _world.DrainEvents(_eventScratch);
+            bool turretsChanged = false;
+            foreach (var e in _eventScratch)
+            {
+                switch (e.Kind)
+                {
+                    case SimEventKind.SapperTargeted:
+                        Alert("SAPPER SPOTTED — it is heading for your wall", 4f);
+                        break;
+                    case SimEventKind.BreachPlanting:
+                        Alert($"BREACH IN {e.F:F0}s — kill the Sapper or bring a drone", 4f);
+                        break;
+                    case SimEventKind.BreachStage:
+                        if (e.A >= 0) Alert("WALL BREACHED — they are coming through", 4f);
+                        else if ((int)e.F > (int)BreachStage.Cracked) Alert("BREACH WIDENING", 3f);
+                        break;
+                    case SimEventKind.BreachCollapsed:
+                        Alert("WALL COLLAPSED", 4f);
+                        break;
+                    case SimEventKind.BreachRepaired:
+                        Alert("wall repaired", 2f);
+                        break;
+                    case SimEventKind.SpitterEngaged:
+                        Alert("SPITTER — it is going for a turret", 3f);
+                        break;
+                    case SimEventKind.StructureHit:
+                        if (e.B >= 0 && e.B < _turrets.Turrets.Count)
+                        {
+                            var t = _turrets.Turrets[e.B];
+                            _blasts.Add(new Blast { Center = new Vector3(t.X + 0.5f, 0.05f, t.Y + 0.5f), Radius = 0.7f, Ttl = BlastLife * 0.5f });
+                            if (_turrets.Damage(_map, e.B, (int)e.F)) { Alert("TURRET DESTROYED", 4f); turretsChanged = true; }
+                        }
+                        break;
+                }
+            }
+            if (turretsChanged) SyncTurretObjects();
+        }
+
+        private void Alert(string text, float seconds)
+        {
+            for (int i = 0; i < _alerts.Count; i++)
+                if (_alerts[i].Text == text) { _alerts[i] = (text, seconds); return; }
+            _alerts.Add((text, seconds));
+            if (_alerts.Count > 4) _alerts.RemoveAt(0);
         }
 
         // ------------------------------------------------------------------ input
@@ -434,8 +531,6 @@ namespace Cipher.Game
             {
                 Vector2 ls = pad.leftStick.ReadValue();
                 if (ls.sqrMagnitude > 0.25f) dir = ls;
-                if (pad.dpad.left.isPressed) dir.x = -1f;
-                if (pad.dpad.right.isPressed) dir.x = 1f;
                 if (pad.dpad.up.isPressed) dir.y = 1f;
                 if (pad.dpad.down.isPressed) dir.y = -1f;
             }
@@ -467,8 +562,12 @@ namespace Cipher.Game
                 _cursorRepeatTimer = 0f;
             }
 
-            bool cycle = (pad != null && pad.rightShoulder.wasPressedThisFrame) || (kb != null && kb.qKey.wasPressedThisFrame);
+            bool cycle = (pad != null && (pad.rightShoulder.wasPressedThisFrame || pad.dpad.right.wasPressedThisFrame)) || (kb != null && kb.qKey.wasPressedThisFrame);
+            bool cycleBack = pad != null && pad.dpad.left.wasPressedThisFrame;
             if (cycle) { _build.CycleItem(1); moved = true; }
+            else if (cycleBack) { _build.CycleItem(-1); moved = true; }
+            bool upgrade = (pad != null && pad.buttonNorth.wasPressedThisFrame) || (kb != null && kb.uKey.wasPressedThisFrame);
+            if (upgrade && _build.TryUpgrade()) SyncTurretObjects();
 
             bool placePressed = (pad != null && pad.buttonSouth.wasPressedThisFrame) || (kb != null && kb.spaceKey.wasPressedThisFrame);
             bool placeHeld = (pad != null && pad.buttonSouth.isPressed) || (kb != null && kb.spaceKey.isPressed);
@@ -591,6 +690,12 @@ namespace Cipher.Game
 
         private void UpdateEffects(float dt)
         {
+            for (int i = _alerts.Count - 1; i >= 0; i--)
+            {
+                var a = _alerts[i];
+                a.Ttl -= dt;
+                if (a.Ttl <= 0f) _alerts.RemoveAt(i); else _alerts[i] = a;
+            }
             for (int i = _tracers.Count - 1; i >= 0; i--)
             {
                 var t = _tracers[i];
@@ -627,6 +732,13 @@ namespace Cipher.Game
 
             float vaultHp = (float)_match.VaultHp / _match.VaultMaxHp;
             _vaultT.localScale = new Vector3(1.6f, 0.3f + 1.2f * vaultHp, 1.6f);
+
+            _crateT.gameObject.SetActive(_pickups.CrateActive);
+            if (_pickups.CrateActive)
+            {
+                _crateT.position = ToWorld(_pickups.CratePosition, 0.45f + 0.15f * Mathf.Sin(Time.time * 4f));
+                _crateT.rotation = Quaternion.Euler(0f, Time.time * 90f, 0f);
+            }
         }
 
         private void UpdateBuildVisual()
@@ -727,11 +839,29 @@ namespace Cipher.Game
 
         private void DrawAgents()
         {
+            _sapperMatrices.Clear();
+            _spitterMatrices.Clear();
+            _fxMatrices.Clear();
             int inBuffer = 0;
             for (int id = 0; id < _world.Count; id++)
             {
                 if (!_world.IsAlive(id)) continue;
                 Vec2 p = _world.PositionOf(id);
+                switch (_world.ArchetypeOf(id))
+                {
+                    case Archetype.Sapper:
+                        _sapperMatrices.Add(Matrix4x4.TRS(new Vector3(p.X, 0.9f, p.Y), Quaternion.identity, new Vector3(0.6f, 0.95f, 0.6f)));
+                        int cell = _world.SapperTargetCell(id);
+                        if (cell >= 0)
+                        {
+                            float pulse = 1.1f + 0.2f * Mathf.Sin(Time.time * 8f);
+                            _fxMatrices.Add(Matrix4x4.TRS(new Vector3(cell % GridW + 0.5f, 2.6f, cell / GridW + 0.5f), Quaternion.identity, new Vector3(pulse, 0.3f, pulse)));
+                        }
+                        continue;
+                    case Archetype.Spitter:
+                        _spitterMatrices.Add(Matrix4x4.TRS(new Vector3(p.X, 0.7f, p.Y), Quaternion.identity, new Vector3(0.7f, 0.5f, 0.7f)));
+                        continue;
+                }
                 _instanceBuffer[inBuffer++] = Matrix4x4.TRS(new Vector3(p.X, 0.6f, p.Y), Quaternion.identity, new Vector3(0.45f, 0.6f, 0.45f));
                 if (inBuffer == MaxInstancesPerDraw)
                 {
@@ -740,6 +870,19 @@ namespace Cipher.Game
                 }
             }
             if (inBuffer > 0) Graphics.DrawMeshInstanced(_agentMesh, 0, _agentMaterial, _instanceBuffer, inBuffer);
+            DrawInstancedBatched(_agentMesh, _sapperMaterial, _sapperMatrices);
+            DrawInstancedBatched(_agentMesh, _spitterMaterial, _spitterMatrices);
+            DrawInstancedBatched(_cubeMesh, _sapperTargetMaterial, _fxMatrices);
+
+            // Repair drones hover over their cell; dim when the hero is too far to power them.
+            _fxMatrices.Clear();
+            foreach (var d in _build.Drones)
+            {
+                float bob = 1.6f + 0.2f * Mathf.Sin(Time.time * 6f + d.X);
+                float size = d.HeroInRange ? 0.55f : 0.35f;
+                _fxMatrices.Add(Matrix4x4.TRS(new Vector3(d.X + 0.5f, bob, d.Y + 0.5f), Quaternion.Euler(0f, Time.time * 180f, 0f), new Vector3(size, 0.2f, size)));
+            }
+            DrawInstancedBatched(_cubeMesh, _droneMaterial, _fxMatrices);
         }
 
         private void DrawInstancedList(Mesh mesh, Material material, Matrix4x4[] matrices, int count)
@@ -848,22 +991,38 @@ namespace Cipher.Game
 
             if (_buildMode)
             {
-                GUI.Label(new Rect(12, 108, 1000, 28),
-                    $"[BUILD]  {_build.ItemName} ${_build.ItemCost}   " +
-                    (pad ? "LS/d-pad move  A place (hold to paint)  X sell  RB next item  B/LB done"
-                         : "arrows move  Space place  X sell  Q next item  Tab done"));
+                var items = new System.Text.StringBuilder("[BUILD]  ");
+                foreach (var it in BuildModel.Items)
+                {
+                    bool sel = it == _build.Item;
+                    items.Append(sel ? "[ " : "  ").Append(BuildModel.NameOf(it)).Append(" $").Append(_build.CostOf(it)).Append(sel ? " ]" : "  ");
+                }
+                GUI.Label(new Rect(12, 108, 1200, 28), items.ToString());
+                GUI.Label(new Rect(12, 130, 1200, 28),
+                    pad ? "LS move  A place (hold to paint)  X sell  Y upgrade turret  RB / d-pad L-R switch item  B/LB done"
+                        : "arrows move  Space place  X sell  U upgrade turret  Q switch item  Tab done");
                 if (_build.Message.Length > 0)
                 {
                     var style = new GUIStyle(GUI.skin.label) { fontStyle = FontStyle.Bold };
                     style.normal.textColor = _build.LastResult == PlacementResult.SealsSpawn ? new Color(1f, 0.6f, 0.1f) : Color.white;
-                    GUI.Label(new Rect(12, 132, 1000, 28), _build.Message, style);
+                    GUI.Label(new Rect(12, 152, 1200, 28), _build.Message, style);
                 }
             }
             else
             {
-                GUI.Label(new Rect(12, 108, 1000, 28),
-                    pad ? "LS move  RS look  RT fire  Y airstrike  LB build  View start wave  Menu pause"
-                        : "WASD move  mouse look  LMB fire  RMB/Q airstrike  Tab build  Enter start wave  Esc pause");
+                GUI.Label(new Rect(12, 108, 1200, 28),
+                    (pad ? "LS move  RS look  RT fire  Y airstrike  LB build  View start wave  Menu pause"
+                         : "WASD move  mouse look  LMB fire  RMB/Q airstrike  Tab build  Enter start wave  Esc pause")
+                    + $"     gun: {_pickups.GunName}");
+            }
+
+            // Alerts: telegraphs for Sappers, breaches, Spitters, upgrades.
+            if (_alerts.Count > 0)
+            {
+                var alertStyle = new GUIStyle(GUI.skin.label) { fontSize = 20, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter };
+                alertStyle.normal.textColor = new Color(1f, 0.55f, 0.1f);
+                for (int i = 0; i < _alerts.Count; i++)
+                    GUI.Label(new Rect(0, 60 + i * 28, Screen.width, 28), _alerts[i].Text, alertStyle);
             }
 
             if (_match.IsOver && !_pauseMenu.IsOpen)

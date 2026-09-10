@@ -29,9 +29,9 @@ Today is Thursday 2026-09-10. Dates are what the owner can *play*, assuming one 
 
 | When | Build | What the owner will see |
 |---|---|---|
-| **Fri Sep 11** | Hero 0.2 | Aimable line airstrike: look, tap Y, the street erupts in a line where you looked. Right stick tilts the camera. |
-| **Thu Sep 17** | **Maze v0 (Milestone 2)** | LB into build mode; place barricades and a turret with cash from kills; live pathing preview that never lies; 5-wave table with win/lose; full-seal warning. |
-| **Thu Sep 24** | Maze v1 | The Sapper breaches a wall, the hole widens, the horde pours through, you shoot the kit or buy a drone; Spitters hunt your turret. |
+| ~~Fri Sep 11~~ **shipped Sep 10** | Hero 0.2 | Aimable line airstrike: look, tap Y, the street erupts in a line where you looked. Right stick tilts the camera. |
+| ~~Thu Sep 17~~ **shipped Sep 10** | **Maze v0 (Milestone 2)** | LB into build mode; place barricades and a turret with cash from kills; live pathing preview that never lies; 5-wave table with win/lose; full-seal warning. |
+| ~~Thu Sep 24~~ **shipped Sep 10** | Maze v1 | The Sapper breaches a wall, the hole widens, the horde pours through, you shoot the kit or buy a drone; Spitters hunt your turret. |
 | **Wed Oct 1** | Gun pass (start of Milestone 3) | Aim assist, hit feedback, sprint; "one more wave" test build. **Owner action:** line up 3–5 friends with controllers (Open Decision #7). |
 | **Thu Oct 8** | **First characters** | URP done; a real (placeholder) zombie runner with run/attack/die animations at 1,000 count, and a rigged hero holding a gun. Still one look each. |
 | **Late Oct** | Art direction pass | Hero with 2 swappable outfits, runners in 2 variants, colour tints per instance. |
