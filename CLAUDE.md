@@ -47,7 +47,7 @@ dotnet run --project sim/tools/Cipher.Sim.Bench -c Release -- --smoke
 - **`GridMap.CellIndex` throws on out-of-bounds** (silent aliasing corrupted the opposite edge pre-review). Bounds-check before calling with untrusted coordinates.
 - Movement mirrors the flow field's corner-cut rule (`AgentWorld.CanTravel`) and caps displacement at 0.9 cells/tick — don't "optimize" either away; regression tests in `ReviewRegressionTests.cs`.
 - Unity's default New Scene template ships its own MainCamera — the bootstrap disables foreign cameras and must aim through its own camera reference, never `Camera.main`.
-- **Unity Personal has no manual (.alf/.ulf) activation any more** — game-ci's `UNITY_LICENSE` path is dead. CI activates with `buildalon/activate-unity-license` (email + password only, no 2FA on the ID). `Shader.Find("Standard")` needs Standard in Always Included Shaders or player builds go magenta (done in `GraphicsSettings.asset`).
+- **Unity Personal has no manual (.alf/.ulf) activation any more** — game-ci's `UNITY_LICENSE` path is dead. CI activates with `buildalon/activate-unity-license` (email + password only, no 2FA on the ID). `Shader.Find("Standard")` needs Standard in Always Included Shaders or player builds go magenta, AND `m_InstancingStripping` must be 2 (Keep All) or every `Graphics.DrawMeshInstanced` draw silently vanishes in players — runtime-created materials don't count as "used" for variant stripping. First CI exe shipped with an empty arena because of this. Both set in `GraphicsSettings.asset`.
 - Adversarial review process (3 parallel agents: sim QA, scaffold audit, design red-team) found 1 compile blocker + 3 sim bugs + 12 design holes on first run — rerun this pattern after every major layer lands.
 
 ## Open decisions

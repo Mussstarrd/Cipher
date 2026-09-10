@@ -43,6 +43,7 @@ Set them with `gh secret set UNITY_USERNAME` / `gh secret set UNITY_PASSWORD` (e
 ## Known first-APK caveats (handled when we get there)
 
 - The `Standard` shader is referenced by code (`Shader.Find`), so it is pinned in *Project Settings → Graphics → Always Included Shaders* (fileID 46 in `GraphicsSettings.asset`). Remove it and every player build renders magenta while Editor Play mode looks fine.
+- Instancing variants are pinned too (`m_InstancingStripping: 2`, Keep All). The agents and walls are drawn with `Graphics.DrawMeshInstanced` using materials created at runtime, which the build's variant stripper cannot see — with the default "Strip Unused" the first CI build showed only the ground and cursor.
 - Android build settings (IL2CPP/ARM64, landscape, target SDK) get committed as ProjectSettings once the editor has generated them.
 
 ## Layout

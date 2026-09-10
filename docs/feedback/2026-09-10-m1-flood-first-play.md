@@ -26,3 +26,15 @@ Follow-up when asked to confirm fps vs. the alive count:
 
 - [x] Confirm fps vs alive reading (owner) — confirmed ~1,000 fps.
 - [ ] Airstrike feel: owner described *what* it does, not yet *how it feels* — ask directed questions next session (impact readability, cooldown, radius vs horde width).
+
+## Addendum — first CI-built player (run 34487824831), same day
+
+Owner ran `CipherDeadTurf.exe` from the CI artifact and sent two photos with:
+
+> That's all it shows
+
+Photos: a light-gray ground plane, the orange cursor sphere, HUD `fps 60 | alive 1000 | breached 888 | kills 621`, no agents, no walls.
+
+- Diagnosis: instanced draws (agents, walls) were stripped from the player — `m_InstancingStripping` was "Strip Unused" and the instanced materials are created at runtime, so the stripper saw no user. Fixed by Keep All; Standard FORWARD variant count doubled in the build log (256 → 512 vp, 4096 → 8192 fp).
+- `fps 60` in the player is vsync (QualitySettings default), not a perf regression.
+- Kills still counted because the sim doesn't care whether anything is drawn — "preview never lies" cuts both ways: the HUD was truthful, the picture wasn't.
