@@ -12,7 +12,7 @@ are committed, so an open is just: Unity Hub → **Add → `game/`** → open wi
 set to *Input System Package*. Press **Play** in `Flood.unity` — the bootstrap builds the whole
 graybox at runtime.
 
-- **Xbox controller:** left stick move, right stick look (chase) / aim (tactical), **RT** fire, **Y** airstrike on the orange marker ahead of you, **hold LB** for the tactical overhead camera, **Menu** pause, **A** restart when down. In the pause menu: stick / d-pad picks Resume or Quit, A confirms, B or Menu backs out.
+- **Xbox controller:** left stick move, right stick look (chase) / aim (tactical), **RT** fire, **Y** airstrike on the orange marker ahead of you, **hold LB** for the tactical overhead camera (look only, weapons hold — ADR-002), **Menu** pause, **A** restart when down. In the pause menu: stick / d-pad picks Resume or Quit, A confirms, B or Menu backs out.
 - **Keyboard / mouse:** WASD move, mouse look / aim, LMB fire, RMB or Q airstrike, hold Tab for tactical, Esc pause, Enter restart.
 - **The loop:** you are the gold capsule at the exit. Runners chew on you when they touch you (HP bar top-left). LMG kills a runner in two taps. Airstrike has a 6 s cooldown; the marker shrinks while it recharges. Down = "run it back".
 - **HUD** (top-left): fps, alive, breached, swarm kills (all sources), your kills, HP, airstrike readiness, camera mode. Desktop tops up toward 1,000 agents.

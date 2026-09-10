@@ -2,7 +2,7 @@
 
 *From the first adversarial design review (2026-09-10). Each becomes an ADR when decided. Items marked **OWNER** need Jeff's call; items marked **ENG** are Claude's to draft, with owner veto. Ordered by urgency.*
 
-## 1. Camera model (OWNER + ENG proposal) — decide before Milestone 2
+## 1. Camera model — DECIDED 2026-09-10 → ADR-002 (Accepted)
 
 The pitch promises overview mazing AND third-person combat; no doc says what the camera does, and the current graybox uses a third thing (fixed overhead). Options:
 - **(a) Tactical camera, hero as controlled unit** — cheapest, matches graybox, weakens gunfeel fantasy.
@@ -10,7 +10,7 @@ The pitch promises overview mazing AND third-person combat; no doc says what the
 - **(c) Zoom hybrid** (over-the-shoulder ⇄ overhead on a shoulder-button hold).
 ENG recommendation to be drafted as ADR-002 with a graybox test of (b) vs (c); M3's exit test must score the mode *transition*, not just the gun.
 
-**2026-09-10 status:** ADR-002 drafted as *Proposed*. The hero graybox ships both candidates in one build (chase by default, hold LB for tactical overhead). Owner decides by playing; ADR-002 lists the three outcomes and what each commits us to.
+**Decided:** option (b). Combat is chase third-person; overhead is look-only now and the build-mode camera in M2. Owner delegated the call to ENG; reversal conditions are in ADR-002.
 
 ## 2. What is Android FOR (OWNER) — one paragraph, decides half the budgets
 

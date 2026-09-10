@@ -17,8 +17,8 @@ namespace Cipher.Game
     /// hero moves per frame but every effect on the swarm goes through AgentWorld.
     ///
     /// Controls (Xbox): left stick move, right stick orbit camera (chase) / aim (tactical),
-    /// RT fire, Y airstrike at the marker ahead, hold LB for the tactical overhead camera,
-    /// Menu pause, A restart when down. Keyboard/mouse: WASD, mouse orbit / aim, LMB fire,
+    /// RT fire, Y airstrike at the marker ahead, hold LB for the tactical overhead camera
+    /// (look only — ADR-002: combat is chase-only), Menu pause, A restart when down. Keyboard/mouse: WASD, mouse orbit / aim, LMB fire,
     /// RMB or Q airstrike, hold Tab tactical, Esc pause, Enter restart.
     /// </summary>
     public static class FloodEntryPoint
@@ -323,7 +323,10 @@ namespace Cipher.Game
 
             _hero.Tick(dt);
 
-            bool fire = (pad != null && pad.rightTrigger.isPressed) || (mouse != null && mouse.leftButton.isPressed);
+            // ADR-002: combat happens in chase. Tactical is for looking (and, next milestone, building).
+            bool canFight = _camMode == CameraMode.Chase;
+
+            bool fire = canFight && ((pad != null && pad.rightTrigger.isPressed) || (mouse != null && mouse.leftButton.isPressed));
             if (fire && _hero.TryFire(_world, Random.Range(-2.5f, 2.5f), out ShotResult shot))
             {
                 _tracers.Add(new Tracer
@@ -334,9 +337,9 @@ namespace Cipher.Game
                 });
             }
 
-            bool strike = (pad != null && pad.buttonNorth.wasPressedThisFrame)
+            bool strike = canFight && ((pad != null && pad.buttonNorth.wasPressedThisFrame)
                        || (mouse != null && mouse.rightButton.wasPressedThisFrame)
-                       || (kb != null && kb.qKey.wasPressedThisFrame);
+                       || (kb != null && kb.qKey.wasPressedThisFrame));
             if (strike && _hero.TryAirstrike(_world, out Vec2 center, out _))
             {
                 _blasts.Add(new Blast { Center = ToWorld(center, 0.05f), Radius = _hero.AirstrikeRadius, Ttl = BlastLife });
@@ -568,7 +571,7 @@ namespace Cipher.Game
             DrawBar(new Rect(12, 84, 260, 14), _hero.AirstrikeReadyFraction, new Color(1f, 0.6f, 0.15f), new Color(0.3f, 0.2f, 0.1f),
                 _hero.AirstrikeReady ? "AIRSTRIKE READY" : "airstrike…");
 
-            GUI.Label(new Rect(12, 104, 400, 24), _camMode == CameraMode.Chase ? "cam: chase" : "cam: tactical");
+            GUI.Label(new Rect(12, 104, 500, 24), _camMode == CameraMode.Chase ? "cam: chase (combat)" : "cam: tactical — look only, weapons hold (build mode lives here next)");
 
             if (_hero.IsDown && !_pauseMenu.IsOpen)
             {

@@ -53,7 +53,7 @@ dotnet run --project sim/tools/Cipher.Sim.Bench -c Release -- --smoke
 
 ## Open decisions
 
-`docs/decisions/OPEN-DECISIONS.md` is the live register (camera model, Android's purpose, v1 cut-list, DOTS reconciliation, preview covenant wording, gamepad tree UX, playtesters). Don't build against undecided items; surface them to the owner instead.
+`docs/decisions/OPEN-DECISIONS.md` is the live register (Android's purpose, v1 cut-list, DOTS reconciliation, preview covenant wording, gamepad tree UX, playtesters). Don't build against undecided items; surface them to the owner instead.
 
 ## Current state / next steps
 
@@ -65,5 +65,5 @@ dotnet run --project sim/tools/Cipher.Sim.Bench -c Release -- --smoke
 - **First owner playtest recorded:** `docs/feedback/2026-09-10-m1-flood-first-play.md` (**~1,000 fps at 1,000 agents** in Editor Play mode on the owner laptop; airstrike "feel" not yet described).
 - **Unity CI is live (2026-09-10):** `.github/workflows/unity.yml` installs the editor fresh on `windows-latest` (~10 min; buildalon's editor cache restore crashed Unity with 0x8007007E — leave `cache-installation: false`), activates Personal via `UNITY_USERNAME`/`UNITY_PASSWORD`, builds `CipherDeadTurf.exe` (87 MB, ~5 min) and uploads it as an artifact. First green run: actions/runs/34487824831. Whole job ≈17 min.
 - Game-side EditMode tests exist (`game/Assets/Tests/EditMode`, asmdef `Cipher.Game.Tests.EditMode`) and run in CI before the build. Put testable game logic in plain C# classes (see `PauseMenuModel`) so hard rule 2 holds outside `sim/` too.
-- **Hero graybox shipped (2026-09-10):** `HeroModel` (pure C#, 7 tests) + sim queries (`Raycast`, `ApplyDamage`, `CountWithin`, shared `Grid.Movement`). Chase cam default, hold LB = tactical overhead — both candidates from Open Decision #1 in one build; **ADR-002 (Proposed)** says which playtest outcome commits us to what. Owner playtest of the hero pending.
-- **Next engineering:** owner hero feedback → camera decision (ADR-002 accepted) → barricade build-mode with live path preview (Milestone 2 "The Maze").
+- **Hero graybox shipped (2026-09-10):** `HeroModel` (pure C#, 7 tests) + sim queries (`Raycast`, `ApplyDamage`, `CountWithin`, shared `Grid.Movement`). **ADR-002 accepted (owner delegated): combat is chase third-person; overhead is look-only and becomes the build-mode camera.** Weapons hold while overhead, enforced in code. Owner playtest of the hero pending.
+- **Next engineering:** owner hero feedback → barricade build-mode with live path preview (Milestone 2 "The Maze").
