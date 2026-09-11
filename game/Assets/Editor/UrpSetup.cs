@@ -48,8 +48,28 @@ namespace Cipher.Game.Editor
                 Debug.Log($"[UrpSetup] created {PipelinePath}");
             }
 
-            // Overcast Virginia winter: one strong directional light, soft cascaded shadows out to
-            // the far end of the play area, HDR on for the fires and muzzle flashes.
+            // Soft shadows FIRST, and through SerializedObject, because supportsSoftShadows is
+            // read-only in URP 17 -- there is no setter, only the serialized field. Done before the
+            // plain property writes below so ApplyModifiedProperties cannot stamp a stale snapshot
+            // back over them.
+            //
+            // ApplyOvercastWinter has set light.shadows = Soft since the winter pass, but the
+            // PIPELINE has the final say and this asset shipped with soft shadows unsupported, so
+            // every shadow in the game was a one-tap hard edge under an overcast sky that has no
+            // hard edges in it. Setting it here as well as in the .asset keeps a regenerated
+            // pipeline from quietly dropping back.
+            var pipelineSo = new SerializedObject(pipeline);
+            var soft = pipelineSo.FindProperty("m_SoftShadowsSupported");
+            if (soft == null) Debug.LogWarning("[UrpSetup] m_SoftShadowsSupported not found; did URP rename it?");
+            else if (!soft.boolValue)
+            {
+                soft.boolValue = true;
+                pipelineSo.ApplyModifiedProperties();
+                Debug.Log("[UrpSetup] enabled soft shadows");
+            }
+
+            // Overcast Virginia winter: one strong directional light, cascaded shadows out to the
+            // far end of the play area, HDR on for the fires and muzzle flashes.
             pipeline.supportsHDR = true;
             pipeline.shadowDistance = 140f;
             pipeline.shadowCascadeCount = 3;
@@ -61,35 +81,49 @@ namespace Cipher.Game.Editor
             GraphicsSettings.defaultRenderPipeline = pipeline;
             QualitySettings.renderPipeline = pipeline;
 
-            // Keep the instanced shader compiled in players: our materials are made at runtime, so
-            // the variant stripper cannot see them. This is cheap now that we are not using Standard.
-            var instanced = Shader.Find("Exodus/InstancedLit");
-            if (instanced != null)
-            {
-                var included = GraphicsSettings.GetGraphicsSettings();
-                var so = new SerializedObject(included);
-                var always = so.FindProperty("m_AlwaysIncludedShaders");
-                bool present = false;
-                for (int i = 0; i < always.arraySize; i++)
-                {
-                    if (always.GetArrayElementAtIndex(i).objectReferenceValue == instanced) { present = true; break; }
-                }
-                if (!present)
-                {
-                    always.InsertArrayElementAtIndex(always.arraySize);
-                    always.GetArrayElementAtIndex(always.arraySize - 1).objectReferenceValue = instanced;
-                    so.ApplyModifiedProperties();
-                    Debug.Log("[UrpSetup] added Exodus/InstancedLit to Always Included Shaders");
-                }
-            }
-            else
-            {
-                Debug.LogWarning("[UrpSetup] Exodus/InstancedLit not found; is the shader importing?");
-            }
+            // Keep our shaders compiled in players: every material in this game is made at runtime,
+            // so the variant stripper cannot see any of them and a missing entry here is a silent
+            // failure, not an error.
+            AlwaysInclude("Exodus/InstancedLit", "Exodus/ComicSky", "Exodus/BlobShadow");
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
             Debug.Log("[UrpSetup] URP configured.");
+        }
+
+        /// <summary>
+        /// Adds shaders to Always Included, idempotently. Named rather than typed because the only
+        /// handle a runtime-built material has on a shader is its name.
+        /// </summary>
+        private static void AlwaysInclude(params string[] names)
+        {
+            var so = new SerializedObject(GraphicsSettings.GetGraphicsSettings());
+            var always = so.FindProperty("m_AlwaysIncludedShaders");
+            bool changed = false;
+
+            foreach (string name in names)
+            {
+                var shader = Shader.Find(name);
+                if (shader == null)
+                {
+                    Debug.LogWarning($"[UrpSetup] {name} not found; is the shader importing?");
+                    continue;
+                }
+
+                bool present = false;
+                for (int i = 0; i < always.arraySize; i++)
+                {
+                    if (always.GetArrayElementAtIndex(i).objectReferenceValue == shader) { present = true; break; }
+                }
+                if (present) continue;
+
+                always.InsertArrayElementAtIndex(always.arraySize);
+                always.GetArrayElementAtIndex(always.arraySize - 1).objectReferenceValue = shader;
+                changed = true;
+                Debug.Log($"[UrpSetup] added {name} to Always Included Shaders");
+            }
+
+            if (changed) so.ApplyModifiedProperties();
         }
     }
 }

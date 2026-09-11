@@ -37,6 +37,20 @@ Shader "Exodus/InstancedLit"
 
         _HalftoneScale("Halftone Dot Spacing", Range(2, 24)) = 7
         _HalftoneStrength("Halftone Strength", Range(0, 1)) = 0.55
+
+        // Ambient. RenderSettings.ambientMode is Trilight and has been since the winter lighting
+        // landed, but nothing in this shader ever sampled spherical harmonics, so the sky/equator/
+        // ground colours were configured and inert: the shadow side got its colour purely from
+        // _ShadowTint. Sampled now, and banded on the same ladder as the key light -- a smooth SH
+        // gradient over a cel-shaded surface is precisely the soft falloff this direction spends
+        // its whole outline budget removing.
+        _AmbientStrength("Ambient Strength", Range(0, 2)) = 0.45
+
+        // Vertex-colour occlusion, baked into the COLOR channel by VertexAo at build time.
+        // DEFAULTS TO ZERO ON PURPOSE. A mesh with no colour stream hands the shader whatever the
+        // platform feels like -- white on some, black on others -- so this is opt-in per material:
+        // VertexAo turns it on only for the materials whose meshes it actually baked.
+        _VertexAoStrength("Vertex AO Strength", Range(0, 1)) = 0
     }
 
     SubShader
@@ -73,6 +87,8 @@ Shader "Exodus/InstancedLit"
                 float  _RimStrength;
                 float  _HalftoneScale;
                 float  _HalftoneStrength;
+                float  _AmbientStrength;
+                float  _VertexAoStrength;
             CBUFFER_END
 
             struct OutlineAttributes
@@ -148,6 +164,13 @@ Shader "Exodus/InstancedLit"
             #pragma fragment Frag
             #pragma multi_compile_instancing
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE
+            // Soft shadows are a KEYWORD, not just an asset checkbox. The pipeline asset had
+            // m_SoftShadowsSupported off AND this pragma missing, so ApplyOvercastWinter's
+            // light.shadows = Soft was quietly downgraded to a one-tap hard shadow in two separate
+            // places. Declared the way URP's own Lit does so the Android quality tiers work too;
+            // five options against 24 existing variants is ~120 for the pass, which is nothing
+            // next to the 8,192 ceiling CLAUDE.md records for the worst shader here.
+            #pragma multi_compile_fragment _ _SHADOWS_SOFT _SHADOWS_SOFT_LOW _SHADOWS_SOFT_MEDIUM _SHADOWS_SOFT_HIGH
             #pragma multi_compile_fog
             #pragma target 3.0
 
@@ -165,6 +188,8 @@ Shader "Exodus/InstancedLit"
                 float  _RimStrength;
                 float  _HalftoneScale;
                 float  _HalftoneStrength;
+                float  _AmbientStrength;
+                float  _VertexAoStrength;
             CBUFFER_END
 
             UNITY_INSTANCING_BUFFER_START(Props)
@@ -179,6 +204,7 @@ Shader "Exodus/InstancedLit"
                 float4 positionOS : POSITION;
                 float3 normalOS   : NORMAL;
                 float2 uv         : TEXCOORD0;
+                float4 color      : COLOR;      // baked occlusion; see _VertexAoStrength
                 UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
@@ -189,6 +215,7 @@ Shader "Exodus/InstancedLit"
                 float3 normalWS   : TEXCOORD1;
                 float  fogCoord   : TEXCOORD2;
                 float2 uv         : TEXCOORD3;
+                half4  color      : COLOR;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
@@ -204,6 +231,7 @@ Shader "Exodus/InstancedLit"
                 output.normalWS = TransformObjectToWorldNormal(input.normalOS);
                 output.fogCoord = ComputeFogFactor(output.positionCS.z);
                 output.uv = TRANSFORM_TEX(input.uv, _BaseMap);
+                output.color = half4(input.color);
                 return output;
             }
 
@@ -228,6 +256,10 @@ Shader "Exodus/InstancedLit"
                 // White by default, so this multiply is a no-op for every flat-coloured thing.
                 albedo *= SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv).rgb;
 
+                // Baked occlusion. Gated by a material float rather than trusted blind, because a
+                // mesh without a colour stream is not guaranteed to hand us white.
+                albedo *= lerp(half3(1.0h, 1.0h, 1.0h), input.color.rgb, _VertexAoStrength);
+
                 float3 normalWS = normalize(input.normalWS);
                 float3 viewDirWS = normalize(GetCameraPositionWS() - input.positionWS);
 
@@ -247,6 +279,20 @@ Shader "Exodus/InstancedLit"
 
                 // Shadow is a printed tint, not an absence of light.
                 half3 shaded = lerp(albedo * _ShadowTint.rgb, albedo, stepped);
+
+                // Sky ambient, as a SECOND FLAT TONE rather than a gradient.
+                //
+                // Trilight gives three colours -- grey winter sky above, horizon at the equator,
+                // brown leaf litter below -- and the useful part is the hue difference between an
+                // upward face and a downward one, not the smooth sweep between them. So: sample
+                // SH, quantise its INTENSITY onto the same band ladder the key light uses, keep
+                // its hue intact, and add it only where the key light is not already painting a
+                // band. Lit faces are unchanged; the shadow side picks up cold sky from above and
+                // warm bounce from the ground, which is what the winter setup was asking for.
+                half3 sh = max(half3(0.0h, 0.0h, 0.0h), SampleSH(normalWS));
+                half shLum = max(1e-4h, Luminance(sh));
+                half shBanded = saturate(floor(saturate(shLum) * bands) / (bands - 1.0h));
+                shaded += albedo * (sh / shLum) * shBanded * _AmbientStrength * (1.0h - stepped);
 
                 // Screentone in the darkest band only, so it reads as shading and not as noise.
                 half darkness = saturate(1.0h - stepped * 1.6h);
@@ -297,6 +343,8 @@ Shader "Exodus/InstancedLit"
                 float  _RimStrength;
                 float  _HalftoneScale;
                 float  _HalftoneStrength;
+                float  _AmbientStrength;
+                float  _VertexAoStrength;
             CBUFFER_END
 
             float3 _LightDirection;
@@ -364,6 +412,8 @@ Shader "Exodus/InstancedLit"
                 float  _RimStrength;
                 float  _HalftoneScale;
                 float  _HalftoneStrength;
+                float  _AmbientStrength;
+                float  _VertexAoStrength;
             CBUFFER_END
 
             struct DepthAttributes
