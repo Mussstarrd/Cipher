@@ -111,6 +111,44 @@ dotnet run --project sim/tools/Cipher.Sim.Bench -c Release -- --smoke
 - **In-game screens:** upgrade offer at wave clear (owns input while up), kit panel on **I**, skill tree on **K**, truck loading during Extraction (owns input). The build wheel is **hold LB / hold Shift**. Q is the airstrike, so do not bind anything else to it.
 - **Screenshot harness flags:** `-exodus-screenshot <path>`, `-exodus-screenshot-delay <sec>`, and `-exodus-screenshot-overhead` / `-wheel` / `-progression` / `-skills` to stage a screen. **Do not set `_wheelHeld` when opening the wheel from a capture** - the input driver reads it as the button having been down and closes the wheel on the next frame.
 - **Bash heredocs break on long content in this environment.** Patching a big block into a file: write the block and a small Python patch script into the scratchpad with the Write tool, then run the script. Trying to inline it in a heredoc fails with `unexpected EOF while looking for matching quote`.
+- **THE ART PIPELINE IS LIVE AND THE GAME HAS REAL PEOPLE IN IT (2026-09-11).** Free CC0 Quaternius
+  models, fetched by `tools/art/fetch-free-packs.sh`, zero money spent. `art/free/` is gitignored; the
+  models actually used are copied into `game/Assets/Resources/`.
+  - **Characters:** `Resources/Characters/*.fbx` -> `CrowdPrefabBuilder` -> `Resources/Civilians/*.prefab`.
+    `CivilianCrowd` promotes the ~110 agents nearest the camera to real skinned bodies each frame and
+    leaves the rest as instanced capsules; the capsule pass skips anyone promoted. `BuildHeroBody`
+    gives the player a body from the same path, excluded from the crowd pool.
+  - **Environment:** `Resources/Environment/*.fbx` scattered by `EnvironmentDresser`, deterministic
+    from a seed, ~262 props. Trees need a **-90 pitch correction**; cars and bushes do not.
+  - **Look:** brown winter ground, `ApplyOvercastWinter` lighting, `ApplyColourGrade` (tonemap, bloom,
+    vignette) built in code so a clean checkout rebuilds it.
+- **ANIMATION: FIVE APPROACHES FAILED SILENTLY BEFORE ONE WORKED.** Every failure left the character in
+  a bind pose, which is indistinguishable from a working import nobody told to move. In order:
+  (1) AnimatorController + imported clip: generic rigs retarget through an avatar and the models
+  imported with `avatarSetup: NoAvatar`; (2) same, after copying the shared library's avatar, which
+  then reported valid and still bound nothing; (3) `AnimationClip.SampleAnimation` per frame, which
+  works in the editor and does NOT apply to a non-legacy clip in a player; (4) a legacy clip made by
+  instantiating the source and setting `legacy = true` afterwards, which keeps its data and animates
+  nothing because legacy and non-legacy clips bind curves through different systems; (5) all of the
+  above against the wrong files. **The answer:** the pack ships each character TWICE, a ~420 KB
+  version with no animation and an ~8 MB version carrying its own clips. Use the 8 MB ones, and build
+  the legacy clip by copying curves explicitly (`LegacyClipMaker`, 630 curves).
+  - An **Animator on the same GameObject suppresses the legacy Animation component even when
+    disabled**, so it must be destroyed, not turned off.
+  - The clip **animates scale on the armature**, so a character measures one height standing still and
+    another once it moves. `FitToHeight` measures a few frames after the walk starts and corrects a
+    PARENT the animation cannot touch. Never size a character at import time or on its spawn frame.
+  - Characters live in slot -> pivot -> model. **The animation overwrites the model's own transform
+    every frame**, so all placement goes on the slot.
+- **OUTLINES NEED SMOOTHED NORMALS.** An inverted hull extruded along shading normals tears open at
+  every hard edge and UV seam, which reads as blur and smear. `SmoothNormals` averages normals by
+  position into the tangent channel and the shader extrudes along that under `_SMOOTH_OUTLINE`. The
+  smoothed mesh copies **must be saved as assets**: a mesh created in memory and assigned to a prefab
+  does not survive the save, and the prefab then renders nothing.
+- **WHEN SOMETHING FAILS SILENTLY, STOP CHANGING THINGS AND LOG THE STATE.** One diagnostic run named
+  the null avatar immediately after several builds of guessing had not. This cost most of a session.
+- **The game assembly references URP runtime** (`Unity.RenderPipelines.Universal.Runtime` and
+  `.Core.Runtime` in `Cipher.Game.asmdef`), needed for the post-processing volume.
 - **ADR-006: the game is PROJECT EXODUS.** Code namespaces, repo name and branch deliberately stay `Cipher.*` — renaming them is a large cosmetic diff with real risk. Only the build product name changed.
 - **Unity Hub must be RUNNING for any headless command.** Killing it kills the licensing daemon and every `-batchmode` run dies with exit 198 and `Found 0 entitlement groups`. Restart it from the Start menu app id `UnityTechnologies.UnityHub_2vrhnee42bhxm!UnityHub` and wait about 25 seconds.
 - **Headless tests when the owner has the editor open:** Unity refuses a second instance on the same project. Copy `game/` + `sim/src` into a temp dir preserving relative layout (the manifest points at `file:../../sim/src/Cipher.Sim`) and run `-runTests` there. Takes about a minute.
