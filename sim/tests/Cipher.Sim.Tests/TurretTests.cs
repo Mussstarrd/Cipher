@@ -179,7 +179,7 @@ namespace Cipher.Sim.Tests
             Assert.Equal("Sentry .50", turrets.FamilyOfTurret(0).Name);
             Assert.Equal("Brush Hog", turrets.FamilyOfTurret(1).Name);
             Assert.Equal("Twin .50", turrets.NextTier(0)!.Name);
-            Assert.Equal("Barbed Drum", turrets.NextTier(1)!.Name);
+            Assert.Equal("Flail Drum", turrets.NextTier(1)!.Name);
             Assert.Equal(FireMode.Area, turrets.FamilyOfTurret(1).Mode);
             Assert.NotEqual(turrets.Turrets[0].Range, turrets.Turrets[1].Range);
         }

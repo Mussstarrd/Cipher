@@ -35,7 +35,7 @@ Today there is one turret (Sentry .50: range 10, 60 dps, targets the runner near
 **Upgrade ladders** reuse `TurretTier` (data, so tiers can grow without code):
 
 - Sentry: *Twin .50* (damage ×1.6) → *Overwatch* (range +4). Exists.
-- Rotor: *Barbed Drum* (damage ×1.7) → *Wide Throw* (radius +1.0).
+- Brush Hog: *Flail Drum* (damage ×1.7) → *Wide Deck* (radius +1.0).
 - Gunship: *Door Gunner* (damage ×1.6) → *Second Bird* (a second drone on the same route, half damage).
 
 **Kill criterion for the family split:** in a 5-mission run the owner builds at least one of each family without being told to, and can say in one sentence what each is for. If two families collapse into "the good one", cut to two and rebalance.

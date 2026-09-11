@@ -48,7 +48,14 @@ dotnet test  sim/tests/Cipher.Sim.Tests -c Release
 dotnet run --project sim/tools/Cipher.Sim.Bench -c Release -- --smoke
 ```
 
-(No .NET SDK in some remote containers — CI on GitHub Actions is the source of truth; verify runs after pushing.)
+**THE .NET SDK IS INSTALLED ON THE OWNER'S LAPTOP** at `C:\Program Files\dotnet\dotnet`. All three
+commands above run locally in about ten seconds. This file used to say there was no SDK, which is why
+`sim/` changes were being pushed on the strength of the EditMode suite alone -- and the EditMode suite
+does not compile `sim/tests/`. CI went red for six commits over a renamed turret tier that
+`dotnet test` would have caught instantly.
+
+**RUN ALL THREE BEFORE PUSHING ANYTHING THAT TOUCHES `sim/`.** The Unity EditMode run is not a
+substitute: it references the sim's SOURCE, not its test project.
 
 ## Hard-won gotchas (keep current)
 
@@ -70,7 +77,7 @@ dotnet run --project sim/tools/Cipher.Sim.Bench -c Release -- --smoke
 - Founding docs 01–05 + ADR-001 committed. Sim core v0 committed and CI-green (18 tests).
 - Unity scaffold committed in `game/`: manifest mounts `sim/src/Cipher.Sim` as local package `com.cipher.sim` (it carries `package.json` + `Cipher.Sim.asmdef` with `noEngineReferences: true`); `FloodBootstrap.cs` builds the whole Milestone-1 graybox procedurally (no scene assets); gamepad-first input via Input System. First-open checklist for the owner: `game/README.md`.
 - `sim/Directory.Build.props` redirects bin/obj to `sim/.artifacts/` so Unity's importer never sees build artifacts. Don't remove it.
-- **`game/` compiled clean on first open (2026-09-10, Unity 6000.0.83f1)** — zero code fixes. Owner's laptop: Hub 3.21 (MSIX, lives under `WindowsApps`, not Program Files), editor at `C:\Program Files\Unity\Hub\Editor\6000.0.83f1\Editor\Unity.exe`, Android SDK/NDK/JDK installed. No .NET SDK locally — `dotnet test` still runs only in CI. Headless import/compile recipe is in `game/README.md`; use it to verify `game/` edits before handing the owner a build.
+- **`game/` compiled clean on first open (2026-09-10, Unity 6000.0.83f1)** — zero code fixes. Owner's laptop: Hub 3.21 (MSIX, lives under `WindowsApps`, not Program Files), editor at `C:\Program Files\Unity\Hub\Editor\6000.0.83f1\Editor\Unity.exe`, Android SDK/NDK/JDK installed. Headless import/compile recipe is in `game/README.md`; use it to verify `game/` edits before handing the owner a build.
 - ProjectSettings, `packages-lock.json`, all `.meta`s and `Assets/Scenes/Flood.unity` are committed. Active Input Handling = Input System Package. Package Manager resolved Input System to 1.19.0 / test-framework 1.6.0.
 - **First owner playtest recorded:** `docs/feedback/2026-09-10-m1-flood-first-play.md` (**~1,000 fps at 1,000 agents** in Editor Play mode on the owner laptop; airstrike "feel" not yet described).
 - **Unity CI is live (2026-09-10):** `.github/workflows/unity.yml` installs the editor fresh on `windows-latest` (~10 min; buildalon's editor cache restore crashed Unity with 0x8007007E — leave `cache-installation: false`), activates Personal via `UNITY_USERNAME`/`UNITY_PASSWORD`, builds `ProjectExodus.exe` (87 MB, ~5 min) and uploads it as an artifact. First green run: actions/runs/34487824831. Whole job ≈17 min.
