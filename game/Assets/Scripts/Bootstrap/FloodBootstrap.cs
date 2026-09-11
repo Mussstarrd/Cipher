@@ -168,6 +168,7 @@ namespace Cipher.Game
         {
             BuildSceneObjects();
             NewMatch();
+            ScreenshotHarness.InstallIfRequested(gameObject);
         }
 
         // ------------------------------------------------------------------ setup
