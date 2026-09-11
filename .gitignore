@@ -39,3 +39,4 @@ art/free/
 
 # Agent worktrees and local Claude Code state
 .claude/
+art/audio/

@@ -1,0 +1,103 @@
+{
+  "_comment": [
+    "What to fetch from Freesound, and under what licence.",
+    "",
+    "LICENCE IS THE WHOLE POINT OF THIS FILE. Freesound is a MIXED library: a great deal of it",
+    "is CC-BY-NC, which forbids commercial use and can never enter this game. Every query here",
+    "is licence-filtered at the API, and the fetcher refuses anything that comes back outside",
+    "the allowed set even if the filter is edited carelessly. CC-BY is allowed and automatically",
+    "written into docs/CREDITS-AUDIO.md; CC0 needs no attribution but gets one anyway.",
+    "",
+    "We take the OGG PREVIEW rather than the original. Previews are the same licence, Unity reads",
+    ".ogg natively, they are a fraction of the size, and the original often needs OAuth rather than",
+    "a token. For ambience and foley at game volume the difference is inaudible.",
+    "",
+    "Slots are what the GAME asks for. Several sounds per slot is deliberate: one rain loop heard",
+    "for ten minutes is worse than no rain."
+  ],
+
+  "weather": [
+    {
+      "slot": "rain-heavy",
+      "query": "heavy rain loop",
+      "filter": "duration:[20 TO 120]",
+      "take": 2
+    },
+    {
+      "slot": "rain-light",
+      "query": "light rain drizzle ambience",
+      "filter": "duration:[20 TO 120]",
+      "take": 2
+    },
+    {
+      "slot": "thunder-distant",
+      "query": "distant thunder rumble",
+      "filter": "duration:[3 TO 30]",
+      "take": 3
+    },
+    {
+      "slot": "wind-trees",
+      "query": "wind trees rustling gust",
+      "filter": "duration:[20 TO 120]",
+      "take": 2
+    }
+  ],
+
+  "ambience": [
+    {
+      "slot": "woodland-day",
+      "query": "quiet woodland ambience birds distant",
+      "filter": "duration:[30 TO 180]",
+      "take": 2
+    },
+    {
+      "slot": "woodland-dusk",
+      "query": "evening ambience crickets distant",
+      "filter": "duration:[30 TO 180]",
+      "take": 2
+    },
+    {
+      "slot": "lake-shore",
+      "query": "small waves lake shore gentle",
+      "filter": "duration:[20 TO 120]",
+      "take": 1
+    }
+  ],
+
+  "foley": [
+    {
+      "slot": "step-gravel",
+      "query": "footstep gravel single",
+      "filter": "duration:[0.05 TO 2]",
+      "take": 6
+    },
+    {
+      "slot": "step-asphalt",
+      "query": "footstep concrete boot single",
+      "filter": "duration:[0.05 TO 2]",
+      "take": 6
+    },
+    {
+      "slot": "cloth-rustle",
+      "query": "cloth rustle movement",
+      "filter": "duration:[0.1 TO 3]",
+      "take": 4
+    }
+  ],
+
+  "crowd": [
+    {
+      "_comment": "ADR-003: these are PEOPLE, not zombies. Effort and breath, never a monster growl.",
+      "slot": "effort-breath",
+      "query": "human breathing effort exertion",
+      "filter": "duration:[0.2 TO 4]",
+      "take": 5
+    },
+    {
+      "slot": "crowd-murmur-distant",
+      "query": "distant crowd murmur walla",
+      "filter": "duration:[20 TO 120]",
+      "take": 2
+    }
+  ]
+}

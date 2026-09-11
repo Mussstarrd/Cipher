@@ -13,3 +13,12 @@ animated-men     17LibivOaUidsQhSkcxP3YYvDr0n7wIwu  https://quaternius.com/packs
 nature           1-Kl0L_Jg8awbh0S5T-z3zxh4mVlnxTpa  https://quaternius.com/packs/ultimatenature.html
 streets          1-YvMpLDYBIy-0Ms7ZlFmUpChTbHku8IJ  https://quaternius.com/packs/modularstreets.html
 cars             1fKlbDry77iY8KlEoxzUxIAZQL_XhzWlA  https://quaternius.com/packs/cars.html
+
+# Added 2026-09-12. The owner asked whether the library had better humanoid models and offered
+# money for graphics; it turned out we had simply never fetched the packs that matter. Robots,
+# mechs and monsters were CC0 and one download away the whole time. Check the free shelf before
+# spending anything.
+robots           18MU0RtRu9G6SU6uSZ_zMQFmVkRlB4zH5  https://quaternius.com/packs/animatedrobot.html
+monsters         102H-oyUM8SGYi1mW0GOgkjEu7xSdaORA  https://quaternius.com/packs/animatedmonster.html
+mechs            1sueV_4CGMpZC8y30mWfgKK9UaT3mkHBX  https://quaternius.com/packs/animatedmech.html
+turrets          1HenXNzxU2HJMDOGQj9LKRHk9eHrBgoya  https://quaternius.com/packs/turretpack.html
