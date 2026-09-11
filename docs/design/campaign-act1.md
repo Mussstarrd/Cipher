@@ -1,147 +1,201 @@
-# Act One — the first thirty-six hours
+# Act One — the fighting retreat
 
 **Date:** 2026-09-10 · **Author:** ENG · **Status:** proposal, owner's story, owner's veto
-**Rewritten:** 2026-09-10 for [ADR-003](../decisions/ADR-003-premise-the-cascade.md) (the protagonist is a
-veteran, the enemy is "the signed") and [ADR-004](../decisions/ADR-004-setting-the-lake.md) (the setting is a
-gated lake community). The previous version had a kingpin defending a city block and was wrong in both halves.
-**Built on:** [progression-and-campaign.md](progression-and-campaign.md) (objective types, scenario JSON),
-[arsenal-and-terrain.md](arsenal-and-terrain.md) (level themes, towers, destructible terrain).
+**Restructured:** 2026-09-10 on the owner's spine. His words:
 
-This is the owner's premise turned into a mission list. His words, from
-`../feedback/2026-09-10-maze-v1-first-play.md`:
+> maybe the storyline starts with trying to secure the gate and we are progressively pushed further and
+> further back until ultimately I'm at the house
+
+That is the act. Everything below is that sentence with mission numbers on it.
+
+**Built on:** [ADR-003](../decisions/ADR-003-premise-the-cascade.md) (the protagonist is a veteran, the enemy
+is "the signed"), [ADR-004](../decisions/ADR-004-setting-the-lake.md) (a gated lake community),
+[progression-and-campaign.md](progression-and-campaign.md) (objective types, scenario JSON),
+[arsenal-and-terrain.md](arsenal-and-terrain.md) (towers, destructible terrain).
+
+The owner's three requested missions are all here: the power yard is mission 3, the armoury is 7, the
+laboratory is 9. From his first playtest notes:
 
 > defending a major infrastructure yard for like electricity and needing to defend a laboratory long enough
 > for some results to come in or needing to defend an Armory long enough to get weapons [...] Maybe the
-> levels are unbeatable you just have to get far enough in the level so that the further on level has a
-> chance to happen
-
-All three of his named missions are in here, and the "you don't win, you last" structure is the spine.
+> levels are unbeatable you just have to get far enough
 
 ---
 
-## 1. The shape
+## 1. The shape: the map gets smaller every mission
 
-**Act One is thirty-six hours long and you lose the community.** That is not a spoiler, it is the pitch. The
-question the act asks is not *can you stop this* but *who gets out on the water before it closes*. Every
-mission is a delay, and the delays are what make the next mission possible.
+**You never take ground back. You only decide how expensively you give it up.**
 
-Three chapters, twelve missions, roughly ten to fifteen minutes each.
+Mission 1 you are defending a gate on behalf of four thousand people. Mission 12 you are defending a garage
+door on behalf of yourself. The road between those two things is one road, and the player drives down it
+backwards for twelve missions.
 
-| Chapter | Missions | Scale | What the player learns |
+| Chapter | Missions | What you are holding | What the player learns |
 |---|---|---|---|
-| **I — The Night It Started** | 1–4 | your lot, your street | the loop; and that they think |
-| **II — Inside The Gates** | 5–8 | the community's services | holding a clock, not a kill count |
-| **III — The Water** | 9–12 | everything left | all of it, under maximum pressure |
+| **I — The Perimeter** | 1–4 | the whole community | the loop, and that the perimeter is a lie |
+| **II — Falling Back** | 5–8 | the interior, the services | holding a clock, not a kill count |
+| **III — The Last Street** | 9–12 | your street, then your lot | all of it, with nothing behind you |
 
-**Only three of the twelve are won by clearing enemies.** Seven are won by a clock. Two cannot be won at
-all, by design, and are scored on how long you held and how much got out. That last category is the owner's
-idea and it is the most distinctive thing in the campaign.
+**Why this is better than the version it replaces.** The previous draft had twelve missions in twelve places
+and the player learned nothing about any of them. A contracting map means:
 
----
-
-## 2. Geography is the level design
-
-Per ADR-004 the whole act happens inside one gated lake community in rural Virginia. That gives the campaign
-a map it does not have to invent, and it means the player learns a real place over twelve missions instead of
-twelve disconnected arenas.
-
-- **The main gate** is the only wide road in. It is mission 6 and you lose it.
-- **Every lot backs onto treeline.** Pressure comes from the woods and the roads simultaneously. That is the
-  signature of this setting and it should never be turned off.
-- **The lake is the second flank and the exit.** It is water, so the signed cannot use it well, which is the
-  one advantage the player has all act.
-- **The golf course is open ground** with no cover for either side. It is where the game shows you scale.
-- **The clubhouse is the civilian strongpoint**, which is where everybody who is not you is sheltering, which
-  is why mission 12 is at the boat ramp behind it.
-
-The interior streets degrade across the act and never reset. Damage from mission 4 is still there in mission 8.
+- **Every location appears twice.** Once when you hold it, once behind enemy lines while you fall back
+  through it. The street you fortified in mission 2 is the approach road in mission 12.
+- **The art budget collapses.** One community, dressed progressively worse. Not twelve arenas.
+- **The tension is structural, not scripted.** The player can see the map shrinking on the mission select.
+  Nobody has to narrate the stakes.
+- **Losing is the verb.** The premise says the levels can be unbeatable and you just get far enough. A
+  retreat makes that true *mechanically* instead of true *in two special missions*.
 
 ---
 
-## 3. The antagonist still needs a name
+## 2. What "pushed back" costs you, in cash
 
-The system was a municipal optimiser. It balanced traffic, power draw and hospital intake for the region, and
-it was very good at its job. Working name: **HALCYON**.
+This is the mechanic that makes the retreat hurt, and it is small to build.
 
-**CIPHER is out.** The owner settled that: it was his street name in the old pitch and the pitch is dead.
-The title question is open separately (ADR-004, question 2).
+When a mission ends you **abandon everything you built** on that map. How much of it you get back depends on
+how the mission ended:
 
-Why an infrastructure AI turns the implanted population on the unimplanted is answered once, late, and never
-repeated: it was asked to minimise long-run harm to the regional population, it found an answer that
-satisfied the constraint, and nobody had checked what it was permitted to change. The people walking up your
-street are not infected and not dead. They are **enrolled**, and they are following instructions.
+| How it ended | Kit recovered |
+|---|---|
+| Objective met with time to spare | 75% |
+| Objective met, overrun at the end | 50% |
+| Fell back under fire (the unwinnable missions) | 25% |
+| — | |
+
+So a clean hold funds the next line. A ragged one does not. The player is never punished with a fail
+screen for retreating, because retreating is the plan. They are punished with a thinner wallet, which they
+feel immediately and can do something about.
+
+**This also answers the "why don't I just turtle at the house from mission 1" question**: because everything
+you own is bolted to the ground you are standing on, and the money to build the last line comes from having
+held the first ones well.
 
 ---
 
-## 4. The missions
+## 3. The missions
 
 Objective types are from `progression-and-campaign.md` §6. "New" is the one thing each mission introduces;
-nothing introduces two.
+nothing introduces two. Read the **Ground lost** column down the page: that is the whole story.
 
-| # | Mission | Setting | New mechanic | New enemy | Objective | Beat |
+### Chapter I — The Perimeter
+
+You still believe this is a thing that can be held.
+
+| # | Mission | Where | New mechanic | New enemy | Objective | Ground lost |
 |---|---|---|---|---|---|---|
-| 1 | **Front Porch** | your house, your driveway | move, shoot, barricade | Runner | ClearWaves (3) | A neighbour walks up the drive at 2 a.m. and says your name, correctly, before he comes at you. |
-| 2 | **The Cul-de-Sac** | your street, four unchipped houses | turrets, cash | — | ClearWaves + ProtectActors (neighbours) | The sheriff's band goes quiet mid-sentence. |
-| 3 | **Treeline** | back lots, fence lines, woods | cover, line of sight, the Grinder | — | SurviveSeconds (hold while the trucks load) | You put a light on the woods and the woods are full of amber. |
-| 4 | **Crowbar** | your own maze, night | breaches, repair drones | **Sapper** | ProtectVault | One of them stops, studies your wall, and picks the right spot. |
-| 5 | **The Pump House** | substation, water plant | protect-an-object, hazards | **Spitter** | HoldUntil (transfer, 8 min) + ProtectActors | The county engineer who would not return your calls is standing in your driveway asking for help. |
-| 6 | **The Gate** | the main entrance | destructible terrain as a weapon | — | SurviveSeconds · **cannot be won** | Scored on minutes bought. You always lose the gate. |
-| 7 | **The Gun Club** | the range road, the sheriff's substation | human enemies alongside the signed | unchipped raiders | ClearWaves + KeepCrewAlive | Other survivors are not your friends. They got here first. |
-| 8 | **Blackout** | the interior streets, no power | limited sight, jammed minimap | **Wrecker** | SurviveSeconds | The grid you saved in mission 5 fails anyway. |
-| 9 | **The Facility** | county research lab, the only mission outside the gates | a maze that changes without you | — | HoldUntil (assay) + ProtectActors (researcher) | The assay finishes. There is no cure. There is a countdown, and there is something in containment. |
-| 10 | **The Armoury** | the fire station and the club vault | full budget, explosive caches | elite mixed waves | HoldUntil (trucks load) | Everything you take here, you take out of somebody else's hands. |
-| 11 | **The Release** | the wooded lots, night | boss fight | **lab release, red eyes** | KillTarget | The only thing in the act that is not a person. |
-| 12 | **The Ramp** | the clubhouse and the boat ramp | all of it at once | all | SurviveSeconds · **cannot be won** | Scored on boats away and people on them. Then you get on the last one, or you don't. |
+| 1 | **The Gate** | the main entrance, night one | move, shoot, barricade | Runner | ClearWaves (3) | none yet |
+| 2 | **The Service Road** | the back entrance nobody thought about | turrets, cash | — | ClearWaves + ProtectActors | the outer lots |
+| 3 | **The Pump House** | substation and water plant | protect-an-object, hazards | **Spitter** | HoldUntil (transfer, 8 min) | the north shore |
+| 4 | **The Gate Falls** | the main entrance again | terrain as a weapon | — | SurviveSeconds · **cannot be won** | **the perimeter** |
 
-**Why two unwinnable missions and not twelve.** The owner's instinct is right that a doomed hold is the
-fantasy, but a campaign of nothing but losses reads as futility rather than tension. Seven clock missions
-*are* winnable and you feel them as wins. Missions 6 and 12 sit either side of the act and are unwinnable on
-purpose, so they land as statements instead of as a difficulty spike. The score screen on those two never
-says FAILED. It says how long, and how many.
+**Mission 1 beat.** Dave Kessler from across the street is on the wrong side of the gate at 2 a.m. and he
+says your name, correctly, before he starts climbing.
 
-**Mission 11 spends the act's only monster.** Per ADR-003 red eyes are a resource. One release, one boss, one
-time. Everything else you kill in twelve missions is somebody who took a deal.
+**Mission 4 beat.** You are standing in the same spot as mission 1, with four times the kit, and it does not
+matter. Scored on minutes bought and how many people got behind the inner line while you bought them.
+The score screen does not say FAILED. It says how long, and how many.
+
+### Chapter II — Falling Back
+
+The perimeter is gone. You are holding the inside of your own neighbourhood.
+
+| # | Mission | Where | New mechanic | New enemy | Objective | Ground lost |
+|---|---|---|---|---|---|---|
+| 5 | **The Fairway** | the golf course, first light, fog | scale | — | SurviveSeconds | the west course |
+| 6 | **Crowbar** | your own maze, night | breaches, repair drones | **Sapper** | ProtectVault | the east streets |
+| 7 | **The Fire Station** | the county truck bay, the club vault | full budget, explosive caches | elite mixed waves | HoldUntil (trucks load) | the commercial row |
+| 8 | **Blackout** | the interior streets | limited sight, jammed minimap | **Wrecker** | SurviveSeconds | everything north of the clubhouse |
+
+**Mission 5 is the scale mission.** Open fairway, no cover for anyone, ground fog, and they come out of it a
+hundred metres wide. This is the shot in `art/concept/lotw-fairway-schnell-01.png` and it should be the first
+time the player understands the number they are fighting.
+
+**Mission 6 beat.** One of them stops, studies your wall, and picks the right spot. They are not a mob.
+
+**Mission 8 beat.** The pump house you saved in mission 3 fails anyway, because HALCYON did not need to take
+it, it only needed to wait.
+
+### Chapter III — The Last Street
+
+| # | Mission | Where | New mechanic | New enemy | Objective | Ground lost |
+|---|---|---|---|---|---|---|
+| 9 | **The Facility** | a county lab, outside the gates | a maze that changes without you | — | HoldUntil (assay) + ProtectActors | you are not there to stop it |
+| 10 | **The Release** | the wooded back lots, night | boss fight | **lab release, red eyes** | KillTarget | the woods |
+| 11 | **The Ramp** | the clubhouse and the boat ramp | evacuation under fire | — | HoldUntil (boats load) | the clubhouse |
+| 12 | **Front Porch** | your house, your driveway, your garage | all of it at once | all | SurviveSeconds · **cannot be won** | — |
+
+**Mission 9 is the only time you leave, and leaving is what loses the community.** The researcher has
+something. You take a truck out through a gate you no longer control. The assay completes and there is no
+cure, there is a countdown, and there is something in containment that does not stay in it. You come home to
+a neighbourhood that fell while you were gone. This is the act break and it is the one mission that breaks
+the retreat pattern, which is why it lands.
+
+**Mission 10 spends the act's only monster.** Per ADR-003, red eyes are a resource. One release, one boss,
+one time. Everything else you kill in twelve missions is a person who took a deal.
+
+**Mission 11 is the goodbye.** Eleven pontoons, more people than eleven pontoons carry, and everyone on that
+ramp has already done the arithmetic. You hold the ramp until the last boat is off the trailer. **You do not
+get on it.** The mission is won. You have nowhere to go and you go home.
+
+**Mission 12 is the whole game in one lot.** Your house, from the reference the owner gave us, with every
+dollar of recovered kit bolted to it. The approach road is the street from mission 2. The treeline behind
+the garage is the woods from mission 10. It cannot be won and the player has known that since mission 4.
+Scored on minutes held. Title drop.
+
+---
+
+## 4. Where the two unwinnable missions sit, and why there
+
+Missions **4** and **12**, and the placement is deliberate.
+
+Mission 4 is early enough to **teach the grammar**: you can lose ground and still be winning. If the first
+unwinnable mission arrives at the finale it reads as the designer cheating. Arriving at mission 4 it reads as
+the premise telling the truth, and every clock mission after it is played by someone who understands what
+they are actually buying.
+
+Missions 1, 2, 3, 5, 6, 7, 8, 9, 10 and 11 are all winnable and all feel like wins. Ten out of twelve. The
+act is not futile, it is expensive.
 
 ---
 
 ## 5. Voice
 
 Delivery in v0 is cheap on purpose: a pre-mission text card, and one-line radio barks over the procedural
-audio. No cutscenes, no voice acting. Portraits and a roster come later.
+audio. No cutscenes, no voice acting.
 
-The register is the owner's own, from ADR-003: dry, profane, educated, entirely without self-pity. He is not
-a hero and he does not think he is owed anything except the cheque he already earned.
+The register is the owner's own, recorded verbatim in ADR-003: dry, profane, educated, entirely without
+self-pity. He is not a hero and does not think he is owed anything except the cheque he already earned.
 
-Three sample briefings.
+**1 — The Gate**
 
-**1 — Front Porch**
+> There are two ways into this place and one of them is this gate, which is a boom barrier a determined
+> ten-year-old could lift. For nine years that was fine, because the thing it was keeping out was
+> solicitors.
+> Kessler from number 40 is standing on the other side of it. He borrowed your pressure washer in April and
+> brought it back clean, which is more than most. He has been standing there nine minutes.
+> When you put the light on him, the only part of him that reacts is the little amber light behind his ear.
+> Then he says your name. Correctly.
+> Weld it shut. You have about four minutes.
 
-> Dave Kessler has lived across the street for eleven years. He borrowed your pressure washer in April and
-> brought it back clean, which is more than most. He is standing at the bottom of your driveway at 2 a.m.
-> and he has been standing there for nine minutes.
-> When you put the porch light on, the little amber light behind his ear is the only part of him that
-> reacts. Then he says your name. Correctly. Then he starts walking.
-> Your house has three doors and a garage that does not lock properly. It is four minutes until the rest of
-> the street gets here.
+**4 — The Gate Falls**
 
-**5 — The Pump House**
+> Everything you have built is at this gate and it is not going to be enough, and the difference between you
+> and the county is that you already know that.
+> Behind you, eight hundred people are moving furniture into the clubhouse at a speed that suggests they do
+> not know it yet.
+> You are not holding the gate. You are selling it. Get the price up.
 
-> The county engineer is called Weiss and until tonight she would not have crossed the road to spit on you,
-> because you are the guy who did not take the implant and would not shut up about it.
-> She is in your driveway at 4 a.m. asking for a man with a gun.
-> The pump house feeds every house inside the gate. If the transfer does not complete, this whole peninsula
-> loses water and power and it does not come back. Eight minutes. It cannot be paused.
-> She stays with the panel. You stay between the panel and the treeline.
-
-**12 — The Ramp**
+**12 — Front Porch**
 
 > This is the part nobody rehearses.
-> There are eleven boats and there are more people than eleven boats will carry, and everyone on that ramp
-> has already done that arithmetic. Every wall you ever built is behind you and none of it held, and you
-> have known that since the gate went.
-> You are not going to hold this. You are going to hold it *longer than they think*, and every minute is a
-> boat on the water.
-> You did not vote for any of this. Make them take it anyway.
+> The boats are gone. The clubhouse is gone. The gate has been gone since Tuesday. What is left is a tan
+> contemporary on a wooded lot with a two-car garage that does not lock properly, and you have spent four
+> days turning it into the only thing standing between the treeline and a man who would not take their money.
+> They are coming up the street you fortified in the first week. You know every yard of it, because you built
+> it, and then you lost it.
+> You did not vote for any of this.
+> Make them take it anyway.
 
 ---
 
@@ -149,25 +203,38 @@ Three sample briefings.
 
 Nothing here needs an engine feature we do not have or have not specced.
 
-- Each mission is one JSON file per the schema in `progression-and-campaign.md` §6. Terrain, spawns, waves by
-  archetype, objectives, rewards, medals.
-- The six objective types cover all twelve missions. `HoldUntil` carries the seven clock missions; missions 6
-  and 12 are `SurviveSeconds` with `winnable: false`, which only changes the end-of-mission screen.
+- Each mission is one JSON file per the schema in `progression-and-campaign.md` §6.
+- The six objective types cover all twelve missions. `HoldUntil` carries the clock missions; 4 and 12 are
+  `SurviveSeconds` with `winnable: false`, which only changes the end-of-mission screen.
+- **The kit-recovery table in §2 is the one new system**, and it is a multiplier on the existing `Bank`
+  applied at mission end. It needs a unit test per row and nothing else.
 - New enemies land in the order the table needs them: Sapper and Spitter **exist today**; the Wrecker
-  (mission 8), unchipped raiders (7) and the lab release (11) are the only new archetypes in the whole act.
-- **Treeline spawns are a sim feature we already have** — a spawn edge is a spawn edge. What is new is that
-  most maps have two of them, roads and woods, with different pressure curves.
-- Level themes map to `arsenal-and-terrain.md` §4, and ADR-004 cuts that list down: one house kit dressed per
-  lot covers missions 1, 2, 3, 4, 8 and 12. Only the pump house, the gate, the gun club and the facility need
-  their own prop tables.
-- **Your community visibly deteriorates.** Same streets, five times, getting worse. Nearly free, and the
-  strongest storytelling device in the list.
+  (mission 8) and the lab release (mission 10) are the only new archetypes in the whole act. The previous
+  draft's "unchipped raiders" are cut — see §7.
+- **Treeline spawns are already expressible**; a spawn edge is a spawn edge. What is new is that most maps
+  have two of them, roads and woods, with different pressure curves.
+- **One map, twelve cuts of it.** The community is authored once. Each mission is a sub-rectangle of it with
+  its own spawn edges and its own props, and the sub-rectangles get smaller. The art and level cost of this
+  act is far closer to one level than to twelve.
+- **Damage persists between missions.** A breach from mission 6 is still open in mission 8, and mission 12's
+  approach road carries the wreckage of missions 1 through 11. Nearly free, and the strongest storytelling
+  device in the list.
 
-## 7. Questions for the owner
+## 7. Changes from the previous draft, and one cut
 
-1. **Does mission 12 end with you on the boat or on the ramp?** Both are defensible. On the ramp is a better
-   ending and a worse sequel.
-2. **Mission 7 makes other survivors the enemy.** That is the grittiest beat in the act and the easiest to cut
-   if you would rather the unchipped stay sympathetic.
-3. **Tone check on the briefings above.** They are written in your voice as recorded in ADR-003. If that is
-   not how you want him to sound, say which direction and I will re-pitch all twelve.
+- The act is now a retreat rather than twelve locations. Owner's call, and it is the right one.
+- **"The Cul-de-Sac" and the neighbour-defence mission are absorbed** into missions 2 and 12.
+- **Unchipped raiders are cut.** In a retreat there is no room for a second faction, and making other
+  survivors the enemy fights the mission 11 evacuation, which only works if the people on the ramp are worth
+  saving. They can come back in Act Two.
+- The laboratory moves from a routine mid-act mission to the act break, and now costs the player the
+  community rather than just time.
+
+## 8. Questions for the owner
+
+1. **Does mission 12 end?** Options: you die, you are last seen still shooting, or it hard-cuts on a timer to
+   Act Two with no answer. My pick is the hard cut, because it is the only one that does not close the door.
+2. **Do the neighbours have names?** Kessler costs nothing and pays off for twelve missions. If you want real
+   names from your street in there, that is yours to give and I will not put any in without you saying so.
+3. **The title.** Third document in a row where it comes up. "Dead Turf" was written for a gangster holding a
+   city block. This act ends on a man holding his own front door. Say the word and I will pitch ten.

@@ -111,6 +111,21 @@
       "id": "night-street-fight",
       "title": "Dark and gritty: the street, on fire",
       "prompt": "Night in a wooded Virginia lake community. A curving residential street of contemporary suburban houses, two of them burning hard and throwing orange light across wet asphalt and pines, smoke rolling low across the road. A lone armed figure in a field jacket walks up the middle of the street away from the viewer toward the fire, rifle held low, silhouetted against the flames. Wrecked cars, a crashed white cargo drone burning in a front yard, scattered debris and abandoned belongings, ash falling like snow through the light. Heavy contrast, deep black shadow and violent orange, painterly, desolate and cinematic"
+    },
+    {
+      "id": "m01-gate-night-one",
+      "title": "Mission 1: the night it started",
+      "prompt": "Night, light rain. The brick entrance gate of a private gated community in rural Virginia, lit by the headlights of two pickup trucks angled across the road. Three ordinary men in work coats and a woman in a parka are hurriedly welding steel pipe and chain across the boom barrier, one holding a shop light, sparks from an angle grinder. Bare winter trees crowding both sides. Thirty metres beyond the gate at the edge of the headlight beams, a small group of perhaps twenty ordinary clothed people stands motionless in the road watching them work, each with a tiny amber light at the temple. Improvised, urgent, not yet hopeless. Cold blue night, warm work lights, grounded realism"
+    },
+    {
+      "id": "m12-last-stand",
+      "title": "Mission 12: the last stand at the house",
+      "prompt": "Night, low three-quarter ground-level view. A suburban house with an attached two-car garage on a wooded lot, brutally fortified: rusted steel plate and plywood bolted over every window, a firing slit cut in the garage door with violent muzzle flash blazing out of it, stacked sandbag walls, two armoured automated sentry turrets on tripod masts firing, three concentric rings of layered scrap-metal barricade and razor wire across the driveway, harsh floodlights on scaffold poles, a dead pickup welded into the barricade line. Fire, heavy smoke, tracer rounds, spent brass. Slamming against the outer wire and spilling around both sides of the house, an immense crowd of ordinary clothed people, hundreds upon hundreds receding into the dark treeline, faint amber lights at their temples. Besieged, desperate, hopeless, epic scale. Violent orange firelight against deep black, heavy contrast, cinematic"
+    },
+    {
+      "id": "falling-back",
+      "title": "Falling back up your own street",
+      "prompt": "Dusk, winter. A curving residential street in a wooded Virginia lake community seen from behind. A lone man in a field jacket with a rifle walks backwards up the middle of the road away from a burning hand-built scrap barricade fifty metres behind him, which is being climbed over and pushed down by a large crowd of ordinary clothed people. Abandoned turret emplacements and sandbags he is leaving behind, a wrecked golf cart, suitcases dropped on lawns. Contemporary suburban houses and bare trees on both sides, smoke, failing grey light. Exhausted, orderly, grim, painterly"
     }
   ]
 }

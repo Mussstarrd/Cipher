@@ -76,6 +76,29 @@ The twelve-mission structure in `campaign-act1.md` survives. The settings change
 That last one is the strongest ending the campaign has had. Everybody leaves by water, and the
 thing you are defending is a queue.
 
+### 3b. The act is a fighting retreat, and the map contracts
+
+**Added 2026-09-10.** The owner supplied the campaign's spine the same day he supplied the setting:
+
+> maybe the storyline starts with trying to secure the gate and we are progressively pushed further and
+> further back until ultimately I'm at the house
+
+This is now the structure of Act One and it is the single best structural idea the project has had. It
+converts the setting from a backdrop into the story. Detail in `docs/design/campaign-act1.md`; what matters
+at the ADR level is that it changes what we build:
+
+- **The community is authored once and each mission is a smaller sub-rectangle of it.** Twelve missions cost
+  closer to one level than to twelve. This is a large, real saving and it arrives for free with the fiction.
+- **Every location is seen twice**, once held and once being given up, which doubles the value of every prop
+  we make.
+- **Damage persists across missions.** Already supported by the destructible-terrain work; now it is load
+  bearing rather than a nice touch.
+- **Kit does not follow the player.** A new mission-end recovery multiplier means a clean hold funds the next
+  line and a ragged one does not. That is the mechanic that makes retreating cost something without ever
+  showing the player a fail screen for doing what the plot requires.
+- **The owner's house is the final mission**, not the first. It is the only location the player defends with
+  nothing behind it.
+
 ### 4. Half in daylight is now doubly right
 
 Winter Virginia overcast is the palette: bare hardwoods, pine, brown leaf litter, grey sky, old
