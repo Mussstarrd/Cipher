@@ -44,7 +44,7 @@ beyond. Android never needs more than roughly 250 full-quality agents at once.
 The single biggest failure mode in the research was **mixing a photoreal pack with a stylised one**. Pick a
 lane and hold it.
 
-**Recommendation: the stylised lane, built on Synty POLYGON.** Roughly **$135 total** for suburbs,
+**Recommendation (SUPERSEDED — see Decision 2, CORRECTED below): the stylised lane, built on Synty POLYGON.** Roughly **$135 total** for suburbs,
 nature/biomes, apocalypse (which carries ordinary-clothed civilians, vehicles and abandoned cars) and a war
 pack for sandbags and barricades.
 
@@ -108,6 +108,52 @@ Specifically:
 
 **What this does to the budget.** Nothing. The same purchase still applies and the same VAT crowd pipeline
 still applies. The only thing that changed is that the result now looks like a decision.
+
+## Decision 2, CORRECTED (2026-09-11): start free, buy later or not at all
+
+**The $135 recommendation above was built on unverified prices and should not be acted on.** A second
+verification pass, run specifically because the owner was about to spend money, could not confirm a single
+figure:
+
+- Every Synty store product page returned **"Sold out"**, including packs available for years, and one page
+  rendered visible template errors. That reads as bot-blocking or a broken cache, not real inventory.
+- **No Unity Asset Store listing resolved at all.**
+- The prices that did render were far off historical norms: one pack showed **$349.99**, another $299.99.
+- There is **no product called "POLYGON Suburbs"**, which is what the first pass recommended buying.
+
+Two things the second pass did establish, and both matter:
+
+1. **Synty's newer Sidekick character line uses a DIFFERENT rig from the classic POLYGON line.** Our crowd
+   technique bakes one skeleton into a texture, so mixing those two lines would break it. Anyone buying Synty
+   later must confirm which line they are buying into.
+2. **Quaternius is CC0** (verified on their live licence page): free for commercial use, no attribution, no
+   resale of raw assets. Their Ultimate Modular Men pack is **11 characters, 4 swappable parts each, rigged,
+   with 24 animations**, in FBX.
+
+### The corrected plan: spend nothing yet
+
+Quaternius alone covers every category this game needs:
+
+| Need | Free pack |
+|---|---|
+| Ordinary modern civilians, rigged and animated | Ultimate Modular Men / Women, Animated Men / Women |
+| Trees and vegetation | Ultimate Nature, Stylized Nature MegaKit |
+| Roads | Modular Streets |
+| Buildings | Downtown City MegaKit, Ultimate House Interior |
+| Vehicles | Cars, Public Transport |
+
+That is enough to build the entire crowd pipeline, dress a level, and **find out whether the look is good
+enough before any money changes hands**. If it is, the purchase may never be needed. If it is not, the owner
+buys with real prices he has checked himself, against a pipeline that is already proven.
+
+**This is strictly better than the original recommendation** and it removes the only external blocker on the
+schedule. The one cost is that Quaternius download buttons are JavaScript-driven, so the files cannot be
+fetched headlessly; the owner clicks download a few times.
+
+### Standing rule this produced
+
+**Never hand the owner a shopping list built on prices a research pass flagged as unverified.** Either
+confirm them or say plainly that they are unconfirmed and recommend the free path first.
 
 ## What shipped with this ADR
 
