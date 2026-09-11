@@ -168,7 +168,10 @@ namespace Cipher.Game.UI
             };
             _cardBodyStyle ??= new GUIStyle(GUI.skin.label)
             {
-                fontSize = 18, alignment = TextAnchor.MiddleCenter,
+                // WORD WRAP, or a long body runs off both edges of the card and off the screen.
+                // The mission brief is two sentences; every card before it was four words, which is
+                // why nobody noticed the card could not hold a sentence.
+                fontSize = 18, alignment = TextAnchor.UpperCenter, wordWrap = true,
             };
 
             // In fast, out slow: the eye catches the arrival and the fade is not a second event.
@@ -176,14 +179,26 @@ namespace Cipher.Game.UI
             float alpha = t > 0.85f ? (1f - t) / 0.15f : Mathf.Clamp01(t / 0.35f);
             float rise = (1f - alpha) * 14f;
 
+            // The card is sized to what it holds. A fixed 96px box was fine for "WAVE 3" and threw
+            // the mission brief across the whole screen.
+            const float Width = 620f;
+            float bodyHeight = _cardBody.Length == 0
+                ? 0f
+                : _cardBodyStyle.CalcHeight(new GUIContent(_cardBody), Width - 48f);
+            float height = 58f + bodyHeight + (bodyHeight > 0f ? 14f : 0f);
+
+            float x = uiW * 0.5f - Width * 0.5f;
+            float y = uiH * 0.20f + rise;
+
             var prev = GUI.color;
-            GUI.color = new Color(0f, 0f, 0f, 0.55f * alpha);
-            GUI.DrawTexture(new Rect(uiW * 0.5f - 300f, uiH * 0.22f - 34f + rise, 600f, 96f), Texture2D.whiteTexture);
+            GUI.color = new Color(0f, 0f, 0f, 0.62f * alpha);
+            GUI.DrawTexture(new Rect(x, y, Width, height), Texture2D.whiteTexture);
             GUI.color = new Color(1f, 1f, 1f, alpha);
             _cardTitleStyle.normal.textColor = new Color(1f, 0.93f, 0.78f, alpha);
             _cardBodyStyle.normal.textColor = new Color(0.92f, 0.92f, 0.92f, alpha);
-            GUI.Label(new Rect(0f, uiH * 0.22f - 30f + rise, uiW, 52f), _cardTitle, _cardTitleStyle);
-            GUI.Label(new Rect(0f, uiH * 0.22f + 20f + rise, uiW, 30f), _cardBody, _cardBodyStyle);
+            GUI.Label(new Rect(x, y + 6f, Width, 50f), _cardTitle, _cardTitleStyle);
+            if (bodyHeight > 0f)
+                GUI.Label(new Rect(x + 24f, y + 56f, Width - 48f, bodyHeight), _cardBody, _cardBodyStyle);
             GUI.color = prev;
         }
 

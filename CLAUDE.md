@@ -388,4 +388,39 @@ substitute: it references the sim's SOURCE, not its test project.
     whose cell kept the damaged value dies early next wave with no symptom but "that one felt weak".
   - Fractional repair is banked in the bootstrap and spent in whole hit points, or a slow tick
     rounds to nothing forever.
+- **OUTSIDE REVIEW, 2026-09-11. Read `RedTeamRegressionTests.cs` before touching ADR-008 code.**
+  A read-only consultant audited the whole project and found things the suite could not, because
+  **every one of them had a green test beside it that exercised the path that worked.** The lesson
+  is the pattern, not the individual bugs:
+  - **A scale a caller must remember to apply WILL be forgotten.** `SpeedScale` was multiplied in
+    one of six movement paths, so a broken chip was a full-speed attacker the moment anything
+    interesting happened -- chasing, closing on a gun, going at a wall -- and only decayed while
+    walking unopposed at the truck. It now lives inside `SteerToward` and `StepRunner`, where no
+    caller can miss it. Same story for `ThreatScale` on wall and spitter damage.
+  - **RUNNING OUT OF WAVES IS NOT WINNING.** `MatchRules` went straight to `Won`, so a player who
+    fought well and never pressed call-your-last-wave finished mission one having never seen the
+    pack-up, the truck, his family or the next position. ADR-005 and ADR-009 sat behind one optional
+    button press. It now opens Extraction unless `HasFallbackPosition` is false.
+  - **A wall left at zero hit points advanced a full breach stage per single point of damage.** 20 hp
+    wall: 20 damage to crack, then ONE to break, then ONE to collapse. Every stage now refills to a
+    fraction of the wall's own maximum (`GridMap._maxHp`), so gunfire cannot bypass the
+    twenty-seconds-per-stage widening pipeline and a repaired wall is not one stray round from
+    opening again.
+  - **Two queries, two answers.** Turrets got the "skip a failing chip" filter and `FindNearestInRange`
+    did not, so patrol drones emptied themselves into a body already going down while a healthy one
+    walked past. When you add a filter, grep for the other query.
+  - `FailingCount` leaked on goal arrival -- there are exactly TWO places an agent stops being alive
+    and both must hand the counter back. A failing Sapper can no longer finish its plant.
+  - **`SetHero` had zero references in `sim/tests`**, so the entire hero-aggression layer (chase,
+    sticky aggro, contact, pistols) was never executed by the suite. That is where the decay bug
+    was. Covered now.
+  - Player-facing: the kit prompt said **Y**, which is the airstrike; the map prompt said M, which is
+    mute; the mission `brief` was parsed, validated, stored and never rendered; the fps readout was
+    the most prominent string on screen; and the scan clock ADR-005 said must always be visible was
+    only shown inside a line gated on having cleared two waves. All fixed.
+  - "TURF HELD"/"TURF LOST" were the last of the retired kingpin vocabulary and the two largest
+    strings in the game.
+  - **The repair crew's window was unreachable by construction**: `Setup` only begins once the field
+    is provably empty, so ADR-009's danger radius and scramble-back could never fire. They now stay
+    out into the next wave until something gets close, which is the tension the ADR asked for.
 - **Was:** owner hero feedback → barricade build-mode with live path preview (Milestone 2 "The Maze").

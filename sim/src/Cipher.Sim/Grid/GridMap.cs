@@ -56,6 +56,7 @@ namespace Cipher.Sim.Grid
         private readonly byte[] _cost;      // >= MinCost for passable cells
         private readonly byte[] _kind;      // WallKind
         private readonly ushort[] _hp;      // 0 when kind == None
+        private readonly ushort[] _maxHp;   // what this wall was built with; a new stage refills to it
         private readonly byte[] _stage;     // BreachStage
         private readonly int[] _gateTokens; // only meaningful while stage is Cracked/Broken
 
@@ -76,6 +77,7 @@ namespace Cipher.Sim.Grid
             _cost = new byte[n];
             _kind = new byte[n];
             _hp = new ushort[n];
+            _maxHp = new ushort[n];
             _stage = new byte[n];
             _gateTokens = new int[n];
             for (int i = 0; i < n; i++) _cost[i] = MinCost;
@@ -150,6 +152,7 @@ namespace Cipher.Sim.Grid
             LeaveGateIfAny(i);
             _kind[i] = (byte)kind;
             _hp[i] = hp;
+            _maxHp[i] = hp;
             _stage[i] = (byte)BreachStage.Intact;
             _cost[i] = MinCost;
             Version++;
@@ -193,8 +196,29 @@ namespace Cipher.Sim.Grid
 
             var next = (BreachStage)(_stage[i] + 1);
             ApplyStage(i, next);
+            // A NEW STAGE GETS A NEW POOL OF HIT POINTS.
+            //
+            // Without this the wall sits at zero after the first stage and `Damage` returns true
+            // for every single point that lands on it afterwards, so a 20 hp wall went
+            // Intact -> Cracked for 20 damage, Cracked -> Broken for ONE, Broken -> Collapsed for
+            // ONE. The twenty-seconds-per-stage widening pipeline was bypassed entirely for any
+            // wall taken down by gunfire rather than by a sapper's kit, and a wall repaired one
+            // stage was re-breakable by a single stray round. The regression test is three lines.
+            _hp[i] = next == BreachStage.Collapsed ? (ushort)0 : StageHp(i);
             Version++;
             return next;
+        }
+
+        /// <summary>What a wall is worth at its current stage: less each time it is opened up.</summary>
+        private ushort StageHp(int i)
+        {
+            ushort max = _maxHp[i] > 0 ? _maxHp[i] : DefaultWallHp;
+            return _stage[i] switch
+            {
+                (byte)BreachStage.Cracked => (ushort)Math.Max(1, max * 3 / 4),
+                (byte)BreachStage.Broken => (ushort)Math.Max(1, max / 2),
+                _ => max,
+            };
         }
 
         /// <summary>Restores a breached wall to Intact at full hit points. No-op on open cells.</summary>
@@ -215,7 +239,9 @@ namespace Cipher.Sim.Grid
             if (_kind[i] == (byte)WallKind.None || _stage[i] == (byte)BreachStage.Intact) return (BreachStage)_stage[i];
             var next = (BreachStage)(_stage[i] - 1);
             ApplyStage(i, next);
-            if (next == BreachStage.Intact) _hp[i] = hp;
+            // Mended back to a stage means mended: a wall left at zero hit points is one stray
+            // round from being opened again, which is not what repairing it bought.
+            _hp[i] = next == BreachStage.Intact ? hp : StageHp(i);
             Version++;
             return next;
         }

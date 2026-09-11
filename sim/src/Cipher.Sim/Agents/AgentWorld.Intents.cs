@@ -116,7 +116,7 @@ namespace Cipher.Sim.Agents
                 if (_timer[i] <= 0f)
                 {
                     _timer[i] = _config.WreckerAttackInterval;
-                    DamageWall(wx, wy, _config.WreckerWallDamage, 1f);
+                    DamageWall(wx, wy, _config.WreckerWallDamage * ThreatScale(i), 1f);
                 }
                 return true;
             }
@@ -131,12 +131,23 @@ namespace Cipher.Sim.Agents
         }
 
         /// <summary>Straight-line steering with separation, sharing the runner's movement rules.</summary>
+        /// <summary>
+        /// Steers one agent at a speed, through the wall and gate rules.
+        ///
+        /// **The failing-chip slowdown is applied HERE, not by the caller.** It was a caller's
+        /// responsibility for exactly as long as it took to review: one of the six movement paths
+        /// multiplied by it and five did not, so a broken chip was a full-speed attacker the moment
+        /// anything interesting was happening -- chasing the player, closing on a gun, going at a
+        /// wall -- and only decayed while walking unopposed at the truck. The test that was meant to
+        /// guard it exercised the one path that worked. A scale that every mover must remember to
+        /// apply is a scale that will be forgotten again.
+        /// </summary>
         private void SteerToward(int i, Vec2 pos, Vec2 target, float dt, float speed, bool gates)
         {
             Vec2 toTarget = (target - pos).Normalized();
             Vec2 separation = ComputeSeparation(i, pos);
             Vec2 desired = (toTarget + separation * _config.SeparationWeight).Normalized();
-            float stepLength = MathF.Min(speed * dt, 0.9f);
+            float stepLength = MathF.Min(speed * SpeedScale(i) * dt, 0.9f);
             MoveResolved(i, pos, pos + desired * stepLength, gates);
         }
 

@@ -53,10 +53,12 @@ namespace Cipher.Game.Tests
         }
 
         [Test]
-        public void WaveClear_PaysBonus_AdvancesWave_ThenWins()
+        public void WaveClear_PaysBonus_AdvancesWave_ThenWins_WhenThereIsNowhereToFallBackTo()
         {
             var eco = new EconomyConfig { StartCash = 0, WaveClearBonusPerWave = 100 };
-            var m = new MatchState(TwoWaves, eco);
+            // A last stand is the ONLY case where running out of waves is winning. Everywhere else
+            // the scan is still coming and the pack-up opens -- see the sibling test below.
+            var m = new MatchState(TwoWaves, eco, hasFallbackPosition: false);
             m.StartWaveNow();
             m.Tick(0.01f, 0, 0);
             int spawned = 0;
@@ -81,6 +83,30 @@ namespace Cipher.Game.Tests
             Assert.AreEqual(300, m.Bank.Cash, "plus 100 x 2 for wave 2");
             Assert.AreEqual(2, m.WavesCleared);
             Assert.AreEqual(0, m.Tick(1f, 0, 0), "a finished match spawns nothing");
+        }
+
+        [Test]
+        public void RunningOutOfWaves_OpensThePackUp_WhenThereIsALineBehindYou()
+        {
+            // The milestone is "a stranger plays mission one unguided". Before this, a stranger who
+            // simply fought well and never found the call-your-last-wave button finished The Gate
+            // having never seen the pack-up, the truck, his family or the next position: the whole
+            // of ADR-005 and ADR-009 sat behind one optional button press.
+            var m = new MatchState(TwoWaves, new EconomyConfig(), hasFallbackPosition: true);
+            m.StartWaveNow();
+            m.Tick(0.01f, 0, 0);
+
+            for (int wave = 0; wave < 2; wave++)
+            {
+                int spawned = 0;
+                while (!m.WaveFullySpawned) spawned += m.Tick(0.1f, spawned, 0);
+                m.Tick(0.1f, 0, 0);
+                if (m.Phase == MatchPhase.Setup) m.StartWaveNow();
+            }
+
+            Assert.AreEqual(MatchPhase.Extraction, m.Phase,
+                            "the scan is still coming; the wave table running dry is not a win");
+            Assert.Greater(m.ExtractTimeLeft, 0f, "and the pack-up clock is running");
         }
 
         [Test]

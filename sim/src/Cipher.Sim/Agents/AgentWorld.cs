@@ -135,6 +135,11 @@ namespace Cipher.Sim.Agents
                 if (Vec2.DistanceSquared(pos, goalCenter) <= goalRadiusSq)
                 {
                     // Arrived: leaves the sim. The match layer turns ReachedCount deltas into vault damage.
+                    // A body can arrive with its chip already broken, and this is the second of the
+                    // only two places an agent stops being alive -- it has to hand the failing slot
+                    // back or FailingCount is permanently wrong and "a wave is not clear while any
+                    // of these remain" becomes a soft lock for whoever trusts it next.
+                    if (_failing[i] > 0f) { _failing[i] = 0f; FailingCount--; }
                     _alive[i] = false;
                     AliveCount--;
                     ReachedCount++;
@@ -173,7 +178,7 @@ namespace Cipher.Sim.Agents
 
                 // Pace is the individual's own: sprinters are on you while the slow ones are still
                 // crossing the field, which is what gives a wave a shape.
-                StepRunner(i, pos, dt, gates, _config.MoveSpeed * _pace[i] * SpeedScale(i));
+                StepRunner(i, pos, dt, gates, _config.MoveSpeed * _pace[i]);
             }
 
             // Aged AFTER movement so a body gets its last step before it falls.
@@ -194,8 +199,9 @@ namespace Cipher.Sim.Agents
             Vec2 desired = (flowDir + separation * _config.SeparationWeight).Normalized();
 
             // Displacement is capped below one cell per tick so agents can never
-            // tunnel a wall between two cells CanTravel never gets to inspect.
-            float stepLength = MathF.Min(speed * dt, 0.9f);
+            // tunnel a wall between two cells CanTravel never gets to inspect. The failing-chip
+            // slowdown is applied here rather than by the caller, for the reason SteerToward gives.
+            float stepLength = MathF.Min(speed * SpeedScale(i) * dt, 0.9f);
             MoveResolved(i, pos, pos + desired * stepLength, gates);
         }
 
@@ -361,8 +367,13 @@ namespace Cipher.Sim.Agents
         }
 
         /// <summary>
-        /// The living agent physically closest to a point (lowest id on ties), or -1. Mobile shooters
-        /// want the nearest body; static turrets want the one closest to the vault (FindFirstInRange).
+        /// The nearest TARGETABLE agent to a point (lowest id on ties), or -1. Mobile shooters want
+        /// the nearest body; static turrets want the one closest to the vault (FindFirstInRange).
+        ///
+        /// Skips bodies whose chip is already failing, for the same reason the turret path does.
+        /// ADR-008 was written to stop a gun emptying itself into someone already going down, the
+        /// turret path was fixed, and this one was missed -- so patrol drones fired seven rounds a
+        /// second into a corpse while a healthy body walked past untouched.
         /// </summary>
         public int FindNearestInRange(Vec2 center, float radius)
         {
@@ -374,7 +385,7 @@ namespace Cipher.Sim.Agents
             foreach (int hashId in _queryScratch)
             {
                 int id = _hashToAgent[hashId];
-                if (!_alive[id]) continue;
+                if (!_alive[id] || _failing[id] > 0f) continue;
                 float distSq = Vec2.DistanceSquared(center, new Vec2(_posX[id], _posY[id]));
                 if (distSq < bestDistSq || (distSq == bestDistSq && id < best))
                 {

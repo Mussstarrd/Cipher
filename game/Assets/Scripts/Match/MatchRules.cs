@@ -383,7 +383,26 @@ namespace Cipher.Game.Match
                         }
                         else if (WaveIndex + 1 >= _waves.Count)
                         {
-                            Phase = MatchPhase.Won;
+                            // RUNNING OUT OF WAVES IS NOT WINNING WHEN THERE IS A LINE BEHIND YOU.
+                            //
+                            // This used to go straight to Won, which meant a player who simply
+                            // fought well and never pressed the call-your-last-wave button finished
+                            // The Gate having never seen the pack-up window, the truck, his family
+                            // or the next position -- the whole of ADR-005 and ADR-009 sat behind
+                            // one optional button press. "MISSION ONE, UNGUIDED" cannot pass while
+                            // the default path of play skips the thing the game is about.
+                            //
+                            // The scan is coming either way; the wave table running dry just means
+                            // nobody else is walking up the road before it does.
+                            if (HasFallbackPosition)
+                            {
+                                Phase = MatchPhase.Extraction;
+                                ExtractTimeLeft = _cycle.ExtractSeconds;
+                            }
+                            else
+                            {
+                                Phase = MatchPhase.Won;
+                            }
                         }
                         else
                         {

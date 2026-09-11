@@ -494,6 +494,13 @@ namespace Cipher.Game
             _camYaw = -90f;
             _camPitch = 22f;
             _snapCamera = true;
+
+            // The one authored sentence that says what this position is and why it matters was
+            // parsed, validated, stored and never rendered. Every mission file has one; nothing put
+            // one on a screen. The untimed opening is exactly the moment there is time to read it.
+            if (_scenario != null && _scenario.Brief.Length > 0)
+                _feedback.ShowCard(_scenario.DisplayName.ToUpperInvariant(), _scenario.Brief, 9f);
+
             _buildMode = false;
             _camMode = CameraMode.Chase;
             _tickAccumulator = 0f;
@@ -2264,6 +2271,7 @@ namespace Cipher.Game
 
         private GameObject? _truckBody;
 
+        private GUIStyle? _scanStyle;
         private GUIStyle? _vaultStyle;
 
         /// <summary>
@@ -2347,9 +2355,15 @@ namespace Cipher.Game
         /// </summary>
         private void TickRepairCrew(float dt)
         {
-            bool window = !_match.IsOver
-                       && _match.Phase == MatchPhase.Setup
-                       && !_match.AwaitingStart;
+            // They COME OUT between waves, and they STAY OUT into the next one until something
+            // gets close. Gating purely on Setup made ADR-009's whole payoff unreachable: Setup
+            // only begins once the field is provably empty, so the danger radius, the scramble
+            // back and the alert could never fire -- they were two people safely tidying up in a
+            // room with nothing in it. Now the next wave starting is what they are racing.
+            bool settled = !_match.IsOver && !_match.AwaitingStart;
+            bool window = settled
+                       && (_match.Phase == MatchPhase.Setup
+                           || (_match.Phase == MatchPhase.Wave && _crew.Outside));
 
             _crewJobs.Clear();
             var turrets = _turrets.Turrets;
@@ -3749,8 +3763,35 @@ namespace Cipher.Game
             bool pad = Gamepad.current != null;
             _subStyle ??= new GUIStyle(GUI.skin.label) { fontSize = 22, alignment = TextAnchor.MiddleCenter };
 
-            GUI.Label(new Rect(12, 8, 1000, 28),
+            // The engine readout goes UNDER the things a player needs. It used to be the single most
+            // prominent string in the game, which tells a first-time player that this is a tech demo
+            // before they have read a word of it.
+            GUI.Label(new Rect(12, 32, 1000, 28),
                 $"fps {_smoothedFps:F0} | alive {_world.AliveCount} | breached {_world.ReachedCount} | kills {_world.TotalKills} (you {_hero.Kills}, turrets {TurretKills()})");
+
+            // THE SCAN CLOCK IS ALWAYS VISIBLE. ADR-005 settled this -- "always visible, because
+            // dread beats surprise" -- and then it only ever appeared inside the call-your-last-wave
+            // line, which is gated on having cleared two waves. ADR-009 made it the answer to the
+            // only question the player has: why am I leaving? Because something is going to look
+            // directly at us, and it is going to do it in this many seconds.
+            if (!_match.IsOver)
+            {
+                float scan = _match.PrepSecondsRemaining;
+                _scanStyle ??= new GUIStyle(GUI.skin.label)
+                {
+                    fontSize = 16, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleRight,
+                };
+                _scanStyle.normal.textColor = scan < 60f ? new Color(1f, 0.58f, 0.42f)
+                                                         : new Color(0.86f, 0.89f, 0.92f);
+                // Its own plate: grey text on a grey winter sky is not a clock anybody reads.
+                var plate = new Rect(_uiW - 232f, 4f, 220f, 26f);
+                var prevCol = GUI.color;
+                GUI.color = new Color(0f, 0f, 0f, 0.45f);
+                GUI.DrawTexture(plate, Texture2D.whiteTexture);
+                GUI.color = prevCol;
+                GUI.Label(new Rect(plate.x, plate.y, plate.width - 10f, plate.height),
+                          $"NEXT SCAN  {(int)(scan / 60f)}:{((int)scan % 60):00}", _scanStyle);
+            }
 
             string phase = _match.Phase switch
             {
@@ -3761,10 +3802,10 @@ namespace Cipher.Game
                 MatchPhase.Extraction =>
                     $"PACK UP {_match.ExtractTimeLeft:F0}s  (L: pull out now)  salvaged {_match.SalvagedCount}",
                 MatchPhase.Extracted => "EXTRACTED",
-                MatchPhase.Won => "TURF HELD",
-                _ => "TURF LOST",
+                MatchPhase.Won => "POSITION HELD",
+                _ => "THE TRUCK IS GONE",
             };
-            GUI.Label(new Rect(12, 32, 1000, 28),
+            GUI.Label(new Rect(12, 8, 1000, 28),
                 $"${_match.Bank.Cash}   Wave {_match.WaveNumber}/{_match.WaveCount}   {phase}   Truck {_match.VaultHp}/{_match.VaultMaxHp}");
 
             if (_match.CanDeclareLastWave)
@@ -3784,7 +3825,7 @@ namespace Cipher.Game
                 (_loadout.Skills.UnspentPoints > 0
                     ? $"   [{_loadout.Skills.UnspentPoints} skill points: {(pad ? "D-pad up" : "K")}]"
                     : $"   {(pad ? "D-pad up" : "K")}: skills")
-                + $"    {(pad ? "Y" : "I")}: kit");
+                + $"    {(pad ? "D-pad right" : "I")}: kit");
 
             if (_lootNoticeTimer > 0f && _lootNotice.Length > 0)
                 GUI.Label(new Rect(12, 176, 1200, 24), _lootNotice);
@@ -3854,7 +3895,7 @@ namespace Cipher.Game
             {
                 bool won = _match.Phase == MatchPhase.Won;
                 Overlay(won ? new Color(0f, 0.3f, 0.1f, 0.55f) : new Color(0.4f, 0f, 0f, 0.55f),
-                        won ? "TURF HELD" : "TURF LOST",
+                        won ? "POSITION HELD" : "THE TRUCK IS GONE",
                         $"{_match.WavesCleared}/{_match.WaveCount} waves   ${_match.Bank.TotalEarned} earned   {_world.TotalKills} kills\n{(pad ? "A" : "Enter")}: run it back");
             }
             else if (_hero.IsDown && !_pauseMenu.IsOpen)
@@ -3890,7 +3931,7 @@ namespace Cipher.Game
             GUI.color = prev;
 
             GUI.Label(new Rect(rect.x, rect.y - 22f, rect.width, 20f),
-                Gamepad.current != null ? "map (RS click: hide)" : "map (M: hide)");
+                Gamepad.current != null ? "map (RS click: hide)" : "map (N: hide)");
         }
 
         private int TurretKills()
@@ -4254,7 +4295,7 @@ namespace Cipher.Game
             float y = 74f;
             GUI.Label(new Rect(_uiW - 546f, y, 520f, 26f),
                       $"KIT     scrip {_loadout.Inventory.Scrip}     " +
-                      $"({(Gamepad.current != null ? "B or Y" : "I")} to close)", _invStyle);
+                      $"({(Gamepad.current != null ? "B" : "I")} to close)", _invStyle);
             y += 30f;
 
             foreach (Slot slot in System.Enum.GetValues(typeof(Slot)))

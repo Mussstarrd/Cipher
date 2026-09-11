@@ -179,6 +179,11 @@ namespace Cipher.Sim.Agents
 
             if ((SapperState)_state[i] == SapperState.Plant)
             {
+                // A broken chip cannot finish the job. Without this the plant is a four-second
+                // timer nothing checks, so killing a Sapper inside its last 2.5 seconds still
+                // opens the hole -- a grace period in the enemy's favour on the counter-play the
+                // entire wall system exists to serve.
+                if (_failing[i] > 0f) return true;
                 _timer[i] -= dt;
                 if (_timer[i] <= 0f)
                 {
@@ -349,7 +354,7 @@ namespace Cipher.Sim.Agents
             {
                 _state[i] = (byte)SpitterState.Approach;
                 Vec2 dir = (targetPos - pos) * (1f / dist);
-                float step = MathF.Min(_config.SpitterSpeed * dt, 0.9f);
+                float step = MathF.Min(_config.SpitterSpeed * SpeedScale(i) * dt, 0.9f);
                 Vec2 before = pos;
                 MoveResolved(i, pos, pos + dir * step, gates);
                 // Wall in the way: fall back to the field this tick so it never freezes against a barricade.
@@ -363,7 +368,8 @@ namespace Cipher.Sim.Agents
             if (_timer[i] <= 0f)
             {
                 _timer[i] += _config.SpitterAttackInterval;
-                _events.Add(new SimEvent(SimEventKind.StructureHit, i, best, _config.SpitterDamage));
+                _events.Add(new SimEvent(SimEventKind.StructureHit, i, best,
+                                         _config.SpitterDamage * ThreatScale(i)));
             }
             return true; // holds position while spitting
         }
