@@ -196,7 +196,19 @@ namespace Cipher.Game
         // ------------------------------------------------------------------ live effects
 
         private struct Emp { public Vector3 Centre; public float Radius; public float Age; public int Seed; }
-        private struct Beam { public Vector3 A, B; public float Age; public Color Ink; public bool Landed; }
+        private struct Beam
+        {
+            public Vector3 A, B;
+            public float Age;
+            public Color Ink;
+            public bool Landed;
+
+            /// <summary>Which emitter fired it. -1 is an emplacement, which has its own profile.</summary>
+            public int Tier;
+
+            /// <summary>Fixes this shot's untidiness. Derived from the shot, never from a counter.</summary>
+            public int Seed;
+        }
 
         private readonly List<Emp> _emps = new List<Emp>(8);
         private readonly List<Beam> _beams = new List<Beam>(64);
@@ -216,6 +228,7 @@ namespace Cipher.Game
         // straight into a batch was silently erased by the next Draw, which cost a build and a
         // capture to find. EVERY per-frame declaration goes through a list for that reason.
         private readonly List<Emp> _held = new List<Emp>(4);
+        private readonly List<Beam> _heldBeams = new List<Beam>(8);
 
         // ------------------------------------------------------------------ resources
 
@@ -295,7 +308,18 @@ namespace Cipher.Game
         /// a shot that hit a wall gets the pulse but not the terminal bloom, because nothing in
         /// the wall was decrypted.
         /// </summary>
-        public void AddBeam(Vector3 from, Vector3 to, SignalBeam kind, bool landed)
+        /// <param name="tier">
+        /// Which rung of the hero's emitter ladder fired it, 0..<see cref="Curves.MaxTier"/>
+        /// (Field Jammer, Decryptor, Worm Lance, Cascade Emitter). It selects a
+        /// <see cref="Curves.PulseProfile"/>: the shot's wavelength, how far it spreads, how
+        /// untidy it is, whether it sheds lobes and what its arrival does. IGNORED for
+        /// <see cref="SignalBeam.Turret"/>, which always uses <see cref="Curves.TurretProfile"/> --
+        /// an emplacement's tier is its own ladder and reads off its hardware, not off the air.
+        ///
+        /// The default is 0 on purpose: the hero starts the match holding a Field Jammer, so a
+        /// call site that has not been told about tiers yet is still drawing the right weapon.
+        /// </param>
+        public void AddBeam(Vector3 from, Vector3 to, SignalBeam kind, bool landed, int tier = 0)
         {
             _beams.Add(new Beam
             {
@@ -304,8 +328,40 @@ namespace Cipher.Game
                 Age = 0f,
                 Ink = kind == SignalBeam.Turret ? TurretBeam : Emitter,
                 Landed = landed,
+                Tier = kind == SignalBeam.Turret ? -1 : tier,
+                Seed = BeamSeed(from, to),
             });
         }
+
+        /// <summary>
+        /// Stages ONE pulse at an explicit age, for this frame only, without retaining it. The
+        /// <see cref="MarkEmp"/> of the weapon side, and it exists for exactly the same reason:
+        /// a pulse lives <see cref="BeamLife"/> = 0.22 seconds, so photographing four tiers at the
+        /// same phase by choosing a shutter delay is guesswork, and "how does this tier differ"
+        /// is a question about ONE phase seen four times. With this the phase is a parameter.
+        /// </summary>
+        public void MarkBeam(Vector3 from, Vector3 to, SignalBeam kind, bool landed, int tier, float age01)
+        {
+            _heldBeams.Add(new Beam
+            {
+                A = from,
+                B = to,
+                Age = Mathf.Clamp01(age01) * BeamLife,
+                Ink = kind == SignalBeam.Turret ? TurretBeam : Emitter,
+                Landed = landed,
+                Tier = kind == SignalBeam.Turret ? -1 : tier,
+                Seed = BeamSeed(from, to),
+            });
+        }
+
+        /// <summary>
+        /// A shot's own seed, fixing which fronts of an untidy weapon are fat and which are thin.
+        /// Derived from where it was fired and where it landed, like <see cref="AddEmp"/>'s, so a
+        /// replay of the same match draws the same picture and a held frame is reproducible.
+        /// </summary>
+        private static int BeamSeed(Vector3 from, Vector3 to)
+            => Mathf.RoundToInt(from.x * 37.1f) * 131 + Mathf.RoundToInt(from.z * 53.7f) * 17
+               + Mathf.RoundToInt(to.x * 29.3f) * 7 + Mathf.RoundToInt(to.z * 41.9f);
 
         /// <summary>
         /// Declares that this body's chip is dying THIS FRAME. <paramref name="fail01"/> runs 1 at
@@ -353,6 +409,7 @@ namespace Cipher.Game
             _failing.Clear();
             _fields.Clear();
             _held.Clear();
+            _heldBeams.Clear();
         }
 
         public void Dispose()
@@ -401,6 +458,7 @@ namespace Cipher.Game
             _failing.Clear();
             _fields.Clear();
             _held.Clear();
+            _heldBeams.Clear();
         }
 
         private void AgeAndStageEmps(float dt)
@@ -522,97 +580,163 @@ namespace Cipher.Game
                 b.Age += dt;
                 if (b.Age >= BeamLife) { _beams.RemoveAt(i); continue; }
                 _beams[i] = b;
+                StageBeam(b);
+            }
 
-                Vector3 d = b.B - b.A;
-                float len = d.magnitude;
-                if (len < 1e-3f) continue;
-                Vector3 dir = d / len;
+            for (int i = 0; i < _heldBeams.Count; i++) StageBeam(_heldBeams[i]);
+        }
 
-                var f = Curves.Pulse(b.Age / BeamLife);
-                if (f.Alpha <= 0.002f && f.BloomAlpha <= 0.002f) continue;
+        /// <summary>
+        /// One pulse, at the age it is already carrying. Split out from the ageing loop so that
+        /// <see cref="MarkBeam"/> can stage a frozen one through exactly the same code -- a review
+        /// shot of a weapon drawn by a second code path is a review of the second code path.
+        /// </summary>
+        private void StageBeam(Beam b)
+        {
+            var p = Curves.ProfileFor(b.Tier);
 
-                float frontD = len * f.FrontT;
-                float backD = len * f.BackT;
+            Vector3 d = b.B - b.A;
+            float len = d.magnitude;
+            if (len < 1e-3f) return;
+            Vector3 dir = d / len;
 
-                // A rotation that points the RING MESH'S NORMAL down the shot. The ring is
-                // authored in XZ with a +Y normal, so LookRotation puts +Z on the shot and the
-                // extra 90 about X brings +Y round onto it. Every wavefront is therefore a disc
-                // standing ACROSS the line of fire, which is the whole read: the player is looking
-                // at fronts of a wave, not at a bar someone drew between two points.
-                var across = Quaternion.LookRotation(dir, Vector3.up) * Quaternion.Euler(90f, 0f, 0f);
+            var f = Curves.Pulse(b.Age / BeamLife);
+            if (f.Alpha <= 0.002f && f.BloomAlpha <= 0.002f) return;
 
-                // ---- the air the carrier is passing through ---------------------------------
-                // One stretched sphere covering the drawn span, at low alpha, with the rim
-                // QUANTISED into four bands. On a smooth ellipsoid that is what produces the
-                // shimmer: seen from the side the bands run along the axis like a heat column,
-                // and seen from behind the shooter -- the chase camera's normal view, so the
-                // common case -- they are concentric rings receding toward the target. It is the
-                // heat haze and it costs one instance, because the banding is the shader's.
-                if (f.Alpha > 0.002f && frontD > backD + 0.05f)
+            float frontD = len * f.FrontT;
+            float backD = len * f.BackT;
+
+            // A rotation that points the RING MESH'S NORMAL down the shot. The ring is
+            // authored in XZ with a +Y normal, so LookRotation puts +Z on the shot and the
+            // extra 90 about X brings +Y round onto it. Every wavefront is therefore a disc
+            // standing ACROSS the line of fire, which is the whole read: the player is looking
+            // at fronts of a wave, not at a bar someone drew between two points.
+            //
+            // THIS IS THE PART NO TIER MAY CHANGE. The ladder moves wavelength, spread,
+            // untidiness and what the arrival does; it never moves the axis, the lifetime or the
+            // hue, because those are what say the weapon is still the same weapon. An upgrade
+            // that changed those would read as a different gun in a different pair of hands.
+            var across = Quaternion.LookRotation(dir, Vector3.up) * Quaternion.Euler(90f, 0f, 0f);
+            Vector3 side = Vector3.Cross(dir, Vector3.up);
+            side = side.sqrMagnitude < 1e-5f ? Vector3.right : side.normalized;
+
+            // ---- the air the carrier is passing through ---------------------------------
+            // One stretched sphere covering the drawn span, at low alpha, with the rim
+            // QUANTISED into four bands. On a smooth ellipsoid that is what produces the
+            // shimmer: seen from the side the bands run along the axis like a heat column,
+            // and seen from behind the shooter -- the chase camera's normal view, so the
+            // common case -- they are concentric rings receding toward the target. It is the
+            // heat haze and it costs one instance, because the banding is the shader's.
+            //
+            // The column is how a tier says how TIDY it is. A Field Jammer spills most of what
+            // it makes into the air around the shot and a Decryptor almost none, which is the
+            // difference between improvised and purpose-built stated in one number.
+            if (f.Alpha > 0.002f && frontD > backD + 0.05f)
+            {
+                float mid = (frontD + backD) * 0.5f;
+                float span = frontD - backD;
+                float fat = Curves.PulseRadius(p, len <= 0f ? 0f : mid / len) * 1.8f * p.HazeFat;
+                _spheres.Add(Matrix4x4.TRS(b.A + dir * mid,
+                                           Quaternion.LookRotation(dir, Vector3.up),
+                                           new Vector3(fat, fat, span)),
+                             PulseHaze, f.Alpha * 0.09f * p.HazeScale, Shape.Haze);
+            }
+
+            // ---- the wavefronts ---------------------------------------------------------
+            // A finite TRAIN of discs behind the front, spaced in metres and travelling with
+            // it. Finite on purpose: a train that reached all the way back to the muzzle
+            // would be a continuous tube, which is the laser the owner rejected. The COUNT and
+            // the SPACING are the tier's loudest voice -- five ragged fronts two metres apart
+            // against fourteen at seventy centimetres is a difference readable from a still.
+            int fronts = Curves.WavefrontCount(p, frontD - backD);
+            for (int k = 0; k < fronts; k++)
+            {
+                if (!Curves.Wavefront(p, k, frontD, backD, len, f.Phase, b.Seed,
+                                      out float dist, out float radius, out float amp)) continue;
+
+                Vector3 at = b.A + dir * dist;
+                float d2 = radius * 2f;
+
+                // The front itself, hot; and a wider, fainter ghost half a beat outside it, so
+                // the edge of each front is soft rather than a hairline. A hard edge on a
+                // wavefront is the single thing that makes energy read as a cut.
+                // The LEADING front is drawn harder than the rest. With the hard white bead
+                // gone something still has to be the head of the packet, and one front at
+                // nearly twice the brightness of the one behind it does that without putting a
+                // projectile back on the end of the shot.
+                float lead = k == 0 ? 0.62f : 0.38f;
+                _rings.Add(Matrix4x4.TRS(at, across, new Vector3(d2, 1f, d2)),
+                           Curves.FrontColour(b.Ink, amp, p), f.Alpha * amp * lead, Shape.Wave);
+                _rings.Add(Matrix4x4.TRS(at, across, new Vector3(d2 * 1.34f, 1f, d2 * 1.34f)),
+                           PulseHaze, f.Alpha * amp * 0.12f, Shape.Wave);
+
+                // ---- lobes: the payload leaving the carrier ------------------------------
+                // Small fronts of their own, off the axis, walking FURTHER off it the further
+                // down the shot they are. This is the Worm Lance's whole tell and it is the
+                // one behaviour in the ladder that is about the payload rather than about the
+                // beam: something is coming off the carrier on its way and going looking. It
+                // is drawn as the same disc at the same angle, so it reads as part of the same
+                // shot rather than as a second weapon firing alongside the first.
+                for (int l = 0; l < p.Lobes; l++)
                 {
-                    float mid = (frontD + backD) * 0.5f;
-                    float span = frontD - backD;
-                    float fat = Curves.PulseRadius(len <= 0f ? 0f : mid / len) * 1.8f;
-                    _spheres.Add(Matrix4x4.TRS(b.A + dir * mid,
-                                               Quaternion.LookRotation(dir, Vector3.up),
-                                               new Vector3(fat, fat, span)),
-                                 PulseHaze, f.Alpha * 0.09f, Shape.Haze);
+                    float u = len <= 0f ? 0f : dist / len;
+                    Curves.Lobe(p, k, l, u, out float offset, out float spin, out float lobeAmp);
+                    if (lobeAmp <= 0.004f) continue;
+                    Vector3 o = Quaternion.AngleAxis(spin, dir) * side * (radius * offset);
+                    float ld = d2 * 0.52f;
+                    _rings.Add(Matrix4x4.TRS(at + o, across, new Vector3(ld, 1f, ld)),
+                               Curves.FrontColour(b.Ink, amp, p), f.Alpha * amp * lobeAmp, Shape.Wave);
+                }
+            }
+
+            // ---- the leading edge -------------------------------------------------------
+            // SOFT, which is the note. The lance had a hard opaque white bead here and that
+            // bead was most of why it read as a projectile; a pulse has no nose cone. This is
+            // a glow with no occlusion at all, a little bigger than the front it sits on.
+            if (f.Alpha > 0.002f && f.FrontT < 1f)
+            {
+                // ONE soft glow, and no bright core inside it. The first build of this put a
+                // near-white sphere here and it photographed as a HEADLIGHT: a round hot thing
+                // with a trail behind it is a projectile whatever the trail is made of. The
+                // leading wavefront above is the head now, and this is only the air around it.
+                float r = Curves.PulseRadius(p, f.FrontT);
+                Vector3 head = b.A + dir * frontD;
+                _spheres.Add(Matrix4x4.TRS(head, Quaternion.identity, Vector3.one * (r * 2.4f * p.HeadGlow)),
+                             PulseHaze, f.Alpha * 0.11f, Shape.Glow);
+            }
+
+            // ---- arrival -----------------------------------------------------------------
+            // What a landed packet looks like: the carrier collapsing onto one chip. Gold,
+            // not blue -- the blue burst belongs to the drone's EMP and nothing else.
+            //
+            // The tier is read here too, and it is the read that matters most, because the
+            // arrival is the frame the player is actually looking at: a Field Jammer barely
+            // marks the chip, a Cascade Emitter sets off a chain back down its own line.
+            if (b.Landed && f.BloomAlpha > 0.002f)
+            {
+                for (int s = 0; s < p.ChainStages; s++)
+                {
+                    Curves.Chain(p, s, f.BloomScale, f.BloomAlpha, len,
+                                 out float scale, out float alpha, out float back);
+                    if (alpha <= 0.002f || scale <= 0.001f) continue;
+                    Vector3 at = b.B - dir * back;
+                    _spheres.Add(Matrix4x4.TRS(at, Quaternion.identity, Vector3.one * scale),
+                                 Pulse, alpha, Shape.Shell);
+                    _spheres.Add(Matrix4x4.TRS(at, Quaternion.identity, Vector3.one * (scale * 0.42f)),
+                                 PulseCore, alpha * 0.85f, Shape.Glow);
                 }
 
-                // ---- the wavefronts ---------------------------------------------------------
-                // A finite TRAIN of discs behind the front, spaced in metres and travelling with
-                // it. Finite on purpose: a train that reached all the way back to the muzzle
-                // would be a continuous tube, which is the laser the owner rejected. Twenty
-                // fronts is a packet with a bright leading edge and a dark end, and the direction
-                // of travel is readable from one still frame because of it.
-                int fronts = Curves.WavefrontCount(frontD - backD);
-                for (int k = 0; k < fronts; k++)
+                // Filaments: the worm looking for the next chip. Short, gold, and thrown from
+                // the body it just landed on. They are deliberately NOT the EMP's arcs -- four
+                // of them, half a metre, and warm, against eleven cold ones reaching twice a
+                // blast radius -- because the one thing this must never be mistaken for is the
+                // drone's pulse.
+                for (int i = 0; i < p.Filaments; i++)
                 {
-                    if (!Curves.Wavefront(k, frontD, backD, len, f.Phase,
-                                          out float dist, out float radius, out float amp)) continue;
-
-                    Vector3 at = b.A + dir * dist;
-                    float d2 = radius * 2f;
-
-                    // The front itself, hot; and a wider, fainter ghost half a beat outside it, so
-                    // the edge of each front is soft rather than a hairline. A hard edge on a
-                    // wavefront is the single thing that makes energy read as a cut.
-                    // The LEADING front is drawn harder than the rest. With the hard white bead
-                    // gone something still has to be the head of the packet, and one front at
-                    // nearly twice the brightness of the one behind it does that without putting a
-                    // projectile back on the end of the shot.
-                    float lead = k == 0 ? 0.62f : 0.38f;
-                    _rings.Add(Matrix4x4.TRS(at, across, new Vector3(d2, 1f, d2)),
-                               Color.Lerp(b.Ink, PulseCore, amp * amp), f.Alpha * amp * lead, Shape.Wave);
-                    _rings.Add(Matrix4x4.TRS(at, across, new Vector3(d2 * 1.34f, 1f, d2 * 1.34f)),
-                               PulseHaze, f.Alpha * amp * 0.12f, Shape.Wave);
-                }
-
-                // ---- the leading edge -------------------------------------------------------
-                // SOFT, which is the note. The lance had a hard opaque white bead here and that
-                // bead was most of why it read as a projectile; a pulse has no nose cone. This is
-                // a glow with no occlusion at all, a little bigger than the front it sits on.
-                if (f.Alpha > 0.002f && f.FrontT < 1f)
-                {
-                    // ONE soft glow, and no bright core inside it. The first build of this put a
-                    // near-white sphere here and it photographed as a HEADLIGHT: a round hot thing
-                    // with a trail behind it is a projectile whatever the trail is made of. The
-                    // leading wavefront above is the head now, and this is only the air around it.
-                    float r = Curves.PulseRadius(f.FrontT);
-                    Vector3 head = b.A + dir * frontD;
-                    _spheres.Add(Matrix4x4.TRS(head, Quaternion.identity, Vector3.one * (r * 2.4f)),
-                                 PulseHaze, f.Alpha * 0.11f, Shape.Glow);
-                }
-
-                // ---- arrival -----------------------------------------------------------------
-                // What a landed packet looks like: the carrier collapsing onto one chip. Gold,
-                // not blue -- the blue burst belongs to the drone's EMP and nothing else.
-                if (b.Landed && f.BloomAlpha > 0.002f)
-                {
-                    _spheres.Add(Matrix4x4.TRS(b.B, Quaternion.identity, Vector3.one * f.BloomScale),
-                                 Pulse, f.BloomAlpha, Shape.Shell);
-                    _spheres.Add(Matrix4x4.TRS(b.B, Quaternion.identity, Vector3.one * (f.BloomScale * 0.42f)),
-                                 PulseCore, f.BloomAlpha * 0.85f, Shape.Glow);
+                    Curves.Filament(b.Seed, i, p, f.BloomAlpha, dir, side,
+                                    out Vector3 away, out float reach, out float alpha);
+                    if (alpha <= 0.002f) continue;
+                    AddSegment(_bars, b.B, b.B + away * reach, 0.05f, PulseCore, alpha, Shape.Solid);
                 }
             }
         }
@@ -1284,6 +1408,361 @@ namespace Cipher.Game
                 return amp > 0.004f;
             }
 
+
+            // ------------------------------------------------------------------ the ladder
+
+            /// <summary>
+            /// The top rung of the hero's emitter ladder. Mirrors <c>GunTiers.MaxTier</c>; the
+            /// NAMES live there because they are gameplay, and the BEHAVIOUR lives here because it
+            /// is drawing, and neither wants to know about the other.
+            /// </summary>
+            public const int MaxTier = 3;
+
+            /// <summary>
+            /// How one rung of the ladder puts its shot in the air.
+            ///
+            /// OWNER, 2026-09-12: "different gun upgrades should make my weapon skin different and
+            /// it should also change the way my projectile goes". This struct is the second half of
+            /// that; <c>HeroEmitter</c> is the first.
+            ///
+            /// THE ESCALATION IS CRUDE -> SOPHISTICATED, NOT SMALL -> BIG (ADR-008). These are
+            /// signal weapons carrying malware, built by one veteran out of what a lake community
+            /// has in its garages, so an upgrade is a better PAYLOAD and a better aerial, never a
+            /// larger calibre. Concretely, across the four rungs:
+            ///
+            ///   wavelength  2.10m -> 0.70m. The carrier gets finer and the train gets denser,
+            ///               which is the single loudest difference between two stills.
+            ///   spread      wide and sloppy -> tight -> tight -> wide again, but wide the way a
+            ///               broadcast array is wide rather than the way a leak is.
+            ///   untidiness  <see cref="Jitter"/> falls off a cliff after the Field Jammer. The
+            ///               first weapon is the ONLY one whose fronts are visibly uneven.
+            ///   arrival     a weak smudge -> a clean collapse -> a collapse that throws
+            ///               filaments looking for the next chip -> a chain back down the line.
+            ///
+            /// WHAT NO RUNG MAY CHANGE: the hue family, the 0.22s lifetime, the disc-across-the-
+            /// axis geometry and the direction of travel. Those four are what say it is the same
+            /// weapon, and three of them are also what holds the shot apart from the dying-chip
+            /// tell (see <see cref="Pulse"/>). An upgrade must read as "his gun got better", never
+            /// as "somebody else is shooting".
+            /// </summary>
+            public readonly struct PulseProfile
+            {
+                /// <summary>Metres between one wavefront and the next. The carrier's wavelength.</summary>
+                public readonly float Spacing;
+
+                /// <summary>The most fronts this weapon's packet ever carries.</summary>
+                public readonly int MaxFronts;
+
+                /// <summary>How fast the packet darkens behind its head, as a front count.</summary>
+                public readonly float Falloff;
+
+                /// <summary>Front radius at the horn, and once it has spread to the target.</summary>
+                public readonly float NearRadius, FarRadius;
+
+                /// <summary>How uneven the fronts are, 0 = machined, 0.5 = visibly improvised.</summary>
+                public readonly float Jitter;
+
+                /// <summary>How far toward <see cref="PulseCore"/> a bright front is pushed.</summary>
+                public readonly float Heat;
+
+                /// <summary>Spill into the surrounding air: alpha, and how fat the column is.</summary>
+                public readonly float HazeScale, HazeFat;
+
+                /// <summary>Size of the soft glow riding the leading front.</summary>
+                public readonly float HeadGlow;
+
+                /// <summary>What the arrival is worth, as a multiple of the shared bloom.</summary>
+                public readonly float BloomScale;
+
+                /// <summary>Satellite fronts shed off the axis, and how far out they walk.</summary>
+                public readonly int Lobes;
+                public readonly float LobeSpread;
+
+                /// <summary>Blooms in the arrival, staggered back down the shot's own line.</summary>
+                public readonly int ChainStages;
+
+                /// <summary>Short filaments thrown from a landed packet, hunting.</summary>
+                public readonly int Filaments;
+
+                public PulseProfile(float spacing, int maxFronts, float falloff,
+                                    float nearRadius, float farRadius, float jitter, float heat,
+                                    float hazeScale, float hazeFat, float headGlow, float bloomScale,
+                                    int lobes, float lobeSpread, int chainStages, int filaments)
+                {
+                    Spacing = spacing;
+                    MaxFronts = maxFronts;
+                    Falloff = falloff;
+                    NearRadius = nearRadius;
+                    FarRadius = farRadius;
+                    Jitter = jitter;
+                    Heat = heat;
+                    HazeScale = hazeScale;
+                    HazeFat = hazeFat;
+                    HeadGlow = headGlow;
+                    BloomScale = bloomScale;
+                    Lobes = lobes;
+                    LobeSpread = lobeSpread;
+                    ChainStages = chainStages;
+                    Filaments = filaments;
+                }
+            }
+
+            /// <summary>
+            /// What an EMPLACEMENT's shot looks like, and it is the file's original tuning to the
+            /// last decimal -- <see cref="WaveSpacing"/>, <see cref="MaxWavefronts"/>,
+            /// <see cref="WaveNearRadius"/>, <see cref="WaveFarRadius"/> and nothing else.
+            ///
+            /// It is a separate profile rather than a rung of the ladder because a turret's tier is
+            /// its own ladder and it is read off its HARDWARE (aerials, horns, how many throats are
+            /// still lit -- see TurretProps). Two objects escalating in the same channel would mean
+            /// the player could not tell a tier-3 Sentry's shot from his own tier-3 emitter's, and
+            /// "whose fire was that" is the one question a defence game must always answer.
+            /// </summary>
+            public static readonly PulseProfile TurretProfile = new PulseProfile(
+                spacing: WaveSpacing, maxFronts: MaxWavefronts, falloff: MaxWavefronts,
+                nearRadius: WaveNearRadius, farRadius: WaveFarRadius,
+                jitter: 0f, heat: 0f, hazeScale: 1f, hazeFat: 1f, headGlow: 1f, bloomScale: 1f,
+                lobes: 0, lobeSpread: 0f, chainStages: 1, filaments: 0);
+
+            /// <summary>
+            /// FIELD JAMMER. Conduit, a drill grip and a bent wire loop. It barely works and it
+            /// should barely look like it works: five fat fronts two metres apart, uneven enough
+            /// that no two are the same size, spraying loose by the far end and losing a lot of
+            /// what it makes into the air. The arrival is a smudge.
+            ///
+            /// THE SPREAD CAME DOWN FROM 0.78 AFTER THE FIRST CAPTURE. At that width the crudest
+            /// weapon in the game threw the BIGGEST thing on the screen -- wider fronts and a
+            /// fatter haze cone than the Cascade Emitter -- which inverts the whole ladder in the
+            /// one frame a player actually looks at. Loose and untidy has to stay smaller than
+            /// broad and deliberate, or "improvised" reads as "powerful".
+            /// </summary>
+            public static readonly PulseProfile Tier0 = new PulseProfile(
+                spacing: 2.10f, maxFronts: 5, falloff: 7f,
+                nearRadius: 0.18f, farRadius: 0.52f,
+                jitter: 0.42f, heat: 0f, hazeScale: 1.5f, hazeFat: 1.15f, headGlow: 1.25f,
+                bloomScale: 0.70f, lobes: 0, lobeSpread: 0f, chainStages: 1, filaments: 0);
+
+            /// <summary>
+            /// DECRYPTOR. The first one he BUILT rather than bodged: a waveguide horn on a
+            /// machined body. Ten even fronts at 1.3m in a column that barely diverges, almost no
+            /// spill, and a clean tight collapse on the chip. Nothing clever -- it simply works,
+            /// and the step up from the Jammer is meant to feel like competence, not power.
+            /// </summary>
+            public static readonly PulseProfile Tier1 = new PulseProfile(
+                spacing: 1.30f, maxFronts: 10, falloff: 12f,
+                nearRadius: 0.11f, farRadius: 0.30f,
+                jitter: 0.05f, heat: 0.25f, hazeScale: 0.75f, hazeFat: 0.85f, headGlow: 0.90f,
+                bloomScale: 1.05f, lobes: 0, lobeSpread: 0f, chainStages: 1, filaments: 0);
+
+            /// <summary>
+            /// WORM LANCE. The payload self-propagates, so the SHOT has to show something leaving
+            /// it: two satellite fronts ride off the axis and walk further out the further down the
+            /// shot they get, and the arrival throws short filaments off the body it landed on.
+            /// The carrier itself is the tightest of the four -- a lance is a delivery system, and
+            /// what spreads is what it is carrying, not the beam.
+            /// </summary>
+            public static readonly PulseProfile Tier2 = new PulseProfile(
+                spacing: 0.95f, maxFronts: 14, falloff: 16f,
+                nearRadius: 0.10f, farRadius: 0.34f,
+                jitter: 0.12f, heat: 0.35f, hazeScale: 0.60f, hazeFat: 0.80f, headGlow: 0.85f,
+                bloomScale: 1.15f, lobes: 2, lobeSpread: 2.2f, chainStages: 1, filaments: 5);
+
+            /// <summary>
+            /// CASCADE EMITTER. Named for the event (ADR-003) by the man who refused the chip, and
+            /// it is the only rung allowed to be excessive: fourteen fronts at seventy centimetres,
+            /// wide and hot, and an arrival that goes off three times, walking back up its own line
+            /// toward the shooter. Still gold, still 0.22 seconds, still discs across the axis --
+            /// the excess is all in density and in what happens when it lands.
+            ///
+            /// The spacing is 0.70 and not lower for a reason. Fronts closer together than they are
+            /// THICK merge into a continuous tube, and a continuous tube of light is exactly the
+            /// laser blast the owner rejected. This is as dense as the family can go.
+            /// </summary>
+            public static readonly PulseProfile Tier3 = new PulseProfile(
+                spacing: 0.70f, maxFronts: 14, falloff: 19f,
+                nearRadius: 0.18f, farRadius: 0.62f,
+                jitter: 0.08f, heat: 0.60f, hazeScale: 1.50f, hazeFat: 1.15f, headGlow: 1.15f,
+                bloomScale: 1.55f, lobes: 1, lobeSpread: 1.1f, chainStages: 3, filaments: 0);
+
+            /// <summary>
+            /// The profile for a beam's tier. Anything negative is an emplacement; anything above
+            /// the ladder clamps to its top, so a loot table that one day hands out a fifth gun
+            /// draws a Cascade Emitter rather than nothing at all.
+            /// </summary>
+            public static PulseProfile ProfileFor(int tier)
+            {
+                if (tier < 0) return TurretProfile;
+                switch (tier)
+                {
+                    case 0: return Tier0;
+                    case 1: return Tier1;
+                    case 2: return Tier2;
+                    default: return Tier3;
+                }
+            }
+
+            /// <summary>As <see cref="PulseRadius(float)"/>, for one rung of the ladder.</summary>
+            public static float PulseRadius(in PulseProfile p, float u)
+                => Mathf.Lerp(p.NearRadius, p.FarRadius, Mathf.Sqrt(Mathf.Clamp01(u)));
+
+            /// <summary>As <see cref="WavefrontCount(float)"/>, for one rung of the ladder.</summary>
+            public static int WavefrontCount(in PulseProfile p, float span)
+            {
+                if (span <= 0f) return 0;
+                return Mathf.Clamp(Mathf.CeilToInt(span / p.Spacing) + 1, 0, p.MaxFronts);
+            }
+
+            /// <summary>
+            /// The colour of a front at this brightness on this rung.
+            ///
+            /// ONLY EVER A LERP BETWEEN TWO COLOURS THAT ARE ALREADY IN THE WEAPON FAMILY, which
+            /// is what makes the ladder safe. Every weapon colour sits at green >=
+            /// <see cref="WeaponGreenFloor"/>, so any mix of two of them does too, and no tier can
+            /// drift the shot toward the implant's orange however it is tuned. Tested.
+            /// </summary>
+            public static Color FrontColour(Color ink, float amp, in PulseProfile p)
+                => Color.Lerp(ink, PulseCore, Mathf.Clamp01(amp * amp + p.Heat * amp));
+
+            /// <summary>
+            /// Where satellite front <paramref name="lobe"/> of wavefront <paramref name="index"/>
+            /// sits, for a weapon that sheds its payload on the way.
+            /// </summary>
+            /// <param name="u">How far down the shot the parent front is, 0..1.</param>
+            /// <param name="offset">Out: how far off the axis, in front radii.</param>
+            /// <param name="spin">Out: which way round the axis, in degrees.</param>
+            /// <param name="amp">Out: 0..1, relative to the parent front.</param>
+            public static void Lobe(in PulseProfile p, int index, int lobe, float u,
+                                    out float offset, out float spin, out float amp)
+            {
+                offset = 0f; spin = 0f; amp = 0f;
+                if (p.Lobes <= 0 || lobe < 0 || lobe >= p.Lobes) return;
+
+                // IT MUST GROW WITH u AND NOT WITH AGE. A lobe that widens with the clock is a
+                // shockwave; one that widens with DISTANCE ALONG THE SHOT is something that left
+                // the carrier and is still going, which is what a self-propagating payload is.
+                offset = p.LobeSpread * (0.55f + 1.45f * Mathf.Clamp01(u));
+
+                // Spread evenly round the axis, then walked on by the index so the lobes spiral
+                // down the packet rather than lying in one plane -- one plane reads as a mistake
+                // in the geometry, a spiral reads as motion.
+                spin = lobe * (360f / Mathf.Max(p.Lobes, 1)) + index * 47f;
+
+                // Fainter than the carrier and fading as it leaves. What is peeling off is small.
+                amp = 0.42f * (1f - 0.45f * Mathf.Clamp01(u));
+            }
+
+            /// <summary>
+            /// Bloom <paramref name="stage"/> of an arrival. Stage 0 is the hit itself; later
+            /// stages are the cascade walking BACK down the shot's own line toward the shooter,
+            /// each one later, smaller and fainter than the one before.
+            /// </summary>
+            /// <param name="back">Out: metres back along the shot from the impact point.</param>
+            public static void Chain(in PulseProfile p, int stage, float bloomScale, float bloomAlpha,
+                                     float length, out float scale, out float alpha, out float back)
+            {
+                scale = 0f; alpha = 0f; back = 0f;
+                if (stage < 0 || stage >= p.ChainStages) return;
+
+                scale = bloomScale * p.BloomScale * Mathf.Pow(0.70f, stage);
+
+                // Later stages start later. The bloom alpha is already falling by the time stage
+                // two lights, so the delay is applied by simply holding the stage dark until the
+                // parent bloom has aged past it -- no second clock, and nothing to keep in sync.
+                float begin = stage * 0.22f;
+                float k = Mathf.InverseLerp(1f, 0f, bloomAlpha);
+                if (k < begin) return;
+                alpha = bloomAlpha * Mathf.Pow(0.72f, stage);
+
+                // Spaced in metres but capped against the shot, so a point-blank cascade does not
+                // put its last bloom behind the shooter's own head.
+                back = Mathf.Min(stage * 1.6f, length * 0.30f);
+            }
+
+            /// <summary>
+            /// Filament <paramref name="index"/> thrown from a landed packet: the worm looking for
+            /// the next chip. Deterministic from the shot's own seed, so a held frame is
+            /// reproducible and two shots at the same place scatter the same way.
+            /// </summary>
+            /// <param name="away">Out: unit direction, always off to the SIDE of the shot.</param>
+            public static void Filament(int seed, int index, in PulseProfile p, float bloomAlpha,
+                                        Vector3 dir, Vector3 side,
+                                        out Vector3 away, out float reach, out float alpha)
+            {
+                away = side; reach = 0f; alpha = 0f;
+                if (p.Filaments <= 0 || index < 0 || index >= p.Filaments) return;
+
+                float a = Hash01(seed, index * 3 + 1) * 360f;
+                float lift = Hash01(seed, index * 3 + 2) * 0.9f - 0.2f;
+                var perp = Quaternion.AngleAxis(a, dir) * side;
+                away = (perp + dir * lift).normalized;
+
+                // SHORT. They are a tell, not a discharge: the EMP's arcs reach nearly twice a
+                // blast radius and these reach half a metre, which is most of why the two cannot
+                // be confused at a glance.
+                reach = 0.38f + 0.34f * Hash01(seed, index * 3 + 3);
+                alpha = bloomAlpha * 0.8f;
+            }
+
+            /// <summary>
+            /// A stable 0..1 from two integers. Not <c>Random</c>: the same shot must draw the
+            /// same picture every time it is replayed, and a held review frame must not crawl.
+            /// </summary>
+            public static float Hash01(int seed, int salt)
+            {
+                unchecked
+                {
+                    uint h = (uint)(seed * 73856093) ^ (uint)(salt * 19349663);
+                    h ^= h >> 13;
+                    h *= 0x85EBCA6Bu;
+                    h ^= h >> 16;
+                    return (h & 0xFFFFFF) / 16777215f;
+                }
+            }
+
+            /// <summary>
+            /// As <see cref="Wavefront(int,float,float,float,float,out float,out float,out float)"/>,
+            /// for one rung of the ladder and one shot's own seed.
+            /// </summary>
+            public static bool Wavefront(in PulseProfile p, int index, float frontDist, float backDist,
+                                         float length, float phase, int seed,
+                                         out float dist, out float radius, out float amp)
+            {
+                dist = 0f; radius = 0f; amp = 0f;
+                if (index < 0 || index >= p.MaxFronts) return false;
+
+                dist = frontDist - index * p.Spacing;
+                if (dist < backDist || dist < 0f) return false;
+
+                radius = PulseRadius(p, length <= 0f ? 0f : dist / length);
+
+                // Brightest at the front and dying back through the packet. Squared, so the fall
+                // is steep near the head: that gradient is the arrow. Without it a train of equal
+                // rings is a ladder and a ladder has no direction.
+                float k = Mathf.Clamp01(index / Mathf.Max(p.Falloff, 1f));
+                amp = (1f - k) * (1f - k) * (1f - k);
+
+                // The shimmer. A slow travelling wave across the train, never down to nothing --
+                // a front that blinks out entirely leaves a hole in the packet and the hole reads
+                // as a gap in the geometry rather than as energy breathing.
+                amp *= 0.74f + 0.26f * Mathf.Sin(index * 1.9f - phase * 2.2f);
+
+                // And the front fattens a little as it flickers, which is the part that stops the
+                // discs looking like a stack of identical washers threaded on a wire.
+                radius *= 0.92f + 0.16f * Mathf.Sin(index * 1.1f - phase * 1.7f);
+
+                // UNTIDINESS IS A PROPERTY OF THE WEAPON, NOT OF THE MOMENT. It comes off the
+                // shot's seed and the front's index, so a Field Jammer's packet is lumpy in a way
+                // that holds still while it travels -- which is what makes it read as a badly made
+                // aerial rather than as noise somebody added to the effect. At Jitter 0 both terms
+                // are exactly 1 and this function is the original, to the bit.
+                if (p.Jitter > 0f)
+                {
+                    amp *= 1f - p.Jitter * 0.55f * Hash01(seed, index);
+                    radius *= 1f + p.Jitter * (Hash01(seed, index + 97) - 0.5f) * 1.1f;
+                }
+
+                return amp > 0.004f;
+            }
             /// <summary>One failing chip at one instant.</summary>
             public struct FailFrame
             {
