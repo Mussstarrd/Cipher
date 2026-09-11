@@ -297,17 +297,19 @@ namespace Cipher.Game.Scenarios
         /// during the scene build, so a typo is a load error naming the known kinds instead of a
         /// prop that simply never appears and is never missed.
         /// </summary>
-        private static readonly string[] PropKinds = { "Pillar", "Guardhouse", "BoomBarrier", "JerseyBarrier" };
-
+        /// The list itself lives in <see cref="PropCatalog"/>, which is also where a prop's solid
+        /// footprint lives, so adding a building is one entry in one file and the reader, the
+        /// builder and the grid agree by construction rather than by three lists staying in step.
         private static void ReadProps(JsonValue props, ScenarioDef def)
         {
             foreach (var pr in props.Items)
             {
                 pr.RejectUnknownKeys("kind", "x", "y", "yaw");
                 string kind = NonEmpty(pr.Get("kind"), "kind");
-                if (System.Array.IndexOf(PropKinds, kind) < 0)
+                if (!PropCatalog.Knows(kind))
                     throw new ScenarioException(
-                        $"{pr.Path}.kind: unknown prop '{kind}'. Known: {string.Join(", ", PropKinds)}");
+                        $"{pr.Path}.kind: unknown prop '{kind}'. " +
+                        $"Known: {string.Join(", ", SortedKinds())}");
 
                 float x = pr.Get("x").AsFloat();
                 float y = pr.Get("y").AsFloat();
@@ -322,6 +324,14 @@ namespace Cipher.Game.Scenarios
 
                 def.Props.Add(new PropDef { Kind = kind, X = x, Y = y, Yaw = yaw });
             }
+        }
+
+        /// <summary>The known prop kinds, alphabetically, for an error message a human can scan.</summary>
+        private static List<string> SortedKinds()
+        {
+            var kinds = new List<string>(PropCatalog.Kinds);
+            kinds.Sort(StringComparer.Ordinal);
+            return kinds;
         }
 
         private static void ReadEconomy(JsonValue e, ScenarioDef def)

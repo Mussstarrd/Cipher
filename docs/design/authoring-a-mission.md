@@ -185,19 +185,53 @@ A mission with a long `HoldUntil` needs a long cycle, or there is nothing left t
 `lastStand` is set. That is the point of the scan cycle: leaving is a thing you do under a clock,
 carrying what fits.
 
-### Scenery
+### Scenery, and the buildings that shape the level
 
 ```json
 "props": [
-  { "kind": "Pillar",      "x": 16.5, "y": 5.4 },
-  { "kind": "Guardhouse",  "x": 19.0, "y": 14.5, "yaw": 200 },
-  { "kind": "BoomBarrier", "x": 17.4, "y": 6.2,  "yaw": 90 },
-  { "kind": "JerseyBarrier", "x": 19.5, "y": 8.0, "yaw": 90 }
+  { "kind": "Clubhouse",   "x": 80.0, "y": 66.0, "yaw": 180 },
+  { "kind": "House",       "x": 48.0, "y": 58.0, "yaw": 180 },
+  { "kind": "Guardhouse",  "x": 33.0, "y": 41.0, "yaw": 15 },
+  { "kind": "StreetLamp",  "x": 50.0, "y": 44.0 }
 ]
 ```
 
-Decoration only — none of it blocks movement or takes damage, so put it wherever it looks right.
-Positions are in cells and may be fractional. `yaw` is degrees.
+Positions are in cells and may be fractional; `yaw` is degrees, and `0` faces **+y**.
+
+**Most props are SOLID.** A building claims a rectangle of grid cells and the crowd walks round it,
+which is the whole point of putting one on a map: terrain that funnels is what makes the player's
+barricades feel placed rather than arbitrary. The cells are claimed during the scene build, before
+any pathing happens, so the build preview, the live sim and the build validator all agree.
+
+A prop never lands on a cell an authored wall already owns, and never inside the road corridor or
+on the hero's spawn — those are simply skipped, so a building shoved into a fence quietly loses the
+overlapping half of itself. Put it where it fits.
+
+| Kind | Cells | What it is |
+| --- | --- | --- |
+| `Clubhouse` | 16 x 12 | The community's social building. The biggest obstruction available. |
+| `CommunityCentre` | 14 x 8 + a 8 x 4 entrance wing | Rec centre / gym. L-shaped. |
+| `House` | 6 x 5 | Siding, gable roof, porch, chimney, driveway. Colour varies by cell. |
+| `PoolHouse` | 7 x 5 | Changing rooms. |
+| `PoolDeck` | 10 x 6 solid (the water) | Deck, coping, water, loungers. The deck is walkable. |
+| `Bleachers` | 8 x 3 | Four stepped rows. |
+| `Guardhouse` | 3 x 3 | The gate hut. |
+| `BrushPile` | 3 x 2 | Cut brush dragged across a gap. |
+| `PalletStack` | 2 x 2 | Pallets off the back of a truck. |
+| `Dumpster` | 3 x 2 | A skip shoved sideways. |
+| `Pillar` / `BoomBarrier` / `JerseyBarrier` | 1 x 1 | Gate furniture. |
+| `StreetLamp` / `PicnicTable` / `Mailbox` | none | Pure decoration; nothing walks round them. |
+
+Fences are **walls**, not props: a `Static` wall rect renders as chain-link, which is what you want
+around a pool or behind a garden. Leave a gap in one and you have a gate the crowd will find.
+
+An **even-sized footprint cannot be centred on a cell**, so a `Clubhouse` or a `House` at `yaw: 180`
+sits one cell further along than the same prop at `yaw: 0`. Check the overhead screenshot; do not
+assume.
+
+Adding a kind is one entry in `PropCatalog` (the cells) plus one case in `SiteProps` (the boxes).
+The scenario reader validates against the catalogue, so a typo is a load error naming every kind
+that exists rather than a prop that silently never appears.
 
 ## Rules of thumb
 

@@ -108,9 +108,14 @@ namespace Cipher.Game.Scenarios
         public List<ActorDef> Actors { get; } = new List<ActorDef>();
 
         /// <summary>
-        /// Built scenery: gate pillars, a guardhouse, a boom barrier. Decoration only -- nothing
-        /// here blocks pathing or takes damage, because the walls own what is solid and a prop that
-        /// quietly changed a route would break the build preview's covenant.
+        /// Built scenery: gate pillars, a guardhouse, the clubhouse, the fenced pool, the houses.
+        ///
+        /// A prop with a footprint in <see cref="PropCatalog"/> IS solid: it writes Rock into the
+        /// one grid map during the scene build, before the first flow field and long before build
+        /// mode can open, so the preview, the live sim and the build validator all read the same
+        /// terrain. That is the whole reason buildings are worth having -- a clubhouse the crowd
+        /// walks through funnels nothing. Nothing here is touched again once a match is running.
+        /// Props with an empty footprint (a street lamp, a mailbox) stay pure decoration.
         /// </summary>
         public List<PropDef> Props { get; } = new List<PropDef>();
 
