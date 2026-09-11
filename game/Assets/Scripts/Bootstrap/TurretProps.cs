@@ -122,6 +122,18 @@ namespace Cipher.Game
         /// <summary>Parts taken away by damage, worst-hit first.</summary>
         private readonly List<GameObject> _fragile = new List<GameObject>(8);
 
+        /// <summary>
+        /// The amber throats. Damage puts them out one by one.
+        ///
+        /// THIS IS WHAT SEPARATES DAMAGE FROM TIER, and without it the two are the same cue read
+        /// twice: an upgrade adds horns and a beating removes them, so a chewed-up tier-3
+        /// emplacement and a fresh tier-0 one are the same object at a glance. How many emitters
+        /// are still LIT is a second, independent channel, and it is the one that matters -- what
+        /// the player needs from a damaged gun is not "how much hardware is left" but "how much of
+        /// it is still running".
+        /// </summary>
+        private readonly List<GameObject> _lit = new List<GameObject>(12);
+
         /// <summary>What a hit emplacement leans on. Never the root -- the bootstrap owns that.</summary>
         private Transform? _lean;
 
@@ -188,7 +200,19 @@ namespace Cipher.Game
         /// as far as scale should ever go -- something that gets smaller as it is hurt reads as
         /// being further away. A thing off its own axis reads as a thing that has been hit.
         /// </summary>
-        public static float LeanDegrees(float hp01) => 9f * (1f - Mathf.Clamp01(hp01));
+        public static float LeanDegrees(float hp01) => 14f * (1f - Mathf.Clamp01(hp01));
+
+        /// <summary>
+        /// How many of this emplacement's emitters are still lit at this much health. Never zero
+        /// while it is standing: a gun that still shoots must still show something, or the player
+        /// stops trusting the cue the first time a dark one kills him.
+        /// </summary>
+        public static int LitCount(int total, float hp01)
+        {
+            if (total <= 0) return 0;
+            int lit = Mathf.CeilToInt(total * (1f - MissingParts(hp01) * 0.25f));
+            return Mathf.Clamp(lit, 1, total);
+        }
 
         /// <summary>
         /// How many pieces have been knocked off at this much health. Stepped rather than
@@ -254,6 +278,15 @@ namespace Cipher.Game
             {
                 var part = _fragile[i];
                 if (part != null) part.SetActive(i < _fragile.Count - missing);
+            }
+
+            // And the lights go out from the end too. A throat inside an arm this pass has already
+            // disabled stays dark whatever this says, which is correct and needs no special case.
+            int keep = LitCount(_lit.Count, 1f - missing * 0.25f);
+            for (int i = 0; i < _lit.Count; i++)
+            {
+                var lamp = _lit[i];
+                if (lamp != null) lamp.SetActive(i < keep);
             }
         }
 
@@ -361,7 +394,14 @@ namespace Cipher.Game
             // The feed horn at the focus, and the throat inside it. The throat is lit in the
             // weapon's own amber so that even an idle sentry says which end the energy leaves by.
             Box(head, "FeedHorn", new Vector3(0f, 0.10f, 0.66f), new Vector3(0.17f, 0.17f, 0.20f), Gunmetal);
-            Box(head, "FeedThroat", new Vector3(0f, 0.10f, 0.76f), new Vector3(0.11f, 0.11f, 0.05f), Emission);
+            _lit.Add(Box(head, "FeedThroat", new Vector3(0f, 0.10f, 0.76f),
+                         new Vector3(0.11f, 0.11f, 0.05f), Emission).gameObject);
+            // Two panel lamps on the amplifier can, so the sentry has more than one light to lose
+            // and its damage ramp is as readable as the Brush Hog's ring of them.
+            _lit.Add(Box(head, "Lamp", new Vector3(-0.10f, 0.20f, -0.12f),
+                         new Vector3(0.06f, 0.05f, 0.03f), Emission).gameObject);
+            _lit.Add(Box(head, "Lamp", new Vector3(0.10f, 0.20f, -0.12f),
+                         new Vector3(0.06f, 0.05f, 0.03f), Emission).gameObject);
 
             // Tier: whip aerials off the hub. Thin, tall and unmistakable at range -- a tier-2
             // sentry is visibly bristling from the far side of the golf course, which is the only
@@ -468,7 +508,8 @@ namespace Cipher.Game
                 var horn = Box(arm, "Horn", new Vector3(0f, 0.10f, reach * 1.24f),
                                new Vector3(0.19f, 0.19f, 0.24f),
                                Galvanised, Quaternion.Euler(-16f, 0f, 0f));
-                Box(horn, "Throat", new Vector3(0f, 0f, 0.56f), new Vector3(0.62f, 0.62f, 0.12f), Emission);
+                _lit.Add(Box(horn, "Throat", new Vector3(0f, 0f, 0.56f),
+                             new Vector3(0.62f, 0.62f, 0.12f), Emission).gameObject);
 
                 if (i < BaseHornCount) baseArms[i] = arm;
                 else _tierParts.Add(arm.gameObject);

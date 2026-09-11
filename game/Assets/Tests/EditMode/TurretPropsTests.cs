@@ -121,6 +121,32 @@ namespace Cipher.Game.Tests
         }
 
         [Test]
+        public void DamageIsReadableSeparatelyFromTier()
+        {
+            // THE TRAP THIS CLOSES. Tier adds horns and damage removes them, so on that channel
+            // alone a chewed-up tier-3 emplacement and a fresh tier-0 one are the same object.
+            // How many emitters are still LIT is the second, independent channel.
+            Assert.That(TurretProps.LitCount(12, 1f), Is.EqualTo(12));
+            Assert.That(TurretProps.LitCount(12, 0.6f), Is.LessThan(12));
+            Assert.That(TurretProps.LitCount(12, 0.35f), Is.LessThan(TurretProps.LitCount(12, 0.6f)));
+            Assert.That(TurretProps.LitCount(12, 0f), Is.LessThan(TurretProps.LitCount(12, 0.35f)));
+        }
+
+        [Test]
+        public void AStandingEmplacementAlwaysShowsAtLeastOneLight()
+        {
+            // A gun that still shoots must still show something, or the first time a dark one
+            // kills the player he stops believing the cue.
+            for (float hp = 0f; hp <= 1f; hp += 0.02f)
+            {
+                Assert.That(TurretProps.LitCount(1, hp), Is.EqualTo(1));
+                Assert.That(TurretProps.LitCount(3, hp), Is.InRange(1, 3));
+                Assert.That(TurretProps.LitCount(12, hp), Is.InRange(1, 12));
+            }
+            Assert.That(TurretProps.LitCount(0, 1f), Is.EqualTo(0), "nothing to light is not one light");
+        }
+
+        [Test]
         public void AHurtEmplacementLeansAndAHealthyOneDoesNot()
         {
             // A LEAN, NOT A SHRINK. The bootstrap already sags a damaged turret vertically; a
