@@ -116,8 +116,17 @@ namespace Cipher.Game.UI.Comic
             return sb.ToString();
         }
 
+        /// <summary>
+        /// A labelled row, joined by spaces rather than PADDED to a column.
+        ///
+        /// Column padding only lines up under a left-aligned monospaced style, and the bootstrap
+        /// draws this overlay CENTRED in a proportional font. Padding there does not produce a form,
+        /// it produces a ragged left edge with gaps in the middle of it — worse than the run-on
+        /// lines this replaced. Label-then-value reads correctly under either alignment, which is
+        /// the property a string composed here and drawn somewhere else needs to have.
+        /// </summary>
         private static void Row(StringBuilder sb, string label, string value)
-            => sb.Append(label.PadRight(16)).Append(value).Append('\n');
+            => sb.Append(label).Append("   ").Append(value).Append('\n');
 
         private static string Emplacements(int n) => n == 1 ? "1 emplacement" : $"{n} emplacements";
 
