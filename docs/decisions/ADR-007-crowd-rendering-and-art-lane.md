@@ -72,6 +72,43 @@ future under Adobe is uncertain enough to note.
 **AI 3D generation is a prop tool, not a character tool.** Meshy's paid tiers grant full commercial rights
 and its output is fine for clutter; topology and rigging are not yet good enough for crowds or heroes.
 
+## Decision 3 — The look is inked comic book (amended 2026-09-11)
+
+The owner asked, after seeing the stylised-versus-photoreal trade: *"It can be comic book graphics?"*
+
+**Yes, and it resolves decision 2 rather than complicating it.** Built and running the same day.
+
+**Why this is the right answer and not a compromise.** Stylised-because-it-was-cheap looks cheap.
+Comic-because-it-was-chosen looks authored. Same models, different intent, and the audience can tell.
+Specifically:
+
+1. **It makes the cheap lane look deliberate.** Low-poly models under flat banded light with a hard ink
+   line read as drawn art. The same models under attempted photorealism read as a budget shortfall.
+2. **It is shader work, which is ours.** No purchased asset determines the look. We control it in one file
+   we already own, and it applies to everything ever added.
+3. **It is the single best answer to legibility at a thousand agents**, which is a gameplay problem, not a
+   taste one. Under PBR a distant crowd is grey mush. Under ink outlines every individual keeps a readable
+   silhouette, which is what the player needs to judge a wave.
+4. **It is faster than PBR**, not slower. Banded lighting is cheaper than a full BRDF, and the outline is an
+   extra instanced pass rather than a screen-space effect, so it costs roughly one extra draw per batch.
+5. **It matches something the owner asked for months ago** and we never delivered: comic-book presentation.
+   Mission briefings can now be panels in the same visual language as the game.
+6. **The photoreal concept art stays useful**, and in the one way that survives a style change: palette,
+   weather, staging, composition and light direction. Those are the parts that were already doing the work.
+
+**How it is implemented**, in `Assets/Shaders/InstancedLit.shader`:
+
+| Element | Technique |
+|---|---|
+| Ink outline | Inverted hull in a pass tagged `SRPDefaultUnlit`, width scaled by view distance so the line keeps a near-constant screen weight. No renderer feature, no RenderGraph, and it instances with the body. |
+| Cel shading | Wrapped lambert quantised into bands, so the dark side stays readable instead of crushing to black. |
+| Shadow | A printed colour tint rather than an absence of light. |
+| Halftone | 45-degree dot grid in screen space, applied only in the darkest band so it reads as shading and not noise. |
+| Silhouette | Cool rim light, which matters enormously once a thousand agents overlap. |
+
+**What this does to the budget.** Nothing. The same purchase still applies and the same VAT crowd pipeline
+still applies. The only thing that changed is that the result now looks like a decision.
+
 ## What shipped with this ADR
 
 The URP migration, on 2026-09-11:
@@ -97,7 +134,9 @@ The URP migration, on 2026-09-11:
 
 ## Open questions for the owner
 
-1. **Stylised or photoreal.** The money question. Stylised is $135 and weeks; photoreal is far more of both
-   and still may not match the renders. My recommendation is stylised, and it is not close on cost.
-2. **Do you want to see a side-by-side first?** I can dress one street in Synty and screenshot it against the
-   concept render before you spend anything.
+1. ~~Stylised or photoreal.~~ **Resolved by decision 3: inked comic book.** The owner picked it and it is
+   better than either option originally offered.
+2. **The purchase still needs approving**, about $135, and it blocks every date in
+   `docs/design/ROADMAP-graphical-beta.md`.
+3. **How hard should the ink be?** Line weight, band count and halftone strength are all material
+   properties and can be tuned in minutes once the owner has seen them in motion rather than in a still.

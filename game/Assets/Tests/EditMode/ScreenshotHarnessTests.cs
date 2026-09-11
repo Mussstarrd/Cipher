@@ -53,6 +53,20 @@ namespace Cipher.Game.Tests
         }
 
         [Test]
+        public void OverheadIsOffByDefault()
+        {
+            Assert.IsFalse(ScreenshotHarness.WantsOverhead(new[] { "x", "-exodus-screenshot", "a.png" }));
+            Assert.IsFalse(ScreenshotHarness.WantsOverhead(null!));
+        }
+
+        [Test]
+        public void OverheadFlagIsDetected()
+        {
+            Assert.IsTrue(ScreenshotHarness.WantsOverhead(
+                new[] { "x", "-exodus-screenshot", "a.png", "-exodus-screenshot-overhead" }));
+        }
+
+        [Test]
         public void ANegativeDelayIsIgnored()
         {
             var (_, delay) = ScreenshotHarness.Parse(

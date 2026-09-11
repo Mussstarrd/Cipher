@@ -234,7 +234,7 @@ namespace Cipher.Game
             ground.name = "Ground";
             ground.transform.position = new Vector3(GridW / 2f, 0f, GridH / 2f);
             ground.transform.localScale = new Vector3(GridW / 10f, 1f, GridH / 10f);
-            ground.GetComponent<Renderer>().material = MakeMaterial(new Color(0.16f, 0.16f, 0.18f), instanced: false);
+            ground.GetComponent<Renderer>().material = MakeMaterial(new Color(0.34f, 0.33f, 0.31f), instanced: false, ink: InkNone);
 
             _agentMesh = HarvestMesh(PrimitiveType.Capsule);
             _cubeMesh = HarvestMesh(PrimitiveType.Cube);
@@ -367,15 +367,26 @@ namespace Cipher.Game
                         ?? Shader.Find("Universal Render Pipeline/Lit")
                         ?? Shader.Find("Standard");
 
-        private static Material MakeMaterial(Color color, bool instanced)
+        /// <summary>
+        /// Comic-book ink width per surface. Characters and props get a drawn line; the ground
+        /// gets none, because an inverted-hull outline on a giant flat plane just makes a border
+        /// round the whole world.
+        /// </summary>
+        public const float InkCharacter = 0.05f;
+        public const float InkProp = 0.035f;
+        public const float InkNone = 0f;
+
+        private static Material MakeMaterial(Color color, bool instanced, float ink = InkProp)
         {
             var mat = new Material(LitShader) { enableInstancing = instanced };
             mat.color = color;
             if (mat.HasProperty(BaseColorId)) mat.SetColor(BaseColorId, color);
+            if (mat.HasProperty(OutlineWidthId)) mat.SetFloat(OutlineWidthId, ink);
             return mat;
         }
 
         private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
+        private static readonly int OutlineWidthId = Shader.PropertyToID("_OutlineWidth");
 
         private void BakeWallsIfChanged()
         {
@@ -691,6 +702,16 @@ namespace Cipher.Game
                     _declineNoticeTimer = 3f;
                 }
             }
+        }
+
+        /// <summary>Tactical camera, for the screenshot harness. Shows the field and the crowd.</summary>
+        public void EnterTacticalViewForCapture()
+        {
+            SetBuildMode(true);
+            // The tactical camera frames the build cursor, which SetBuildMode parks on the hero.
+            // For a capture we want the whole field, so centre it on the map instead.
+            _build.SetCursor(GridW / 2, GridH / 2);
+            _build.Refresh();
         }
 
         private void SetBuildMode(bool on)

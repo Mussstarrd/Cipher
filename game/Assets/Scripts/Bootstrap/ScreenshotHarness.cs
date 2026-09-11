@@ -19,9 +19,12 @@ namespace Cipher.Game
     {
         private const string PathArg = "-exodus-screenshot";
         private const string DelayArg = "-exodus-screenshot-delay";
+        private const string OverheadArg = "-exodus-screenshot-overhead";
 
         private string? _path;
         private float _delay = 8f;
+        private bool _overhead;
+        private bool _viewSet;
         private float _elapsed;
         private bool _captured;
         private float _shotAt;
@@ -30,13 +33,24 @@ namespace Cipher.Game
         public static void InstallIfRequested(GameObject host)
         {
             if (host == null) throw new ArgumentNullException(nameof(host));
-            var (path, delay) = Parse(Environment.GetCommandLineArgs());
+            var args = Environment.GetCommandLineArgs();
+            var (path, delay) = Parse(args);
             if (path == null) return;
 
             var harness = host.AddComponent<ScreenshotHarness>();
             harness._path = path;
             harness._delay = delay;
+            harness._overhead = WantsOverhead(args);
             Debug.Log($"[Screenshot] armed: {path} after {delay:F1}s");
+        }
+
+        /// <summary>True when the capture should use the tactical camera, to show the whole field.</summary>
+        public static bool WantsOverhead(string[] args)
+        {
+            if (args == null) return false;
+            foreach (var a in args)
+                if (string.Equals(a, OverheadArg, StringComparison.OrdinalIgnoreCase)) return true;
+            return false;
         }
 
         /// <summary>Pulled out so it can be unit tested without a player.</summary>
@@ -69,6 +83,14 @@ namespace Cipher.Game
         {
             if (_path == null) return;
             _elapsed += Time.unscaledDeltaTime;
+
+            // Switch the view a moment before the shot so the camera has settled.
+            if (_overhead && !_viewSet && _elapsed > Mathf.Max(0f, _delay - 1.5f))
+            {
+                var bootstrap = GetComponent<FloodBootstrap>();
+                if (bootstrap != null) bootstrap.EnterTacticalViewForCapture();
+                _viewSet = true;
+            }
 
             if (!_captured)
             {
