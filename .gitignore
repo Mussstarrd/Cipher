@@ -22,3 +22,7 @@ Thumbs.db
 
 # Generated concept art: reference only, regenerate rather than version it.
 art/concept/
+
+# Unity player builds (local). Releases are CI artifacts only.
+game/Builds/
+game/out/
