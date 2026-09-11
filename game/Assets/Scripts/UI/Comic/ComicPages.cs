@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 #nullable enable
 using UnityEngine;
 
@@ -51,7 +53,8 @@ namespace Cipher.Game.UI.Comic
                     ComicInk.Border(box, 2f);
                     ComicInk.Small(new ComicRect(box.X + 6f, box.Y + 3f, box.W - 12f, 16f), slot.SlotName.ToUpperInvariant());
                     ComicInk.Body(new ComicRect(box.X + 6f, box.Y + 19f, box.W - 12f, 20f), slot.Item.Name);
-                    ComicInk.Small(new ComicRect(box.X + 6f, box.Bottom - 19f, box.W - 12f, 16f), $"{slot.Item.Power:F1}");
+                    DrawEffects(new ComicRect(box.X + 6f, box.Y + 40f, box.W - 12f, box.H - 44f),
+                                slot.Item.Effects);
                 }
                 else
                 {
@@ -71,9 +74,11 @@ namespace Cipher.Game.UI.Comic
                 var item = page.Pack[i];
                 ComicInk.PaperFill(card);
                 ComicInk.Border(card, 2f);
-                ComicInk.Body(new ComicRect(card.X + 6f, card.Y + 4f, card.W - 12f, 20f), item.Name);
-                ComicInk.Small(new ComicRect(card.X + 6f, card.Bottom - 20f, card.W - 12f, 16f),
-                               $"{item.Slot.ToUpperInvariant()}  {item.Power:F1}");
+                ComicInk.Small(new ComicRect(card.X + 6f, card.Y + 3f, card.W - 12f, 14f),
+                               item.Slot.ToUpperInvariant());
+                ComicInk.Body(new ComicRect(card.X + 6f, card.Y + 17f, card.W - 12f, 20f), item.Name);
+                DrawEffects(new ComicRect(card.X + 6f, card.Y + 38f, card.W - 12f, card.H - 42f),
+                            item.Effects);
                 if (i == page.SelectedPackIndex) ComicInk.Cursor(card);
             }
         }
@@ -96,7 +101,43 @@ namespace Cipher.Game.UI.Comic
             ComicInk.Border(delta, ComicInk.BorderWidth);
 
             string text = page.HasComparison ? page.DeltaText : "—";
-            ComicInk.BigNumber(delta, text, ComicInk.Ink);
+            ComicInk.BigNumber(new ComicRect(delta.X, delta.Y, delta.W, delta.H - 16f),
+                               text, ComicInk.Ink);
+            if (page.HasComparison)
+                ComicInk.Small(new ComicRect(delta.X, delta.Bottom - 18f, delta.W, 15f),
+                               page.DeltaSign > 0 ? "better overall" : "worse overall", centred: true);
+        }
+
+        /// <summary>
+        /// The plain lines that say what a piece of gear does. Clipped to the space available and
+        /// the remainder counted, because a helmet with five affixes must not spill onto the one
+        /// below it -- and "+2 more" is honest where silently dropping them is not.
+        /// </summary>
+        private static void DrawEffects(ComicRect area, IReadOnlyList<string> effects)
+        {
+            if (effects == null || effects.Count == 0 || area.H < 14f) return;
+
+            const float Line = 14f;
+            // The margin is why: without it the last line sits ON the card's border and is sheared
+            // in half, which reads as a rendering fault rather than as a full box.
+            int room = Math.Max(0, (int)((area.H - 3f) / Line));
+            if (room == 0) return;
+
+            int shown = Math.Min(room, effects.Count);
+            bool truncated = effects.Count > room;
+
+            // With room for exactly one line, "+2 more" would be the only thing on the card: a fact
+            // about the card instead of a fact about the gear. Show the real line and drop the
+            // counter -- the swap panel is where the full list belongs anyway.
+            if (truncated && room == 1) { truncated = false; shown = 1; }
+            else if (truncated && shown > 0) shown--;
+
+            for (int i = 0; i < shown; i++)
+                ComicInk.Small(new ComicRect(area.X, area.Y + i * Line, area.W, Line), effects[i]);
+
+            if (truncated)
+                ComicInk.Small(new ComicRect(area.X, area.Y + shown * Line, area.W, Line),
+                               $"+{effects.Count - shown} more");
         }
 
         private static void DrawCompareCard(ComicRect card, string heading, KitItem? item)
@@ -111,8 +152,13 @@ namespace Cipher.Game.UI.Comic
             ComicInk.Border(card, 2f);
             ComicInk.Small(new ComicRect(card.X + 8f, card.Y + 4f, card.W - 16f, 16f), heading);
             ComicInk.Body(new ComicRect(card.X + 8f, card.Y + 22f, card.W - 16f, 22f), item.Value.Name);
-            ComicInk.BigNumber(new ComicRect(card.X, card.Bottom - 44f, card.W, 40f),
-                               $"{item.Value.Power:F1}", ComicInk.Ink);
+            DrawEffects(new ComicRect(card.X + 8f, card.Y + 46f, card.W - 16f, card.H - 78f),
+                        item.Value.Effects);
+            // The score stays, small, at the foot: it is the single number that says which is
+            // better overall once the effects disagree, and that is ALL it is. It was the only
+            // thing on the card, which made it a riddle rather than a summary.
+            ComicInk.Small(new ComicRect(card.X + 8f, card.Bottom - 22f, card.W - 16f, 16f),
+                           $"overall  {item.Value.Power:F1}");
         }
 
         // ================================================================== skills

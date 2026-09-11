@@ -16,11 +16,24 @@ namespace Cipher.Game.UI.Comic
         public readonly string Slot;
         public readonly float Power;
 
-        public KitItem(string name, string slot, float power)
+        /// <summary>
+        /// What the thing actually DOES, one plain line per effect: "+8% gun damage", "+3 armour".
+        ///
+        /// The page used to show `Power` alone. The owner, looking at a helmet worth 16.8 against
+        /// one worth 16.0: "These metrics need to give some kind of explanation like health regen
+        /// or speed or building durability add-on or something, I don't know what those numbers
+        /// mean." He was right -- the number is a comparison key and nothing else, and a comparison
+        /// key with no units is a riddle. The English already existed in `ItemRules.Describe`; the
+        /// screen was throwing it away.
+        /// </summary>
+        public readonly IReadOnlyList<string> Effects;
+
+        public KitItem(string name, string slot, float power, IReadOnlyList<string>? effects = null)
         {
             Name = name ?? string.Empty;
             Slot = slot ?? string.Empty;
             Power = power;
+            Effects = effects ?? Array.Empty<string>();
         }
 
         public override string ToString() => $"{Name} ({Slot}) {Power:F1}";

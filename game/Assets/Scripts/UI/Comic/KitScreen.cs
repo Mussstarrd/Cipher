@@ -100,7 +100,7 @@ namespace Cipher.Game.UI.Comic
             for (int i = 0; i < DollOrder.Length; i++)
             {
                 var item = inventory.Equipped(DollOrder[i]);
-                if (item != null) list.Add(new KitItem(item.Name, SlotNames[i], item.PowerScore));
+                if (item != null) list.Add(new KitItem(item.Name, SlotNames[i], item.PowerScore, Effects(item)));
             }
             return list;
         }
@@ -112,9 +112,26 @@ namespace Cipher.Game.UI.Comic
             for (int i = 0; i < inventory.Pack.Count; i++)
             {
                 var item = inventory.Pack[i];
-                list.Add(new KitItem(item.Name, NameOf(item.Slot), item.PowerScore));
+                list.Add(new KitItem(item.Name, NameOf(item.Slot), item.PowerScore, Effects(item)));
             }
             return list;
+        }
+
+        /// <summary>
+        /// What a piece of gear does, in plain lines. `ItemRules.Describe` already wrote these and
+        /// nothing was showing them; all this does is drop the affix's nickname, because "Plated"
+        /// is flavour and "+3 armour" is the fact the player is choosing between.
+        /// </summary>
+        private static List<string> Effects(ItemInstance item)
+        {
+            var lines = new List<string>(item.Affixes.Count);
+            for (int i = 0; i < item.Affixes.Count; i++)
+            {
+                string described = ItemRules.Describe(item.Affixes[i]);
+                int split = described.IndexOf("  ", StringComparison.Ordinal);
+                lines.Add(split > 0 ? described.Substring(split + 2).Trim() : described);
+            }
+            return lines;
         }
 
         /// <summary>The player-facing name of a slot. Falls back to the enum, which should never show.</summary>
