@@ -44,6 +44,21 @@ namespace Cipher.Game
 
         public int SlotCount => _slots.Count;
 
+        /// <summary>How long a body stays on the ground before its slot is recycled. The death clip's length.</summary>
+        public float DeathSeconds { get; set; } = 1.1f;
+
+        /// <summary>Raised when a slot's occupant has just been killed, so the view plays the fall.</summary>
+        public System.Action<int>? OnSlotDied;
+
+        /// <summary>Raised when a slot's occupant took damage and lived, so the view flinches.</summary>
+        public System.Action<int>? OnSlotHurt;
+
+        private readonly List<float> _dying = new List<float>();
+        private readonly List<float> _lastHealth = new List<float>();
+
+        /// <summary>True while a slot is playing out a death and must not be reassigned.</summary>
+        public bool IsDying(int slot) => slot >= 0 && slot < _dying.Count && _dying[slot] > 0f;
+
         public void AddSlot(Transform slot)
         {
             // Capacity is the budget the caller sized the pool against; exceeding it silently would
@@ -56,6 +71,8 @@ namespace Cipher.Game
             _slots.Add(slot);
             _lastPosition.Add(slot.position);
             _assigned.Add(-1);
+            _dying.Add(0f);
+            _lastHealth.Add(-1f);
             slot.gameObject.SetActive(false);
         }
 
@@ -112,8 +129,30 @@ namespace Cipher.Game
             _holders.Clear();
             for (int i = 0; i < _slots.Count; i++)
             {
+                // A body that is DYING keeps its slot until the clip has played out. Releasing it
+                // the instant the sim marked the agent dead is why enemies vanished mid-stride --
+                // the death animation was on disk and there was never a body left to play it on.
+                if (_dying[i] > 0f)
+                {
+                    _dying[i] -= dt;
+                    if (_dying[i] > 0f) continue;
+                    _assigned[i] = -1;
+                    _free.Add(i);
+                    continue;
+                }
+
                 int held = _assigned[i];
                 if (held >= 0 && _chosen.ContainsKey(held)) { _holders.Add(held); continue; }
+
+                // Alive-but-gone means it walked out of range: hand the body over. Dead means it
+                // fell right here: start the death and hold the body where it stood.
+                if (held >= 0 && !world.IsAlive(held) && DeathSeconds > 0f)
+                {
+                    _dying[i] = DeathSeconds;
+                    OnSlotDied?.Invoke(i);
+                    continue;
+                }
+
                 _assigned[i] = -1;
                 _free.Add(i);
             }
@@ -129,6 +168,7 @@ namespace Cipher.Game
                 // A new occupant is a different person: reset the heading so the body does not spin,
                 // and re-roll the stride phase so a freshly promoted group does not march in step.
                 _lastPosition[slot] = _chosen[id];
+                _lastHealth[slot] = -1f;
                 OnSlotReassigned?.Invoke(slot);
             }
 
@@ -137,6 +177,13 @@ namespace Cipher.Game
             {
                 int id = _assigned[i];
                 var slot = _slots[i];
+
+                // Dying bodies stay exactly where they fell, visible, and are not driven.
+                if (_dying[i] > 0f)
+                {
+                    if (!slot.gameObject.activeSelf) slot.gameObject.SetActive(true);
+                    continue;
+                }
 
                 if (id < 0 || !_chosen.TryGetValue(id, out var position))
                 {
@@ -160,6 +207,12 @@ namespace Cipher.Game
                 slot.position = position;
                 _lastPosition[i] = position;
                 Promoted.Add(id);
+
+                // A flinch when it is hurt. The sim raises no per-agent damage event, so the body
+                // remembers the health it last saw and reacts when the number goes down.
+                float hp = world.HealthOf(id);
+                if (_lastHealth[i] >= 0f && hp < _lastHealth[i] - 0.01f) OnSlotHurt?.Invoke(i);
+                _lastHealth[i] = hp;
 
                 // Walking is for people who are walking. The clip used to run on everybody all the
                 // time, including agents standing still against a barricade.

@@ -227,6 +227,17 @@ namespace Cipher.Game
 
         // ---- ui ----
         private float _smoothedFps = 60f;
+
+        // ---- Feel (Phase A of the approved roadmap) ----
+        private const float HitstopScale = 0.08f;
+        private const float TraumaDecay = 1.9f;
+        private float _hitstop;
+        /// <summary>0..1 camera trauma. Shake is trauma squared, so small hits barely register and big ones do.</summary>
+        private float _trauma;
+        private float _fovCurrent = 60f;
+        private Vector3 _camVelocity;
+
+        private void AddTrauma(float amount) => _trauma = Mathf.Clamp01(_trauma + amount);
         private readonly PauseMenuModel _pauseMenu = new PauseMenuModel();
         private GUIStyle? _menuTitleStyle;
         private GUIStyle? _menuItemStyle;
@@ -466,6 +477,7 @@ namespace Cipher.Game
             // how messy the exit was.
             _lastSapperAlive = 0;
             _lastSpitterAlive = 0;
+            for (int i = 0; i < _flashLastHealth.Length; i++) { _flashLastHealth[i] = -1f; _flashLeft[i] = 0f; }
             // Panels do not survive a position either: input is not read while the match is over,
             // so a skill tree left open could not be closed and drew over the debrief.
             _showInventory = false;
@@ -1027,7 +1039,15 @@ namespace Cipher.Game
 
             // Focus runs on unscaled time so four seconds of slow lasts four seconds, not eleven.
             _focus.Tick(Time.unscaledDeltaTime);
-            Time.timeScale = _focus.TimeScale;
+
+            // Hitstop: a kill freezes the world for a few hundredths of a second. It is applied through
+            // the same time scale the adrenaline focus uses, which the fixed-step sim already tolerates
+            // -- the sim sees fewer ticks, not different ones, so determinism is untouched.
+            if (_hitstop > 0f) _hitstop -= Time.unscaledDeltaTime;
+            Time.timeScale = _focus.TimeScale * (_hitstop > 0f ? HitstopScale : 1f);
+
+            TickBodyFlashes(Time.unscaledDeltaTime);
+            _trauma = Mathf.Max(0f, _trauma - Time.unscaledDeltaTime * TraumaDecay);
 
             float dt = Time.deltaTime;
 
@@ -1229,7 +1249,9 @@ namespace Cipher.Game
                 _sfx.PlayAt(Sfx.TurretShot, ToWorld(s.From, 1f), 0.6f, 0.1f, minInterval: 0.045f);
             }
 
-            if (_hero.ApplyContact(_world, TickDt) > 0f && _hurtCooldown <= 0f)
+            float bitten = _hero.ApplyContact(_world, TickDt);
+            if (bitten > 0f) AddTrauma(0.12f);
+            if (bitten > 0f && _hurtCooldown <= 0f)
             {
                 _sfx.Play(Sfx.Hurt, 0.8f, 0.1f);
                 _hurtCooldown = 0.35f;
@@ -1249,6 +1271,12 @@ namespace Cipher.Game
 
             // Kills from any source pay out (hero, turrets, airstrike).
             int kills = (int)(_world.TotalKills - _lastKills);
+            if (kills > 0)
+            {
+                // Render-side only. Forty milliseconds is enough to feel and too short to notice.
+                _hitstop = Mathf.Max(_hitstop, 0.045f);
+                AddTrauma(0.06f);
+            }
             _lastKills = (int)_world.TotalKills;
             // The two thinking archetypes always drop and are worth far more experience, which is
             // what makes hunting them the right play. The sim does not raise a "died" event per
@@ -1852,7 +1880,8 @@ namespace Cipher.Game
         /// character and we were importing one, which is why the crowd mimed a walk while standing
         /// still: not a missing asset, a missing import.
         /// </summary>
-        private static readonly string[] BodyClips = { "walk", "idle", "run", "punch", "aim", "advance", "fire" };
+        private static readonly string[] BodyClips =
+            { "walk", "idle", "run", "punch", "death", "hit", "aim", "advance", "fire" };
 
         private readonly Dictionary<string, AnimationClip> _clips = new Dictionary<string, AnimationClip>();
 
@@ -1901,11 +1930,17 @@ namespace Cipher.Game
 
             var rng = new System.Random(20260911);
             _walkStates.Clear();
+            _bodyFlashLeft.Clear();
+            _bodyRenderers.Clear();
+            _crowdSlots = new List<Transform>(CivilianPoolSize);
             for (int i = 0; i < CivilianPoolSize; i++)
             {
                 var slot = BuildCivilian(pool[i % pool.Count], root, rng);
                 _crowd.AddSlot(slot);
+                _crowdSlots.Add(slot);
                 _walkStates.Add(slot.GetComponentInChildren<Animation>());
+                _bodyFlashLeft.Add(0f);
+                _bodyRenderers.Add(slot.GetComponentsInChildren<Renderer>(true));
             }
 
             // Two things the owner saw and named: "the characters are always making walking
@@ -1913,6 +1948,9 @@ namespace Cipher.Game
             // first; a body that keeps its stride phase when it changes occupant is the second.
             _crowd.OnSlotMoved = SetSlotWalking;
             _crowd.OnSlotReassigned = ResetSlotStride;
+            _crowd.OnSlotDied = PlaySlotDeath;
+            _crowd.OnSlotHurt = PlaySlotHit;
+            if (_clips.TryGetValue("death", out var deathClip)) _crowd.DeathSeconds = deathClip.length + 0.35f;
 
             Debug.Log($"[Crowd] pool of {_crowd.SlotCount} civilians from {prefabs.Length} models");
         }
@@ -2218,6 +2256,9 @@ namespace Cipher.Game
             var anim = _walkStates[slot];
             if (anim == null) return;
 
+            // A body on the ground stays there; locomotion has no say.
+            if (_crowd != null && _crowd.IsDying(slot)) return;
+
             string wanted = speed > 2.6f ? "run" : speed > 0.3f ? "walk" : "idle";
             if (anim[wanted] == null) wanted = "walk";
             if (anim[wanted] == null) return;
@@ -2230,6 +2271,66 @@ namespace Cipher.Game
             if (state != null && wanted != "idle")
                 state.speed = Mathf.Clamp(speed / (wanted == "run" ? 4.2f : 2.2f), 0.6f, 1.7f);
         }
+
+        /// <summary>
+        /// The fall. Owner: enemies "die by vanishing" was the expert's diagnosis and the single most
+        /// amateur-reading thing in the build. The clip was imported and never loaded.
+        /// </summary>
+        private void PlaySlotDeath(int slot)
+        {
+            if (slot < 0 || slot >= _walkStates.Count) return;
+            var anim = _walkStates[slot];
+            if (anim == null || anim["death"] == null) return;
+            anim.CrossFade("death", 0.06f);
+            _sfx.PlayAt(Sfx.Hit, _crowd != null ? _crowdSlotPosition(slot) : Vector3.zero, 0.7f, 0.15f, minInterval: 0.05f);
+        }
+
+        /// <summary>A flinch: the hit clip once, over whatever the body was doing, and a white flash.</summary>
+        private void PlaySlotHit(int slot)
+        {
+            if (slot < 0 || slot >= _walkStates.Count) return;
+            FlashBody(slot);
+            var anim = _walkStates[slot];
+            if (anim == null || anim["hit"] == null) return;
+            // Layered above locomotion so it does not have to wait for the stride to finish.
+            anim["hit"].layer = 1;
+            anim["hit"].wrapMode = WrapMode.Once;
+            anim.CrossFade("hit", 0.04f);
+        }
+
+        private readonly List<float> _bodyFlashLeft = new List<float>();
+        private readonly List<Renderer[]> _bodyRenderers = new List<Renderer[]>();
+        private MaterialPropertyBlock? _bodyBlock;
+
+        private void FlashBody(int slot)
+        {
+            if (slot >= _bodyFlashLeft.Count) return;
+            _bodyFlashLeft[slot] = HitFlashSeconds;
+            SetBodyFlash(slot, true);
+        }
+
+        private void SetBodyFlash(int slot, bool on)
+        {
+            _bodyBlock ??= new MaterialPropertyBlock();
+            _bodyBlock.SetVector(InstanceColorId, on ? new Vector4(1f, 1f, 1f, 1f) : Vector4.zero);
+            foreach (var r in _bodyRenderers[slot]) if (r != null) r.SetPropertyBlock(_bodyBlock);
+        }
+
+        /// <summary>Clears expired flashes. Cheap: only slots currently flashing do any work.</summary>
+        private void TickBodyFlashes(float dt)
+        {
+            for (int i = 0; i < _bodyFlashLeft.Count; i++)
+            {
+                if (_bodyFlashLeft[i] <= 0f) continue;
+                _bodyFlashLeft[i] -= dt;
+                if (_bodyFlashLeft[i] <= 0f) SetBodyFlash(i, false);
+            }
+        }
+
+        private Vector3 _crowdSlotPosition(int slot) =>
+            _crowdSlots != null && slot < _crowdSlots.Count ? _crowdSlots[slot].position : Vector3.zero;
+
+        private List<Transform>? _crowdSlots;
 
         /// <summary>A body that changed person starts its stride somewhere new, so no two march together.</summary>
         private void ResetSlotStride(int slot)
@@ -2643,12 +2744,17 @@ namespace Cipher.Game
             {
                 _blasts.Add(new Blast { Center = ToWorld(imp.Center, 0.05f), Radius = imp.Radius, Ttl = BlastLife });
                 _sfx.PlayAt(Sfx.Bomb, ToWorld(imp.Center, 0.5f), 1f, 0.12f);
+                // A bomb shakes you by how close it was, not by whether it was yours.
+                float near = Mathf.Clamp01(1f - Vec2.DistanceSquared(imp.Center, _hero.Position) / (26f * 26f));
+                AddTrauma(0.25f + 0.5f * near);
             }
 
             bool fire = (pad != null && pad.rightTrigger.isPressed) || (mouse != null && mouse.leftButton.isPressed);
             if (fire && _hero.TryFire(_world, Random.Range(-2.5f, 2.5f), out ShotResult shot))
             {
                 NoteHeroShot();
+                AddTrauma(0.05f);
+                _muzzleLeft = HitFlashSeconds;
                 _tracers.Add(new Tracer
                 {
                     A = ToWorld(shot.Origin, 0.75f),
@@ -2933,9 +3039,32 @@ namespace Cipher.Game
                 targetRot = Quaternion.Euler(68f, 0f, 0f);
             }
 
+            // A critically damped spring rather than a flat lerp: the rig lags a step behind and
+            // settles, which is most of what makes a camera feel like it has weight. Same feel at
+            // any frame rate because it is integrated against dt.
+            _camera.transform.position = Vector3.SmoothDamp(_camera.transform.position, targetPos,
+                                                            ref _camVelocity, 0.085f, Mathf.Infinity, dt);
             float k = 1f - Mathf.Exp(-12f * dt);
-            _camera.transform.position = Vector3.Lerp(_camera.transform.position, targetPos, k);
             _camera.transform.rotation = Quaternion.Slerp(_camera.transform.rotation, targetRot, k);
+
+            // Trauma shake. Squared, so a rifle shot barely stirs it and a bomb next to you does not
+            // let you aim, which is the correct order of things. Perlin rather than random so the
+            // motion is continuous and reads as force, not as a glitch.
+            if (_trauma > 0f)
+            {
+                float t = Time.unscaledTime * 21f;
+                float amp = _trauma * _trauma;
+                var shake = new Vector3((Mathf.PerlinNoise(t, 0.3f) - 0.5f) * 0.42f,
+                                        (Mathf.PerlinNoise(0.7f, t) - 0.5f) * 0.30f,
+                                        0f) * amp;
+                _camera.transform.position += _camera.transform.rotation * shake;
+                _camera.transform.rotation *= Quaternion.Euler(0f, 0f, (Mathf.PerlinNoise(t, t) - 0.5f) * 2.4f * amp);
+            }
+
+            // FOV breathes: tighter while firing, wider at rest. Small, and the whole world moves.
+            float fovTarget = _camMode == CameraMode.Chase ? (_muzzleLeft > 0f ? 57f : 61f) : 60f;
+            _fovCurrent = Mathf.Lerp(_fovCurrent, fovTarget, 1f - Mathf.Exp(-6f * dt));
+            _camera.fieldOfView = _fovCurrent;
         }
 
         /// <summary>
@@ -3037,9 +3166,32 @@ namespace Cipher.Game
         private Material _blastSmokeMaterial = null!;
         private Material _blastRingMaterial = null!;
 
+        private float _muzzleLeft;
+        private Material? _heroMuzzleMaterial;
+
+        /// <summary>
+        /// Two frames of flat white at the end of the rifle. One primitive, no particles: the cel
+        /// shader bands it into a hard shape, and the eye reads the flash before the tracer.
+        /// </summary>
+        private void DrawHeroMuzzle(float dt)
+        {
+            if (_muzzleLeft <= 0f) return;
+            _muzzleLeft -= dt;
+            _heroMuzzleMaterial ??= MakeMaterial(new Color(1f, 0.95f, 0.72f), instanced: false, ink: InkNone);
+
+            var facing = new Vector3(_hero.Facing.X, 0f, _hero.Facing.Y);
+            if (facing.sqrMagnitude < 1e-6f) return;
+            facing.Normalize();
+            // Rifle held at chest height, muzzle just under a metre out. Tuned to the hero body.
+            var at = ToWorld(_hero.Position, 1.28f) + facing * 0.95f + Vector3.Cross(Vector3.up, facing) * -0.12f;
+            var m = Matrix4x4.TRS(at, Quaternion.LookRotation(facing, Vector3.up), new Vector3(0.22f, 0.22f, 0.5f));
+            Graphics.DrawMesh(_cubeMesh, m, _heroMuzzleMaterial, 0);
+        }
+
         private void DrawWorld()
         {
             if (_lineupMode) return;   // lineup capture: nothing but the models
+            DrawHeroMuzzle(Time.deltaTime);
             BakeWallsIfChanged();
             DrawInstancedList(_cubeMesh, _wallMaterial, _wallMatrices, _wallMatrices.Length);
             DrawInstancedList(_cubeMesh, _fenceMeshMaterial, _fenceMeshMatrices, _fenceMeshMatrices.Length);
@@ -3070,16 +3222,57 @@ namespace Cipher.Game
             // new explosion, so the owner reported "orange cylinders" twice and was right twice.
         }
 
+        /// <summary>Seconds a hit body flashes white. Two frames at sixty; longer reads as a lamp.</summary>
+        private const float HitFlashSeconds = 0.05f;
+
+        private float[] _flashLastHealth = System.Array.Empty<float>();
+        private float[] _flashLeft = System.Array.Empty<float>();
+        private readonly Vector4[] _instanceColours = new Vector4[MaxInstancesPerDraw];
+        private MaterialPropertyBlock? _capsuleBlock;
+        private static readonly int InstanceColorId = Shader.PropertyToID("_InstanceColor");
+
+        private void EnsureFlashBuffers(int count)
+        {
+            if (_flashLastHealth.Length >= count) return;
+            int n = Mathf.Max(count, _flashLastHealth.Length * 2, 256);
+            int old = _flashLastHealth.Length;
+            System.Array.Resize(ref _flashLastHealth, n);
+            System.Array.Resize(ref _flashLeft, n);
+            for (int i = old; i < n; i++) _flashLastHealth[i] = -1f;
+        }
+
+        /// <summary>
+        /// One instanced draw of capsules with a per-instance colour. The shader has carried
+        /// _InstanceColor since URP landed and nothing ever wrote it, which is why a capsule that
+        /// was shot looked identical to one that was not.
+        /// </summary>
+        private void FlushCapsules(int count)
+        {
+            _capsuleBlock ??= new MaterialPropertyBlock();
+            _capsuleBlock.SetVectorArray(InstanceColorId, _instanceColours);
+            Graphics.DrawMeshInstanced(_agentMesh, 0, _agentMaterial, _instanceBuffer, count, _capsuleBlock);
+        }
+
         private void DrawAgents()
         {
             _sapperMatrices.Clear();
             _spitterMatrices.Clear();
             _fxMatrices.Clear();
             int inBuffer = 0;
+            EnsureFlashBuffers(_world.Count);
+            float dt = Time.deltaTime;
+
             for (int id = 0; id < _world.Count; id++)
             {
                 if (!_world.IsAlive(id)) continue;
                 Vec2 p = _world.PositionOf(id);
+
+                // Two frames of white when the number goes down. The sim raises no per-agent damage
+                // event, so the renderer remembers the last health it drew and reacts to the drop.
+                float hp = _world.HealthOf(id);
+                if (_flashLastHealth[id] >= 0f && hp < _flashLastHealth[id] - 0.01f) _flashLeft[id] = HitFlashSeconds;
+                _flashLastHealth[id] = hp;
+                if (_flashLeft[id] > 0f) _flashLeft[id] -= dt;
                 switch (_world.ArchetypeOf(id))
                 {
                     case Archetype.Sapper:
@@ -3097,14 +3290,17 @@ namespace Cipher.Game
                 }
                 // Anyone wearing a real body this frame must not also be drawn as a capsule.
                 if (_crowd != null && _crowd.Promoted.Contains(id)) continue;
-                _instanceBuffer[inBuffer++] = Matrix4x4.TRS(new Vector3(p.X, 0.6f, p.Y), Quaternion.identity, new Vector3(0.45f, 0.6f, 0.45f));
+                _instanceBuffer[inBuffer] = Matrix4x4.TRS(new Vector3(p.X, 0.6f, p.Y), Quaternion.identity, new Vector3(0.45f, 0.6f, 0.45f));
+                // Alpha is the switch the shader reads: a > 0 means "use this colour instead".
+                _instanceColours[inBuffer] = _flashLeft[id] > 0f ? new Vector4(1f, 1f, 1f, 1f) : Vector4.zero;
+                inBuffer++;
                 if (inBuffer == MaxInstancesPerDraw)
                 {
-                    Graphics.DrawMeshInstanced(_agentMesh, 0, _agentMaterial, _instanceBuffer, inBuffer);
+                    FlushCapsules(inBuffer);
                     inBuffer = 0;
                 }
             }
-            if (inBuffer > 0) Graphics.DrawMeshInstanced(_agentMesh, 0, _agentMaterial, _instanceBuffer, inBuffer);
+            if (inBuffer > 0) FlushCapsules(inBuffer);
             DrawInstancedBatched(_agentMesh, _sapperMaterial, _sapperMatrices);
             DrawInstancedBatched(_agentMesh, _spitterMaterial, _spitterMatrices);
             DrawInstancedBatched(_cubeMesh, _sapperTargetMaterial, _fxMatrices);
