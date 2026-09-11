@@ -12,6 +12,7 @@ using Cipher.Sim.Emplacements;
 using Cipher.Sim.Grid;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 using UnityEngine.InputSystem;
 
 namespace Cipher.Game
@@ -266,12 +267,13 @@ namespace Cipher.Game
             _sfx = new SoundBank(transform) { MasterVolume = 0.8f };
 
             ApplyOvercastWinter();
+            ApplyColourGrade();
 
             var ground = GameObject.CreatePrimitive(PrimitiveType.Plane);
             ground.name = "Ground";
             ground.transform.position = new Vector3(GridW / 2f, 0f, GridH / 2f);
             ground.transform.localScale = new Vector3(GridW / 10f, 1f, GridH / 10f);
-            ground.GetComponent<Renderer>().material = MakeMaterial(new Color(0.34f, 0.33f, 0.31f), instanced: false, ink: InkNone);
+            ground.GetComponent<Renderer>().material = MakeMaterial(GroundColour, instanced: false, ink: InkNone);
 
             _agentMesh = HarvestMesh(PrimitiveType.Capsule);
             _cubeMesh = HarvestMesh(PrimitiveType.Cube);
@@ -317,7 +319,10 @@ namespace Cipher.Game
             var marker = GameObject.CreatePrimitive(PrimitiveType.Cube);
             marker.name = "StrikeMarker";
             Destroy(marker.GetComponent<Collider>());
-            marker.GetComponent<Renderer>().material = MakeMaterial(new Color(1f, 0.55f, 0.1f), instanced: false);
+            // Dark wet asphalt with a warm cast rather than traffic-cone orange. It still reads as
+            // "they come from here" without being the brightest thing on the map.
+            marker.GetComponent<Renderer>().material =
+                MakeMaterial(new Color(0.24f, 0.19f, 0.16f), instanced: false, ink: InkNone);
             _markerT = marker.transform;
 
             var cursor = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -334,7 +339,9 @@ namespace Cipher.Game
             Destroy(vault.GetComponent<Collider>());
             vault.transform.position = new Vector3(GoalX + 0.5f, 0.6f, GoalY + 0.5f);
             vault.transform.localScale = new Vector3(1.6f, 1.2f, 1.6f);
-            vault.GetComponent<Renderer>().material = MakeMaterial(new Color(0.2f, 0.9f, 0.5f), instanced: false);
+            // Weathered olive, like something worth defending rather than a debug cube.
+            vault.GetComponent<Renderer>().material =
+                MakeMaterial(new Color(0.28f, 0.34f, 0.24f), instanced: false, ink: InkProp);
             _vaultT = vault.transform;
 
             var crate = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -357,6 +364,8 @@ namespace Cipher.Game
         // Overcast Virginia winter (ADR-004): flat grey sky, low sun, cold haze, brown ground.
         // Half the game happens in daylight and this is what that daylight looks like.
         private static readonly Color SkyGrey = new Color(0.62f, 0.65f, 0.69f);
+        /// <summary>Wet brown leaf litter over dead grass. Winter here is not grey, it is brown.</summary>
+        private static readonly Color GroundColour = new Color(0.30f, 0.26f, 0.20f);
         private static readonly Color HazeGrey = new Color(0.58f, 0.61f, 0.65f);
 
         private void ApplyOvercastWinter()
@@ -1333,6 +1342,64 @@ namespace Cipher.Game
             if (mat.HasProperty(OutlineWidthId)) mat.SetFloat(OutlineWidthId, InkProp);
             if (source != null && source.mainTexture != null) mat.mainTexture = source.mainTexture;
             return mat;
+        }
+
+        /// <summary>
+        /// Adds the colour grade. Three effects, chosen because each one does something the comic
+        /// look specifically needs and nothing else:
+        ///
+        ///   Tonemapping keeps the flat banded colour from clipping where fire and muzzle flash
+        ///   blow past white, which is the one place a cel shader looks broken.
+        ///   Bloom gives those same highlights somewhere to go.
+        ///   Vignette pulls the eye off the edge of a play area that has no horizon.
+        ///
+        /// Built in code rather than as an asset so it survives a clean checkout and CI can rebuild
+        /// it, same reasoning as the pipeline assets in UrpSetup.
+        /// </summary>
+        private void ApplyColourGrade()
+        {
+            var go = new GameObject("Grade");
+            var volume = go.AddComponent<UnityEngine.Rendering.Volume>();
+            volume.isGlobal = true;
+            volume.priority = 1f;
+
+            var profile = ScriptableObject.CreateInstance<UnityEngine.Rendering.VolumeProfile>();
+            volume.sharedProfile = profile;
+
+            if (profile.Add<UnityEngine.Rendering.Universal.Tonemapping>() is { } tonemap)
+            {
+                tonemap.active = true;
+                tonemap.mode.overrideState = true;
+                tonemap.mode.value = UnityEngine.Rendering.Universal.TonemappingMode.Neutral;
+            }
+
+            if (profile.Add<UnityEngine.Rendering.Universal.Bloom>() is { } bloom)
+            {
+                bloom.active = true;
+                bloom.threshold.overrideState = true;
+                bloom.threshold.value = 1.05f;      // only genuine highlights, not the whole sky
+                bloom.intensity.overrideState = true;
+                bloom.intensity.value = 0.55f;
+                bloom.scatter.overrideState = true;
+                bloom.scatter.value = 0.62f;
+            }
+
+            if (profile.Add<UnityEngine.Rendering.Universal.Vignette>() is { } vignette)
+            {
+                vignette.active = true;
+                vignette.intensity.overrideState = true;
+                vignette.intensity.value = 0.26f;
+                vignette.smoothness.overrideState = true;
+                vignette.smoothness.value = 0.5f;
+            }
+
+            if (_camera != null)
+            {
+                var data = _camera.GetUniversalAdditionalCameraData();
+                if (data != null) data.renderPostProcessing = true;
+            }
+
+            Debug.Log("[Grade] tonemap, bloom and vignette applied");
         }
 
         /// <summary>Starts the first wave, so a smoke capture can actually see combat. Harness only.</summary>
