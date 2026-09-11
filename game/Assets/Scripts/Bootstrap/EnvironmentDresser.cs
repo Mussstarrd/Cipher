@@ -146,7 +146,8 @@ namespace Cipher.Game
                 // Pull the last tile back inside the map instead of letting it hang over the edge
                 // of the ground plane. A few centimetres of overlap on one seam is invisible; a
                 // road ending in mid-air is not.
-                float left = span >= _map.Width ? 0f : Mathf.Min(x, _map.Width - span);
+                bool clamped = !(span >= _map.Width) && x > _map.Width - span;
+                float left = clamped ? _map.Width - span : x;
 
                 // Test EVERY cell the tile covers, not just the one under its centre. A six-cell
                 // tile tested at its centre steps straight over a one-cell wall: on this map the
@@ -157,9 +158,11 @@ namespace Cipher.Game
                 var go = UnityEngine.Object.Instantiate(tile, _root);
                 go.transform.rotation = turn;
                 go.transform.localScale = tile.transform.localScale * scale;
+                // The pulled-back last tile sits ON TOP of the one before it. Coplanar surfaces
+                // z-fight, which is the one artefact SurfaceLift exists to avoid, so lift it clear.
                 go.transform.position = new Vector3(
                     left + span * 0.5f - offset.x,
-                    lift,
+                    clamped ? lift + SurfaceLift : lift,
                     centreY + 0.5f - offset.z);
 
                 ApplyShared(go, tinted, RoadTint);
