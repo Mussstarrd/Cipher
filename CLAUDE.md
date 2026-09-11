@@ -253,4 +253,24 @@ substitute: it references the sim's SOURCE, not its test project.
   percentage table. Read the campaign doc before writing any mission content.
 - **Design specs waiting to be built:** `docs/design/arsenal-and-terrain.md` (three tower families incl. the Grinder and a roving drone, destructible terrain, cover props, five level themes, build order) and `docs/design/progression-and-campaign.md` (gear, builds, safe zone, JSON scenarios, couch co-op). `docs/ACCOUNTS.md` lists what the owner needs to sign up for.
 - **Owner checkpoint requested** (his words): no more check-ins until towers + upgrades + wall/tower attackers + champion upgrades exist → all four shipped in Maze v1. Next: owner playtest of Maze v1 → gun pass (Oct 1) → URP + first characters (Oct 8).
+- **PHASE B SHIPPED (2026-09-11): the player can see what is happening to them.**
+  `Scripts/UI/HudFeedback.cs` is the one place the "what just happened to me" HUD is drawn: wave
+  cards, a health vignette, damage-direction wedges, and world markers that become edge arrows with
+  a distance when their subject is off screen. Drawing is isolated there so the comic toolkit can
+  restyle it without touching the models that own the data.
+  - **A CAMERA SPRING MUST SNAP ON A TELEPORT.** SmoothDamp from wherever the rig was meant arriving
+    at a new position glided in from inside the treeline, which photographs as "the camera is
+    broken". `_snapCamera` is set by `NewMatch` and consumed on the next camera update.
+  - **NOTHING TICKS DURING THE UNTIMED OPENING**, so anything the HUD reads from a per-tick system
+    shows its uninitialised value until the first wave. The objectives panel read `VAULT 0/0`.
+    `NewMatch` ticks the objective set once with dt 0 to prime it. Check any new panel the same way.
+  - The dark rectangle on the ground ahead of the hero in screenshots is the **airstrike aim box**
+    (`_markerT`), not a rendering bug. It is a filled slab in wet-asphalt brown and reads as a mud
+    stain; restyling it is on the Phase D graphics list.
+- **THE COMIC PAGE KIT IS ON THE BRANCH, UNWIRED** (`Scripts/UI/Comic/`, merged from a specialist
+  worktree 2026-09-11). `ComicInk` (panels, six baked halftone screens where the DOT SIZE varies
+  rather than the opacity, stamps, gauges, leader lines, an ink figure) plus three pure-C# page
+  layouts and `ComicPages` to draw them. **Phase C wires them**: the kit, skills and truck screens
+  the owner called "computer gibberish" get rebuilt on this, and only then is the look photographed.
+  `ComicPageDemo.DrawAll` exists for exactly that shot and needs a harness flag.
 - **Was:** owner hero feedback → barricade build-mode with live path preview (Milestone 2 "The Maze").
