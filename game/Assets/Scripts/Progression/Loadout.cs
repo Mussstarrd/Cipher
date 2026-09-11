@@ -57,6 +57,8 @@ namespace Cipher.Game.Progression
         /// <summary>Call after any equip, pickup or card take.</summary>
         public HeroConfig Recompute()
         {
+            bool secondWind = Inventory.HasEquippedAffix(AffixKind.SecondWind);
+
             // Three sources, one total: permanent tree, run-scoped gear, mission-scoped cards.
             var stats = new StatBlock();
             stats.Add(Skills.TotalStats());
@@ -96,6 +98,10 @@ namespace Cipher.Game.Progression
                 // Self-damage may legitimately reach zero: that is what the Ordnance capstone buys.
                 AirstrikeSelfDamage = Math.Max(
                     0f, _base.AirstrikeSelfDamage * (1f - stats.Percent(StatKind.AirstrikeSelfDamage))),
+
+                // Armour and Second Wind are the two gear effects the hero has to know about.
+                ContactArmour = stats.Flat(StatKind.Armour),
+                HasSecondWind = secondWind,
             };
 
             Effective = c;

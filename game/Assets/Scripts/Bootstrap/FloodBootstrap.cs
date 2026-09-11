@@ -550,7 +550,10 @@ namespace Cipher.Game
             {
                 switch (_match.Phase)
                 {
-                    case MatchPhase.Wave: _sfx.Play(Sfx.WaveHorn, 0.9f, 0.02f); break;
+                    case MatchPhase.Wave:
+                        _sfx.Play(Sfx.WaveHorn, 0.9f, 0.02f);
+                        _hero.RearmSecondWind();   // once per wave, not once per mission
+                        break;
                     case MatchPhase.Setup:
                         _sfx.Play(Sfx.WaveClear, 0.9f, 0.01f);
                         OnWaveCleared();
@@ -641,6 +644,11 @@ namespace Cipher.Game
                 _sfx.Play(Sfx.Hurt, 0.8f, 0.1f);
                 _hurtCooldown = 0.35f;
             }
+            if (_hero.ConsumedSecondWindThisTick)
+            {
+                Alert("SECOND WIND — that should have killed you", 4f);
+                _sfx.Play(Sfx.Win, 0.8f, 0.05f);
+            }
             HandleSimEvents();
             _build.TickDrones(_hero.Position, TickDt);
             if (_pickups.Tick(_matchSeconds, TickDt, _hero.Position, _heroCfg))
@@ -700,6 +708,7 @@ namespace Cipher.Game
             _hero.Retune(_loadout.Effective);
             _turrets.DamageMultiplier = _loadout.TurretDamageMultiplier;
             _turrets.RangeMultiplier = _loadout.TurretRangeMultiplier;
+            _build.RepairSpeedMultiplier = _loadout.RepairSpeedMultiplier;
         }
 
         /// <summary>Experience in, level-ups and skill points out, with a notice for the player.</summary>

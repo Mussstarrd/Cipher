@@ -205,12 +205,20 @@ namespace Cipher.Game.Build
         }
 
         /// <summary>Advances repair drones; prunes finished ones. Returns stages repaired this call.</summary>
+        /// <summary>
+        /// Scales how fast drones close a breach. Doctrine cards and the Fresh Welds node feed this,
+        /// applied as a time multiplier rather than baked into the drone, so an upgrade helps drones
+        /// already working.
+        /// </summary>
+        public float RepairSpeedMultiplier { get; set; } = 1f;
+
         public int TickDrones(Vec2 heroPosition, float dt)
         {
             int repaired = 0;
+            float scaled = dt * System.Math.Max(0.1f, RepairSpeedMultiplier);
             for (int i = Drones.Count - 1; i >= 0; i--)
             {
-                repaired += Drones[i].Tick(_world, heroPosition, dt);
+                repaired += Drones[i].Tick(_world, heroPosition, scaled);
                 if (Drones[i].Done) Drones.RemoveAt(i);
             }
             return repaired;

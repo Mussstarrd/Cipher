@@ -511,5 +511,74 @@ namespace Cipher.Game.Tests
             for (int i = 0; i < 200; i++)
                 Assert.AreEqual(a.DecideIntent(View(2)), b.DecideIntent(View(2)));
         }
+
+        // ---------------------------------------------------------------- armour and second wind
+
+        [Test]
+        public void ArmourReachesTheHeroConfigAndNotJustTheHelper()
+        {
+            var loadout = new Loadout(new HeroConfig());
+            Assert.AreEqual(0f, loadout.Effective.ContactArmour, 0.0001f);
+
+            loadout.Pickup(new ItemInstance(Slot.Vest, Rarity.Issued, 10,
+                new[] { new Affix(AffixKind.Plated, 3f) }, "test"));
+
+            Assert.AreEqual(3f, loadout.Effective.ContactArmour, 0.0001f,
+                "a Plated affix that never reaches the hero is a lie on the item card");
+        }
+
+        [Test]
+        public void SecondWindOnlyArrivesWithALegacyVest()
+        {
+            var loadout = new Loadout(new HeroConfig());
+            Assert.IsFalse(loadout.Effective.HasSecondWind);
+
+            loadout.Pickup(new ItemInstance(Slot.Vest, Rarity.Legacy, 20,
+                new[] { new Affix(AffixKind.SecondWind, 1f) }, "test"));
+
+            Assert.IsTrue(loadout.Effective.HasSecondWind);
+        }
+
+        [Test]
+        public void SkillPointsInScrapPlateAlsoArmourTheHero()
+        {
+            var skills = new SkillState();
+            skills.AddXp(LevelCurve.TotalXpFor(10));
+            var loadout = new Loadout(new HeroConfig(), null, null, skills);
+
+            loadout.SpendSkillPoint("s-plate");
+            loadout.SpendSkillPoint("s-plate");
+
+            Assert.AreEqual(2f, loadout.Effective.ContactArmour, 0.0001f);
+        }
+
+        [Test]
+        public void RepairSpeedMultiplierIsExposedForTheDrones()
+        {
+            var skills = new SkillState();
+            skills.AddXp(LevelCurve.TotalXpFor(20));
+            var loadout = new Loadout(new HeroConfig(), null, null, skills);
+            Assert.AreEqual(1f, loadout.RepairSpeedMultiplier, 0.0001f);
+
+            loadout.SpendSkillPoint("d-lanes");
+            loadout.SpendSkillPoint("d-reach");
+            loadout.SpendSkillPoint("d-welds");
+
+            Assert.AreEqual(1.15f, loadout.RepairSpeedMultiplier, 0.0001f);
+        }
+
+        [Test]
+        public void TurretMultipliersRiseWithDoctrine()
+        {
+            var skills = new SkillState();
+            skills.AddXp(LevelCurve.TotalXpFor(20));
+            var loadout = new Loadout(new HeroConfig(), null, null, skills);
+            Assert.AreEqual(1f, loadout.TurretDamageMultiplier, 0.0001f);
+
+            loadout.SpendSkillPoint("d-lanes");
+            loadout.SpendSkillPoint("d-lanes");
+
+            Assert.AreEqual(1.08f, loadout.TurretDamageMultiplier, 0.0001f);
+        }
     }
 }

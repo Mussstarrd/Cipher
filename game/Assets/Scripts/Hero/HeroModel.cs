@@ -19,6 +19,17 @@ namespace Cipher.Game.Hero
         public float ContactRadius { get; set; } = 0.9f;      // runners inside this chew on you
         public float ContactDamagePerAgentPerSecond { get; set; } = 6f;
         public int ContactAgentCap { get; set; } = 8;         // being buried is lethal, not instant
+
+        /// <summary>
+        /// Flat damage removed from each body's contact tick, from Plated affixes and Scrap
+        /// Plate. Applied per agent rather than to the total, so armour is worth most when a
+        /// few are on you and least when you are buried, which is the right shape: it makes
+        /// armour a reason to hold a line, not a reason to stand in the middle of a wave.
+        /// </summary>
+        public float ContactArmour { get; set; }
+
+        /// <summary>Once per wave, a lethal hit leaves you on 1 HP instead. Legacy vests only.</summary>
+        public bool HasSecondWind { get; set; }
         // Airstrike ultimate: a line of bombs along the look axis, aimed by looking (ROADMAP-2026-09 #1).
         public float AirstrikeCooldown { get; set; } = 8f;
         public float AirstrikeMinRange { get; set; } = 6f;    // marker clamps to this band from the hero
@@ -255,12 +266,48 @@ namespace Cipher.Game.Hero
         }
 
         /// <summary>Runners in contact chew on the hero. Returns damage taken this call.</summary>
+        /// <summary>True while a Legacy vest can still save the player this wave.</summary>
+        public bool SecondWindReady => _cfg.HasSecondWind && !_secondWindUsed;
+
+        /// <summary>Fires when Second Wind catches a lethal hit, so the game layer can react.</summary>
+        public bool ConsumedSecondWindThisTick { get; private set; }
+
+        private bool _secondWindUsed;
+
+        /// <summary>Rearms Second Wind. Called at the start of each wave, not each mission.</summary>
+        public void RearmSecondWind() => _secondWindUsed = false;
+
         public float ApplyContact(AgentWorld world, float dt)
         {
+            ConsumedSecondWindThisTick = false;
             if (IsDown || dt <= 0f) return 0f;
             int n = Math.Min(world.CountWithin(Position, _cfg.ContactRadius), _cfg.ContactAgentCap);
             if (n == 0) return 0f;
-            float damage = n * _cfg.ContactDamagePerAgentPerSecond * dt;
+
+            // Armour bites per body, and never reduces a tick to nothing: being swarmed still kills.
+            float perAgent = Math.Max(_cfg.ContactDamagePerAgentPerSecond * 0.1f,
+                                      _cfg.ContactDamagePerAgentPerSecond - _cfg.ContactArmour);
+            float damage = n * perAgent * dt;
+            return ApplyDamageToSelf(damage);
+        }
+
+        /// <summary>
+        /// The single place the hero loses health, so Second Wind cannot be bypassed by a new
+        /// damage source someone adds later.
+        /// </summary>
+        private float ApplyDamageToSelf(float damage)
+        {
+            if (damage <= 0f || IsDown) return 0f;
+
+            if (damage >= Health && SecondWindReady)
+            {
+                float dealt = Health - 1f;
+                Health = 1f;
+                _secondWindUsed = true;
+                ConsumedSecondWindThisTick = true;
+                return Math.Max(0f, dealt);
+            }
+
             Health = Math.Max(0f, Health - damage);
             return damage;
         }
@@ -269,6 +316,7 @@ namespace Cipher.Game.Hero
         {
             Position = at;
             Health = _cfg.MaxHealth;
+            _secondWindUsed = false;
             FireCooldown = 0f;
             AirstrikeCooldown = 0f;
             _strikeBombsLeft = 0;
