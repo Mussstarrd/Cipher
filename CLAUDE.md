@@ -182,7 +182,28 @@ dotnet run --project sim/tools/Cipher.Sim.Bench -c Release -- --smoke
   - Objectives needing the Structure/Process/Crew actor system (`ProtectActors`, `HoldUntil`,
     `KeepCrewAlive`) are **refused by name at load**. Do not make them load-and-do-nothing.
   - `ShippedScenarioTests` loads every file in `Resources/Scenarios` and asserts it parses, its id
-    matches its filename, and it has an objective that can complete. Add missions and CI guards them.
+    matches its filename, its `next` names a file that exists, and it has an objective that can
+    complete. Add missions and CI guards them.
+  - **How to author one: `docs/design/authoring-a-mission.md`.** Hand it to the owner.
+- **THE RETREAT IS A LOOP NOW (2026-09-11).** Completing the objectives does NOT win the mission
+  where there is a line behind you: it opens the pack-up window (`MatchState.CompleteByObjective`).
+  Leaving loads the next position, and whatever is left of the scan cycle becomes materials there
+  (`ScanCycleConfig.PrepDollarsPerSecond`) along with the truck's salvage. That closes ADR-005's
+  third place to spend the budget, which until now was computed and consumed by nothing.
+  - **`lastStand` and an empty `next` are DIFFERENT THINGS and must stay different.** "Nothing
+    behind this line" is design and is true of exactly one Act One mission; "the next mission is not
+    written" is content. Deriving the first from the second turned the last authored mission into a
+    last stand and silently changed how it played.
+  - **Anything sized or placed from the map must be re-pointed in `ResizeForMap`.** BuildSceneObjects
+    runs once per PROCESS, not per mission: the minimap texture and its two buffers, the ground
+    plane and the vault object all live across a position change. Add to that list when you add
+    something map-shaped, and verify with `-exodus-screenshot-fallback`, which jumps straight to the
+    next position under a camera.
+- **BUILT SCENERY IS BOXES AND THAT IS THE DECISION** (`Scripts/Bootstrap/SiteProps.cs`). The free
+  kits have no buildings. Under the ink shader a box with an overhanging roof and a dark window band
+  reads as a guardhouse; what would look cheap is a photoreal model beside it. Props are authored per
+  position in the scenario's `props`, carry **no colliders and no grid cells**, and an unknown kind
+  is a load error rather than a prop that never appears.
 - **JSON is hand-rolled** (`Scripts/Scenario/Json.cs`). `JsonUtility` cannot express this schema
   (no dictionaries, no polymorphic lists, no optional sections) and Newtonsoft is a package
   dependency for ~400 lines. Numbers parse `InvariantCulture` on purpose: a comma-decimal locale
