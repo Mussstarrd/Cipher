@@ -68,6 +68,10 @@ namespace Cipher.Game.Editor
                     // bounds read in edit mode on a freshly instantiated prefab are not real: the
                     // renderer has never been through a frame. Measure in play, or do not measure.
 
+                    // Smoothed normals for the outline hull. Without this the ink tears at every
+                    // seam and the character looks like a smudged pencil sketch.
+                    SmoothNormals.ApplyToHierarchy(instance, $"{OutDir}/{name}_smoothmesh.asset");
+
                     // Unity objects use a "fake null" that ?? does not recognise, so the coalescing
                     // operator hands back a destroyed component instead of adding a live one.
                     var animator = instance.GetComponent<Animator>();

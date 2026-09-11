@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1001 &7325929806785266465
+--- !u!1001 &7334448231061390238
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
@@ -48,31 +48,47 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 195254801354814361, guid: 104cfc2157f9c92488476aacfc222daf, type: 3}
+      propertyPath: m_Mesh
+      value: 
+      objectReference: {fileID: -2305789500867737203, guid: 382b31bfa70b3354fa09e28b1f9f8d58, type: 2}
     - target: {fileID: 919132149155446097, guid: 104cfc2157f9c92488476aacfc222daf, type: 3}
       propertyPath: m_Name
       value: Farmer_Civilian
       objectReference: {fileID: 0}
+    - target: {fileID: 1524576946745221677, guid: 104cfc2157f9c92488476aacfc222daf, type: 3}
+      propertyPath: m_Mesh
+      value: 
+      objectReference: {fileID: 4300000, guid: 382b31bfa70b3354fa09e28b1f9f8d58, type: 2}
+    - target: {fileID: 3720554658630495615, guid: 104cfc2157f9c92488476aacfc222daf, type: 3}
+      propertyPath: m_Mesh
+      value: 
+      objectReference: {fileID: 2887849268179646600, guid: 382b31bfa70b3354fa09e28b1f9f8d58, type: 2}
+    - target: {fileID: 7149117711173880816, guid: 104cfc2157f9c92488476aacfc222daf, type: 3}
+      propertyPath: m_Mesh
+      value: 
+      objectReference: {fileID: -2727857632967518967, guid: 382b31bfa70b3354fa09e28b1f9f8d58, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 104cfc2157f9c92488476aacfc222daf, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 7358163387904854277}
+      addedObject: {fileID: 2037978032341229624}
   m_SourcePrefab: {fileID: 100100000, guid: 104cfc2157f9c92488476aacfc222daf, type: 3}
---- !u!1 &7596314221704183408 stripped
+--- !u!1 &7568396066645950159 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 104cfc2157f9c92488476aacfc222daf, type: 3}
-  m_PrefabInstance: {fileID: 7325929806785266465}
+  m_PrefabInstance: {fileID: 7334448231061390238}
   m_PrefabAsset: {fileID: 0}
---- !u!95 &7358163387904854277
+--- !u!95 &2037978032341229624
 Animator:
   serializedVersion: 7
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7596314221704183408}
+  m_GameObject: {fileID: 7568396066645950159}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
   m_Controller: {fileID: 9100000, guid: b8d285cb71d876a49a096529e8a52393, type: 2}

@@ -409,6 +409,8 @@ namespace Cipher.Game
         public const float InkCharacter = 0.05f;
         public const float InkProp = 0.035f;
         public const float InkNone = 0f;
+        /// <summary>Fine line for detailed character meshes, which need far less than a cube.</summary>
+        public const float InkFigure = 0.012f;
 
         private static Material MakeMaterial(Color color, bool instanced, float ink = InkProp)
         {
@@ -421,6 +423,7 @@ namespace Cipher.Game
 
         private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
         private static readonly int OutlineWidthId = Shader.PropertyToID("_OutlineWidth");
+        private static readonly int SmoothOutlineId = Shader.PropertyToID("_SmoothOutline");
 
         private void BakeWallsIfChanged()
         {
@@ -1048,7 +1051,15 @@ namespace Cipher.Game
                             : (src != null ? src.color : Color.grey);
                         mat.color = tint;
                         if (mat.HasProperty(BaseColorId)) mat.SetColor(BaseColorId, tint);
-                        if (mat.HasProperty(OutlineWidthId)) mat.SetFloat(OutlineWidthId, InkCharacter * 0.5f);
+                        // Characters carry smoothed normals in their tangents; tell the shader to
+                        // extrude along those, and keep the line fine. A thick hull on a detailed
+                        // mesh reads as a smudge, not as ink.
+                        if (mat.HasProperty(OutlineWidthId)) mat.SetFloat(OutlineWidthId, InkFigure);
+                        if (mat.HasProperty(SmoothOutlineId))
+                        {
+                            mat.SetFloat(SmoothOutlineId, 1f);
+                            mat.EnableKeyword("_SMOOTH_OUTLINE");
+                        }
                         if (src != null && src.mainTexture != null) mat.mainTexture = src.mainTexture;
                         swapped[m] = mat;
                     }

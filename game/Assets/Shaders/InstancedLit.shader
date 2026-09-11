@@ -20,6 +20,7 @@ Shader "Exodus/InstancedLit"
 
         _OutlineColor("Outline Colour", Color) = (0.05, 0.05, 0.07, 1)
         _OutlineWidth("Outline Width", Range(0, 0.4)) = 0.035
+        [Toggle(_SMOOTH_OUTLINE)] _SmoothOutline("Use Smoothed Normals For Outline", Float) = 0
 
         _ShadowTint("Shadow Tint", Color) = (0.32, 0.35, 0.45, 1)
         _Bands("Light Bands", Range(2, 5)) = 3
@@ -48,6 +49,7 @@ Shader "Exodus/InstancedLit"
             #pragma fragment OutlineFrag
             #pragma multi_compile_instancing
             #pragma multi_compile_fog
+            #pragma shader_feature_local _SMOOTH_OUTLINE
             #pragma target 3.0
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
@@ -68,6 +70,7 @@ Shader "Exodus/InstancedLit"
             {
                 float4 positionOS : POSITION;
                 float3 normalOS   : NORMAL;
+                float4 tangentOS  : TANGENT;    // carries the smoothed normal when baked
                 UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
@@ -85,12 +88,21 @@ Shader "Exodus/InstancedLit"
                 UNITY_TRANSFER_INSTANCE_ID(input, output);
 
                 float3 positionWS = TransformObjectToWorld(input.positionOS.xyz);
-                float3 normalWS = normalize(TransformObjectToWorldNormal(input.normalOS));
 
-                // Scale the hull with view distance so the ink keeps a near-constant screen width
-                // instead of vanishing into the distance, which is what a drawn line does.
-                float viewDist = length(GetCameraPositionWS() - positionWS);
-                float width = _OutlineWidth * (1.0 + viewDist * 0.06);
+                // Extrude along the SMOOTHED normal where one has been baked. A character mesh splits
+                // vertices at every hard edge and UV seam, so extruding along the shading normal tears
+                // the hull open at each seam and the line reads as blurred and smeared.
+                #if defined(_SMOOTH_OUTLINE)
+                    float3 extrudeOS = input.tangentOS.xyz;
+                #else
+                    float3 extrudeOS = input.normalOS;
+                #endif
+                float3 normalWS = normalize(TransformObjectToWorldNormal(extrudeOS));
+
+                // Keep the ink at a roughly constant width ON SCREEN. Scaling with raw distance made
+                // far-off silhouettes balloon into blobs; scaling with the projected size does not.
+                float viewDist = max(0.5, length(GetCameraPositionWS() - positionWS));
+                float width = _OutlineWidth * (1.0 + viewDist * 0.012);
 
                 positionWS += normalWS * width;
                 output.positionCS = TransformWorldToHClip(positionWS);
