@@ -336,6 +336,14 @@ namespace Cipher.Game
             go.transform.localScale *= Mathf.Lerp(scaleMin, scaleMax, rng.NextFloat());
 
             Reskin(go);
+
+            // A contact shadow, measured off this instance. The scatter is where the grounding
+            // problem is most visible: a few hundred trees and cars, every one of them apparently
+            // resting a centimetre above the ground under a single flat overcast key light.
+            // Measured AFTER the scale and rotation above, so a half-size bush gets a half-size
+            // mark and a tree lying on its side does not get a shadow the length of its trunk.
+            BlobShadows.RegisterProp(go);
+
             OnPlaced?.Invoke(prefab.name, go);
             Placed++;
         }
