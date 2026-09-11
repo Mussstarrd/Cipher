@@ -199,6 +199,15 @@ dotnet run --project sim/tools/Cipher.Sim.Bench -c Release -- --smoke
     plane and the vault object all live across a position change. Add to that list when you add
     something map-shaped, and verify with `-exodus-screenshot-fallback`, which jumps straight to the
     next position under a camera.
+- **ACTORS ARE WHAT FIVE OF TWELVE MISSIONS ARE FOUGHT OVER** (`Scripts/Scenario/Actors.cs`).
+  Process (a clock), Structure (a transformer), Crew (a person). `HoldUntil`, `ProtectActors` and
+  `KeepCrewAlive` are implemented against them.
+  - **Damage is PRESSURE, not attacks.** `IActorThreat.EnemiesWithin` is the only thing the rules
+    take from the sim. Do not give actors grid cells to make them attackable: that makes them solid,
+    which changes pathing, which breaks the build preview's covenant.
+  - **`IsFailCondition` lives on `IObjective`.** ProtectVault/ProtectActors/KeepCrewAlive are
+    conditions you hold, never tasks you finish; counting one as a goal makes its mission unwinnable.
+  - Attended work PAUSES when the hero leaves. It never resets.
 - **BUILT SCENERY IS BOXES AND THAT IS THE DECISION** (`Scripts/Bootstrap/SiteProps.cs`). The free
   kits have no buildings. Under the ink shader a box with an overhanging roof and a dark window band
   reads as a guardhouse; what would look cheap is a photoreal model beside it. Props are authored per

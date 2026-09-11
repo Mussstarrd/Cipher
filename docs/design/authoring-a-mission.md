@@ -131,15 +131,54 @@ the fraction that attack a barricade instead of walking around it. Together they
 
 All objectives must complete to finish; any failure loses it.
 
-| Type | Parameters | Notes |
-|---|---|---|
-| `ClearWaves` | `count` | Cannot exceed the number of waves you defined. |
-| `SurviveSeconds` | `seconds` | The clock missions. Seven of Act One's twelve are these. |
-| `ProtectVault` | `minHp` | A **fail condition**, not a goal. It never completes and is not waited on. |
+| Type | Parameters | Goal or condition | Notes |
+|---|---|---|---|
+| `ClearWaves` | `count` | goal | Cannot exceed the number of waves you defined. |
+| `SurviveSeconds` | `seconds` | goal | The clock missions. |
+| `HoldUntil` | `actorId` | goal | A Process actor finishes its work. Fails if the thing is destroyed. |
+| `ProtectVault` | `minHp` | **condition** | |
+| `ProtectActors` | `minAlive` | **condition** | Counts Structures and Processes. |
+| `KeepCrewAlive` | `minAlive` | **condition** | Counts Crew. |
 
-`ProtectActors`, `HoldUntil` and `KeepCrewAlive` are in the schema but **refused at load** — they
-need the Structure/Process/Crew actor system, which is not built. A mission using one fails to load
-rather than starting and turning out to be unwinnable.
+A **condition** is something you hold, not a task you finish. It can only fail or stay pending, and
+the mission never waits on it — a mission whose only objective is a condition could never be won.
+Every mission needs at least one goal.
+
+### Actors: the things a mission is fought over
+
+```json
+"actors": [
+  { "id": "transfer", "kind": "Process", "x": 63, "y": 28, "hp": 260,
+    "durationSeconds": 300, "requiresHeroWithin": 0 },
+  { "id": "transformer-a", "kind": "Structure", "x": 60, "y": 23, "hp": 180 },
+  { "id": "dave", "kind": "Crew", "x": 61, "y": 30, "hp": 60 }
+]
+```
+
+| Kind | What it is |
+|---|---|
+| `Process` | Runs a clock. `durationSeconds` is the work; `requiresHeroWithin` (cells) means it only runs while you are standing there — set 0 and it runs unattended. |
+| `Structure` | A transformer, a pump, a well head. It has HP and that is all. |
+| `Crew` | A person. Takes damage three times as fast, because people do. |
+
+Enemies standing near an actor wreck it, and how fast depends on how many. **Actors do not block
+movement** — nothing an objective owns is allowed to change where the horde walks.
+
+Work on an attended Process **pauses** when you leave; it does not reset. You can be pushed off it
+and come back.
+
+### The scan cycle, per position
+
+```json
+"cycle": { "cycleSeconds": 900, "minWavesBeforeExtract": 2,
+           "extractSeconds": 90, "prepDollarsPerSecond": 0.9 }
+```
+
+This is the difficulty curve and the fiction in one number. HALCYON frees up compute as the act goes
+on, so `cycleSeconds` should **shorten** mission by mission — days early, hours by the end. Whatever
+is left of it when you pull out becomes materials at the next position, at `prepDollarsPerSecond`.
+
+A mission with a long `HoldUntil` needs a long cycle, or there is nothing left to fall back with.
 
 **Completing the objectives does not end the mission.** It opens the pack-up window, unless
 `lastStand` is set. That is the point of the scan cycle: leaving is a thing you do under a clock,
@@ -169,6 +208,8 @@ Positions are in cells and may be fractional. `yaw` is degrees.
 - **Start cash buys about four things.** $400 is two turrets, or one turret and a lot of wall.
 - **Give the fall-back position a harder table than the one before it**, because the player arrives
   with materials, levels and a shorter cycle.
+- **A `HoldUntil` should be most of the mission, not all of it.** Five minutes of transfer inside a
+  fifteen-minute cycle leaves the player a real choice about how many extra waves to take.
 
 ## Checking your work
 
