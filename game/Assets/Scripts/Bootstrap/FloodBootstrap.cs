@@ -955,6 +955,9 @@ namespace Cipher.Game
             _showInventory = true;
         }
 
+        /// <summary>Starts the first wave, so a smoke capture can actually see combat. Harness only.</summary>
+        public void StartWaveForCapture() => _match.StartWaveNow();
+
         /// <summary>Opens the skill screen with points banked, for a capture. Harness only.</summary>
         public void ShowSkillsForCapture()
         {
