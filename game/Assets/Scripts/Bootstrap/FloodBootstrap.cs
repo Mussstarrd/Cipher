@@ -139,6 +139,7 @@ namespace Cipher.Game
         private Vec2 HeroSpawn = new Vec2(58f, 24f);
         private Transform _heroT = null!;
         private Transform _barrelT = null!;
+        private HeroEmitter _emitter = null!;
         private Transform _markerT = null!;
         private StrikeDrone? _strikeDrone;
         private readonly List<StrikeImpact> _impactScratch = new List<StrikeImpact>(8);
@@ -632,14 +633,10 @@ namespace Cipher.Game
             heroGo.GetComponent<Renderer>().material = MakeMaterial(new Color(1f, 0.84f, 0.2f), instanced: false);
             _heroT = heroGo.transform;
 
-            var barrel = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            barrel.name = "Barrel";
-            Destroy(barrel.GetComponent<Collider>());
-            barrel.transform.SetParent(_heroT, worldPositionStays: false);
-            barrel.transform.localPosition = new Vector3(0f, 0.25f, 0.9f);
-            barrel.transform.localScale = new Vector3(0.18f, 0.18f, 1.1f);
-            barrel.GetComponent<Renderer>().material = MakeMaterial(new Color(0.12f, 0.12f, 0.12f), instanced: false);
-            _barrelT = barrel.transform;
+            // The weapon is four weapons now, not one box. HeroEmitter owns the geometry per tier
+            // and cancels the hero capsule's non-uniform scale itself.
+            _emitter = HeroEmitter.Build(_heroT, PropMaterial);
+            _barrelT = _emitter.Root.transform;
 
             var marker = GameObject.CreatePrimitive(PrimitiveType.Cube);
             marker.name = "StrikeMarker";
@@ -3187,9 +3184,12 @@ namespace Cipher.Game
                 NoteHeroShot();
                 AddTrauma(0.05f);
                 _muzzleLeft = HitFlashSeconds;
-                _signal.AddBeam(ToWorld(shot.Origin, 0.75f),
+                // From the horn, not from the middle of his chest: the emitter hangs off his right
+                // and a pulse that starts anywhere else reads as coming from the wrong object.
+                var muzzle = _emitter.Muzzle != null ? _emitter.Muzzle.position : ToWorld(shot.Origin, 0.75f);
+                _signal.AddBeam(muzzle,
                                 ToWorld(shot.End, shot.Hit ? 0.9f : 0.75f),
-                                SignalBeam.Emitter, landed: shot.Hit);
+                                SignalBeam.Emitter, landed: shot.Hit, tier: _pickups.GunTier);
                 _sfx.Play(Sfx.Shot, 0.75f, 0.08f);
                 if (shot.Killed)
                 {
@@ -3396,6 +3396,9 @@ namespace Cipher.Game
             var facing = new Vector3(_hero.Facing.X, 0f, _hero.Facing.Y);
             if (facing.sqrMagnitude > 1e-6f) _heroT.rotation = Quaternion.LookRotation(facing, Vector3.up);
             _barrelT.gameObject.SetActive(!_hero.IsDown && !_buildMode);
+            // Restated every frame rather than on pickup: a tier can also arrive from a loadout
+            // change or a fall-back, and the crate event is not the only way it moves.
+            _emitter.SetTier(_pickups.GunTier);
 
             bool showMarker = !_hero.IsDown && !_buildMode && !_match.IsOver;
             _markerT.gameObject.SetActive(showMarker);
