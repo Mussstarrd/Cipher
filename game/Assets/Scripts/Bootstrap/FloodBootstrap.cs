@@ -853,7 +853,7 @@ namespace Cipher.Game
                     var run = alongY ? Quaternion.Euler(0f, 90f, 0f) : Quaternion.identity;
 
                     if (kind == WallKind.Rock) BakeFence(centre, run, alongY, x, y, posts, panels, rails);
-                    else BakeLogPile(centre, run, x, y, logs);
+                    else ImprovisedBarricade.Bake(centre, run, x, y, logs);
                 }
             }
 
@@ -970,41 +970,6 @@ namespace Cipher.Game
                 var offset = alongY ? new Vector3(0f, 0f, -half) : new Vector3(-half, 0f, 0f);
                 posts.Add(Matrix4x4.TRS(centre + offset + new Vector3(0f, height * 0.5f + 0.05f, 0f),
                                         run, new Vector3(0.14f, height + 0.1f, 0.14f)));
-            }
-        }
-
-        /// <summary>
-        /// Felled trees stacked into a barricade — the owner's idea, and the right one for a lake
-        /// community with a treeline behind every lot: it is made of the thing the map is full of.
-        ///
-        /// Three courses, each log lying ALONG the run, with per-cell jitter on length and roll so a
-        /// long stretch does not read as extruded fencing. Deterministic from the cell, so the same
-        /// wall looks the same on every run and a screenshot is reproducible.
-        /// </summary>
-        private void BakeLogPile(Vector3 centre, Quaternion run, int x, int y, List<Matrix4x4> logs)
-        {
-            // The built-in cylinder is 2 units tall on Y, so tip it onto the run axis.
-            var lie = run * Quaternion.Euler(0f, 0f, 90f);
-
-            // Four thinner courses rather than three fat ones: a log has to be narrow relative to
-            // its length or it reads as a stacked crate, which is what the first pass looked like.
-            const int courses = 4;
-            for (int course = 0; course < courses; course++)
-            {
-                int h = Hash(x, y, course);
-                float radius = 0.20f + (h & 7) * 0.006f;
-                float length = 1.06f + ((h >> 3) & 7) * 0.010f;
-                float roll = ((h >> 6) & 15) * 1.4f;
-                // Courses nest into the gaps below them, the way a real stack settles.
-                float lift = 0.21f + course * 0.40f;
-                float shove = (((h >> 10) & 7) - 3.5f) * 0.022f;
-                float lean = ((course & 1) == 0 ? 0.06f : -0.06f) + (((h >> 14) & 3) - 1.5f) * 0.02f;
-
-                var offset = run * new Vector3(shove, 0f, lean);
-                logs.Add(Matrix4x4.TRS(
-                    centre + offset + new Vector3(0f, lift, 0f),
-                    lie * Quaternion.Euler(roll, 0f, 0f),
-                    new Vector3(radius * 2f, length * 0.5f, radius * 2f)));
             }
         }
 
@@ -2197,6 +2162,12 @@ namespace Cipher.Game
             else
                 Debug.LogWarning("[Env] no Street_Straight in Resources/Environment; no road laid");
 
+            // THE AUTHORED FOOTPRINTS GO DOWN BEFORE THE SCATTER. The dresser only refuses cells
+            // that are already solid, so marking the buildings afterwards -- which is what this
+            // did while props were pure decoration -- grew trees through the clubhouse and left
+            // the clubhouse's own footprint full of holes where they landed.
+            foreach (var prop in _scenario.Props) MarkPropFootprint(prop);
+
             dresser.Dress(trees, bushes, cars, KeepClear);
 
             // Everything past the playable rectangle. Built before the authored props so it can
@@ -2210,15 +2181,11 @@ namespace Cipher.Game
                 Debug.Log($"[Env] backdrop: {backdrop.Placed} pieces");
             }
 
-            // Built scenery last: it is authored per position, so it wins over the random scatter.
+            // The buildings themselves. Their CELLS were claimed before the scatter (above); this
+            // is only the geometry, which can go down whenever.
             var site = new SiteProps(root, PropMaterial);
             foreach (var prop in _scenario.Props)
-            {
                 site.Build(prop.Kind, prop.X, prop.Y, prop.Yaw);
-                // Authored props are solid too, and their footprint is bigger than a cell. A
-                // guardhouse you can walk through is a box painted on the ground.
-                MarkPropFootprint(prop);
-            }
             if (site.Placed > 0) Debug.Log($"[Env] {site.Placed} built props");
 
             foreach (var cell in dresser.SolidCells) RememberScenery(cell.X, cell.Y);
@@ -2721,25 +2688,18 @@ namespace Cipher.Game
         /// </summary>
         private void MarkPropFootprint(PropDef prop)
         {
-            int half = prop.Kind switch
+            // The shape lives in PropCatalog, beside the list of kinds the scenario reader
+            // validates against, so a clubhouse is one entry in one file rather than a size here
+            // and a name there. Rock, and remembered as scenery, so the cells are solid and the
+            // wall renderer leaves them alone -- the building itself is the picture.
+            foreach (var (x, y) in PropCatalog.Footprint(prop.Kind, prop.X, prop.Y, prop.Yaw))
             {
-                "Guardhouse" => 1,      // 3x3
-                "JerseyBarrier" => 0,   // 1x1, and it is waist height anyway
-                "Pillar" => 0,
-                _ => 0,
-            };
-
-            int cx = Mathf.FloorToInt(prop.X);
-            int cy = Mathf.FloorToInt(prop.Y);
-            for (int x = cx - half; x <= cx + half; x++)
-                for (int y = cy - half; y <= cy + half; y++)
-                {
-                    if (x < 0 || y < 0 || x >= GridW || y >= GridH) continue;
-                    if (_map.KindAt(x, y) != WallKind.None) continue;
-                    if (KeepClear(x, y)) continue;   // never wall off the lane or the objective
-                    _map.SetWall(x, y, WallKind.Rock, GridMap.DefaultWallHp);
-                    RememberScenery(x, y);
-                }
+                if (x < 0 || y < 0 || x >= GridW || y >= GridH) continue;
+                if (_map.KindAt(x, y) != WallKind.None) continue;
+                if (KeepClear(x, y)) continue;   // never wall off the lane or the objective
+                _map.SetWall(x, y, WallKind.Rock, GridMap.DefaultWallHp);
+                RememberScenery(x, y);
+            }
         }
 
         /// <summary>The nearest living agent to a point, in world space; the point itself if none.</summary>

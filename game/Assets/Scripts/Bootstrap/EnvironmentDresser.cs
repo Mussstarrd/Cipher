@@ -102,154 +102,142 @@ namespace Cipher.Game
         }
 
         /// <summary>
-        /// Lays a road along a horizontal corridor.
+        /// Lays the carriageway along a horizontal corridor: asphalt, shoulders, a dashed centre
+        /// line and solid edge lines, as ONE road rather than two strips with a gap down it.
         ///
-        /// Everything about the tile is MEASURED, because an imported kit arrives at whatever scale
-        /// and orientation its author used. Two guesses cost real time here. The first took the
-        /// tile's largest horizontal extent as its width, which is its length, so the scale came out
-        /// 1 and the road shipped as a one-cell bar standing proud of the ground like a kerbstone.
-        /// The second assumed the tile lies flat in XZ: this one is authored Z-up, so its footprint
-        /// is in X/Y and it stood on its edge like a fence panel.
+        /// THIS USED TO INSTANTIATE THE IMPORTED STREET TILE AND THAT WAS THE BUG. `Street_Straight`
+        /// is a divided kit piece -- two carriageways with a median between them -- so laying it
+        /// down the middle of the map produced exactly what the owner reported: "the two Road Lanes
+        /// need to be together". It is also Z-up authored, which had already cost this project a
+        /// session, and the surface markings it carries were being flattened to a single tint by
+        /// the reskin anyway. Three problems, all of them downstream of using a model for something
+        /// a model is not needed for.
         ///
-        /// So nothing is assumed. The tile is measured, its THINNEST axis is rotated onto Y (that
-        /// axis is the road surface's normal, whichever one it happens to be), its longest remaining
-        /// axis is turned along the corridor, the short one is scaled to the corridor width, and the
-        /// whole thing is sunk so its top face sits a hair above the ground plane rather than as a
-        /// slab on top of it.
+        /// So the road is drawn, not imported. Under the ink shader a road IS flat bands of colour:
+        /// dark asphalt, a pale gravel shoulder either side, white edge lines and a dashed yellow
+        /// centre. That is the whole picture, it is what the art direction already is, and it costs
+        /// six boxes per run of clear cells instead of a mesh every six metres.
+        ///
+        /// <paramref name="tile"/> is kept only as the source of a material to reskin, so the road
+        /// still picks up whatever shader setup the kit's asphalt had; its GEOMETRY is not used.
+        /// The parameter stays because the bootstrap's call site is not ours to change.
+        ///
+        /// Markings are BOXES WITH THICKNESS sitting proud of the asphalt, not coplanar decals. A
+        /// stripe painted at the same height as the surface under it z-fights from the overhead
+        /// camera, which is the one view the player plans in.
         /// </summary>
         public void LayRoad(GameObject tile, int centreY, int widthCells, Func<int, int, bool> blocked)
         {
-            if (tile == null) return;
+            if (widthCells < 2) return;
 
-            var points = CollectMeshCorners(tile);
-            if (points.Count == 0) return;
+            Material? source = null;
+            if (tile != null)
+                foreach (var r in tile.GetComponentsInChildren<Renderer>())
+                {
+                    if (r.sharedMaterial == null) continue;
+                    source = r.sharedMaterial;
+                    break;
+                }
 
-            // Stand the tile up the right way: the thinnest axis is the surface normal.
-            var raw = BoundsOf(points, Quaternion.identity);
-            Quaternion upright =
-                raw.size.y <= raw.size.x && raw.size.y <= raw.size.z ? Quaternion.identity
-                : raw.size.z <= raw.size.x ? Quaternion.Euler(-90f, 0f, 0f)   // Z-up authoring
-                : Quaternion.Euler(0f, 0f, 90f);                              // X-up authoring
+            var asphalt = Tint(_reskin(source), RoadTint);
+            var shoulder = Tint(_reskin(source), ShoulderTint);
+            var paintWhite = Tint(_reskin(source), EdgeLineTint);
+            var paintYellow = Tint(_reskin(source), CentreLineTint);
 
-            // Then put its long axis along the corridor, which runs in X.
-            var flat = BoundsOf(points, upright);
-            Quaternion turn = flat.size.x >= flat.size.z
-                ? upright
-                : Quaternion.Euler(0f, 90f, 0f) * upright;
+            float half = widthCells * 0.5f;
+            float mid = centreY + 0.5f;
 
-            var laid = BoundsOf(points, turn);
-            float across = laid.size.z;   // kerb to kerb
-            float along = laid.size.x;    // direction of travel
-            if (across <= 1e-4f || along <= 1e-4f) return;
-
-            // Uniform scale, so the surface markings keep their proportions. One tile then covers
-            // `span` cells of road.
-            float scale = widthCells / across;
-            float span = along * scale;
-            if (span < 0.5f) return;
-
-            float lift = SurfaceLift - laid.max.y * scale;
-            var offset = new Vector3(laid.center.x * scale, 0f, laid.center.z * scale);
-
-            // One material per source material for the whole road, not one per tile.
-            var tinted = new Dictionary<Material, Material>();
-
-            for (float x = 0f; x < _map.Width; x += span)
+            // Walk the corridor and lay one slab per contiguous run of clear cells. A wall across
+            // the road leaves a HOLE in the road, which is what a road with something dragged
+            // across it should look like; the old code skipped a whole six-metre tile instead and
+            // left the carriageway ending in mid-air either side of the barricade.
+            int runStart = -1;
+            for (int x = 0; x <= _map.Width; x++)
             {
-                // Pull the last tile back inside the map instead of letting it hang over the edge
-                // of the ground plane. A few centimetres of overlap on one seam is invisible; a
-                // road ending in mid-air is not.
-                bool clamped = !(span >= _map.Width) && x > _map.Width - span;
-                float left = clamped ? _map.Width - span : x;
+                bool clear = x < _map.Width && !ColumnBlocked(x, centreY, widthCells, blocked);
+                if (clear && runStart < 0) runStart = x;
+                if (clear || runStart < 0) continue;
 
-                // Test EVERY cell the tile covers, not just the one under its centre. A six-cell
-                // tile tested at its centre steps straight over a one-cell wall: on this map the
-                // wall columns fell between the centres, so the predicate never fired once and the
-                // road was laid clean through all three walls.
-                if (FootprintBlocked(left, span, centreY, widthCells, blocked)) continue;
-
-                var go = UnityEngine.Object.Instantiate(tile, _root);
-                go.transform.rotation = turn;
-                go.transform.localScale = tile.transform.localScale * scale;
-                // The pulled-back last tile sits ON TOP of the one before it. Coplanar surfaces
-                // z-fight, which is the one artefact SurfaceLift exists to avoid, so lift it clear.
-                go.transform.position = new Vector3(
-                    left + span * 0.5f - offset.x,
-                    clamped ? lift + SurfaceLift : lift,
-                    centreY + 0.5f - offset.z);
-
-                ApplyShared(go, tinted, RoadTint);
-                Placed++;
+                LayRun(runStart, x, mid, half, asphalt, shoulder, paintWhite, paintYellow);
+                runStart = -1;
             }
         }
 
-        /// <summary>True if any cell under a tile's footprint is blocked.</summary>
-        private bool FootprintBlocked(float left, float span, int centreY, int widthCells,
-                                      Func<int, int, bool> blocked)
+        /// <summary>One contiguous stretch of carriageway, from cell <paramref name="x0"/> to
+        /// <paramref name="x1"/> exclusive.</summary>
+        private void LayRun(int x0, int x1, float mid, float half,
+                            Material asphalt, Material shoulder, Material white, Material yellow)
         {
-            int x0 = Mathf.Max(0, Mathf.FloorToInt(left));
-            int x1 = Mathf.Min(_map.Width - 1, Mathf.CeilToInt(left + span) - 1);
-            int half = Mathf.Max(0, widthCells / 2);
-            int y0 = Mathf.Max(0, centreY - half);
-            int y1 = Mathf.Min(_map.Height - 1, centreY + half);
+            float length = x1 - x0;
+            if (length < 0.5f) return;
+            float cx = (x0 + x1) * 0.5f;
 
-            for (int x = x0; x <= x1; x++)
-                for (int y = y0; y <= y1; y++)
-                    if (blocked(x, y)) return true;
+            // Gravel shoulder, slightly wider than the asphalt and slightly lower, so the edge of
+            // the road is a step rather than a line where asphalt meets field.
+            Slab(shoulder, cx, mid, length, half * 2f + ShoulderWidth * 2f, SurfaceLift * 0.5f);
+            Slab(asphalt, cx, mid, length, half * 2f, SurfaceLift);
+
+            // Edge lines, one per side, inset from the kerb the way real ones are.
+            float edge = half - EdgeInset;
+            Slab(white, cx, mid - edge, length, LineWidth, PaintLift);
+            Slab(white, cx, mid + edge, length, LineWidth, PaintLift);
+
+            // Dashed centre line. The dash phase is taken from the WORLD position, not from the
+            // start of this run, so the dashes stay in step across a gap in the carriageway.
+            for (float d = Mathf.Ceil(x0 / DashPitch) * DashPitch; d < x1; d += DashPitch)
+            {
+                float from = Mathf.Max(d, x0);
+                float to = Mathf.Min(d + DashLength, x1);
+                if (to - from < 0.15f) continue;
+                Slab(yellow, (from + to) * 0.5f, mid, to - from, LineWidth, PaintLift);
+            }
+        }
+
+        /// <summary>
+        /// A flat box lying on the ground: top face at <paramref name="top"/>, and real thickness
+        /// downward so nothing here is ever coplanar with anything else.
+        /// </summary>
+        private void Slab(Material material, float cx, float cz, float length, float width, float top)
+        {
+            const float thickness = 0.35f;
+            var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            go.name = "Road";
+            UnityEngine.Object.Destroy(go.GetComponent<Collider>());
+            go.transform.SetParent(_root, false);
+            go.transform.position = new Vector3(cx, top - thickness * 0.5f, cz);
+            go.transform.localScale = new Vector3(length, thickness, width);
+            go.GetComponent<Renderer>().sharedMaterial = material;
+            Placed++;
+        }
+
+        /// <summary>True if any cell in the corridor at this x is blocked.</summary>
+        private bool ColumnBlocked(int x, int centreY, int widthCells, Func<int, int, bool> blocked)
+        {
+            int halfCells = Mathf.Max(0, widthCells / 2);
+            int y0 = Mathf.Max(0, centreY - halfCells);
+            int y1 = Mathf.Min(_map.Height - 1, centreY + halfCells);
+            for (int y = y0; y <= y1; y++)
+                if (blocked(x, y)) return true;
             return false;
         }
 
         /// <summary>Wet winter asphalt, darker than the leaf litter either side of it.</summary>
         private static readonly Color RoadTint = new Color(0.17f, 0.17f, 0.18f);
+        /// <summary>Gravel and grit swept to the kerb.</summary>
+        private static readonly Color ShoulderTint = new Color(0.33f, 0.31f, 0.27f);
+        private static readonly Color EdgeLineTint = new Color(0.76f, 0.75f, 0.71f);
+        private static readonly Color CentreLineTint = new Color(0.72f, 0.60f, 0.20f);
+
+        private const float ShoulderWidth = 0.9f;
+        private const float EdgeInset = 0.45f;
+        private const float LineWidth = 0.16f;
+        private const float DashLength = 3.0f;
+        private const float DashPitch = 7.0f;
+        /// <summary>Top of a painted line: proud of the asphalt, under the decals at 0.02.</summary>
+        private const float PaintLift = 0.017f;
 
         /// <summary>How far above the ground plane a flat surface sits. Coplanar faces flicker.</summary>
         private const float SurfaceLift = 0.012f;
-
-        /// <summary>
-        /// Every mesh corner of a prefab, in the prefab's own space at its own scale.
-        ///
-        /// This instantiates a throwaway copy at the origin rather than doing the matrix arithmetic
-        /// against the asset's transform: an FBX root carries an import scale that the naive
-        /// worldToLocal/localToWorld round trip does not cancel, and the first version of this
-        /// measured a six-metre road tile as two centimetres across.
-        /// </summary>
-        private static List<Vector3> CollectMeshCorners(GameObject prefab)
-        {
-            var points = new List<Vector3>();
-            var probe = UnityEngine.Object.Instantiate(prefab);
-            try
-            {
-                probe.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
-
-                foreach (var filter in probe.GetComponentsInChildren<MeshFilter>())
-                {
-                    var mesh = filter.sharedMesh;
-                    if (mesh == null) continue;
-
-                    var m = filter.transform.localToWorldMatrix;
-                    var c = mesh.bounds.center;
-                    var e = mesh.bounds.extents;
-                    for (int i = 0; i < 8; i++)
-                        points.Add(m.MultiplyPoint3x4(new Vector3(
-                            c.x + ((i & 1) == 0 ? -e.x : e.x),
-                            c.y + ((i & 2) == 0 ? -e.y : e.y),
-                            c.z + ((i & 4) == 0 ? -e.z : e.z))));
-                }
-            }
-            finally
-            {
-                UnityEngine.Object.DestroyImmediate(probe);
-            }
-            return points;
-        }
-
-        /// <summary>Axis-aligned bounds of a point cloud after <paramref name="rotation"/>.</summary>
-        private static Bounds BoundsOf(List<Vector3> points, Quaternion rotation)
-        {
-            var b = new Bounds(rotation * points[0], Vector3.zero);
-            for (int i = 1; i < points.Count; i++) b.Encapsulate(rotation * points[i]);
-            return b;
-        }
 
         /// <summary>
         /// Reskins a prop, sharing one material per distinct source material via
