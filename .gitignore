@@ -29,3 +29,6 @@ game/out/
 
 # Import and tooling logs (local only)
 .artifacts/
+
+# Free third-party art packs. Re-downloadable input, not project source.
+art/free/

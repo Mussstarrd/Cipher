@@ -1,0 +1,15 @@
+# Free CC0 art packs, Quaternius. One per line: <dest-folder> <drive-folder-id> <source-page>
+#
+# Licence: CC0 1.0 Universal, confirmed in each pack's own License.txt and on the pack pages.
+# "Free of charge, in personal, educational and commercial games, no credit required." Raw assets
+# may not be resold or repackaged, which we never do.
+#
+# Fetch them all:  bash tools/art/fetch-free-packs.sh
+# These are NOT committed: art/free/ is gitignored. They are a re-downloadable input, not source.
+
+modular-men      1USAAquX2JJWuA2m6zol0KUkFe3UkZ8zX  https://quaternius.com/packs/ultimatemodularcharacters.html
+modular-women    1720N9IGyQHXYvtvZJzazhxtTTlz-y2Vf  https://quaternius.com/packs/ultimatemodularwomen.html
+animated-men     17LibivOaUidsQhSkcxP3YYvDr0n7wIwu  https://quaternius.com/packs/animatedmen.html
+nature           1-Kl0L_Jg8awbh0S5T-z3zxh4mVlnxTpa  https://quaternius.com/packs/ultimatenature.html
+streets          1-YvMpLDYBIy-0Ms7ZlFmUpChTbHku8IJ  https://quaternius.com/packs/modularstreets.html
+cars             1fKlbDry77iY8KlEoxzUxIAZQL_XhzWlA  https://quaternius.com/packs/cars.html
