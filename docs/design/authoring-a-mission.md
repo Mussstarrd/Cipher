@@ -4,8 +4,9 @@
 **Files:** `game/Assets/Resources/Scenarios/*.json`. One file per position. The filename **is** the id.
 
 A mission is a text file. Change a wave table, move a gate, retune the economy, add a guardhouse —
-save, run. Nothing is compiled. The two that ship today are `act1-01-the-gate.json` and
-`act1-02-the-clubhouse.json`; copy one and edit it.
+save, run. Nothing is compiled. Three ship today: `act1-01-the-gate.json`,
+`act1-02-the-service-road.json` and `act1-03-the-pump-house.json`. Copy one and edit it; the pump
+house is the one with actors and a custom scan cycle in it.
 
 ## The shortest possible mission
 
