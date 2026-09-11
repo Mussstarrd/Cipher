@@ -1,5 +1,13 @@
-// Everything the SIGNAL weapons draw: the EMP burst, the emitter lance, the dying implant on a
-// chipped citizen, and the jammer field a Brush Hog lays on the ground.
+// Everything the SIGNAL weapons draw: the EMP burst, the microwave pulse a weapon puts into the
+// air, the dying implant on a chipped citizen, and the field a Brush Hog broadcasts.
+//
+// WHAT THE PULSE ASKS OF THIS SHADER, AND WHY IT NEEDED NOTHING NEW (2026-09-11). The owner read
+// the old straight-bar-with-a-bright-bead as a laser and asked for a microwave pulse in amber.
+// Every part of that is per-instance data and geometry: the wavefronts are ring meshes standing
+// across the line of fire, and the shimmer is THIS SHADER'S EXISTING quantised rim applied to a
+// stretched smooth-normalled sphere -- concentric bands around the axis, drawn for free. Nothing
+// was added to the pass. That is the point: the variant budget below is not a suggestion, and an
+// effect that needs a keyword to exist is an effect that has not been thought about hard enough.
 //
 // ADR-003 took the bullets away. The player is not shooting people, he is killing the chip in
 // their head, and that has to be legible in one frame or the premise never reaches the screen.
@@ -27,7 +35,7 @@ Shader "Exodus/SignalFx"
 {
     Properties
     {
-        [MainColor] _BaseColor("Colour", Color) = (0.45, 0.86, 1.0, 1.0)
+        [MainColor] _BaseColor("Colour", Color) = (1.0, 0.84, 0.36, 1.0)
         // Defaults describe a solid, unbanded, fully occluding blob -- the safe shape for anything
         // drawn without per-instance data (a non-instanced Graphics.DrawMesh falls back to these).
         _RimPower("Rim Power", Float) = 2.5
@@ -184,7 +192,7 @@ Shader "Exodus/SignalFx"
                 // GUARDED, AND THE GUARD IS THE POINT. ComputeFogIntensity returns 0, not 1, when
                 // no fog keyword is defined -- so an unguarded multiply does not merely skip the
                 // fog, it multiplies the entire effect by zero. The first build of this shader
-                // drew every lance and every dash as a solid BLACK shape with correct geometry,
+                // drew every pulse and every dash as a solid BLACK shape with correct geometry,
                 // which looks like a colour bug and is actually a missing #if. MixFog has the
                 // opposite default and would have been safe; it is just wrong for additive.
                 real fogIntensity = 1.0;
