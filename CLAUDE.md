@@ -160,10 +160,17 @@ substitute: it references the sim's SOURCE, not its test project.
   origin, read `MeshFilter.sharedMesh.bounds` through `localToWorldMatrix`, destroy it. (Renderer
   bounds are still useless on a fresh instance — that is a separate trap, see FitToHeight.)
 - **KIT PIECES ARRIVE IN ARBITRARY ORIENTATIONS AND YOU CANNOT ASSUME XZ IS THE FLOOR.** The dead
-  trees import pitched -90; `Street_Straight` is authored **Z-up**, so a road laid flat in XZ stood on
-  its edge like a fence panel. `EnvironmentDresser.LayRoad` now rotates the THINNEST measured axis
-  onto Y and the longest remaining one along the corridor, which is orientation-agnostic. Do that
-  rather than hard-coding a correction per model.
+  trees import pitched -90; `Street_Straight` was authored **Z-up**, so a road laid flat in XZ stood
+  on its edge like a fence panel. Rotate the THINNEST measured axis onto Y and the longest remaining
+  one along the corridor, which is orientation-agnostic, rather than hard-coding a correction per
+  model.
+  - **THE ROAD IS DRAWN NOW, NOT IMPORTED** (2026-09-12). `Street_Straight` is a DIVIDED piece --
+    two carriageways with a median -- which is exactly the gap the owner saw ("the two Road Lanes
+    need to be together"), and the prop reskin was flattening its markings to one tint anyway. One
+    carriageway is drawn instead: asphalt, gravel shoulders, solid white edges, dashed yellow
+    centre. **Markings are boxes WITH THICKNESS** -- coplanar stripes z-fight from the tactical
+    camera. Laid as runs of clear cells, so a barricade sits in a hole in the road rather than the
+    road stopping short of it.
 - **OUTLINES NEED SMOOTHED NORMALS.** An inverted hull extruded along shading normals tears open at
   every hard edge and UV seam, which reads as blur and smear. `SmoothNormals` averages normals by
   position into the tangent channel and the shader extrudes along that under `_SMOOTH_OUTLINE`. The
@@ -266,8 +273,19 @@ substitute: it references the sim's SOURCE, not its test project.
 - **BUILT SCENERY IS BOXES AND THAT IS THE DECISION** (`Scripts/Bootstrap/SiteProps.cs`). The free
   kits have no buildings. Under the ink shader a box with an overhanging roof and a dark window band
   reads as a guardhouse; what would look cheap is a photoreal model beside it. Props are authored per
-  position in the scenario's `props`, carry **no colliders and no grid cells**, and an unknown kind
-  is a load error rather than a prop that never appears.
+  position in the scenario's `props`, and an unknown kind is a load error rather than a prop that
+  never appears.
+  - **~~Props carry no grid cells.~~ THEY DO NOW, and that is the point** (2026-09-12). A level whose
+    buildings are decoration funnels nothing, which is what the owner was complaining about.
+    `PropCatalog.cs` owns a prop's FOOTPRINT in cells; `SiteProps` owns its boxes.
+  - **The footprint is written into the ONE `GridMap` during the scene build**, before the first flow
+    field and long before build mode can open, and never touched again while a match runs. Because
+    there is only one map, the preview, the live sim and `BuildValidator` cannot disagree -- hard
+    rule 4 holds by construction rather than by convention. **`WallKind.Rock`, not `Wall`**, so a
+    sapper cannot demolish the architecture.
+  - **Footprints are claimed BEFORE `dresser.Dress(...)`, not after.** The dresser only refuses
+    already-solid cells, so marking afterwards grew trees through the clubhouse and left its
+    footprint full of holes.
 - **JSON is hand-rolled** (`Scripts/Scenario/Json.cs`). `JsonUtility` cannot express this schema
   (no dictionaries, no polymorphic lists, no optional sections) and Newtonsoft is a package
   dependency for ~400 lines. Numbers parse `InvariantCulture` on purpose: a comma-decimal locale
@@ -498,4 +516,22 @@ substitute: it references the sim's SOURCE, not its test project.
     say which of the two it is -- that ambiguity only showed up in the damage screenshot.
   - `props.SetTier(t.Tier)` / `props.SetIntegrity(hp)` are called from `SyncTurretObjects`. Without
     them everything silently sits at tier 0 and full health, which is what shipped before.
+- **THE GATE IS A PLACE PEOPLE LIVED IN, AND THE TERRAIN DOES THE FUNNELLING** (2026-09-12).
+  North of the road: the clubhouse and two streets of houses, leaving a four-cell gap. South: a
+  fenced pool with a deck and a pool house, and the rec centre whose L-plan leaves a five-cell gap.
+  Everything else is a long walk through the treeline. **That is the job a tower-defence map has to
+  do before the player places anything**, and the owner was right that a brown field did not do it.
+  - Flank gates are real places: inside the pool fence, and through the gap in the clubhouse's back
+    fence. Nothing beyond placement was needed -- `_flankGates`/`DecideFlank` work off the spawn list.
+  - **Only ONE pinch gets used**, because one flow field means one cheapest path. Correct for
+    mission one (block it and they switch) but it is the "one lane the player learns once" that
+    `Intent` exists to fix, and the director was not touched.
+  - The pre-placed walls are brush somebody dragged, with pallets and dumpsters at the ends
+    (`ImprovisedBarricade.cs`). The owner: "the stacks of logs look very unrealistic".
+  - Cost ~11% fps in the zoomed-out tactical view at zero agents; 92-149 mid-wave on this laptop.
+    ~900 new GameObject renderers each drawing a forward and an outline pass is the first thing to
+    look at if Android complains.
+- **Unity rewrites four asset files with CRLF on every headless run** (`GraphicsSettings.asset`,
+  `ExodusPipeline.asset`, `UniversalRenderPipelineGlobalSettings.asset`, `ShaderGraphSettings.asset`).
+  Pure line-ending churn with no content change. Keep it out of commits where it is not the subject.
 - **Was:** owner hero feedback → barricade build-mode with live path preview (Milestone 2 "The Maze").
