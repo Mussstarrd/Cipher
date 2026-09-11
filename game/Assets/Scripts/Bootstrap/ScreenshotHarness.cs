@@ -31,6 +31,16 @@ namespace Cipher.Game
         private const string CollectorArg = "-exodus-screenshot-collector";
         private const string ComicArg = "-exodus-comic";
         private const string ComicKeyboardArg = "-exodus-comic-keyboard";
+
+        /// <summary>
+        /// Seconds left on the truck page's pack-up clock when the preview opens.
+        ///
+        /// The page changes at thirty seconds and again at ten, and those are the states the
+        /// owner actually complained about ("after a certain amount of time it just kicked me
+        /// out"). Without this the only way to photograph the warning is to hold the shutter for
+        /// a minute, so the state that needed reviewing was the one that never got reviewed.
+        /// </summary>
+        private const string ComicClockArg = "-exodus-comic-clock";
         private const string YawArg = "-exodus-screenshot-yaw";
         private const string PitchArg = "-exodus-screenshot-pitch";
 
@@ -124,7 +134,8 @@ namespace Cipher.Game
             var preview = host.AddComponent<UI.Comic.ComicScreenPreview>();
             preview.Page = page;
             preview.PadPrompts = !HasFlag(args, ComicKeyboardArg);
-            Debug.Log($"[Screenshot] comic preview: {page}, pad prompts {preview.PadPrompts}");
+            preview.TruckSecondsLeft = ReadFloat(args, ComicClockArg, preview.TruckSecondsLeft);
+            Debug.Log($"[Screenshot] comic preview: {page}, pad prompts {preview.PadPrompts}, truck clock {preview.TruckSecondsLeft:F0}s");
         }
 
         /// <summary>The string after a flag, or null when the flag is absent.</summary>

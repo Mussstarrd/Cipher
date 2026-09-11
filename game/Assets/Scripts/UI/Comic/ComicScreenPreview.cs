@@ -34,16 +34,37 @@ namespace Cipher.Game.UI.Comic
         /// </summary>
         public bool PadPrompts = true;
 
+        /// <summary>
+        /// Seconds on the pack-up clock when the truck page opens. Set by
+        /// <c>-exodus-comic-clock</c>, because the page's Hurry and Final states are the ones
+        /// worth reviewing and waiting a real minute for them is not a review loop.
+        /// </summary>
+        public float TruckSecondsLeft = 74f;
+
         private KitScreen? _kit;
         private SkillsScreen? _skills;
         private TruckScreen? _truck;
 
-        private void Awake()
+        private bool _built;
+
+        /// <summary>
+        /// Builds the models on FIRST USE, not in Awake.
+        ///
+        /// `AddComponent` runs Awake synchronously, so the harness sets `Page`, `PadPrompts` and
+        /// `TruckSecondsLeft` on the line AFTER the component has already woken up. Page and
+        /// PadPrompts survived that because they are read every frame; the clock did not, and
+        /// -exodus-comic-clock silently photographed the default. Anything this component reads once
+        /// has to be read here rather than in Awake.
+        /// </summary>
+        private void EnsureBuilt()
         {
+            if (_built) return;
+            _built = true;
+
             var loadout = BuildLoadout();
             _kit = new KitScreen(loadout);
             _skills = new SkillsScreen(loadout);
-            _truck = new TruckScreen(new PreviewTruckHost());
+            _truck = new TruckScreen(new PreviewTruckHost(TruckSecondsLeft));
 
             _kit.Show();
             _skills.Show();
@@ -92,13 +113,17 @@ namespace Cipher.Game.UI.Comic
                 new SalvagedEmplacement("Fence Panels", new Haulage(240f, 2.2f), 60),
                 new SalvagedEmplacement("Generator", new Haulage(700f, 1.6f), 340),
             };
-            for (int i = 0; i < loadout.Inventory.Pack.Count && i < 3; i++)
+            // EVERY pack item, not three of them. This is the list the real extraction builds,
+            // and the whole point of the gear decision is that the page must not drown in it:
+            // a preview that quietly trimmed the pack to three could never have shown the fault.
+            for (int i = 0; i < loadout.Inventory.Pack.Count; i++)
                 list.Add(new HauledItem(loadout.Inventory.Pack[i]));
             return list;
         }
 
         private void Update()
         {
+            EnsureBuilt();
             switch (Page)
             {
                 case Screen.Kit: _kit?.HandleInput(); break;
@@ -109,6 +134,8 @@ namespace Cipher.Game.UI.Comic
 
         private void OnGUI()
         {
+            EnsureBuilt();
+
             // Negative depth puts this in front of the bootstrap's own HUD. IMGUI draws high depth
             // first, and the order between two components is otherwise arbitrary.
             GUI.depth = -100;
@@ -133,8 +160,11 @@ namespace Cipher.Game.UI.Comic
         private sealed class PreviewTruckHost : ITruckHost
         {
             private readonly float _opened = Time.unscaledTime;
+            private readonly float _window;
 
-            public float SecondsLeft => Mathf.Max(0f, 74f - (Time.unscaledTime - _opened));
+            public PreviewTruckHost(float window) => _window = Mathf.Max(0f, window);
+
+            public float SecondsLeft => Mathf.Max(0f, _window - (Time.unscaledTime - _opened));
             public bool TryUnbolt(int recoveredValue) => true;
             public bool PullOut() => false;
             public void Notice(string text) => Debug.Log($"[ComicPreview] {text}");
