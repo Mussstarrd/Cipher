@@ -8,9 +8,17 @@ wrong. [ADR-003](decisions/ADR-003-premise-the-cascade.md) replaced the plague w
 the gangster with a veteran, [ADR-004](decisions/ADR-004-setting-the-lake.md) moved the game out of
 the city, [ADR-005](decisions/ADR-005-the-scan-cycle.md) replaced the nightly Hold with the scan
 cycle, and [ADR-006](decisions/ADR-006-title-project-exodus.md) retitled it. The mechanical spine —
-hardcore mazing, deep upgrade trees, hero combat, a thousand agents on screen — survived all four
-intact, which is the best evidence we had that the spine was the good part. Code namespaces remain*
-`Cipher.*` *deliberately; see ADR-006.*
+hardcore mazing, deep upgrade trees, hero combat — survived all four intact, which is the best
+evidence we had that the spine was the good part.*
+
+*One pillar did NOT survive, and this document claimed it had until 2026-09-12: **the thousand
+agents are gone.** The owner cut them the same evening ("less zombies... more robust. quality over
+quantity") and the live roadmap adopted it. ADR-003's enemy are your neighbours, and a neighbour has
+to be individually legible — you have to be able to see one person deciding to come at you. A
+position is now forty to a hundred and fifty bodies. The flood was the old fiction's pillar, not
+this one's.*
+
+*Code namespaces remain* `Cipher.*` *deliberately; see ADR-006.*
 
 ---
 
