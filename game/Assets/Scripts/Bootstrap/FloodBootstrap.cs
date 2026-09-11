@@ -151,6 +151,9 @@ namespace Cipher.Game
         private bool _wasDown;
         private bool _strikeWasInbound;
         private float _hurtCooldown;
+        private readonly AdrenalineFocus _focus = new AdrenalineFocus();
+        private readonly BuildWheel _wheel = new BuildWheel();
+        private bool _wheelHeld;
         private string _declineNotice = "";
         private float _declineNoticeTimer;
         private float _hordePollTimer;
@@ -185,7 +188,10 @@ namespace Cipher.Game
             _field.Compute(GoalX, GoalY);
             _world = new AgentWorld(_map, _field, new SimConfig(), initialCapacity: 4096);
             _turrets = new TurretSystem();
-            _match = new MatchState(WaveTable.Default, _eco);
+            // The game opts in to the untimed opening: dig in for as long as you like, and the
+            // first wave comes when you press start.
+            _match = new MatchState(WaveTable.Default, _eco, openingIsUntimed: true);
+            _focus.Reset();
             _build = new BuildModel(_map, _world, _turrets, _match, _eco, SpawnCells, GoalX, GoalY, GridW - 12, GridH / 2);
             _world.Structures = _turrets.AsStructureQuery();
             ulong seed = (ulong)System.DateTime.UtcNow.Ticks;
@@ -468,6 +474,10 @@ namespace Cipher.Game
                 return;
             }
 
+            // Focus runs on unscaled time so four seconds of slow lasts four seconds, not eleven.
+            _focus.Tick(Time.unscaledDeltaTime);
+            Time.timeScale = _focus.TimeScale;
+
             float dt = Time.deltaTime;
 
             if (_match.IsOver)
@@ -561,7 +571,12 @@ namespace Cipher.Game
                         var view = new DirectorView(_matchSeconds, _world.ActiveSapperCount, _world.ActiveBreachCount,
                                                     _world.CountAlive(Archetype.Spitter), sealedIn, _turrets.Turrets.Count);
                         Archetype a = _director.Decide(view);
-                        if (a == Archetype.Runner) _world.Spawn(pos, health: 10f);
+                        if (a == Archetype.Runner)
+                        {
+                            // Not every body runs the same errand (owner, 2026-09-11). The split is
+                            // decided HERE, by the seeded director, because the sim carries no RNG.
+                            _world.Spawn(pos, health: 10f, _director.DecideIntent(view));
+                        }
                         else _world.SpawnArchetype(pos, a);
                     }
                 }
@@ -638,6 +653,20 @@ namespace Cipher.Game
                         Alert("SPITTER — it is going for a turret", 3f);
                         _sfx.Play(Sfx.SpitterSeen, 0.8f, 0.05f, minInterval: 1.5f);
                         break;
+                    case SimEventKind.StructureMauled:
+                        if (e.B >= 0 && e.B < _turrets.Turrets.Count)
+                        {
+                            var mt = _turrets.Turrets[e.B];
+                            _sfx.PlayAt(Sfx.Hit, new Vector3(mt.X + 0.5f, 1f, mt.Y + 0.5f),
+                                        0.6f, 0.2f, minInterval: 0.25f);
+                            if (_turrets.Damage(_map, e.B, (int)e.F))
+                            {
+                                Alert("TURRET TORN DOWN", 4f);
+                                _sfx.PlayAt(Sfx.TurretDestroyed, new Vector3(mt.X + 0.5f, 1f, mt.Y + 0.5f), 1f, 0.02f);
+                                turretsChanged = true;
+                            }
+                        }
+                        break;
                     case SimEventKind.StructureHit:
                         if (e.B >= 0 && e.B < _turrets.Turrets.Count)
                         {
@@ -669,8 +698,20 @@ namespace Cipher.Game
             var pad = Gamepad.current;
             var kb = Keyboard.current;
             if (_declineNoticeTimer > 0f) _declineNoticeTimer = Mathf.Max(0f, _declineNoticeTimer - Time.deltaTime);
-            bool toggle = (pad != null && pad.leftShoulder.wasPressedThisFrame) || (kb != null && kb.tabKey.wasPressedThisFrame);
-            if (toggle) { SetBuildMode(!_buildMode); _sfx.Play(_buildMode ? Sfx.MenuOpen : Sfx.MenuConfirm, 0.7f, 0f); }
+            // Tab is still a plain toggle for keyboard players who just want in and out.
+            bool toggle = kb != null && kb.tabKey.wasPressedThisFrame;
+            if (toggle)
+            {
+                SetBuildMode(!_buildMode);
+                if (!_buildMode) _focus.Release();
+                _sfx.Play(_buildMode ? Sfx.MenuOpen : Sfx.MenuConfirm, 0.7f, 0f);
+            }
+
+            // LB (or held Shift on the keyboard) opens the radial. Holding it is the whole interaction:
+            // the wheel appears, adrenaline focus slows the world, and letting go commits the pick.
+            bool wheelDown = (pad != null && pad.leftShoulder.isPressed)
+                             || (kb != null && kb.leftShiftKey.isPressed && !_match.IsOver);
+            UpdateBuildWheel(wheelDown, pad, kb);
 
             if ((pad != null && pad.rightStickButton.wasPressedThisFrame) || (kb != null && kb.nKey.wasPressedThisFrame))
                 _showMinimap = !_showMinimap;
@@ -712,6 +753,73 @@ namespace Cipher.Game
             // For a capture we want the whole field, so centre it on the map instead.
             _build.SetCursor(GridW / 2, GridH / 2);
             _build.Refresh();
+        }
+
+        /// <summary>
+        /// Drives the radial build menu. Holding the button opens build mode, spends a focus charge
+        /// and shows the wheel; releasing commits whatever is highlighted.
+        /// </summary>
+        private void UpdateBuildWheel(bool held, Gamepad? pad, Keyboard? kb)
+        {
+            if (held && !_wheelHeld)
+            {
+                _wheelHeld = true;
+                if (!_buildMode) SetBuildMode(true);
+                _wheel.Open(_build.Options.Count, _build.Selected);
+                bool slowed = _focus.TryEngage();
+                _sfx.Play(Sfx.MenuOpen, 0.8f, 0f);
+                if (!slowed)
+                {
+                    _declineNotice = "focus depleted - wheel is open, time is not slowed";
+                    _declineNoticeTimer = 2f;
+                }
+                return;
+            }
+
+            if (held)
+            {
+                // Right stick aims; the mouse aims from screen centre for keyboard players.
+                float ax = 0f, ay = 0f;
+                if (pad != null)
+                {
+                    var stick = pad.rightStick.ReadValue();
+                    ax = stick.x; ay = stick.y;
+                }
+                if (Mathf.Abs(ax) + Mathf.Abs(ay) < 0.2f && Mouse.current != null)
+                {
+                    Vector2 m = Mouse.current.position.ReadValue();
+                    ax = (m.x - Screen.width * 0.5f) / Mathf.Max(1f, Screen.height * 0.35f);
+                    ay = (m.y - Screen.height * 0.5f) / Mathf.Max(1f, Screen.height * 0.35f);
+                }
+
+                int before = _wheel.Selected;
+                _wheel.Aim(ax, ay);
+
+                // Number keys remain the fast path for anyone who already knows the order.
+                if (kb != null)
+                {
+                    if (kb.digit1Key.wasPressedThisFrame) _wheel.Step(-_wheel.Selected + 0);
+                    if (kb.leftArrowKey.wasPressedThisFrame) _wheel.Step(-1);
+                    if (kb.rightArrowKey.wasPressedThisFrame) _wheel.Step(1);
+                }
+
+                if (_wheel.Selected != before && _wheel.Selected >= 0)
+                    _sfx.Play(Sfx.MenuTick, 0.5f, 0.02f);
+                return;
+            }
+
+            if (_wheelHeld)
+            {
+                _wheelHeld = false;
+                int chosen = _wheel.Close();
+                if (chosen >= 0 && chosen < _build.Options.Count)
+                {
+                    _build.SelectOption(chosen);
+                    _build.Refresh();
+                    _sfx.Play(Sfx.MenuConfirm, 0.8f, 0f);
+                }
+                _focus.Release();
+            }
         }
 
         private void SetBuildMode(bool on)
@@ -1257,7 +1365,7 @@ namespace Cipher.Game
         private void SetPaused(bool paused)
         {
             if (paused) _pauseMenu.Open(); else _pauseMenu.Close();
-            Time.timeScale = paused ? 0f : 1f;
+            Time.timeScale = paused ? 0f : _focus.TimeScale;
             AudioListener.pause = paused;
         }
 
@@ -1266,7 +1374,7 @@ namespace Cipher.Game
             switch (action)
             {
                 case PauseMenuAction.Resume:
-                    Time.timeScale = 1f;
+                    Time.timeScale = _focus.TimeScale;
                     AudioListener.pause = false;
                     break;
                 case PauseMenuAction.Quit:
@@ -1314,7 +1422,9 @@ namespace Cipher.Game
 
             string phase = _match.Phase switch
             {
-                MatchPhase.Setup => $"SETUP {_match.SetupTimeLeft:F0}s  ({(pad ? "View" : "Enter")}: start wave now)",
+                MatchPhase.Setup => _match.AwaitingStart
+                    ? $"SET UP. Take your time.  ({(pad ? "View" : "Enter")}: start the first wave)"
+                    : $"SETUP {_match.SetupTimeLeft:F0}s  ({(pad ? "View" : "Enter")}: start wave now)",
                 MatchPhase.Wave => $"WAVE  {_match.SpawnedThisWave}/{_match.CurrentWave.Count} spawned",
                 MatchPhase.Extraction =>
                     $"PACK UP {_match.ExtractTimeLeft:F0}s  (L: pull out now)  salvaged {_match.SalvagedCount}",
@@ -1330,6 +1440,8 @@ namespace Cipher.Game
                 GUI.Label(new Rect(12, 104, 1000, 24),
                     $"{(pad ? "D-pad down" : "L")}: call this your last wave here  ({_match.PrepSecondsRemaining:F0}s prep left for the next line)");
             }
+            GUI.Label(new Rect(12, 152, 600, 24), _focus.StatusLine());
+
             if (_declineNoticeTimer > 0f && _declineNotice.Length > 0)
             {
                 GUI.Label(new Rect(12, 128, 1000, 24), _declineNotice);
@@ -1350,8 +1462,8 @@ namespace Cipher.Game
                 }
                 GUI.Label(new Rect(12, 108, 1200, 28), items.ToString());
                 GUI.Label(new Rect(12, 130, 1200, 28),
-                    pad ? "LS move  A place (hold to paint)  X sell  Y upgrade turret  RB / d-pad L-R switch item  B/LB done"
-                        : "arrows move  Space place  X sell  U upgrade turret  Q switch item  Tab done");
+                    pad ? "LS move  A place (hold to paint)  X sell  Y upgrade turret  hold LB for the wheel  Tab done"
+                        : "arrows move  Space place  X sell  U upgrade turret  hold Shift for the wheel  Tab done");
                 if (_build.Message.Length > 0)
                 {
                     var style = new GUIStyle(GUI.skin.label) { fontStyle = FontStyle.Bold };
@@ -1389,6 +1501,9 @@ namespace Cipher.Game
             }
 
             if (_showMinimap && !_pauseMenu.IsOpen) DrawMinimap();
+
+            // The wheel paints over the HUD but under the pause menu.
+            if (_wheel.IsOpen && !_pauseMenu.IsOpen && !_match.IsOver) DrawBuildWheel();
 
             if (_pauseMenu.IsOpen) DrawPauseMenu();
         }
@@ -1428,6 +1543,63 @@ namespace Cipher.Game
             GUI.Label(new Rect(0, _uiH * 0.38f, _uiW, 60), title, _centerStyle);
             GUI.Label(new Rect(0, _uiH * 0.38f + 64, _uiW, 70), sub, _subStyle);
         }
+
+        /// <summary>
+        /// The radial build menu. Replaces the row of corner text the owner rightly called a legend
+        /// rather than a menu. Drawn in the scaled UI space so it is the same size on every DPI.
+        /// </summary>
+        private void DrawBuildWheel()
+        {
+            int count = _build.Options.Count;
+            if (count == 0) return;
+
+            float cx = _uiW * 0.5f;
+            float cy = _uiH * 0.5f;
+            float radius = Mathf.Min(_uiW, _uiH) * 0.26f;
+            const float itemW = 250f, itemH = 60f;
+
+            var prev = GUI.color;
+
+            // Dim the world so the wheel is unmistakably modal.
+            GUI.color = new Color(0f, 0f, 0f, 0.45f);
+            GUI.DrawTexture(new Rect(0f, 0f, _uiW, _uiH), Texture2D.whiteTexture);
+            GUI.color = prev;
+
+            _wheelStyle ??= new GUIStyle(GUI.skin.box)
+            {
+                fontSize = 20,
+                alignment = TextAnchor.MiddleCenter,
+                wordWrap = true,
+            };
+
+            for (int i = 0; i < count; i++)
+            {
+                float angle = BuildWheel.AngleForIndex(i, count);
+                float x = cx + Mathf.Sin(angle) * radius - itemW * 0.5f;
+                float y = cy - Mathf.Cos(angle) * radius - itemH * 0.5f;
+
+                var option = _build.Options[i];
+                bool affordable = _match.Bank.CanAfford(option.Cost);
+                bool selected = i == _wheel.Selected;
+
+                GUI.color = selected
+                    ? (affordable ? new Color(1f, 0.85f, 0.35f, 0.98f) : new Color(1f, 0.45f, 0.35f, 0.98f))
+                    : (affordable ? new Color(0.85f, 0.88f, 0.92f, 0.85f) : new Color(0.55f, 0.55f, 0.58f, 0.8f));
+
+                GUI.Box(new Rect(x, y, itemW, itemH),
+                        option.Name + System.Environment.NewLine + "$" + option.Cost, _wheelStyle);
+            }
+            GUI.color = prev;
+
+            string centre = (_wheel.Selected >= 0 && _wheel.Selected < count)
+                ? _build.Options[_wheel.Selected].Name
+                : "choose";
+            GUI.Label(new Rect(cx - 200f, cy - 18f, 400f, 32f), centre, _subStyle);
+            GUI.Label(new Rect(cx - 200f, cy + 14f, 400f, 28f),
+                      _focus.IsActive ? "FOCUS" : "release to commit", _subStyle);
+        }
+
+        private GUIStyle? _wheelStyle;
 
         private static void DrawBar(Rect r, float fraction, Color fill, Color back, string label)
         {

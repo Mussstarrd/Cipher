@@ -203,6 +203,13 @@ namespace Cipher.Sim.Emplacements
             return true;
         }
 
+        /// <summary>
+        /// How much of a turret's shot a wall absorbs when the round is stopped by it. Below one
+        /// because a rifle round chews masonry slowly; the point is that walling in your own guns
+        /// costs you the wall, not that it costs you instantly.
+        /// </summary>
+        public const float TurretWallDamageScale = 0.5f;
+
         /// <summary>Fires every ready turret. Shots are appended to <paramref name="shots"/> (may be null).</summary>
         public int Step(AgentWorld world, float dt, List<TurretShot>? shots)
         {
@@ -220,21 +227,35 @@ namespace Cipher.Sim.Emplacements
                 {
                     if (family.Mode == FireMode.Area)
                     {
-                        if (world.CountWithin(t.Center, t.Range) == 0) { t.FireCooldown = 0f; break; }
+                        // Cover blocks a blast the same way it blocks a bullet: a rotor behind
+                        // your own barricade grinds the barricade, not the street beyond it.
+                        if (world.CountWithinVisible(t.Center, t.Range) == 0) { t.FireCooldown = 0f; break; }
                         t.FireCooldown += interval;
                         t.ShotsFired++;
-                        int k = world.ApplyRadialDamage(t.Center, t.Range, t.DamagePerShot);
+                        int k = world.ApplyRadialDamageVisible(t.Center, t.Range, t.DamagePerShot);
                         t.Kills += k;
                         kills += k;
                         shots?.Add(new TurretShot(i, t.Center, t.Center, k > 0, area: true));
                         continue;
                     }
 
-                    int target = world.FindFirstInRange(t.Center, t.Range);
+                    // Owner's rule: a turret cannot detect through a wall. Acquisition is now
+                    // sight-limited, which is what makes the maze a decision instead of scenery.
+                    int target = world.FindFirstInRangeVisible(t.Center, t.Range);
                     if (target < 0) { t.FireCooldown = 0f; break; }
                     t.FireCooldown += interval;
                     t.ShotsFired++;
                     Vec2 to = world.PositionOf(target);
+
+                    // Belt and braces: a wall raised between acquisition and the shot eats the
+                    // round and takes the damage, so fire never passes through intact cover.
+                    if (world.FirstWallBetween(t.Center, to, out int wx, out int wy))
+                    {
+                        world.DamageWall(wx, wy, t.DamagePerShot * TurretWallDamageScale, 1f);
+                        shots?.Add(new TurretShot(i, t.Center, GridMap.CellCenter(wx, wy), false));
+                        continue;
+                    }
+
                     bool killed = world.ApplyDamage(target, t.DamagePerShot);
                     if (killed) { t.Kills++; kills++; }
                     shots?.Add(new TurretShot(i, t.Center, to, killed));

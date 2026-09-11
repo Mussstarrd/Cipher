@@ -27,6 +27,7 @@ namespace Cipher.Sim.Agents
         private float[] _health;
         private bool[] _alive;
         private byte[] _archetype;
+        private byte[] _intent;
         private byte[] _state;
         private float[] _timer;
         private int[] _target;
@@ -48,6 +49,7 @@ namespace Cipher.Sim.Agents
             _health = new float[capacity];
             _alive = new bool[capacity];
             _archetype = new byte[capacity];
+            _intent = new byte[capacity];
             _state = new byte[capacity];
             _timer = new float[capacity];
             _target = new int[capacity];
@@ -73,6 +75,7 @@ namespace Cipher.Sim.Agents
                 Array.Resize(ref _health, newSize);
                 Array.Resize(ref _alive, newSize);
                 Array.Resize(ref _archetype, newSize);
+                Array.Resize(ref _intent, newSize);
                 Array.Resize(ref _state, newSize);
                 Array.Resize(ref _timer, newSize);
                 Array.Resize(ref _target, newSize);
@@ -84,6 +87,7 @@ namespace Cipher.Sim.Agents
             _health[id] = health;
             _alive[id] = true;
             _archetype[id] = (byte)archetype;
+            _intent[id] = (byte)Intent.Vault;
             _state[id] = 0;
             _timer[id] = 0f;
             _target[id] = -1;
@@ -125,6 +129,18 @@ namespace Cipher.Sim.Agents
                         break; // no plan: walks like a runner
                     case Archetype.Spitter:
                         if (StepSpitter(i, pos, dt, gates)) continue;
+                        break;
+                }
+
+                // Ordinary bodies do not all run the same errand (owner, 2026-09-11). Some peel off
+                // for the guns, some go at the walls, and the rest keep coming for the objective.
+                switch ((Intent)_intent[i])
+                {
+                    case Intent.HuntStructure:
+                        if (StepStructureHunter(i, pos, dt, gates)) continue;
+                        break;
+                    case Intent.WreckWall:
+                        if (StepWallWrecker(i, pos, dt, gates)) continue;
                         break;
                 }
 
@@ -351,7 +367,7 @@ namespace Cipher.Sim.Agents
                 hash = Mix(hash, BitConverter.SingleToInt32Bits(_posX[i]));
                 hash = Mix(hash, BitConverter.SingleToInt32Bits(_posY[i]));
                 hash = Mix(hash, BitConverter.SingleToInt32Bits(_health[i]));
-                hash = Mix(hash, _archetype[i] | (_state[i] << 8));
+                hash = Mix(hash, _archetype[i] | (_state[i] << 8) | (_intent[i] << 16));
                 hash = Mix(hash, BitConverter.SingleToInt32Bits(_timer[i]));
                 hash = Mix(hash, _target[i]);
             }

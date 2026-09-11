@@ -111,6 +111,25 @@ namespace Cipher.Game.Match
         public ScanCycleConfig Cycle => _cycle;
 
         /// <summary>
+        /// The opening setup has no clock. You dig in for as long as you like and the first wave
+        /// comes when you say it does. Owner's call: "you should get as much time as you want to
+        /// set up until you press A or something to start". Between-wave setups stay timed, because
+        /// that pressure is the game; only the one before the first shot is yours.
+        ///
+        /// Defaults to FALSE so the constructor stays backward compatible and existing tests keep
+        /// their old timing; the game layer opts in. Turning it on by default silently turned three
+        /// test loops that wait on Setup into infinite loops, which is exactly the kind of change
+        /// that should not ride in on a default.
+        /// </summary>
+        public bool OpeningIsUntimed { get; }
+
+        /// <summary>True while the match is waiting on the player rather than on a countdown.</summary>
+        public bool AwaitingStart =>
+            OpeningIsUntimed && Phase == MatchPhase.Setup && WaveIndex == 0 && !_openingReleased;
+
+        private bool _openingReleased;
+
+        /// <summary>
         /// False for a position with no line behind it, which greys out the extract call.
         /// Mission 12 is the only place in Act One where this is false, and that is the point.
         /// </summary>
@@ -153,13 +172,15 @@ namespace Cipher.Game.Match
             EconomyConfig economy,
             int vaultHp = 25,
             ScanCycleConfig? cycle = null,
-            bool hasFallbackPosition = true)
+            bool hasFallbackPosition = true,
+            bool openingIsUntimed = false)
         {
             _waves = waves ?? throw new ArgumentNullException(nameof(waves));
             if (waves.Count == 0) throw new ArgumentException("Need at least one wave.", nameof(waves));
             _eco = economy ?? throw new ArgumentNullException(nameof(economy));
             _cycle = cycle ?? new ScanCycleConfig();
             HasFallbackPosition = hasFallbackPosition;
+            OpeningIsUntimed = openingIsUntimed;
             Bank = new Bank(economy.StartCash);
             VaultMaxHp = VaultHp = Math.Max(1, vaultHp);
             SetupTimeLeft = _waves[0].SetupSeconds;
@@ -221,10 +242,14 @@ namespace Cipher.Game.Match
             if (count > 0) AbandonedCount += count;
         }
 
-        /// <summary>Player skips the remaining setup countdown.</summary>
+        /// <summary>
+        /// Player starts the wave: skips a running countdown, or releases the untimed opening.
+        /// </summary>
         public void StartWaveNow()
         {
-            if (Phase == MatchPhase.Setup) SetupTimeLeft = 0f;
+            if (Phase != MatchPhase.Setup) return;
+            _openingReleased = true;
+            SetupTimeLeft = 0f;
         }
 
         /// <summary>Kills from any source pay out.</summary>
@@ -253,6 +278,9 @@ namespace Cipher.Game.Match
             switch (Phase)
             {
                 case MatchPhase.Setup:
+                    // The opening holds until the player says go. Nothing ages while it waits, so
+                    // taking your time here does not eat the scan cycle either.
+                    if (AwaitingStart) { ElapsedSeconds -= dt; return 0; }
                     SetupTimeLeft = Math.Max(0f, SetupTimeLeft - dt);
                     if (SetupTimeLeft <= 0f)
                     {

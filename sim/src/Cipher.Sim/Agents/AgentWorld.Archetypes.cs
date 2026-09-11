@@ -31,6 +31,8 @@ namespace Cipher.Sim.Agents
         StructureHit,
         /// <summary>A = agent id, B = structure index. A Spitter locked on.</summary>
         SpitterEngaged,
+        /// <summary>A = agent id, B = structure index, F = damage. A body is tearing at an emplacement.</summary>
+        StructureMauled,
     }
 
     public readonly struct SimEvent

@@ -44,5 +44,21 @@ namespace Cipher.Sim.Agents
         public float SpitterAttackRange { get; set; } = 9f;
         public float SpitterDamage { get; set; } = 15f;
         public float SpitterAttackInterval { get; set; } = 1.5f;
-    }
+    
+        // --- Intent split (owner, 2026-09-11): not every body runs the same errand. ---
+
+        /// <summary>How far a hunter will look for an emplacement before giving up and rejoining.</summary>
+        public float HunterAcquireRange { get; set; } = 14f;
+        /// <summary>Close enough to start tearing at it.</summary>
+        public float HunterContactRange { get; set; } = 1.1f;
+        /// <summary>Hunters move with purpose. Slightly faster than the crowd, and it reads.</summary>
+        public float HunterSpeed { get; set; } = 3.6f;
+        public float HunterAttackInterval { get; set; } = 1f;
+        public float HunterStructureDamage { get; set; } = 8f;
+
+        /// <summary>Cells a wrecker will search outward for something to pull down.</summary>
+        public int WreckerSearchCells { get; set; } = 10;
+        public float WreckerAttackInterval { get; set; } = 0.8f;
+        public float WreckerWallDamage { get; set; } = 6f;
+}
 }

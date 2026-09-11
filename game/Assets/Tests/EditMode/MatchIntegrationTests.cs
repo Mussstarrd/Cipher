@@ -117,7 +117,11 @@ namespace Cipher.Game.Tests
         [Test]
         public void Turrets_DrawSpitters_WhichDamageThem()
         {
-            var r = Make(seed: 5);
+            // Deep vault on purpose: this test is about the DIRECTOR sending Spitters, not about
+            // surviving. One turret alone never holds the lane, and since turrets stopped seeing
+            // through walls (owner's rule, 2026-09-11) it holds it even less, so a shallow vault
+            // ended the run before the 40 s Spitter timer and the test failed for the wrong reason.
+            var r = Make(seed: 5, vaultHp: 100000);
             r.Build.SetCursor(30, 8); // just inside the first gap on the second lane
             r.Build.CycleItem(1);
             Assert.IsTrue(r.Build.TryPlace());
@@ -129,6 +133,8 @@ namespace Cipher.Game.Tests
                 if (r.Match.Phase == MatchPhase.Lost) break;
             }
 
+            Assert.AreNotEqual(MatchPhase.Lost, r.Match.Phase,
+                "the deep vault should keep the run alive long enough to observe the director");
             Assert.GreaterOrEqual(r.SpittersSeen, 1, "with a turret up, the director must send Spitters (first at 40 s)");
             Assert.GreaterOrEqual(r.StructureHits, 1, "a Spitter must reach range and hit the turret");
         }

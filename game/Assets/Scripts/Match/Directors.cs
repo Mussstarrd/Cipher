@@ -41,6 +41,13 @@ namespace Cipher.Game.Match
     {
         public float SapperFirstAt { get; set; } = 45f;
         public float SapperChance { get; set; } = 0.005f;     // 1 per 200 spawns
+
+        // --- Intent split (owner, 2026-09-11). Most still come for the objective. ---
+
+        /// <summary>Share of ordinary bodies that peel off for the nearest emplacement.</summary>
+        public float HunterShare { get; set; } = 0.10f;
+        /// <summary>Share that go at a barricade rather than walking round it.</summary>
+        public float WreckerShare { get; set; } = 0.08f;
         public float SapperSpacing { get; set; } = 60f;
         public int MaxSappersAlive { get; set; } = 1;
         public int MaxActiveBreaches { get; set; } = 1;
@@ -72,6 +79,23 @@ namespace Cipher.Game.Match
         {
             _cfg = config;
             _rng = new XorShift64(seed);
+        }
+
+        /// <summary>
+        /// What an ordinary body is going to do with itself. Owner's call, 2026-09-11: they must
+        /// not all follow the same logic, and some should peel off for the guns or the walls.
+        ///
+        /// Weights are deliberately modest. The majority still come for the objective, because the
+        /// split is meant to make the crowd unpredictable, not to turn every wave into a siege of
+        /// your turret line. Hunters only appear once there is something to hunt.
+        /// </summary>
+        public Intent DecideIntent(in DirectorView view)
+        {
+            float roll = _rng.NextFloat();
+
+            if (view.TurretCount > 0 && roll < _cfg.HunterShare) return Intent.HuntStructure;
+            if (roll < _cfg.HunterShare + _cfg.WreckerShare) return Intent.WreckWall;
+            return Intent.Vault;
         }
 
         public Archetype Decide(in DirectorView v)
