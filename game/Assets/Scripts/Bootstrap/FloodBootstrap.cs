@@ -465,6 +465,7 @@ namespace Cipher.Game
             _director = new SpawnDirector(_scenario.Director, _scenario.DirectorSeed);
             // Derived from the map, not from the 64-wide graybox: a narrower scenario used to hand
             // PickupSystem a minX of 34 and GridMap.CellIndex throws on out-of-bounds.
+            _pullOutWarned = false;
             _crew.Reset(new Vec2(GoalX + 0.5f, GoalY + 0.5f));
             _aidKits = new AidKits(_map, _aidSpots, seed ^ 0xA1D5);
             _aidKits.PlaceOpening();
@@ -2405,6 +2406,7 @@ namespace Cipher.Game
         private readonly RepairCrew _crew = new RepairCrew();
         private readonly List<RepairCrew.Job> _crewJobs = new List<RepairCrew.Job>(16);
         private float _crewBanked;
+        private bool _pullOutWarned;
         private GameObject? _crewAdult;
         private GameObject? _crewChild;
 
@@ -2594,6 +2596,17 @@ namespace Cipher.Game
                     _crewBanked -= whole;
                     _turrets.Repair(_map, _crew.JobIndex, whole);
                 }
+            }
+
+            if (_match.Phase == MatchPhase.Extraction && !_truckScreen.IsOpen
+                && _match.ExtractTimeLeft <= 10f && !_pullOutWarned)
+            {
+                // The pack-up page shouts about the clock, but B puts the player back in the fight
+                // and the page stops existing. Being removed from a position you were still working
+                // in reads as a bug unless something warned you first.
+                _pullOutWarned = true;
+                Alert("THE SCAN IS STARTING - MOVE OUT", 4f);
+                _sfx.Play(Sfx.Refuse, 0.8f, 0f);
             }
 
             if (_crew.AbandonedThisTick)
@@ -4209,19 +4222,21 @@ namespace Cipher.Game
                 int prep = Mathf.Max(0, Mathf.RoundToInt(_match.PrepSecondsRemaining));
                 int materials = Mathf.RoundToInt(prep * _match.Cycle.PrepDollarsPerSecond) + _match.Salvaged;
 
-                Overlay(new Color(0.08f, 0.16f, 0.28f, 0.6f), "FELL BACK",
-                        $"{_match.WavesCleared} waves held   {_world.TotalKills} of them down\n" +
-                        $"{_match.SalvagedCount} emplacements on the truck, {_match.AbandonedCount} left bolted down\n" +
-                        $"{prep / 60}:{(prep % 60):00} of the cycle left  ->  ${materials} of materials at the next line\n" +
-                        $"\nNEXT: {(_nextName.Length > 0 ? _nextName : "the line stops here for now")}\n" +
-                        $"{(pad ? "A" : "Enter")}: move out");
-            }
-            else if (_match.IsOver && !_pauseMenu.IsOpen)
-            {
-                bool won = _match.Phase == MatchPhase.Won;
-                Overlay(won ? new Color(0f, 0.3f, 0.1f, 0.55f) : new Color(0.4f, 0f, 0f, 0.55f),
-                        won ? "POSITION HELD" : "THE TRUCK IS GONE",
-                        $"{_match.WavesCleared}/{_match.WaveCount} waves   ${_match.Bank.TotalEarned} earned   {_world.TotalKills} kills\n{(pad ? "A" : "Enter")}: run it back");
+                // The owner read this screen as being "kicked out" and did not know what it meant.
+                // FellBackReport writes it as what actually happened rather than as a row of
+                // numbers -- what the stand bought, and what it cost.
+                var facts = new Comic.FellBackReport.Facts(
+                    wavesHeld:   _match.WavesCleared,
+                    chipsBroken: (int)_world.TotalKills,
+                    onTheTruck:  _match.SalvagedCount,
+                    leftBehind:  _match.AbandonedCount,
+                    prepSeconds: prep,
+                    materials:   materials,
+                    nextName:    _nextName,
+                    pad:         pad);
+                Overlay(new Color(0.08f, 0.16f, 0.28f, 0.6f),
+                        Comic.FellBackReport.Title,
+                        Comic.FellBackReport.Compose(facts));
             }
             else if (_hero.IsDown && !_pauseMenu.IsOpen)
             {
@@ -4277,7 +4292,7 @@ namespace Cipher.Game
             GUI.DrawTexture(new Rect(0, 0, _uiW, _uiH), Texture2D.whiteTexture);
             GUI.color = prev;
             GUI.Label(new Rect(0, _uiH * 0.38f, _uiW, 60), title, _centerStyle);
-            GUI.Label(new Rect(0, _uiH * 0.38f + 64, _uiW, 70), sub, _subStyle);
+            GUI.Label(new Rect(0, _uiH * 0.38f + 64, _uiW, _uiH * 0.44f), sub, _subStyle);
         }
 
         /// <summary>

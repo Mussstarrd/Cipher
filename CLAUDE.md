@@ -569,4 +569,45 @@ substitute: it references the sim's SOURCE, not its test project.
     constants, and `TheEmpStaysCold` still guards the EMP.
   - Muzzle flash is still the bootstrap's own material and is NOT tier-aware; `HeroEmitter.Muzzle`
     is exposed for whoever wires it.
+- **THE PACK-UP PAGE AND THE CONTRACTING PERIMETER** (2026-09-12). The owner's three notes from one
+  playthrough: the truck page "looks like absolute poop... somebody just drew it with a pencil and a
+  ruler", "I have no idea what I packed the truck with, there was nothing labelled", and "after a
+  certain amount of time it just kicked me out".
+  - **GEAR IS OFF THE TRUCK PAGE** and that is the decision worth remembering. A dog tag is 0.0005 m3
+    beside a 2.4 m3 sentry, so with gear on the manifest the volume gauge could never mean anything.
+    ADR-005 says gear is never what you cut; it rides in the cab, the page says so once, and both
+    gauges are honest because every number on them is about something that could be left behind.
+  - A crate is TWO rects: a to-scale block in the bed (a picture) and a labelled card (name, weight,
+    volume, value, manifest number). **Columns grow rather than cards shrinking**, so nothing is
+    pushed off the panel.
+  - The clock names the COST, not the time: "PULLING OUT - 4 STAY HERE". And an alert fires at ten
+    seconds even when the page is closed -- B puts the player back in the fight and the page stops
+    existing, so being removed from a position reads as a bug unless something warned you.
+  - **`docs/design/the-contracting-perimeter.md` refuses "the map contracts" as a spec.** Mission 2's
+    grid is LARGER than mission 1's and always will be. The ramp is APPROACHES, FRONTAGE and DEPTH,
+    and each position names what the terrain stops doing for you: mission 5 has nothing to funnel
+    with, 8 takes away sight, 9 takes away permanence, 12 takes away depth.
+  - **`ShippedScenarioTests.PropsNeverSealAGate` is new and load-bearing.** `ScenarioReader` probes
+    WALLS only, but props became solid on 2026-09-12, so a building across the only corridor loads
+    clean and shows up as a wave that spawns and mills about. That guard is what makes 77 props
+    safe to author on one position.
+- **AUDIO HAS TWO HALVES AND THEY DO NOT MIX** (`tools/audio/`, 2026-09-12). Weapons, the EMP and
+  the dying chip stay **synthesised** (`Scripts/Audio/`) -- they are synthetic by nature and
+  generating them lets them answer to weapon tier and distance, which a clip cannot. Everything
+  organic (weather, ambience, foley, distant crowd) is **fetched**, because synthesis is hopeless
+  at it.
+  - **Freesound is a MIXED library and most of it is unusable.** CC-BY-NC forbids commercial use.
+    `fetch-sounds.py` guards three ways: the query is licence-filtered, every RESULT is re-checked
+    against the allowed set so an edited filter cannot smuggle one through, and everything that
+    lands is written to `docs/CREDITS-AUDIO.md` with author and licence. **Never hand-edit that
+    file; re-run the fetcher**, or it drifts from what is on disk.
+  - Token in `.secrets/freesound.txt` (gitignored). `art/audio/` is gitignored; copy what is used
+    into `game/Assets/Resources/Audio/`, the same way the model packs work.
+- **THE FREE ART SHELF WAS NOT EMPTY.** The owner asked whether the library had better humanoid
+  models and offered money; Quaternius ships CC0 **animated robots, mechs, monsters and turrets**
+  and we had only fetched people, nature, streets and cars. **Check the free shelf before spending.**
+  - **`fetch-free-packs.sh` can no longer download them**: Google rebuilt the Drive folder page to
+    render entirely in JavaScript, so the scraper sees a shell with no file list and reports
+    `[dir?]` for a few subfolders. Fixing it needs a headless browser or a Cloud API key.
+    `tools/art/FETCH-THESE-BY-HAND.md` has the four links and the folder names to unzip into.
 - **Was:** owner hero feedback → barricade build-mode with live path preview (Milestone 2 "The Maze").
