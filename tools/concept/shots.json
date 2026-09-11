@@ -1,5 +1,5 @@
 {
-  "_note": "Concept-art shot list for CIPHER: DEAD TURF. Premise per docs/decisions/ADR-003. The crowd are ordinary chipped citizens, NOT zombies: no rot, no blood-soaked horror, no glowing eyes. Their only tell is a small amber implant indicator at the temple. Red eyes belong exclusively to the rare engineered things released from the labs. The protagonist is a veteran, NOT a gangster. Half these shots are daylight.",
+  "_note": "Concept-art shot list for CIPHER: DEAD TURF. Premise per docs/decisions/ADR-003. SETTING IS REAL: Lake of the Woods, Locust Grove, Orange County, Virginia - a gated lake community of wooded lots, a clubhouse, a golf course and a large lake, next to the Wilderness Civil War battlefield. Enemies are ordinary chipped citizens: no rot, no blood, normal eyes, one small amber implant light at the temple. Red eyes belong only to rare lab releases. Protagonist is a veteran, not a gangster.",
   "style": "cinematic video game concept art, near-future grounded realism set about five years from now, third person action game, believable real-world detail, photographic depth of field, volumetric atmosphere, dense detail, film grain, painted by a senior concept artist, ultra detailed, 8k",
   "shots": [
     {
@@ -56,6 +56,61 @@
       "id": "safehouse",
       "title": "The safe zone",
       "prompt": "Interior of an ordinary suburban American garage converted into a defensive base in daylight, seen wide. Workbench with cleaned rifle parts and ammunition laid out on a towel, welded scrap barricade sections leaning against the wall, a pegboard of tools, sandbags stacked by the roller door, a folding camp chair, a laptop, coffee. Utterly domestic and utterly practical. Dust in shafts of daylight through a dirty window. No gang imagery, no neon, no military base aesthetic, just a competent man's garage"
+    },
+    {
+      "id": "lotw-gate",
+      "title": "The gate",
+      "prompt": "The brick entrance gate of a private gated lake community in rural Virginia on an overcast winter afternoon, low brick entry walls, a small guardhouse, a lowered boom barrier, tall loblolly pines and bare hardwood trees crowding both sides of the road. The gate has been reinforced overnight by hand with welded scrap steel, stacked sandbags, chain link and a pickup truck parked across the lane as a blocker. Beyond the barrier, standing motionless on the road, several hundred completely ordinary clothed people in coats and work clothes, silent, waiting, each with a tiny amber light at the temple. No blood, no rot, normal eyes. Utter dread, grey flat light"
+    },
+    {
+      "id": "lotw-treeline",
+      "title": "The treeline at night",
+      "prompt": "Night in a wooded Virginia residential community, seen from a driveway. A hard floodlight rakes across a treeline of pines and bare hardwoods thirty metres away, clearly lighting the nearest trunks and the frosted ground. Standing among the trees at the very edge of the light, a dense mass of ordinary people in coats and work clothes, motionless, faces lit dimly, hundreds more receding into darkness behind them, each with a single tiny amber light at the temple so the black woods behind are full of amber pinpricks. Cold fog, visible breath. Readable and clearly lit in the foreground, pure dread, no gore"
+    },
+    {
+      "id": "lotw-street",
+      "title": "Residential street",
+      "prompt": "A curving residential street in a wooded Virginia lake community on a grey winter morning, contemporary 1980s cedar and vinyl sided houses with attached garages set back on sloped wooded lots, mailboxes, bare trees, pine needles on the asphalt. A crowd of a few hundred ordinary clothed people walks up the middle of the road toward the viewer, unhurried, spread from kerb to kerb. Abandoned cars, an overturned golf cart, scattered belongings. No blood, normal eyes, small amber temple lights"
+    },
+    {
+      "id": "lotw-house",
+      "title": "The house, held",
+      "prompt": "Night. An ordinary 1980s contemporary suburban house with an attached two-car garage on a wooded Virginia lot, fought over and barely held. Plywood and welded steel plate bolted over every window, sandbag emplacements along the garage front, one harsh salvaged floodlight on a scaffold pole throwing hard shadows, a hand-built barricade of welded scrap and a dead pickup across the mouth of the driveway. Scorch marks up the siding, bullet damage, a burnt-out car on the lawn, thousands of spent shell casings, smoke drifting through the floodlight beam. Bodies of ordinary clothed people in the road at the edge of the light. Grim, exhausted, lived-in"
+    },
+    {
+      "id": "lotw-clubhouse",
+      "title": "The clubhouse strongpoint",
+      "prompt": "A 1970s brick community clubhouse with white columns and a portico in rural Virginia, converted into a survivor strongpoint in flat daylight. Sandbag emplacements on the front lawn, a deployed automated sentry kit on a tripod mast, pallets of water and supplies, parked pickups forming a vehicle wall, laundry lines, a few armed civilians in ordinary clothes standing watch. Golf course fairway and treeline behind. Grounded, improvised, plausible"
+    },
+    {
+      "id": "lotw-lake",
+      "title": "The lake at dusk",
+      "prompt": "A wide Virginia recreational lake at dusk seen from a small sandy community beach, abandoned pontoon boats drifting, overturned kayaks on the sand, dead calm water reflecting a sky going orange to deep blue. On the far shore, two columns of black smoke rising from the treeline and the orange glow of a fire. In the foreground, a folding chair, an abandoned cooler, a rifle leaning against a piling. Beautiful and completely wrong, melancholy, cinematic"
+    },
+    {
+      "id": "lotw-fairway",
+      "title": "Killing ground",
+      "prompt": "A golf course fairway in rural Virginia at first light, heavy ground fog, dew, sand bunkers, a treeline on both sides. Hand-built scrap barricades and coils of wire strung across the open fairway with firing positions behind them. Out of the fog at a hundred metres, the indistinct shapes of a very large crowd of ordinary people walking toward the line, hundreds of them, amber pinprick lights at each temple. Cold blue-grey light, long shadows, enormous scale"
+    },
+    {
+      "id": "brute-woods",
+      "title": "Dark, gritty, the thing from the lab",
+      "prompt": "A massive engineered creature moving through dark Virginia woodland at night, lit hard from below by a dropped floodlight in the leaf litter, steam rising off wet grey-pink musculature over an elongated distorted human frame, surgical ports and torn containment tags, burning red eyes. Bare hardwood trunks and pine, fog between the trees. Small ordinary human figures fleeing in the deep background for scale. Brutal, gory, heavy contrast, orange and black"
+    },
+    {
+      "id": "night-gate-fight",
+      "title": "Dark and gritty: holding the gate",
+      "prompt": "Night, torrential rain. Over-the-shoulder third person view behind a lean American veteran in a soaked field jacket and plate carrier firing a light machine gun from behind a welded scrap barricade at the brick entrance gate of a wooded Virginia lake community. Violent muzzle flash lighting the rain and the smoke, spent brass in the air, a burning truck throwing orange light, a floodlight on a pole. Thirty metres out a dense crowd of ordinary clothed people comes on through the rain, amber temple lights, bodies already piled at the barricade. Brutal, gritty, heavy orange and black contrast, cinematic rim lighting, grounded and awful rather than heroic"
+    },
+    {
+      "id": "night-humanoid",
+      "title": "Dark and gritty: the humanoid in the woods",
+      "prompt": "Night in dark Virginia woodland, hard flashlight beam from the viewer. A sleek matte white and grey commercial humanoid robot with a featureless head and a thin dark sensor visor and no face stands twenty feet away among bare trunks, half turned toward the light, its white panels filthy and scored with damage, one arm hanging wrong, a thin amber status strip glowing on its chest. Fog, wet leaf litter, rain. Uncanny, silent, industrial and Tesla-like in design. Horror by stillness, cold blue and amber"
+    },
+    {
+      "id": "night-street-fight",
+      "title": "Dark and gritty: the street, on fire",
+      "prompt": "Night in a wooded Virginia lake community. A curving residential street of contemporary suburban houses, two of them burning hard and throwing orange light across wet asphalt and pines, smoke rolling low across the road. A lone armed figure in a field jacket walks up the middle of the street away from the viewer toward the fire, rifle held low, silhouetted against the flames. Wrecked cars, a crashed white cargo drone burning in a front yard, scattered debris and abandoned belongings, ash falling like snow through the light. Heavy contrast, deep black shadow and violent orange, painterly, desolate and cinematic"
     }
   ]
 }
