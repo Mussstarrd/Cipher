@@ -445,4 +445,34 @@ substitute: it references the sim's SOURCE, not its test project.
   - **Gear on the truck page reads as noise** -- a dog tag is 0.0005 m3 beside a 2.4 m3 sentry. ADR-005
     says gear is never what you cut, so the page arguably should show emplacements only and say gear
     rides free. Design call, not made.
+- **ADR-008 SECOND PASS: THE IMPLANT IS DECRYPTED PROGRESSIVELY, AND NOTHING IS DEAD BEFORE ITS BAR
+  IS EMPTY** (2026-09-12). The first model shipped an exploit and the owner found it in one sitting:
+  "just tagging them and being able to run in circles is an easy way to beat the game."
+  - **The old model had a FREE-DEATH STATE.** Integrity hitting zero broke the chip, paid the
+    player, made turrets ignore the body and decayed its threat -- so the optimal play was to land
+    one killing shot on everything and walk away. The wave was already over.
+  - Now there is one number the player sees (`Integrity01`, the health bar) and one they do not
+    (`_drain`). A pulse does direct damage AND adds drain. **One hit is fatal in about forty
+    seconds** (`SimConfig.SoloDecryptSeconds`) -- a real death sentence and a useless tactic, which
+    is the whole point. Hits stack, so focused fire kills in seconds.
+  - **Speed and threat decay only below `FrailtyBelow` (30%)**, so a body tagged once and sitting at
+    90% is a full-strength attacker: the owner's "just because a zombie gets hit doesn't inherently
+    mean they slow down all the way to death".
+  - **Both routes to an empty bar pay** (`Retire`). Withholding payment for a slow decrypt would
+    punish spraying, but it lies to the kill tally -- the forty seconds IS the punishment.
+  - **`IsFailing` CHANGED MEANING and it is a trap.** It used to be "dead in 2.5s"; it is now "has
+    been shot at least once", which is most of the field. Anything gating a visual or a targeting
+    rule on it must be re-read: the dying-chip tell is gated on `Integrity01 < FrailTellBelow`, and
+    guns skip only what `IsSpokenFor` says will fall within `SpokenForSeconds` anyway.
+  - **A turret now stops firing at a body the malware will finish and moves on**, so the last hit of
+    a kill is often the drain and the kill is credited to the world rather than the emplacement.
+    That is intended; anything reading `turret.Kills` as the economy would be wrong.
+  - **Health bars are on** (`HudFeedback.DrawHealthBar`, drawn by `FloodBootstrap.DrawHealthBars`)
+    for bodies, emplacements and actors. A FULL bar is never drawn and everything fades with
+    distance, which is what "nice and discreetly" has to mean at four hundred agents. The bars are
+    also what makes the decrypt legible at all -- without them the mechanic is invisible.
+  - **A sim test that takes tens of seconds must PEN its subject.** An unpenned agent crosses a
+    48-cell map in fourteen seconds, reaches the goal, leaves the world, and the test then measures
+    how fast it WALKS rather than how fast it dies. `FailingChipTests.Penned` walls the eight
+    neighbouring cells with Rock.
 - **Was:** owner hero feedback → barricade build-mode with live path preview (Milestone 2 "The Maze").

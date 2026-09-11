@@ -64,14 +64,9 @@ namespace Cipher.Sim.Tests
             Assert.True(w.IsAlive(id));
             Assert.Equal(0, w.TotalKills);
 
-            // ADR-008: the fatal hit breaks the chip and pays, but the body keeps coming until
-            // its failure window runs out.
+            // ADR-008 second pass: emptying the bar IS the kill and it pays once. What takes time
+            // now is the decrypt on a body nobody bothered to finish -- see FailingChipTests.
             Assert.True(w.ApplyDamage(id, 6f));
-            Assert.True(w.IsFailing(id));
-            Assert.Equal(1, w.AliveCount);
-            Assert.Equal(1, w.TotalKills);
-
-            for (int i = 0; i < 40; i++) w.Step(0.1f);
             Assert.False(w.IsAlive(id));
             Assert.Equal(0, w.AliveCount);
             Assert.Equal(1, w.TotalKills);
@@ -89,7 +84,7 @@ namespace Cipher.Sim.Tests
             w.Spawn(new Vec2(5.5f, 5f), 10f);
             int failing = w.Spawn(new Vec2(5f, 5.5f), 10f);
             w.Spawn(new Vec2(9f, 5f), 10f);
-            w.ApplyDamage(failing, 100f);
+            w.ApplyDamage(failing, 1f);   // infected, nowhere near empty
 
             // A failing body is still standing there, so it is still counted...
             Assert.Equal(3, w.CountWithin(new Vec2(5f, 5f), 1f));

@@ -70,7 +70,7 @@ namespace Cipher.Sim.Agents
                 // A body whose chip is already failing is not worth a round. Without this a turret
                 // empties itself into someone who is going down anyway while the person behind them
                 // walks past, which is the opposite of what an auto-targeting gun should do.
-                if (!_alive[id] || _failing[id] > 0f) continue;
+                if (!_alive[id] || IsSpokenFor(id)) continue;
 
                 var target = new Vec2(_posX[id], _posY[id]);
                 if (!HasLineOfSight(center, target)) continue;

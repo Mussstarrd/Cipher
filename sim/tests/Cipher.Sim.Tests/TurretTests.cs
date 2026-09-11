@@ -101,13 +101,18 @@ namespace Cipher.Sim.Tests
             int kills = 0;
             for (int t = 0; t < 30; t++) kills += turrets.Step(world, Dt, null); // 1 s: 12 shots available
 
-            // ADR-008: a "kill" is a chip broken. The body stays up for its failure window, and
-            // the gun moves on to someone it can still stop rather than emptying into it.
-            Assert.Equal(1, kills);
-            Assert.True(world.IsFailing(target));
-            Assert.Equal(1, turrets.Turrets[0].Kills);
+            // ADR-008 second pass: the gun stops once the malware already in the target will
+            // finish it inside SpokenForSeconds, and moves on. That is the intended behaviour --
+            // rounds spent on someone already falling are rounds not spent on the next one -- so
+            // the last shot of a kill is often the drain rather than the turret, and the kill is
+            // credited to the world rather than to the emplacement.
+            Assert.InRange(turrets.Turrets[0].ShotsFired, 8, 12);
+            Assert.True(world.Integrity01(target) < 0.25f, "it did nearly all of the work");
+
+            for (int t = 0; t < 90 && world.IsAlive(target); t++) world.Step(Dt);
+            Assert.False(world.IsAlive(target));
             Assert.Equal(1, world.TotalKills);
-            Assert.InRange(turrets.Turrets[0].ShotsFired, 11, 12);
+            Assert.Equal(kills, turrets.Turrets[0].Kills);
         }
 
         [Fact]

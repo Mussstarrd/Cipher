@@ -2276,6 +2276,64 @@ namespace Cipher.Game
 
         private GameObject? _truckBody;
 
+        /// <summary>
+        /// Bars over everything that can be hurt: bodies, emplacements and the objective actors.
+        ///
+        /// Owner: "we need to have health bars on the structures and the zombies and the turrets
+        /// nice and discreetly". Discreet is doing real work in that sentence -- a full bar is not
+        /// drawn at all and everything fades out with distance, so a fresh wave at the gate shows
+        /// nothing and the field only fills up as the player does damage. See HudFeedback.
+        ///
+        /// This is also what makes the decrypt model legible. A bar that visibly creeps down after
+        /// one pulse, and plummets under four, is the difference between "I tagged him" and "I know
+        /// what tagging does". Without it the whole mechanic is invisible.
+        /// </summary>
+        private void DrawHealthBars(float uiScale, Vector3 heroWorld)
+        {
+            const float BodyMax = 40f;
+
+            for (int id = 0; id < _world.Count; id++)
+            {
+                if (!_world.IsAlive(id)) continue;
+                float integrity = _world.Integrity01(id);
+                if (integrity >= 0.999f) continue;      // cheap reject before the projection
+
+                Vec2 p = _world.PositionOf(id);
+                var at = new Vector3(p.X, 2.05f, p.Y);
+                float d = Vector3.Distance(heroWorld, at);
+                if (d > BodyMax) continue;
+
+                _feedback.DrawHealthBar(_camera, uiScale, _uiW, _uiH, at, integrity, d,
+                                        width: 36f, maxMetres: BodyMax);
+            }
+
+            var turrets = _turrets.Turrets;
+            for (int i = 0; i < turrets.Count; i++)
+            {
+                var t = turrets[i];
+                if (t.MaxHp <= 0) continue;
+                var at = new Vector3(t.X + 0.5f, 2.3f, t.Y + 0.5f);
+                _feedback.DrawHealthBar(_camera, uiScale, _uiW, _uiH, at,
+                                        (float)t.Hp / t.MaxHp, Vector3.Distance(heroWorld, at),
+                                        width: 40f, maxMetres: 70f,
+                                        tint: new Color(0.55f, 0.78f, 0.92f));
+            }
+
+            if (_actors != null)
+            {
+                for (int i = 0; i < _actors.All.Count; i++)
+                {
+                    var a = _actors.All[i];
+                    if (!a.IsAlive) continue;
+                    var at = new Vector3(a.X + 0.5f, 2.6f, a.Y + 0.5f);
+                    _feedback.DrawHealthBar(_camera, uiScale, _uiW, _uiH, at, a.HealthFraction,
+                                            Vector3.Distance(heroWorld, at),
+                                            width: 46f, maxMetres: 90f,
+                                            tint: new Color(0.95f, 0.80f, 0.42f));
+                }
+            }
+        }
+
         private GUIStyle? _scanStyle;
         private GUIStyle? _vaultStyle;
 
@@ -2289,6 +2347,8 @@ namespace Cipher.Game
             if (_camera == null || _match.IsOver) return;
             float scale = Mathf.Clamp(Screen.height / 800f, 1f, 3f);
             var heroW = ToWorld(_hero.Position, 0f);
+
+            DrawHealthBars(scale, heroW);
 
             if (_actors != null)
             {
@@ -3524,6 +3584,12 @@ namespace Cipher.Game
         /// <summary>Where every living body is standing this frame, for the contact shadows.</summary>
         private readonly List<Vector3> _blobPositions = new List<Vector3>(512);
         private readonly List<Vector3> _heroBlob = new List<Vector3> { Vector3.zero };
+
+        /// <summary>
+        /// Bar fraction below which the implant visibly gives up. A little wider than the sim's
+        /// `FrailtyBelow` so the warning arrives slightly before the stumbling does.
+        /// </summary>
+        private const float FrailTellBelow = 0.45f;
         private Vector3[] _lastAgentPos = new Vector3[256];
 
         private void DrawAgents()
@@ -3555,7 +3621,12 @@ namespace Cipher.Game
                 Vector3 facing = here - _lastAgentPos[id];
                 _lastAgentPos[id] = here;
 
-                if (_world.IsFailing(id))
+                // ONLY WHEN THEY ARE ACTUALLY GOING DOWN. `IsFailing` used to mean "will be dead in
+                // 2.5 seconds" and now means "has been shot at least once", which after the decrypt
+                // rewrite is most of the field -- gating the tell on it put a crackling ring round
+                // every body the player had ever tagged. The tell has to mean "this one is
+                // finished", or it means nothing.
+                if (_world.Integrity01(id) < FrailTellBelow)
                 {
                     bool promoted = _crowd != null && _crowd.Promoted.Contains(id);
                     var head = new Vector3(p.X, promoted ? 1.62f : 1.05f, p.Y);
@@ -3592,7 +3663,7 @@ namespace Cipher.Game
                 // grip and what is left is a person the signal no longer owns. ADR-008 forbids
                 // gore for this -- it is a device dying, not a wound -- so the tell is entirely in
                 // the colour, and it has to work on a capsule because most of the crowd is one.
-                if (_world.IsFailing(id))
+                if (_world.Integrity01(id) < FrailTellBelow)
                 {
                     float integrity = _world.Integrity01(id);
                     // Stutters faster as it loses the thread, and the gaps get longer.

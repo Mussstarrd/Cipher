@@ -183,7 +183,7 @@ namespace Cipher.Sim.Agents
                 // timer nothing checks, so killing a Sapper inside its last 2.5 seconds still
                 // opens the hole -- a grace period in the enemy's favour on the counter-play the
                 // entire wall system exists to serve.
-                if (_failing[i] > 0f) return true;
+                if (Integrity01(i) <= 0f) return true;
                 _timer[i] -= dt;
                 if (_timer[i] <= 0f)
                 {

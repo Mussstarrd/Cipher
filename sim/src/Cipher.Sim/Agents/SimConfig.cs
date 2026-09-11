@@ -98,19 +98,37 @@ namespace Cipher.Sim.Agents
         public float PistolDamage { get; set; } = 4f;
 
         /// <summary>
-        /// How long a broken chip takes to finish killing its host, in seconds. ADR-008: the owner
-        /// asked for "two or three seconds" of deterioration during which they can still attack.
-        /// This is the single number that decides how dangerous a crowd is, because it decides how
-        /// long the people you have already dealt with keep coming.
+        /// Seconds for ONE pulse, never followed up, to finish decrypting an implant from full.
+        ///
+        /// The owner's own number: "maybe hitting them does cause them to say over 40 seconds
+        /// completely die, but I want them to need to take multiple shots or pulses to be able to
+        /// accelerate their health bars going down." It has to be a genuine death sentence and a
+        /// useless tactic at the same time, which is exactly what forty seconds buys: tag a whole
+        /// wave once each and every one of them reaches the truck long before the malware does.
+        ///
+        /// Hits stack, so this is also the unit of acceleration -- six pulses decrypt six times as
+        /// fast. Lower it and spraying becomes viable; raise it and a hit stops meaning anything.
         /// </summary>
-        public float FailSeconds { get; set; } = 2.5f;
+        public float SoloDecryptSeconds { get; set; } = 40f;
 
         /// <summary>
-        /// The fraction of normal speed a body retains at the very end of its failure. Above zero
-        /// deliberately: a body that stops dead when its chip breaks reads as a freeze bug, and the
-        /// point of the window is that it keeps coming.
+        /// The fraction of the bar below which a body starts to come apart. Above this it is a
+        /// full-strength attacker no matter how much malware is in it -- the owner's "just because
+        /// a zombie gets hit doesn't inherently mean they slow down all the way to death".
         /// </summary>
+        public float FrailtyBelow { get; set; } = 0.3f;
+
+        /// <summary>Speed retained at an empty bar. Above zero: a body that stops dead reads as a freeze.</summary>
         public float FailSpeedFloor { get; set; } = 0.34f;
+
+        /// <summary>How hard a body hits with its bar nearly empty.</summary>
+        public float FailThreatFloor { get; set; } = 0.25f;
+
+        /// <summary>
+        /// A gun ignores a body already due to fall within this long. Replaces "ignore anything
+        /// infected", which after the decrypt rewrite would mean ignoring almost everyone.
+        /// </summary>
+        public float SpokenForSeconds { get; set; } = 1.25f;
 
         /// <summary>Arm's reach. An ordinary body only claws a gun it nearly walks into.</summary>
         public float OpportunistStructureRange { get; set; } = 2.6f;

@@ -255,6 +255,59 @@ namespace Cipher.Game.UI
             GUI.Label(new Rect(ex - 120f, ey + 14f, 240f, 22f), $"{label}  {metres:F0}m", _markerStyle);
         }
 
+        /// <summary>
+        /// A small bar floating over something in the world. Discreet on purpose -- the owner asked
+        /// for health bars "nice and discreetly", and four hundred of them is a spreadsheet, not a
+        /// battlefield.
+        ///
+        /// Three rules keep it quiet:
+        ///  - a full bar is not drawn at all, so an untouched crowd shows nothing;
+        ///  - it fades out with distance and vanishes past <paramref name="maxMetres"/>;
+        ///  - it is one flat ink rectangle with a fill, no frame, no gradient, no number.
+        ///
+        /// Returns false when nothing was drawn, so callers can skip their own work.
+        /// </summary>
+        public bool DrawHealthBar(Camera camera, float uiScale, float uiW, float uiH,
+                                  Vector3 world, float fraction01, float metres,
+                                  float width = 34f, float maxMetres = 45f, Color? tint = null)
+        {
+            if (camera == null) return false;
+            fraction01 = Mathf.Clamp01(fraction01);
+            if (fraction01 >= 0.999f) return false;
+            if (metres > maxMetres) return false;
+
+            var screen = camera.WorldToScreenPoint(world);
+            if (screen.z <= 0f) return false;
+
+            float x = screen.x / uiScale;
+            float y = (Screen.height - screen.y) / uiScale;
+            if (x < -width || x > uiW + width || y < -12f || y > uiH + 12f) return false;
+
+            // Fades over the last third of its range rather than popping out of existence.
+            float near = Mathf.Clamp01(1f - Mathf.InverseLerp(maxMetres * 0.66f, maxMetres, metres));
+            if (near <= 0.02f) return false;
+
+            // Smaller with distance too, so a crowd at the gate does not turn into a wall of bars.
+            float scale = Mathf.Lerp(0.72f, 1f, near);
+            float w = width * scale;
+            float h = 3.5f * scale;
+            var rect = new Rect(x - w * 0.5f, y, w, h);
+
+            var prev = GUI.color;
+            GUI.color = new Color(0.05f, 0.05f, 0.06f, 0.55f * near);
+            GUI.DrawTexture(new Rect(rect.x - 1f, rect.y - 1f, rect.width + 2f, rect.height + 2f),
+                            Texture2D.whiteTexture);
+
+            var colour = tint ?? Color.Lerp(new Color(0.90f, 0.32f, 0.22f),
+                                            new Color(0.62f, 0.78f, 0.45f), fraction01);
+            colour.a = near;
+            GUI.color = colour;
+            GUI.DrawTexture(new Rect(rect.x, rect.y, rect.width * fraction01, rect.height),
+                            Texture2D.whiteTexture);
+            GUI.color = prev;
+            return true;
+        }
+
         // ---------------------------------------------------------------- generated textures
 
         private static Texture2D BuildVignette(int size)

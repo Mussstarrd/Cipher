@@ -54,7 +54,8 @@ namespace Cipher.Sim.Agents
             _posY = new float[capacity];
             _health = new float[capacity];
             _alive = new bool[capacity];
-            _failing = new float[capacity];
+            _drain = new float[capacity];
+            _maxHealth = new float[capacity];
             _archetype = new byte[capacity];
             _intent = new byte[capacity];
             _state = new byte[capacity];
@@ -84,7 +85,8 @@ namespace Cipher.Sim.Agents
                 Array.Resize(ref _posY, newSize);
                 Array.Resize(ref _health, newSize);
                 Array.Resize(ref _alive, newSize);
-                Array.Resize(ref _failing, newSize);
+                Array.Resize(ref _drain, newSize);
+                Array.Resize(ref _maxHealth, newSize);
                 Array.Resize(ref _archetype, newSize);
                 Array.Resize(ref _intent, newSize);
                 Array.Resize(ref _state, newSize);
@@ -100,7 +102,8 @@ namespace Cipher.Sim.Agents
             _posY[id] = position.Y;
             _health[id] = health;
             _alive[id] = true;
-            _failing[id] = 0f;
+            _drain[id] = 0f;
+            _maxHealth[id] = health;
             _archetype[id] = (byte)archetype;
             _intent[id] = (byte)Intent.Vault;
             _state[id] = 0;
@@ -139,7 +142,7 @@ namespace Cipher.Sim.Agents
                     // only two places an agent stops being alive -- it has to hand the failing slot
                     // back or FailingCount is permanently wrong and "a wave is not clear while any
                     // of these remain" becomes a soft lock for whoever trusts it next.
-                    if (_failing[i] > 0f) { _failing[i] = 0f; FailingCount--; }
+                    if (_drain[i] > 0f) { _drain[i] = 0f; FailingCount--; }
                     _alive[i] = false;
                     AliveCount--;
                     ReachedCount++;
@@ -236,9 +239,8 @@ namespace Cipher.Sim.Agents
             foreach (int hashId in _queryScratch)
             {
                 int id = _hashToAgent[hashId];
-                if (!_alive[id] || _failing[id] > 0f) continue;
-                _health[id] -= damage;
-                if (_health[id] <= 0f && BreakChip(id)) kills++;
+                if (!_alive[id]) continue;
+                if (Infect(id, damage)) kills++;
             }
 
             return kills;
@@ -252,10 +254,7 @@ namespace Cipher.Sim.Agents
         public bool ApplyDamage(int id, float damage)
         {
             if (id < 0 || id >= Count || !_alive[id]) return false;
-            if (_failing[id] > 0f) return false;
-            _health[id] -= damage;
-            if (_health[id] > 0f) return false;
-            return BreakChip(id);
+            return Infect(id, damage);
         }
 
         /// <summary>
@@ -325,7 +324,7 @@ namespace Cipher.Sim.Agents
             foreach (int hashId in _queryScratch)
             {
                 int id = _hashToAgent[hashId];
-                if (!_alive[id] || _failing[id] > 0f) continue;
+                if (!_alive[id] || IsSpokenFor(id)) continue;
                 Vec2 rel = new Vec2(_posX[id], _posY[id]) - origin;
                 float t = Vec2.Dot(rel, dir);
                 if (t < 0f || t > maxDistance) continue;
@@ -385,7 +384,7 @@ namespace Cipher.Sim.Agents
             foreach (int hashId in _queryScratch)
             {
                 int id = _hashToAgent[hashId];
-                if (!_alive[id] || _failing[id] > 0f) continue;
+                if (!_alive[id] || IsSpokenFor(id)) continue;
                 float distSq = Vec2.DistanceSquared(center, new Vec2(_posX[id], _posY[id]));
                 if (distSq < bestDistSq || (distSq == bestDistSq && id < best))
                 {
@@ -426,7 +425,7 @@ namespace Cipher.Sim.Agents
             for (int i = 0; i < Count; i++)
             {
                 hash = Mix(hash, _alive[i] ? 1 : 0);
-                hash = Mix(hash, (int)(_failing[i] * 1000f));
+                hash = Mix(hash, (int)(_drain[i] * 1000f));
                 if (!_alive[i]) continue;
                 hash = Mix(hash, BitConverter.SingleToInt32Bits(_posX[i]));
                 hash = Mix(hash, BitConverter.SingleToInt32Bits(_posY[i]));

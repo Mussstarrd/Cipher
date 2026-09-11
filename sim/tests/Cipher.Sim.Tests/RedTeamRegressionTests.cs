@@ -17,12 +17,12 @@ namespace Cipher.Sim.Tests
     /// </summary>
     public sealed class RedTeamRegressionTests
     {
-        private static (GridMap map, FlowField field, AgentWorld world) Open(float failSeconds = 2.5f)
+        private static (GridMap map, FlowField field, AgentWorld world) Open(float soloSeconds = 40f)
         {
             var map = new GridMap(40, 40);
             var field = new FlowField(map);
             field.Compute(38, 20);
-            var world = new AgentWorld(map, field, new SimConfig { FailSeconds = failSeconds });
+            var world = new AgentWorld(map, field, new SimConfig { SoloDecryptSeconds = soloSeconds });
             return (map, field, world);
         }
 
@@ -33,12 +33,14 @@ namespace Cipher.Sim.Tests
         {
             // The original slowdown was applied by ONE caller out of six, and the test that was
             // meant to guard it exercised that one. Chasing the player is the path that matters.
-            var (_, _, world) = Open(failSeconds: 4f);
+            var (_, _, world) = Open(soloSeconds: 40f);
             world.SetHero(new Vec2(20f, 20f), alive: true);
 
             int healthy = world.Spawn(new Vec2(16f, 18f), 10f);
             int failing = world.Spawn(new Vec2(16f, 22f), 10f);
-            world.ApplyDamage(failing, 10f);
+            // Nearly out, not out: emptying the bar now kills outright, and a corpse demonstrates
+            // nothing about how a stumbling body moves.
+            world.ApplyDamage(failing, 9.7f);
 
             var hStart = world.PositionOf(healthy);
             var fStart = world.PositionOf(failing);
@@ -65,7 +67,7 @@ namespace Cipher.Sim.Tests
                 for (int y = 0; y < 40; y++) map.SetWall(20, y, WallKind.Barricade, 2000);
                 var field = new FlowField(map);
                 field.Compute(38, 20);
-                var world = new AgentWorld(map, field, new SimConfig { FailSeconds = Window });
+                var world = new AgentWorld(map, field, new SimConfig { SoloDecryptSeconds = Window });
 
                 int id = world.Spawn(new Vec2(19f, 20.5f), 10f, Intent.WreckWall);
                 if (broken) world.ApplyDamage(id, 10f);
@@ -93,7 +95,7 @@ namespace Cipher.Sim.Tests
             for (int y = 1; y < 21; y++) map.SetWall(15, y, WallKind.Barricade, GridMap.DefaultWallHp);
             var field = new FlowField(map);
             field.Compute(28, 19);
-            var world = new AgentWorld(map, field, new SimConfig { FailSeconds = 60f });
+            var world = new AgentWorld(map, field, new SimConfig { SoloDecryptSeconds = 6f });
 
             int sapper = world.SpawnArchetype(new Vec2(14.2f, 19.5f), Archetype.Sapper);
             for (int i = 0; i < 200 && map.StageAt(15, 19) == BreachStage.Intact; i++)
@@ -115,9 +117,9 @@ namespace Cipher.Sim.Tests
             // There are exactly two places an agent stops being alive and only one of them used to
             // hand the counter back, so FailingCount leaked forever. Latent today; a soft lock for
             // whoever next trusts "a wave is not clear while any of these remain".
-            var (_, _, world) = Open(failSeconds: 60f);
+            var (_, _, world) = Open(soloSeconds: 6f);
             int id = world.Spawn(new Vec2(36.5f, 20.5f), 10f);
-            world.ApplyDamage(id, 10f);
+            world.ApplyDamage(id, 1f);
             Assert.Equal(1, world.FailingCount);
 
             for (int i = 0; i < 200 && world.IsAlive(id); i++) world.Step(0.05f);
@@ -136,7 +138,7 @@ namespace Cipher.Sim.Tests
             var (_, _, world) = Open();
             int dying = world.Spawn(new Vec2(10.6f, 20f), 5f);
             int healthy = world.Spawn(new Vec2(12.5f, 20f), 100f);
-            world.ApplyDamage(dying, 5f);
+            world.ApplyDamage(dying, 4.9f);   // about to fall, not fallen
 
             Assert.Equal(healthy, world.FindNearestInRange(new Vec2(10.5f, 20f), 6f));
         }
@@ -223,7 +225,9 @@ namespace Cipher.Sim.Tests
             var map = new GridMap(40, 40);
             var field = new FlowField(map);
             field.Compute(38, 20);
-            var world = new AgentWorld(map, field, new SimConfig { FailSeconds = 60f });
+            // A slow decrypt on purpose: this test is about how HARD a frail body shoots, and with
+            // a fast drain the subject dies between the two measurements.
+            var world = new AgentWorld(map, field, new SimConfig { SoloDecryptSeconds = 200f });
             world.SetHero(new Vec2(20f, 20f), alive: true);
 
             world.Spawn(new Vec2(16f, 20f), 10f, Intent.Vault, pace: 1f, armed: true);
@@ -231,7 +235,9 @@ namespace Cipher.Sim.Tests
             float healthyShot = FirstPistolShot(world);
             Assert.True(healthyShot > 0f, "an armed body takes pot shots at him");
 
-            world.ApplyDamage(0, 9999f);
+            // Down to a quarter of the bar, which is inside the frailty band but a long way from
+            // empty -- emptying it would kill outright and there would be nothing left to shoot.
+            world.ApplyDamage(0, 7.5f);
             float failingShot = FirstPistolShot(world);
             Assert.True(failingShot > 0f && failingShot < healthyShot,
                         "a broken chip still shoots, and it shoots weaker");
