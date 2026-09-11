@@ -10,6 +10,7 @@ using Cipher.Sim.Core;
 using Cipher.Sim.Emplacements;
 using Cipher.Sim.Grid;
 using UnityEngine;
+using UnityEngine.Rendering;
 using UnityEngine.InputSystem;
 
 namespace Cipher.Game
@@ -226,12 +227,7 @@ namespace Cipher.Game
             camGo.AddComponent<AudioListener>();
             _sfx = new SoundBank(transform) { MasterVolume = 0.8f };
 
-            var lightGo = new GameObject("Sun");
-            var light = lightGo.AddComponent<Light>();
-            light.type = LightType.Directional;
-            light.transform.rotation = Quaternion.Euler(55f, -30f, 0f);
-            light.intensity = 1.1f;
-            RenderSettings.ambientLight = new Color(0.35f, 0.35f, 0.4f);
+            ApplyOvercastWinter();
 
             var ground = GameObject.CreatePrimitive(PrimitiveType.Plane);
             ground.name = "Ground";
@@ -320,11 +316,65 @@ namespace Cipher.Game
             return mesh;
         }
 
+        // Overcast Virginia winter (ADR-004): flat grey sky, low sun, cold haze, brown ground.
+        // Half the game happens in daylight and this is what that daylight looks like.
+        private static readonly Color SkyGrey = new Color(0.62f, 0.65f, 0.69f);
+        private static readonly Color HazeGrey = new Color(0.58f, 0.61f, 0.65f);
+
+        private void ApplyOvercastWinter()
+        {
+            var lightGo = new GameObject("Sun");
+            var light = lightGo.AddComponent<Light>();
+            light.type = LightType.Directional;
+            // Low winter sun, raking from the south-west, so everything casts a long shadow.
+            light.transform.rotation = Quaternion.Euler(26f, -42f, 0f);
+            light.color = new Color(1f, 0.96f, 0.88f);
+            light.intensity = 1.45f;
+            light.shadows = LightShadows.Soft;
+            light.shadowStrength = 0.72f;
+            _sun = light;
+
+            // Trilight ambient reads as an overcast dome: bright sky, dull brown bounce off leaf litter.
+            RenderSettings.ambientMode = AmbientMode.Trilight;
+            RenderSettings.ambientSkyColor = SkyGrey;
+            RenderSettings.ambientEquatorColor = new Color(0.44f, 0.45f, 0.46f);
+            RenderSettings.ambientGroundColor = new Color(0.26f, 0.22f, 0.18f);
+
+            // Haze is what sells distance and hides the edge of the play area.
+            RenderSettings.fog = true;
+            RenderSettings.fogMode = FogMode.ExponentialSquared;
+            RenderSettings.fogColor = HazeGrey;
+            RenderSettings.fogDensity = 0.011f;
+
+            if (_camera != null)
+            {
+                _camera.clearFlags = CameraClearFlags.SolidColor;
+                _camera.backgroundColor = HazeGrey;
+            }
+        }
+
+        private Light? _sun;
+
+        private static Shader? _litShader;
+
+        /// <summary>
+        /// Our own instanced URP shader, with fallbacks so an un-migrated project still renders.
+        /// Standard is last because under URP it renders magenta; it only helps a Built-in fallback.
+        /// </summary>
+        private static Shader LitShader =>
+            _litShader ??= Shader.Find("Exodus/InstancedLit")
+                        ?? Shader.Find("Universal Render Pipeline/Lit")
+                        ?? Shader.Find("Standard");
+
         private static Material MakeMaterial(Color color, bool instanced)
         {
-            var shader = Shader.Find("Standard");
-            return new Material(shader) { color = color, enableInstancing = instanced };
+            var mat = new Material(LitShader) { enableInstancing = instanced };
+            mat.color = color;
+            if (mat.HasProperty(BaseColorId)) mat.SetColor(BaseColorId, color);
+            return mat;
         }
+
+        private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
 
         private void BakeWallsIfChanged()
         {
