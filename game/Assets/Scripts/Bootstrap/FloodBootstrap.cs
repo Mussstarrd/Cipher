@@ -150,6 +150,8 @@ namespace Cipher.Game
         private bool _wasDown;
         private bool _strikeWasInbound;
         private float _hurtCooldown;
+        private string _declineNotice = "";
+        private float _declineNoticeTimer;
         private float _hordePollTimer;
         private float _hordeIntensity;
 
@@ -450,6 +452,8 @@ namespace Cipher.Game
                 {
                     case MatchPhase.Wave: _sfx.Play(Sfx.WaveHorn, 0.9f, 0.02f); break;
                     case MatchPhase.Setup: _sfx.Play(Sfx.WaveClear, 0.9f, 0.01f); break;
+                    case MatchPhase.Extraction: _sfx.Play(Sfx.WaveClear, 1f, 0f); break;
+                    case MatchPhase.Extracted: _sfx.Play(Sfx.Win, 0.85f, 0f); break;
                     case MatchPhase.Won: _sfx.Play(Sfx.Win, 1f, 0f); break;
                     case MatchPhase.Lost: _sfx.Play(Sfx.Lose, 1f, 0f); break;
                 }
@@ -602,6 +606,7 @@ namespace Cipher.Game
         {
             var pad = Gamepad.current;
             var kb = Keyboard.current;
+            if (_declineNoticeTimer > 0f) _declineNoticeTimer = Mathf.Max(0f, _declineNoticeTimer - Time.deltaTime);
             bool toggle = (pad != null && pad.leftShoulder.wasPressedThisFrame) || (kb != null && kb.tabKey.wasPressedThisFrame);
             if (toggle) { SetBuildMode(!_buildMode); _sfx.Play(_buildMode ? Sfx.MenuOpen : Sfx.MenuConfirm, 0.7f, 0f); }
 
@@ -610,6 +615,31 @@ namespace Cipher.Game
 
             bool startWave = (pad != null && pad.selectButton.wasPressedThisFrame) || (kb != null && kb.enterKey.wasPressedThisFrame);
             if (startWave && _match.Phase == MatchPhase.Setup) _match.StartWaveNow();
+
+            // Scan cycle (ADR-005): call this your last wave here, then pull out when packed.
+            bool lastCall = (pad != null && pad.dpad.down.wasPressedThisFrame) || (kb != null && kb.lKey.wasPressedThisFrame);
+            if (lastCall)
+            {
+                if (_match.Phase == MatchPhase.Extraction)
+                {
+                    if (_match.PullOutNow()) _sfx.Play(Sfx.MenuConfirm, 0.9f, 0f);
+                }
+                else
+                {
+                    var result = _match.DeclareLastWave();
+                    _sfx.Play(result == DeclareResult.Ok ? Sfx.WaveHorn : Sfx.MenuTick, 0.8f, 0f);
+                    _declineNotice = result switch
+                    {
+                        DeclareResult.Ok => "LAST WAVE CALLED — hold it, then pack up",
+                        DeclareResult.TooEarly =>
+                            $"too early — hold {_match.Cycle.MinWavesBeforeExtract} waves before you can call it",
+                        DeclareResult.NowhereToGo => "there is nowhere to fall back to",
+                        DeclareResult.AlreadyDeclared => "already called",
+                        _ => "",
+                    };
+                    _declineNoticeTimer = 3f;
+                }
+            }
         }
 
         private void SetBuildMode(bool on)
@@ -1214,11 +1244,24 @@ namespace Cipher.Game
             {
                 MatchPhase.Setup => $"SETUP {_match.SetupTimeLeft:F0}s  ({(pad ? "View" : "Enter")}: start wave now)",
                 MatchPhase.Wave => $"WAVE  {_match.SpawnedThisWave}/{_match.CurrentWave.Count} spawned",
+                MatchPhase.Extraction =>
+                    $"PACK UP {_match.ExtractTimeLeft:F0}s  (L: pull out now)  salvaged {_match.SalvagedCount}",
+                MatchPhase.Extracted => "EXTRACTED",
                 MatchPhase.Won => "TURF HELD",
                 _ => "TURF LOST",
             };
             GUI.Label(new Rect(12, 32, 1000, 28),
                 $"${_match.Bank.Cash}   Wave {_match.WaveNumber}/{_match.WaveCount}   {phase}   Vault {_match.VaultHp}/{_match.VaultMaxHp}");
+
+            if (_match.CanDeclareLastWave)
+            {
+                GUI.Label(new Rect(12, 104, 1000, 24),
+                    $"{(pad ? "D-pad down" : "L")}: call this your last wave here  ({_match.PrepSecondsRemaining:F0}s prep left for the next line)");
+            }
+            if (_declineNoticeTimer > 0f && _declineNotice.Length > 0)
+            {
+                GUI.Label(new Rect(12, 128, 1000, 24), _declineNotice);
+            }
 
             DrawBar(new Rect(12, 60, 260, 18), _hero.HealthFraction, new Color(0.2f, 0.85f, 0.3f), new Color(0.6f, 0.1f, 0.1f), $"HP {_hero.Health:F0}");
             DrawBar(new Rect(12, 84, 260, 14), _hero.AirstrikeReadyFraction, new Color(1f, 0.6f, 0.15f), new Color(0.3f, 0.2f, 0.1f),

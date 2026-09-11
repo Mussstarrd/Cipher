@@ -18,7 +18,7 @@ namespace Cipher.Game.Editor
     /// </summary>
     public static class CiBuild
     {
-        private const string ProductName = "CipherDeadTurf";
+        private const string ProductName = "ProjectExodus";
 
         [MenuItem("Cipher/Build/Windows x64")]
         public static void BuildWindows() =>

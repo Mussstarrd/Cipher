@@ -24,7 +24,7 @@ laboratory is 9. From his first playtest notes:
 
 ## 1. The shape: the map gets smaller every mission
 
-**You never take ground back. You only decide how expensively you give it up.**
+**You never take ground back. You only decide when to give it up, and how much you carry out.**
 
 Mission 1 you are defending a gate on behalf of four thousand people. Mission 12 you are defending a garage
 door on behalf of yourself. The road between those two things is one road, and the player drives down it
@@ -49,29 +49,37 @@ and the player learned nothing about any of them. A contracting map means:
 
 ---
 
-## 2. What "pushed back" costs you, in cash
+## 2. The scan cycle: you decide when a position is done
 
-This is the mechanic that makes the retreat hurt, and it is small to build.
+Full rationale and shipped code in [ADR-005](../decisions/ADR-005-the-scan-cycle.md). The short version,
+because it governs every mission below.
 
-When a mission ends you **abandon everything you built** on that map. How much of it you get back depends on
-how the mission ended:
+HALCYON cannot see the unchipped continuously. A wide-area sweep needs an orbital window and compute it does
+not have spare, so it runs on a **cycle**: roughly three days at the start of the act, hours by the end. A
+scan is what sends the signed at you. The gap between scans is the rest of the game.
 
-| How it ended | Kit recovered |
-|---|---|
-| Objective met with time to spare | 75% |
-| Objective met, overrun at the end | 50% |
-| Fell back under fire (the unwinnable missions) | 25% |
-| — | |
+**Within a mission**, once you have held a minimum number of waves you may call **"this is my last wave
+here."** Calling it during setup, before you can see what is in the wave, pays a commitment bonus. Calling it
+once you have counted them does not.
 
-So a clean hold funds the next line. A ragged one does not. The player is never punished with a fail
-screen for retreating, because retreating is the plan. They are punished with a thinner wallet, which they
-feel immediately and can do something about.
+**When that wave is down**, the pack-up window opens. You unbolt emplacements one at a time and each one
+costs seconds off the window. What you get back is what you carried. What you leave stays bolted to ground
+you are not coming back to. You can pull out early and bank the rest of the time.
 
-**This also answers the "why don't I just turtle at the house from mission 1" question**: because everything
-you own is bolted to the ground you are standing on, and the money to build the last line comes from having
-held the first ones well.
+**Whatever is left of the cycle is prep at the next position**: fortify, trap, rest, re-arm. So one clock is
+spent in three places, and every extra wave you take is fortification you do not build.
 
----
+That is the whole risk curve of a mission and the player owns both ends of it. It also answers the obvious
+exploit, *why not just turtle at the house from mission one*: because everything you own is bolted to the
+ground you are standing on, and the money and the hours to build the last line come from having held the
+earlier ones well.
+
+**Leaving is never a loss.** The end-of-mission state is EXTRACTED, which is neither a win nor a failure. The
+game never shows a fail screen for doing what the plot requires.
+
+**Mission 12 has the call greyed out**, and the reason it gives is *there is nowhere to fall back to*. Eleven
+missions teach the player they always get to decide when to leave. The twelfth takes it away through a button
+they have pressed every mission. That is the cheapest and best piece of storytelling in the act.
 
 ## 3. The missions
 

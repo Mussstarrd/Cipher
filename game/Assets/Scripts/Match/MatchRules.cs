@@ -69,7 +69,17 @@ namespace Cipher.Game.Match
         };
     }
 
-    public enum MatchPhase { Setup, Wave, Won, Lost }
+    public enum MatchPhase
+    {
+        Setup,
+        Wave,
+        /// <summary>Your declared last wave is down. Pack what you can carry before the next scan.</summary>
+        Extraction,
+        /// <summary>You left in good order. Not a win, not a loss: the next position is the point.</summary>
+        Extracted,
+        Won,
+        Lost,
+    }
 
     /// <summary>
     /// Wave flow and win/lose, as pure state. The game layer feeds it the tick, how many
@@ -79,7 +89,9 @@ namespace Cipher.Game.Match
     {
         private readonly IReadOnlyList<WaveDef> _waves;
         private readonly EconomyConfig _eco;
+        private readonly ScanCycleConfig _cycle;
         private float _spawnAccumulator;
+        private bool _declaredBeforeSpawn;
 
         public MatchPhase Phase { get; private set; } = MatchPhase.Setup;
         /// <summary>0-based index of the current (or next, during Setup) wave.</summary>
@@ -93,19 +105,120 @@ namespace Cipher.Game.Match
         public Bank Bank { get; }
         public int WavesCleared { get; private set; }
 
+        // --- Scan cycle (ADR-005) ---
+
+        /// <summary>Tuning for this position's scan cycle.</summary>
+        public ScanCycleConfig Cycle => _cycle;
+
+        /// <summary>
+        /// False for a position with no line behind it, which greys out the extract call.
+        /// Mission 12 is the only place in Act One where this is false, and that is the point.
+        /// </summary>
+        public bool HasFallbackPosition { get; }
+
+        /// <summary>The player has called this wave as their last one here.</summary>
+        public bool LastWaveDeclared { get; private set; }
+
+        /// <summary>Seconds left in the pack-up window. Only meaningful during Extraction.</summary>
+        public float ExtractTimeLeft { get; private set; }
+
+        /// <summary>Real seconds this position has consumed, fighting and packing alike.</summary>
+        public float ElapsedSeconds { get; private set; }
+
+        /// <summary>
+        /// What is left of the cycle once you leave: the time you get to fortify, trap and rest at
+        /// the next position before the following scan. Every extra wave you take comes out of this.
+        /// </summary>
+        public float PrepSecondsRemaining => Math.Max(0f, _cycle.CycleSeconds - ElapsedSeconds);
+
+        /// <summary>Cash value of the emplacements you got back on the truck.</summary>
+        public int Salvaged { get; private set; }
+
+        /// <summary>How many emplacements you recovered.</summary>
+        public int SalvagedCount { get; private set; }
+
+        /// <summary>Emplacements you ran out of time for and left bolted to the ground.</summary>
+        public int AbandonedCount { get; private set; }
+
+        public bool CanDeclareLastWave => DeclareLastWaveCheck() == DeclareResult.Ok;
+
         public WaveDef CurrentWave => _waves[Math.Min(WaveIndex, _waves.Count - 1)];
         public bool WaveFullySpawned => SpawnedThisWave >= CurrentWave.Count;
-        public bool IsOver => Phase == MatchPhase.Won || Phase == MatchPhase.Lost;
+        public bool IsOver => Phase == MatchPhase.Won || Phase == MatchPhase.Lost
+                           || Phase == MatchPhase.Extracted;
         public float RefundMultiplier => Phase == MatchPhase.Setup ? _eco.SetupRefund : _eco.CombatRefund;
 
-        public MatchState(IReadOnlyList<WaveDef> waves, EconomyConfig economy, int vaultHp = 25)
+        public MatchState(
+            IReadOnlyList<WaveDef> waves,
+            EconomyConfig economy,
+            int vaultHp = 25,
+            ScanCycleConfig? cycle = null,
+            bool hasFallbackPosition = true)
         {
             _waves = waves ?? throw new ArgumentNullException(nameof(waves));
             if (waves.Count == 0) throw new ArgumentException("Need at least one wave.", nameof(waves));
             _eco = economy ?? throw new ArgumentNullException(nameof(economy));
+            _cycle = cycle ?? new ScanCycleConfig();
+            HasFallbackPosition = hasFallbackPosition;
             Bank = new Bank(economy.StartCash);
             VaultMaxHp = VaultHp = Math.Max(1, vaultHp);
             SetupTimeLeft = _waves[0].SetupSeconds;
+        }
+
+        private DeclareResult DeclareLastWaveCheck()
+        {
+            if (!HasFallbackPosition) return DeclareResult.NowhereToGo;
+            if (LastWaveDeclared) return DeclareResult.AlreadyDeclared;
+            if (Phase != MatchPhase.Setup && Phase != MatchPhase.Wave) return DeclareResult.NotFighting;
+            if (WavesCleared < _cycle.MinWavesBeforeExtract) return DeclareResult.TooEarly;
+            return DeclareResult.Ok;
+        }
+
+        /// <summary>
+        /// "This is my last wave here." Clearing it opens the pack-up window instead of another setup.
+        /// Calling it during Setup, before you can see what is coming, pays a commitment bonus.
+        /// </summary>
+        public DeclareResult DeclareLastWave()
+        {
+            var check = DeclareLastWaveCheck();
+            if (check != DeclareResult.Ok) return check;
+            LastWaveDeclared = true;
+            _declaredBeforeSpawn = Phase == MatchPhase.Setup;
+            return DeclareResult.Ok;
+        }
+
+        /// <summary>
+        /// Unbolt one emplacement during the pack-up window and put it on the truck. Costs
+        /// <see cref="ScanCycleConfig.UnboltSeconds"/> off the window; refuses when the window is short.
+        /// </summary>
+        public SalvageResult TrySalvage(int value)
+        {
+            if (Phase != MatchPhase.Extraction) return SalvageResult.NotExtracting;
+            if (ExtractTimeLeft < _cycle.UnboltSeconds)
+            {
+                AbandonedCount++;
+                return SalvageResult.OutOfTime;
+            }
+            // The window is the only clock here; Tick already charges real time to ElapsedSeconds.
+            ExtractTimeLeft -= _cycle.UnboltSeconds;
+            if (value > 0) { Salvaged += value; Bank.Earn(value); }
+            SalvagedCount++;
+            return SalvageResult.Ok;
+        }
+
+        /// <summary>Leave now rather than burn the rest of the window. Banks the unused prep time.</summary>
+        public bool PullOutNow()
+        {
+            if (Phase != MatchPhase.Extraction) return false;
+            ExtractTimeLeft = 0f;
+            Phase = MatchPhase.Extracted;
+            return true;
+        }
+
+        /// <summary>Emplacements still standing when the window closed, for the debrief.</summary>
+        public void ReportAbandoned(int count)
+        {
+            if (count > 0) AbandonedCount += count;
         }
 
         /// <summary>Player skips the remaining setup countdown.</summary>
@@ -128,6 +241,8 @@ namespace Cipher.Game.Match
         public int Tick(float dt, int aliveRunners, int breachedThisTick)
         {
             if (IsOver || dt <= 0f) return 0;
+
+            ElapsedSeconds += dt;
 
             if (breachedThisTick > 0)
             {
@@ -159,8 +274,18 @@ namespace Cipher.Game.Match
                     else if (aliveRunners == 0)
                     {
                         WavesCleared++;
-                        Bank.Earn(_eco.WaveClearBonusPerWave * WaveNumber);
-                        if (WaveIndex + 1 >= _waves.Count)
+                        int bonus = _eco.WaveClearBonusPerWave * WaveNumber;
+                        if (LastWaveDeclared && _declaredBeforeSpawn)
+                            bonus += (int)Math.Round(bonus * _cycle.CommitBonus);
+                        Bank.Earn(bonus);
+
+                        if (LastWaveDeclared)
+                        {
+                            // You called it and you held it. The scan is still coming.
+                            Phase = MatchPhase.Extraction;
+                            ExtractTimeLeft = _cycle.ExtractSeconds;
+                        }
+                        else if (WaveIndex + 1 >= _waves.Count)
                         {
                             Phase = MatchPhase.Won;
                         }
@@ -172,6 +297,11 @@ namespace Cipher.Game.Match
                         }
                     }
                     return toSpawn;
+
+                case MatchPhase.Extraction:
+                    ExtractTimeLeft = Math.Max(0f, ExtractTimeLeft - dt);
+                    if (ExtractTimeLeft <= 0f) Phase = MatchPhase.Extracted;
+                    return 0;
             }
             return 0;
         }

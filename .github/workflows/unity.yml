@@ -120,7 +120,7 @@ jobs:
       - name: Upload build
         uses: actions/upload-artifact@v4
         with:
-          name: CipherDeadTurf-${{ matrix.build-target }}-${{ github.sha }}
+          name: ProjectExodus-${{ matrix.build-target }}-${{ github.sha }}
           path: Builds/${{ matrix.build-target }}
           # A player build is ~90 MB and GitHub's free artifact allowance is 500 MB total, so
           # storage bills long before Actions minutes do. Three days is enough to pull a build
@@ -172,7 +172,7 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: CipherDeadTurf-Android-${{ github.sha }}
+          name: ProjectExodus-Android-${{ github.sha }}
           path: Builds/Android/*.apk
           retention-days: 7
           if-no-files-found: error
