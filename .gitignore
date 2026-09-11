@@ -23,6 +23,10 @@ Thumbs.db
 # Generated concept art: reference only, regenerate rather than version it.
 art/concept/
 
+# Before/after captures from the screenshot harness. Evidence for a review, not source:
+# regenerate them from the exe rather than versioning a few megabytes of PNG per pass.
+art/review/
+
 # Unity player builds (local). Releases are CI artifacts only.
 game/Builds/
 game/out/

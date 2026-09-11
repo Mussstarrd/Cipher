@@ -58,8 +58,24 @@ namespace Cipher.Game
             var root = new GameObject(area ? "BrushHog" : "Sentry");
             var props = new TurretProps(root, material);
             if (area) props.BrushHog(); else props.Sentry();
+
+            // Sandbags on a tripod are exactly the case vertex AO was built for: the darkening
+            // where the bags meet each other and the ground is what stops them reading as blocks.
+            // Keyed by family, so every sentry on the board shares one bake.
+            VertexAo.Bake(root, area ? "BrushHog" : "Sentry");
+
+            // Measured once, here, rather than every frame: an emplacement can be sold or fall
+            // back, so its shadow is QUEUED by the caller rather than registered as permanent.
+            props.GroundRadius = Mathf.Clamp(BlobShadows.MeasureRadius(root), 0.35f, 1.4f);
             return props;
         }
+
+        /// <summary>
+        /// Radius of the contact shadow this emplacement wants. The caller queues it each frame --
+        /// <c>blobs.Queue(props.Root.transform.position, props.GroundRadius)</c> -- because turrets
+        /// are sold, upgraded and abandoned, and a permanent registration would outlive them.
+        /// </summary>
+        public float GroundRadius { get; private set; } = 0.7f;
 
         /// <summary>Sandbags, a tripod, and a gun that points at what it is shooting.</summary>
         private void Sentry()
