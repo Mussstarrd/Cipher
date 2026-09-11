@@ -200,6 +200,11 @@ namespace Cipher.Game
         private int _bakedMapVersion = -1;
         private readonly List<GameObject> _turretGos = new List<GameObject>(32);
         private Transform _vaultT = null!;
+        /// <summary>Dry winter ground cover. Scattered once per position, drawn instanced.</summary>
+        private readonly List<Matrix4x4> _grass = new List<Matrix4x4>(4096);
+        private Mesh? _grassMesh;
+        private Material? _grassMaterial;
+
         private Transform? _groundT;
         private Texture2D? _groundTexture;
         private Material? _groundMaterial;
@@ -469,6 +474,7 @@ namespace Cipher.Game
             _director = new SpawnDirector(_scenario.Director, _scenario.DirectorSeed);
             // Derived from the map, not from the 64-wide graybox: a narrower scenario used to hand
             // PickupSystem a minX of 34 and GridMap.CellIndex throws on out-of-bounds.
+            ScatterGroundCover(seed);
             _crew.Reset(new Vec2(GoalX + 0.5f, GoalY + 0.5f));
             _aidKits = new AidKits(_map, _aidSpots, seed ^ 0xA1D5);
             _aidKits.PlaceOpening();
@@ -2173,6 +2179,7 @@ namespace Cipher.Game
 
             // The cruiser keeps its bar running. Owner asked, and it is the only moving light in a
             // level lit by flat overcast noon, which makes it a landmark as well as a detail.
+            _grassRoadCentre = GridH / 2;
             _aidSpots.Clear();
             dresser.OnPlaced = (name, go) =>
             {
@@ -2339,6 +2346,12 @@ namespace Cipher.Game
                 }
             }
         }
+
+        /// <summary>
+        /// How far the strike has to be aimed before its marker is drawn, in cells. Below this the
+        /// box would be sitting on the player.
+        /// </summary>
+        private const float StrikeMarkerMinRange = 7f;
 
         private GUIStyle? _scanStyle;
         private GUIStyle? _vaultStyle;
@@ -2747,6 +2760,46 @@ namespace Cipher.Game
                 if (d < bestSq) { bestSq = d; best = id; }
             }
             return best < 0 ? ToWorld(around, 0f) : ToWorld(_world.PositionOf(best), 0f);
+        }
+
+        private int _grassRoadCentre;
+
+        /// <summary>
+        /// Scatters the ground cover for this position. Called AFTER the dresser, so it can see
+        /// every solid cell the buildings and scenery claimed and grow nothing through a wall.
+        ///
+        /// The road is excluded by corridor rather than by asking the dresser, because the road is
+        /// drawn as runs of clear cells and has no cell record of its own -- and grass sprouting
+        /// through fresh asphalt is the single most obvious way to give this away.
+        /// </summary>
+        private void ScatterGroundCover(ulong seed)
+        {
+            _grassMesh ??= GroundCover.BuildTuft();
+            // InkNone: an inverted-hull outline on four thousand blades of grass is both a fortune
+            // in fill rate and a black smear where a verge should be.
+            // Dark and desaturated. The first pass was pale enough that the dusk key light blew it
+            // to near-white and the verges read as gravel. Dead growth against brown leaf litter is
+            // barely lighter than the ground it stands in.
+            if (_grassMaterial == null)
+            {
+                _grassMaterial = MakeMaterial(new Color(0.27f, 0.24f, 0.16f), instanced: true, ink: InkNone);
+                // RIM OFF. A blade of grass is a thin vertical sliver, so from almost every angle it
+                // is seen edge-on, lands at rim = 1 and renders WHITE -- the verges came out looking
+                // like gravel and torn paper no matter how dark the base colour was set.
+                //
+                // This is the same failure the signal-weapon pass hit on its arcs and dashes, in a
+                // different shader: **a rim term is a lie on anything thinner than it is long.**
+                _grassMaterial.SetFloat("_RimStrength", 0f);
+            }
+
+            int half = 4;   // the drawn road is six wide; keep the verge clear of it too
+            _grass.Clear();
+            _grass.AddRange(GroundCover.Scatter(_map, seed ^ 0x6A55UL, (x, y) =>
+            {
+                if (_map.KindAt(x, y) != WallKind.None) return false;
+                if (Mathf.Abs(y - _grassRoadCentre) <= half) return false;
+                return true;
+            }));
         }
 
         /// <summary>Cells that must stay empty no matter what the dresser wants.</summary>
@@ -3396,6 +3449,20 @@ namespace Cipher.Game
                     _strikeDrone.Park();
                 }
             }
+            // DO NOT PUT IT UNDER HIS FEET. Owner: "My character shouldn't have that background aim
+            // rectangle around him."
+            //
+            // The strike marker is aimed by looking, so whenever the player tips the camera down --
+            // which is most of the time in a chase view -- the aim point lands on the hero and the
+            // marker becomes a dirty rectangle he is standing in. It reads as a rendering artefact,
+            // not as a targeting box, and he has now asked about it twice.
+            //
+            // It only appears when the strike is actually available AND aimed somewhere worth
+            // aiming, which is also the only time it carries information.
+            float aimAway = Mathf.Sqrt(Vec2.DistanceSquared(_hero.StrikeTarget, _hero.Position));
+            showMarker = showMarker && _hero.AirstrikeReady && aimAway > StrikeMarkerMinRange;
+            _markerT.gameObject.SetActive(showMarker);
+
             if (showMarker)
             {
                 Vec2 m = _hero.StrikeTarget;
@@ -3576,6 +3643,8 @@ namespace Cipher.Game
             DrawHeroMuzzle(Time.deltaTime);
             BakeWallsIfChanged();
             DrawInstancedList(_cubeMesh, _wallMaterial, _wallMatrices, _wallMatrices.Length);
+            if (_grass.Count > 0 && _grassMesh != null && _grassMaterial != null)
+                DrawInstancedBatched(_grassMesh, _grassMaterial, _grass);
             DrawInstancedList(_cubeMesh, _fenceMeshMaterial, _fenceMeshMatrices, _fenceMeshMatrices.Length);
             DrawInstancedList(_cubeMesh, _fencePostMaterial, _fencePostMatrices, _fencePostMatrices.Length);
             DrawInstancedList(_cubeMesh, _fencePostMaterial, _fenceRailMatrices, _fenceRailMatrices.Length);

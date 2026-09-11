@@ -70,6 +70,35 @@ namespace Cipher.Game
             }
             if (!any) box = new Bounds(Vector3.zero, Vector3.one);
 
+            // THE MODEL ALREADY HAS A LIGHT BAR. Use it rather than building a second one.
+            //
+            // The owner reported "two sets of lights flashing" -- because there were. `Cop.fbx`
+            // ships a node called `Lights` on its roof, and this method was bolting our own bar on
+            // top of it. The first version of this bug was our bar floating in the air (fixed by
+            // measuring the roof); the second was our bar sitting neatly beside the one that was
+            // already there, which is harder to see in a screenshot and just as wrong.
+            //
+            // **Before adding geometry to an imported model, look for what the model already has.**
+            var existing = FindLightBar(car.transform);
+            if (existing != null)
+            {
+                // Its own material instances: these get written every frame, and the prop reskin
+                // hands out SHARED materials that half the map is also using.
+                var slots = existing.sharedMaterials;
+                var owned = new Material[slots.Length];
+                for (int i = 0; i < slots.Length; i++)
+                    owned[i] = material(i % 2 == 0 ? Red : Blue);
+                existing.sharedMaterials = owned;
+
+                lights._left = owned[0];
+                lights._right = owned.Length > 1 ? owned[1] : owned[0];
+                // One slot means one bar that can only alternate as a whole, which still reads at
+                // distance -- plenty of real bars do exactly that.
+                lights._single = owned.Length <= 1;
+                lights._phase = Random.value * lights.Period;
+                return lights;
+            }
+
             float roofHeight = box.max.y;
             float barWidth = box.size.x * 0.34f;
             float barSpan = box.size.x * 0.20f;
@@ -89,6 +118,26 @@ namespace Cipher.Game
             lights._phase = Random.value * lights.Period;   // no two cars blink together
             return lights;
         }
+
+        /// <summary>
+        /// The light bar an imported vehicle already carries, or null. Matched by node name, which
+        /// is the only handle a kit model reliably gives you -- there is no convention for which
+        /// submesh is emissive and guessing by colour breaks the moment the prop reskin runs.
+        /// </summary>
+        private static Renderer? FindLightBar(Transform root)
+        {
+            foreach (var r in root.GetComponentsInChildren<Renderer>())
+            {
+                string n = r.gameObject.name;
+                if (n.IndexOf("light", System.StringComparison.OrdinalIgnoreCase) >= 0
+                    || n.IndexOf("siren", System.StringComparison.OrdinalIgnoreCase) >= 0)
+                    return r;
+            }
+            return null;
+        }
+
+        /// <summary>True when the whole bar alternates together rather than half at a time.</summary>
+        private bool _single;
 
         private void Bar(string name, Transform parent, Vector3 localPosition, Material mat, Vector3 size)
         {
@@ -111,6 +160,11 @@ namespace Cipher.Game
             // Hard alternation rather than a fade: a strobe is a square wave, and the cel shader
             // would band a fade into a square wave anyway.
             bool leftOn = _phase < Period * 0.5f;
+            if (_single)
+            {
+                Paint(_left, leftOn ? Red : Blue);
+                return;
+            }
             Paint(_left, leftOn ? Red : Dark);
             Paint(_right, leftOn ? Dark : Blue);
         }
@@ -126,7 +180,7 @@ namespace Cipher.Game
         private void OnDestroy()
         {
             if (_left != null) Destroy(_left);
-            if (_right != null) Destroy(_right);
+            if (_right != null && !ReferenceEquals(_right, _left)) Destroy(_right);
         }
     }
 }
