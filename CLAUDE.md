@@ -534,4 +534,25 @@ substitute: it references the sim's SOURCE, not its test project.
 - **Unity rewrites four asset files with CRLF on every headless run** (`GraphicsSettings.asset`,
   `ExodusPipeline.asset`, `UniversalRenderPipelineGlobalSettings.asset`, `ShaderGraphSettings.asset`).
   Pure line-ending churn with no content change. Keep it out of commits where it is not the subject.
+- **ADR-010 (Accepted, owner directive 2026-09-12): THE STAND IS LOUD ON PURPOSE, AND YOU CAN TURN
+  THEIR MACHINES.** Closes the question ADR-009 left open.
+  - **There is no stealth option and there never was.** A position is a decision to be loud: switch
+    everything on, hold, hurt them enough to buy the gap, and the noise you made is the reason you
+    cannot stay. That is not a cost bolted onto the loop, **it IS the loop**, and it finally explains
+    why leaving is a decision the player makes rather than a failure. You retreat *out of their
+    current alert zone*, which is why the next position is a fresh fight two days later.
+  - **Do NOT build a heat meter yet.** The loop already expresses this and a fourth resource next to
+    cash, time and truck space is not what was asked for. Order: (1) SAY it -- one line in the brief,
+    one in the pack-up; (2) make the noise visible where it already exists; (3) only then consider
+    the cycle responding to what is switched on.
+  - **The turncoat drone**: a buildable, ROAMING, non-shooting emplacement that converts hacked
+    humanoids to fight for the player. It cannot touch a chipped person -- that is the design, not a
+    simplification, because it makes the humanoid share of a wave a resource the player reads.
+  - **THE SIM HAS NEVER HAD AN AGENT FIGHT ANOTHER AGENT.** Everything to date is crowd-vs-structure
+    or crowd-vs-hero. Conversion needs an allegiance flag every targeting query respects, the hero
+    and turrets not shooting converts (the "two queries, two answers" trap again), enemy-selects-
+    enemy targeting, and all of it deterministic. A day of careful work, not a quick win.
+  - ~30% of a wave becomes machines, which moves the balance of every area weapon. A mission with
+    few humanoids should make the drone a bad buy -- the build bar must never hold a thing that is
+    right every time.
 - **Was:** owner hero feedback → barricade build-mode with live path preview (Milestone 2 "The Maze").
