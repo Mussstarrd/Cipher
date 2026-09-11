@@ -155,7 +155,6 @@ namespace Cipher.Game
         private Material _breachMaterial = null!;
         private Material _tracerMaterial = null!;
         private Material _turretTracerMaterial = null!;
-        private Material _blastMaterial = null!;
         private Material _routeOkMaterial = null!;
         private Material _routeBadMaterial = null!;
         private Material _turretMaterial = null!;
@@ -538,7 +537,6 @@ namespace Cipher.Game
             _blastRingMaterial = MakeMaterial(new Color(0.44f, 0.38f, 0.30f), instanced: true, ink: InkNone);
             _tracerMaterial = MakeMaterial(new Color(1f, 0.95f, 0.5f), instanced: false);
             _turretTracerMaterial = MakeMaterial(new Color(0.6f, 0.9f, 1f), instanced: false);
-            _blastMaterial = MakeMaterial(new Color(1f, 0.5f, 0.1f), instanced: false);
             _routeOkMaterial = MakeMaterial(new Color(0.3f, 0.9f, 0.45f), instanced: true);
             _routeBadMaterial = MakeMaterial(new Color(1f, 0.2f, 0.15f), instanced: true);
             _turretMaterial = MakeMaterial(new Color(0.25f, 0.55f, 0.85f), instanced: false);
@@ -3067,14 +3065,9 @@ namespace Cipher.Game
                 var m = Matrix4x4.TRS(t.A + d * 0.5f, Quaternion.LookRotation(d / len, Vector3.up), new Vector3(0.07f, 0.07f, len));
                 Graphics.DrawMesh(_cubeMesh, m, t.Turret ? _turretTracerMaterial : _tracerMaterial, 0);
             }
-            foreach (var b in _blasts)
-            {
-                float life = b.Ttl / BlastLife;
-                float r = b.Radius * (1.15f - 0.15f * life);
-                float h = 0.05f + 2.5f * (1f - life);
-                var m = Matrix4x4.TRS(b.Center + Vector3.up * (h * 0.5f), Quaternion.identity, new Vector3(r * 2f, h * 0.5f, r * 2f));
-                Graphics.DrawMesh(_discMesh, m, _blastMaterial, 0);
-            }
+            // The blast itself is drawn by DrawBlasts. A second, older renderer used to live here --
+            // an outlined orange cylinder growing out of the ground -- and it was drawn ON TOP of the
+            // new explosion, so the owner reported "orange cylinders" twice and was right twice.
         }
 
         private void DrawAgents()

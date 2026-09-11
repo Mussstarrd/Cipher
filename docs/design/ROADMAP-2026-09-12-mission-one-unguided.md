@@ -1,6 +1,6 @@
 # ROADMAP — Mission One, Unguided
 
-**Status:** proposed to the owner 2026-09-11 evening; **the live plan once he approves.** Supersedes
+**Status:** APPROVED by the owner 2026-09-11 evening, with one amendment: **no deadline.** Quality and solid engineering over dates; the day counts below are effort estimates, not commitments. **This is the live plan.** Supersedes
 `PLAN-2026-09-11.md` (which is done) and retires `ROADMAP-graphical-beta.md` (built around a purchase
 that was never needed — do not read it as current).
 **Authors:** the engineer, an outside game-director brainstorm (memo in this session), and three owner
@@ -67,7 +67,7 @@ leash.
    screenshots, and the owner decides with his eyes.
 5. **Every phase ends with a build and a screenshot to the owner.** Every commit is small, green
    (all three local checks), and pushed.
-6. **Honest estimate: three weeks**, not "about a week." The response layer is the entire gap.
+6. ~~Honest estimate: three weeks.~~ **Owner's amendment: no timeline.** "We're going to focus on the perfect game not deadlines." The day counts in this document are effort estimates only.
 
 ## 4. Graphics polish — ranked by impact ÷ days
 
@@ -166,6 +166,6 @@ read, the act shape is wrong, and that has to be learned at mission 4, not missi
 
 1. The milestone as written in §2, judged by two outside players on video.
 2. The systems freeze in §3, including "quality over quantity" as a stated design pillar.
-3. Three weeks as the honest estimate.
+3. ~~Three weeks as the honest estimate.~~ Declined: no deadline.
 4. The building-kit purchase deferred to the Phase D checkpoint.
 5. He finds the two outside playtesters for Phase E (the open item in `OPEN-DECISIONS.md`).
