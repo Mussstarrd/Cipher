@@ -49,6 +49,9 @@ namespace Cipher.Game
         /// banded it, the difference is invisible. The point is not realism; it is that the eye has
         /// something to land on so the ground stops reading as a solid fill.
         /// </summary>
+        /// <summary>Dead winter growth, painted into the ground rather than grown out of it.</summary>
+        private static readonly Color Weed = new Color(0.34f, 0.33f, 0.19f);
+
         public static Texture2D BuildGroundTexture(int size, Color baseColour, ulong seed)
         {
             var tex = new Texture2D(size, size, TextureFormat.RGB24, mipChain: true)
@@ -60,6 +63,9 @@ namespace Cipher.Game
             };
 
             var pixels = new Color32[size * size];
+            // Dead winter growth: olive drab going to straw. Not green -- ADR-004 puts this in
+            // February, and a lawn here would fight the lighting and the fiction at once.
+            var weed = Weed;
             var rng = new Rng(seed);
 
             // A dry-grass tint and a wet-earth tint either side of the base colour.
@@ -85,6 +91,29 @@ namespace Cipher.Game
                     var colour = Color.Lerp(wet, dry, Mathf.SmoothStep(0f, 1f, patch));
                     colour = Color.Lerp(colour, baseColour, 0.45f);
                     colour *= 0.86f + n * 0.30f;
+
+                    // GROUND COVER LIVES IN THE TEXTURE, NOT IN GEOMETRY.
+                    //
+                    // The first attempt at vegetation scattered thousands of little crossed-quad
+                    // tufts. The owner's verdict, and he was right: "that is not grass, that looks
+                    // terrible, that cannot be what the ground looks like." Up close a small dark
+                    // upright sliver under an ink shader does not read as a blade of grass -- it
+                    // reads as a scrap of litter, and a field of them reads as a rubbish tip.
+                    //
+                    // The lesson is about the art direction rather than the tuning. This game draws
+                    // hard flat bands of colour with an ink outline; it has no soft alpha, no
+                    // subsurface, and no way to make a thin blade catch light like a blade. What it
+                    // IS good at is patches of flat colour, which is exactly what dry winter growth
+                    // looks like from standing height anyway. So the growth is painted.
+                    float growth = Fbm(grid, lattice, u * 1.7f + 11.3f, v * 1.7f + 4.9f, 9f, 3);
+                    float clump = Fbm(grid, lattice, u * 0.8f + 2.1f, v * 0.8f + 7.7f, 3f, 2);
+                    float cover = Mathf.SmoothStep(0.42f, 0.72f, growth * 0.65f + clump * 0.35f);
+                    colour = Color.Lerp(colour, Weed, cover * 0.72f);
+
+                    // A second, tighter octave inside the patches so they have grain rather than
+                    // being flat blobs -- this is what stops it looking like spilt paint.
+                    float blade = Fbm(grid, lattice, u * 6.3f + 1.9f, v * 6.3f + 8.3f, 26f, 2);
+                    if (cover > 0.35f) colour *= 0.90f + blade * 0.22f;
 
                     // Sparse dark specks: twigs, stones, whatever the eye wants them to be.
                     float speck = Fbm(grid, lattice, u * 3.1f + 5.5f, v * 3.1f + 2.2f, 18f, 2);

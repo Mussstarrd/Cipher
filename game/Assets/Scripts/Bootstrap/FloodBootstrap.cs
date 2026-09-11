@@ -200,11 +200,6 @@ namespace Cipher.Game
         private int _bakedMapVersion = -1;
         private readonly List<GameObject> _turretGos = new List<GameObject>(32);
         private Transform _vaultT = null!;
-        /// <summary>Dry winter ground cover. Scattered once per position, drawn instanced.</summary>
-        private readonly List<Matrix4x4> _grass = new List<Matrix4x4>(4096);
-        private Mesh? _grassMesh;
-        private Material? _grassMaterial;
-
         private Transform? _groundT;
         private Texture2D? _groundTexture;
         private Material? _groundMaterial;
@@ -474,7 +469,6 @@ namespace Cipher.Game
             _director = new SpawnDirector(_scenario.Director, _scenario.DirectorSeed);
             // Derived from the map, not from the 64-wide graybox: a narrower scenario used to hand
             // PickupSystem a minX of 34 and GridMap.CellIndex throws on out-of-bounds.
-            ScatterGroundCover(seed);
             _crew.Reset(new Vec2(GoalX + 0.5f, GoalY + 0.5f));
             _aidKits = new AidKits(_map, _aidSpots, seed ^ 0xA1D5);
             _aidKits.PlaceOpening();
@@ -586,7 +580,9 @@ namespace Cipher.Game
             // The ground is most of the screen, and one flat colour across it is most of the screen
             // doing nothing. Generated at startup rather than shipped, so a clean checkout rebuilds
             // it and there is still not a single texture file in this project.
-            _groundTexture = WorldBackdrop.BuildGroundTexture(512, GroundColour, 20260911UL);
+            // 1024 rather than 512: the ground is the single largest surface on screen and the
+            // player walks with their nose a metre off it.
+            _groundTexture = WorldBackdrop.BuildGroundTexture(1024, GroundColour, 20260911UL);
             var groundMat = MakeMaterial(Color.white, instanced: false, ink: InkNone);
             groundMat.mainTexture = _groundTexture;
             // Eight-unit tiles. Half a unit per tile made the repeat a visible grid, which is worse
@@ -2179,7 +2175,6 @@ namespace Cipher.Game
 
             // The cruiser keeps its bar running. Owner asked, and it is the only moving light in a
             // level lit by flat overcast noon, which makes it a landmark as well as a detail.
-            _grassRoadCentre = GridH / 2;
             _aidSpots.Clear();
             dresser.OnPlaced = (name, go) =>
             {
@@ -2762,46 +2757,6 @@ namespace Cipher.Game
             return best < 0 ? ToWorld(around, 0f) : ToWorld(_world.PositionOf(best), 0f);
         }
 
-        private int _grassRoadCentre;
-
-        /// <summary>
-        /// Scatters the ground cover for this position. Called AFTER the dresser, so it can see
-        /// every solid cell the buildings and scenery claimed and grow nothing through a wall.
-        ///
-        /// The road is excluded by corridor rather than by asking the dresser, because the road is
-        /// drawn as runs of clear cells and has no cell record of its own -- and grass sprouting
-        /// through fresh asphalt is the single most obvious way to give this away.
-        /// </summary>
-        private void ScatterGroundCover(ulong seed)
-        {
-            _grassMesh ??= GroundCover.BuildTuft();
-            // InkNone: an inverted-hull outline on four thousand blades of grass is both a fortune
-            // in fill rate and a black smear where a verge should be.
-            // Dark and desaturated. The first pass was pale enough that the dusk key light blew it
-            // to near-white and the verges read as gravel. Dead growth against brown leaf litter is
-            // barely lighter than the ground it stands in.
-            if (_grassMaterial == null)
-            {
-                _grassMaterial = MakeMaterial(new Color(0.27f, 0.24f, 0.16f), instanced: true, ink: InkNone);
-                // RIM OFF. A blade of grass is a thin vertical sliver, so from almost every angle it
-                // is seen edge-on, lands at rim = 1 and renders WHITE -- the verges came out looking
-                // like gravel and torn paper no matter how dark the base colour was set.
-                //
-                // This is the same failure the signal-weapon pass hit on its arcs and dashes, in a
-                // different shader: **a rim term is a lie on anything thinner than it is long.**
-                _grassMaterial.SetFloat("_RimStrength", 0f);
-            }
-
-            int half = 4;   // the drawn road is six wide; keep the verge clear of it too
-            _grass.Clear();
-            _grass.AddRange(GroundCover.Scatter(_map, seed ^ 0x6A55UL, (x, y) =>
-            {
-                if (_map.KindAt(x, y) != WallKind.None) return false;
-                if (Mathf.Abs(y - _grassRoadCentre) <= half) return false;
-                return true;
-            }));
-        }
-
         /// <summary>Cells that must stay empty no matter what the dresser wants.</summary>
         private bool KeepClear(int x, int y)
         {
@@ -2943,6 +2898,13 @@ namespace Cipher.Game
             _camYaw = yawDegrees;
             _camPitch = Mathf.Clamp(pitchDegrees, PitchMin, PitchMax);
             _snapCamera = true;
+        }
+
+        /// <summary>Puts a Collector on the field in front of the player. Harness only.</summary>
+        public void SpawnCollectorForCapture()
+        {
+            var at = _hero.Position + new Vec2(-9f, 0f);
+            _world.SpawnArchetype(at, Archetype.Collector);
         }
 
         /// <summary>Starts the first wave, so a smoke capture can actually see combat. Harness only.</summary>
@@ -3368,7 +3330,10 @@ namespace Cipher.Game
                 // Rare archetypes are flagged with big negative-free sentinels so they always win the pixel.
                 switch (_world.ArchetypeOf(id))
                 {
-                    case Archetype.Sapper: _minimapAgents[idx] = 100000; break;
+                    // A Collector outranks everything: it is the one thing on the map worth
+                    // knowing the position of at all times.
+                    case Archetype.Collector: _minimapAgents[idx] = 200000; break;
+                    case Archetype.Sapper: if (_minimapAgents[idx] < 200000) _minimapAgents[idx] = 100000; break;
                     case Archetype.Spitter: if (_minimapAgents[idx] < 100000) _minimapAgents[idx] = 50000; break;
                     default: if (_minimapAgents[idx] < 50000) _minimapAgents[idx]++; break;
                 }
@@ -3643,8 +3608,6 @@ namespace Cipher.Game
             DrawHeroMuzzle(Time.deltaTime);
             BakeWallsIfChanged();
             DrawInstancedList(_cubeMesh, _wallMaterial, _wallMatrices, _wallMatrices.Length);
-            if (_grass.Count > 0 && _grassMesh != null && _grassMaterial != null)
-                DrawInstancedBatched(_grassMesh, _grassMaterial, _grass);
             DrawInstancedList(_cubeMesh, _fenceMeshMaterial, _fenceMeshMatrices, _fenceMeshMatrices.Length);
             DrawInstancedList(_cubeMesh, _fencePostMaterial, _fencePostMatrices, _fencePostMatrices.Length);
             DrawInstancedList(_cubeMesh, _fencePostMaterial, _fenceRailMatrices, _fenceRailMatrices.Length);
@@ -3682,6 +3645,24 @@ namespace Cipher.Game
         private MaterialPropertyBlock? _capsuleBlock;
         private static readonly int InstanceColorId = Shader.PropertyToID("_InstanceColor");
 
+        /// <summary>
+        /// Puts the <paramref name="slot"/>-th Collector body where its agent is, building one on
+        /// first use. Slot order follows agent id, which is stable for the life of an agent, so a
+        /// body does not swap between two Collectors mid-fight -- the same rule CLAUDE.md records
+        /// for the crowd after the owner saw characters "scan switching from skin to skin".
+        /// </summary>
+        private void PlaceCollector(int slot, Vector3 at, Vector3 facing, float integrity01)
+        {
+            while (_collectorBodies.Count <= slot)
+                _collectorBodies.Add(CollectorBody.Build(c => MakeMaterial(c, instanced: false, ink: InkProp)));
+
+            var body = _collectorBodies[slot];
+            if (!body.gameObject.activeSelf) body.gameObject.SetActive(true);
+            body.Follow(at, facing, integrity01);
+
+            GroundMarkRenderer.Active?.Queue(at, 1.15f);
+        }
+
         private void EnsureFlashBuffers(int count)
         {
             if (_flashLastHealth.Length >= count) return;
@@ -3710,6 +3691,13 @@ namespace Cipher.Game
         private readonly List<Vector3> _heroBlob = new List<Vector3> { Vector3.zero };
 
         /// <summary>
+        /// Bodies for the Collectors. A handful at most, pooled and hidden rather than destroyed,
+        /// because ADR-011 says one or two on a field -- an instanced draw would buy nothing and
+        /// cost them their shadows, and these are the thing the player is looking at.
+        /// </summary>
+        private readonly List<CollectorBody> _collectorBodies = new List<CollectorBody>(4);
+
+        /// <summary>
         /// Bar fraction below which the implant visibly gives up. A little wider than the sim's
         /// `FrailtyBelow` so the warning arrives slightly before the stumbling does.
         /// </summary>
@@ -3722,6 +3710,7 @@ namespace Cipher.Game
             _spitterMatrices.Clear();
             _fxMatrices.Clear();
             _blobPositions.Clear();
+            int collectorsSeen = 0;
             int inBuffer = 0;
             EnsureFlashBuffers(_world.Count);
             float dt = Time.deltaTime;
@@ -3755,6 +3744,15 @@ namespace Cipher.Game
                     bool promoted = _crowd != null && _crowd.Promoted.Contains(id);
                     var head = new Vector3(p.X, promoted ? 1.62f : 1.05f, p.Y);
                     _signal.MarkFailing(head, facing, _world.Integrity01(id), id);
+                }
+
+                // A Collector gets a real body rather than a capsule and skips the crowd pass
+                // entirely: it is three times the mass of a person (ADR-011), it is the thing the
+                // player is looking at, and there are one or two of them.
+                if (_world.ArchetypeOf(id) == Archetype.Collector)
+                {
+                    PlaceCollector(collectorsSeen++, here, facing, _world.Integrity01(id));
+                    continue;
                 }
 
                 // Two frames of white when the number goes down. The sim raises no per-agent damage
@@ -3812,6 +3810,9 @@ namespace Cipher.Game
             DrawInstancedBatched(_agentMesh, _sapperMaterial, _sapperMatrices);
             DrawInstancedBatched(_agentMesh, _spitterMaterial, _spitterMatrices);
             DrawInstancedBatched(_cubeMesh, _sapperTargetMaterial, _fxMatrices);
+            for (int i = collectorsSeen; i < _collectorBodies.Count; i++)
+                _collectorBodies[i].gameObject.SetActive(false);
+
             GroundMarkRenderer.Active?.DrawAgents(_blobPositions, 0.42f);
             _signal.Draw(Time.deltaTime);
             if (_heroBody != null || _heroT != null)

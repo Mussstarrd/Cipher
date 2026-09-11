@@ -1,4 +1,5 @@
 #nullable enable
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Cipher.Game
@@ -79,22 +80,21 @@ namespace Cipher.Game
             // already there, which is harder to see in a screenshot and just as wrong.
             //
             // **Before adding geometry to an imported model, look for what the model already has.**
-            var existing = FindLightBar(car.transform);
-            if (existing != null)
+            var bar = FindLightSubmeshes(car, out var owner);
+            if (owner != null && bar.Count > 0)
             {
-                // Its own material instances: these get written every frame, and the prop reskin
-                // hands out SHARED materials that half the map is also using.
-                var slots = existing.sharedMaterials;
-                var owned = new Material[slots.Length];
-                for (int i = 0; i < slots.Length; i++)
-                    owned[i] = material(i % 2 == 0 ? Red : Blue);
-                existing.sharedMaterials = owned;
+                // Only the bar's slots get our materials; every other slot keeps the shared one it
+                // came in with, so the rest of the car still batches with every other prop.
+                var slots = owner.sharedMaterials;
+                lights._left = material(Red);
+                lights._right = material(Blue);
+                for (int i = 0; i < bar.Count; i++)
+                    slots[bar[i]] = i % 2 == 0 ? lights._left : lights._right;
+                owner.sharedMaterials = slots;
 
-                lights._left = owned[0];
-                lights._right = owned.Length > 1 ? owned[1] : owned[0];
-                // One slot means one bar that can only alternate as a whole, which still reads at
+                // One lens means one bar that can only alternate as a whole, which still reads at
                 // distance -- plenty of real bars do exactly that.
-                lights._single = owned.Length <= 1;
+                lights._single = bar.Count < 2;
                 lights._phase = Random.value * lights.Period;
                 return lights;
             }
@@ -120,20 +120,58 @@ namespace Cipher.Game
         }
 
         /// <summary>
-        /// The light bar an imported vehicle already carries, or null. Matched by node name, which
-        /// is the only handle a kit model reliably gives you -- there is no convention for which
-        /// submesh is emissive and guessing by colour breaks the moment the prop reskin runs.
+        /// The submeshes of <paramref name="car"/> that make up its light bar, or an empty list.
+        ///
+        /// TWO WRONG ANSWERS CAME BEFORE THIS ONE, and the shape of the mistake is worth keeping.
+        /// First I looked for a child node called "light" or "siren": kit models name their parts
+        /// whatever the artist felt like, and `Cop.fbx` has exactly four nodes -- a body and three
+        /// wheel groups. Then I looked for a small child renderer sitting on the roof: there is no
+        /// such child, because **the bar is not a separate object at all**. It is baked into the
+        /// body mesh as two of its eight submeshes.
+        ///
+        /// So the search has to go one level below the renderer. For each submesh, take the bounds
+        /// of the vertices its own triangles actually touch, and keep the ones that sit high on the
+        /// car and are small. That finds a roof-mounted bar on any vehicle in any kit, whatever
+        /// anybody called it.
+        ///
+        /// The general lesson, which cost two builds: **a model's structure is a fact to be
+        /// measured, not a convention to be assumed.** Same family as the road tile that measured
+        /// two centimetres and the characters that animated their own scale.
         /// </summary>
-        private static Renderer? FindLightBar(Transform root)
+        private static List<int> FindLightSubmeshes(GameObject car, out Renderer? owner)
         {
-            foreach (var r in root.GetComponentsInChildren<Renderer>())
+            owner = null;
+            var found = new List<int>();
+
+            foreach (var filter in car.GetComponentsInChildren<MeshFilter>())
             {
-                string n = r.gameObject.name;
-                if (n.IndexOf("light", System.StringComparison.OrdinalIgnoreCase) >= 0
-                    || n.IndexOf("siren", System.StringComparison.OrdinalIgnoreCase) >= 0)
-                    return r;
+                var mesh = filter.sharedMesh;
+                var renderer = filter.GetComponent<Renderer>();
+                if (mesh == null || renderer == null || mesh.subMeshCount < 2) continue;
+
+                var verts = mesh.vertices;
+                var whole = mesh.bounds;
+                float roofLine = whole.min.y + whole.size.y * 0.80f;
+                float wholeVolume = Mathf.Max(1e-6f, whole.size.x * whole.size.y * whole.size.z);
+
+                for (int sub = 0; sub < mesh.subMeshCount; sub++)
+                {
+                    var tris = mesh.GetTriangles(sub);
+                    if (tris.Length == 0) continue;
+
+                    var b = new Bounds(verts[tris[0]], Vector3.zero);
+                    for (int t = 1; t < tris.Length; t++) b.Encapsulate(verts[tris[t]]);
+
+                    if (b.center.y < roofLine) continue;
+                    float volume = b.size.x * b.size.y * b.size.z;
+                    if (volume > wholeVolume * 0.06f) continue;
+
+                    found.Add(sub);
+                }
+
+                if (found.Count > 0) { owner = renderer; return found; }
             }
-            return null;
+            return found;
         }
 
         /// <summary>True when the whole bar alternates together rather than half at a time.</summary>

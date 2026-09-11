@@ -13,6 +13,12 @@ namespace Cipher.Sim.Agents
         Sapper = 1,
         /// <summary>Hunts player structures (turrets) and lobs acid from range.</summary>
         Spitter = 2,
+        /// <summary>
+        /// ADR-011. Not infected, not chipped, not a machine: engineered, and the only enemy built
+        /// on purpose to collect the people who refused the implant. It walks at the HERO, not the
+        /// objective, which is what makes it the first enemy a player cannot solve by building.
+        /// </summary>
+        Collector = 3,
     }
 
     public enum SimEventKind : byte
@@ -122,6 +128,7 @@ namespace Cipher.Sim.Agents
             {
                 Archetype.Sapper => _config.SapperHealth,
                 Archetype.Spitter => _config.SpitterHealth,
+                Archetype.Collector => _config.CollectorHealth,
                 _ => _config.RunnerHealth,
             };
             int id = SpawnInternal(position, health, archetype);

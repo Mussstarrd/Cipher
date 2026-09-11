@@ -124,6 +124,29 @@ namespace Cipher.Sim.Agents
         /// <summary>How hard a body hits with its bar nearly empty.</summary>
         public float FailThreatFloor { get; set; } = 0.25f;
 
+        // ---------------------------------------------------------------- Collectors (ADR-011)
+
+        /// <summary>A Collector's bar. Large, but the fight is not meant to be won by holding the trigger.</summary>
+        public float CollectorHealth { get; set; } = 900f;
+
+        /// <summary>
+        /// The fraction of a normal payload that takes hold on lab hardware. Low on purpose: the
+        /// passive decrypt must never arrive in a useful time, so every point comes off by direct
+        /// fire. That inverts the tactic ADR-008 just taught the player, which is the fight.
+        /// </summary>
+        public float CollectorDrainResistance { get; set; } = 0.12f;
+
+        /// <summary>Heavy rather than fast. It does not need to catch you quickly; it needs to arrive.</summary>
+        public float CollectorSpeed { get; set; } = 2.1f;
+
+        /// <summary>How close a structure has to be before it is worth hitting rather than walking past.</summary>
+        public float CollectorReach { get; set; } = 2.2f;
+
+        public float CollectorAttackInterval { get; set; } = 1.1f;
+
+        /// <summary>It goes through an emplacement rather than around it, and quickly.</summary>
+        public float CollectorStructureDamage { get; set; } = 34f;
+
         /// <summary>
         /// A gun ignores a body already due to fall within this long. Replaces "ignore anything
         /// infected", which after the decrypt rewrite would mean ignoring almost everyone.

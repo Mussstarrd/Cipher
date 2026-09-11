@@ -113,7 +113,11 @@ namespace Cipher.Sim.Agents
         private float Frailty(int id)
         {
             float integrity = Integrity01(id);
-            float floor = _config.FrailtyBelow;
+            // A Collector holds its speed and its swing almost to zero: no comfortable stretch at
+            // the end where it is still standing but has stopped being dangerous.
+            float floor = (Archetype)_archetype[id] == Archetype.Collector
+                ? _config.FrailtyBelow * 0.25f
+                : _config.FrailtyBelow;
             if (floor <= 0f || integrity >= floor) return 0f;
             return 1f - integrity / floor;
         }
@@ -146,6 +150,9 @@ namespace Cipher.Sim.Agents
             float perHit = _maxHealth[id] > 0f
                 ? _maxHealth[id] / Math.Max(0.01f, _config.SoloDecryptSeconds)
                 : 0f;
+            // ADR-011: lab hardware resists. The arsenal still works on a Collector, it just works
+            // badly, which is why the player is not simply disarmed by one.
+            perHit *= DrainResistance(id);
             if (_drain[id] <= 0f) FailingCount++;
             _drain[id] += perHit;
 
