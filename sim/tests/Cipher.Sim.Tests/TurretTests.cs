@@ -100,8 +100,11 @@ namespace Cipher.Sim.Tests
 
             int kills = 0;
             for (int t = 0; t < 30; t++) kills += turrets.Step(world, Dt, null); // 1 s: 12 shots available
+
+            // ADR-008: a "kill" is a chip broken. The body stays up for its failure window, and
+            // the gun moves on to someone it can still stop rather than emptying into it.
             Assert.Equal(1, kills);
-            Assert.False(world.IsAlive(target));
+            Assert.True(world.IsFailing(target));
             Assert.Equal(1, turrets.Turrets[0].Kills);
             Assert.Equal(1, world.TotalKills);
             Assert.InRange(turrets.Turrets[0].ShotsFired, 11, 12);

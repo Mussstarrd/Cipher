@@ -35,7 +35,11 @@ namespace Cipher.Game.Tests
             Assert.IsTrue(s2.Killed);
             Assert.AreEqual(1, hero.Kills);
             Assert.AreEqual(2, hero.ShotsFired);
-            Assert.IsFalse(world.IsAlive(target));
+            // ADR-008: the second packet BREAKS the chip. The body stays up for its failure
+            // window, and the beam passes through it from here on rather than being wasted.
+            Assert.IsTrue(world.IsFailing(target));
+            Assert.IsFalse(hero.TryFire(world, 0f, out var s3) && s3.Hit,
+                           "nothing left in that head to decrypt");
         }
 
         [Test]
@@ -175,17 +179,17 @@ namespace Cipher.Game.Tests
             Assert.AreEqual(0, hero.TickStrike(world, cfg.AirstrikeInboundDelay - 0.01f, impacts), "nothing lands before the delay");
             Assert.IsTrue(world.IsAlive(farAgent));
 
-            Assert.AreEqual(1, hero.TickStrike(world, 0.02f, impacts), "first bomb lands at the far end");
-            Assert.IsFalse(world.IsAlive(farAgent));
-            Assert.IsTrue(world.IsAlive(nearAgent));
+            Assert.AreEqual(1, hero.TickStrike(world, 0.02f, impacts), "first pulse lands at the far end");
+            Assert.IsTrue(world.IsFailing(farAgent), "the EMP breaks the chip; the body walks on a while");
+            Assert.IsFalse(world.IsFailing(nearAgent));
             Assert.AreEqual(1, impacts.Count);
             Assert.AreEqual(37f, impacts[0].Center.X, 1e-3f);
 
             hero.TickStrike(world, cfg.AirstrikeBombInterval * (cfg.AirstrikeBombCount + 1), impacts);
             Assert.IsFalse(hero.StrikeInbound);
             Assert.AreEqual(cfg.AirstrikeBombCount, impacts.Count);
-            Assert.IsFalse(world.IsAlive(nearAgent), "last bomb lands at the near end");
-            Assert.IsTrue(world.IsAlive(offLine), "the line is only 4 cells wide");
+            Assert.IsTrue(world.IsFailing(nearAgent), "last pulse lands at the near end");
+            Assert.IsFalse(world.IsFailing(offLine), "the line is only 4 cells wide");
             Assert.AreEqual(2, hero.Kills);
             Assert.AreEqual(23f, impacts[impacts.Count - 1].Center.X, 1e-3f);
         }

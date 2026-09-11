@@ -94,8 +94,10 @@ namespace Cipher.Sim.Tests
             {
                 int id = world.SpawnArchetype(new Vec2(2.5f, 19.5f), Archetype.Sapper);
                 world.Step(Dt);
-                world.ApplyDamage(id, 1000f); // killed on the walk, every time
-                world.Step(Dt);
+                world.ApplyDamage(id, 1000f); // chip broken on the walk, every time
+                // ADR-008: the body does not drop until its failure window closes, so the plan is
+                // not pruned until then either. Step past it.
+                for (int t = 0; t < 40; t++) world.Step(0.1f);
             }
 
             Assert.Equal(0, world.ActiveSapperCount);

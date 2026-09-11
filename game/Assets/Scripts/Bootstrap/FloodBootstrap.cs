@@ -28,7 +28,7 @@ namespace Cipher.Game
     /// View start the wave early, Menu pause, A restart when down / after the match.
     /// Build mode: LS/d-pad move the cursor, A place (hold to paint), X sell, Y upgrade a turret,
     /// RB / d-pad left-right next item, B or LB done. Sappers breach walls, Spitters hunt turrets,
-    /// repair drones close holes while you stand near, gun crates upgrade your LMG. Keyboard: WASD, mouse, LMB, RMB/Q, Tab build, Enter start wave,
+    /// repair drones close holes while you stand near, crates upgrade your emitter. Keyboard: WASD, mouse, LMB, RMB/Q, Tab build, Enter start wave,
     /// arrows cursor, Space place, X sell, Q next item, Esc pause.
     /// </summary>
     public static class FloodEntryPoint
@@ -120,6 +120,7 @@ namespace Cipher.Game
             if (names.Count == 1) return names[0];
             return string.Join(", ", names.GetRange(0, names.Count - 1)) + " and " + names[names.Count - 1];
         }
+        /// <summary>Cumulative chips broken per archetype at the last tick, to diff against.</summary>
         private int _lastSapperAlive;
         private int _lastSpitterAlive;
         private string _lootNotice = "";
@@ -505,11 +506,11 @@ namespace Cipher.Game
             _lastReached = 0;
             _lastKills = 0;
             _spawnCursor = 0;
-            // Archetype deaths are INFERRED from the living count falling, so these two have to be
-            // zeroed with the world they counted. Left standing, falling back from a position with
-            // three Sappers and four Spitters alive paid out seven kills on the first tick of the
-            // next mission: seven lots of experience and seven loot rolls, every time, scaling with
-            // how messy the exit was.
+            // These track the SIM'S cumulative break counters, which restart at zero with a new
+            // world, so they have to be zeroed alongside it. The old inference had the same
+            // requirement for a different reason -- left standing, falling back from a position
+            // with three Sappers and four Spitters alive paid out seven kills on the first tick of
+            // the next mission -- and the phantom-payout bug is exactly as easy to reintroduce now.
             _lastSapperAlive = 0;
             _lastSpitterAlive = 0;
             for (int i = 0; i < _flashLastHealth.Length; i++) { _flashLastHealth[i] = -1f; _flashLeft[i] = 0f; }
@@ -1358,14 +1359,19 @@ namespace Cipher.Game
             }
             _lastKills = (int)_world.TotalKills;
             // The two thinking archetypes always drop and are worth far more experience, which is
-            // what makes hunting them the right play. The sim does not raise a "died" event per
-            // archetype, so infer it from the living count falling. Approximate but stable.
-            int sappersNow = _world.CountAlive(Archetype.Sapper);
-            int spittersNow = _world.CountAlive(Archetype.Spitter);
-            int sapperDeaths = Mathf.Max(0, _lastSapperAlive - sappersNow);
-            int spitterDeaths = Mathf.Max(0, _lastSpitterAlive - spittersNow);
-            _lastSapperAlive = sappersNow;
-            _lastSpitterAlive = spittersNow;
+            // what makes hunting them the right play.
+            //
+            // This used to infer their deaths from the living count falling, because the sim raised
+            // no per-archetype event. That inference is wrong twice over now: the count falls a
+            // whole failure window after the player earned the kill, and a body that reaches the
+            // vault leaves the count without anyone having broken its chip. The sim counts breaks
+            // exactly (ADR-008), so read the number instead of guessing it.
+            int sapperBroken = (int)_world.BrokenOf(Archetype.Sapper);
+            int spitterBroken = (int)_world.BrokenOf(Archetype.Spitter);
+            int sapperDeaths = Mathf.Max(0, sapperBroken - _lastSapperAlive);
+            int spitterDeaths = Mathf.Max(0, spitterBroken - _lastSpitterAlive);
+            _lastSapperAlive = sapperBroken;
+            _lastSpitterAlive = spitterBroken;
 
             for (int i = 0; i < sapperDeaths; i++)
             {
@@ -3493,7 +3499,25 @@ namespace Cipher.Game
                 if (_crowd != null && _crowd.Promoted.Contains(id)) continue;
                 _instanceBuffer[inBuffer] = Matrix4x4.TRS(new Vector3(p.X, 0.6f, p.Y), Quaternion.identity, new Vector3(0.45f, 0.6f, 0.45f));
                 // Alpha is the switch the shader reads: a > 0 means "use this colour instead".
-                _instanceColours[inBuffer] = _flashLeft[id] > 0f ? new Vector4(1f, 1f, 1f, 1f) : Vector4.zero;
+                //
+                // A body whose chip is failing goes cold and stutters: the implant is losing its
+                // grip and what is left is a person the signal no longer owns. ADR-008 forbids
+                // gore for this -- it is a device dying, not a wound -- so the tell is entirely in
+                // the colour, and it has to work on a capsule because most of the crowd is one.
+                if (_world.IsFailing(id))
+                {
+                    float integrity = _world.Integrity01(id);
+                    // Stutters faster as it loses the thread, and the gaps get longer.
+                    float stutter = Mathf.Sin(Time.time * (18f + 30f * (1f - integrity)) + id * 1.7f);
+                    float lit = stutter > (0.1f + 0.7f * (1f - integrity)) ? 1f : 0f;
+                    var cold = Color.Lerp(new Color(0.30f, 0.38f, 0.52f),
+                                          new Color(0.62f, 0.86f, 1f), lit);
+                    _instanceColours[inBuffer] = new Vector4(cold.r, cold.g, cold.b, 1f);
+                }
+                else
+                {
+                    _instanceColours[inBuffer] = _flashLeft[id] > 0f ? new Vector4(1f, 1f, 1f, 1f) : Vector4.zero;
+                }
                 inBuffer++;
                 if (inBuffer == MaxInstancesPerDraw)
                 {

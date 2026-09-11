@@ -12,7 +12,7 @@ namespace Cipher.Game.Hero
     {
         public float MoveSpeed { get; set; } = 7f;            // cells / s (runners do 3)
         public float MaxHealth { get; set; } = 100f;
-        public float FireInterval { get; set; } = 1f / 12f;   // LMG: 12 rounds / s
+        public float FireInterval { get; set; } = 1f / 12f;   // twelve packets a second
         public float GunDamage { get; set; } = 6f;            // runners have 10 hp: two taps
         public float GunRange { get; set; } = 25f;
         public float GunHitRadius { get; set; } = 0.45f;
@@ -310,8 +310,10 @@ namespace Cipher.Game.Hero
         {
             ConsumedSecondWindThisTick = false;
             if (IsDown || dt <= 0f) return 0f;
-            int n = Math.Min(world.CountWithin(Position, _cfg.ContactRadius), _cfg.ContactAgentCap);
-            if (n == 0) return 0f;
+            // Threat, not headcount: a body whose chip is failing is still leaning on you, just
+            // with less and less in it. ADR-008.
+            float n = Math.Min(world.ThreatWithin(Position, _cfg.ContactRadius), _cfg.ContactAgentCap);
+            if (n <= 0f) return 0f;
 
             // Armour bites per body, and never reduces a tick to nothing: being swarmed still kills.
             float perAgent = Math.Max(_cfg.ContactDamagePerAgentPerSecond * 0.1f,

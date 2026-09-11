@@ -54,6 +54,7 @@ namespace Cipher.Sim.Agents
             _posY = new float[capacity];
             _health = new float[capacity];
             _alive = new bool[capacity];
+            _failing = new float[capacity];
             _archetype = new byte[capacity];
             _intent = new byte[capacity];
             _state = new byte[capacity];
@@ -83,6 +84,7 @@ namespace Cipher.Sim.Agents
                 Array.Resize(ref _posY, newSize);
                 Array.Resize(ref _health, newSize);
                 Array.Resize(ref _alive, newSize);
+                Array.Resize(ref _failing, newSize);
                 Array.Resize(ref _archetype, newSize);
                 Array.Resize(ref _intent, newSize);
                 Array.Resize(ref _state, newSize);
@@ -98,6 +100,7 @@ namespace Cipher.Sim.Agents
             _posY[id] = position.Y;
             _health[id] = health;
             _alive[id] = true;
+            _failing[id] = 0f;
             _archetype[id] = (byte)archetype;
             _intent[id] = (byte)Intent.Vault;
             _state[id] = 0;
@@ -170,9 +173,11 @@ namespace Cipher.Sim.Agents
 
                 // Pace is the individual's own: sprinters are on you while the slow ones are still
                 // crossing the field, which is what gives a wave a shape.
-                StepRunner(i, pos, dt, gates, _config.MoveSpeed * _pace[i]);
+                StepRunner(i, pos, dt, gates, _config.MoveSpeed * _pace[i] * SpeedScale(i));
             }
 
+            // Aged AFTER movement so a body gets its last step before it falls.
+            StepFailing(dt);
             AdvanceBreaches(dt);
             PruneDeadPlans();
 
@@ -225,35 +230,52 @@ namespace Cipher.Sim.Agents
             foreach (int hashId in _queryScratch)
             {
                 int id = _hashToAgent[hashId];
-                if (!_alive[id]) continue;
+                if (!_alive[id] || _failing[id] > 0f) continue;
                 _health[id] -= damage;
-                if (_health[id] <= 0f)
-                {
-                    _alive[id] = false;
-                    AliveCount--;
-                    kills++;
-                    _hashDirty = true;
-                }
+                if (_health[id] <= 0f && BreakChip(id)) kills++;
             }
 
-            TotalKills += kills;
             return kills;
         }
 
-        /// <summary>Damages one agent. Returns true if this call killed it. Dead agents are ignored.</summary>
+        /// <summary>
+        /// Attacks one agent's implant. Returns true if this call BROKE the chip -- which is the
+        /// moment the player is paid, not the moment the body drops. A body already failing
+        /// absorbs further fire without being paid for twice. See ADR-008.
+        /// </summary>
         public bool ApplyDamage(int id, float damage)
         {
             if (id < 0 || id >= Count || !_alive[id]) return false;
+            if (_failing[id] > 0f) return false;
             _health[id] -= damage;
             if (_health[id] > 0f) return false;
-            _alive[id] = false;
-            AliveCount--;
-            TotalKills++;
-            _hashDirty = true;
-            return true;
+            return BreakChip(id);
         }
 
-        /// <summary>Number of living agents within the circle (hero contact damage, trap triggers).</summary>
+        /// <summary>
+        /// Summed threat within the circle: a healthy body counts 1, a failing one counts what is
+        /// left of its chip. This is what hero contact damage should read, because "they can still
+        /// attack with gradually decreasing strength" (ADR-008) is a fractional number of
+        /// attackers, not a whole one.
+        /// </summary>
+        public float ThreatWithin(Vec2 center, float radius)
+        {
+            RebuildHashIfDirty();
+            _queryScratch.Clear();
+            _hash.QueryCircle(center, radius, _queryScratch);
+            float rSq = radius * radius;
+            float total = 0f;
+            foreach (int hashId in _queryScratch)
+            {
+                int id = _hashToAgent[hashId];
+                if (!_alive[id]) continue;
+                if (Vec2.DistanceSquared(center, new Vec2(_posX[id], _posY[id])) <= rSq)
+                    total += ThreatScale(id);
+            }
+            return total;
+        }
+
+        /// <summary>Number of bodies within the circle, failing ones included -- they are still there.</summary>
         public int CountWithin(Vec2 center, float radius)
         {
             RebuildHashIfDirty();
@@ -271,9 +293,13 @@ namespace Cipher.Sim.Agents
         }
 
         /// <summary>
-        /// Hitscan: the first living agent whose center lies within <paramref name="hitRadius"/>
+        /// Hitscan: the first TARGETABLE agent whose center lies within <paramref name="hitRadius"/>
         /// of the segment origin → origin + dir * maxDistance. Ties resolve to the lower id
         /// (deterministic). Returns false on a miss. Does not mutate state.
+        ///
+        /// A body whose chip is already failing is not targetable and the beam passes through it:
+        /// the emitter carries malware, and there is nothing left in that head to decrypt. Same
+        /// rule the turrets use, for the same reason -- see ADR-008.
         /// </summary>
         public bool Raycast(Vec2 origin, Vec2 direction, float maxDistance, float hitRadius, out int hitId, out float hitDistance)
         {
@@ -293,7 +319,7 @@ namespace Cipher.Sim.Agents
             foreach (int hashId in _queryScratch)
             {
                 int id = _hashToAgent[hashId];
-                if (!_alive[id]) continue;
+                if (!_alive[id] || _failing[id] > 0f) continue;
                 Vec2 rel = new Vec2(_posX[id], _posY[id]) - origin;
                 float t = Vec2.Dot(rel, dir);
                 if (t < 0f || t > maxDistance) continue;
@@ -389,6 +415,7 @@ namespace Cipher.Sim.Agents
             for (int i = 0; i < Count; i++)
             {
                 hash = Mix(hash, _alive[i] ? 1 : 0);
+                hash = Mix(hash, (int)(_failing[i] * 1000f));
                 if (!_alive[i]) continue;
                 hash = Mix(hash, BitConverter.SingleToInt32Bits(_posX[i]));
                 hash = Mix(hash, BitConverter.SingleToInt32Bits(_posY[i]));

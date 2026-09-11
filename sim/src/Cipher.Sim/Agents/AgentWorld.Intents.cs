@@ -96,7 +96,7 @@ namespace Cipher.Sim.Agents
             {
                 _timer[i] = _config.HunterAttackInterval;
                 _events.Add(new SimEvent(SimEventKind.StructureMauled, i, best,
-                                         _config.HunterStructureDamage));
+                                         _config.HunterStructureDamage * ThreatScale(i)));
             }
             return true;
         }

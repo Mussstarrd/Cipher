@@ -76,12 +76,16 @@ namespace Cipher.Sim.Tests
 
             int kills = world.ApplyRadialDamage(new Vec2(5f, 5f), radius: 2f, damage: 25f);
 
+            // ADR-008: the pulse BREAKS chips. The bodies stay upright for the failure window,
+            // so the player is paid immediately and the crowd keeps coming for another moment.
             Assert.Equal(2, kills);
             Assert.Equal(2, world.TotalKills);
-            Assert.False(world.IsAlive(near1));
-            Assert.False(world.IsAlive(near2));
-            Assert.True(world.IsAlive(far));
-            Assert.Equal(1, world.AliveCount);
+            Assert.True(world.IsFailing(near1));
+            Assert.True(world.IsFailing(near2));
+            Assert.False(world.IsFailing(far));
+            Assert.Equal(3, world.AliveCount);
+            // FailingChipTests owns what happens when the window closes; this test is about who
+            // the pulse reached.
         }
 
         [Fact]

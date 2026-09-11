@@ -135,7 +135,8 @@ namespace Cipher.Sim.Agents
                 // Opportunists hit softer than the dedicated hunters: a gun in the way is a nuisance
                 // they claw at in passing, not the thing they came for.
                 _events.Add(new SimEvent(SimEventKind.StructureMauled, i, best,
-                                         _config.HunterStructureDamage * _config.OpportunistDamageScale));
+                                         _config.HunterStructureDamage * _config.OpportunistDamageScale
+                                         * ThreatScale(i)));
             }
             return true;
         }

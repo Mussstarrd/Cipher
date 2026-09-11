@@ -107,7 +107,7 @@ namespace Cipher.Game.Tests
 
             Assert.IsTrue(pickups.Tick(46f, 0.1f, pickups.CratePosition, cfg));
             Assert.AreEqual(1, pickups.GunTier);
-            Assert.AreEqual("LMG Mk2", pickups.GunName);
+            Assert.AreEqual("Decryptor", pickups.GunName);
             Assert.AreEqual(9f, cfg.GunDamage);
             Assert.IsFalse(pickups.CrateActive);
 

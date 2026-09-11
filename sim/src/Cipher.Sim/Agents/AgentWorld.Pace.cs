@@ -75,7 +75,8 @@ namespace Cipher.Sim.Agents
             {
                 _timer[i] = _config.PistolInterval;
                 // The sim does not own hero health, so it reports the shot and the game resolves it.
-                _events.Add(new SimEvent(SimEventKind.PistolShot, i, 0, _config.PistolDamage));
+                _events.Add(new SimEvent(SimEventKind.PistolShot, i, 0,
+                                         _config.PistolDamage * ThreatScale(i)));
             }
             return true;
         }

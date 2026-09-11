@@ -64,7 +64,14 @@ namespace Cipher.Sim.Tests
             Assert.True(w.IsAlive(id));
             Assert.Equal(0, w.TotalKills);
 
+            // ADR-008: the fatal hit breaks the chip and pays, but the body keeps coming until
+            // its failure window runs out.
             Assert.True(w.ApplyDamage(id, 6f));
+            Assert.True(w.IsFailing(id));
+            Assert.Equal(1, w.AliveCount);
+            Assert.Equal(1, w.TotalKills);
+
+            for (int i = 0; i < 40; i++) w.Step(0.1f);
             Assert.False(w.IsAlive(id));
             Assert.Equal(0, w.AliveCount);
             Assert.Equal(1, w.TotalKills);
@@ -75,17 +82,25 @@ namespace Cipher.Sim.Tests
         }
 
         [Fact]
-        public void CountWithin_CountsOnlyLivingAgentsInsideRadius()
+        public void CountWithin_CountsEveryBodyStillStandingInsideRadius()
         {
             var w = MakeWorld();
             w.Spawn(new Vec2(5f, 5f), 10f);
             w.Spawn(new Vec2(5.5f, 5f), 10f);
-            int dead = w.Spawn(new Vec2(5f, 5.5f), 10f);
+            int failing = w.Spawn(new Vec2(5f, 5.5f), 10f);
             w.Spawn(new Vec2(9f, 5f), 10f);
-            w.ApplyDamage(dead, 100f);
+            w.ApplyDamage(failing, 100f);
 
-            Assert.Equal(2, w.CountWithin(new Vec2(5f, 5f), 1f));
+            // A failing body is still standing there, so it is still counted...
+            Assert.Equal(3, w.CountWithin(new Vec2(5f, 5f), 1f));
             Assert.Equal(0, w.CountWithin(new Vec2(20f, 20f), 1f));
+
+            // ...but the moment it was hit it stopped counting as a whole attacker, because
+            // ThreatWithin sums what is left of each chip rather than heads. ADR-008.
+            // (Stepping is deliberately left out: the agents would walk out of the radius and the
+            // test would be measuring movement instead of threat. FailingChipTests owns decay.)
+            Assert.Equal(3f, w.ThreatWithin(new Vec2(5f, 5f), 1f), 2);
+            Assert.Equal(1f, w.ThreatScale(failing), 2);
         }
 
         [Fact]

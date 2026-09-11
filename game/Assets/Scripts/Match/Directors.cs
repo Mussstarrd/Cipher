@@ -242,7 +242,16 @@ namespace Cipher.Game.Match
     /// <summary>The hero gun ladder: data, applied to a HeroConfig in place.</summary>
     public static class GunTiers
     {
-        public static readonly string[] Names = { "LMG", "LMG Mk2", "LMG Mk3", "Gold-plated LMG" };
+        /// <summary>
+        /// The emitter ladder. ADR-008: the weapon carries malware, not rounds -- it decrypts the
+        /// implant -- so the tiers are about what the payload can do, not about calibre. The last
+        /// tier is named for the event in ADR-003, which is the kind of thing a man who refused the
+        /// chip would call the thing he built to kill it.
+        ///
+        /// This also retires "Gold-plated LMG", which was the last piece of the kingpin fiction
+        /// ADR-003 threw out, still sitting in the loot table.
+        /// </summary>
+        public static readonly string[] Names = { "Field Jammer", "Decryptor", "Worm Lance", "Cascade Emitter" };
         public const int MaxTier = 3;
 
         public static void Apply(HeroConfig cfg, int tier)

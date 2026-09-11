@@ -97,6 +97,21 @@ namespace Cipher.Sim.Agents
         /// <summary>Damage per hit. The game layer owns hero health and resolves it.</summary>
         public float PistolDamage { get; set; } = 4f;
 
+        /// <summary>
+        /// How long a broken chip takes to finish killing its host, in seconds. ADR-008: the owner
+        /// asked for "two or three seconds" of deterioration during which they can still attack.
+        /// This is the single number that decides how dangerous a crowd is, because it decides how
+        /// long the people you have already dealt with keep coming.
+        /// </summary>
+        public float FailSeconds { get; set; } = 2.5f;
+
+        /// <summary>
+        /// The fraction of normal speed a body retains at the very end of its failure. Above zero
+        /// deliberately: a body that stops dead when its chip breaks reads as a freeze bug, and the
+        /// point of the window is that it keeps coming.
+        /// </summary>
+        public float FailSpeedFloor { get; set; } = 0.34f;
+
         /// <summary>Arm's reach. An ordinary body only claws a gun it nearly walks into.</summary>
         public float OpportunistStructureRange { get; set; } = 2.6f;
 
