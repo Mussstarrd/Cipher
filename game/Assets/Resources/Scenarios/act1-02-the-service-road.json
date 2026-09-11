@@ -3,6 +3,7 @@
   "id": "act1-02-the-service-road",
   "displayName": "The Service Road",
   "tier": 1,
+  "next": "act1-03-the-pump-house",
   "brief": "There is a second way in. There was always a second way in. The maintenance crews used it, the county used it, and it is a cattle gate and a chain across a gravel track behind the outer lots. Nobody thought about it because nobody had to.",
 
   "map": {
@@ -41,6 +42,11 @@
     { "kind": "BoomBarrier",   "x": 59.4, "y": 13.6, "yaw": 90 }
   ],
 
+  "actors": [
+    { "id": "well-head-north", "kind": "Structure", "x": 52, "y": 18, "hp": 200 },
+    { "id": "well-head-south", "kind": "Structure", "x": 52, "y": 38, "hp": 200 }
+  ],
+
   "heroSpawn": { "x": 64, "y": 28 },
   "spawnCells": [
     { "x": 1, "y": 21, "gate": "service-road" },
@@ -74,6 +80,7 @@
 
   "objectives": [
     { "type": "ClearWaves", "count": 3 },
+    { "type": "ProtectActors", "minAlive": 2 },
     { "type": "ProtectVault", "minHp": 1 }
   ],
 

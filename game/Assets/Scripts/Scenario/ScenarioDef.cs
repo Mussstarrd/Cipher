@@ -103,6 +103,14 @@ namespace Cipher.Game.Scenarios
 
         public EconomyConfig Economy { get; set; } = new EconomyConfig();
         public DirectorConfig Director { get; set; } = new DirectorConfig();
+
+        /// <summary>
+        /// This position's scan cycle. Per-mission because ADR-005's difficulty curve IS this
+        /// number: HALCYON frees up compute as the act goes on, so the cycle shortens from days to
+        /// hours and the player watches it fall. Leaving it uniform across twelve missions throws
+        /// away the one piece of tuning that is also the fiction.
+        /// </summary>
+        public ScanCycleConfig Cycle { get; set; } = new ScanCycleConfig();
         /// <summary>Seed for this mission's spawn director. Same seed, same match.</summary>
         public ulong DirectorSeed { get; set; } = 20260910UL;
 

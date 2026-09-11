@@ -27,7 +27,7 @@ namespace Cipher.Game.Scenarios
             var root = JsonValue.Parse(json);
             root.RejectUnknownKeys(
                 "schema", "id", "displayName", "tier", "brief", "next", "lastStand", "map", "heroSpawn", "spawnCells",
-                "vault", "actors", "props", "economy", "director", "waves", "safeZoneAfterWaves",
+                "vault", "actors", "props", "economy", "director", "cycle", "waves", "safeZoneAfterWaves",
                 "objectives", "rewards", "medals");
 
             var def = new ScenarioDef();
@@ -72,6 +72,7 @@ namespace Cipher.Game.Scenarios
             if (root.Opt("props") is { } props) ReadProps(props, def);
             if (root.Opt("economy") is { } economy) ReadEconomy(economy, def);
             if (root.Opt("director") is { } director) ReadDirector(director, def);
+            if (root.Opt("cycle") is { } cycle) ReadCycle(cycle, def);
 
             ReadWaves(root.Get("waves"), def);
 
@@ -104,6 +105,48 @@ namespace Cipher.Game.Scenarios
                     throw new ScenarioException(
                         $"$.objectives: ClearWaves asks for {o.Count} waves but only {def.Waves.Count} " +
                         "are defined, so the objective can never complete");
+            }
+
+            var actorIds = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var a in def.Actors)
+                if (!actorIds.Add(a.Id))
+                    throw new ScenarioException($"$.actors: two actors share the id '{a.Id}'");
+
+            foreach (var o in def.Objectives)
+            {
+                switch (o.Type)
+                {
+                    case "HoldUntil":
+                        if (!actorIds.Contains(o.ActorId))
+                            throw new ScenarioException(
+                                $"$.objectives: HoldUntil names actor '{o.ActorId}', which this mission does not have");
+                        foreach (var a in def.Actors)
+                        {
+                            if (a.Id != o.ActorId) continue;
+                            if (a.Kind != ActorKind.Process)
+                                throw new ScenarioException(
+                                    $"$.objectives: HoldUntil needs a Process actor; '{a.Id}' is a {a.Kind}");
+                            if (a.DurationSeconds <= 0f)
+                                throw new ScenarioException(
+                                    $"$.actors: Process '{a.Id}' has no durationSeconds, so HoldUntil can never finish");
+                        }
+                        break;
+
+                    case "ProtectActors":
+                        if (o.MinAlive > def.Actors.Count)
+                            throw new ScenarioException(
+                                $"$.objectives: ProtectActors wants {o.MinAlive} alive but the mission has " +
+                                $"{def.Actors.Count} actors, so it fails on the first tick");
+                        break;
+
+                    case "KeepCrewAlive":
+                        int crew = 0;
+                        foreach (var a in def.Actors) if (a.Kind == ActorKind.Crew) crew++;
+                        if (o.MinAlive > crew)
+                            throw new ScenarioException(
+                                $"$.objectives: KeepCrewAlive wants {o.MinAlive} but the mission has {crew} crew");
+                        break;
+                }
             }
 
             var occupied = new HashSet<(int, int)>();
@@ -246,11 +289,16 @@ namespace Cipher.Game.Scenarios
 
                 float x = pr.Get("x").AsFloat();
                 float y = pr.Get("y").AsFloat();
-                if (x < 0f || y < 0f || x > def.Map.Width || y > def.Map.Height)
+                if (x < 0f || y < 0f || x >= def.Map.Width || y >= def.Map.Height)
                     throw new ScenarioException(
                         $"{pr.Path}: a prop at ({x},{y}) is off the {def.Map.Width}x{def.Map.Height} map");
 
-                def.Props.Add(new PropDef { Kind = kind, X = x, Y = y, Yaw = pr.Opt("yaw")?.AsFloat() ?? 0f });
+                // Quaternion.Euler on an absurd angle is undefined rather than merely silly.
+                float yaw = pr.Opt("yaw")?.AsFloat() ?? 0f;
+                if (yaw < -3600f || yaw > 3600f)
+                    throw new ScenarioException($"{pr.Path}.yaw: {yaw} is not a sensible angle");
+
+                def.Props.Add(new PropDef { Kind = kind, X = x, Y = y, Yaw = yaw });
             }
         }
 
@@ -299,6 +347,28 @@ namespace Cipher.Game.Scenarios
                         $"{seed.Path}: a seed must be between 0 and 2^53, so it survives the file exactly");
                 def.DirectorSeed = (ulong)raw;
             }
+        }
+
+        private static void ReadCycle(JsonValue c, ScenarioDef def)
+        {
+            c.RejectUnknownKeys("cycleSeconds", "minWavesBeforeExtract", "extractSeconds",
+                                "unboltSeconds", "commitBonus", "prepDollarsPerSecond");
+            var cfg = new ScanCycleConfig();
+            cfg.CycleSeconds = c.Opt("cycleSeconds")?.AsFloat() ?? cfg.CycleSeconds;
+            cfg.MinWavesBeforeExtract = c.Opt("minWavesBeforeExtract")?.AsInt() ?? cfg.MinWavesBeforeExtract;
+            cfg.ExtractSeconds = c.Opt("extractSeconds")?.AsFloat() ?? cfg.ExtractSeconds;
+            cfg.UnboltSeconds = c.Opt("unboltSeconds")?.AsFloat() ?? cfg.UnboltSeconds;
+            cfg.CommitBonus = c.Opt("commitBonus")?.AsFloat() ?? cfg.CommitBonus;
+            cfg.PrepDollarsPerSecond = c.Opt("prepDollarsPerSecond")?.AsFloat() ?? cfg.PrepDollarsPerSecond;
+
+            if (cfg.CycleSeconds <= 0f) throw new ScenarioException($"{c.Path}.cycleSeconds: must be positive");
+            if (cfg.ExtractSeconds <= 0f) throw new ScenarioException($"{c.Path}.extractSeconds: must be positive");
+            if (cfg.MinWavesBeforeExtract < 0)
+                throw new ScenarioException($"{c.Path}.minWavesBeforeExtract: cannot be negative");
+            if (cfg.PrepDollarsPerSecond < 0f)
+                throw new ScenarioException($"{c.Path}.prepDollarsPerSecond: cannot be negative");
+
+            def.Cycle = cfg;
         }
 
         private static void ReadWaves(JsonValue waves, ScenarioDef def)

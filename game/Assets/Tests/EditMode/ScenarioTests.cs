@@ -236,7 +236,7 @@ namespace Cipher.Game.Tests
         }
 
         [Test]
-        public void RejectsAnObjectiveThatCannotRunYetRatherThanLoadingIt()
+        public void AnObjectiveNamingAnActorTheMissionLacksIsRejected()
         {
             // Loading a mission whose objective can never complete produces an unwinnable level that
             // looks like a balance problem. Refusing at load is far cheaper to diagnose.
@@ -245,7 +245,7 @@ namespace Cipher.Game.Tests
                     "{ \"type\": \"ClearWaves\", \"count\": 1 }",
                     "{ \"type\": \"HoldUntil\", \"actorId\": \"gen-1\" }")));
             Assert.That(ex!.Message, Does.Contain("HoldUntil"));
-            Assert.That(ex.Message, Does.Contain("actor system"));
+            Assert.That(ex.Message, Does.Contain("gen-1"));
         }
 
         [Test]
@@ -680,6 +680,235 @@ namespace Cipher.Game.Tests
             var ex = Assert.Throws<ScenarioException>(() => ScenarioReader.Read(
                 Base.Replace("\"waves\"", "\"director\": { \"seed\": 1e300 }, \"waves\"")));
             Assert.That(ex!.Message, Does.Contain("seed"));
+        }
+    }
+
+    /// <summary>
+    /// The actor system: the objects a mission is fought over. Pure rules, no scene.
+    /// </summary>
+    public sealed class ActorTests
+    {
+        /// <summary>A threat that reports a fixed crowd on every actor.</summary>
+        private sealed class Crowd : IActorThreat
+        {
+            private readonly int _n;
+            public Crowd(int n) { _n = n; }
+            public int EnemiesWithin(int x, int y, float radius) => _n;
+        }
+
+        private static ActorSystem OneProcess(float duration, float requiresHeroWithin = 0f, int hp = 100) =>
+            new ActorSystem(new[]
+            {
+                new ActorDef
+                {
+                    Id = "gen", Kind = ActorKind.Process, X = 10, Y = 10,
+                    Hp = hp, DurationSeconds = duration, RequiresHeroWithin = requiresHeroWithin,
+                },
+            });
+
+        [Test]
+        public void AnUnattendedProcessRunsOnItsOwn()
+        {
+            var sys = OneProcess(10f);
+            for (int i = 0; i < 100; i++) sys.Tick(0.1f, 0f, 0f, null!);
+            Assert.That(sys.IsComplete("gen"), Is.True);
+            Assert.That(sys.Progress01("gen"), Is.EqualTo(1f).Within(1e-4));
+        }
+
+        [Test]
+        public void AnAttendedProcessOnlyRunsWithTheHeroThere()
+        {
+            var sys = OneProcess(10f, requiresHeroWithin: 6f);
+
+            // Hero across the map: nothing happens, and the HUD should say so rather than tick.
+            for (int i = 0; i < 50; i++) sys.Tick(0.1f, 60f, 60f, null!);
+            Assert.That(sys.Progress01("gen"), Is.EqualTo(0f));
+            Assert.That(sys.IsRunning("gen"), Is.False);
+
+            for (int i = 0; i < 50; i++) sys.Tick(0.1f, 10.5f, 10.5f, null!);
+            Assert.That(sys.Progress01("gen"), Is.EqualTo(0.5f).Within(1e-3));
+            Assert.That(sys.IsRunning("gen"), Is.True);
+        }
+
+        [Test]
+        public void LeavingPausesTheWorkRatherThanLosingIt()
+        {
+            // Eight minutes thrown away by one bad thirty seconds is the kind of punishment that
+            // stops people taking the risk the mission is about.
+            var sys = OneProcess(10f, requiresHeroWithin: 6f);
+            for (int i = 0; i < 40; i++) sys.Tick(0.1f, 10.5f, 10.5f, null!);
+            float banked = sys.Progress01("gen");
+
+            for (int i = 0; i < 40; i++) sys.Tick(0.1f, 60f, 60f, null!);
+            Assert.That(sys.Progress01("gen"), Is.EqualTo(banked).Within(1e-4));
+        }
+
+        [Test]
+        public void ACrowdWrecksAnActorAndStopsItsWork()
+        {
+            var sys = OneProcess(100f, hp: 10);
+            sys.DamagePerEnemyPerSecond = 2f;
+
+            sys.Tick(1f, 0f, 0f, new Crowd(3));       // 6 damage
+            Assert.That(sys.IsAlive("gen"), Is.True);
+
+            sys.Tick(1f, 0f, 0f, new Crowd(3));       // 12 total
+            Assert.That(sys.IsAlive("gen"), Is.False);
+
+            float stopped = sys.Progress01("gen");
+            sys.Tick(5f, 0f, 0f, null!);
+            Assert.That(sys.Progress01("gen"), Is.EqualTo(stopped),
+                        "a wrecked machine does not keep working");
+        }
+
+        [Test]
+        public void CrewDieFasterThanMachines()
+        {
+            var sys = new ActorSystem(new[]
+            {
+                new ActorDef { Id = "box", Kind = ActorKind.Structure, X = 1, Y = 1, Hp = 30 },
+                new ActorDef { Id = "dave", Kind = ActorKind.Crew, X = 2, Y = 2, Hp = 30 },
+            });
+            sys.DamagePerEnemyPerSecond = 2f;
+            sys.CrewDamageMultiplier = 3f;
+
+            sys.Tick(5f, 0f, 0f, new Crowd(1));       // machine 10, person 30
+            Assert.That(sys.AliveCount(ActorKind.Structure), Is.EqualTo(1));
+            Assert.That(sys.AliveCount(ActorKind.Crew), Is.EqualTo(0));
+        }
+
+        [Test]
+        public void DuplicateActorIdsAreRejected()
+        {
+            Assert.Throws<ScenarioException>(() => new ActorSystem(new[]
+            {
+                new ActorDef { Id = "gen", Kind = ActorKind.Process, DurationSeconds = 1f },
+                new ActorDef { Id = "gen", Kind = ActorKind.Process, DurationSeconds = 1f },
+            }));
+        }
+    }
+
+    public sealed class ActorObjectiveTests
+    {
+        private static ObjectiveContext Ctx(IActorQuery actors, int vaultHp = 25) =>
+            new ObjectiveContext(0f, 0, 0, 0, vaultHp, 25, actors);
+
+        private sealed class Crowd : IActorThreat
+        {
+            private readonly int _n;
+            public Crowd(int n) { _n = n; }
+            public int EnemiesWithin(int x, int y, float radius) => _n;
+        }
+
+        [Test]
+        public void HoldUntilCompletesWhenTheWorkDoes()
+        {
+            var sys = new ActorSystem(new[]
+            {
+                new ActorDef { Id = "gen", Kind = ActorKind.Process, X = 5, Y = 5, Hp = 100, DurationSeconds = 4f },
+            });
+            var o = new HoldUntil("gen");
+
+            sys.Tick(2f, 0f, 0f, null!);
+            Assert.That(o.Tick(Ctx(sys), 2f), Is.EqualTo(ObjectiveState.Pending));
+            Assert.That(o.Hud, Does.Contain("50%"));
+
+            sys.Tick(2f, 0f, 0f, null!);
+            Assert.That(o.Tick(Ctx(sys), 2f), Is.EqualTo(ObjectiveState.Complete));
+        }
+
+        [Test]
+        public void HoldUntilFailsIfTheThingIsDestroyed()
+        {
+            // The horde does not have to reach you. It only has to reach the generator.
+            var sys = new ActorSystem(new[]
+            {
+                new ActorDef { Id = "gen", Kind = ActorKind.Process, X = 5, Y = 5, Hp = 4, DurationSeconds = 600f },
+            });
+            sys.DamagePerEnemyPerSecond = 2f;
+            var o = new HoldUntil("gen");
+
+            sys.Tick(1f, 0f, 0f, new Crowd(3));
+            Assert.That(o.Tick(Ctx(sys), 1f), Is.EqualTo(ObjectiveState.Failed));
+            Assert.That(o.Hud, Is.EqualTo("DESTROYED"));
+        }
+
+        [Test]
+        public void HoldUntilIsAGoalAndProtectActorsIsNot()
+        {
+            // If ProtectActors counted as a goal, every mission carrying one would be unwinnable.
+            Assert.That(new HoldUntil("gen").IsFailCondition, Is.False);
+            Assert.That(new ProtectActors(1).IsFailCondition, Is.True);
+            Assert.That(new KeepCrewAlive(1).IsFailCondition, Is.True);
+            Assert.That(new ProtectVault(1).IsFailCondition, Is.True);
+            Assert.That(new ClearWaves(1).IsFailCondition, Is.False);
+        }
+
+        [Test]
+        public void AMissionOfHoldUntilPlusProtectActorsIsWinnable()
+        {
+            var sys = new ActorSystem(new[]
+            {
+                new ActorDef { Id = "gen", Kind = ActorKind.Process, X = 5, Y = 5, Hp = 100, DurationSeconds = 2f },
+                new ActorDef { Id = "xfmr", Kind = ActorKind.Structure, X = 8, Y = 8, Hp = 100 },
+            });
+            var set = ObjectiveFactory.CreateSet(new[]
+            {
+                new ObjectiveDef { Type = "HoldUntil", ActorId = "gen" },
+                new ObjectiveDef { Type = "ProtectActors", MinAlive = 2 },
+            });
+
+            sys.Tick(2f, 0f, 0f, null!);
+            set.Tick(Ctx(sys), 2f);
+
+            Assert.That(set.IsComplete, Is.True);
+            Assert.That(set.IsFailed, Is.False);
+        }
+
+        [Test]
+        public void LosingOneOfTwoProtectedActorsFailsTheMission()
+        {
+            var sys = new ActorSystem(new[]
+            {
+                new ActorDef { Id = "a", Kind = ActorKind.Structure, X = 5, Y = 5, Hp = 4 },
+                new ActorDef { Id = "b", Kind = ActorKind.Structure, X = 8, Y = 8, Hp = 400 },
+            });
+            sys.DamagePerEnemyPerSecond = 2f;
+            var set = ObjectiveFactory.CreateSet(new[]
+            {
+                new ObjectiveDef { Type = "ClearWaves", Count = 1 },
+                new ObjectiveDef { Type = "ProtectActors", MinAlive = 2 },
+            });
+
+            sys.Tick(1f, 0f, 0f, new Crowd(3));
+            set.Tick(Ctx(sys), 1f);
+            Assert.That(set.IsFailed, Is.True);
+            Assert.That(set.FailedBy, Is.TypeOf<ProtectActors>());
+        }
+
+        [Test]
+        public void ObjectivesNamingMissingOrWrongActorsAreRejectedAtLoad()
+        {
+            const string with = @"{
+                ""schema"": 1, ""id"": ""t"", ""displayName"": ""T"",
+                ""map"": { ""width"": 32, ""height"": 32 },
+                ""heroSpawn"": { ""x"": 30, ""y"": 16 },
+                ""spawnCells"": [ { ""x"": 1, ""y"": 16 } ],
+                ""vault"": { ""x"": 31, ""y"": 16, ""hp"": 10 },
+                ""actors"": [ { ""id"": ""box"", ""kind"": ""Structure"", ""x"": 10, ""y"": 10 } ],
+                ""waves"": [ { ""setupSeconds"": 10, ""count"": 20, ""spawnPerSecond"": 4 } ],
+                ""objectives"": [ { ""type"": ""HoldUntil"", ""actorId"": ""box"" } ]
+            }";
+
+            // A Structure cannot run a process, so HoldUntil on one could never finish.
+            var ex = Assert.Throws<ScenarioException>(() => ScenarioReader.Read(with));
+            Assert.That(ex!.Message, Does.Contain("Process"));
+
+            // Wanting more alive than exist fails on the first tick.
+            var ex2 = Assert.Throws<ScenarioException>(() => ScenarioReader.Read(
+                with.Replace(@"{ ""type"": ""HoldUntil"", ""actorId"": ""box"" }",
+                             @"{ ""type"": ""ProtectActors"", ""minAlive"": 3 }")));
+            Assert.That(ex2!.Message, Does.Contain("ProtectActors"));
         }
     }
 }

@@ -70,6 +70,8 @@ namespace Cipher.Game
 
         private ScenarioDef _scenario = null!;
         private ObjectiveSet _objectives = null!;
+        private ActorSystem _actors = null!;
+        private readonly List<Transform> _actorViews = new List<Transform>();
 
         /// <summary>
         /// The display name of the position behind this one, read at match start.
@@ -348,13 +350,11 @@ namespace Cipher.Game
             // it cannot be left, which is what makes mission 12 unwinnable by design rather than by
             // a special case in code.
             _match = new MatchState(_scenario.ToWaveTable(), _eco, _scenario.VaultHp,
+                                    cycle: _scenario.Cycle,
                                     hasFallbackPosition: _scenario.HasFallbackPosition,
                                     openingIsUntimed: true);
-            if (_carriedCash > 0)
-            {
-                _match.Bank.Earn(_carriedCash);
-                Alert($"+${_carriedCash} of materials carried back from the last position", 5f);
-            }
+            if (_carriedCash > 0) _match.Bank.Earn(_carriedCash);
+            _actors = new ActorSystem(_scenario.Actors);
             _objectives = ObjectiveFactory.CreateSet(_scenario.Objectives);
             _nextName = string.IsNullOrEmpty(_scenario.Next) ? "" : LoadScenario(_scenario.Next).DisplayName;
             _carriedCash = 0;
@@ -380,6 +380,9 @@ namespace Cipher.Game
             _cardOffer = System.Array.Empty<Improvisation>();
             _matchSeconds = 0f;
             _alerts.Clear();
+            // AFTER the clear, or the player never sees it and the bank just quietly grows.
+            if (_carriedCash > 0)
+                Alert($"+${_carriedCash} of materials, carried back from the last position", 6f);
             _lastPhase = MatchPhase.Setup;
             _wasDown = false;
             _strikeWasInbound = false;
@@ -387,6 +390,8 @@ namespace Cipher.Game
 
 
             _hero = new HeroModel(_loadout.Effective, HeroSpawn);
+            _threat ??= new WorldThreat(() => _world);
+            BuildActorViews();
             ApplyLoadoutToWorld();
             if (_crowd == null) BuildCivilianPool();
             if (_heroBody == null) BuildHeroBody();
@@ -406,6 +411,19 @@ namespace Cipher.Game
             _lastReached = 0;
             _lastKills = 0;
             _spawnCursor = 0;
+            // Archetype deaths are INFERRED from the living count falling, so these two have to be
+            // zeroed with the world they counted. Left standing, falling back from a position with
+            // three Sappers and four Spitters alive paid out seven kills on the first tick of the
+            // next mission: seven lots of experience and seven loot rolls, every time, scaling with
+            // how messy the exit was.
+            _lastSapperAlive = 0;
+            _lastSpitterAlive = 0;
+            // Panels do not survive a position either: input is not read while the match is over,
+            // so a skill tree left open could not be closed and drew over the debrief.
+            _showInventory = false;
+            _showSkills = false;
+            _skillCursor = 0;
+            _truckCursor = 0;
             _tracers.Clear();
             _blasts.Clear();
             _bakedMapVersion = -1;
@@ -745,7 +763,15 @@ namespace Cipher.Game
                         AwardXp(LevelCurve.XpForExtraction(_match.WavesCleared));
                         OpenTruck();
                         break;
-                    case MatchPhase.Extracted: _sfx.Play(Sfx.Win, 0.85f, 0f); break;
+                    case MatchPhase.Extracted:
+                        _sfx.Play(Sfx.Win, 0.85f, 0f);
+                        // Whatever is still on the list when the window shuts stayed bolted down.
+                        // Nothing called this before, so the debrief's headline number -- what you
+                        // had to leave behind -- read zero for a player who walked away from six
+                        // turrets, which is the one number the screen exists to show.
+                        ReportAbandonedEmplacements();
+                        _showTruck = false;
+                        break;
                     case MatchPhase.Won: _sfx.Play(Sfx.Win, 1f, 0f); break;
                     case MatchPhase.Lost: _sfx.Play(Sfx.Lose, 1f, 0f); break;
                 }
@@ -780,11 +806,17 @@ namespace Cipher.Game
                 int toSpawn = _match.Tick(TickDt, _world.AliveCount, breached);
                 _lastReached = _world.ReachedCount;
 
+                // Actors first: the objectives read their state, so a generator wrecked this tick
+                // must fail the objective this tick and not next one.
+                _actors.Tick(TickDt, _hero.Position.X, _hero.Position.Y, _threat);
+                SyncActorViews();
+
                 // The scenario decides what winning this mission means. The wave table is only the
                 // backstop, for a mission that really is just waves.
                 _objectives.Tick(
                     new ObjectiveContext(_matchSeconds, _match.WaveIndex, _match.WavesCleared,
-                                         _world.AliveCount, _match.VaultHp, _match.VaultMaxHp),
+                                         _world.AliveCount, _match.VaultHp, _match.VaultMaxHp,
+                                         _actors),
                     TickDt);
                 if (_objectives.IsFailed) _match.LoseByObjective();
                 else if (_objectives.IsComplete) _match.CompleteByObjective();
@@ -1075,9 +1107,22 @@ namespace Cipher.Game
             if (_declineNoticeTimer > 0f) _declineNoticeTimer = Mathf.Max(0f, _declineNoticeTimer - Time.deltaTime);
             if (_lootNoticeTimer > 0f) _lootNoticeTimer = Mathf.Max(0f, _lootNoticeTimer - Time.deltaTime);
 
-            // An offer on the table owns the input until it is answered, and so does the truck.
+            // An offer on the table owns the input until it is answered.
             if (_cardOffer.Count > 0) { ReadCardInput(); return; }
-            if (_match.Phase == MatchPhase.Extraction) { ReadTruckInput(kb, pad); return; }
+
+            // The truck does NOT. Packing up happens while the position is still being attacked --
+            // the vault keeps taking breaches through the whole window -- so taking every control
+            // away was turning an unlosable position into an unplayable one. It is especially bad
+            // for a SurviveSeconds objective, which completes mid-wave and drops the player
+            // straight into the window with the horde on the field.
+            if (_match.Phase == MatchPhase.Extraction && _showTruck) { ReadTruckInput(kb, pad); return; }
+            if (_match.Phase == MatchPhase.Extraction
+                && ((pad != null && pad.buttonNorth.wasPressedThisFrame)
+                    || (kb != null && kb.iKey.wasPressedThisFrame)))
+            {
+                _showTruck = true;
+                return;
+            }
 
             if ((pad != null && pad.buttonNorth.wasPressedThisFrame && !_buildMode)
                 || (kb != null && kb.iKey.wasPressedThisFrame))
@@ -1532,6 +1577,86 @@ namespace Cipher.Game
                 };
                 GUI.Label(new Rect(x, y, w, 20), $"{mark} {o.Hud}");
                 y += 20f;
+            }
+        }
+
+        /// <summary>
+        /// The one thing the actor rules need from the simulation, kept behind an interface so the
+        /// rules stay testable without a world.
+        /// </summary>
+        private sealed class WorldThreat : IActorThreat
+        {
+            private readonly System.Func<AgentWorld?> _world;
+            public WorldThreat(System.Func<AgentWorld?> world) { _world = world; }
+
+            public int EnemiesWithin(int x, int y, float radius)
+            {
+                var w = _world();
+                return w == null ? 0 : w.CountWithin(new Vec2(x + 0.5f, y + 0.5f), radius);
+            }
+        }
+
+        private IActorThreat _threat = null!;
+
+        /// <summary>
+        /// Builds the visible side of the mission's actors: a box for a machine, a capsule for a
+        /// person, and a bar over each one. They are scenery plus a number -- no colliders and no
+        /// grid cells, because the actor rules model pressure rather than attacks precisely so an
+        /// objective cannot quietly change where the horde walks.
+        /// </summary>
+        private void BuildActorViews()
+        {
+            for (int i = 0; i < _actorViews.Count; i++)
+                if (_actorViews[i] != null) Destroy(_actorViews[i].gameObject);
+            _actorViews.Clear();
+            if (_actors.Count == 0) return;
+
+            var root = new GameObject("Actors").transform;
+            for (int i = 0; i < _actors.All.Count; i++)
+            {
+                var a = _actors.All[i];
+                var go = GameObject.CreatePrimitive(
+                    a.Kind == ActorKind.Crew ? PrimitiveType.Capsule : PrimitiveType.Cube);
+                go.name = "Actor_" + a.Id;
+                Destroy(go.GetComponent<Collider>());
+                go.transform.SetParent(root, false);
+                go.transform.position = new Vector3(a.X + 0.5f, a.Kind == ActorKind.Crew ? 0.9f : 0.8f, a.Y + 0.5f);
+                go.transform.localScale = a.Kind switch
+                {
+                    ActorKind.Crew => new Vector3(0.5f, 0.9f, 0.5f),
+                    ActorKind.Process => new Vector3(1.8f, 1.6f, 1.8f),
+                    _ => new Vector3(1.6f, 1.6f, 1.6f),
+                };
+                go.GetComponent<Renderer>().sharedMaterial = PropMaterial(a.Kind switch
+                {
+                    ActorKind.Crew => new Color(0.72f, 0.62f, 0.48f),
+                    ActorKind.Process => new Color(0.30f, 0.46f, 0.52f),
+                    _ => new Color(0.46f, 0.42f, 0.34f),
+                });
+                _actorViews.Add(go.transform);
+            }
+        }
+
+        /// <summary>Sinks an actor as it is wrecked, so the field reads without looking at the HUD.</summary>
+        private void SyncActorViews()
+        {
+            for (int i = 0; i < _actorViews.Count && i < _actors.All.Count; i++)
+            {
+                var view = _actorViews[i];
+                if (view == null) continue;
+                var a = _actors.All[i];
+
+                if (!a.IsAlive)
+                {
+                    if (view.gameObject.activeSelf) view.gameObject.SetActive(false);
+                    continue;
+                }
+
+                var scale = view.localScale;
+                float sink = 1f - 0.45f * (1f - a.HealthFraction);
+                view.localPosition = new Vector3(view.localPosition.x,
+                                                 scale.y * 0.5f * sink,
+                                                 view.localPosition.z);
             }
         }
 
@@ -2472,7 +2597,7 @@ namespace Cipher.Game
             // The wheel paints over the HUD but under the pause menu.
             // An offer owns the screen while it is up, so the kit panel stands down.
             if (_showInventory && !_showSkills && _cardOffer.Count == 0 && !_pauseMenu.IsOpen) DrawInventory();
-            if (_match.Phase == MatchPhase.Extraction && !_pauseMenu.IsOpen) DrawTruck();
+            if (_match.Phase == MatchPhase.Extraction && _showTruck && !_pauseMenu.IsOpen) DrawTruck();
             if (_showSkills && !_pauseMenu.IsOpen) DrawSkillTree();
             if (_cardOffer.Count > 0 && !_pauseMenu.IsOpen) DrawCardOffer();
             if (_wheel.IsOpen && !_pauseMenu.IsOpen && !_match.IsOver) DrawBuildWheel();
@@ -2522,8 +2647,22 @@ namespace Cipher.Game
         /// barricade panel is light and enormous, so four light guns against one heavy one is a real
         /// choice rather than a number to maximise.
         /// </summary>
+        /// <summary>Whether the loading screen is up. The window runs whether it is or not.</summary>
+        private bool _showTruck;
+
+        /// <summary>Counts what the truck could not take, once the pack-up window has closed.</summary>
+        private void ReportAbandonedEmplacements()
+        {
+            if (_truck == null) return;
+            int left = 0;
+            for (int i = 0; i < _recoverable.Count; i++)
+                if (_recoverable[i] is SalvagedEmplacement && !_truck.IsLoaded(_recoverable[i])) left++;
+            _match.ReportAbandoned(left);
+        }
+
         private void OpenTruck()
         {
+            _showTruck = true;
             _truck = new TruckLoad();
             _truckCursor = 0;
             _recoverable = new List<IHaulable>();

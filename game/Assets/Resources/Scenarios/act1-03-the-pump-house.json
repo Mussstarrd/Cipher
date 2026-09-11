@@ -1,0 +1,107 @@
+{
+  "schema": 1,
+  "id": "act1-03-the-pump-house",
+  "displayName": "The Pump House",
+  "tier": 2,
+  "brief": "The county runs the water through here and the substation next door runs the county. If the transfer finishes, the inner line has pressure and light for another week. If it does not, everything behind you is dark and dry and we are having a different conversation.",
+
+  "map": {
+    "width": 72,
+    "height": 56,
+    "preset": "arena",
+    "walls": [
+      { "rect": [16, 0, 1, 20], "kind": "Wall" },
+      { "rect": [16, 27, 1, 29], "kind": "Wall" },
+
+      { "rect": [34, 10, 1, 46], "kind": "Wall" },
+      { "rect": [34, 0, 1, 3], "kind": "Wall" },
+
+      { "rect": [50, 0, 1, 26], "kind": "Static" },
+      { "rect": [50, 33, 1, 23], "kind": "Static" },
+
+      { "rect": [56, 18, 1, 20], "kind": "Wall" },
+      { "rect": [56, 18, 12, 1], "kind": "Wall" },
+      { "rect": [56, 37, 12, 1], "kind": "Wall" }
+    ]
+  },
+
+  "props": [
+    { "kind": "Pillar",        "x": 16.5, "y": 19.4 },
+    { "kind": "Pillar",        "x": 16.5, "y": 27.6 },
+    { "kind": "BoomBarrier",   "x": 17.4, "y": 20.4, "yaw": 90 },
+    { "kind": "Guardhouse",    "x": 19.5, "y": 30.0, "yaw": 200 },
+
+    { "kind": "JerseyBarrier", "x": 36.5, "y": 6.0,  "yaw": 90 },
+    { "kind": "JerseyBarrier", "x": 36.5, "y": 8.4,  "yaw": 90 },
+
+    { "kind": "Pillar",        "x": 50.5, "y": 25.4 },
+    { "kind": "Pillar",        "x": 50.5, "y": 33.6 },
+
+    { "kind": "Guardhouse",    "x": 60.0, "y": 21.5, "yaw": 180 },
+    { "kind": "JerseyBarrier", "x": 57.5, "y": 27.5, "yaw": 90 }
+  ],
+
+  "actors": [
+    { "id": "transfer", "kind": "Process", "x": 63, "y": 28, "hp": 260,
+      "durationSeconds": 300, "requiresHeroWithin": 0 },
+    { "id": "transformer-a", "kind": "Structure", "x": 60, "y": 23, "hp": 180 },
+    { "id": "transformer-b", "kind": "Structure", "x": 60, "y": 33, "hp": 180 }
+  ],
+
+  "heroSpawn": { "x": 66, "y": 28 },
+  "spawnCells": [
+    { "x": 1, "y": 24, "gate": "county-road" },
+    { "x": 1, "y": 40, "gate": "north-shore" }
+  ],
+  "vault": { "x": 70, "y": 28, "hp": 30 },
+
+  "cycle": {
+    "cycleSeconds": 900,
+    "minWavesBeforeExtract": 2,
+    "extractSeconds": 90,
+    "prepDollarsPerSecond": 0.9
+  },
+
+  "economy": {
+    "startCash": 500,
+    "cashPerKill": 5,
+    "waveClearBonusPerWave": 120
+  },
+
+  "director": {
+    "seed": 20260913,
+    "sapperFirstAt": 35,
+    "spitterFirstAt": 20,
+    "spitterChance": 0.012,
+    "hunterShare": 0.18,
+    "wreckerShare": 0.10
+  },
+
+  "waves": [
+    { "setupSeconds": 30, "count": 240, "spawnPerSecond": 11, "mix": { "Runner": 0.94, "Spitter": 0.06 } },
+    { "setupSeconds": 22, "count": 380, "spawnPerSecond": 13, "mix": { "Runner": 0.90, "Spitter": 0.07, "Sapper": 0.03 } },
+    { "setupSeconds": 20, "count": 520, "spawnPerSecond": 16, "mix": { "Runner": 0.87, "Spitter": 0.09, "Sapper": 0.04 } },
+    { "setupSeconds": 18, "count": 700, "spawnPerSecond": 19, "mix": { "Runner": 0.84, "Spitter": 0.11, "Sapper": 0.05 } },
+    { "setupSeconds": 18, "count": 900, "spawnPerSecond": 22, "mix": { "Runner": 0.82, "Spitter": 0.12, "Sapper": 0.06 } }
+  ],
+
+  "safeZoneAfterWaves": [],
+
+  "objectives": [
+    { "type": "HoldUntil", "actorId": "transfer" },
+    { "type": "ProtectActors", "minAlive": 2 },
+    { "type": "ProtectVault", "minHp": 1 }
+  ],
+
+  "rewards": {
+    "scrip": 140,
+    "guaranteedDrops": [ { "slot": "Vest", "rarity": "Salvaged", "ilvl": 8 } ],
+    "unlocks": []
+  },
+
+  "medals": {
+    "bronze": [ { "type": "Complete" } ],
+    "silver": [ { "type": "VaultHpAtLeast", "value": 26 } ],
+    "gold": [ { "type": "VaultHpAtLeast", "value": 30 }, { "type": "TimeUnder", "seconds": 600 } ]
+  }
+}
