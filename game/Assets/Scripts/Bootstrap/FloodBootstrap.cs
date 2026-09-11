@@ -235,6 +235,7 @@ namespace Cipher.Game
             ApplyLoadoutToWorld();
             if (_crowd == null) BuildCivilianPool();
             if (_heroBody == null) BuildHeroBody();
+            if (!_environmentDressed) { DressEnvironment(); _environmentDressed = true; }
             _hero.Aim(new Vec2(-1f, 0f));
             _camYaw = -90f;
             _camPitch = 22f;
@@ -1123,6 +1124,7 @@ namespace Cipher.Game
         private AnimationClip? _walkClip;
         private CivilianCrowd? _crowd;
         private Transform? _heroBody;
+        private bool _environmentDressed;
         /// <summary>Model used for the player. Excluded from the civilian pool.</summary>
         private const string HeroModelName = "Adventurer_Civilian";
         /// <summary>Real bodies for the nearest agents. The rest stay instanced capsules.</summary>
@@ -1272,6 +1274,65 @@ namespace Cipher.Game
             var facing = new Vector3(_hero.Facing.X, 0f, _hero.Facing.Y);
             if (facing.sqrMagnitude > 1e-6f)
                 _heroBody.rotation = Quaternion.LookRotation(facing.normalized, Vector3.up);
+        }
+
+        /// <summary>
+        /// Dresses the map with trees, bushes and abandoned cars. Runs once; the dressing is static
+        /// and deterministic, so the same map looks the same every run.
+        /// </summary>
+        private void DressEnvironment()
+        {
+            var all = Resources.LoadAll<GameObject>("Environment");
+            if (all == null || all.Length == 0) return;
+
+            var trees = new List<GameObject>();
+            var bushes = new List<GameObject>();
+            var cars = new List<GameObject>();
+            foreach (var go in all)
+            {
+                if (go == null) continue;
+                string n = go.name;
+                if (n.StartsWith("Bush")) bushes.Add(go);
+                else if (n.Contains("Tree")) trees.Add(go);
+                else cars.Add(go);
+            }
+
+            var root = new GameObject("Environment").transform;
+            var dresser = new EnvironmentDresser(_map, root, ReskinForComic);
+
+            // Keep the spawn lane, the objective and the hero's ground clear, or the level dresses
+            // itself shut and the horde has nowhere to walk.
+            dresser.Dress(trees, bushes, cars, KeepClear);
+
+            Debug.Log($"[Env] placed {dresser.Placed} props " +
+                      $"({trees.Count} tree models, {bushes.Count} bush, {cars.Count} vehicle)");
+        }
+
+        /// <summary>Cells that must stay empty no matter what the dresser wants.</summary>
+        private bool KeepClear(int x, int y)
+        {
+            // The corridor the horde walks, plus a margin at each end.
+            if (Mathf.Abs(y - GridH / 2) <= 3) return true;
+            if (x <= 4 || x >= GridW - 5) return true;
+
+            var heroCell = _map.WorldToCell(_hero != null ? _hero.Position : HeroSpawn);
+            if (Mathf.Abs(x - heroCell.Item1) <= 3 && Mathf.Abs(y - heroCell.Item2) <= 3) return true;
+
+            return false;
+        }
+
+        /// <summary>Re-materialises an imported prop into the game's comic look.</summary>
+        private Material ReskinForComic(Material? source)
+        {
+            var mat = new Material(LitShader) { enableInstancing = false };
+            Color tint = source != null && source.HasProperty(BaseColorId)
+                ? source.GetColor(BaseColorId)
+                : (source != null ? source.color : Color.grey);
+            mat.color = tint;
+            if (mat.HasProperty(BaseColorId)) mat.SetColor(BaseColorId, tint);
+            if (mat.HasProperty(OutlineWidthId)) mat.SetFloat(OutlineWidthId, InkProp);
+            if (source != null && source.mainTexture != null) mat.mainTexture = source.mainTexture;
+            return mat;
         }
 
         /// <summary>Starts the first wave, so a smoke capture can actually see combat. Harness only.</summary>
