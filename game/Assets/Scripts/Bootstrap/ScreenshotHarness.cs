@@ -22,15 +22,18 @@ namespace Cipher.Game
         private const string OverheadArg = "-exodus-screenshot-overhead";
         private const string WheelArg = "-exodus-screenshot-wheel";
         private const string ProgressArg = "-exodus-screenshot-progression";
+        private const string SkillsArg = "-exodus-screenshot-skills";
 
         private string? _path;
         private float _delay = 8f;
         private bool _overhead;
         private bool _wheel;
         private bool _progression;
+        private bool _skills;
         private bool _viewSet;
         private bool _wheelSet;
         private bool _progressionSet;
+        private bool _skillsSet;
         private float _elapsed;
         private bool _captured;
         private float _shotAt;
@@ -49,6 +52,7 @@ namespace Cipher.Game
             harness._overhead = WantsOverhead(args);
             harness._wheel = WantsWheel(args);
             harness._progression = HasFlag(args, ProgressArg);
+            harness._skills = HasFlag(args, SkillsArg);
             Debug.Log($"[Screenshot] armed: {path} after {delay:F1}s");
         }
 
@@ -109,6 +113,13 @@ namespace Cipher.Game
                 var bootstrap = GetComponent<FloodBootstrap>();
                 if (bootstrap != null) bootstrap.EnterTacticalViewForCapture();
                 _viewSet = true;
+            }
+
+            if (_skills && !_skillsSet && _elapsed > Mathf.Max(0f, _delay - 1f))
+            {
+                var bs = GetComponent<FloodBootstrap>();
+                if (bs != null) bs.ShowSkillsForCapture();
+                _skillsSet = true;
             }
 
             if (_progression && !_progressionSet && _elapsed > Mathf.Max(0f, _delay - 1f))

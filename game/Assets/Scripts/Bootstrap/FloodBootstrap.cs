@@ -82,6 +82,8 @@ namespace Cipher.Game
         private string _lootNotice = "";
         private float _lootNoticeTimer;
         private bool _showInventory;
+        private bool _showSkills;
+        private int _skillCursor;
         private IReadOnlyList<Improvisation> _cardOffer = System.Array.Empty<Improvisation>();
         private int _cardCursor;
         private HeroModel _hero = null!;
@@ -227,6 +229,7 @@ namespace Cipher.Game
 
 
             _hero = new HeroModel(_loadout.Effective, HeroSpawn);
+            ApplyLoadoutToWorld();
             _hero.Aim(new Vec2(-1f, 0f));
             _camYaw = -90f;
             _camPitch = 22f;
@@ -684,6 +687,18 @@ namespace Cipher.Game
             }
         }
 
+        /// <summary>
+        /// Pushes the loadout everywhere it has to land. The hero reads a config; the turret system
+        /// reads multipliers. Scaling turrets at FIRE time rather than at placement means a Doctrine
+        /// card improves the guns already on the board, which is what a player expects.
+        /// </summary>
+        private void ApplyLoadoutToWorld()
+        {
+            _hero.Retune(_loadout.Effective);
+            _turrets.DamageMultiplier = _loadout.TurretDamageMultiplier;
+            _turrets.RangeMultiplier = _loadout.TurretRangeMultiplier;
+        }
+
         /// <summary>Experience in, level-ups and skill points out, with a notice for the player.</summary>
         private void AwardXp(int amount)
         {
@@ -714,7 +729,7 @@ namespace Cipher.Game
             };
             if (result.Outcome is PickupOutcome.EquippedEmptySlot or PickupOutcome.Upgraded)
             {
-                _hero.Retune(_loadout.Effective);
+                ApplyLoadoutToWorld();
                 _sfx.Play(Sfx.Pickup, 0.9f, 0.02f);
             }
         }
@@ -767,7 +782,7 @@ namespace Cipher.Game
             _cardOffer = System.Array.Empty<Improvisation>();
             if (card == null) return;
 
-            _hero.Retune(_loadout.Effective);
+            ApplyLoadoutToWorld();
             Alert($"{card.Name} — {card.Text}", 4f);
             _sfx.Play(Sfx.MenuConfirm, 1f, 0f);
         }
@@ -858,6 +873,9 @@ namespace Cipher.Game
             if ((pad != null && pad.buttonNorth.wasPressedThisFrame && !_buildMode)
                 || (kb != null && kb.iKey.wasPressedThisFrame))
                 _showInventory = !_showInventory;
+
+            if (kb != null && kb.kKey.wasPressedThisFrame) { _showSkills = !_showSkills; _showInventory = false; }
+            if (_showSkills) { ReadSkillInput(kb, pad); return; }
             // Tab is still a plain toggle for keyboard players who just want in and out.
             bool toggle = kb != null && kb.tabKey.wasPressedThisFrame;
             if (toggle)
@@ -917,11 +935,23 @@ namespace Cipher.Game
                 var item = roller.TryDrop(DropSource.SapperKill, 2, 3);
                 if (item != null) _loadout.Pickup(item);
             }
-            _hero.Retune(_loadout.Effective);
+            ApplyLoadoutToWorld();
 
             _cardOffer = _loadout.Deck.Deal();
             _cardCursor = 1;
             _showInventory = true;
+        }
+
+        /// <summary>Opens the skill screen with points banked, for a capture. Harness only.</summary>
+        public void ShowSkillsForCapture()
+        {
+            _loadout.Skills.AddXp(LevelCurve.TotalXpFor(9));
+            _loadout.SpendSkillPoint("t-marks");
+            _loadout.SpendSkillPoint("t-marks");
+            _loadout.SpendSkillPoint("d-lanes");
+            ApplyLoadoutToWorld();
+            _skillCursor = 1;
+            _showSkills = true;
         }
 
         /// <summary>Opens the radial for a capture, aimed at one option. Screenshot harness only.</summary>
@@ -1636,7 +1666,8 @@ namespace Cipher.Game
                 $"{_focus.StatusLine()}    LV {_loadout.Skills.Level}  " +
                 $"xp {_loadout.Skills.XpIntoLevel}/{Mathf.Max(1, _loadout.Skills.XpNeededForNext)}  " +
                 $"scrip {_loadout.Inventory.Scrip}" +
-                (_loadout.Skills.UnspentPoints > 0 ? $"   [{_loadout.Skills.UnspentPoints} skill points]" : ""));
+                (_loadout.Skills.UnspentPoints > 0 ? $"   [{_loadout.Skills.UnspentPoints} skill points - K]" : "")
+                + "    I: kit");
 
             if (_lootNoticeTimer > 0f && _lootNotice.Length > 0)
                 GUI.Label(new Rect(12, 176, 1200, 24), _lootNotice);
@@ -1703,7 +1734,8 @@ namespace Cipher.Game
 
             // The wheel paints over the HUD but under the pause menu.
             // An offer owns the screen while it is up, so the kit panel stands down.
-            if (_showInventory && _cardOffer.Count == 0 && !_pauseMenu.IsOpen) DrawInventory();
+            if (_showInventory && !_showSkills && _cardOffer.Count == 0 && !_pauseMenu.IsOpen) DrawInventory();
+            if (_showSkills && !_pauseMenu.IsOpen) DrawSkillTree();
             if (_cardOffer.Count > 0 && !_pauseMenu.IsOpen) DrawCardOffer();
             if (_wheel.IsOpen && !_pauseMenu.IsOpen && !_match.IsOver) DrawBuildWheel();
 
@@ -1744,6 +1776,88 @@ namespace Cipher.Game
             GUI.color = prev;
             GUI.Label(new Rect(0, _uiH * 0.38f, _uiW, 60), title, _centerStyle);
             GUI.Label(new Rect(0, _uiH * 0.38f + 64, _uiW, 70), sub, _subStyle);
+        }
+
+        /// <summary>
+        /// Spending permanent points. Deliberately a flat list rather than a drawn graph: the
+        /// prerequisites already impose the shape, and a list navigates on a gamepad without any of
+        /// the tree-cursor UX that is still unproven here.
+        /// </summary>
+        private void ReadSkillInput(Keyboard? kb, Gamepad? pad)
+        {
+            var all = SkillCatalogue.All;
+            if (all.Count == 0) return;
+
+            bool up = (kb != null && kb.upArrowKey.wasPressedThisFrame)
+                      || (pad != null && pad.dpad.up.wasPressedThisFrame);
+            bool down = (kb != null && kb.downArrowKey.wasPressedThisFrame)
+                        || (pad != null && pad.dpad.down.wasPressedThisFrame);
+            if (up) { _skillCursor = (_skillCursor - 1 + all.Count) % all.Count; _sfx.Play(Sfx.MenuTick, 0.6f, 0f); }
+            if (down) { _skillCursor = (_skillCursor + 1) % all.Count; _sfx.Play(Sfx.MenuTick, 0.6f, 0f); }
+
+            bool buy = (kb != null && (kb.enterKey.wasPressedThisFrame || kb.spaceKey.wasPressedThisFrame))
+                       || (pad != null && pad.buttonSouth.wasPressedThisFrame);
+            if (!buy) return;
+
+            var node = all[_skillCursor];
+            var result = _loadout.SpendSkillPoint(node.Id);
+            if (result == SpendResult.Ok)
+            {
+                ApplyLoadoutToWorld();
+                _sfx.Play(Sfx.MenuConfirm, 0.9f, 0f);
+                Alert($"{node.Name} — {node.Text}", 3f);
+            }
+            else
+            {
+                _sfx.Play(Sfx.MenuTick, 0.7f, 0f);
+                _declineNotice = result switch
+                {
+                    SpendResult.NotEnoughPoints => "not enough skill points",
+                    SpendResult.PrerequisiteMissing => $"needs {SkillCatalogue.Find(node.Requires!)?.Name}",
+                    SpendResult.AtMaxRank => "already at max rank",
+                    _ => "cannot buy that",
+                };
+                _declineNoticeTimer = 2.5f;
+            }
+        }
+
+        private void DrawSkillTree()
+        {
+            var prev = GUI.color;
+            GUI.color = new Color(0f, 0f, 0f, 0.8f);
+            GUI.DrawTexture(new Rect(0f, 0f, _uiW, _uiH), Texture2D.whiteTexture);
+            GUI.color = prev;
+
+            _invStyle ??= new GUIStyle(GUI.skin.label) { fontSize = 17, wordWrap = true };
+
+            GUI.Label(new Rect(_uiW * 0.5f - 460f, 54f, 920f, 30f),
+                      $"SKILLS     level {_loadout.Skills.Level}     {_loadout.Skills.UnspentPoints} points to spend     (K to close)",
+                      _subStyle);
+
+            var all = SkillCatalogue.All;
+            float y = 100f;
+            for (int i = 0; i < all.Count; i++)
+            {
+                var node = all[i];
+                int rank = _loadout.Skills.RankOf(node.Id);
+                bool sel = i == _skillCursor;
+                bool affordable = _loadout.Skills.CanSpend(node.Id) == SpendResult.Ok;
+
+                GUI.color = sel ? new Color(1f, 0.86f, 0.38f, 1f)
+                          : affordable ? new Color(0.86f, 0.9f, 0.94f, 0.95f)
+                          : new Color(0.55f, 0.56f, 0.6f, 0.85f);
+
+                string lockNote = node.Requires != null && !_loadout.Skills.IsBought(node.Requires)
+                    ? $"  (needs {SkillCatalogue.Find(node.Requires)?.Name})" : "";
+                GUI.Label(new Rect(_uiW * 0.5f - 460f, y, 920f, 24f),
+                          $"{(sel ? ">" : " ")} [{node.Path,-8}] {node.Name,-20} {rank}/{node.MaxRank}   {node.Cost}pt   {node.Text}{lockNote}",
+                          _invStyle);
+                y += 24f;
+            }
+            GUI.color = prev;
+
+            GUI.Label(new Rect(_uiW * 0.5f - 460f, y + 16f, 920f, 26f),
+                      "up/down to move, A or Enter to buy", _subStyle);
         }
 
         /// <summary>

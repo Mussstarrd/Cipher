@@ -204,6 +204,14 @@ namespace Cipher.Sim.Emplacements
         }
 
         /// <summary>
+        /// Global scaling applied at fire time rather than at placement, so a Doctrine card or a
+        /// skill point improves guns the player ALREADY owns. Baking it in at placement would mean
+        /// an upgrade only helped the next turret, which reads as a bug to anyone playing.
+        /// </summary>
+        public float DamageMultiplier { get; set; } = 1f;
+        public float RangeMultiplier { get; set; } = 1f;
+
+        /// <summary>
         /// How much of a turret's shot a wall absorbs when the round is stopped by it. Below one
         /// because a rifle round chews masonry slowly; the point is that walling in your own guns
         /// costs you the wall, not that it costs you instantly.
@@ -219,6 +227,8 @@ namespace Cipher.Sim.Emplacements
                 var t = _turrets[i];
                 var family = FamilyOf(t.Family);
                 float interval = 1f / Math.Max(0.01f, family.ShotsPerSecond);
+                float range = t.Range * Math.Max(0.1f, RangeMultiplier);
+                float damage = t.DamagePerShot * Math.Max(0f, DamageMultiplier);
 
                 t.FireCooldown -= dt;
                 // Catch up at most a few shots after a hitch; never an unbounded burst.
@@ -229,10 +239,10 @@ namespace Cipher.Sim.Emplacements
                     {
                         // Cover blocks a blast the same way it blocks a bullet: a rotor behind
                         // your own barricade grinds the barricade, not the street beyond it.
-                        if (world.CountWithinVisible(t.Center, t.Range) == 0) { t.FireCooldown = 0f; break; }
+                        if (world.CountWithinVisible(t.Center, range) == 0) { t.FireCooldown = 0f; break; }
                         t.FireCooldown += interval;
                         t.ShotsFired++;
-                        int k = world.ApplyRadialDamageVisible(t.Center, t.Range, t.DamagePerShot);
+                        int k = world.ApplyRadialDamageVisible(t.Center, range, damage);
                         t.Kills += k;
                         kills += k;
                         shots?.Add(new TurretShot(i, t.Center, t.Center, k > 0, area: true));
@@ -241,7 +251,7 @@ namespace Cipher.Sim.Emplacements
 
                     // Owner's rule: a turret cannot detect through a wall. Acquisition is now
                     // sight-limited, which is what makes the maze a decision instead of scenery.
-                    int target = world.FindFirstInRangeVisible(t.Center, t.Range);
+                    int target = world.FindFirstInRangeVisible(t.Center, range);
                     if (target < 0) { t.FireCooldown = 0f; break; }
                     t.FireCooldown += interval;
                     t.ShotsFired++;
@@ -251,12 +261,12 @@ namespace Cipher.Sim.Emplacements
                     // round and takes the damage, so fire never passes through intact cover.
                     if (world.FirstWallBetween(t.Center, to, out int wx, out int wy))
                     {
-                        world.DamageWall(wx, wy, t.DamagePerShot * TurretWallDamageScale, 1f);
+                        world.DamageWall(wx, wy, damage * TurretWallDamageScale, 1f);
                         shots?.Add(new TurretShot(i, t.Center, GridMap.CellCenter(wx, wy), false));
                         continue;
                     }
 
-                    bool killed = world.ApplyDamage(target, t.DamagePerShot);
+                    bool killed = world.ApplyDamage(target, damage);
                     if (killed) { t.Kills++; kills++; }
                     shots?.Add(new TurretShot(i, t.Center, to, killed));
                 }

@@ -1,6 +1,7 @@
 #nullable enable
 using Cipher.Sim.Agents;
 using Cipher.Sim.Core;
+using Cipher.Sim.Emplacements;
 using Cipher.Sim.Grid;
 using Xunit;
 
@@ -266,6 +267,24 @@ namespace Cipher.Sim.Tests
             public FakeStructures(params Vec2[] positions) { _positions = positions; }
             public int Count => _positions.Length;
             public Vec2 PositionAt(int index) => _positions[index];
+        }
+
+        // ---------------------------------------------------------------- turret scaling
+
+        [Fact]
+        public void TurretMultipliersScaleGunsAlreadyOnTheBoard()
+        {
+            // Scaling at fire time rather than at placement is the point: a Doctrine card has to
+            // improve the turrets the player already owns, or it reads as a bug.
+            var turrets = new TurretSystem();
+            Assert.Equal(1f, turrets.DamageMultiplier);
+            Assert.Equal(1f, turrets.RangeMultiplier);
+
+            turrets.DamageMultiplier = 1.3f;
+            turrets.RangeMultiplier = 1.2f;
+
+            Assert.Equal(1.3f, turrets.DamageMultiplier, 3);
+            Assert.Equal(1.2f, turrets.RangeMultiplier, 3);
         }
     }
 }
