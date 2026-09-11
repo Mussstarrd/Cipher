@@ -1,4 +1,5 @@
 #nullable enable
+using UnityEngine;
 using System;
 using System.Collections.Generic;
 using Cipher.Game.Hero;
@@ -54,6 +55,29 @@ namespace Cipher.Game.Match
         /// <summary>When a spawn has no path (full seal), a Sapper is forced this often regardless of chance.</summary>
         public float SealedSapperSpacing { get; set; } = 20f;
 
+        // ---- Texture of the crowd (owner, 2026-09-11) ----------------------------------------
+
+        /// <summary>Share that sprint. They arrive first and alone, which is the warning shot.</summary>
+        public float SprinterShare { get; set; } = 0.14f;
+
+        /// <summary>Share that only walk. They arrive last, in a mass, long after you relaxed.</summary>
+        public float WalkerShare { get; set; } = 0.30f;
+
+        public float SprintPace { get; set; } = 1.75f;
+        public float RunPace { get; set; } = 1.0f;
+        public float WalkPace { get; set; } = 0.55f;
+
+        /// <summary>Share carrying a sidearm. Rare on purpose; it should feel like bad luck.</summary>
+        public float ArmedShare { get; set; } = 0.05f;
+
+        /// <summary>
+        /// Share that come over a fence somewhere other than the main approach. The owner's number.
+        /// </summary>
+        public float FlankShare { get; set; } = 0.08f;
+
+        /// <summary>Flankers climbed something to get in, and they arrive tired and scattered.</summary>
+        public float FlankPaceScale { get; set; } = 0.65f;
+
         public float SpitterFirstAt { get; set; } = 40f;
         public float SpitterChance { get; set; } = 0.005f;
         public float SpitterPity { get; set; } = 45f;         // at least one per this many seconds
@@ -102,6 +126,41 @@ namespace Cipher.Game.Match
             if (roll < _cfg.HunterShare + _cfg.WreckerShare)
                 return Intent.WreckWall;
             return Intent.Vault;
+        }
+
+        /// <summary>
+        /// How fast this one moves, as a multiplier on the configured walk.
+        ///
+        /// Owner: "Some of the mobs need to Sprint some need to run some need to walk". Three bands
+        /// rather than a continuous roll, because three legible speeds read as three kinds of person
+        /// and a smear of random speeds just reads as noise. Within a band there is a little jitter
+        /// so no two in the same band are exactly matched.
+        /// </summary>
+        public float DecidePace()
+        {
+            float roll = _rng.NextFloat();
+            float jitter = 0.94f + _rng.NextFloat() * 0.12f;
+
+            if (roll < _cfg.SprinterShare) return _cfg.SprintPace * jitter;
+            if (roll < _cfg.SprinterShare + _cfg.WalkerShare) return _cfg.WalkPace * jitter;
+            return _cfg.RunPace * jitter;
+        }
+
+        /// <summary>Whether this one is carrying a sidearm. Rare, and it should stay rare.</summary>
+        public bool DecideArmed() => _rng.NextFloat() < _cfg.ArmedShare;
+
+        /// <summary>
+        /// Which gate this one comes through: the main approach, or over a fence somewhere else.
+        ///
+        /// Owner: "I don't think all of the mobs should come from that front gate I think we should
+        /// have maybe 8% stragglers that Roman slower from the sides they've somehow climbed a gate".
+        /// Returns an index into the scenario's flank gates, or -1 for the main approach.
+        /// </summary>
+        public int DecideFlank(int flankCount)
+        {
+            if (flankCount <= 0) return -1;
+            if (_rng.NextFloat() >= _cfg.FlankShare) return -1;
+            return Mathf.Clamp((int)(_rng.NextFloat() * flankCount), 0, flankCount - 1);
         }
 
         public Archetype Decide(in DirectorView v)

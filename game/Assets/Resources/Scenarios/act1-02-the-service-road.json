@@ -176,6 +176,18 @@
       "x": 2,
       "y": 92,
       "gate": "outer-lots"
+    },
+    {
+      "x": 34,
+      "y": 8,
+      "gate": "north-lots",
+      "flank": true
+    },
+    {
+      "x": 34,
+      "y": 104,
+      "gate": "shoreline",
+      "flank": true
     }
   ],
   "vault": {

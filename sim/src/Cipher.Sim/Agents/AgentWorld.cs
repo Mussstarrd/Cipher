@@ -32,6 +32,10 @@ namespace Cipher.Sim.Agents
         private float[] _timer;
         /// <summary>Seconds of remaining interest in the player. See AgentWorld.Aggression.cs.</summary>
         private float[] _aggro;
+        /// <summary>Per-agent speed multiplier. See AgentWorld.Pace.cs.</summary>
+        private float[] _pace;
+        /// <summary>Per-agent sidearm flag. See AgentWorld.Pace.cs.</summary>
+        private bool[] _armed;
         private int[] _target;
 
         public int Count { get; private set; }
@@ -55,6 +59,8 @@ namespace Cipher.Sim.Agents
             _state = new byte[capacity];
             _timer = new float[capacity];
             _aggro = new float[capacity];
+            _pace = new float[capacity];
+            _armed = new bool[capacity];
             _target = new int[capacity];
         }
 
@@ -82,6 +88,8 @@ namespace Cipher.Sim.Agents
                 Array.Resize(ref _state, newSize);
             Array.Resize(ref _timer, newSize);
                 Array.Resize(ref _aggro, newSize);
+                Array.Resize(ref _pace, newSize);
+                Array.Resize(ref _armed, newSize);
                 Array.Resize(ref _target, newSize);
             }
 
@@ -95,6 +103,8 @@ namespace Cipher.Sim.Agents
             _state[id] = 0;
             _timer[id] = 0f;
             _aggro[id] = 0f;
+            _pace[id] = 1f;
+            _armed[id] = false;
             _target[id] = -1;
             AliveCount++;
             _hashDirty = true;
@@ -138,6 +148,10 @@ namespace Cipher.Sim.Agents
                         break;
                 }
 
+                // A body with a sidearm stops and shoots rather than closing, but only when it can
+                // actually see him. See AgentWorld.Pace.cs.
+                if (StepPistol(i, pos, dt, gates)) continue;
+
                 // Opportunity outranks the errand: a person within reach, then a gun within reach,
                 // then whatever they spawned intending to do. See AgentWorld.Aggression.cs.
                 if (StepOpportunist(i, pos, dt, gates)) continue;
@@ -154,7 +168,9 @@ namespace Cipher.Sim.Agents
                         break;
                 }
 
-                StepRunner(i, pos, dt, gates, _config.MoveSpeed);
+                // Pace is the individual's own: sprinters are on you while the slow ones are still
+                // crossing the field, which is what gives a wave a shape.
+                StepRunner(i, pos, dt, gates, _config.MoveSpeed * _pace[i]);
             }
 
             AdvanceBreaches(dt);

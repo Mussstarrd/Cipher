@@ -185,6 +185,18 @@
       "x": 2,
       "y": 80,
       "gate": "north-shore"
+    },
+    {
+      "x": 38,
+      "y": 8,
+      "gate": "substation-fence",
+      "flank": true
+    },
+    {
+      "x": 38,
+      "y": 104,
+      "gate": "north-shore-path",
+      "flank": true
     }
   ],
   "vault": {

@@ -79,7 +79,7 @@ namespace Cipher.Sim.Agents
                     if (dist > _config.HeroContactRange)
                     {
                         // They run at people. The game layer owns hero health and resolves contact.
-                        SteerToward(i, pos, HeroPosition, dt, _config.ChaseSpeed, gates);
+                        SteerToward(i, pos, HeroPosition, dt, _config.ChaseSpeed * _pace[i], gates);
                         return true;
                     }
 
@@ -113,7 +113,7 @@ namespace Cipher.Sim.Agents
 
             if (d > _config.HunterContactRange)
             {
-                SteerToward(i, pos, target, dt, _config.MoveSpeed, gates);
+                SteerToward(i, pos, target, dt, _config.MoveSpeed * _pace[i], gates);
                 return true;
             }
 

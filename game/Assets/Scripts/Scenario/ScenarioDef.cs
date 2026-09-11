@@ -28,7 +28,20 @@ namespace Cipher.Game.Scenarios
     {
         public readonly int X, Y;
         public readonly string Gate;
-        public SpawnPoint(int x, int y, string gate) { X = x; Y = y; Gate = gate; }
+
+        /// <summary>
+        /// A way in that is not the main approach: a fence somebody climbed, a culvert, the shore.
+        ///
+        /// Owner: "I don't think all of the mobs should come from that front gate I think we should
+        /// have maybe 8% stragglers that Roman slower from the sides they've somehow climbed a gate".
+        /// A small share of each wave uses one of these, and arrives slower and scattered.
+        /// </summary>
+        public readonly bool Flank;
+
+        public SpawnPoint(int x, int y, string gate, bool flank = false)
+        {
+            X = x; Y = y; Gate = gate; Flank = flank;
+        }
     }
 
     public sealed class MapDef

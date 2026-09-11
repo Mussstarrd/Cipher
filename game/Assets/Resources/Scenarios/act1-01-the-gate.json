@@ -102,6 +102,18 @@
       "x": 2,
       "y": 48,
       "gate": "county-road"
+    },
+    {
+      "x": 30,
+      "y": 6,
+      "gate": "north-fence",
+      "flank": true
+    },
+    {
+      "x": 30,
+      "y": 90,
+      "gate": "south-treeline",
+      "flank": true
     }
   ],
   "vault": {

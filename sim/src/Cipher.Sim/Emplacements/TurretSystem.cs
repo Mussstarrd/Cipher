@@ -59,9 +59,17 @@ namespace Cipher.Sim.Emplacements
     /// <summary>The graybox tower catalogue. Replace with a loaded data file once scenarios land.</summary>
     public static class TurretCatalog
     {
+        // BALANCE, owner 2026-09-11: "The turrets are killing the mobs to easily a single turret
+        // should be able to be overrun if I don't intervene come on."
+        //
+        // The Sentry was 60 dps against 34-hp bodies -- one kill every half second, forever, with no
+        // input from the player. It is 22 now. Paired with opportunists hitting guns harder, a lone
+        // turret holds a lane against a trickle and loses it to a wave, which is the decision the
+        // whole build layer exists to give him.
+
         /// <summary>Long reach, single target, picks the runner nearest the vault. Answers leakers down a lane.</summary>
         public static TurretFamily Sentry { get; } = new TurretFamily(
-            "Sentry .50", cost: 150, range: 10f, damagePerShot: 5f, shotsPerSecond: 12f, maxHp: 300, FireMode.Single,
+            "Sentry .50", cost: 150, range: 10f, damagePerShot: 4f, shotsPerSecond: 5.5f, maxHp: 300, FireMode.Single,
             new[]
             {
                 new TurretTier("Twin .50", cost: 120, damageMultiplier: 1.6f, rangeBonus: 0f, hpBonus: 100),
@@ -76,7 +84,7 @@ namespace Cipher.Sim.Emplacements
         /// from the kingpin fiction ADR-003 retired -- there is no chop shop in a lake community.
         /// </summary>
         public static TurretFamily Grinder { get; } = new TurretFamily(
-            "Brush Hog", cost: 120, range: 2.2f, damagePerShot: 2.75f, shotsPerSecond: 8f, maxHp: 260, FireMode.Area,
+            "Brush Hog", cost: 120, range: 2.4f, damagePerShot: 2.2f, shotsPerSecond: 5f, maxHp: 260, FireMode.Area,
             new[]
             {
                 new TurretTier("Flail Drum", cost: 110, damageMultiplier: 1.7f, rangeBonus: 0f, hpBonus: 90),

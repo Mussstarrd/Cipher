@@ -17,6 +17,8 @@ namespace Cipher.Sim.Agents
 
     public enum SimEventKind : byte
     {
+        /// <summary>A = agent id, F = damage. Someone with a sidearm took a shot at the player.</summary>
+        PistolShot,
         /// <summary>A = agent id, B = wall cell index. The Sapper chose its wall.</summary>
         SapperTargeted,
         /// <summary>A = agent id, B = wall cell index, F = seconds until the hole opens.</summary>

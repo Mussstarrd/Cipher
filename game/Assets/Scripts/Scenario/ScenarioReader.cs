@@ -54,12 +54,20 @@ namespace Cipher.Game.Scenarios
 
             foreach (var s in root.Get("spawnCells").Items)
             {
-                s.RejectUnknownKeys("x", "y", "gate");
+                s.RejectUnknownKeys("x", "y", "gate", "flank");
                 var cell = ReadCell(s, def.Map, "spawnCells");
-                def.SpawnCells.Add(new SpawnPoint(cell.X, cell.Y, s.Opt("gate")?.AsString() ?? ""));
+                def.SpawnCells.Add(new SpawnPoint(cell.X, cell.Y,
+                                                  s.Opt("gate")?.AsString() ?? "",
+                                                  s.Opt("flank")?.AsBool() ?? false));
             }
             if (def.SpawnCells.Count == 0)
                 throw new ScenarioException("$.spawnCells: a scenario needs at least one spawn point");
+
+            bool anyMain = false;
+            foreach (var sc in def.SpawnCells) if (!sc.Flank) anyMain = true;
+            if (!anyMain)
+                throw new ScenarioException(
+                    "$.spawnCells: every gate is a flank, so the wave has no main approach to come from");
 
             var vault = root.Get("vault");
             vault.RejectUnknownKeys("x", "y", "hp");

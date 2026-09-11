@@ -88,6 +88,8 @@ namespace Cipher.Game
         private readonly List<SimEvent> _eventScratch = new List<SimEvent>(32);
         private readonly List<(string Text, float Ttl)> _alerts = new List<(string, float)>(8);
         private (int X, int Y)[] SpawnCells = { (1, 4), (1, 14), (1, 24), (1, 34), (1, 44) };
+        private (int X, int Y)[] _mainGates = System.Array.Empty<(int, int)>();
+        private (int X, int Y)[] _flankGates = System.Array.Empty<(int, int)>();
         private int _spawnCursor;
         private float _tickAccumulator;
         private int _lastReached, _lastKills;
@@ -280,9 +282,21 @@ namespace Cipher.Game
             HeroSpawn = new Vec2(def.HeroSpawn.X + 0.5f, def.HeroSpawn.Y + 0.5f);
             _eco = def.Economy;
 
+            // Two lists: the main approach the wave walks in through, and the fences a minority
+            // climb. BuildModel still sees every gate, because sealing ANY of them has to be
+            // previewed honestly.
             SpawnCells = new (int X, int Y)[def.SpawnCells.Count];
+            var main = new List<(int X, int Y)>();
+            var flanks = new List<(int X, int Y)>();
             for (int i = 0; i < def.SpawnCells.Count; i++)
-                SpawnCells[i] = (def.SpawnCells[i].X, def.SpawnCells[i].Y);
+            {
+                var sc = def.SpawnCells[i];
+                SpawnCells[i] = (sc.X, sc.Y);
+                (sc.Flank ? flanks : main).Add((sc.X, sc.Y));
+            }
+            if (main.Count == 0) main.AddRange(SpawnCells);
+            _mainGates = main.ToArray();
+            _flankGates = flanks.ToArray();
         }
 
         /// <summary>
@@ -515,6 +529,9 @@ namespace Cipher.Game
             _logMaterial = MakeMaterial(new Color(0.36f, 0.27f, 0.19f), instanced: true);
             _barricadeMaterial = MakeMaterial(new Color(0.55f, 0.45f, 0.25f), instanced: true);
             _breachMaterial = MakeMaterial(new Color(0.9f, 0.35f, 0.1f), instanced: true);
+            // No ink on either: an outline around a fireball reads as a balloon.
+            _blastFlashMaterial = MakeMaterial(new Color(1f, 0.82f, 0.38f), instanced: true, ink: InkNone);
+            _blastRingMaterial = MakeMaterial(new Color(0.42f, 0.35f, 0.28f), instanced: true, ink: InkNone);
             _tracerMaterial = MakeMaterial(new Color(1f, 0.95f, 0.5f), instanced: false);
             _turretTracerMaterial = MakeMaterial(new Color(0.6f, 0.9f, 1f), instanced: false);
             _blastMaterial = MakeMaterial(new Color(1f, 0.5f, 0.1f), instanced: false);
@@ -1159,17 +1176,26 @@ namespace Cipher.Game
                     foreach (var sc in SpawnCells) if (!_field.HasPath(sc.X, sc.Y)) { sealedIn = true; break; }
                     for (int i = 0; i < toSpawn; i++)
                     {
-                        var (sx, sy) = SpawnCells[_spawnCursor % SpawnCells.Length];
+                        // A minority come over a fence somewhere else, slower and scattered.
+                        int flank = _director.DecideFlank(_flankGates.Length);
+                        var gates = flank >= 0 ? _flankGates : _mainGates;
+                        int gateIndex = flank >= 0 ? flank : _spawnCursor % Mathf.Max(1, gates.Length);
+                        var (sx, sy) = gates[gateIndex];
                         _spawnCursor++;
+
                         var pos = new Vec2(sx + 0.5f + (_spawnCursor % 3) * 0.3f, sy + 0.5f + (_spawnCursor % 5) * 0.2f);
                         var view = new DirectorView(_matchSeconds, _world.ActiveSapperCount, _world.ActiveBreachCount,
                                                     _world.CountAlive(Archetype.Spitter), sealedIn, _turrets.Turrets.Count);
                         Archetype a = _director.Decide(view);
                         if (a == Archetype.Runner)
                         {
-                            // Not every body runs the same errand (owner, 2026-09-11). The split is
-                            // decided HERE, by the seeded director, because the sim carries no RNG.
-                            _world.Spawn(pos, _scenario.EnemyHealth, _director.DecideIntent(view));
+                            // Not every body runs the same errand, at the same speed, or unarmed
+                            // (owner, 2026-09-11). All three are decided HERE by the seeded director,
+                            // because the sim carries no RNG.
+                            float pace = _director.DecidePace();
+                            if (flank >= 0) pace *= _scenario.Director.FlankPaceScale;
+                            _world.Spawn(pos, _scenario.EnemyHealth, _director.DecideIntent(view),
+                                         pace, _director.DecideArmed());
                         }
                         else _world.SpawnArchetype(pos, a);
                     }
@@ -1394,6 +1420,24 @@ namespace Cipher.Game
                         Alert("SPITTER — it is going for a turret", 3f);
                         _sfx.Play(Sfx.SpitterSeen, 0.8f, 0.05f, minInterval: 1.5f);
                         break;
+                    case SimEventKind.PistolShot:
+                    {
+                        // A neighbour who owned a handgun. Weak, and the point is not the damage --
+                        // it is that a pocket of the crowd stops and shoots while the rest keeps
+                        // coming, so the wave has to be read rather than treated as one object.
+                        _hero.TakeDamage(e.F);
+                        var from = ToWorld(_world.PositionOf(e.A), 1.15f);
+                        _tracers.Add(new Tracer
+                        {
+                            A = from,
+                            B = ToWorld(_hero.Position, 1.0f),
+                            Ttl = TracerLife * 0.5f,
+                            Turret = false,
+                        });
+                        _sfx.PlayAt(Sfx.Shot, from, 0.45f, 0.06f);
+                        break;
+                    }
+
                     case SimEventKind.StructureMauled:
                         if (e.B >= 0 && e.B < _turrets.Turrets.Count)
                         {
@@ -2889,6 +2933,61 @@ namespace Cipher.Game
             _camera.transform.rotation = Quaternion.Slerp(_camera.transform.rotation, targetRot, k);
         }
 
+        /// <summary>
+        /// Draws an airstrike impact: a flash, an expanding ring of dust, and a few chunks thrown
+        /// out of it.
+        ///
+        /// Owner: "we also still need a graphic to fill in for the actual explosions". There was a
+        /// blast RADIUS being tracked and nothing drawing it, so the most dramatic thing in the game
+        /// happened invisibly -- bodies simply stopped existing.
+        ///
+        /// Built from the same instanced primitives as everything else. Under a cel shader a hard
+        /// flat ring expanding and fading in steps reads better than any soft particle would, and it
+        /// costs one draw call per shape rather than a particle system per bomb.
+        /// </summary>
+        private void DrawBlasts(float dt)
+        {
+            if (_blasts.Count == 0) return;
+
+            _fxMatrices.Clear();
+            var ringMatrices = _fxRing;
+            ringMatrices.Clear();
+
+            for (int i = _blasts.Count - 1; i >= 0; i--)
+            {
+                var b = _blasts[i];
+                b.Ttl -= dt;
+                if (b.Ttl <= 0f) { _blasts.RemoveAt(i); continue; }
+                _blasts[i] = b;
+
+                float life = 1f - Mathf.Clamp01(b.Ttl / BlastLife);   // 0 at the flash, 1 at the end
+
+                // The flash: bright, fat, and gone in the first fifth of the life.
+                if (life < 0.22f)
+                {
+                    float f = 1f - life / 0.22f;
+                    float size = b.Radius * (0.5f + 0.9f * (1f - f));
+                    _fxMatrices.Add(Matrix4x4.TRS(b.Center + Vector3.up * (0.6f + 1.8f * (1f - f)),
+                                                  Quaternion.identity,
+                                                  new Vector3(size, size * (0.7f + f), size)));
+                }
+
+                // The ring: expands past the blast radius and flattens as it goes.
+                float ring = b.Radius * (0.35f + 1.5f * life);
+                float thickness = Mathf.Lerp(1.1f, 0.12f, life);
+                ringMatrices.Add(Matrix4x4.TRS(b.Center + Vector3.up * 0.05f,
+                                               Quaternion.identity,
+                                               new Vector3(ring, thickness, ring)));
+            }
+
+            if (_fxMatrices.Count > 0) DrawInstancedBatched(_agentMesh, _blastFlashMaterial, _fxMatrices);
+            if (ringMatrices.Count > 0) DrawInstancedBatched(_discMesh, _blastRingMaterial, ringMatrices);
+        }
+
+        private readonly List<Matrix4x4> _fxRing = new List<Matrix4x4>(32);
+        private Material _blastFlashMaterial = null!;
+        private Material _blastRingMaterial = null!;
+
         private void DrawWorld()
         {
             if (_lineupMode) return;   // lineup capture: nothing but the models
@@ -2901,6 +3000,7 @@ namespace Cipher.Game
             DrawInstancedList(_cubeMesh, _barricadeMaterial, _barricadeMatrices, _barricadeMatrices.Length);
             DrawInstancedList(_cubeMesh, _breachMaterial, _breachMatrices, _breachMatrices.Length);
             DrawAgents();
+            DrawBlasts(Time.deltaTime);
 
             if (_buildMode)
             {

@@ -71,11 +71,32 @@ namespace Cipher.Sim.Agents
         /// <summary>While that memory lasts, the range they will follow to is this much wider.</summary>
         public float AggroStickyScale { get; set; } = 1.6f;
 
+        // ---- Sidearms (owner, 2026-09-11) ----------------------------------------------------
+        // "a few of them should have pistols that they take pop shots at me". Weak and slow on
+        // purpose: the point is that a pocket of the crowd behaves differently, so the player has to
+        // read the wave instead of treating it as one object.
+
+        /// <summary>How far a sidearm will engage from.</summary>
+        public float PistolRange { get; set; } = 11f;
+
+        /// <summary>They stop and shoot at about this distance rather than closing all the way.</summary>
+        public float PistolStandoff { get; set; } = 7f;
+
+        /// <summary>Seconds between shots. Slow; this is a handgun in shaking hands.</summary>
+        public float PistolInterval { get; set; } = 1.9f;
+
+        /// <summary>Damage per hit. The game layer owns hero health and resolves it.</summary>
+        public float PistolDamage { get; set; } = 4f;
+
         /// <summary>Arm's reach. An ordinary body only claws a gun it nearly walks into.</summary>
         public float OpportunistStructureRange { get; set; } = 2.6f;
 
-        /// <summary>An opportunist hits a gun softer than a body that came specifically for guns.</summary>
-        public float OpportunistDamageScale { get; set; } = 0.55f;
+        /// <summary>
+        /// An opportunist hits a gun softer than a body that came specifically for guns -- but not
+        /// much softer. Owner: "a single turret should be able to be overrun if I don't intervene".
+        /// A gun that a passing crowd cannot pull down is a gun the player never has to defend.
+        /// </summary>
+        public float OpportunistDamageScale { get; set; } = 0.85f;
 
         public float HunterAcquireRange { get; set; } = 14f;
         /// <summary>Close enough to start tearing at it.</summary>

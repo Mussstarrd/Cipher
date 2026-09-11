@@ -31,7 +31,13 @@ namespace Cipher.Game.Hero
         /// <summary>Once per wave, a lethal hit leaves you on 1 HP instead. Legacy vests only.</summary>
         public bool HasSecondWind { get; set; }
         // Airstrike ultimate: a line of bombs along the look axis, aimed by looking (ROADMAP-2026-09 #1).
-        public float AirstrikeCooldown { get; set; } = 8f;
+        /// <summary>
+        /// Owner, 2026-09-11: "Airstrikes need to have a longer cool down they are overpowered."
+        /// Eight seconds made it a primary weapon. At forty-five it is the thing you save for the
+        /// moment the line actually breaks, which is what ADR-003's hijacked cargo drone should be:
+        /// leverage you get occasionally, not a button you hold.
+        /// </summary>
+        public float AirstrikeCooldown { get; set; } = 45f;
         public float AirstrikeMinRange { get; set; } = 6f;    // marker clamps to this band from the hero
         public float AirstrikeMaxRange { get; set; } = 24f;
         public float AirstrikeLineLength { get; set; } = 14f; // bombs walk the line far to near
@@ -315,6 +321,12 @@ namespace Cipher.Game.Hero
         /// The single place the hero loses health, so Second Wind cannot be bypassed by a new
         /// damage source someone adds later.
         /// </summary>
+        /// <summary>
+        /// Damage from something other than contact: a sidearm, a Spitter, the player's own strike.
+        /// Goes through the same path as everything else, so Second Wind covers it too.
+        /// </summary>
+        public float TakeDamage(float damage) => ApplyDamageToSelf(damage);
+
         private float ApplyDamageToSelf(float damage)
         {
             if (damage <= 0f || IsDown) return 0f;

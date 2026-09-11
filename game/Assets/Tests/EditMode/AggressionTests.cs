@@ -5,6 +5,7 @@ using Cipher.Sim.Core;
 using Cipher.Sim.Emplacements;
 using Cipher.Sim.Grid;
 using NUnit.Framework;
+using UnityEngine;
 
 namespace Cipher.Game.Tests
 {
@@ -173,6 +174,138 @@ namespace Cipher.Game.Tests
             }
 
             Assert.That(Run(), Is.EqualTo(Run()));
+        }
+    }
+
+    /// <summary>
+    /// The texture of the crowd: speed, sidearms, and guns that can actually be lost.
+    /// </summary>
+    public sealed class CrowdTextureTests
+    {
+        private static (GridMap map, AgentWorld world) Field(SimConfig? cfg = null)
+        {
+            var map = new GridMap(48, 48);
+            var flow = new FlowField(map);
+            flow.Compute(46, 24);
+            return (map, new AgentWorld(map, flow, cfg ?? new SimConfig(), initialCapacity: 64));
+        }
+
+        [Test]
+        public void ASprinterOutrunsAWalker()
+        {
+            // "Some of the mobs need to Sprint some need to run some need to walk." One speed for
+            // everybody is the loudest tell that a crowd is a particle system.
+            var (_, world) = Field();
+            int fast = world.Spawn(new Vec2(10.5f, 20.5f), 100f, Intent.Vault, pace: 1.75f, armed: false);
+            int slow = world.Spawn(new Vec2(10.5f, 28.5f), 100f, Intent.Vault, pace: 0.55f, armed: false);
+            world.SetHero(new Vec2(0f, 0f), alive: false);
+
+            for (int i = 0; i < 60; i++) world.Step(1f / 30f);
+
+            float fastGain = world.PositionOf(fast).X - 10.5f;
+            float slowGain = world.PositionOf(slow).X - 10.5f;
+            Assert.That(fastGain, Is.GreaterThan(slowGain * 2f),
+                        "a sprinter should be well clear of a walker after two seconds");
+        }
+
+        [Test]
+        public void PaceSurvivesTheChase()
+        {
+            var (_, world) = Field();
+            int fast = world.Spawn(new Vec2(20.5f, 20.5f), 100f, Intent.Vault, pace: 1.75f, armed: false);
+            int slow = world.Spawn(new Vec2(20.5f, 28.5f), 100f, Intent.Vault, pace: 0.55f, armed: false);
+            world.SetHero(new Vec2(20.5f, 24.5f), alive: true);
+
+            for (int i = 0; i < 20; i++) world.Step(1f / 30f);
+
+            float fastLeft = Vec2.DistanceSquared(world.PositionOf(fast), new Vec2(20.5f, 24.5f));
+            float slowLeft = Vec2.DistanceSquared(world.PositionOf(slow), new Vec2(20.5f, 24.5f));
+            Assert.That(fastLeft, Is.LessThan(slowLeft), "the fast one reaches him first");
+        }
+
+        [Test]
+        public void AnArmedBodyShootsRatherThanClosingAllTheWay()
+        {
+            var (_, world) = Field();
+            int id = world.Spawn(new Vec2(24.5f, 24.5f), 100f, Intent.Vault, pace: 1f, armed: true);
+            world.SetHero(new Vec2(15.5f, 24.5f), alive: true);   // 9 cells: inside pistol range
+
+            var events = new List<SimEvent>();
+            bool shot = false;
+            for (int i = 0; i < 120 && !shot; i++)
+            {
+                world.Step(1f / 30f);
+                world.DrainEvents(events);
+                foreach (var e in events) if (e.Kind == SimEventKind.PistolShot) shot = true;
+                events.Clear();
+            }
+
+            Assert.That(shot, Is.True, "a sidearm inside its range should be used");
+            float dist = Mathf.Sqrt(Vec2.DistanceSquared(world.PositionOf(id), new Vec2(15.5f, 24.5f)));
+            Assert.That(dist, Is.GreaterThan(3f), "it stands off rather than closing to contact");
+        }
+
+        [Test]
+        public void NobodyShootsThroughAWall()
+        {
+            var (map, world) = Field();
+            for (int y = 0; y < 48; y++) map.SetWall(20, y, WallKind.Wall, GridMap.DefaultWallHp);
+
+            world.Spawn(new Vec2(24.5f, 24.5f), 100f, Intent.Vault, pace: 1f, armed: true);
+            world.SetHero(new Vec2(15.5f, 24.5f), alive: true);
+
+            var events = new List<SimEvent>();
+            for (int i = 0; i < 60; i++)
+            {
+                world.Step(1f / 30f);
+                world.DrainEvents(events);
+                foreach (var e in events)
+                    Assert.That(e.Kind, Is.Not.EqualTo(SimEventKind.PistolShot),
+                                "the same rule as the turrets: no shooting through cover");
+                events.Clear();
+            }
+        }
+
+        [Test]
+        public void ACrowdCanPullDownALoneTurret()
+        {
+            // "a single turret should be able to be overrun if I don't intervene come on."
+            var (map, world) = Field();
+            var turrets = new TurretSystem();
+            turrets.Place(map, 24, 24);
+            world.Structures = turrets.AsStructureQuery();
+            world.SetHero(new Vec2(0f, 0f), alive: false);
+
+            for (int i = 0; i < 24; i++)
+                world.Spawn(new Vec2(22.0f + (i % 4) * 0.4f, 23.0f + (i / 4) * 0.5f), 400f,
+                            Intent.Vault, pace: 1f, armed: false);
+
+            var events = new List<SimEvent>();
+            float hp = turrets.Turrets[0].Hp;
+            bool down = false;
+
+            for (int i = 0; i < 30 * 25 && !down; i++)
+            {
+                world.Step(1f / 30f);
+                turrets.Step(world, 1f / 30f, null);
+                world.DrainEvents(events);
+                foreach (var e in events)
+                {
+                    // Bounds-checked, like the game does: a destroyed turret leaves the list, and
+                    // events queued in the same batch still carry its old index.
+                    if (e.Kind != SimEventKind.StructureMauled) continue;
+                    if (e.B < 0 || e.B >= turrets.Turrets.Count) continue;
+                    turrets.Damage(map, e.B, Mathf.CeilToInt(e.F));
+                }
+                events.Clear();
+
+                // A destroyed turret leaves the list entirely, so "gone" and "not alive" are both
+                // ways of losing it.
+                down = turrets.Turrets.Count == 0 || !turrets.Turrets[0].Alive;
+            }
+
+            Assert.That(down, Is.True,
+                        $"a crowd standing on a gun should pull it down; it started at {hp} hp");
         }
     }
 }
