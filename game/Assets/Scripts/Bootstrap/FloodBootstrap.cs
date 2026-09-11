@@ -458,6 +458,7 @@ namespace Cipher.Game
             _director = new SpawnDirector(_scenario.Director, _scenario.DirectorSeed);
             // Derived from the map, not from the 64-wide graybox: a narrower scenario used to hand
             // PickupSystem a minX of 34 and GridMap.CellIndex throws on out-of-bounds.
+            _crew.Reset(new Vec2(GoalX + 0.5f, GoalY + 0.5f));
             _aidKits = new AidKits(_map, _aidSpots, seed ^ 0xA1D5);
             _aidKits.PlaceOpening();
             _pickups = new PickupSystem(_map, seed ^ 0xC1FE,
@@ -1257,6 +1258,7 @@ namespace Cipher.Game
                 // Actors first: the objectives read their state, so a generator wrecked this tick
                 // must fail the objective this tick and not next one.
                 if (!waiting) _actors.Tick(TickDt, _hero.Position.X, _hero.Position.Y, _threat);
+                TickRepairCrew(TickDt);
                 SyncActorViews();
 
                 // The scenario decides what winning this mission means. The wave table is only the
@@ -2253,6 +2255,13 @@ namespace Cipher.Game
         /// <summary>Everything the signal weapons draw. ADR-008; see SignalFx for the API split.</summary>
         private readonly SignalFx _signal = new SignalFx();
 
+        /// <summary>ADR-009: the wife and the nine-year-old, out fixing things between waves.</summary>
+        private readonly RepairCrew _crew = new RepairCrew();
+        private readonly List<RepairCrew.Job> _crewJobs = new List<RepairCrew.Job>(16);
+        private float _crewBanked;
+        private GameObject? _crewAdult;
+        private GameObject? _crewChild;
+
         private GameObject? _truckBody;
 
         private GUIStyle? _vaultStyle;
@@ -2329,6 +2338,105 @@ namespace Cipher.Game
         /// The one thing the actor rules need from the simulation, kept behind an interface so the
         /// rules stay testable without a world.
         /// </summary>
+        /// <summary>
+        /// Runs the repair crew and applies what they fixed. ADR-009.
+        ///
+        /// The window is "between waves, mission still running" -- and NOT the pack-up, because
+        /// during extraction the emplacements are being unbolted, not mended, and two people
+        /// wandering out to fix a turret that is about to be loaded is nonsense.
+        /// </summary>
+        private void TickRepairCrew(float dt)
+        {
+            bool window = !_match.IsOver
+                       && _match.Phase == MatchPhase.Setup
+                       && !_match.AwaitingStart;
+
+            _crewJobs.Clear();
+            var turrets = _turrets.Turrets;
+            for (int i = 0; i < turrets.Count; i++)
+            {
+                var t = turrets[i];
+                if (t.MaxHp <= 0) continue;
+                _crewJobs.Add(new RepairCrew.Job(i, new Vec2(t.X + 0.5f, t.Y + 0.5f),
+                                                 (float)t.Hp / t.MaxHp));
+            }
+
+            float repaired = _crew.Tick(dt, window, _crewJobs,
+                (at, radius) => _world.CountWithinVisible(at, radius));
+
+            if (repaired > 0f && _crew.JobIndex >= 0 && _crew.JobIndex < turrets.Count)
+            {
+                // Whole hit points only, so a fractional tick does not round to nothing forever:
+                // the crew banks the remainder and spends it when it reaches one.
+                _crewBanked += repaired;
+                int whole = Mathf.FloorToInt(_crewBanked);
+                if (whole > 0)
+                {
+                    _crewBanked -= whole;
+                    _turrets.Repair(_map, _crew.JobIndex, whole);
+                }
+            }
+
+            if (_crew.AbandonedThisTick)
+            {
+                Alert("they had to get back in the truck", 2.4f);
+                _sfx.Play(Sfx.Refuse, 0.4f, 0.1f, minInterval: 3f);
+            }
+
+            SyncCrewBodies();
+        }
+
+        /// <summary>
+        /// Two small figures, only while they are out. Built lazily from the same civilian path the
+        /// crowd uses, so they are people rather than markers -- ADR-009 asks the player to care
+        /// about them, and a capsule cannot carry that.
+        /// </summary>
+        private void SyncCrewBodies()
+        {
+            bool out_ = _crew.Outside;
+            if (_crewAdult == null && out_)
+            {
+                _crewAdult = BuildCrewBody(1.72f);
+                _crewChild = BuildCrewBody(1.24f);
+            }
+            if (_crewAdult == null || _crewChild == null) return;
+
+            _crewAdult.SetActive(out_);
+            _crewChild.SetActive(out_);
+            if (!out_) return;
+
+            var a = _crew.AdultPosition;
+            var c = _crew.ChildPosition;
+            _crewAdult.transform.position = new Vector3(a.X, 0f, a.Y);
+            _crewChild.transform.position = new Vector3(c.X, 0f, c.Y);
+
+            // Face the way they are going, or the job if they have arrived.
+            Vector3 look = new Vector3(a.X - c.X, 0f, a.Y - c.Y);
+            if (look.sqrMagnitude > 1e-4f)
+            {
+                var rot = Quaternion.LookRotation(look.normalized, Vector3.up);
+                _crewAdult.transform.rotation = rot;
+                _crewChild.transform.rotation = rot;
+            }
+
+            GroundMarkRenderer.Active?.Queue(_crewAdult.transform.position, 0.34f);
+            GroundMarkRenderer.Active?.Queue(_crewChild.transform.position, 0.26f);
+        }
+
+        private GameObject BuildCrewBody(float height)
+        {
+            var go = new GameObject("RepairCrew");
+            var body = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+            Destroy(body.GetComponent<Collider>());
+            body.transform.SetParent(go.transform, false);
+            body.transform.localPosition = new Vector3(0f, height * 0.5f, 0f);
+            body.transform.localScale = new Vector3(height * 0.26f, height * 0.5f, height * 0.26f);
+            body.GetComponent<Renderer>().material =
+                MakeMaterial(new Color(0.74f, 0.70f, 0.62f), instanced: false, ink: InkProp);
+            go.SetActive(false);
+            return go;
+        }
+
         private sealed class WorldThreat : IActorThreat
         {
             private readonly System.Func<AgentWorld?> _world;

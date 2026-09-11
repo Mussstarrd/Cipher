@@ -374,4 +374,18 @@ substitute: it references the sim's SOURCE, not its test project.
   - The sim carries no heading, so a failing body's facing is derived in the bootstrap from where it
     was last frame. A heading in the sim would be renderer-only state in the hot path and in the
     determinism hash.
+- **THE REPAIR CREW IS THE SETUP WINDOW'S STAKE** (`Scripts/Match/RepairCrew.cs`, ADR-009). Between
+  waves the wife and the nine-year-old get out of the truck and mend the worst emplacement they can
+  safely reach. **They are never killed.** Enemies inside `DangerRadius` make them abandon the job
+  and scramble back, and the repair simply does not happen -- the stake is the repair, not the
+  family. That line is deliberate, it is what ADR-009 asks for, and `RepairCrewTests` pins it down
+  because it is exactly the kind of decision a later change erodes by accident.
+  - The window is `Phase == Setup && !AwaitingStart`, **not** the pack-up: during extraction the
+    emplacements are being unbolted, not mended.
+  - **`TurretSystem.Repair` is new and is NOT `Damage` with a negative amount.** Damage frees the
+    cell at zero and repair must never do anything of the kind. It also writes the restored value
+    back to `map` -- the grid keeps its own copy of a structure's hit points, and a repaired turret
+    whose cell kept the damaged value dies early next wave with no symptom but "that one felt weak".
+  - Fractional repair is banked in the bootstrap and spent in whole hit points, or a slow tick
+    rounds to nothing forever.
 - **Was:** owner hero feedback → barricade build-mode with live path preview (Milestone 2 "The Maze").

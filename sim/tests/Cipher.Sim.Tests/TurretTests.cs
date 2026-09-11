@@ -217,5 +217,57 @@ namespace Cipher.Sim.Tests
             }
             Assert.Equal(Run(), Run());
         }
-    }
+    
+        // ---------------------------------------------------------------- repair (ADR-009)
+
+        [Fact]
+        public void Repair_RestoresHitPoints_AndNeverExceedsTheTiersMaximum()
+        {
+            var (map, _, _) = OpenField();
+            var turrets = new TurretSystem();
+            turrets.Place(map, 10, 16);
+            var t = turrets.Turrets[0];
+            ushort max = t.MaxHp;
+
+            turrets.Damage(map, 0, 40);
+            Assert.Equal(max - 40, t.Hp);
+
+            Assert.Equal(25, turrets.Repair(map, 0, 25));
+            Assert.Equal(max - 15, t.Hp);
+
+            // Asking for more than is missing restores only what was missing.
+            Assert.Equal(15, turrets.Repair(map, 0, 999));
+            Assert.Equal(max, t.Hp);
+            Assert.Equal(0, turrets.Repair(map, 0, 10));
+        }
+
+        [Fact]
+        public void Repair_KeepsTheMapsCopyOfTheStructureInStep()
+        {
+            var (map, _, _) = OpenField();
+            var turrets = new TurretSystem();
+            turrets.Place(map, 10, 16);
+            var t = turrets.Turrets[0];
+
+            turrets.Damage(map, 0, 30);
+            turrets.Repair(map, 0, 30);
+
+            // A repaired turret whose cell kept the damaged value dies early next wave, and the
+            // only symptom is "that turret felt weak", which nobody ever debugs.
+            Assert.Equal(t.Hp, map.HpAt(t.X, t.Y));
+        }
+
+        [Fact]
+        public void Repair_IgnoresNonsenseRatherThanThrowing()
+        {
+            var (map, _, _) = OpenField();
+            var turrets = new TurretSystem();
+            turrets.Place(map, 10, 16);
+
+            Assert.Equal(0, turrets.Repair(map, 0, 0));
+            Assert.Equal(0, turrets.Repair(map, 0, -5));
+            Assert.Equal(0, turrets.Repair(map, 99, 10));
+            Assert.Equal(0, turrets.Repair(map, -1, 10));
+        }
+}
 }

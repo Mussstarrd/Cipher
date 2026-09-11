@@ -204,6 +204,33 @@ namespace Cipher.Sim.Emplacements
             return fraction;
         }
 
+        /// <summary>
+        /// Mends an emplacement, capped at the maximum its tier allows. Returns the hit points
+        /// actually restored, which is what the caller needs in order to say so.
+        ///
+        /// Separate from <see cref="Damage"/> rather than a negative amount through it: damage
+        /// frees the cell when it reaches zero and repair must never do anything of the kind, and a
+        /// sign test guarding two different behaviours in one method is how that bug gets written.
+        ///
+        /// ADR-009: this exists because two people get out of the truck between waves and fix
+        /// things. Nothing else in the game could repair a turret.
+        /// </summary>
+        public int Repair(GridMap map, int index, int amount)
+        {
+            if (map == null) throw new ArgumentNullException(nameof(map));
+            if (index < 0 || index >= _turrets.Count || amount <= 0) return 0;
+
+            var t = _turrets[index];
+            int restored = Math.Min(amount, t.MaxHp - t.Hp);
+            if (restored <= 0) return 0;
+
+            t.Hp = (ushort)(t.Hp + restored);
+            // The map carries its own copy of the structure's hit points and the two must agree,
+            // or a repaired turret keeps the cell's damaged value and dies early next wave.
+            map.Repair(t.X, t.Y, t.Hp);
+            return restored;
+        }
+
         /// <summary>Structure damage (Spitters). Returns true when the turret is destroyed; its cell is freed.</summary>
         public bool Damage(GridMap map, int index, int amount)
         {
