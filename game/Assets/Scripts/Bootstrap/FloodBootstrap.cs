@@ -1610,6 +1610,11 @@ namespace Cipher.Game
 
         private bool _hudHidden;
         private AnimationClip? _walkClip;
+        private Animation? _heroAnim;
+        private float _heroFiring;
+
+        /// <summary>Called when the hero shoots, so his body plays the shot rather than miming it.</summary>
+        private void NoteHeroShot() => _heroFiring = 0.16f;
         private CivilianCrowd? _crowd;
         private Transform? _heroBody;
         private bool _environmentDressed;
@@ -1669,20 +1674,22 @@ namespace Cipher.Game
             // to go rather than just be switched off.
             foreach (var a0 in go.GetComponentsInChildren<Animator>()) Destroy(a0);
 
-            if (_walkClip != null && _walkClip.legacy)
+            EnsureClips();
+            if (_clips.Count > 0)
             {
                 var legacy = go.AddComponent<Animation>();
-                legacy.AddClip(_walkClip, "walk");
-                legacy.wrapMode = WrapMode.Loop;
+                foreach (var pair in _clips) legacy.AddClip(pair.Value, pair.Key);
                 legacy.playAutomatically = false;
-                legacy.Play("walk");
+
+                string opening = _clips.ContainsKey("idle") ? "idle" : "walk";
+                legacy.Play(opening);
 
                 // Desynchronise, or the crowd marches in lockstep, which is the single most obvious
                 // tell that a crowd is fake.
-                var state = legacy["walk"];
+                var state = legacy[opening];
                 if (state != null)
                 {
-                    state.time = (float)rng.NextDouble() * _walkClip.length;
+                    state.time = (float)rng.NextDouble() * state.length;
                     state.speed = 0.9f + (float)rng.NextDouble() * 0.25f;
                 }
             }
@@ -1693,11 +1700,34 @@ namespace Cipher.Game
             return slot.transform;
         }
 
+        /// <summary>
+        /// The clips a body can play, by the name the game uses. The pack ships twenty-four per
+        /// character and we were importing one, which is why the crowd mimed a walk while standing
+        /// still: not a missing asset, a missing import.
+        /// </summary>
+        private static readonly string[] BodyClips = { "walk", "idle", "run", "punch", "aim", "advance", "fire" };
+
+        private readonly Dictionary<string, AnimationClip> _clips = new Dictionary<string, AnimationClip>();
+
+        private void EnsureClips()
+        {
+            if (_clips.Count > 0) return;
+            foreach (string name in BodyClips)
+            {
+                var clip = Resources.Load<AnimationClip>("Civilians/" + name);
+                if (clip != null && clip.legacy) _clips[name] = clip;
+                else Debug.LogWarning($"[Anim] clip '{name}' missing or not legacy");
+            }
+            Debug.Log($"[Anim] {_clips.Count} legacy clips loaded");
+        }
+
         /// <summary>Loads the legacy walk clip once. Null when the art has not been imported.</summary>
         private void EnsureWalkClip()
         {
+            EnsureClips();
             if (_walkClip != null) return;
-            _walkClip = Resources.Load<AnimationClip>("Civilians/WalkLegacy");
+            _clips.TryGetValue("walk", out var walk);
+            _walkClip = walk != null ? walk : Resources.Load<AnimationClip>("Civilians/WalkLegacy");
         }
 
         /// <summary>
@@ -1768,11 +1798,26 @@ namespace Cipher.Game
             if (_heroBody.gameObject.activeSelf != show) _heroBody.gameObject.SetActive(show);
             if (!show) return;
 
-            _heroBody.position = new Vector3(_hero.Position.X, 0f, _hero.Position.Y);
+            var here = new Vector3(_hero.Position.X, 0f, _hero.Position.Y);
+            float dt = Time.deltaTime;
+            float speed = dt > 0f ? (here - _heroBody.position).magnitude / dt : 0f;
+            _heroBody.position = here;
 
             var facing = new Vector3(_hero.Facing.X, 0f, _hero.Facing.Y);
             if (facing.sqrMagnitude > 1e-6f)
                 _heroBody.rotation = Quaternion.LookRotation(facing.normalized, Vector3.up);
+
+            // The protagonist carries a rifle, so his set is the gun one: he holds it when still,
+            // moves with it up, and the shoot clip plays over the top when he pulls the trigger.
+            _heroAnim ??= _heroBody.GetComponentInChildren<Animation>();
+            if (_heroAnim == null) return;
+
+            if (_heroFiring > 0f) _heroFiring -= dt;
+
+            string wanted = _heroFiring > 0f ? "fire" : speed > 0.3f ? "advance" : "aim";
+            if (_heroAnim[wanted] == null) wanted = speed > 0.3f ? "walk" : "idle";
+            if (_heroAnim[wanted] == null || _heroAnim.IsPlaying(wanted)) return;
+            _heroAnim.CrossFade(wanted, wanted == "fire" ? 0.04f : 0.16f);
         }
 
         /// <summary>
@@ -2000,9 +2045,14 @@ namespace Cipher.Game
         private readonly System.Random _strideRng = new System.Random(0x5EED);
 
         /// <summary>
-        /// Walks the ones that are walking. The clip used to run on the whole crowd all the time,
-        /// including agents standing still against a barricade, which reads as a crowd of people
-        /// miming rather than moving.
+        /// Picks what a body is DOING from how fast it is going.
+        ///
+        /// Standing still, walking and running are three different animations and we own all three;
+        /// playing the walk on everybody all the time, including agents pressed motionless against a
+        /// barricade, is what the owner saw as "always making walking movements".
+        ///
+        /// Cross-faded rather than cut, and the thresholds have a gap between them so a body
+        /// hovering at the boundary does not flicker between two clips.
         /// </summary>
         private void SetSlotWalking(int slot, float speed)
         {
@@ -2010,20 +2060,17 @@ namespace Cipher.Game
             var anim = _walkStates[slot];
             if (anim == null) return;
 
-            var state = anim["walk"];
-            if (state == null) return;
+            string wanted = speed > 2.6f ? "run" : speed > 0.3f ? "walk" : "idle";
+            if (anim[wanted] == null) wanted = "walk";
+            if (anim[wanted] == null) return;
 
-            // A crowd pressed against a wall still shuffles, so the floor is low rather than zero.
-            bool moving = speed > 0.25f;
-            if (!moving)
-            {
-                if (anim.isPlaying) anim.Stop();
-                return;
-            }
+            if (!anim.IsPlaying(wanted)) anim.CrossFade(wanted, 0.18f);
 
-            if (!anim.isPlaying) anim.Play("walk");
-            // Stride matches ground speed, which is most of why a walk cycle reads as real.
-            state.speed = Mathf.Clamp(speed / 2.2f, 0.55f, 1.9f);
+            // Stride matches ground speed, which is most of why a walk cycle reads as real. Idle
+            // keeps whatever gentle variation it was given at build time.
+            var state = anim[wanted];
+            if (state != null && wanted != "idle")
+                state.speed = Mathf.Clamp(speed / (wanted == "run" ? 4.2f : 2.2f), 0.6f, 1.7f);
         }
 
         /// <summary>A body that changed person starts its stride somewhere new, so no two march together.</summary>
@@ -2426,6 +2473,7 @@ namespace Cipher.Game
             bool fire = (pad != null && pad.rightTrigger.isPressed) || (mouse != null && mouse.leftButton.isPressed);
             if (fire && _hero.TryFire(_world, Random.Range(-2.5f, 2.5f), out ShotResult shot))
             {
+                NoteHeroShot();
                 _tracers.Add(new Tracer
                 {
                     A = ToWorld(shot.Origin, 0.75f),
