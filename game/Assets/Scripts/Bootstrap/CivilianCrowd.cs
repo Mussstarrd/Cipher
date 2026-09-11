@@ -7,14 +7,18 @@ using UnityEngine;
 namespace Cipher.Game
 {
     /// <summary>
-    /// Draws the nearest slice of the swarm as real walking people, and leaves the rest as instanced
-    /// capsules.
+    /// Draws the nearest slice of the swarm as real bodies. Everything further out is drawn by
+    /// <see cref="CrowdImpostors"/> as a silhouette of its own class.
     ///
-    /// The honest shape of this: a skinned character costs far more than an instanced capsule, so a
-    /// thousand of them is not affordable. What IS affordable is the couple of hundred closest to the
-    /// camera, which is also the only part of the crowd a player can actually read. Everything beyond
-    /// that keeps the old cheap representation, and the transition happens far enough out that the
-    /// switch is not visible.
+    /// The honest shape of this: a real body costs far more than an instanced mesh, so a thousand of
+    /// them is not affordable. What IS affordable is the nearest hundred or so, which is also the
+    /// part of the crowd a player can read in detail. That is ADR-007's tier 0; the two tiers behind
+    /// it are what stop the cutoff from being a cliff.
+    ///
+    /// A body is not necessarily a skinned character. <see cref="BodyClass.Humanoid"/> and
+    /// <see cref="BodyClass.Spitter"/> are box-built machines with a procedural gait
+    /// (<see cref="MachineBody"/>), which cost rather less than the skinned people they replaced --
+    /// so the same budget now buys the same number of bodies for strictly less work.
     ///
     /// This is a bridge, not the destination. The vertex-animation-texture path in ADR-007 is what
     /// eventually makes all thousand real. This exists so the game looks like itself in the meantime,
@@ -22,13 +26,39 @@ namespace Cipher.Game
     /// </summary>
     public sealed class CivilianCrowd
     {
-        /// <summary>How many agents get a real body. Beyond this they stay capsules.</summary>
+        /// <summary>How many bodies were BUILT. <see cref="AddSlot"/> refuses to exceed it.</summary>
         public int Capacity { get; }
+
+        /// <summary>
+        /// The most bodies that may be promoted at once, across every class.
+        ///
+        /// Separate from <see cref="Capacity"/> because slots are typed and a slot cannot change
+        /// class: the pool is overbuilt so that no class starves in a wave that is mostly one
+        /// thing, and this is the number that keeps the overbuild off the frame. A body with no
+        /// occupant is inactive and costs nothing, so building more than this is free at runtime.
+        /// </summary>
+        public int ActiveBudget { get; set; } = int.MaxValue;
 
         /// <summary>Agents further than this from the camera are never promoted.</summary>
         public float PromoteRange { get; set; } = 34f;
 
+        /// <summary>
+        /// What kind of body an agent wants. An agent may only be given a slot of its own class.
+        ///
+        /// Null means everything is <see cref="BodyClass.Signed"/>, which is what the crowd did
+        /// before there was a second enemy class.
+        ///
+        /// THIS MUST BE A PURE FUNCTION OF THE AGENT ID (see <see cref="CrowdCasting.ClassOf"/>).
+        /// If an agent's answer can change, an agent that walks out of range and back comes back a
+        /// different species -- the same class of bug as the body-swapping the owner saw, one level
+        /// up.
+        /// </summary>
+        public Func<int, BodyClass>? Classify;
+
+        private const int ClassCount = 4;
+
         private readonly List<Transform> _slots = new List<Transform>();
+        private readonly List<BodyClass> _slotClass = new List<BodyClass>();
         private readonly List<Vector3> _lastPosition = new List<Vector3>();
         private readonly List<int> _assigned = new List<int>();
         private readonly Transform _root;
@@ -59,7 +89,23 @@ namespace Cipher.Game
         /// <summary>True while a slot is playing out a death and must not be reassigned.</summary>
         public bool IsDying(int slot) => slot >= 0 && slot < _dying.Count && _dying[slot] > 0f;
 
-        public void AddSlot(Transform slot)
+        /// <summary>Which agent is wearing slot <paramref name="slot"/>, or -1 for nobody.</summary>
+        public int AgentInSlot(int slot) => _assigned[slot];
+
+        /// <summary>The class a slot was built as. A slot can never serve any other.</summary>
+        public BodyClass ClassOfSlot(int slot) => _slotClass[slot];
+
+        /// <summary>How many bodies of a class exist in the pool.</summary>
+        public int SlotsOfClass(BodyClass c)
+        {
+            int n = 0;
+            for (int i = 0; i < _slotClass.Count; i++) if (_slotClass[i] == c) n++;
+            return n;
+        }
+
+        public void AddSlot(Transform slot) => AddSlot(slot, BodyClass.Signed);
+
+        public void AddSlot(Transform slot, BodyClass bodyClass)
         {
             // Capacity is the budget the caller sized the pool against; exceeding it silently would
             // put more skinned characters on screen than the frame was costed for. It used to be
@@ -69,6 +115,7 @@ namespace Cipher.Game
                     $"CivilianCrowd was built for {Capacity} bodies and AddSlot was called again.");
 
             _slots.Add(slot);
+            _slotClass.Add(bodyClass);
             _lastPosition.Add(slot.position);
             _assigned.Add(-1);
             _dying.Add(0f);
@@ -85,7 +132,11 @@ namespace Cipher.Game
             Promoted.Clear();
             if (_slots.Count == 0 || world == null) return;
 
-            int capacity = _slots.Count;
+            // The nearest slice is chosen ACROSS classes and capped at the frame budget, not at the
+            // number of bodies built. Choosing per class would promote the fourteenth-nearest
+            // sapper over the second-nearest citizen, which is backwards: what a player can read is
+            // what is close to him, whatever species it is.
+            int capacity = Mathf.Min(_slots.Count, ActiveBudget);
             float rangeSq = PromoteRange * PromoteRange;
             var flatCamera = new Vector3(cameraPosition.x, 0f, cameraPosition.z);
 
@@ -125,7 +176,7 @@ namespace Cipher.Game
             _chosen.Clear();
             for (int i = 0; i < _nearest.Count; i++) _chosen.Add(_nearest[i].id, _nearest[i].position);
 
-            _free.Clear();
+            for (int c = 0; c < ClassCount; c++) _freeByClass[c].Clear();
             _holders.Clear();
             for (int i = 0; i < _slots.Count; i++)
             {
@@ -137,7 +188,7 @@ namespace Cipher.Game
                     _dying[i] -= dt;
                     if (_dying[i] > 0f) continue;
                     _assigned[i] = -1;
-                    _free.Add(i);
+                    _freeByClass[(int)_slotClass[i]].Add(i);
                     continue;
                 }
 
@@ -154,16 +205,23 @@ namespace Cipher.Game
                 }
 
                 _assigned[i] = -1;
-                _free.Add(i);
+                _freeByClass[(int)_slotClass[i]].Add(i);
             }
 
-            // Hand the free slots to the nearest agents that do not have one, nearest first.
-            int nextFree = 0;
-            for (int i = 0; i < _nearest.Count && nextFree < _free.Count; i++)
+            // Hand the free slots to the nearest agents that do not have one, nearest first --
+            // but only ever a slot of the agent's OWN class. An agent whose class has run out of
+            // bodies stays a capsule rather than borrowing somebody else's: a sapper wearing a
+            // delivery walker's chassis is worse than a sapper wearing a pill, because the pill at
+            // least does not lie about what is coming at you.
+            for (int c = 0; c < ClassCount; c++) _nextFree[c] = 0;
+            for (int i = 0; i < _nearest.Count; i++)
             {
                 int id = _nearest[i].id;
+                int c = (int)(Classify != null ? Classify(id) : BodyClass.Signed);
+                var free = _freeByClass[c];
+                if (_nextFree[c] >= free.Count) continue;
                 if (!_holders.Add(id)) continue;   // already wearing a body
-                int slot = _free[nextFree++];
+                int slot = free[_nextFree[c]++];
                 _assigned[slot] = id;
                 // A new occupant is a different person: reset the heading so the body does not spin,
                 // and re-roll the stride phase so a freshly promoted group does not march in step.
@@ -231,7 +289,14 @@ namespace Cipher.Game
 
         private readonly Dictionary<int, Vector3> _chosen = new Dictionary<int, Vector3>(256);
         private readonly HashSet<int> _holders = new HashSet<int>();
-        private readonly List<int> _free = new List<int>(256);
+
+        /// <summary>Free slots, bucketed by the class they were built as.</summary>
+        private readonly List<int>[] _freeByClass =
+        {
+            new List<int>(128), new List<int>(64), new List<int>(32), new List<int>(32),
+        };
+
+        private readonly int[] _nextFree = new int[ClassCount];
 
         private readonly List<(float dist, int id, Vector3 position)> _nearest =
             new List<(float, int, Vector3)>(512);

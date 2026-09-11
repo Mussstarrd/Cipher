@@ -163,7 +163,6 @@ namespace Cipher.Game
         private readonly List<Matrix4x4> _routeBad = new List<Matrix4x4>(2048);
 
         // ---- rendering ----
-        private Mesh _agentMesh = null!;
         private Material _agentMaterial = null!;
         private Mesh _cubeMesh = null!;
         private Mesh _discMesh = null!;
@@ -210,12 +209,8 @@ namespace Cipher.Game
         private int[] _minimapAgents = null!;
         private float _minimapTimer;
         private bool _showMinimap = true;
-        private Material _sapperMaterial = null!;
-        private Material _spitterMaterial = null!;
         private Material _droneMaterial = null!;
         private Material _sapperTargetMaterial = null!;
-        private readonly List<Matrix4x4> _sapperMatrices = new List<Matrix4x4>(16);
-        private readonly List<Matrix4x4> _spitterMatrices = new List<Matrix4x4>(16);
         private readonly List<Matrix4x4> _fxMatrices = new List<Matrix4x4>(32);
 
         // ---- camera ----
@@ -589,10 +584,15 @@ namespace Cipher.Game
             ground.GetComponent<Renderer>().material = groundMat;
             _groundMaterial = groundMat;
 
-            _agentMesh = HarvestMesh(PrimitiveType.Capsule);
             _cubeMesh = HarvestMesh(PrimitiveType.Cube);
             _discMesh = HarvestMesh(PrimitiveType.Cylinder);
-            _agentMaterial = MakeMaterial(new Color(0.75f, 0.15f, 0.12f), instanced: true);
+            // THE DISTANT CROWD'S MATERIAL. It was (0.75, 0.15, 0.12) -- arterial red -- which is
+            // why the owner saw "red pills": not a hit flash and not a health tint, just the last
+            // of the pre-ADR-003 infected premise, never revisited when the enemy became the
+            // neighbours. Every impostor now carries its own per-instance colour, so this base is
+            // only ever seen if something forgets to write one; a neutral grey fails quietly where
+            // a red fails loudly and wrongly.
+            _agentMaterial = MakeMaterial(new Color(0.55f, 0.54f, 0.52f), instanced: true);
             _wallMaterial = MakeMaterial(new Color(0.35f, 0.33f, 0.30f), instanced: true);
             // Galvanised steel, weathered timber. The mesh panel is lighter than the posts so the
             // fence reads as see-through at distance without any transparency.
@@ -612,8 +612,6 @@ namespace Cipher.Game
             _routeBadMaterial = MakeMaterial(new Color(1f, 0.2f, 0.15f), instanced: true);
             _turretMaterial = MakeMaterial(new Color(0.25f, 0.55f, 0.85f), instanced: false);
             _grinderMaterial = MakeMaterial(new Color(0.85f, 0.35f, 0.75f), instanced: false);
-            _sapperMaterial = MakeMaterial(new Color(1f, 0.45f, 0.05f), instanced: true);
-            _spitterMaterial = MakeMaterial(new Color(0.35f, 0.9f, 0.25f), instanced: true);
             _droneMaterial = MakeMaterial(new Color(0.4f, 0.95f, 1f), instanced: true);
             _sapperTargetMaterial = MakeMaterial(new Color(1f, 0.3f, 0.05f), instanced: true);
             _instanceBuffer = new Matrix4x4[MaxInstancesPerDraw];
@@ -1769,6 +1767,82 @@ namespace Cipher.Game
         /// Lines the imported civilian models up in front of the camera so we can see what the free
         /// CC0 art actually looks like under our comic shader. Harness only.
         /// </summary>
+        /// <summary>
+        /// Keeps the hero on his feet for a capture, and ONLY for a capture.
+        ///
+        /// The screenshot harness drops the photographer into the middle of a live wave with no
+        /// hands on the sticks, so he is down inside forty seconds and every frame after that is
+        /// photographed through the death vignette -- a flat red wash over the whole image. That
+        /// makes it impossible to judge a crowd's colour, which is exactly what the crowd work
+        /// needs judging on. Reached only from <see cref="ScreenshotHarness"/>.
+        /// </summary>
+        public void KeepHeroUpForCapture()
+        {
+            // Heal caps at max and refuses once he is already down, so this tops him up every
+            // frame and never revives him -- it has to run from the first frame to work at all.
+            _hero.Heal(10000f);
+        }
+
+        /// <summary>
+        /// Overrides how far out bodies are promoted, for measuring what that distance COSTS.
+        ///
+        /// The owner asked for the promotion radius to be pushed "as far as the frame budget
+        /// honestly allows" and said not to raise it blindly. A const cannot be measured without a
+        /// rebuild per candidate, and four rebuilds is four different builds being compared -- the
+        /// same trap the single-exe render-baseline switches exist to avoid. One exe, one knob.
+        /// </summary>
+        public void SetCrowdRangeForCapture(float metres)
+        {
+            if (_crowd != null) _crowd.PromoteRange = metres;
+        }
+
+        /// <summary>
+        /// Spawns a handful of REAL agents of every visual class just in front of the hero, so all
+        /// four can be photographed in one frame.
+        ///
+        /// Not a lineup: these are ordinary agents in the ordinary world, pathing, animating and
+        /// rendering through exactly the pipeline the wave uses. It exists because the Sapper and
+        /// the Spitter are 2-6% of a wave BY DESIGN and the Spitter additionally waits on the
+        /// player having built something -- so a capture run cannot be relied on to contain either,
+        /// and "I did not see one" and "it is broken" look identical.
+        /// </summary>
+        public void SpawnOneOfEachForCapture()
+        {
+            var at = _hero.Position;
+            // Spread WIDE. The first version put them in a tight arc and they piled into one
+            // unreadable heap, which proves nothing about how any of them look.
+            for (int i = 0; i < 6; i++)
+                _world.SpawnArchetype(new Vec2(at.X - 9f + i * 3.6f, at.Y + 4f), Archetype.Runner);
+            for (int i = 0; i < 4; i++)
+                _world.SpawnArchetype(new Vec2(at.X - 9f + i * 3.6f, at.Y + 8f), Archetype.Sapper);
+            for (int i = 0; i < 4; i++)
+                _world.SpawnArchetype(new Vec2(at.X - 9f + i * 3.6f, at.Y + 12f), Archetype.Spitter);
+            Debug.Log("[Capture] spawned one of each visual class");
+        }
+
+        /// <summary>
+        /// Counts what is actually WEARING a body, by class, at the moment of the shutter.
+        ///
+        /// Written because "I cannot see a Sapper in the screenshot" has two completely different
+        /// causes -- he is not there, or he is there and looks wrong -- and staring at pixels
+        /// cannot tell them apart. CLAUDE.md: when something fails silently, stop changing things
+        /// and log the state.
+        /// </summary>
+        public void LogCrowdCensusForCapture()
+        {
+            if (_crowd == null) { Debug.Log("[Census] no crowd"); return; }
+            var worn = new int[4];
+            for (int slot = 0; slot < _crowd.SlotCount; slot++)
+                if (_crowd.AgentInSlot(slot) >= 0) worn[(int)_crowd.ClassOfSlot(slot)]++;
+
+            var live = new int[4];
+            for (int id = 0; id < _world.Count; id++)
+                if (_world.IsAlive(id)) live[(int)ClassOfAgent(id)]++;
+
+            Debug.Log($"[Census] alive signed {live[0]} humanoid {live[1]} sapper {live[2]} spitter {live[3]}"
+                    + $" | bodies signed {worn[0]} humanoid {worn[1]} sapper {worn[2]} spitter {worn[3]}");
+        }
+
         public void ShowCharacterLineupForCapture()
         {
             // Prefer the built civilian prefabs (Animator + looping walk) over the raw models.
@@ -1927,6 +2001,32 @@ namespace Cipher.Game
         /// <summary>Called when the hero shoots, so his body plays the shot rather than miming it.</summary>
         private void NoteHeroShot() => _heroFiring = 0.16f;
         private CivilianCrowd? _crowd;
+        private MachineFactory? _machines;
+        private CrowdImpostors? _impostors;
+
+        /// <summary>
+        /// How far out an agent still gets a real body.
+        ///
+        /// OWNER, 2026-09-11: "I can see the enemies far back on the map but they are still just
+        /// red pills until they get way too close." This was 34 m, set when the arena was 64x48;
+        /// The Gate is 128x96 with a road you can see all the way down. Raised as far as the frame
+        /// budget honestly allows and no further -- beyond it the body becomes an INSTANCED
+        /// SILHOUETTE (<see cref="CrowdImpostors"/>) rather than a capsule, which is the tier
+        /// ADR-007 specified and nobody built, and which is what actually carries the distance.
+        /// </summary>
+        /// MEASURED, on this laptop, one exe and one knob (<c>-exodus-crowd-range</c>), a 40-body
+        /// wave at a fixed camera, median of three: 34 m gave 128 fps and 72 m gave 113 -- about
+        /// 9% to more than double the radius. That cost is bounded by the WAVE, not by the radius:
+        /// <see cref="CrowdCasting.ActiveBudget"/> still caps promotions at 110, so a big wave
+        /// costs exactly what it always did and the radius only decides whether that budget is
+        /// reached at a distance a player can see. 68 m covers the road corridor at The Gate.
+        private const float CrowdPromoteRange = 68f;
+
+        /// <summary>An agent's visual class. Pure in the id, so it never changes under a body.</summary>
+        private BodyClass ClassOfAgent(int id)
+            => CrowdCasting.ClassOf(_world.ArchetypeOf(id), id, _castingSeed);
+
+        private int _castingSeed = 20260911;
         private Transform? _heroBody;
         private bool _environmentDressed;
         /// <summary>Model used for the player. Excluded from the civilian pool.</summary>
@@ -2055,28 +2155,47 @@ namespace Cipher.Game
             EnsureWalkClip();
 
             var root = new GameObject("CivilianCrowd").transform;
-            _crowd = new CivilianCrowd(root, CivilianPoolSize);
+            _crowd = new CivilianCrowd(root, CrowdCasting.TotalBuilt)
+            {
+                ActiveBudget = CrowdCasting.ActiveBudget,
+                PromoteRange = CrowdPromoteRange,
+                Classify = ClassOfAgent,
+            };
 
             // The player's model must not also be walking in the horde: seeing yourself in the
-            // crowd you are shooting at reads as a bug, not as variety.
-            var pool = new List<GameObject>();
-            foreach (var prefab in prefabs)
-                if (prefab != null && prefab.name != HeroModelName) pool.Add(prefab);
-            if (pool.Count == 0) pool.AddRange(prefabs);
+            // crowd you are shooting at reads as a bug, not as variety. The Sapper's model comes
+            // out too, so that silhouette means one thing.
+            CrowdBodies.SplitPool(prefabs, HeroModelName, out var pool, out var sapperModel);
 
             var rng = new System.Random(20260911);
+            _machines = new MachineFactory(c => MakeMaterial(c, instanced: false), root);
             _walkStates.Clear();
             _bodyFlashLeft.Clear();
             _bodyRenderers.Clear();
-            _crowdSlots = new List<Transform>(CivilianPoolSize);
-            for (int i = 0; i < CivilianPoolSize; i++)
+            _crowdSlots = new List<Transform>(CrowdCasting.TotalBuilt);
+            for (int c = 0; c < CrowdCasting.Built.Length; c++)
             {
-                var slot = BuildCivilian(pool[i % pool.Count], root, rng);
-                _crowd.AddSlot(slot);
-                _crowdSlots.Add(slot);
-                _walkStates.Add(slot.GetComponentInChildren<Animation>());
-                _bodyFlashLeft.Add(0f);
-                _bodyRenderers.Add(slot.GetComponentsInChildren<Renderer>(true));
+                var bodyClass = (BodyClass)c;
+                for (int i = 0; i < CrowdCasting.Built[c]; i++)
+                {
+                    Transform slot;
+                    if (CrowdCasting.IsMachine(bodyClass))
+                    {
+                        slot = CrowdBodies.BuildMachine(bodyClass, i, root, _machines);
+                    }
+                    else
+                    {
+                        var template = CrowdBodies.TemplateFor(bodyClass, i, pool, sapperModel);
+                        if (template == null) continue;
+                        slot = BuildCivilian(template, root, rng);
+                        if (bodyClass == BodyClass.Sapper) CrowdBodies.DressSapper(slot);
+                    }
+                    _crowd.AddSlot(slot, bodyClass);
+                    _crowdSlots.Add(slot);
+                    _walkStates.Add(slot.GetComponentInChildren<Animation>());
+                    _bodyFlashLeft.Add(0f);
+                    _bodyRenderers.Add(slot.GetComponentsInChildren<Renderer>(true));
+                }
             }
 
             // Two things the owner saw and named: "the characters are always making walking
@@ -2088,7 +2207,17 @@ namespace Cipher.Game
             _crowd.OnSlotHurt = PlaySlotHit;
             if (_clips.TryGetValue("death", out var deathClip)) _crowd.DeathSeconds = deathClip.length + 0.35f;
 
-            Debug.Log($"[Crowd] pool of {_crowd.SlotCount} civilians from {prefabs.Length} models");
+            // Machines have no Animation component, so all four handlers above already no-op on
+            // them -- which is why a machine would walk fine and then die by vanishing. This puts
+            // the gaits in front of the handlers. It MUST come after the assignments.
+            MachineGait.Intercept(_crowd, _crowdSlots);
+
+            Debug.Log($"[Crowd] {_crowd.SlotCount} bodies "
+                    + $"({_crowd.SlotsOfClass(BodyClass.Signed)} signed, "
+                    + $"{_crowd.SlotsOfClass(BodyClass.Humanoid)} humanoid, "
+                    + $"{_crowd.SlotsOfClass(BodyClass.Sapper)} sapper, "
+                    + $"{_crowd.SlotsOfClass(BodyClass.Spitter)} spitter), "
+                    + $"{CrowdCasting.ActiveBudget} on screen at once, from {prefabs.Length} models");
         }
 
         /// <summary>
@@ -3609,8 +3738,6 @@ namespace Cipher.Game
 
         private float[] _flashLastHealth = System.Array.Empty<float>();
         private float[] _flashLeft = System.Array.Empty<float>();
-        private readonly Vector4[] _instanceColours = new Vector4[MaxInstancesPerDraw];
-        private MaterialPropertyBlock? _capsuleBlock;
         private static readonly int InstanceColorId = Shader.PropertyToID("_InstanceColor");
 
         private void EnsureFlashBuffers(int count)
@@ -3622,18 +3749,6 @@ namespace Cipher.Game
             System.Array.Resize(ref _flashLeft, n);
             System.Array.Resize(ref _lastAgentPos, n);
             for (int i = old; i < n; i++) _flashLastHealth[i] = -1f;
-        }
-
-        /// <summary>
-        /// One instanced draw of capsules with a per-instance colour. The shader has carried
-        /// _InstanceColor since URP landed and nothing ever wrote it, which is why a capsule that
-        /// was shot looked identical to one that was not.
-        /// </summary>
-        private void FlushCapsules(int count)
-        {
-            _capsuleBlock ??= new MaterialPropertyBlock();
-            _capsuleBlock.SetVectorArray(InstanceColorId, _instanceColours);
-            Graphics.DrawMeshInstanced(_agentMesh, 0, _agentMaterial, _instanceBuffer, count, _capsuleBlock);
         }
 
         /// <summary>Where every living body is standing this frame, for the contact shadows.</summary>
@@ -3649,13 +3764,18 @@ namespace Cipher.Game
 
         private void DrawAgents()
         {
-            _sapperMatrices.Clear();
-            _spitterMatrices.Clear();
             _fxMatrices.Clear();
             _blobPositions.Clear();
-            int inBuffer = 0;
             EnsureFlashBuffers(_world.Count);
             float dt = Time.deltaTime;
+
+            // The far field. Everything not wearing a real body is drawn here, as a silhouette of
+            // its own class rather than as a capsule -- see CrowdImpostors for why both halves of
+            // that sentence are the fix the owner asked for.
+            _impostors ??= new CrowdImpostors(_agentMaterial);
+            _impostors.DetailRange = CrowdPromoteRange * 1.55f;
+            _impostors.Begin();
+            var eye = _camera != null ? _camera.transform.position : Vector3.zero;
 
             for (int id = 0; id < _world.Count; id++)
             {
@@ -3694,30 +3814,32 @@ namespace Cipher.Game
                 if (_flashLastHealth[id] >= 0f && hp < _flashLastHealth[id] - 0.01f) _flashLeft[id] = HitFlashSeconds;
                 _flashLastHealth[id] = hp;
                 if (_flashLeft[id] > 0f) _flashLeft[id] -= dt;
-                switch (_world.ArchetypeOf(id))
+                var bodyClass = ClassOfAgent(id);
+
+                // The wall a Sapper has picked, marked above it. Nothing to do with how the Sapper
+                // is drawn, which is why it is no longer inside the branch that drew him.
+                if (bodyClass == BodyClass.Sapper)
                 {
-                    case Archetype.Sapper:
-                        _sapperMatrices.Add(Matrix4x4.TRS(new Vector3(p.X, 0.9f, p.Y), Quaternion.identity, new Vector3(0.6f, 0.95f, 0.6f)));
-                        int cell = _world.SapperTargetCell(id);
-                        if (cell >= 0)
-                        {
-                            float pulse = 1.1f + 0.2f * Mathf.Sin(Time.time * 8f);
-                            _fxMatrices.Add(Matrix4x4.TRS(new Vector3(cell % GridW + 0.5f, 2.6f, cell / GridW + 0.5f), Quaternion.identity, new Vector3(pulse, 0.3f, pulse)));
-                        }
-                        continue;
-                    case Archetype.Spitter:
-                        _spitterMatrices.Add(Matrix4x4.TRS(new Vector3(p.X, 0.7f, p.Y), Quaternion.identity, new Vector3(0.7f, 0.5f, 0.7f)));
-                        continue;
+                    int cell = _world.SapperTargetCell(id);
+                    if (cell >= 0)
+                    {
+                        float pulse = 1.1f + 0.2f * Mathf.Sin(Time.time * 8f);
+                        _fxMatrices.Add(Matrix4x4.TRS(new Vector3(cell % GridW + 0.5f, 2.6f, cell / GridW + 0.5f), Quaternion.identity, new Vector3(pulse, 0.3f, pulse)));
+                    }
                 }
-                // Anyone wearing a real body this frame must not also be drawn as a capsule.
+
+                // Anyone wearing a real body this frame must not also be drawn as an impostor.
                 if (_crowd != null && _crowd.Promoted.Contains(id)) continue;
-                _instanceBuffer[inBuffer] = Matrix4x4.TRS(new Vector3(p.X, 0.6f, p.Y), Quaternion.identity, new Vector3(0.45f, 0.6f, 0.45f));
-                // Alpha is the switch the shader reads: a > 0 means "use this colour instead".
+
+                // Alpha is the switch the shader reads: a > 0 means "use this colour instead", and
+                // it is now ALWAYS on, because the far field is dressed rather than uniform. The
+                // ordinary state is what this body is wearing; the other two override it.
                 //
                 // A body whose chip is failing goes cold and stutters: the implant is losing its
                 // grip and what is left is a person the signal no longer owns. ADR-008 forbids
                 // gore for this -- it is a device dying, not a wound -- so the tell is entirely in
-                // the colour, and it has to work on a capsule because most of the crowd is one.
+                // the colour, and it has to work on an impostor because most of the crowd is one.
+                Vector4 dress;
                 if (_world.Integrity01(id) < FrailTellBelow)
                 {
                     float integrity = _world.Integrity01(id);
@@ -3726,22 +3848,22 @@ namespace Cipher.Game
                     float lit = stutter > (0.1f + 0.7f * (1f - integrity)) ? 1f : 0f;
                     var cold = Color.Lerp(new Color(0.30f, 0.38f, 0.52f),
                                           new Color(0.62f, 0.86f, 1f), lit);
-                    _instanceColours[inBuffer] = new Vector4(cold.r, cold.g, cold.b, 1f);
+                    dress = new Vector4(cold.r, cold.g, cold.b, 1f);
+                }
+                else if (_flashLeft[id] > 0f)
+                {
+                    dress = new Vector4(1f, 1f, 1f, 1f);
                 }
                 else
                 {
-                    _instanceColours[inBuffer] = _flashLeft[id] > 0f ? new Vector4(1f, 1f, 1f, 1f) : Vector4.zero;
+                    var worn = CrowdImpostors.DressOf(bodyClass, id);
+                    dress = new Vector4(worn.r, worn.g, worn.b, 1f);
                 }
-                inBuffer++;
-                if (inBuffer == MaxInstancesPerDraw)
-                {
-                    FlushCapsules(inBuffer);
-                    inBuffer = 0;
-                }
+
+                _impostors.Add(bodyClass, here, facing,
+                               Vector3.Distance(here, new Vector3(eye.x, 0f, eye.z)), dress);
             }
-            if (inBuffer > 0) FlushCapsules(inBuffer);
-            DrawInstancedBatched(_agentMesh, _sapperMaterial, _sapperMatrices);
-            DrawInstancedBatched(_agentMesh, _spitterMaterial, _spitterMatrices);
+            _impostors.Draw();
             DrawInstancedBatched(_cubeMesh, _sapperTargetMaterial, _fxMatrices);
             GroundMarkRenderer.Active?.DrawAgents(_blobPositions, 0.42f);
             _signal.Draw(Time.deltaTime);

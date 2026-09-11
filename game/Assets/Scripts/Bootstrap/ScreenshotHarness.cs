@@ -24,6 +24,18 @@ namespace Cipher.Game
         private const string ProgressArg = "-exodus-screenshot-progression";
         private const string SkillsArg = "-exodus-screenshot-skills";
         private const string StartArg = "-exodus-screenshot-start";
+
+        /// <summary>
+        /// Tops the hero up every frame so the shutter is not fired through the death vignette.
+        /// A CAPTURE AID, never a cheat: nothing reads it outside this class.
+        /// </summary>
+        private const string ImmortalArg = "-exodus-screenshot-immortal";
+
+        /// <summary>Promotion radius override, in metres, for measuring what it costs.</summary>
+        private const string CrowdRangeArg = "-exodus-crowd-range";
+
+        /// <summary>Puts a few real agents of every visual class in front of the hero.</summary>
+        private const string ClassesArg = "-exodus-crowd-classes";
         private const string LineupArg = "-exodus-screenshot-lineup";
         private const string FallBackArg = "-exodus-screenshot-fallback";
         private const string EmplacementsArg = "-exodus-screenshot-emplacements";
@@ -40,6 +52,11 @@ namespace Cipher.Game
         private bool _progression;
         private bool _skills;
         private bool _start;
+        private bool _immortal;
+        private float _crowdRange = float.NaN;
+        private bool _crowdRangeSet;
+        private bool _classes;
+        private bool _classesSet;
         private bool _lineup;
         private bool _fallBack;
         private bool _emplacements;
@@ -76,6 +93,9 @@ namespace Cipher.Game
             harness._progression = HasFlag(args, ProgressArg);
             harness._skills = HasFlag(args, SkillsArg);
             harness._start = HasFlag(args, StartArg);
+            harness._immortal = HasFlag(args, ImmortalArg);
+            harness._crowdRange = ReadFloat(args, CrowdRangeArg, float.NaN);
+            harness._classes = HasFlag(args, ClassesArg);
             harness._lineup = HasFlag(args, LineupArg);
             harness._fallBack = HasFlag(args, FallBackArg);
             harness._emplacements = HasFlag(args, EmplacementsArg);
@@ -208,6 +228,27 @@ namespace Cipher.Game
             }
 
             // Start the wave early so there is a fight to photograph by the time we capture.
+            if (!_crowdRangeSet && !float.IsNaN(_crowdRange) && _elapsed > 0.6f)
+            {
+                var bc = GetComponent<FloodBootstrap>();
+                if (bc != null) { bc.SetCrowdRangeForCapture(_crowdRange); _crowdRangeSet = true; }
+            }
+
+            // Late, and after the wave has started: the spawn has to land in a world that is
+            // already running, or the classes stand in an empty street and prove nothing about how
+            // they read among other people.
+            if (_classes && !_classesSet && _elapsed > _delay - 6f)
+            {
+                var bk = GetComponent<FloodBootstrap>();
+                if (bk != null) { bk.SpawnOneOfEachForCapture(); _classesSet = true; }
+            }
+
+            if (_immortal)
+            {
+                var bh = GetComponent<FloodBootstrap>();
+                if (bh != null) bh.KeepHeroUpForCapture();
+            }
+
             if (_start && !_started && _elapsed > 0.5f)
             {
                 var bstart = GetComponent<FloodBootstrap>();
@@ -280,6 +321,12 @@ namespace Cipher.Game
             if (!_captured)
             {
                 if (_elapsed < _delay) return;
+
+                // What the frame actually contains, alongside the frame. A screenshot cannot say
+                // whether a class is missing or merely unrecognisable; this can.
+                var census = GetComponent<FloodBootstrap>();
+                if (census != null) census.LogCrowdCensusForCapture();
+
                 try
                 {
                     string full = Path.GetFullPath(_path);
