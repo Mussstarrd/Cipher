@@ -173,6 +173,33 @@ substitute: it references the sim's SOURCE, not its test project.
   the null avatar immediately after several builds of guessing had not. This cost most of a session.
 - **The game assembly references URP runtime** (`Unity.RenderPipelines.Universal.Runtime` and
   `.Core.Runtime` in `Cipher.Game.asmdef`), needed for the post-processing volume.
+- **A RENDERING FEATURE CAN BE SWITCHED ON IN THREE PLACES AND STILL BE OFF (2026-09-11).** Soft
+  shadows needed ALL of: `light.shadows = Soft` (was set), `m_SoftShadowsSupported` on the pipeline
+  asset (was 0), and `#pragma multi_compile_fragment _ _SHADOWS_SOFT ...` in our own shader (was
+  missing). Two of the three were configured and the result was a hard one-tap shadow under an
+  overcast sky. Same shape of bug as Trilight ambient: `RenderSettings.ambientMode` had three
+  authored colours and `InstancedLit` never called `SampleSH`. **When a render setting appears to do
+  nothing, the shader is the third place to look, and usually the one nobody checked.**
+  `supportsSoftShadows` is read-only in URP 17 -- `UrpSetup` flips the serialized field instead.
+- **VERTEX COLOURS ARE OPT-IN PER MATERIAL, NOT PER MESH.** A mesh with no COLOR stream does not
+  reliably hand a shader white, so `_VertexAoStrength` defaults to 0 and `VertexAo.Bake` clones the
+  material to switch it on for the renderers it actually wrote. The prop palette is SHARED with
+  things that are never baked (actors, the cruiser light bar); flipping the shared material would
+  darken them by whatever garbage their colour channel holds. `VertexAo.Bake` also runs BEFORE the
+  strike drone's lamp is built, because an AO clone of the lamp material would leave the strobe in
+  `Fly()` writing to a material nothing renders.
+- **Ground marks are `Scripts/Bootstrap/GroundStamp.cs` + `BlobShadows` + `Decals`**, drawn by
+  `GroundMarkRenderer`, which **installs itself** (`RuntimeInitializeOnLoadMethod`) because props
+  register their contact shadows from three files and a missing draw call would be silent. One
+  shader, `Exodus/BlobShadow`, unlit alpha-blended instanced, single-digit variants, in Always
+  Included. The crowd is the one thing it cannot do alone: `GroundMarkRenderer.Active?.DrawAgents(
+  positions, 0.42f)` from `DrawWorld`, and `ResetForNewPosition()` wherever the props are destroyed.
+- **Before/after render captures come from ONE exe.** `-exodus-render-baseline` reverts the lot;
+  `-exodus-baseline-shadows` / `-exodus-baseline-ambient` / `-exodus-baseline-ao` /
+  `-exodus-no-groundmarks` revert one thing each, and `-exodus-groundmarks-demo` stages decals.
+  Two builds of two commits differ in the frame, the spawn and the drone overhead as well as in the
+  thing being judged; one exe with one switch differs only in that. **Judge one change per pair** --
+  the combined image cannot say which of four changes did what.
 - **MISSIONS ARE DATA NOW (2026-09-11).** `Assets/Resources/Scenarios/*.json` -> `ScenarioReader` ->
   `ScenarioDef` -> `FloodBootstrap.NewMatch`. The game opens on `act1-01-the-gate`, named by
   `StartingScenarioId`. A scenario owns the map size, the walls, the gates, the hero spawn, the
