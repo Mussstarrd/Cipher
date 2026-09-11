@@ -52,6 +52,13 @@ namespace Cipher.Game.Progression
     /// <summary>The card pool. Data, not code: balance lives in this one list.</summary>
     public static class ImprovisationCatalogue
     {
+        // BALANCE, owner 2026-09-11: "The in-between waves boosts are too powerful because I'm
+        // still winning the level just with a single turret."
+        //
+        // A pick-one-of-three at every wave clear COMPOUNDS. Five picks of +20% turret damage is
+        // not +100%, it is a different game, and the wave table never sees it coming. Every
+        // percentage in this deck was halved. The cards should tilt a run, not decide it.
+
         public static IReadOnlyList<Improvisation> All { get; } = Build();
 
         private static List<Improvisation> Build()
@@ -63,65 +70,65 @@ namespace Cipher.Game.Progression
                 => list.Add(new Improvisation(id, name, path, text, apply, capstone));
 
             // ---- Trigger: the gun ----
-            Add("trg-zeroed", "Zeroed In", Path.Trigger, "+15% gun damage",
-                b => b.AddPercent(StatKind.GunDamage, 0.15f));
-            Add("trg-discipline", "Trigger Discipline", Path.Trigger, "+12% fire rate",
-                b => b.AddPercent(StatKind.FireRate, 0.12f));
-            Add("trg-handload", "Hand-Loads", Path.Trigger, "+22% gun damage",
-                b => b.AddPercent(StatKind.GunDamage, 0.22f));
-            Add("trg-followthrough", "Follow Through", Path.Trigger, "+10% gun damage, +8% fire rate",
-                b => b.AddPercent(StatKind.GunDamage, 0.10f).AddPercent(StatKind.FireRate, 0.08f));
-            Add("trg-lightkit", "Light Kit", Path.Trigger, "+10% move speed, +6% fire rate",
-                b => b.AddPercent(StatKind.MoveSpeed, 0.10f).AddPercent(StatKind.FireRate, 0.06f));
-            Add("trg-scrounge", "Brass Discipline", Path.Trigger, "+25% cash per kill",
-                b => b.AddPercent(StatKind.CashPerKill, 0.25f));
-            Add("trg-barrel", "Spare Barrel", Path.Trigger, "+18% fire rate",
-                b => b.AddPercent(StatKind.FireRate, 0.18f));
+            Add("trg-zeroed", "Zeroed In", Path.Trigger, "+8% gun damage",
+                b => b.AddPercent(StatKind.GunDamage, 0.075f));
+            Add("trg-discipline", "Trigger Discipline", Path.Trigger, "+6% fire rate",
+                b => b.AddPercent(StatKind.FireRate, 0.060f));
+            Add("trg-handload", "Hand-Loads", Path.Trigger, "+11% gun damage",
+                b => b.AddPercent(StatKind.GunDamage, 0.110f));
+            Add("trg-followthrough", "Follow Through", Path.Trigger, "+5% gun damage, +4% fire rate",
+                b => b.AddPercent(StatKind.GunDamage, 0.050f).AddPercent(StatKind.FireRate, 0.040f));
+            Add("trg-lightkit", "Light Kit", Path.Trigger, "+5% move speed, +3% fire rate",
+                b => b.AddPercent(StatKind.MoveSpeed, 0.050f).AddPercent(StatKind.FireRate, 0.030f));
+            Add("trg-scrounge", "Brass Discipline", Path.Trigger, "+12% cash per kill",
+                b => b.AddPercent(StatKind.CashPerKill, 0.125f));
+            Add("trg-barrel", "Spare Barrel", Path.Trigger, "+9% fire rate",
+                b => b.AddPercent(StatKind.FireRate, 0.090f));
             Add("trg-capstone", "Cyclic Rate", Path.Trigger,
-                "CAPSTONE  +30% fire rate and +15% gun damage",
-                b => b.AddPercent(StatKind.FireRate, 0.30f).AddPercent(StatKind.GunDamage, 0.15f),
+                "CAPSTONE  +15% fire rate and +8% gun damage",
+                b => b.AddPercent(StatKind.FireRate, 0.150f).AddPercent(StatKind.GunDamage, 0.075f),
                 capstone: true);
 
             // ---- Ordnance: the strike ----
-            Add("ord-shortfuse", "Short Fuse", Path.Ordnance, "-18% airstrike cooldown",
-                b => b.AddPercent(StatKind.AirstrikeCooldown, 0.18f));
-            Add("ord-wide", "Wide Pattern", Path.Ordnance, "+25% blast radius",
-                b => b.AddPercent(StatKind.AirstrikeRadius, 0.25f));
-            Add("ord-thermite", "Thermite", Path.Ordnance, "+30% airstrike damage",
-                b => b.AddPercent(StatKind.AirstrikeDamage, 0.30f));
-            Add("ord-sandbagged", "Sandbagged", Path.Ordnance, "-60% self-damage from your own strike",
-                b => b.AddPercent(StatKind.AirstrikeSelfDamage, 0.60f));
-            Add("ord-coldblooded", "Cold-Blooded", Path.Ordnance, "-12% airstrike cooldown, +10% blast radius",
-                b => b.AddPercent(StatKind.AirstrikeCooldown, 0.12f)
-                      .AddPercent(StatKind.AirstrikeRadius, 0.10f));
-            Add("ord-hardened", "Dug In", Path.Ordnance, "+15% max health, +2 armour",
-                b => b.AddPercent(StatKind.MaxHealth, 0.15f).AddFlat(StatKind.Armour, 2f));
-            Add("ord-standoff", "Stand Off", Path.Ordnance, "+20% airstrike damage, +8% move speed",
-                b => b.AddPercent(StatKind.AirstrikeDamage, 0.20f).AddPercent(StatKind.MoveSpeed, 0.08f));
+            Add("ord-shortfuse", "Short Fuse", Path.Ordnance, "-9% airstrike cooldown",
+                b => b.AddPercent(StatKind.AirstrikeCooldown, 0.090f));
+            Add("ord-wide", "Wide Pattern", Path.Ordnance, "+12% blast radius",
+                b => b.AddPercent(StatKind.AirstrikeRadius, 0.125f));
+            Add("ord-thermite", "Thermite", Path.Ordnance, "+15% airstrike damage",
+                b => b.AddPercent(StatKind.AirstrikeDamage, 0.150f));
+            Add("ord-sandbagged", "Sandbagged", Path.Ordnance, "-30% self-damage from your own strike",
+                b => b.AddPercent(StatKind.AirstrikeSelfDamage, 0.300f));
+            Add("ord-coldblooded", "Cold-Blooded", Path.Ordnance, "-6% airstrike cooldown, +5% blast radius",
+                b => b.AddPercent(StatKind.AirstrikeCooldown, 0.060f)
+                      .AddPercent(StatKind.AirstrikeRadius, 0.050f));
+            Add("ord-hardened", "Dug In", Path.Ordnance, "+8% max health, +2 armour",
+                b => b.AddPercent(StatKind.MaxHealth, 0.075f).AddFlat(StatKind.Armour, 2f));
+            Add("ord-standoff", "Stand Off", Path.Ordnance, "+10% airstrike damage, +4% move speed",
+                b => b.AddPercent(StatKind.AirstrikeDamage, 0.100f).AddPercent(StatKind.MoveSpeed, 0.040f));
             Add("ord-capstone", "Danger Close", Path.Ordnance,
-                "CAPSTONE  immune to your own strike, -20% cooldown",
-                b => b.AddPercent(StatKind.AirstrikeSelfDamage, 1f)
-                      .AddPercent(StatKind.AirstrikeCooldown, 0.20f),
+                "CAPSTONE  immune to your own strike, -10% cooldown",
+                b => b.AddPercent(StatKind.AirstrikeSelfDamage, 0.500f)
+                      .AddPercent(StatKind.AirstrikeCooldown, 0.100f),
                 capstone: true);
 
             // ---- Doctrine: the emplacements ----
-            Add("doc-overwatch", "Overwatch", Path.Doctrine, "+20% turret damage",
-                b => b.AddPercent(StatKind.TurretDamage, 0.20f));
-            Add("doc-reach", "Long Lanes", Path.Doctrine, "+18% turret range",
-                b => b.AddPercent(StatKind.TurretRange, 0.18f));
-            Add("doc-welds", "Fresh Welds", Path.Doctrine, "+35% repair speed",
-                b => b.AddPercent(StatKind.RepairSpeed, 0.35f));
-            Add("doc-supply", "Supply Line", Path.Doctrine, "+20% cash per kill",
-                b => b.AddPercent(StatKind.CashPerKill, 0.20f));
-            Add("doc-interlock", "Interlocking Fire", Path.Doctrine, "+12% turret damage, +10% turret range",
-                b => b.AddPercent(StatKind.TurretDamage, 0.12f).AddPercent(StatKind.TurretRange, 0.10f));
-            Add("doc-standfast", "Stand Fast", Path.Doctrine, "+20% max health, +25% repair speed",
-                b => b.AddPercent(StatKind.MaxHealth, 0.20f).AddPercent(StatKind.RepairSpeed, 0.25f));
+            Add("doc-overwatch", "Overwatch", Path.Doctrine, "+10% turret damage",
+                b => b.AddPercent(StatKind.TurretDamage, 0.100f));
+            Add("doc-reach", "Long Lanes", Path.Doctrine, "+9% turret range",
+                b => b.AddPercent(StatKind.TurretRange, 0.090f));
+            Add("doc-welds", "Fresh Welds", Path.Doctrine, "+18% repair speed",
+                b => b.AddPercent(StatKind.RepairSpeed, 0.175f));
+            Add("doc-supply", "Supply Line", Path.Doctrine, "+10% cash per kill",
+                b => b.AddPercent(StatKind.CashPerKill, 0.100f));
+            Add("doc-interlock", "Interlocking Fire", Path.Doctrine, "+6% turret damage, +5% turret range",
+                b => b.AddPercent(StatKind.TurretDamage, 0.060f).AddPercent(StatKind.TurretRange, 0.050f));
+            Add("doc-standfast", "Stand Fast", Path.Doctrine, "+10% max health, +12% repair speed",
+                b => b.AddPercent(StatKind.MaxHealth, 0.100f).AddPercent(StatKind.RepairSpeed, 0.125f));
             Add("doc-plated", "Scrap Plate", Path.Doctrine, "+4 armour",
                 b => b.AddFlat(StatKind.Armour, 4f));
             Add("doc-capstone", "Fields of Fire", Path.Doctrine,
-                "CAPSTONE  +30% turret damage and +20% turret range",
-                b => b.AddPercent(StatKind.TurretDamage, 0.30f).AddPercent(StatKind.TurretRange, 0.20f),
+                "CAPSTONE  +15% turret damage and +10% turret range",
+                b => b.AddPercent(StatKind.TurretDamage, 0.150f).AddPercent(StatKind.TurretRange, 0.100f),
                 capstone: true);
 
             return list;

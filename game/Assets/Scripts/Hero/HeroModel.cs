@@ -16,9 +16,12 @@ namespace Cipher.Game.Hero
         public float GunDamage { get; set; } = 6f;            // runners have 10 hp: two taps
         public float GunRange { get; set; } = 25f;
         public float GunHitRadius { get; set; } = 0.45f;
-        public float ContactRadius { get; set; } = 0.9f;      // runners inside this chew on you
+        // Wider than SimConfig.HeroContactRange, deliberately and with margin: the swarm closes to
+        // that distance and stops, so if this is the smaller of the two they stand just outside it
+        // and are completely harmless. That shipped.
+        public float ContactRadius { get; set; } = 1.35f;     // runners inside this chew on you
         public float ContactDamagePerAgentPerSecond { get; set; } = 6f;
-        public int ContactAgentCap { get; set; } = 8;         // being buried is lethal, not instant
+        public int ContactAgentCap { get; set; } = 10;        // being buried is lethal, not instant
 
         /// <summary>
         /// Flat damage removed from each body's contact tick, from Plated affixes and Scrap

@@ -451,39 +451,52 @@ namespace Cipher.Game.Tests
                 hasFallbackPosition: hasFallback);
 
         [Test]
-        public void CompletingTheObjectivesOpensThePackUpWindow()
+        public void CompletingTheObjectivesUnlocksTheExitWithoutForcingIt()
         {
-            // ADR-005: finishing the job is not the end of the mission where there is a line behind
-            // you. It is the cue to unbolt what you can carry and go. Setting Won here instead
-            // skipped extraction and the truck entirely.
+            // ADR-005 is explicit that leaving is the PLAYER's call, and that decision is the whole
+            // risk curve of a mission. The first version dropped him into the pack-up window the
+            // instant the objective ticked over, which he ran into and did not understand.
             var match = NewMatch();
             match.CompleteByObjective();
+
+            Assert.That(match.Phase, Is.EqualTo(Cipher.Game.Match.MatchPhase.Setup),
+                        "finishing the job must not shove him out of the door");
+            Assert.That(match.ObjectivesMet, Is.True);
+            Assert.That(match.CanDeclareLastWave, Is.True,
+                        "but he may now leave whenever he likes");
+        }
+
+        [Test]
+        public void FinishingTheJobUnlocksTheExitEvenBelowTheWaveMinimum()
+        {
+            // The minimum exists to stop wave-one bailing, not to trap someone already finished.
+            var match = NewMatch();
+            Assert.That(match.CanDeclareLastWave, Is.False, "nothing cleared yet");
+
+            match.CompleteByObjective();
+            Assert.That(match.CanDeclareLastWave, Is.True);
+        }
+
+        [Test]
+        public void CompletingAgainEveryTickChangesNothing()
+        {
+            var match = NewMatch();
+            match.CompleteByObjective();
+            match.DeclareLastWave();
+
+            // Clear the declared wave to open the window, then keep completing.
+            match.StartWaveNow();
+            for (int i = 0; i < 200 && match.Phase != Cipher.Game.Match.MatchPhase.Extraction; i++)
+                match.Tick(0.1f, aliveRunners: 0, breachedThisTick: 0);
 
             Assert.That(match.Phase, Is.EqualTo(Cipher.Game.Match.MatchPhase.Extraction));
-            Assert.That(match.ExtractTimeLeft, Is.GreaterThan(0f));
-            Assert.That(match.LastWaveDeclared, Is.True);
-        }
-
-        [Test]
-        public void WithNowhereToFallBackCompletingSimplyWins()
-        {
-            var match = NewMatch(hasFallback: false);
-            match.CompleteByObjective();
-            Assert.That(match.Phase, Is.EqualTo(Cipher.Game.Match.MatchPhase.Won));
-        }
-
-        [Test]
-        public void CompletingAgainDuringExtractionDoesNotRestartTheWindow()
-        {
-            var match = NewMatch();
-            match.CompleteByObjective();
             float first = match.ExtractTimeLeft;
 
             match.Tick(3f, aliveRunners: 0, breachedThisTick: 0);
             match.CompleteByObjective();
 
             Assert.That(match.ExtractTimeLeft, Is.LessThan(first),
-                        "the pack-up clock must keep running; objectives stay complete every tick");
+                        "the pack-up clock keeps running; objectives stay complete every tick");
         }
 
         [Test]
@@ -507,23 +520,22 @@ namespace Cipher.Game.Tests
         }
 
         [Test]
-        public void TheShippedGateMissionReachesItsPackUpWindow()
+        public void TheShippedGateMissionCanBeFinishedAndLeft()
         {
-            // The Gate asks for two of its five waves. If completion ended the match outright, and
-            // MinWavesBeforeExtract is also two, the extraction phase would be unreachable in
-            // mission one -- the exact bug this pair of changes exists to close.
+            // The Gate asks for two of its five waves. Finishing them unlocks the exit; taking more
+            // is the player buying cash and experience out of the same scan cycle.
             var def = ScenarioReader.Read(
                 File.ReadAllText(Path.Combine("Assets", "Resources", "Scenarios", "act1-01-the-gate.json")));
             var set = ObjectiveFactory.CreateSet(def.Objectives);
-            var match = new Cipher.Game.Match.MatchState(
-                def.ToWaveTable(), def.Economy, def.VaultHp);
+            var match = new Cipher.Game.Match.MatchState(def.ToWaveTable(), def.Economy, def.VaultHp);
 
             set.Tick(new ObjectiveContext(0f, 1, 2, 0, def.VaultHp, def.VaultHp), 1f);
             Assert.That(set.IsComplete, Is.True);
 
             match.CompleteByObjective();
-            Assert.That(match.Phase, Is.EqualTo(Cipher.Game.Match.MatchPhase.Extraction));
-            Assert.That(def.Waves.Count, Is.GreaterThan(2), "the objective must shorten the match");
+            Assert.That(match.ObjectivesMet, Is.True);
+            Assert.That(match.CanDeclareLastWave, Is.True);
+            Assert.That(def.Waves.Count, Is.GreaterThan(2), "and he may keep going for more");
         }
     }
 

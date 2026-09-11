@@ -530,8 +530,12 @@ namespace Cipher.Game
             _barricadeMaterial = MakeMaterial(new Color(0.55f, 0.45f, 0.25f), instanced: true);
             _breachMaterial = MakeMaterial(new Color(0.9f, 0.35f, 0.1f), instanced: true);
             // No ink on either: an outline around a fireball reads as a balloon.
-            _blastFlashMaterial = MakeMaterial(new Color(1f, 0.82f, 0.38f), instanced: true, ink: InkNone);
-            _blastRingMaterial = MakeMaterial(new Color(0.42f, 0.35f, 0.28f), instanced: true, ink: InkNone);
+            _sphereMesh = HarvestMesh(PrimitiveType.Sphere);
+            // No ink on any of these: an outline around a fireball reads as a balloon.
+            _blastFlashMaterial = MakeMaterial(new Color(1f, 0.97f, 0.86f), instanced: true, ink: InkNone);
+            _blastFireMaterial = MakeMaterial(new Color(0.98f, 0.52f, 0.14f), instanced: true, ink: InkNone);
+            _blastSmokeMaterial = MakeMaterial(new Color(0.26f, 0.24f, 0.23f), instanced: true, ink: InkNone);
+            _blastRingMaterial = MakeMaterial(new Color(0.44f, 0.38f, 0.30f), instanced: true, ink: InkNone);
             _tracerMaterial = MakeMaterial(new Color(1f, 0.95f, 0.5f), instanced: false);
             _turretTracerMaterial = MakeMaterial(new Color(0.6f, 0.9f, 1f), instanced: false);
             _blastMaterial = MakeMaterial(new Color(1f, 0.5f, 0.1f), instanced: false);
@@ -1495,7 +1499,7 @@ namespace Cipher.Game
             // straight into the window with the horde on the field.
             if (_match.Phase == MatchPhase.Extraction && _showTruck) { ReadTruckInput(kb, pad); return; }
             if (_match.Phase == MatchPhase.Extraction
-                && ((pad != null && pad.buttonNorth.wasPressedThisFrame)
+                && ((pad != null && pad.dpad.right.wasPressedThisFrame)
                     || (kb != null && kb.iKey.wasPressedThisFrame)))
             {
                 _showTruck = true;
@@ -1513,7 +1517,10 @@ namespace Cipher.Game
                 return;
             }
 
-            if ((pad != null && pad.buttonNorth.wasPressedThisFrame && !_buildMode)
+            // D-PAD RIGHT for the kit, not Y. Y is the airstrike, and binding the kit to it meant
+            // calling a strike opened the inventory -- owner: "When I press why it opens my
+            // inventory that is also my airstrike button".
+            if ((pad != null && pad.dpad.right.wasPressedThisFrame && !_buildMode)
                 || (kb != null && kb.iKey.wasPressedThisFrame))
             {
                 _showInventory = !_showInventory;
@@ -2934,24 +2941,32 @@ namespace Cipher.Game
         }
 
         /// <summary>
-        /// Draws an airstrike impact: a flash, an expanding ring of dust, and a few chunks thrown
-        /// out of it.
+        /// Draws an airstrike impact.
         ///
-        /// Owner: "we also still need a graphic to fill in for the actual explosions". There was a
-        /// blast RADIUS being tracked and nothing drawing it, so the most dramatic thing in the game
-        /// happened invisibly -- bodies simply stopped existing.
+        /// Owner, twice: "it's still just a bunch of cylinders that pop out of the ground orange and
+        /// then disappear there's no graphic". He was right, and the first attempt was mine: one
+        /// yellow capsule scaling up is a yellow capsule scaling up.
         ///
-        /// Built from the same instanced primitives as everything else. Under a cel shader a hard
-        /// flat ring expanding and fading in steps reads better than any soft particle would, and it
-        /// costs one draw call per shape rather than a particle system per bomb.
+        /// An explosion reads as an explosion because of SEQUENCE and SILHOUETTE, not because of one
+        /// bright shape. So it is four things on different clocks:
+        ///
+        ///   FLASH    two frames of a fat bright sphere. Gone before you can focus on it, which is
+        ///            exactly what a real one does to your eye.
+        ///   FIREBALL a sphere that rises, swells and dims through orange into black smoke.
+        ///   SMOKE    a handful of puffs thrown out and up, each on its own arc, rising as they fade.
+        ///   RING     a flat ground ring racing out PAST the blast radius and thinning as it goes.
+        ///
+        /// All instanced primitives on the existing batching path, all with the ink outline off: an
+        /// outline around a fireball reads as a balloon.
         /// </summary>
         private void DrawBlasts(float dt)
         {
             if (_blasts.Count == 0) return;
 
-            _fxMatrices.Clear();
-            var ringMatrices = _fxRing;
-            ringMatrices.Clear();
+            _fxFlash.Clear();
+            _fxFire.Clear();
+            _fxSmoke.Clear();
+            _fxRing.Clear();
 
             for (int i = _blasts.Count - 1; i >= 0; i--)
             {
@@ -2960,32 +2975,68 @@ namespace Cipher.Game
                 if (b.Ttl <= 0f) { _blasts.RemoveAt(i); continue; }
                 _blasts[i] = b;
 
-                float life = 1f - Mathf.Clamp01(b.Ttl / BlastLife);   // 0 at the flash, 1 at the end
+                float life = Mathf.Clamp01(1f - b.Ttl / BlastLife);   // 0 at detonation, 1 at the end
+                float r = b.Radius;
 
-                // The flash: bright, fat, and gone in the first fifth of the life.
-                if (life < 0.22f)
+                // ---- flash -------------------------------------------------------------------
+                if (life < 0.12f)
                 {
-                    float f = 1f - life / 0.22f;
-                    float size = b.Radius * (0.5f + 0.9f * (1f - f));
-                    _fxMatrices.Add(Matrix4x4.TRS(b.Center + Vector3.up * (0.6f + 1.8f * (1f - f)),
-                                                  Quaternion.identity,
-                                                  new Vector3(size, size * (0.7f + f), size)));
+                    float f = 1f - life / 0.12f;
+                    float size = r * (1.1f + 0.5f * f);
+                    _fxFlash.Add(Matrix4x4.TRS(b.Center + Vector3.up * r * 0.35f,
+                                               Quaternion.identity, Vector3.one * size));
                 }
 
-                // The ring: expands past the blast radius and flattens as it goes.
-                float ring = b.Radius * (0.35f + 1.5f * life);
-                float thickness = Mathf.Lerp(1.1f, 0.12f, life);
-                ringMatrices.Add(Matrix4x4.TRS(b.Center + Vector3.up * 0.05f,
-                                               Quaternion.identity,
-                                               new Vector3(ring, thickness, ring)));
+                // ---- fireball ----------------------------------------------------------------
+                if (life < 0.62f)
+                {
+                    float f = life / 0.62f;
+                    float size = r * Mathf.Lerp(0.55f, 1.45f, Mathf.Sqrt(f));
+                    float rise = r * (0.30f + 0.85f * f);
+                    _fxFire.Add(Matrix4x4.TRS(b.Center + Vector3.up * rise,
+                                              Quaternion.Euler(0f, f * 90f, 0f),
+                                              new Vector3(size, size * (1f - 0.25f * f), size)));
+                }
+
+                // ---- smoke, thrown out and up ------------------------------------------------
+                const int puffs = 5;
+                for (int k = 0; k < puffs; k++)
+                {
+                    float a = (k / (float)puffs) * Mathf.PI * 2f + b.Center.x * 0.7f + b.Center.z * 1.3f;
+                    float spread = r * (0.25f + 0.70f * life);
+                    float up = r * (0.35f + 1.5f * life);
+                    float size = r * Mathf.Lerp(0.30f, 0.66f, life) * (1f - life * 0.45f);
+                    if (size <= 0.01f) continue;
+
+                    _fxSmoke.Add(Matrix4x4.TRS(
+                        b.Center + new Vector3(Mathf.Cos(a) * spread, up, Mathf.Sin(a) * spread),
+                        Quaternion.Euler(a * 30f, a * 57f, 0f),
+                        Vector3.one * size));
+                }
+
+                // ---- ground ring -------------------------------------------------------------
+                float ring = r * (0.4f + 2.1f * life);
+                float thickness = Mathf.Lerp(0.9f, 0.06f, life);
+                _fxRing.Add(Matrix4x4.TRS(b.Center + Vector3.up * 0.06f,
+                                          Quaternion.identity,
+                                          new Vector3(ring, thickness, ring)));
             }
 
-            if (_fxMatrices.Count > 0) DrawInstancedBatched(_agentMesh, _blastFlashMaterial, _fxMatrices);
-            if (ringMatrices.Count > 0) DrawInstancedBatched(_discMesh, _blastRingMaterial, ringMatrices);
+            if (_fxRing.Count > 0) DrawInstancedBatched(_discMesh, _blastRingMaterial, _fxRing);
+            if (_fxSmoke.Count > 0) DrawInstancedBatched(_sphereMesh, _blastSmokeMaterial, _fxSmoke);
+            if (_fxFire.Count > 0) DrawInstancedBatched(_sphereMesh, _blastFireMaterial, _fxFire);
+            if (_fxFlash.Count > 0) DrawInstancedBatched(_sphereMesh, _blastFlashMaterial, _fxFlash);
         }
 
-        private readonly List<Matrix4x4> _fxRing = new List<Matrix4x4>(32);
+        private readonly List<Matrix4x4> _fxFlash = new List<Matrix4x4>(16);
+        private readonly List<Matrix4x4> _fxFire = new List<Matrix4x4>(16);
+        private readonly List<Matrix4x4> _fxSmoke = new List<Matrix4x4>(64);
+        private readonly List<Matrix4x4> _fxRing = new List<Matrix4x4>(16);
+
+        private Mesh _sphereMesh = null!;
         private Material _blastFlashMaterial = null!;
+        private Material _blastFireMaterial = null!;
+        private Material _blastSmokeMaterial = null!;
         private Material _blastRingMaterial = null!;
 
         private void DrawWorld()
@@ -3421,10 +3472,8 @@ namespace Cipher.Game
 
             if (_truck == null || _recoverable.Count == 0) return;
 
-            bool up = (kb != null && kb.upArrowKey.wasPressedThisFrame)
-                      || (pad != null && pad.dpad.up.wasPressedThisFrame);
-            bool down = (kb != null && kb.downArrowKey.wasPressedThisFrame)
-                        || (pad != null && pad.dpad.down.wasPressedThisFrame);
+            bool up = (kb != null && kb.upArrowKey.wasPressedThisFrame) || StickStep(pad, +1);
+            bool down = (kb != null && kb.downArrowKey.wasPressedThisFrame) || StickStep(pad, -1);
             if (up) { _truckCursor = (_truckCursor - 1 + _recoverable.Count) % _recoverable.Count; _sfx.Play(Sfx.MenuTick, 0.6f, 0f); }
             if (down) { _truckCursor = (_truckCursor + 1) % _recoverable.Count; _sfx.Play(Sfx.MenuTick, 0.6f, 0f); }
 
@@ -3540,15 +3589,38 @@ namespace Cipher.Game
         /// prerequisites already impose the shape, and a list navigates on a gamepad without any of
         /// the tree-cursor UX that is still unproven here.
         /// </summary>
+        /// <summary>
+        /// One menu step per stick flick. The stick is analogue and a panel is a list, so it needs
+        /// a threshold plus a latch, or a single nudge scrolls the whole list in three frames.
+        /// </summary>
+        private bool StickStep(Gamepad? pad, int sign)
+        {
+            if (pad == null) return false;
+            float y = pad.leftStick.ReadValue().y;
+
+            if (Mathf.Abs(y) < 0.45f) { _stickLatched = false; return false; }
+            if (_stickLatched) return false;
+
+            bool matches = sign > 0 ? y > 0f : y < 0f;
+            if (!matches) return false;
+
+            _stickLatched = true;
+            return true;
+        }
+
+        private bool _stickLatched;
+
         private void ReadSkillInput(Keyboard? kb, Gamepad? pad)
         {
             var all = SkillCatalogue.All;
             if (all.Count == 0) return;
 
-            bool up = (kb != null && kb.upArrowKey.wasPressedThisFrame)
-                      || (pad != null && pad.dpad.up.wasPressedThisFrame);
-            bool down = (kb != null && kb.downArrowKey.wasPressedThisFrame)
-                        || (pad != null && pad.dpad.down.wasPressedThisFrame);
+            // The LEFT STICK scrolls. D-pad up is the key that opened this panel, so using it to
+            // move the cursor as well meant the first press closed the panel again and there was no
+            // way to reach anything -- owner: "once I'm in my skills if I press up again it exits
+            // out of my skills so that's counterproductive there's no way for me to scroll".
+            bool up = (kb != null && kb.upArrowKey.wasPressedThisFrame) || StickStep(pad, +1);
+            bool down = (kb != null && kb.downArrowKey.wasPressedThisFrame) || StickStep(pad, -1);
             if (up) { _skillCursor = (_skillCursor - 1 + all.Count) % all.Count; _sfx.Play(Sfx.MenuTick, 0.6f, 0f); }
             if (down) { _skillCursor = (_skillCursor + 1) % all.Count; _sfx.Play(Sfx.MenuTick, 0.6f, 0f); }
 

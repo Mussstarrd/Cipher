@@ -138,6 +138,12 @@ namespace Cipher.Game.Match
         /// <summary>The player has called this wave as their last one here.</summary>
         public bool LastWaveDeclared { get; private set; }
 
+        /// <summary>
+        /// The scenario's objectives are all satisfied. The player may leave at any time and keeps
+        /// the reward; staying buys more cash and experience out of the same scan cycle.
+        /// </summary>
+        public bool ObjectivesMet { get; private set; }
+
         /// <summary>Seconds left in the pack-up window. Only meaningful during Extraction.</summary>
         public float ExtractTimeLeft { get; private set; }
 
@@ -191,7 +197,9 @@ namespace Cipher.Game.Match
             if (!HasFallbackPosition) return DeclareResult.NowhereToGo;
             if (LastWaveDeclared) return DeclareResult.AlreadyDeclared;
             if (Phase != MatchPhase.Setup && Phase != MatchPhase.Wave) return DeclareResult.NotFighting;
-            if (WavesCleared < _cycle.MinWavesBeforeExtract) return DeclareResult.TooEarly;
+            // Having finished the job unlocks the call even if the wave minimum is not met: the
+            // minimum exists to stop wave-one bailing, not to trap someone who is already done.
+            if (!ObjectivesMet && WavesCleared < _cycle.MinWavesBeforeExtract) return DeclareResult.TooEarly;
             return DeclareResult.Ok;
         }
 
@@ -298,9 +306,14 @@ namespace Cipher.Game.Match
                 return;
             }
 
-            LastWaveDeclared = true;
-            Phase = MatchPhase.Extraction;
-            ExtractTimeLeft = _cycle.ExtractSeconds;
+            // DOES NOT FORCE THE EXIT. The first version dropped the player straight into the
+            // pack-up window the moment the objective ticked over, which the owner ran into and did
+            // not understand: "the second wave without me saying I'm ready to leave it's already
+            // asking me if I want to pack up". ADR-005 is explicit that leaving is the PLAYER's
+            // call -- that decision is the whole risk curve of a mission. Completing the objective
+            // means the job is done and he may go whenever he likes, which is a different thing
+            // from being shown the door.
+            ObjectivesMet = true;
         }
 
         /// <summary>

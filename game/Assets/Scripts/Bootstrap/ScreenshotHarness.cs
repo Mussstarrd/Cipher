@@ -157,7 +157,9 @@ namespace Cipher.Game
 
             // Late enough that the wave is on the field, early enough that the strike is still in
             // the air when the shutter opens.
-            if (_emplacements && !_emplacementsSet && _elapsed > Mathf.Max(0f, _delay - 1.1f))
+            // Four seconds ahead of the shutter: the strike has an inbound delay and then walks its
+            // bombs down the line, so calling it one second early photographed an empty sky.
+            if (_emplacements && !_emplacementsSet && _elapsed > Mathf.Max(0f, _delay - 4f))
             {
                 var be = GetComponent<FloodBootstrap>();
                 if (be != null) be.ShowEmplacementsForCapture();

@@ -308,4 +308,49 @@ namespace Cipher.Game.Tests
                         $"a crowd standing on a gun should pull it down; it started at {hp} hp");
         }
     }
+
+    /// <summary>
+    /// Two numbers in two different assemblies have to agree, and when they did not the entire
+    /// swarm became harmless: they walked up, stopped one tenth of a cell outside the radius that
+    /// hurts, and stood there. Owner: "when they get to me they just stand there they don't touch
+    /// me my health doesn't go down unless I walk through them".
+    /// </summary>
+    public sealed class ContactDamageTests
+    {
+        [Test]
+        public void TheSimStopsThemInsideTheRadiusThatHurts()
+        {
+            var sim = new SimConfig();
+            var hero = new Cipher.Game.Hero.HeroConfig();
+            Assert.That(sim.HeroContactRange, Is.LessThan(hero.ContactRadius * 0.8f),
+                        "the swarm must close well inside the hurt radius, not park on its edge");
+        }
+
+        [Test]
+        public void ACrowdOnTopOfHimTakesHisHealthDown()
+        {
+            var map = new GridMap(48, 48);
+            var flow = new FlowField(map);
+            flow.Compute(46, 24);
+            var world = new AgentWorld(map, flow, new SimConfig(), initialCapacity: 64);
+
+            var cfg = new Cipher.Game.Hero.HeroConfig();
+            var hero = new Cipher.Game.Hero.HeroModel(cfg, new Vec2(24.5f, 24.5f));
+
+            for (int i = 0; i < 12; i++)
+                world.Spawn(new Vec2(26.5f + (i % 3) * 0.3f, 23.5f + (i / 3) * 0.4f), 100f,
+                            Intent.Vault, pace: 1f, armed: false);
+
+            float start = hero.Health;
+            for (int t = 0; t < 30 * 6; t++)
+            {
+                world.SetHero(hero.Position, alive: !hero.IsDown);
+                world.Step(1f / 30f);
+                hero.ApplyContact(world, 1f / 30f);
+            }
+
+            Assert.That(hero.Health, Is.LessThan(start),
+                        "a crowd that reaches him has to actually hurt him");
+        }
+    }
 }

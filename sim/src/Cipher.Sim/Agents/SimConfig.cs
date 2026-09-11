@@ -56,8 +56,17 @@ namespace Cipher.Sim.Agents
         /// <summary>How close the player has to be before ordinary bodies come for him instead.</summary>
         public float HeroAggroRange { get; set; } = 8f;
 
-        /// <summary>Close enough to be chewing on him. The game layer owns the damage.</summary>
-        public float HeroContactRange { get; set; } = 1.0f;
+        /// <summary>
+        /// Close enough to be chewing on him. The game layer owns the damage.
+        ///
+        /// MUST BE SMALLER THAN HeroConfig.ContactRadius, with margin. This was 1.0 against a
+        /// damage radius of 0.9, so the swarm walked up, stopped one tenth of a cell OUTSIDE the
+        /// radius that hurts, and stood there. The owner: "when they get to me they just stand
+        /// there they don't touch me my health doesn't go down unless I walk through them". Two
+        /// numbers that have to agree, held in two different assemblies, is a thing to keep an eye
+        /// on: there is now a test that swarms the hero and asserts his health falls.
+        /// </summary>
+        public float HeroContactRange { get; set; } = 0.62f;
 
         /// <summary>They move faster at a person than they do at a building.</summary>
         public float ChaseSpeed { get; set; } = 4.2f;
