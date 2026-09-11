@@ -1,0 +1,91 @@
+{
+  "schema": 1,
+  "id": "act1-02-the-service-road",
+  "displayName": "The Service Road",
+  "tier": 1,
+  "brief": "There is a second way in. There was always a second way in. The maintenance crews used it, the county used it, and it is a cattle gate and a chain across a gravel track behind the outer lots. Nobody thought about it because nobody had to.",
+
+  "map": {
+    "width": 72,
+    "height": 56,
+    "preset": "arena",
+    "walls": [
+      { "rect": [14, 0, 1, 18], "kind": "Static" },
+      { "rect": [14, 25, 1, 31], "kind": "Static" },
+
+      { "rect": [30, 12, 1, 44], "kind": "Wall" },
+      { "rect": [30, 0, 1, 5], "kind": "Wall" },
+
+      { "rect": [44, 0, 1, 30], "kind": "Wall" },
+      { "rect": [44, 37, 1, 19], "kind": "Wall" },
+
+      { "rect": [58, 20, 1, 36], "kind": "Static" },
+      { "rect": [58, 0, 1, 13], "kind": "Static" }
+    ]
+  },
+
+  "props": [
+    { "kind": "Pillar",        "x": 14.5, "y": 17.4 },
+    { "kind": "Pillar",        "x": 14.5, "y": 25.6 },
+    { "kind": "BoomBarrier",   "x": 15.4, "y": 18.4, "yaw": 90 },
+    { "kind": "JerseyBarrier", "x": 17.5, "y": 21.0, "yaw": 90 },
+
+    { "kind": "Guardhouse",    "x": 33.0, "y": 8.5,  "yaw": 210 },
+    { "kind": "JerseyBarrier", "x": 32.5, "y": 6.5,  "yaw": 90 },
+
+    { "kind": "Pillar",        "x": 44.5, "y": 29.4 },
+    { "kind": "Pillar",        "x": 44.5, "y": 37.6 },
+    { "kind": "JerseyBarrier", "x": 47.0, "y": 33.5, "yaw": 90 },
+
+    { "kind": "Guardhouse",    "x": 61.0, "y": 15.0, "yaw": 170 },
+    { "kind": "BoomBarrier",   "x": 59.4, "y": 13.6, "yaw": 90 }
+  ],
+
+  "heroSpawn": { "x": 64, "y": 28 },
+  "spawnCells": [
+    { "x": 1, "y": 21, "gate": "service-road" },
+    { "x": 1, "y": 46, "gate": "outer-lots" }
+  ],
+  "vault": { "x": 69, "y": 28, "hp": 30 },
+
+  "economy": {
+    "startCash": 350,
+    "cashPerKill": 5,
+    "waveClearBonusPerWave": 110
+  },
+
+  "director": {
+    "seed": 20260912,
+    "sapperFirstAt": 40,
+    "spitterFirstAt": 9999,
+    "hunterShare": 0.14,
+    "wreckerShare": 0.10
+  },
+
+  "waves": [
+    { "setupSeconds": 25, "count": 200, "spawnPerSecond": 10, "mix": { "Runner": 1.0 } },
+    { "setupSeconds": 20, "count": 320, "spawnPerSecond": 12, "mix": { "Runner": 0.98, "Sapper": 0.02 } },
+    { "setupSeconds": 20, "count": 450, "spawnPerSecond": 15, "mix": { "Runner": 0.97, "Sapper": 0.03 } },
+    { "setupSeconds": 18, "count": 600, "spawnPerSecond": 17, "mix": { "Runner": 0.95, "Sapper": 0.05 } },
+    { "setupSeconds": 18, "count": 800, "spawnPerSecond": 20, "mix": { "Runner": 0.94, "Sapper": 0.06 } }
+  ],
+
+  "safeZoneAfterWaves": [],
+
+  "objectives": [
+    { "type": "ClearWaves", "count": 3 },
+    { "type": "ProtectVault", "minHp": 1 }
+  ],
+
+  "rewards": {
+    "scrip": 90,
+    "guaranteedDrops": [ { "slot": "Optic", "rarity": "Scavenged", "ilvl": 5 } ],
+    "unlocks": []
+  },
+
+  "medals": {
+    "bronze": [ { "type": "Complete" } ],
+    "silver": [ { "type": "VaultHpAtLeast", "value": 24 } ],
+    "gold": [ { "type": "VaultHpAtLeast", "value": 30 }, { "type": "TimeUnder", "seconds": 540 } ]
+  }
+}
