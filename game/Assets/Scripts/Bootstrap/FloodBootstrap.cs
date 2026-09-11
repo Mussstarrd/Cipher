@@ -106,6 +106,20 @@ namespace Cipher.Game
         private Loadout _loadout = null!;
         private ItemRoller _loot = null!;
         private int _lastLevel = 1;
+        private int _waveStartKills;
+        private int _waveStartCash;
+        private float _waveStartSeconds;
+
+        /// <summary>"the county road", "the county road and the north fence": where this wave comes from.</summary>
+        private string GateNames()
+        {
+            var names = new List<string>();
+            foreach (var g in _scenario.SpawnCells)
+                if (!g.Flank && g.Gate.Length > 0) names.Add(g.Gate.Replace('-', ' '));
+            if (names.Count == 0) return "gate";
+            if (names.Count == 1) return names[0];
+            return string.Join(", ", names.GetRange(0, names.Count - 1)) + " and " + names[names.Count - 1];
+        }
         private int _lastSapperAlive;
         private int _lastSpitterAlive;
         private string _lootNotice = "";
@@ -239,9 +253,11 @@ namespace Cipher.Game
         private float _trauma;
         private float _fovCurrent = 60f;
         private Vector3 _camVelocity;
+        private bool _snapCamera = true;
 
         private void AddTrauma(float amount) => _trauma = Mathf.Clamp01(_trauma + amount);
         private readonly PauseMenuModel _pauseMenu = new PauseMenuModel();
+        private readonly HudFeedback _feedback = new HudFeedback();
         private GUIStyle? _menuTitleStyle;
         private GUIStyle? _menuItemStyle;
         private GUIStyle? _centerStyle;
@@ -423,6 +439,9 @@ namespace Cipher.Game
             if (carried > 0) _match.Bank.Earn(carried);
             _actors = new ActorSystem(_scenario.Actors);
             _objectives = ObjectiveFactory.CreateSet(_scenario.Objectives);
+            // Prime the panel: the sim does not tick while the opening waits, and a vault that reads
+            // 0/0 until the first wave looks like a mission already lost.
+            _objectives.Tick(new ObjectiveContext(0f, 0, 0, 0, _match.VaultHp, _match.VaultMaxHp, _actors), 0f);
             _nextName = string.IsNullOrEmpty(_scenario.Next) ? "" : LoadScenario(_scenario.Next).DisplayName;
             _carriedCash = 0;
             _focus.Reset();
@@ -469,6 +488,7 @@ namespace Cipher.Game
             _hero.Aim(new Vec2(-1f, 0f));
             _camYaw = -90f;
             _camPitch = 22f;
+            _snapCamera = true;
             _buildMode = false;
             _camMode = CameraMode.Chase;
             _tickAccumulator = 0f;
@@ -1054,6 +1074,7 @@ namespace Cipher.Game
             Time.timeScale = _focus.TimeScale * (_hitstop > 0f ? HitstopScale : 1f);
 
             TickBodyFlashes(Time.unscaledDeltaTime);
+            _feedback.Tick(Time.unscaledDeltaTime);
             _trauma = Mathf.Max(0f, _trauma - Time.unscaledDeltaTime * TraumaDecay);
 
             float dt = Time.deltaTime;
@@ -1112,15 +1133,29 @@ namespace Cipher.Game
                     case MatchPhase.Wave:
                         _sfx.Play(Sfx.WaveHorn, 0.9f, 0.02f);
                         _hero.RearmSecondWind();   // once per wave, not once per mission
+                        _feedback.ShowCard($"WAVE {_match.WaveNumber}",
+                            $"{_match.CurrentWave.Count} of them, from the {GateNames()}" +
+                            (_match.LastWaveDeclared ? "   -   your last one here" : ""));
+                        _waveStartKills = (int)_world.TotalKills;
+                        _waveStartCash = _match.Bank.TotalEarned;
+                        _waveStartSeconds = _matchSeconds;
                         break;
                     case MatchPhase.Setup:
                         _sfx.Play(Sfx.WaveClear, 0.9f, 0.01f);
                         OnWaveCleared();
+                        _feedback.ShowCard("WAVE CLEARED",
+                            $"{(int)_world.TotalKills - _waveStartKills} down   " +
+                            $"${_match.Bank.TotalEarned - _waveStartCash} earned   " +
+                            $"{Mathf.RoundToInt(_matchSeconds - _waveStartSeconds)}s   " +
+                            $"{Mathf.RoundToInt(_match.PrepSecondsRemaining)}s of cycle left", 3.6f);
                         break;
                     case MatchPhase.Extraction:
                         _sfx.Play(Sfx.WaveClear, 1f, 0f);
                         AwardXp(LevelCurve.XpForExtraction(_match.WavesCleared));
                         OpenTruck();
+                        _feedback.ShowCard("PACK UP",
+                            $"{Mathf.RoundToInt(_match.ExtractTimeLeft)}s before the next scan   -   " +
+                            $"{(Gamepad.current != null ? "D-pad right" : "I")}: the truck", 4f);
                         break;
                     case MatchPhase.Extracted:
                         _sfx.Play(Sfx.Win, 0.85f, 0f);
@@ -1198,7 +1233,14 @@ namespace Cipher.Game
                 {
                     if (_objectives.IsFailed) _match.LoseByObjective();
                 }
-                if (_objectives.IsComplete) _match.CompleteByObjective();
+                if (_objectives.IsComplete && !_match.ObjectivesMet)
+                {
+                    _match.CompleteByObjective();
+                    if (_match.ObjectivesMet)
+                        _feedback.ShowCard("JOB DONE",
+                            $"leave whenever you like   -   {(Gamepad.current != null ? "D-pad down" : "L")}: call your last wave", 4.5f);
+                }
+                else if (_objectives.IsComplete) _match.CompleteByObjective();
                 if (toSpawn > 0)
                 {
                     bool sealedIn = false;
@@ -1257,7 +1299,14 @@ namespace Cipher.Game
             }
 
             float bitten = _hero.ApplyContact(_world, TickDt);
-            if (bitten > 0f) AddTrauma(0.12f);
+            if (bitten > 0f)
+            {
+                AddTrauma(0.12f);
+                // Where the teeth are: the centroid of everything in reach. Good enough to say
+                // "behind you", which is the only thing the wedge has to say.
+                var bite = NearestAgentWorld(_hero.Position, _heroCfg.ContactRadius * 1.2f);
+                _feedback.NoteDamage(ToWorld(_hero.Position, 0f), bite, _camYaw);
+            }
             if (bitten > 0f && _hurtCooldown <= 0f)
             {
                 _sfx.Play(Sfx.Hurt, 0.8f, 0.1f);
@@ -1477,6 +1526,8 @@ namespace Cipher.Game
                         // coming, so the wave has to be read rather than treated as one object.
                         _hero.TakeDamage(e.F);
                         var from = ToWorld(_world.PositionOf(e.A), 1.15f);
+                        _feedback.NoteDamage(ToWorld(_hero.Position, 0f), from, _camYaw);
+                        AddTrauma(0.10f);
                         _tracers.Add(new Tracer
                         {
                             A = from,
@@ -2151,6 +2202,47 @@ namespace Cipher.Game
         private GUIStyle? _vaultStyle;
 
         /// <summary>
+        /// Arrows at the screen edge to the things that matter when they are out of view: the
+        /// truck during the pack-up, every actor the objectives depend on, and the nearest aid kit
+        /// when health is low. The vault has its own label already.
+        /// </summary>
+        private void DrawWorldMarkers()
+        {
+            if (_camera == null || _match.IsOver) return;
+            float scale = Mathf.Clamp(Screen.height / 800f, 1f, 3f);
+            var heroW = ToWorld(_hero.Position, 0f);
+
+            if (_actors != null)
+            {
+                for (int i = 0; i < _actors.All.Count; i++)
+                {
+                    var a = _actors.All[i];
+                    if (!a.IsAlive) continue;
+                    var w = new Vector3(a.X + 0.5f, 2.2f, a.Y + 0.5f);
+                    string label = a.Kind == ActorKind.Process
+                        ? $"{a.Id.ToUpperInvariant()}  {(int)(a.Progress01 * 100f)}%"
+                        : a.Id.ToUpperInvariant();
+                    _feedback.DrawMarker(_camera, scale, _uiW, _uiH, w, label,
+                                         new Color(0.55f, 0.85f, 0.95f), Vector3.Distance(heroW, w));
+                }
+            }
+
+            if (_hero.HealthFraction < 0.55f && _aidKits != null && _aidKits.Kits.Count > 0)
+            {
+                int best = 0; float bestD = float.MaxValue;
+                for (int i = 0; i < _aidKits.Kits.Count; i++)
+                {
+                    float d = Vec2.DistanceSquared(_aidKits.Kits[i], _hero.Position);
+                    if (d < bestD) { bestD = d; best = i; }
+                }
+                var k = _aidKits.Kits[best];
+                var w = new Vector3(k.X, 1.2f, k.Y);
+                _feedback.DrawMarker(_camera, scale, _uiW, _uiH, w, "AID KIT",
+                                     new Color(1f, 0.55f, 0.5f), Vector3.Distance(heroW, w));
+            }
+        }
+
+        /// <summary>
         /// The mission's objectives, live, top right. This is the only place a player can see what
         /// the scenario file actually asked of them, which is what stops a data-driven mission from
         /// being a level that mysteriously ends.
@@ -2399,6 +2491,20 @@ namespace Cipher.Game
                     _map.SetWall(x, y, WallKind.Rock, GridMap.DefaultWallHp);
                     RememberScenery(x, y);
                 }
+        }
+
+        /// <summary>The nearest living agent to a point, in world space; the point itself if none.</summary>
+        private Vector3 NearestAgentWorld(Vec2 around, float radius)
+        {
+            int best = -1;
+            float bestSq = radius * radius;
+            for (int id = 0; id < _world.Count; id++)
+            {
+                if (!_world.IsAlive(id)) continue;
+                float d = Vec2.DistanceSquared(_world.PositionOf(id), around);
+                if (d < bestSq) { bestSq = d; best = id; }
+            }
+            return best < 0 ? ToWorld(around, 0f) : ToWorld(_world.PositionOf(best), 0f);
         }
 
         /// <summary>Cells that must stay empty no matter what the dresser wants.</summary>
@@ -3070,6 +3176,16 @@ namespace Cipher.Game
                 targetRot = Quaternion.Euler(68f, 0f, 0f);
             }
 
+            // A new position snaps; gliding in from wherever the rig last was reads as a cutscene
+            // nobody asked for.
+            if (_snapCamera)
+            {
+                _snapCamera = false;
+                _camVelocity = Vector3.zero;
+                _camera.transform.position = targetPos;
+                _camera.transform.rotation = targetRot;
+            }
+
             // A critically damped spring rather than a flat lerp: the rig lags a step behind and
             // settles, which is most of what makes a camera feel like it has weight. Same feel at
             // any frame rate because it is integrated against dt.
@@ -3510,6 +3626,8 @@ namespace Cipher.Game
 
             DrawObjectives();
             DrawVaultMarker();
+            DrawWorldMarkers();
+            _feedback.Draw(_uiW, _uiH, _hero.HealthFraction);
             GUI.Label(new Rect(12, 152, 900, 24),
                 $"{_focus.StatusLine()}    LV {_loadout.Skills.Level}  " +
                 $"xp {_loadout.Skills.XpIntoLevel}/{Mathf.Max(1, _loadout.Skills.XpNeededForNext)}  " +

@@ -32,3 +32,6 @@ game/out/
 
 # Free third-party art packs. Re-downloadable input, not project source.
 art/free/
+
+# Agent worktrees and local Claude Code state
+.claude/
