@@ -263,6 +263,29 @@ namespace Cipher.Game.Match
         /// <paramref name="aliveRunners"/> is the swarm's live count after its step;
         /// <paramref name="breachedThisTick"/> runners reached the exit this tick.
         /// </summary>
+        /// <summary>
+        /// Ends the match from outside, because the scenario's objectives were met.
+        ///
+        /// The phase machine here owns spawning, setup and extraction; it does NOT own what winning
+        /// this particular mission means, because that is content. Half of Act One is won by a clock
+        /// and not by a kill count, and a wave table cannot express that. So the objectives call
+        /// this, and clearing the last wave stays as the backstop for a mission that is just waves.
+        ///
+        /// Ignored once the match is over: a win cannot overwrite a loss that already happened.
+        /// </summary>
+        public void WinByObjective()
+        {
+            if (IsOver) return;
+            Phase = MatchPhase.Won;
+        }
+
+        /// <summary>Ends the match from outside, because an objective failed. See WinByObjective.</summary>
+        public void LoseByObjective()
+        {
+            if (IsOver) return;
+            Phase = MatchPhase.Lost;
+        }
+
         public int Tick(float dt, int aliveRunners, int breachedThisTick)
         {
             if (IsOver || dt <= 0f) return 0;

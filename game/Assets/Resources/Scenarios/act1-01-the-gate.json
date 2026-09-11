@@ -1,0 +1,68 @@
+{
+  "schema": 1,
+  "id": "act1-01-the-gate",
+  "displayName": "The Gate",
+  "tier": 1,
+  "brief": "Hold the north gate until the county road is clear. They are not mindless. They will find the cheapest way in, and the cheapest way in is the gate you are standing on.",
+
+  "map": {
+    "width": 64,
+    "height": 48,
+    "preset": "arena",
+    "walls": [
+      { "rect": [16, 0, 1, 20], "kind": "Wall" },
+      { "rect": [16, 28, 1, 20], "kind": "Wall" },
+      { "rect": [32, 0, 1, 18], "kind": "Wall" },
+      { "rect": [32, 30, 1, 18], "kind": "Wall" },
+      { "rect": [48, 0, 1, 20], "kind": "Static" },
+      { "rect": [48, 28, 1, 20], "kind": "Static" }
+    ]
+  },
+
+  "heroSpawn": { "x": 56, "y": 24 },
+  "spawnCells": [
+    { "x": 1, "y": 24, "gate": "county-road" }
+  ],
+  "vault": { "x": 62, "y": 24, "hp": 25 },
+
+  "economy": {
+    "startCash": 400,
+    "cashPerKill": 5,
+    "waveClearBonusPerWave": 100
+  },
+
+  "director": {
+    "seed": 20260911,
+    "sapperFirstAt": 45,
+    "spitterFirstAt": 40,
+    "hunterShare": 0.10,
+    "wreckerShare": 0.08
+  },
+
+  "waves": [
+    { "setupSeconds": 25, "count": 150, "spawnPerSecond": 8,  "mix": { "Runner": 1.0 } },
+    { "setupSeconds": 20, "count": 250, "spawnPerSecond": 10, "mix": { "Runner": 0.98, "Spitter": 0.02 } },
+    { "setupSeconds": 20, "count": 350, "spawnPerSecond": 12, "mix": { "Runner": 0.95, "Spitter": 0.03, "Sapper": 0.02 } },
+    { "setupSeconds": 20, "count": 500, "spawnPerSecond": 15, "mix": { "Runner": 0.93, "Spitter": 0.04, "Sapper": 0.03 } },
+    { "setupSeconds": 20, "count": 700, "spawnPerSecond": 18, "mix": { "Runner": 0.90, "Spitter": 0.06, "Sapper": 0.04 } }
+  ],
+
+  "safeZoneAfterWaves": [],
+
+  "objectives": [
+    { "type": "ClearWaves", "count": 2 },
+    { "type": "ProtectVault", "minHp": 1 }
+  ],
+
+  "rewards": {
+    "scrip": 60,
+    "guaranteedDrops": [ { "slot": "Vest", "rarity": "Scavenged", "ilvl": 3 } ],
+    "unlocks": []
+  },
+
+  "medals": {
+    "bronze": [ { "type": "Complete" } ],
+    "silver": [ { "type": "VaultHpAtLeast", "value": 20 } ],
+    "gold": [ { "type": "VaultHpAtLeast", "value": 25 }, { "type": "TimeUnder", "seconds": 420 } ]
+  }
+}

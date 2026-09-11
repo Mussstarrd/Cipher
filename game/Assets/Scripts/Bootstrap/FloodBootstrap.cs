@@ -4,6 +4,7 @@ using Cipher.Game.Audio;
 using Cipher.Game.Build;
 using Cipher.Game.Hero;
 using Cipher.Game.Match;
+using Cipher.Game.Scenarios;
 using Cipher.Game.Progression;
 using Cipher.Game.UI;
 using Cipher.Sim.Agents;
@@ -46,9 +47,14 @@ namespace Cipher.Game
     {
         private const float TickRate = 30f;
         private const float TickDt = 1f / TickRate;
-        private const int GridW = 64;
-        private const int GridH = 48;
-        private const int GoalX = GridW - 2, GoalY = GridH / 2;
+        /// <summary>
+        /// Map dimensions, the goal and the spawn gates all come from the loaded scenario now, so
+        /// they are state rather than constants. The names are unchanged because roughly forty
+        /// call sites read them and a rename would have buried the actual change.
+        /// </summary>
+        private int GridW = 64;
+        private int GridH = 48;
+        private int GoalX = 62, GoalY = 24;
         private const int MaxInstancesPerDraw = 1023; // Graphics.DrawMeshInstanced hard limit
 
         // ---- sim / match ----
@@ -57,14 +63,20 @@ namespace Cipher.Game
         private AgentWorld _world = null!;
         private TurretSystem _turrets = null!;
         private MatchState _match = null!;
-        private readonly EconomyConfig _eco = new EconomyConfig();
+        private EconomyConfig _eco = new EconomyConfig();
+
+        /// <summary>Which mission the game opens on. The campaign picker replaces this later.</summary>
+        private const string StartingScenarioId = "act1-01-the-gate";
+
+        private ScenarioDef _scenario = null!;
+        private ObjectiveSet _objectives = null!;
         private BuildModel _build = null!;
         private SpawnDirector _director = null!;
         private PickupSystem _pickups = null!;
         private float _matchSeconds;
         private readonly List<SimEvent> _eventScratch = new List<SimEvent>(32);
         private readonly List<(string Text, float Ttl)> _alerts = new List<(string, float)>(8);
-        private static readonly (int X, int Y)[] SpawnCells = { (1, 4), (1, 14), (1, 24), (1, 34), (1, 44) };
+        private (int X, int Y)[] SpawnCells = { (1, 4), (1, 14), (1, 24), (1, 34), (1, 44) };
         private int _spawnCursor;
         private float _tickAccumulator;
         private int _lastReached, _lastKills;
@@ -91,7 +103,7 @@ namespace Cipher.Game
         private IReadOnlyList<Improvisation> _cardOffer = System.Array.Empty<Improvisation>();
         private int _cardCursor;
         private HeroModel _hero = null!;
-        private static readonly Vec2 HeroSpawn = new Vec2(GridW - 6f, GridH / 2f);
+        private Vec2 HeroSpawn = new Vec2(58f, 24f);
         private Transform _heroT = null!;
         private Transform _barrelT = null!;
         private Transform _markerT = null!;
@@ -196,13 +208,51 @@ namespace Cipher.Game
 
         // ------------------------------------------------------------------ setup
 
+        /// <summary>
+        /// Loads a mission from Resources/Scenarios.
+        ///
+        /// A missing or malformed file is FATAL rather than silently falling back to a built-in
+        /// arena. A fallback would mean a typo in a mission file shows up as "the level is wrong
+        /// somehow" during a playtest instead of as a message naming the line.
+        /// </summary>
+        private static ScenarioDef LoadScenario(string id)
+        {
+            var text = Resources.Load<TextAsset>($"Scenarios/{id}");
+            if (text == null)
+                throw new ScenarioException($"no scenario at Resources/Scenarios/{id}.json");
+
+            var def = ScenarioReader.Read(text.text);
+            Debug.Log($"[Scenario] {def.Id} \"{def.DisplayName}\": {def.Map.Width}x{def.Map.Height}, " +
+                      $"{def.Waves.Count} waves, {def.Objectives.Count} objectives, " +
+                      $"{def.SpawnCells.Count} spawn gate(s)");
+            return def;
+        }
+
+        /// <summary>Pulls the map's shape out of the scenario before anything sized by it is built.</summary>
+        private void ApplyScenarioShape(ScenarioDef def)
+        {
+            GridW = def.Map.Width;
+            GridH = def.Map.Height;
+            GoalX = def.Vault.X;
+            GoalY = def.Vault.Y;
+            HeroSpawn = new Vec2(def.HeroSpawn.X + 0.5f, def.HeroSpawn.Y + 0.5f);
+            _eco = def.Economy;
+
+            SpawnCells = new (int X, int Y)[def.SpawnCells.Count];
+            for (int i = 0; i < def.SpawnCells.Count; i++)
+                SpawnCells[i] = (def.SpawnCells[i].X, def.SpawnCells[i].Y);
+        }
+
         private void NewMatch()
         {
+            _scenario = LoadScenario(StartingScenarioId);
+            ApplyScenarioShape(_scenario);
+
             _map = new GridMap(GridW, GridH);
-            // Serpentine graybox arena: three map walls forcing an S-route left to right.
-            for (int y = 0; y < GridH - 10; y++) _map.SetWall(16, y, WallKind.Wall, GridMap.DefaultWallHp);
-            for (int y = 10; y < GridH; y++) _map.SetWall(32, y, WallKind.Wall, GridMap.DefaultWallHp);
-            for (int y = 0; y < GridH - 10; y++) _map.SetWall(48, y, WallKind.Wall, GridMap.DefaultWallHp);
+            foreach (var w in _scenario.Map.Walls)
+                for (int x = w.X; x < w.X + w.Width; x++)
+                    for (int y = w.Y; y < w.Y + w.Height; y++)
+                        _map.SetWall(x, y, w.Kind, GridMap.DefaultWallHp);
 
             _field = new FlowField(_map);
             _field.Compute(GoalX, GoalY);
@@ -210,12 +260,16 @@ namespace Cipher.Game
             _turrets = new TurretSystem();
             // The game opts in to the untimed opening: dig in for as long as you like, and the
             // first wave comes when you press start.
-            _match = new MatchState(WaveTable.Default, _eco, openingIsUntimed: true);
+            _match = new MatchState(_scenario.ToWaveTable(), _eco, _scenario.VaultHp,
+                                    openingIsUntimed: true);
+            _objectives = ObjectiveFactory.CreateSet(_scenario.Objectives);
             _focus.Reset();
             _build = new BuildModel(_map, _world, _turrets, _match, _eco, SpawnCells, GoalX, GoalY, GridW - 12, GridH / 2);
             _world.Structures = _turrets.AsStructureQuery();
             ulong seed = (ulong)System.DateTime.UtcNow.Ticks;
-            _director = new SpawnDirector(new DirectorConfig(), seed);
+            // The director is seeded from the scenario so a mission plays the same way twice, which
+            // is what makes a balance note about wave three mean anything.
+            _director = new SpawnDirector(_scenario.Director, _scenario.DirectorSeed);
             _pickups = new PickupSystem(_map, seed ^ 0xC1FE, minX: 34, maxX: GridW - 4);
 
             // Carry the permanent tree across restarts; gear and cards are per-position.
@@ -612,6 +666,15 @@ namespace Cipher.Game
                 int breached = _world.ReachedCount - _lastReached;
                 int toSpawn = _match.Tick(TickDt, _world.AliveCount, breached);
                 _lastReached = _world.ReachedCount;
+
+                // The scenario decides what winning this mission means. The wave table is only the
+                // backstop, for a mission that really is just waves.
+                _objectives.Tick(
+                    new ObjectiveContext(_matchSeconds, _match.WaveIndex, _match.WavesCleared,
+                                         _world.AliveCount, _match.VaultHp, _match.VaultMaxHp),
+                    TickDt);
+                if (_objectives.IsFailed) _match.LoseByObjective();
+                else if (_objectives.IsComplete) _match.WinByObjective();
                 if (toSpawn > 0)
                 {
                     bool sealedIn = false;
@@ -880,7 +943,7 @@ namespace Cipher.Game
             if (turretsChanged) SyncTurretObjects();
         }
 
-        private static Vector3 CellWorld(int cell, float height) => new Vector3(cell % GridW + 0.5f, height, cell / GridW + 0.5f);
+        private Vector3 CellWorld(int cell, float height) => new Vector3(cell % GridW + 0.5f, height, cell / GridW + 0.5f);
 
         private void Alert(string text, float seconds)
         {
@@ -1325,6 +1388,33 @@ namespace Cipher.Game
 
             Debug.Log($"[Env] placed {dresser.Placed} props " +
                       $"({trees.Count} tree models, {bushes.Count} bush, {cars.Count} vehicle)");
+        }
+
+        /// <summary>
+        /// The mission's objectives, live, top right. This is the only place a player can see what
+        /// the scenario file actually asked of them, which is what stops a data-driven mission from
+        /// being a level that mysteriously ends.
+        /// </summary>
+        private void DrawObjectives()
+        {
+            if (_objectives == null) return;
+
+            float w = 300f, x = _uiW - w - 16f, y = 56f;
+            GUI.Label(new Rect(x, y, w, 22), _scenario != null ? _scenario.DisplayName.ToUpperInvariant() : "");
+            y += 22f;
+
+            for (int i = 0; i < _objectives.All.Count; i++)
+            {
+                var o = _objectives.All[i];
+                string mark = _objectives.StateOf(i) switch
+                {
+                    ObjectiveState.Complete => "[x]",
+                    ObjectiveState.Failed => "[!]",
+                    _ => "[ ]",
+                };
+                GUI.Label(new Rect(x, y, w, 20), $"{mark} {o.Hud}");
+                y += 20f;
+            }
         }
 
         /// <summary>Cells that must stay empty no matter what the dresser wants.</summary>
@@ -2153,6 +2243,8 @@ namespace Cipher.Game
                 GUI.Label(new Rect(12, 104, 1000, 24),
                     $"{(pad ? "D-pad down" : "L")}: call this your last wave here  ({_match.PrepSecondsRemaining:F0}s prep left for the next line)");
             }
+
+            DrawObjectives();
             GUI.Label(new Rect(12, 152, 900, 24),
                 $"{_focus.StatusLine()}    LV {_loadout.Skills.Level}  " +
                 $"xp {_loadout.Skills.XpIntoLevel}/{Mathf.Max(1, _loadout.Skills.XpNeededForNext)}  " +
