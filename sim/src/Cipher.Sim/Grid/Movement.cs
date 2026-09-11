@@ -47,7 +47,16 @@ namespace Cipher.Sim.Grid
             if (dir.LengthSquared < 0.5f || maxDistance <= 0f) return false;
 
             const float step = 0.25f;
-            int lastX = int.MinValue, lastY = int.MinValue;
+
+            // START PAST THE SHOOTER'S OWN CELL. A turret stands on a cell marked Structure, which
+            // IS blocked, so a march that samples the origin finds a wall at distance zero and the
+            // turret decides it cannot see anything at all. That is exactly what shipped: line of
+            // sight went in, and every turret in the game silently stopped firing, because each one
+            // was blocked by itself. The same applies to a shot fired by anything standing on a
+            // solid cell; nothing can be hit by the cell it is already inside.
+            var (originX, originY) = map.WorldToCell(origin);
+            int lastX = originX, lastY = originY;
+
             for (float travelled = 0f; travelled <= maxDistance; travelled += step)
             {
                 Vec2 p = origin + dir * travelled;

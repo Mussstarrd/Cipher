@@ -14,14 +14,13 @@
       { "rect": [14, 0, 1, 18], "kind": "Static" },
       { "rect": [14, 25, 1, 31], "kind": "Static" },
 
-      { "rect": [30, 12, 1, 44], "kind": "Wall" },
-      { "rect": [30, 0, 1, 5], "kind": "Wall" },
+      { "rect": [30, 4, 1, 10], "kind": "Wall" },
+      { "rect": [30, 40, 1, 12], "kind": "Wall" },
 
-      { "rect": [44, 0, 1, 30], "kind": "Wall" },
-      { "rect": [44, 37, 1, 19], "kind": "Wall" },
+      { "rect": [44, 22, 1, 12], "kind": "Wall" },
 
-      { "rect": [58, 20, 1, 36], "kind": "Static" },
-      { "rect": [58, 0, 1, 13], "kind": "Static" }
+      { "rect": [58, 8, 1, 10], "kind": "Static" },
+      { "rect": [58, 38, 1, 10], "kind": "Static" }
     ]
   },
 
@@ -43,8 +42,9 @@
   ],
 
   "actors": [
-    { "id": "well-head-north", "kind": "Structure", "x": 52, "y": 18, "hp": 200 },
-    { "id": "well-head-south", "kind": "Structure", "x": 52, "y": 38, "hp": 200 }
+    { "id": "well-head-north",  "kind": "Structure", "x": 52, "y": 18, "hp": 420 },
+    { "id": "well-head-middle", "kind": "Structure", "x": 54, "y": 28, "hp": 420 },
+    { "id": "well-head-south",  "kind": "Structure", "x": 52, "y": 38, "hp": 420 }
   ],
 
   "heroSpawn": { "x": 64, "y": 28 },
@@ -68,12 +68,14 @@
     "wreckerShare": 0.10
   },
 
+  "enemy": { "health": 40 },
+
   "waves": [
-    { "setupSeconds": 25, "count": 200, "spawnPerSecond": 10, "mix": { "Runner": 1.0 } },
-    { "setupSeconds": 20, "count": 320, "spawnPerSecond": 12, "mix": { "Runner": 0.98, "Sapper": 0.02 } },
-    { "setupSeconds": 20, "count": 450, "spawnPerSecond": 15, "mix": { "Runner": 0.97, "Sapper": 0.03 } },
-    { "setupSeconds": 18, "count": 600, "spawnPerSecond": 17, "mix": { "Runner": 0.95, "Sapper": 0.05 } },
-    { "setupSeconds": 18, "count": 800, "spawnPerSecond": 20, "mix": { "Runner": 0.94, "Sapper": 0.06 } }
+    { "setupSeconds": 25, "count": 55,  "spawnPerSecond": 3.0, "mix": { "Runner": 1.0 } },
+    { "setupSeconds": 20, "count": 80,  "spawnPerSecond": 3.8, "mix": { "Runner": 0.98, "Sapper": 0.02 } },
+    { "setupSeconds": 20, "count": 110, "spawnPerSecond": 4.6, "mix": { "Runner": 0.97, "Sapper": 0.03 } },
+    { "setupSeconds": 18, "count": 145, "spawnPerSecond": 5.4, "mix": { "Runner": 0.95, "Sapper": 0.05 } },
+    { "setupSeconds": 18, "count": 185, "spawnPerSecond": 6.2, "mix": { "Runner": 0.94, "Sapper": 0.06 } }
   ],
 
   "safeZoneAfterWaves": [],

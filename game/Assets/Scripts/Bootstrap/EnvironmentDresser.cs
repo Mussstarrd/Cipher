@@ -319,8 +319,12 @@ namespace Cipher.Game
             go.transform.localScale *= Mathf.Lerp(scaleMin, scaleMax, rng.NextFloat());
 
             Reskin(go);
+            OnPlaced?.Invoke(prefab.name, go);
             Placed++;
         }
+
+        /// <summary>Raised for every scattered prop, so the caller can dress specific ones further.</summary>
+        public Action<string, GameObject>? OnPlaced;
 
         /// <summary>Small deterministic generator, so dressing never touches UnityEngine.Random.</summary>
         private struct Rng

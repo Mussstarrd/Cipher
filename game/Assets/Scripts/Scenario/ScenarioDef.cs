@@ -101,6 +101,16 @@ namespace Cipher.Game.Scenarios
         /// </summary>
         public List<PropDef> Props { get; } = new List<PropDef>();
 
+        /// <summary>
+        /// Health of an ordinary body at this position.
+        ///
+        /// Owner, after the first graphical playtest: "maybe we need less zombies and have them be
+        /// more robust. quality over quantity." The premise supports it -- ADR-003's enemy is
+        /// PEOPLE walking at you, not a tide, and the one thing that makes each of them legible is
+        /// that killing one is a thing you notice doing. Wave counts came down to match.
+        /// </summary>
+        public float EnemyHealth { get; set; } = 10f;
+
         public EconomyConfig Economy { get; set; } = new EconomyConfig();
         public DirectorConfig Director { get; set; } = new DirectorConfig();
 

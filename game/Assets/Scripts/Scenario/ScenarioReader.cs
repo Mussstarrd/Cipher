@@ -27,7 +27,7 @@ namespace Cipher.Game.Scenarios
             var root = JsonValue.Parse(json);
             root.RejectUnknownKeys(
                 "schema", "id", "displayName", "tier", "brief", "next", "lastStand", "map", "heroSpawn", "spawnCells",
-                "vault", "actors", "props", "economy", "director", "cycle", "waves", "safeZoneAfterWaves",
+                "vault", "actors", "props", "economy", "director", "cycle", "enemy", "waves", "safeZoneAfterWaves",
                 "objectives", "rewards", "medals");
 
             var def = new ScenarioDef();
@@ -73,6 +73,13 @@ namespace Cipher.Game.Scenarios
             if (root.Opt("economy") is { } economy) ReadEconomy(economy, def);
             if (root.Opt("director") is { } director) ReadDirector(director, def);
             if (root.Opt("cycle") is { } cycle) ReadCycle(cycle, def);
+            if (root.Opt("enemy") is { } enemy)
+            {
+                enemy.RejectUnknownKeys("health");
+                def.EnemyHealth = enemy.Opt("health")?.AsFloat() ?? def.EnemyHealth;
+                if (def.EnemyHealth <= 0f)
+                    throw new ScenarioException($"{enemy.Path}.health: must be positive");
+            }
 
             ReadWaves(root.Get("waves"), def);
 
@@ -133,10 +140,17 @@ namespace Cipher.Game.Scenarios
                         break;
 
                     case "ProtectActors":
-                        if (o.MinAlive > def.Actors.Count)
+                        // Counts what the OBJECTIVE counts: Structures and Processes, not Crew.
+                        // Comparing against every actor let a mission whose actors are all Crew
+                        // pass validation and then fail on its first tick -- precisely the failure
+                        // this check exists to catch.
+                        int guarded = 0;
+                        foreach (var a in def.Actors)
+                            if (a.Kind == ActorKind.Structure || a.Kind == ActorKind.Process) guarded++;
+                        if (o.MinAlive > guarded)
                             throw new ScenarioException(
                                 $"$.objectives: ProtectActors wants {o.MinAlive} alive but the mission has " +
-                                $"{def.Actors.Count} actors, so it fails on the first tick");
+                                $"{guarded} structures and processes, so it fails on the first tick");
                         break;
 
                     case "KeepCrewAlive":

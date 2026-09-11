@@ -243,6 +243,16 @@ namespace Cipher.Game.Match
         }
 
         /// <summary>
+        /// The authoritative final tally, counted once the window has shut. Replaces the running
+        /// count rather than adding to it: a piece the player ran out of time to unbolt is already
+        /// counted by <see cref="TrySalvage"/>, and is also still standing at the end.
+        /// </summary>
+        public void SetAbandoned(int count)
+        {
+            AbandonedCount = Math.Max(0, count);
+        }
+
+        /// <summary>
         /// Player starts the wave: skips a running countdown, or releases the untimed opening.
         /// </summary>
         public void StartWaveNow()

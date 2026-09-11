@@ -68,16 +68,14 @@ namespace Cipher.Game
             Promoted.Clear();
             if (_slots.Count == 0 || world == null) return;
 
-            // Pick the nearest living agents. This is a bounded selection, not a sort: only the
-            // closest _slots.Count of a thousand candidates can ever get a body, so the list never
-            // grows past that and the great majority of agents cost one compare against the current
-            // worst. The obvious version sorted the whole in-range set and threw most of that work
-            // away every frame; the comment above it claimed otherwise, which is how it survived.
-            _nearest.Clear();
             int capacity = _slots.Count;
             float rangeSq = PromoteRange * PromoteRange;
             var flatCamera = new Vector3(cameraPosition.x, 0f, cameraPosition.z);
 
+            // Pick the nearest living agents. A bounded selection, not a sort: only the closest
+            // _slots.Count of a thousand candidates can ever get a body, so the list never grows
+            // past that and the great majority of agents cost one compare against the current worst.
+            _nearest.Clear();
             for (int id = 0; id < world.Count; id++)
             {
                 if (!world.IsAlive(id)) continue;
@@ -87,8 +85,6 @@ namespace Cipher.Game
                 if (d > rangeSq) continue;
                 if (_nearest.Count == capacity && d >= _nearest[capacity - 1].dist) continue;
 
-                // Binary search for the insertion point, then insert and drop the worst. The list
-                // stays sorted, so index 0 is always the nearest.
                 int lo = 0, hi = _nearest.Count;
                 while (lo < hi)
                 {
@@ -99,19 +95,62 @@ namespace Cipher.Game
                 _nearest.Insert(lo, (d, id, world3));
             }
 
-            int n = Mathf.Min(capacity, _nearest.Count);
+            // ---- Identity, which is the part that matters -------------------------------------
+            //
+            // The obvious version handed slot 0 to the nearest agent, slot 1 to the next, and so on,
+            // every frame. The SET it chose was right and the ASSIGNMENT was garbage: two agents
+            // swapping distance order swapped bodies, so the person standing in a given spot changed
+            // model several times a second. The owner's words: "the character skins are very quickly
+            // like scan switching from skin to skin to skin."
+            //
+            // So a slot KEEPS its agent for as long as that agent is still in the set, and only a
+            // slot whose occupant died or walked out of range is handed to somebody new.
+            _chosen.Clear();
+            for (int i = 0; i < _nearest.Count; i++) _chosen.Add(_nearest[i].id, _nearest[i].position);
 
-            for (int i = 0; i < n; i++)
+            _free.Clear();
+            _holders.Clear();
+            for (int i = 0; i < _slots.Count; i++)
             {
-                var (_, id, position) = _nearest[i];
+                int held = _assigned[i];
+                if (held >= 0 && _chosen.ContainsKey(held)) { _holders.Add(held); continue; }
+                _assigned[i] = -1;
+                _free.Add(i);
+            }
+
+            // Hand the free slots to the nearest agents that do not have one, nearest first.
+            int nextFree = 0;
+            for (int i = 0; i < _nearest.Count && nextFree < _free.Count; i++)
+            {
+                int id = _nearest[i].id;
+                if (!_holders.Add(id)) continue;   // already wearing a body
+                int slot = _free[nextFree++];
+                _assigned[slot] = id;
+                // A new occupant is a different person: reset the heading so the body does not spin,
+                // and re-roll the stride phase so a freshly promoted group does not march in step.
+                _lastPosition[slot] = _chosen[id];
+                OnSlotReassigned?.Invoke(slot);
+            }
+
+            // ---- Move them ---------------------------------------------------------------------
+            for (int i = 0; i < _slots.Count; i++)
+            {
+                int id = _assigned[i];
                 var slot = _slots[i];
+
+                if (id < 0 || !_chosen.TryGetValue(id, out var position))
+                {
+                    if (slot.gameObject.activeSelf) slot.gameObject.SetActive(false);
+                    _assigned[i] = -1;
+                    continue;
+                }
 
                 if (!slot.gameObject.activeSelf) slot.gameObject.SetActive(true);
 
-                // Face the way it is travelling. Reusing a slot for a different agent would spin the
-                // body wildly for one frame, so a change of occupant resets the heading instead.
-                Vector3 previous = _assigned[i] == id ? _lastPosition[i] : position;
+                Vector3 previous = _lastPosition[i];
                 Vector3 delta = position - previous;
+                float speed = dt > 0f ? delta.magnitude / dt : 0f;
+
                 if (delta.sqrMagnitude > 1e-6f)
                 {
                     var look = Quaternion.LookRotation(delta.normalized, Vector3.up);
@@ -120,16 +159,23 @@ namespace Cipher.Game
 
                 slot.position = position;
                 _lastPosition[i] = position;
-                _assigned[i] = id;
                 Promoted.Add(id);
-            }
 
-            for (int i = n; i < _slots.Count; i++)
-            {
-                if (_slots[i].gameObject.activeSelf) _slots[i].gameObject.SetActive(false);
-                _assigned[i] = -1;
+                // Walking is for people who are walking. The clip used to run on everybody all the
+                // time, including agents standing still against a barricade.
+                OnSlotMoved?.Invoke(i, speed);
             }
         }
+
+        /// <summary>Raised when a slot changes occupant, so the view can re-roll that body's stride.</summary>
+        public System.Action<int>? OnSlotReassigned;
+
+        /// <summary>Raised each frame with a slot's ground speed, so the view can stop the walk.</summary>
+        public System.Action<int, float>? OnSlotMoved;
+
+        private readonly Dictionary<int, Vector3> _chosen = new Dictionary<int, Vector3>(256);
+        private readonly HashSet<int> _holders = new HashSet<int>();
+        private readonly List<int> _free = new List<int>(256);
 
         private readonly List<(float dist, int id, Vector3 position)> _nearest =
             new List<(float, int, Vector3)>(512);

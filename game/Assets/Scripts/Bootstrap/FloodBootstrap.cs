@@ -353,7 +353,8 @@ namespace Cipher.Game
                                     cycle: _scenario.Cycle,
                                     hasFallbackPosition: _scenario.HasFallbackPosition,
                                     openingIsUntimed: true);
-            if (_carriedCash > 0) _match.Bank.Earn(_carriedCash);
+            int carried = _carriedCash;
+            if (carried > 0) _match.Bank.Earn(carried);
             _actors = new ActorSystem(_scenario.Actors);
             _objectives = ObjectiveFactory.CreateSet(_scenario.Objectives);
             _nextName = string.IsNullOrEmpty(_scenario.Next) ? "" : LoadScenario(_scenario.Next).DisplayName;
@@ -380,9 +381,11 @@ namespace Cipher.Game
             _cardOffer = System.Array.Empty<Improvisation>();
             _matchSeconds = 0f;
             _alerts.Clear();
-            // AFTER the clear, or the player never sees it and the bank just quietly grows.
-            if (_carriedCash > 0)
-                Alert($"+${_carriedCash} of materials, carried back from the last position", 6f);
+            // After the clear, or the player never sees it and the bank just quietly grows. Reads a
+            // LOCAL, because _carriedCash is zeroed a few lines above this -- which is why the
+            // first attempt at fixing this still never fired.
+            if (carried > 0)
+                Alert($"+${carried} of materials, carried back from the last position", 6f);
             _lastPhase = MatchPhase.Setup;
             _wasDown = false;
             _strikeWasInbound = false;
@@ -422,6 +425,9 @@ namespace Cipher.Game
             // so a skill tree left open could not be closed and drew over the debrief.
             _showInventory = false;
             _showSkills = false;
+            _showTruck = false;
+            _truck = null;
+            _recoverable = new List<IHaulable>();
             _skillCursor = 0;
             _truckCursor = 0;
             _tracers.Clear();
@@ -715,6 +721,9 @@ namespace Cipher.Game
             else if (_hero.IsDown)
             {
                 if (RestartPressed()) { _hero.Respawn(HeroSpawn); _hero.Aim(new Vec2(-1f, 0f)); }
+                // Being down must not take the truck away: the pack-up clock keeps running while
+                // you are on the floor, and losing the window because of it is not a decision.
+                if (_match.Phase == MatchPhase.Extraction) ReadModeToggles();
             }
             else
             {
@@ -801,14 +810,22 @@ namespace Cipher.Game
         {
             if (!_match.IsOver)
             {
-                _matchSeconds += TickDt;
+                // NOTHING AGES DURING THE UNTIMED OPENING. The player sets up for as long as they
+                // like before the first wave, and MatchState already refuses to spend cycle time
+                // there -- but the match clock and the actors did not know that. A five-minute
+                // transfer with requiresHeroWithin 0 therefore finished before wave one ever
+                // spawned, which won mission 3 by pressing nothing. SurviveSeconds had the same
+                // hole. The one clock has to mean the same thing to everything reading it.
+                bool waiting = _match.AwaitingStart;
+                if (!waiting) _matchSeconds += TickDt;
+
                 int breached = _world.ReachedCount - _lastReached;
                 int toSpawn = _match.Tick(TickDt, _world.AliveCount, breached);
                 _lastReached = _world.ReachedCount;
 
                 // Actors first: the objectives read their state, so a generator wrecked this tick
                 // must fail the objective this tick and not next one.
-                _actors.Tick(TickDt, _hero.Position.X, _hero.Position.Y, _threat);
+                if (!waiting) _actors.Tick(TickDt, _hero.Position.X, _hero.Position.Y, _threat);
                 SyncActorViews();
 
                 // The scenario decides what winning this mission means. The wave table is only the
@@ -818,8 +835,15 @@ namespace Cipher.Game
                                          _world.AliveCount, _match.VaultHp, _match.VaultMaxHp,
                                          _actors),
                     TickDt);
-                if (_objectives.IsFailed) _match.LoseByObjective();
-                else if (_objectives.IsComplete) _match.CompleteByObjective();
+                // Once the goals are met the verdict is settled. Keeping the fail-conditions live
+                // through the pack-up window meant a transformer lost while loading the truck
+                // could take away a mission whose work had already finished, which is not a
+                // decision the player can act on -- they have already won and are leaving.
+                if (!_objectives.IsComplete)
+                {
+                    if (_objectives.IsFailed) _match.LoseByObjective();
+                }
+                if (_objectives.IsComplete) _match.CompleteByObjective();
                 if (toSpawn > 0)
                 {
                     bool sealedIn = false;
@@ -836,7 +860,7 @@ namespace Cipher.Game
                         {
                             // Not every body runs the same errand (owner, 2026-09-11). The split is
                             // decided HERE, by the seeded director, because the sim carries no RNG.
-                            _world.Spawn(pos, health: 10f, _director.DecideIntent(view));
+                            _world.Spawn(pos, _scenario.EnemyHealth, _director.DecideIntent(view));
                         }
                         else _world.SpawnArchetype(pos, a);
                     }
@@ -1124,11 +1148,33 @@ namespace Cipher.Game
                 return;
             }
 
+            // B closes whatever is open. A panel with no way out on the design-centre input device
+            // is a panel the owner could not leave: "i cant get to my inventory or skills or any of
+            // that shit on controller".
+            if (pad != null && pad.buttonEast.wasPressedThisFrame && (_showInventory || _showSkills))
+            {
+                _showInventory = false;
+                _showSkills = false;
+                _sfx.Play(Sfx.MenuTick, 0.6f, 0f);
+                return;
+            }
+
             if ((pad != null && pad.buttonNorth.wasPressedThisFrame && !_buildMode)
                 || (kb != null && kb.iKey.wasPressedThisFrame))
+            {
                 _showInventory = !_showInventory;
+                _showSkills = false;
+            }
 
-            if (kb != null && kb.kKey.wasPressedThisFrame) { _showSkills = !_showSkills; _showInventory = false; }
+            // D-pad up is the skill tree. It was keyboard-only, on a game whose design-centre input
+            // is a controller on BOTH platforms (ADR-002), which made a whole progression track
+            // unreachable for the person it was built for.
+            if ((pad != null && pad.dpad.up.wasPressedThisFrame && !_buildMode)
+                || (kb != null && kb.kKey.wasPressedThisFrame))
+            {
+                _showSkills = !_showSkills;
+                _showInventory = false;
+            }
             if (_showSkills) { ReadSkillInput(kb, pad); return; }
             // Tab is still a plain toggle for keyboard players who just want in and out.
             bool toggle = kb != null && kb.tabKey.wasPressedThisFrame;
@@ -1465,8 +1511,19 @@ namespace Cipher.Game
             if (pool.Count == 0) pool.AddRange(prefabs);
 
             var rng = new System.Random(20260911);
+            _walkStates.Clear();
             for (int i = 0; i < CivilianPoolSize; i++)
-                _crowd.AddSlot(BuildCivilian(pool[i % pool.Count], root, rng));
+            {
+                var slot = BuildCivilian(pool[i % pool.Count], root, rng);
+                _crowd.AddSlot(slot);
+                _walkStates.Add(slot.GetComponentInChildren<Animation>());
+            }
+
+            // Two things the owner saw and named: "the characters are always making walking
+            // movements and they are all in sync". Standing still while playing a walk cycle is the
+            // first; a body that keeps its stride phase when it changes occupant is the second.
+            _crowd.OnSlotMoved = SetSlotWalking;
+            _crowd.OnSlotReassigned = ResetSlotStride;
 
             Debug.Log($"[Crowd] pool of {_crowd.SlotCount} civilians from {prefabs.Length} models");
         }
@@ -1533,6 +1590,13 @@ namespace Cipher.Game
             var root = new GameObject("Environment").transform;
             var dresser = new EnvironmentDresser(_map, root, ReskinForComic);
 
+            // The cruiser keeps its bar running. Owner asked, and it is the only moving light in a
+            // level lit by flat overcast noon, which makes it a landmark as well as a detail.
+            dresser.OnPlaced = (name, go) =>
+            {
+                if (name == "Cop") EmergencyLights.Attach(go, roofHeight: 1.55f, PropMaterial);
+            };
+
             // Keep the spawn lane, the objective and the hero's ground clear, or the level dresses
             // itself shut and the horde has nowhere to walk.
             // Road first so props never land on top of it. Six cells wide: the corridor KeepClear
@@ -1552,6 +1616,46 @@ namespace Cipher.Game
             Debug.Log($"[Env] placed {dresser.Placed} props " +
                       $"({trees.Count} tree models, {bushes.Count} bush, {cars.Count} vehicle)");
         }
+
+        /// <summary>
+        /// Labels the thing you are defending, in the world, above it.
+        ///
+        /// The owner played a whole position without knowing what it was: "the zombies are hunting
+        /// me and my escape truck or whatever the protection point is (green protect box at my side
+        /// of the map)". A defence game that does not say what is being defended has failed at the
+        /// first thing it has to do.
+        /// </summary>
+        private void DrawVaultMarker()
+        {
+            if (_camera == null || _match.IsOver) return;
+
+            var world = new Vector3(GoalX + 0.5f, 2.4f, GoalY + 0.5f);
+            var screen = _camera.WorldToScreenPoint(world);
+            if (screen.z <= 0f) return;   // behind the camera
+
+            float scale = Mathf.Clamp(Screen.height / 800f, 1f, 3f);
+            // Clamped inside the screen: a label that says what you are defending is no use when
+            // the thing you are defending is at the edge of the view, which is most of the time.
+            float x = Mathf.Clamp(screen.x / scale, 114f, Mathf.Max(114f, _uiW - 114f));
+            float y = Mathf.Clamp((Screen.height - screen.y) / scale, 34f, Mathf.Max(34f, _uiH - 40f));
+
+            _vaultStyle ??= new GUIStyle(GUI.skin.label)
+            {
+                fontSize = 16,
+                fontStyle = FontStyle.Bold,
+                alignment = TextAnchor.MiddleCenter,
+            };
+
+            float hp = _match.VaultMaxHp <= 0 ? 0f : _match.VaultHp / (float)_match.VaultMaxHp;
+            _vaultStyle.normal.textColor = Color.Lerp(new Color(1f, 0.45f, 0.3f),
+                                                      new Color(0.75f, 0.95f, 0.7f), hp);
+            GUI.Label(new Rect(x - 110f, y - 28f, 220f, 22f),
+                      $"THE VAULT  {_match.VaultHp}/{_match.VaultMaxHp}", _vaultStyle);
+            GUI.Label(new Rect(x - 110f, y - 8f, 220f, 20f),
+                      "everything you have not carried out yet", _vaultStyle);
+        }
+
+        private GUIStyle? _vaultStyle;
 
         /// <summary>
         /// The mission's objectives, live, top right. This is the only place a player can see what
@@ -1592,7 +1696,9 @@ namespace Cipher.Game
             public int EnemiesWithin(int x, int y, float radius)
             {
                 var w = _world();
-                return w == null ? 0 : w.CountWithin(new Vec2(x + 0.5f, y + 0.5f), radius);
+                // Visible, not merely near: a crowd on the far side of a wall is not wrecking the
+                // transformer, and towers already cannot see through walls.
+                return w == null ? 0 : w.CountWithinVisible(new Vec2(x + 0.5f, y + 0.5f), radius);
             }
         }
 
@@ -1609,6 +1715,9 @@ namespace Cipher.Game
             for (int i = 0; i < _actorViews.Count; i++)
                 if (_actorViews[i] != null) Destroy(_actorViews[i].gameObject);
             _actorViews.Clear();
+
+            var stale = GameObject.Find("Actors");
+            if (stale != null) Destroy(stale);
             if (_actors.Count == 0) return;
 
             var root = new GameObject("Actors").transform;
@@ -1652,12 +1761,56 @@ namespace Cipher.Game
                     continue;
                 }
 
-                var scale = view.localScale;
+                // Half-height differs by primitive: a Unity cube is 1 unit tall so half is
+                // scale.y * 0.5, a capsule is 2 so half is scale.y. Using the cube's figure for
+                // both dropped every crew member to the waist on the first tick at full health.
+                float halfHeight = a.Kind == ActorKind.Crew ? view.localScale.y : view.localScale.y * 0.5f;
                 float sink = 1f - 0.45f * (1f - a.HealthFraction);
                 view.localPosition = new Vector3(view.localPosition.x,
-                                                 scale.y * 0.5f * sink,
+                                                 halfHeight * sink,
                                                  view.localPosition.z);
             }
+        }
+
+        private readonly List<Animation?> _walkStates = new List<Animation?>();
+        private readonly System.Random _strideRng = new System.Random(0x5EED);
+
+        /// <summary>
+        /// Walks the ones that are walking. The clip used to run on the whole crowd all the time,
+        /// including agents standing still against a barricade, which reads as a crowd of people
+        /// miming rather than moving.
+        /// </summary>
+        private void SetSlotWalking(int slot, float speed)
+        {
+            if (slot < 0 || slot >= _walkStates.Count) return;
+            var anim = _walkStates[slot];
+            if (anim == null) return;
+
+            var state = anim["walk"];
+            if (state == null) return;
+
+            // A crowd pressed against a wall still shuffles, so the floor is low rather than zero.
+            bool moving = speed > 0.25f;
+            if (!moving)
+            {
+                if (anim.isPlaying) anim.Stop();
+                return;
+            }
+
+            if (!anim.isPlaying) anim.Play("walk");
+            // Stride matches ground speed, which is most of why a walk cycle reads as real.
+            state.speed = Mathf.Clamp(speed / 2.2f, 0.55f, 1.9f);
+        }
+
+        /// <summary>A body that changed person starts its stride somewhere new, so no two march together.</summary>
+        private void ResetSlotStride(int slot)
+        {
+            if (slot < 0 || slot >= _walkStates.Count) return;
+            var anim = _walkStates[slot];
+            if (anim == null) return;
+            var state = anim["walk"];
+            if (state == null) return;
+            state.time = (float)_strideRng.NextDouble() * Mathf.Max(0.01f, state.length);
         }
 
         /// <summary>Cells that must stay empty no matter what the dresser wants.</summary>
@@ -2509,12 +2662,15 @@ namespace Cipher.Game
             }
 
             DrawObjectives();
+            DrawVaultMarker();
             GUI.Label(new Rect(12, 152, 900, 24),
                 $"{_focus.StatusLine()}    LV {_loadout.Skills.Level}  " +
                 $"xp {_loadout.Skills.XpIntoLevel}/{Mathf.Max(1, _loadout.Skills.XpNeededForNext)}  " +
                 $"scrip {_loadout.Inventory.Scrip}" +
-                (_loadout.Skills.UnspentPoints > 0 ? $"   [{_loadout.Skills.UnspentPoints} skill points - K]" : "")
-                + "    I: kit");
+                (_loadout.Skills.UnspentPoints > 0
+                    ? $"   [{_loadout.Skills.UnspentPoints} skill points: {(pad ? "D-pad up" : "K")}]"
+                    : $"   {(pad ? "D-pad up" : "K")}: skills")
+                + $"    {(pad ? "Y" : "I")}: kit");
 
             if (_lootNoticeTimer > 0f && _lootNotice.Length > 0)
                 GUI.Label(new Rect(12, 176, 1200, 24), _lootNotice);
@@ -2657,7 +2813,9 @@ namespace Cipher.Game
             int left = 0;
             for (int i = 0; i < _recoverable.Count; i++)
                 if (_recoverable[i] is SalvagedEmplacement && !_truck.IsLoaded(_recoverable[i])) left++;
-            _match.ReportAbandoned(left);
+            // SET, not add: TrySalvage already counts a failed unbolt as an abandon, so adding
+            // this final tally on top counted the same piece twice.
+            _match.SetAbandoned(left);
         }
 
         private void OpenTruck()
@@ -2686,6 +2844,24 @@ namespace Cipher.Game
 
         private void ReadTruckInput(Keyboard? kb, Gamepad? pad)
         {
+            // CLOSE FIRST, and before any early return. This panel used to have no way out at all:
+            // once it was up it swallowed every frame, so opening it meant watching the pack-up
+            // window run down with no movement, no fire and no pull-out. An empty list made it
+            // worse by returning before even the pull-out key was read.
+            bool close = (kb != null && (kb.tabKey.wasPressedThisFrame || kb.iKey.wasPressedThisFrame))
+                         || (pad != null && (pad.buttonEast.wasPressedThisFrame
+                                             || pad.buttonNorth.wasPressedThisFrame));
+            if (close) { _showTruck = false; _sfx.Play(Sfx.MenuTick, 0.6f, 0f); return; }
+
+            // Pull out early, from either device. This was keyboard-only, which left a pad player
+            // with no exit at all once the panel was open.
+            if ((kb != null && kb.lKey.wasPressedThisFrame)
+                || (pad != null && pad.dpad.left.wasPressedThisFrame))
+            {
+                if (_match.PullOutNow()) { _showTruck = false; _sfx.Play(Sfx.WaveClear, 0.9f, 0f); }
+                return;
+            }
+
             if (_truck == null || _recoverable.Count == 0) return;
 
             bool up = (kb != null && kb.upArrowKey.wasPressedThisFrame)
@@ -2760,7 +2936,6 @@ namespace Cipher.Game
                 _sfx.Play(Sfx.MenuConfirm, 0.8f, 0f);
             }
 
-            if (kb != null && kb.lKey.wasPressedThisFrame) _match.PullOutNow();
         }
 
         private void DrawTruck()
@@ -2856,7 +3031,8 @@ namespace Cipher.Game
             _invStyle ??= new GUIStyle(GUI.skin.label) { fontSize = 17, wordWrap = true };
 
             GUI.Label(new Rect(_uiW * 0.5f - 460f, 54f, 920f, 30f),
-                      $"SKILLS     level {_loadout.Skills.Level}     {_loadout.Skills.UnspentPoints} points to spend     (K to close)",
+                      $"SKILLS     level {_loadout.Skills.Level}     {_loadout.Skills.UnspentPoints} points to spend     " +
+                      $"({(Gamepad.current != null ? "B or D-pad up" : "K")} to close)",
                       _subStyle);
 
             var all = SkillCatalogue.All;
@@ -2942,7 +3118,8 @@ namespace Cipher.Game
 
             float y = 74f;
             GUI.Label(new Rect(_uiW - 546f, y, 520f, 26f),
-                      $"KIT     scrip {_loadout.Inventory.Scrip}     (I to close)", _invStyle);
+                      $"KIT     scrip {_loadout.Inventory.Scrip}     " +
+                      $"({(Gamepad.current != null ? "B or Y" : "I")} to close)", _invStyle);
             y += 30f;
 
             foreach (Slot slot in System.Enum.GetValues(typeof(Slot)))
