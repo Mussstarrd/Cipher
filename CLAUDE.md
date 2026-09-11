@@ -300,4 +300,25 @@ substitute: it references the sim's SOURCE, not its test project.
   layouts and `ComicPages` to draw them. **Phase C wires them**: the kit, skills and truck screens
   the owner called "computer gibberish" get rebuilt on this, and only then is the look photographed.
   `ComicPageDemo.DrawAll` exists for exactly that shot and needs a harness flag.
+- **ADR-008 (Accepted, owner directive): WEAPONS ATTACK THE IMPLANT, NOT THE BODY.** The enemy are
+  neighbours who opted into a chip; the hero was shooting them with an LMG, and the fiction and the
+  verbs had been disagreeing since ADR-003. Weapons now carry malware that decrypts the implant.
+  - **NOTHING DIES INSTANTLY ANY MORE.** `AgentWorld.Failing.cs`: integrity reaching zero starts a
+    `SimConfig.FailSeconds` (2.5) window in which the body keeps walking (speed decaying to
+    `FailSpeedFloor`) and keeps attacking (`ThreatScale`, decaying to 0), and only then drops.
+    **`BreakChip` is the ONLY place a chip is retired**; every damage path funnels through it.
+  - **THE TWO MOMENTS ARE DIFFERENT AND BOTH MATTER.** Chip breaks -> `TotalKills`/`BrokenOf` pay
+    the player NOW. Body drops -> `AliveCount` falls. Anything that keys off `AliveCount` hitting
+    zero (wave clear) now fires up to 2.5s later, which is correct: that is the crowd finishing its
+    swing. Anything that pays the player must key off the BREAK or it lags by a window.
+  - **Targeting skips failing bodies** (`FindFirstInRangeVisible`, `Raycast`). A gun that empties
+    itself into someone already going down while the next one walks past is the opposite of what an
+    auto-targeting gun should do. Hero contact reads `ThreatWithin`, not `CountWithin`.
+  - **The archetype-death inference is deleted.** It watched the living count fall; that is now a
+    window late AND counts anyone who reached the vault. Read `BrokenOf(Archetype)`.
+  - **When behaviour changes by design, the old tests are WRONG, not broken.** Six sim tests and two
+    EditMode tests asserted instant death. Rewriting them against the new contract is the work, and
+    a test that still asserts the old contract is a test nobody updated.
+  - Gun ladder is now Field Jammer / Decryptor / Worm Lance / Cascade Emitter. "Gold-plated LMG" was
+    the last of the retired kingpin fiction still sitting in the loot table.
 - **Was:** owner hero feedback → barricade build-mode with live path preview (Milestone 2 "The Maze").
