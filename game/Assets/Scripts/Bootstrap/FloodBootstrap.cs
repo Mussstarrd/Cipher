@@ -955,6 +955,95 @@ namespace Cipher.Game
             _showInventory = true;
         }
 
+        /// <summary>
+        /// Lines the imported civilian models up in front of the camera so we can see what the free
+        /// CC0 art actually looks like under our comic shader. Harness only.
+        /// </summary>
+        public void ShowCharacterLineupForCapture()
+        {
+            var prefabs = Resources.LoadAll<GameObject>("Characters");
+            if (prefabs == null || prefabs.Length == 0)
+            {
+                Debug.LogWarning("[Lineup] no character models under Resources/Characters");
+                return;
+            }
+
+            // Clear the graybox out of frame so the shot is about the models.
+            foreach (var n in new[] { "Ground", "Vault", "SpawnPad", "Hero" })
+            {
+                var go0 = GameObject.Find(n);
+                if (go0 != null) go0.SetActive(false);
+            }
+
+            var root = new GameObject("CharacterLineup");
+            float spacing = 1.6f;
+            float x0 = -(prefabs.Length - 1) * spacing * 0.5f;
+
+            for (int i = 0; i < prefabs.Length; i++)
+            {
+                var go = Instantiate(prefabs[i], root.transform);
+                go.name = prefabs[i].name;
+                go.transform.position = new Vector3(x0 + i * spacing, 0f, 0f);
+                // A slight turn off dead-on reads as three-dimensional instead of as a sprite.
+                go.transform.rotation = Quaternion.Euler(0f, 180f + (i % 2 == 0 ? 14f : -14f), 0f);
+
+                // Give them the game's own look rather than whatever the FBX shipped with.
+                foreach (var r in go.GetComponentsInChildren<Renderer>())
+                {
+                    var mats = r.sharedMaterials;
+                    var swapped = new Material[mats.Length];
+                    for (int m = 0; m < mats.Length; m++)
+                    {
+                        var src = mats[m];
+                        var mat = new Material(LitShader) { enableInstancing = false };
+                        Color tint = src != null && src.HasProperty(BaseColorId)
+                            ? src.GetColor(BaseColorId)
+                            : (src != null ? src.color : Color.grey);
+                        mat.color = tint;
+                        if (mat.HasProperty(BaseColorId)) mat.SetColor(BaseColorId, tint);
+                        if (mat.HasProperty(OutlineWidthId)) mat.SetFloat(OutlineWidthId, InkCharacter * 0.5f);
+                        if (src != null && src.mainTexture != null) mat.mainTexture = src.mainTexture;
+                        swapped[m] = mat;
+                    }
+                    r.sharedMaterials = swapped;
+                }
+            }
+
+            root.transform.position = new Vector3(GridW * 0.5f, 6f, GridH * 0.5f);
+
+            // Quaternius FBX do not all import at the same scale, so measure what actually arrived
+            // and frame from that instead of guessing a camera distance.
+            var bounds = new Bounds(root.transform.position, Vector3.zero);
+            bool any = false;
+            foreach (var r in root.GetComponentsInChildren<Renderer>())
+            {
+                if (!any) { bounds = r.bounds; any = true; }
+                else bounds.Encapsulate(r.bounds);
+            }
+
+            if (any && _camera != null)
+            {
+                float height = Mathf.Max(0.2f, bounds.size.y);
+                float width = Mathf.Max(0.2f, bounds.size.x);
+                // Distance that fits the wider of the two axes, with a little air.
+                float vFov = _camera.fieldOfView * Mathf.Deg2Rad;
+                float distV = (height * 0.5f) / Mathf.Tan(vFov * 0.5f);
+                float distH = (width * 0.5f) / Mathf.Tan(vFov * 0.5f * _camera.aspect);
+                float dist = Mathf.Max(distV, distH) * 1.35f + 1f;
+
+                _camera.transform.position = bounds.center + new Vector3(0f, height * 0.12f, -dist);
+                _camera.transform.rotation = Quaternion.identity;
+                Debug.Log($"[Lineup] bounds {bounds.size}, camera back {dist:F2}");
+            }
+
+            _lineupMode = true;
+            _hudHidden = true;
+            Debug.Log($"[Lineup] placed {prefabs.Length} characters");
+        }
+
+        private bool _hudHidden;
+        private bool _lineupMode;
+
         /// <summary>Starts the first wave, so a smoke capture can actually see combat. Harness only.</summary>
         public void StartWaveForCapture() => _match.StartWaveNow();
 
@@ -1437,6 +1526,8 @@ namespace Cipher.Game
 
         private void UpdateCamera(float dt)
         {
+            if (_lineupMode) return;   // the lineup capture owns the camera
+
             Vector3 targetPos;
             Quaternion targetRot;
 
@@ -1465,6 +1556,7 @@ namespace Cipher.Game
 
         private void DrawWorld()
         {
+            if (_lineupMode) return;   // lineup capture: nothing but the models
             BakeWallsIfChanged();
             DrawInstancedList(_cubeMesh, _wallMaterial, _wallMatrices, _wallMatrices.Length);
             DrawInstancedList(_cubeMesh, _barricadeMaterial, _barricadeMatrices, _barricadeMatrices.Length);
@@ -1650,6 +1742,12 @@ namespace Cipher.Game
         }
 
         private void OnGUI()
+        {
+            if (_hudHidden) return;
+            OnGuiInner();
+        }
+
+        private void OnGuiInner()
         {
             BeginScaledUi();
             bool pad = Gamepad.current != null;

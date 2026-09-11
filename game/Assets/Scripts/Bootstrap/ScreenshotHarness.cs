@@ -24,6 +24,7 @@ namespace Cipher.Game
         private const string ProgressArg = "-exodus-screenshot-progression";
         private const string SkillsArg = "-exodus-screenshot-skills";
         private const string StartArg = "-exodus-screenshot-start";
+        private const string LineupArg = "-exodus-screenshot-lineup";
 
         private string? _path;
         private float _delay = 8f;
@@ -32,6 +33,8 @@ namespace Cipher.Game
         private bool _progression;
         private bool _skills;
         private bool _start;
+        private bool _lineup;
+        private bool _lineupSet;
         private bool _started;
         private bool _viewSet;
         private bool _wheelSet;
@@ -57,6 +60,7 @@ namespace Cipher.Game
             harness._progression = HasFlag(args, ProgressArg);
             harness._skills = HasFlag(args, SkillsArg);
             harness._start = HasFlag(args, StartArg);
+            harness._lineup = HasFlag(args, LineupArg);
             Debug.Log($"[Screenshot] armed: {path} after {delay:F1}s");
         }
 
@@ -117,6 +121,13 @@ namespace Cipher.Game
                 var bootstrap = GetComponent<FloodBootstrap>();
                 if (bootstrap != null) bootstrap.EnterTacticalViewForCapture();
                 _viewSet = true;
+            }
+
+            if (_lineup && !_lineupSet && _elapsed > 0.5f)
+            {
+                var bl = GetComponent<FloodBootstrap>();
+                if (bl != null) bl.ShowCharacterLineupForCapture();
+                _lineupSet = true;
             }
 
             // Start the wave early so there is a fight to photograph by the time we capture.
