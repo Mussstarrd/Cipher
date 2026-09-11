@@ -961,7 +961,10 @@ namespace Cipher.Game
         /// </summary>
         public void ShowCharacterLineupForCapture()
         {
-            var prefabs = Resources.LoadAll<GameObject>("Characters");
+            // Prefer the built civilian prefabs (Animator + looping walk) over the raw models.
+            var prefabs = Resources.LoadAll<GameObject>("Civilians");
+            bool animated = prefabs != null && prefabs.Length > 0;
+            if (!animated) prefabs = Resources.LoadAll<GameObject>("Characters");
             if (prefabs == null || prefabs.Length == 0)
             {
                 Debug.LogWarning("[Lineup] no character models under Resources/Characters");
@@ -976,16 +979,60 @@ namespace Cipher.Game
             }
 
             var root = new GameObject("CharacterLineup");
-            float spacing = 1.6f;
-            float x0 = -(prefabs.Length - 1) * spacing * 0.5f;
 
-            for (int i = 0; i < prefabs.Length; i++)
+            // A crowd, not a police lineup: several rows, staggered, all walking at the camera.
+            int perRow = animated ? 9 : prefabs.Length;
+            int rows = animated ? 5 : 1;
+            int count = perRow * rows;
+            var rng = new System.Random(7);
+
+            for (int i = 0; i < count; i++)
             {
-                var go = Instantiate(prefabs[i], root.transform);
-                go.name = prefabs[i].name;
-                go.transform.position = new Vector3(x0 + i * spacing, 0f, 0f);
-                // A slight turn off dead-on reads as three-dimensional instead of as a sprite.
-                go.transform.rotation = Quaternion.Euler(0f, 180f + (i % 2 == 0 ? 14f : -14f), 0f);
+                var template = prefabs[i % prefabs.Length];
+
+                // The walk clip animates the character's OWN root transform, so anything written to
+                // it gets overwritten the moment the animator evaluates: position snapped to the
+                // origin and scale to the clip's. Give each one a plain wrapper to live in and put
+                // the placement on that, where no animation can reach it.
+                int row = i / perRow, col = i % perRow;
+                float jitterX = (float)(rng.NextDouble() - 0.5) * 0.7f;
+                float jitterZ = (float)(rng.NextDouble() - 0.5) * 0.5f;
+
+                var slot = new GameObject("Slot_" + i);
+                slot.transform.SetParent(root.transform, false);
+                slot.transform.localPosition = new Vector3(
+                    (col - (perRow - 1) * 0.5f) * 1.15f + jitterX,
+                    0f,
+                    row * 1.6f + jitterZ);
+                slot.transform.localRotation =
+                    Quaternion.Euler(0f, 180f + (float)(rng.NextDouble() - 0.5) * 18f, 0f);
+
+                // The clip is authored Z-up (Blender), so an animated character lies on its back.
+                // A corrective pivot between the slot and the character stands it up without the
+                // animation being able to overwrite the correction.
+                var pivot = new GameObject("Pivot");
+                pivot.transform.SetParent(slot.transform, false);
+                pivot.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+
+                var go = Instantiate(template, pivot.transform);
+                go.name = template.name + "_" + i;
+                go.transform.localPosition = Vector3.zero;
+
+                // Desynchronise the walk cycle or the crowd marches in lockstep, which is the
+                // single most obvious tell that a crowd is fake.
+                var anim = go.GetComponentInChildren<Animator>();
+                if (anim != null && anim.runtimeAnimatorController != null)
+                {
+                    anim.cullingMode = AnimatorCullingMode.AlwaysAnimate;
+                    // Desynchronise the walk cycle or the crowd marches in lockstep, which is the
+                    // single most obvious tell that a crowd is fake.
+                    anim.Update((float)rng.NextDouble() * 1.3f);
+                }
+
+                // Size them AFTER the animator has evaluated a pose. This clip animates scale on the
+                // armature, so a character that measures 1.98 m standing still measures sixty once
+                // it starts walking. Editor-time bounds cannot see that; a driven frame can.
+                ScaleToHumanHeight(go, slot);
 
                 // Give them the game's own look rather than whatever the FBX shipped with.
                 foreach (var r in go.GetComponentsInChildren<Renderer>())
@@ -1009,31 +1056,18 @@ namespace Cipher.Game
                 }
             }
 
-            root.transform.position = new Vector3(GridW * 0.5f, 6f, GridH * 0.5f);
+            // Fixed framing, deliberately. Four separate attempts to compute this from renderer
+            // bounds put the camera inside somebody or aimed it at empty sky, because bounds on
+            // freshly spawned animated characters are not trustworthy on the frame you spawn them.
+            // The crowd's layout is known, so the camera can be too.
+            const float CrowdZ = 22f;
+            root.transform.position = new Vector3(GridW * 0.5f, 0f, CrowdZ);
 
-            // Quaternius FBX do not all import at the same scale, so measure what actually arrived
-            // and frame from that instead of guessing a camera distance.
-            var bounds = new Bounds(root.transform.position, Vector3.zero);
-            bool any = false;
-            foreach (var r in root.GetComponentsInChildren<Renderer>())
+            if (_camera != null)
             {
-                if (!any) { bounds = r.bounds; any = true; }
-                else bounds.Encapsulate(r.bounds);
-            }
-
-            if (any && _camera != null)
-            {
-                float height = Mathf.Max(0.2f, bounds.size.y);
-                float width = Mathf.Max(0.2f, bounds.size.x);
-                // Distance that fits the wider of the two axes, with a little air.
-                float vFov = _camera.fieldOfView * Mathf.Deg2Rad;
-                float distV = (height * 0.5f) / Mathf.Tan(vFov * 0.5f);
-                float distH = (width * 0.5f) / Mathf.Tan(vFov * 0.5f * _camera.aspect);
-                float dist = Mathf.Max(distV, distH) * 1.35f + 1f;
-
-                _camera.transform.position = bounds.center + new Vector3(0f, height * 0.12f, -dist);
-                _camera.transform.rotation = Quaternion.identity;
-                Debug.Log($"[Lineup] bounds {bounds.size}, camera back {dist:F2}");
+                _camera.transform.position = new Vector3(GridW * 0.5f, 1.55f, CrowdZ - 7f);
+                _camera.transform.rotation = Quaternion.Euler(1.5f, 0f, 0f);
+                _camera.nearClipPlane = 0.1f;
             }
 
             _lineupMode = true;
@@ -1043,6 +1077,29 @@ namespace Cipher.Game
 
         private bool _hudHidden;
         private bool _lineupMode;
+
+        /// <summary>
+        /// Rescales a spawned character so it stands about 1.8 m, measured from its renderers AFTER
+        /// the animator has posed it. Every attempt to do this at import time was wrong, because the
+        /// walk clip animates scale on the armature and edit-time bounds never see it.
+        /// </summary>
+        private static void ScaleToHumanHeight(GameObject go, GameObject slot, float target = 1.8f)
+        {
+            var renderers = go.GetComponentsInChildren<Renderer>();
+            if (renderers.Length == 0) return;
+
+            var b = renderers[0].bounds;
+            for (int i = 1; i < renderers.Length; i++) b.Encapsulate(renderers[i].bounds);
+
+            float h = b.size.y;
+            if (h <= 1e-4f || !float.IsFinite(h)) return;
+
+            float factor = target / h;
+            if (factor <= 0f || !float.IsFinite(factor)) return;
+            slot.transform.localScale *= factor;   // scale the wrapper, not the animated root
+            Debug.Log($"[Scale] {go.name}: measured {h:F3} factor {factor:F4} -> slot scale {slot.transform.localScale.y:F4} at {slot.transform.position}");
+
+        }
 
         /// <summary>Starts the first wave, so a smoke capture can actually see combat. Harness only.</summary>
         public void StartWaveForCapture() => _match.StartWaveNow();
