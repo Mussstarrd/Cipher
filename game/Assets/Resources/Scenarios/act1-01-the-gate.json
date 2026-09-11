@@ -3,6 +3,7 @@
   "id": "act1-01-the-gate",
   "displayName": "The Gate",
   "tier": 1,
+  "next": "act1-02-the-clubhouse",
   "brief": "Hold the main gate until the county road is clear. They are not mindless. They will find the cheapest way in, and three fence lines with the gaps in the wrong places is the longest walk you can sell them.",
 
   "map": {

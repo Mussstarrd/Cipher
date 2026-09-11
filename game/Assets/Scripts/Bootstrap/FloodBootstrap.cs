@@ -70,6 +70,15 @@ namespace Cipher.Game
 
         private ScenarioDef _scenario = null!;
         private ObjectiveSet _objectives = null!;
+
+        /// <summary>
+        /// The display name of the position behind this one, read at match start.
+        ///
+        /// Loaded eagerly and allowed to throw: a broken next-mission file should stop the game at
+        /// the start of a position, not at the moment the player finally tries to leave one. CI
+        /// catches it before that either way.
+        /// </summary>
+        private string _nextName = "";
         private BuildModel _build = null!;
         private SpawnDirector _director = null!;
         private PickupSystem _pickups = null!;
@@ -153,6 +162,7 @@ namespace Cipher.Game
         private int _bakedMapVersion = -1;
         private readonly List<GameObject> _turretGos = new List<GameObject>(32);
         private Transform _vaultT = null!;
+        private Transform? _groundT;
         private Transform _crateT = null!;
         private Texture2D _minimap = null!;
         private Color32[] _minimapPixels = null!;
@@ -211,6 +221,7 @@ namespace Cipher.Game
 
             BuildSceneObjects();
             NewMatch();
+
             ScreenshotHarness.InstallIfRequested(gameObject);
         }
 
@@ -251,9 +262,76 @@ namespace Cipher.Game
                 SpawnCells[i] = (def.SpawnCells[i].X, def.SpawnCells[i].Y);
         }
 
+        /// <summary>
+        /// Materials the last position's leftover cycle time bought, banked for this one.
+        /// Consumed by <see cref="NewMatch"/> and then cleared.
+        /// </summary>
+        private int _carriedCash;
+
+        /// <summary>What the truck brought out of the last position, for the after-action line.</summary>
+        private int _carriedCount;
+
+        /// <summary>
+        /// Falls back to the next position: loads the scenario named by the one just left, converts
+        /// whatever is left of the scan cycle into materials, and starts the match there.
+        ///
+        /// This is the half of ADR-005 that had never been built. The cycle is one budget spent in
+        /// three places, and until now the third place did not exist: PrepSecondsRemaining was
+        /// computed every tick and consumed by nothing, so taking an extra wave cost the player
+        /// nothing they could see.
+        /// </summary>
+        private void AdvanceToNextPosition()
+        {
+            _carriedCash = Mathf.RoundToInt(_match.PrepSecondsRemaining * _match.Cycle.PrepDollarsPerSecond)
+                           + _match.Salvaged;
+            _carriedCount = _match.SalvagedCount;
+
+            // The chain runs out before Act One does: missions 3 to 12 are designed but not
+            // authored. Falling back from the last authored position starts the act over rather
+            // than pretending there is nothing behind it, which would be a lie about the campaign.
+            string next = string.IsNullOrEmpty(_scenario.Next) ? StartingScenarioId : _scenario.Next;
+            if (next == StartingScenarioId && string.IsNullOrEmpty(_scenario.Next)) _carriedCash = 0;
+
+            _scenario = LoadScenario(next);
+            ApplyScenarioShape(_scenario);
+            ResizeForMap();
+            NewMatch();
+        }
+
+        /// <summary>
+        /// Re-points everything that was sized or placed from the map, after the map changed.
+        ///
+        /// BuildSceneObjects runs once for the life of the process, so without this the minimap
+        /// buffers keep the first mission's dimensions and the repaint indexes past the end of them
+        /// five times a second, while the vault object stays where the FIRST mission's flow field
+        /// was aiming. Everything here is cheap; it runs once per position.
+        /// </summary>
+        private void ResizeForMap()
+        {
+            if (_minimap == null || _minimap.width != GridW || _minimap.height != GridH)
+            {
+                if (_minimap != null) Destroy(_minimap);
+                _minimap = new Texture2D(GridW, GridH, TextureFormat.RGBA32, mipChain: false)
+                           { filterMode = FilterMode.Point };
+                _minimapPixels = new Color32[GridW * GridH];
+                _minimapAgents = new int[GridW * GridH];
+            }
+
+            if (_groundT != null)
+            {
+                _groundT.position = new Vector3(GridW / 2f, 0f, GridH / 2f);
+                _groundT.localScale = new Vector3(GridW / 10f, 1f, GridH / 10f);
+            }
+
+            if (_vaultT != null)
+                _vaultT.position = new Vector3(GoalX + 0.5f, 0.6f, GoalY + 0.5f);
+
+            // The scatter was laid out for the last map's walls and lane. Throw it away and re-dress.
+            _environmentDressed = false;
+        }
+
         private void NewMatch()
         {
-            // Already loaded in Awake, before BuildSceneObjects sized anything by it.
             _map = new GridMap(GridW, GridH);
             foreach (var w in _scenario.Map.Walls)
                 for (int x = w.X; x < w.X + w.Width; x++)
@@ -266,9 +344,20 @@ namespace Cipher.Game
             _turrets = new TurretSystem();
             // The game opts in to the untimed opening: dig in for as long as you like, and the
             // first wave comes when you press start.
+            // HasFallbackPosition comes from the scenario's "next": a position with nothing behind
+            // it cannot be left, which is what makes mission 12 unwinnable by design rather than by
+            // a special case in code.
             _match = new MatchState(_scenario.ToWaveTable(), _eco, _scenario.VaultHp,
+                                    hasFallbackPosition: _scenario.HasFallbackPosition,
                                     openingIsUntimed: true);
+            if (_carriedCash > 0)
+            {
+                _match.Bank.Earn(_carriedCash);
+                Alert($"+${_carriedCash} of materials carried back from the last position", 5f);
+            }
             _objectives = ObjectiveFactory.CreateSet(_scenario.Objectives);
+            _nextName = string.IsNullOrEmpty(_scenario.Next) ? "" : LoadScenario(_scenario.Next).DisplayName;
+            _carriedCash = 0;
             _focus.Reset();
             _build = new BuildModel(_map, _world, _turrets, _match, _eco, SpawnCells, GoalX, GoalY,
                                     Mathf.Clamp(GridW - 12, 1, GridW - 2), GridH / 2);
@@ -301,7 +390,13 @@ namespace Cipher.Game
             ApplyLoadoutToWorld();
             if (_crowd == null) BuildCivilianPool();
             if (_heroBody == null) BuildHeroBody();
-            if (!_environmentDressed) { DressEnvironment(); _environmentDressed = true; }
+            if (!_environmentDressed)
+            {
+                var stale = GameObject.Find("Environment");
+                if (stale != null) Destroy(stale);
+                DressEnvironment();
+                _environmentDressed = true;
+            }
             _hero.Aim(new Vec2(-1f, 0f));
             _camYaw = -90f;
             _camPitch = 22f;
@@ -338,6 +433,7 @@ namespace Cipher.Game
             ground.name = "Ground";
             ground.transform.position = new Vector3(GridW / 2f, 0f, GridH / 2f);
             ground.transform.localScale = new Vector3(GridW / 10f, 1f, GridH / 10f);
+            _groundT = ground.transform;
             ground.GetComponent<Renderer>().material = MakeMaterial(GroundColour, instanced: false, ink: InkNone);
 
             _agentMesh = HarvestMesh(PrimitiveType.Capsule);
@@ -590,7 +686,13 @@ namespace Cipher.Game
 
             if (_match.IsOver)
             {
-                if (RestartPressed()) NewMatch();
+                // Leaving in good order is not the end of a run, it is the start of the next
+                // position. Only a win or a loss runs the same ground back.
+                if (RestartPressed())
+                {
+                    if (_match.Phase == MatchPhase.Extracted) AdvanceToNextPosition();
+                    else NewMatch();
+                }
             }
             else if (_hero.IsDown)
             {
@@ -1513,6 +1615,13 @@ namespace Cipher.Game
             Debug.Log("[Grade] tonemap, bloom and vignette applied");
         }
 
+        /// <summary>
+        /// Falls back to the next position immediately. Harness only: it is the only way to put the
+        /// map-resize path under a camera without playing two whole missions first, and that path
+        /// is the one that used to index a 64x48 minimap buffer with a 72x56 map's coordinates.
+        /// </summary>
+        public void FallBackForCapture() => AdvanceToNextPosition();
+
         /// <summary>Starts the first wave, so a smoke capture can actually see combat. Harness only.</summary>
         public void StartWaveForCapture() => _match.StartWaveNow();
 
@@ -2312,7 +2421,22 @@ namespace Cipher.Game
                     GUI.Label(new Rect(0, 60 + i * 28, _uiW, 28), _alerts[i].Text, alertStyle);
             }
 
-            if (_match.IsOver && !_pauseMenu.IsOpen)
+            if (_match.Phase == MatchPhase.Extracted && !_pauseMenu.IsOpen)
+            {
+                // Falling back is the ordinary outcome, so it gets its own screen rather than
+                // borrowing the loss screen. It is also the only place the player sees what taking
+                // that extra wave actually cost them.
+                int prep = Mathf.Max(0, Mathf.RoundToInt(_match.PrepSecondsRemaining));
+                int materials = Mathf.RoundToInt(prep * _match.Cycle.PrepDollarsPerSecond) + _match.Salvaged;
+
+                Overlay(new Color(0.08f, 0.16f, 0.28f, 0.6f), "FELL BACK",
+                        $"{_match.WavesCleared} waves held   {_world.TotalKills} of them down\n" +
+                        $"{_match.SalvagedCount} emplacements on the truck, {_match.AbandonedCount} left bolted down\n" +
+                        $"{prep / 60}:{(prep % 60):00} of the cycle left  ->  ${materials} of materials at the next line\n" +
+                        $"\nNEXT: {(_nextName.Length > 0 ? _nextName : "the line stops here for now")}\n" +
+                        $"{(pad ? "A" : "Enter")}: move out");
+            }
+            else if (_match.IsOver && !_pauseMenu.IsOpen)
             {
                 bool won = _match.Phase == MatchPhase.Won;
                 Overlay(won ? new Color(0f, 0.3f, 0.1f, 0.55f) : new Color(0.4f, 0f, 0f, 0.55f),

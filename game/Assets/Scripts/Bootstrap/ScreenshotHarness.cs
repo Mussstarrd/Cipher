@@ -25,6 +25,7 @@ namespace Cipher.Game
         private const string SkillsArg = "-exodus-screenshot-skills";
         private const string StartArg = "-exodus-screenshot-start";
         private const string LineupArg = "-exodus-screenshot-lineup";
+        private const string FallBackArg = "-exodus-screenshot-fallback";
 
         private string? _path;
         private float _delay = 8f;
@@ -34,6 +35,8 @@ namespace Cipher.Game
         private bool _skills;
         private bool _start;
         private bool _lineup;
+        private bool _fallBack;
+        private bool _fellBack;
         private bool _lineupSet;
         private bool _started;
         private bool _viewSet;
@@ -61,6 +64,7 @@ namespace Cipher.Game
             harness._skills = HasFlag(args, SkillsArg);
             harness._start = HasFlag(args, StartArg);
             harness._lineup = HasFlag(args, LineupArg);
+            harness._fallBack = HasFlag(args, FallBackArg);
             Debug.Log($"[Screenshot] armed: {path} after {delay:F1}s");
         }
 
@@ -136,6 +140,15 @@ namespace Cipher.Game
                 var bstart = GetComponent<FloodBootstrap>();
                 if (bstart != null) bstart.StartWaveForCapture();
                 _started = true;
+            }
+
+            // Fall back to the next position, so the capture shows the mission AFTER this one.
+            // This is the only way to exercise the map-resize path without playing two missions.
+            if (_fallBack && !_fellBack && _elapsed > Mathf.Max(0f, _delay - 2f))
+            {
+                var bf = GetComponent<FloodBootstrap>();
+                if (bf != null) bf.FallBackForCapture();
+                _fellBack = true;
             }
 
             if (_skills && !_skillsSet && _elapsed > Mathf.Max(0f, _delay - 1f))

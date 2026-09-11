@@ -1,0 +1,73 @@
+{
+  "schema": 1,
+  "id": "act1-02-the-clubhouse",
+  "displayName": "The Clubhouse",
+  "tier": 1,
+  "brief": "The gate is theirs. Everyone who ran is in the clubhouse behind you, and the open ground in front of it is a golf course, which is the worst possible thing to have to defend and the only thing you have left.",
+
+  "map": {
+    "width": 72,
+    "height": 56,
+    "preset": "arena",
+    "walls": [
+      { "rect": [20, 0, 1, 22], "kind": "Wall" },
+      { "rect": [20, 34, 1, 22], "kind": "Wall" },
+
+      { "rect": [40, 14, 1, 42], "kind": "Wall" },
+
+      { "rect": [56, 0, 1, 24], "kind": "Wall" },
+      { "rect": [56, 32, 1, 24], "kind": "Wall" },
+
+      { "rect": [62, 22, 8, 1], "kind": "Static" },
+      { "rect": [62, 34, 8, 1], "kind": "Static" }
+    ]
+  },
+
+  "heroSpawn": { "x": 64, "y": 28 },
+  "spawnCells": [
+    { "x": 1, "y": 12, "gate": "fairway-north" },
+    { "x": 1, "y": 44, "gate": "fairway-south" }
+  ],
+  "vault": { "x": 69, "y": 28, "hp": 30 },
+
+  "economy": {
+    "startCash": 350,
+    "cashPerKill": 5,
+    "waveClearBonusPerWave": 110
+  },
+
+  "director": {
+    "seed": 20260912,
+    "sapperFirstAt": 30,
+    "spitterFirstAt": 25,
+    "hunterShare": 0.14,
+    "wreckerShare": 0.10
+  },
+
+  "waves": [
+    { "setupSeconds": 25, "count": 200, "spawnPerSecond": 10, "mix": { "Runner": 0.97, "Spitter": 0.03 } },
+    { "setupSeconds": 20, "count": 320, "spawnPerSecond": 12, "mix": { "Runner": 0.94, "Spitter": 0.04, "Sapper": 0.02 } },
+    { "setupSeconds": 20, "count": 450, "spawnPerSecond": 15, "mix": { "Runner": 0.91, "Spitter": 0.06, "Sapper": 0.03 } },
+    { "setupSeconds": 18, "count": 600, "spawnPerSecond": 17, "mix": { "Runner": 0.88, "Spitter": 0.07, "Sapper": 0.05 } },
+    { "setupSeconds": 18, "count": 800, "spawnPerSecond": 20, "mix": { "Runner": 0.86, "Spitter": 0.08, "Sapper": 0.06 } }
+  ],
+
+  "safeZoneAfterWaves": [],
+
+  "objectives": [
+    { "type": "ClearWaves", "count": 3 },
+    { "type": "ProtectVault", "minHp": 1 }
+  ],
+
+  "rewards": {
+    "scrip": 90,
+    "guaranteedDrops": [ { "slot": "Optic", "rarity": "Scavenged", "ilvl": 5 } ],
+    "unlocks": []
+  },
+
+  "medals": {
+    "bronze": [ { "type": "Complete" } ],
+    "silver": [ { "type": "VaultHpAtLeast", "value": 24 } ],
+    "gold": [ { "type": "VaultHpAtLeast", "value": 30 }, { "type": "TimeUnder", "seconds": 540 } ]
+  }
+}

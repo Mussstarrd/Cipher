@@ -330,6 +330,19 @@ namespace Cipher.Game.Tests
             foreach (var o in set.All) if (o is not ProtectVault) hasGoal = true;
             Assert.That(hasGoal, Is.True, $"{def.Id} has no objective that can ever complete");
         }
+
+        [Test, TestCaseSource(nameof(ScenarioFiles))]
+        public void EveryFallbackPositionExists(string path)
+        {
+            // "next" is followed at runtime the moment a player leaves a position, so a typo here
+            // is a crash in the middle of a session rather than at load.
+            var def = ScenarioReader.Read(File.ReadAllText(path));
+            if (def.Next.Length == 0) return;
+
+            string next = Path.Combine(Path.GetDirectoryName(path)!, def.Next + ".json");
+            Assert.That(File.Exists(next), Is.True,
+                        $"{def.Id} falls back to '{def.Next}', which is not a mission file");
+        }
     }
 
     public sealed class ObjectiveTests
@@ -635,6 +648,30 @@ namespace Cipher.Game.Tests
                 Base.Replace("\"width\": 32, \"height\": 32", "\"width\": 10, \"height\": 10")));
             Assert.Throws<ScenarioException>(() => ScenarioReader.Read(
                 Base.Replace("\"width\": 32, \"height\": 32", "\"width\": 100000, \"height\": 100000")));
+        }
+
+        [Test]
+        public void APositionWithNowhereBehindItCannotAlsoNameOne()
+        {
+            // The two facts are separate on purpose: "nothing behind this line" is design, and
+            // "the next mission is not written yet" is content. A file claiming both is confused.
+            var ex = Assert.Throws<ScenarioException>(() => ScenarioReader.Read(
+                Base.Replace("\"waves\"", "\"lastStand\": true, \"next\": \"other\", \"waves\"")));
+            Assert.That(ex!.Message, Does.Contain("lastStand"));
+        }
+
+        [Test]
+        public void AnUnauthoredNextDoesNotTurnAPositionIntoALastStand()
+        {
+            // The regression this guards: HasFallbackPosition used to be derived from `next` being
+            // empty, so the last authored mission silently lost its extract call and became a
+            // mission you could only hold or lose.
+            var def = ScenarioReader.Read(Base);
+            Assert.That(def.Next, Is.Empty);
+            Assert.That(def.HasFallbackPosition, Is.True);
+
+            var last = ScenarioReader.Read(Base.Replace("\"waves\"", "\"lastStand\": true, \"waves\""));
+            Assert.That(last.HasFallbackPosition, Is.False);
         }
 
         [Test]

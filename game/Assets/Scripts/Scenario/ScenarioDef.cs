@@ -59,6 +59,27 @@ namespace Cipher.Game.Scenarios
         public int Tier { get; set; } = 1;
         public string Brief { get; set; } = "";
 
+        /// <summary>
+        /// The mission file to load after leaving this one. Empty means the authored chain stops
+        /// here, which is a CONTENT fact, not a design one -- see <see cref="LastStand"/>.
+        /// </summary>
+        public string Next { get; set; } = "";
+
+        /// <summary>
+        /// There is nowhere behind this position. Greys out the extract call entirely, so the
+        /// mission cannot be won by leaving, only held or lost.
+        ///
+        /// Deliberately NOT derived from <see cref="Next"/> being empty, which was the first
+        /// version and was wrong. Those are two different facts: "the campaign has no line behind
+        /// this one" is design, and in Act One it is true of exactly one mission (the house);
+        /// "the next mission is not written yet" is the state of the content. Conflating them
+        /// silently turned the last authored mission into a last stand and changed how it plays.
+        /// </summary>
+        public bool LastStand { get; set; }
+
+        /// <summary>Whether the extract call is available at all.</summary>
+        public bool HasFallbackPosition => !LastStand;
+
         public MapDef Map { get; } = new MapDef();
         public Cell HeroSpawn { get; set; }
         public List<SpawnPoint> SpawnCells { get; } = new List<SpawnPoint>();

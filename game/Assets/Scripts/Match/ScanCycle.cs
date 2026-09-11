@@ -34,8 +34,19 @@ namespace Cipher.Game.Match
         /// </summary>
         public float CommitBonus { get; set; } = 0.25f;
 
+        /// <summary>
+        /// Dollars of materials per second of cycle time left over when you pull out.
+        ///
+        /// ADR-005 says the remainder of the cycle is prep at the next position -- fortify, trap,
+        /// rest -- and this is how that becomes a number the player can feel. It cannot be MORE
+        /// setup time, because the opening setup at a new position is already untimed; time you
+        /// spent not fighting has to arrive as something you built with it.
+        /// </summary>
+        public float PrepDollarsPerSecond { get; set; } = 1.2f;
+
         public ScanCycleConfig Clone() => new ScanCycleConfig
         {
+            PrepDollarsPerSecond = PrepDollarsPerSecond,
             CycleSeconds = CycleSeconds,
             MinWavesBeforeExtract = MinWavesBeforeExtract,
             ExtractSeconds = ExtractSeconds,

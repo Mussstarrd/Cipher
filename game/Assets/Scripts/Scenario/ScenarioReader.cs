@@ -26,7 +26,7 @@ namespace Cipher.Game.Scenarios
         {
             var root = JsonValue.Parse(json);
             root.RejectUnknownKeys(
-                "schema", "id", "displayName", "tier", "brief", "map", "heroSpawn", "spawnCells",
+                "schema", "id", "displayName", "tier", "brief", "next", "lastStand", "map", "heroSpawn", "spawnCells",
                 "vault", "actors", "economy", "director", "waves", "safeZoneAfterWaves",
                 "objectives", "rewards", "medals");
 
@@ -41,6 +41,13 @@ namespace Cipher.Game.Scenarios
             def.DisplayName = NonEmpty(root.Get("displayName"), "displayName");
             def.Tier = root.Opt("tier")?.AsInt() ?? 1;
             def.Brief = root.Opt("brief")?.AsString() ?? "";
+            def.Next = root.Opt("next")?.AsString() ?? "";
+            def.LastStand = root.Opt("lastStand")?.AsBool() ?? false;
+            if (def.Next == def.Id)
+                throw new ScenarioException("$.next: a position cannot fall back to itself");
+            if (def.LastStand && def.Next.Length > 0)
+                throw new ScenarioException(
+                    "$.lastStand: this position has nowhere behind it, so it cannot also name a 'next'");
 
             ReadMap(root.Get("map"), def.Map);
             def.HeroSpawn = ReadCell(root.Get("heroSpawn"), def.Map, "heroSpawn");
