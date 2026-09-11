@@ -18,6 +18,14 @@ Shader "Exodus/InstancedLit"
     {
         [MainColor] _BaseColor("Base Colour", Color) = (0.6, 0.6, 0.6, 1)
 
+        // Optional surface. Almost everything in this game is flat colour, but the GROUND is most
+        // of the screen and a single flat fill across it is most of the screen doing nothing.
+        // Defaults to white so a material that sets no texture behaves exactly as it did before.
+        // [MainTexture] is what binds Material.mainTexture to this property. Without it the
+        // setter looks for _MainTex, finds nothing, and fails SILENTLY -- the ground came out
+        // pure white because the base colour was white and the texture was never applied.
+        [MainTexture] _BaseMap("Base Map", 2D) = "white" {}
+
         _OutlineColor("Outline Colour", Color) = (0.05, 0.05, 0.07, 1)
         _OutlineWidth("Outline Width", Range(0, 0.4)) = 0.035
         [Toggle(_SMOOTH_OUTLINE)] _SmoothOutline("Use Smoothed Normals For Outline", Float) = 0
@@ -56,6 +64,7 @@ Shader "Exodus/InstancedLit"
 
             CBUFFER_START(UnityPerMaterial)
                 float4 _BaseColor;
+                float4 _BaseMap_ST;
                 float4 _OutlineColor;
                 float  _OutlineWidth;
                 float4 _ShadowTint;
@@ -147,6 +156,7 @@ Shader "Exodus/InstancedLit"
 
             CBUFFER_START(UnityPerMaterial)
                 float4 _BaseColor;
+                float4 _BaseMap_ST;
                 float4 _OutlineColor;
                 float  _OutlineWidth;
                 float4 _ShadowTint;
@@ -161,10 +171,14 @@ Shader "Exodus/InstancedLit"
                 UNITY_DEFINE_INSTANCED_PROP(float4, _InstanceColor)
             UNITY_INSTANCING_BUFFER_END(Props)
 
+            TEXTURE2D(_BaseMap);
+            SAMPLER(sampler_BaseMap);
+
             struct Attributes
             {
                 float4 positionOS : POSITION;
                 float3 normalOS   : NORMAL;
+                float2 uv         : TEXCOORD0;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
@@ -174,6 +188,7 @@ Shader "Exodus/InstancedLit"
                 float3 positionWS : TEXCOORD0;
                 float3 normalWS   : TEXCOORD1;
                 float  fogCoord   : TEXCOORD2;
+                float2 uv         : TEXCOORD3;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
@@ -188,6 +203,7 @@ Shader "Exodus/InstancedLit"
                 output.positionCS = TransformWorldToHClip(positionWS);
                 output.normalWS = TransformObjectToWorldNormal(input.normalOS);
                 output.fogCoord = ComputeFogFactor(output.positionCS.z);
+                output.uv = TRANSFORM_TEX(input.uv, _BaseMap);
                 return output;
             }
 
@@ -209,6 +225,8 @@ Shader "Exodus/InstancedLit"
 
                 float4 instanced = UNITY_ACCESS_INSTANCED_PROP(Props, _InstanceColor);
                 half3 albedo = (instanced.a > 0.0h) ? instanced.rgb : _BaseColor.rgb;
+                // White by default, so this multiply is a no-op for every flat-coloured thing.
+                albedo *= SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv).rgb;
 
                 float3 normalWS = normalize(input.normalWS);
                 float3 viewDirWS = normalize(GetCameraPositionWS() - input.positionWS);
@@ -270,6 +288,7 @@ Shader "Exodus/InstancedLit"
 
             CBUFFER_START(UnityPerMaterial)
                 float4 _BaseColor;
+                float4 _BaseMap_ST;
                 float4 _OutlineColor;
                 float  _OutlineWidth;
                 float4 _ShadowTint;
@@ -336,6 +355,7 @@ Shader "Exodus/InstancedLit"
 
             CBUFFER_START(UnityPerMaterial)
                 float4 _BaseColor;
+                float4 _BaseMap_ST;
                 float4 _OutlineColor;
                 float  _OutlineWidth;
                 float4 _ShadowTint;

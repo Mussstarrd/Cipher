@@ -183,6 +183,9 @@ namespace Cipher.Game
         private readonly List<GameObject> _turretGos = new List<GameObject>(32);
         private Transform _vaultT = null!;
         private Transform? _groundT;
+        private Texture2D? _groundTexture;
+        private Material? _groundMaterial;
+        private Transform? _backdropRoot;
         private Transform _crateT = null!;
         private Texture2D _minimap = null!;
         private Color32[] _minimapPixels = null!;
@@ -341,7 +344,13 @@ namespace Cipher.Game
             {
                 _groundT.position = new Vector3(GridW / 2f, 0f, GridH / 2f);
                 _groundT.localScale = new Vector3(GridW / 10f, 1f, GridH / 10f);
+                // Tiling is in world units, so it has to follow the map or the litter stretches.
+                if (_groundMaterial != null)
+                    _groundMaterial.mainTextureScale = new Vector2(GridW / 8f, GridH / 8f);
             }
+
+            // The backdrop is sized from the map too, so it is rebuilt with it.
+            if (_backdropRoot != null) { Destroy(_backdropRoot.gameObject); _backdropRoot = null; }
 
             if (_vaultT != null)
                 _vaultT.position = new Vector3(GoalX + 0.5f, 0.6f, GoalY + 0.5f);
@@ -481,7 +490,18 @@ namespace Cipher.Game
             ground.transform.position = new Vector3(GridW / 2f, 0f, GridH / 2f);
             ground.transform.localScale = new Vector3(GridW / 10f, 1f, GridH / 10f);
             _groundT = ground.transform;
-            ground.GetComponent<Renderer>().material = MakeMaterial(GroundColour, instanced: false, ink: InkNone);
+
+            // The ground is most of the screen, and one flat colour across it is most of the screen
+            // doing nothing. Generated at startup rather than shipped, so a clean checkout rebuilds
+            // it and there is still not a single texture file in this project.
+            _groundTexture = WorldBackdrop.BuildGroundTexture(512, GroundColour, 20260911UL);
+            var groundMat = MakeMaterial(Color.white, instanced: false, ink: InkNone);
+            groundMat.mainTexture = _groundTexture;
+            // Eight-unit tiles. Half a unit per tile made the repeat a visible grid, which is worse
+            // than no texture at all: the eye locks onto the lattice instead of the surface.
+            groundMat.mainTextureScale = new Vector2(GridW / 8f, GridH / 8f);
+            ground.GetComponent<Renderer>().material = groundMat;
+            _groundMaterial = groundMat;
 
             _agentMesh = HarvestMesh(PrimitiveType.Capsule);
             _cubeMesh = HarvestMesh(PrimitiveType.Cube);
@@ -610,8 +630,26 @@ namespace Cipher.Game
             RenderSettings.fogColor = HazeGrey;
             RenderSettings.fogDensity = 0.011f;
 
-            if (_camera != null)
+            // A banded procedural sky rather than a flat clear colour. A smooth or empty sky over
+            // cel-shaded ground is the fastest way to make stylised art look unfinished, because the
+            // eye reads the mismatch before it reads anything else.
+            var skyShader = Shader.Find("Exodus/ComicSky");
+            if (skyShader != null)
             {
+                var sky = new Material(skyShader);
+                sky.SetColor("_SkyTop", new Color(0.40f, 0.47f, 0.57f));
+                sky.SetColor("_SkyHorizon", new Color(0.76f, 0.78f, 0.80f));
+                sky.SetColor("_CloudLight", new Color(0.87f, 0.88f, 0.89f));
+                sky.SetColor("_CloudDark", new Color(0.56f, 0.59f, 0.65f));
+                sky.SetColor("_GroundHaze", HazeGrey);
+                RenderSettings.skybox = sky;
+                RenderSettings.ambientMode = AmbientMode.Trilight;
+
+                if (_camera != null) _camera.clearFlags = CameraClearFlags.Skybox;
+            }
+            else if (_camera != null)
+            {
+                Debug.LogWarning("[Sky] Exodus/ComicSky not found; falling back to a flat clear");
                 _camera.clearFlags = CameraClearFlags.SolidColor;
                 _camera.backgroundColor = HazeGrey;
             }
@@ -1922,6 +1960,17 @@ namespace Cipher.Game
                 Debug.LogWarning("[Env] no Street_Straight in Resources/Environment; no road laid");
 
             dresser.Dress(trees, bushes, cars, KeepClear);
+
+            // Everything past the playable rectangle. Built before the authored props so it can
+            // never sit on top of them, and parented separately so a position change throws it away.
+            if (_backdropRoot == null)
+            {
+                _backdropRoot = new GameObject("Backdrop").transform;
+                var backdrop = new WorldBackdrop(_backdropRoot, PropMaterial);
+                backdrop.Build(GridW, GridH, GroundColour, _groundTexture,
+                               trees.ToArray(), ReskinForComic);
+                Debug.Log($"[Env] backdrop: {backdrop.Placed} pieces");
+            }
 
             // Built scenery last: it is authored per position, so it wins over the random scatter.
             var site = new SiteProps(root, PropMaterial);
