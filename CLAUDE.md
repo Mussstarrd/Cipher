@@ -350,4 +350,28 @@ substitute: it references the sim's SOURCE, not its test project.
   `-exodus-screenshot-strike` calls an airstrike 1.5s before the shutter. The rig looks west down
   the lane by default, so the truck -- the most important object on the map -- was always behind the
   photographer and had never once been photographed.
+- **THE SIGNAL WEAPONS ARE ON SCREEN** (`Scripts/Bootstrap/SignalFx.cs`, merged + wired 2026-09-11).
+  EMP burst, transmitted lance, the dying-chip tell and the Grinder's jammer field, on one cheap
+  unlit instanced shader (`Exodus/SignalFx`, in Always Included).
+  - **Its API splits `Add` from `Mark`.** `Add*` raises an event the renderer ages itself; `Mark*` is
+    a fact about THIS frame that the caller restates every frame. That is why nothing ever has to
+    tell it a body stopped failing. Follow the split when adding to it.
+  - **`ComputeFogIntensity` returns 0, not 1, when no fog keyword is defined**, so an unguarded
+    `emissive *= ComputeFogIntensity(...)` multiplies the whole effect by ZERO rather than skipping
+    the fog. Every lance drew as a solid black bar with perfect geometry, which looks like a colour
+    bug and is a missing `#if`. `MixFog` has the opposite default -- it is just wrong for additive.
+  - **A per-instance hot-rim term must be scaled by rim strength**, or every thin bar is seen
+    edge-on, lands at rim = 1 and comes out white: a cyan weapon rendered as a row of white sticks.
+  - **A faceted low-poly sphere cannot hold a narrow rim band** -- at 80 triangles almost no face
+    lands in the grazing band, so the shell drew confetti. Smooth normals plus quantisation.
+  - `-exodus-signalfx-demo`, `-exodus-signalfx-age <0..1>` (freeze a burst at one stage -- this is
+    the one that matters; three rounds of tuning went into stages that were never in frame) and
+    `-exodus-signalfx-tell`.
+  - **The fireball path is DELETED** (`DrawBlasts`, `_fxFire`/`_fxSmoke`/`_fxFlash`, four blast
+    materials, `Blast`, `BlastLife`). `_tracers` now carries exactly ONE thing: rounds fired AT the
+    player by the signed who still have sidearms. That contrast is the point -- their weapons are
+    guns and his are not.
+  - The sim carries no heading, so a failing body's facing is derived in the bootstrap from where it
+    was last frame. A heading in the sim would be renderer-only state in the hot path and in the
+    determinism hash.
 - **Was:** owner hero feedback → barricade build-mode with live path preview (Milestone 2 "The Maze").

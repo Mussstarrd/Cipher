@@ -142,18 +142,8 @@ namespace Cipher.Game
         private readonly List<StrikeImpact> _impactScratch = new List<StrikeImpact>(8);
 
         private struct Tracer { public Vector3 A, B; public float Ttl; public bool Turret; }
-        private struct Blast { public Vector3 Center; public float Radius; public float Ttl; public float Life; }
         private readonly List<Tracer> _tracers = new List<Tracer>(128);
-        private readonly List<Blast> _blasts = new List<Blast>(8);
         private const float TracerLife = 0.06f;
-        /// <summary>
-        /// How long a bomb is on screen, in seconds. It was 0.45, which is a blink: the owner's
-        /// complaint about the airstrike ("a bunch of cylinders that pop out of the ground and then
-        /// disappear") was half about the SHAPE and half about the DURATION, and replacing the
-        /// shape alone left the second half of it standing. A bomb now flashes, burns, throws smoke
-        /// that drifts and thins, and leaves a scorch behind.
-        /// </summary>
-        private const float BlastLife = 1.7f;
 
         // ---- build mode ----
         private bool _buildMode;
@@ -382,8 +372,10 @@ namespace Cipher.Game
         /// </summary>
         private void ResizeForMap()
         {
-            // Scorch marks and contact shadows belong to the position that earned them.
+            // Scorch marks, contact shadows and anything still crackling belong to the position
+            // that earned them.
             GroundMarkRenderer.Active?.ResetForNewPosition();
+            _signal.Clear();
 
             if (_minimap == null || _minimap.width != GridW || _minimap.height != GridH)
             {
@@ -525,7 +517,6 @@ namespace Cipher.Game
             _skillCursor = 0;
             _truckCursor = 0;
             _tracers.Clear();
-            _blasts.Clear();
             _bakedMapVersion = -1;
             SyncTurretObjects();
         }
@@ -582,10 +573,6 @@ namespace Cipher.Game
             _aidCaseMaterial = MakeMaterial(new Color(0.92f, 0.92f, 0.90f), instanced: true);
             _aidCrossMaterial = MakeMaterial(new Color(0.85f, 0.14f, 0.12f), instanced: true, ink: InkNone);
             // No ink on any of these: an outline around a fireball reads as a balloon.
-            _blastFlashMaterial = MakeMaterial(new Color(1f, 0.97f, 0.86f), instanced: true, ink: InkNone);
-            _blastFireMaterial = MakeMaterial(new Color(0.98f, 0.52f, 0.14f), instanced: true, ink: InkNone);
-            _blastSmokeMaterial = MakeMaterial(new Color(0.26f, 0.24f, 0.23f), instanced: true, ink: InkNone);
-            _blastRingMaterial = MakeMaterial(new Color(0.44f, 0.38f, 0.30f), instanced: true, ink: InkNone);
             _tracerMaterial = MakeMaterial(new Color(1f, 0.95f, 0.5f), instanced: false);
             _turretTracerMaterial = MakeMaterial(new Color(0.6f, 0.9f, 1f), instanced: false);
             _routeOkMaterial = MakeMaterial(new Color(0.3f, 0.9f, 0.45f), instanced: true);
@@ -1049,6 +1036,13 @@ namespace Cipher.Game
                 float sag = 1f - 0.22f * (1f - hp);
                 props.Root.transform.position = new Vector3(t.X + 0.5f, 0f, t.Y + 0.5f);
                 GroundMarkRenderer.Active?.Queue(props.Root.transform.position, props.GroundRadius);
+
+                // An area emplacement broadcasts rather than aiming, so its reach is a field of
+                // interference on the ground and not a gun barrel. A damaged one broadcasts weakly,
+                // which is also the only way the player can see a Grinder is in trouble.
+                if (_turrets.FamilyOfTurret(i).Mode == FireMode.Area)
+                    _signal.MarkJammer(props.Root.transform.position,
+                                       t.Range, 0.35f + 0.65f * hp);
                 props.Root.transform.localScale =
                     new Vector3(1f + 0.10f * t.Tier, sag * (1f + 0.10f * t.Tier), 1f + 0.10f * t.Tier);
 
@@ -1334,14 +1328,15 @@ namespace Cipher.Game
                 NoteTurretShot(in s);
                 if (s.Area)
                 {
-                    // A grinder sweeps rather than fires: show the bite radius, not a tracer.
+                    // A grinder broadcasts rather than fires: show the bite radius as a pulse in
+                    // its own field, not a tracer and not a fireball.
                     var t = _turrets.Turrets.Count > s.TurretIndex ? _turrets.Turrets[s.TurretIndex] : null;
                     if (t != null)
-                        _blasts.Add(new Blast { Center = new Vector3(t.X + 0.5f, 0.05f, t.Y + 0.5f), Radius = t.Range, Ttl = 0.5f, Life = 0.5f });
+                        _signal.AddEmp(new Vector3(t.X + 0.5f, 0.05f, t.Y + 0.5f), t.Range * 0.55f);
                     _sfx.PlayAt(Sfx.TurretShot, ToWorld(s.From, 1f), 0.4f, 0.2f, minInterval: 0.11f);
                     continue;
                 }
-                _tracers.Add(new Tracer { A = ToWorld(s.From, 1.1f), B = ToWorld(s.To, 0.6f), Ttl = TracerLife * 0.7f, Turret = true });
+                _signal.AddBeam(ToWorld(s.From, 1.1f), ToWorld(s.To, 0.9f), SignalBeam.Turret, landed: true);
                 _sfx.PlayAt(Sfx.TurretShot, ToWorld(s.From, 1f), 0.6f, 0.1f, minInterval: 0.045f);
             }
 
@@ -1609,7 +1604,7 @@ namespace Cipher.Game
                         if (e.B >= 0 && e.B < _turrets.Turrets.Count)
                         {
                             var t = _turrets.Turrets[e.B];
-                            _blasts.Add(new Blast { Center = new Vector3(t.X + 0.5f, 0.05f, t.Y + 0.5f), Radius = 0.7f, Ttl = 0.42f, Life = 0.42f });
+                            _signal.AddEmp(new Vector3(t.X + 0.5f, 0.05f, t.Y + 0.5f), 0.7f);
                             _sfx.PlayAt(Sfx.Hit, new Vector3(t.X + 0.5f, 1f, t.Y + 0.5f), 0.7f, 0.15f, minInterval: 0.2f);
                             if (_turrets.Damage(_map, e.B, (int)e.F)) { Alert("TURRET DESTROYED", 4f); _sfx.PlayAt(Sfx.TurretDestroyed, new Vector3(t.X + 0.5f, 1f, t.Y + 0.5f), 1f, 0.02f); turretsChanged = true; }
                         }
@@ -2254,6 +2249,9 @@ namespace Cipher.Game
             GUI.Label(new Rect(x - 150f, y - 8f, 300f, 20f),
                       "your family is in it", _vaultStyle);
         }
+
+        /// <summary>Everything the signal weapons draw. ADR-008; see SignalFx for the API split.</summary>
+        private readonly SignalFx _signal = new SignalFx();
 
         private GameObject? _truckBody;
 
@@ -2957,7 +2955,8 @@ namespace Cipher.Game
             _hero.TickStrike(_world, dt, _impactScratch);
             foreach (var imp in _impactScratch)
             {
-                _blasts.Add(new Blast { Center = ToWorld(imp.Center, 0.05f), Radius = imp.Radius, Ttl = BlastLife, Life = BlastLife });
+                // ADR-008: this is an electromagnetic pulse, not a bomb. No fire, no smoke.
+                _signal.AddEmp(ToWorld(imp.Center, 0.05f), imp.Radius);
                 Decals.Current?.Add(DecalKind.Scorch, ToWorld(imp.Center, 0f), imp.Radius * 0.9f,
                                     Mathf.Atan2(_hero.StrikeAxis.X, _hero.StrikeAxis.Y) * Mathf.Rad2Deg);
                 _sfx.PlayAt(Sfx.Bomb, ToWorld(imp.Center, 0.5f), 1f, 0.12f);
@@ -2972,12 +2971,9 @@ namespace Cipher.Game
                 NoteHeroShot();
                 AddTrauma(0.05f);
                 _muzzleLeft = HitFlashSeconds;
-                _tracers.Add(new Tracer
-                {
-                    A = ToWorld(shot.Origin, 0.75f),
-                    B = ToWorld(shot.End, shot.Hit ? 0.6f : 0.75f),
-                    Ttl = TracerLife,
-                });
+                _signal.AddBeam(ToWorld(shot.Origin, 0.75f),
+                                ToWorld(shot.End, shot.Hit ? 0.9f : 0.75f),
+                                SignalBeam.Emitter, landed: shot.Hit);
                 _sfx.Play(Sfx.Shot, 0.75f, 0.08f);
                 if (shot.Killed)
                 {
@@ -3052,12 +3048,6 @@ namespace Cipher.Game
                 var t = _tracers[i];
                 t.Ttl -= dt;
                 if (t.Ttl <= 0f) _tracers.RemoveAt(i); else _tracers[i] = t;
-            }
-            for (int i = _blasts.Count - 1; i >= 0; i--)
-            {
-                var b = _blasts[i];
-                b.Ttl -= dt;
-                if (b.Ttl <= 0f) _blasts.RemoveAt(i); else _blasts[i] = b;
             }
         }
 
@@ -3309,123 +3299,13 @@ namespace Cipher.Game
             _camera.fieldOfView = _fovCurrent;
         }
 
-        /// <summary>
-        /// Draws an airstrike impact.
-        ///
-        /// Owner, twice: "it's still just a bunch of cylinders that pop out of the ground orange and
-        /// then disappear there's no graphic". He was right, and the first attempt was mine: one
-        /// yellow capsule scaling up is a yellow capsule scaling up.
-        ///
-        /// An explosion reads as an explosion because of SEQUENCE and SILHOUETTE, not because of one
-        /// bright shape. So it is four things on different clocks:
-        ///
-        ///   FLASH    two frames of a fat bright sphere. Gone before you can focus on it, which is
-        ///            exactly what a real one does to your eye.
-        ///   FIREBALL a sphere that rises, swells and dims through orange into black smoke.
-        ///   SMOKE    a handful of puffs thrown out and up, each on its own arc, rising as they fade.
-        ///   RING     a flat ground ring racing out PAST the blast radius and thinning as it goes.
-        ///
-        /// All instanced primitives on the existing batching path, all with the ink outline off: an
-        /// outline around a fireball reads as a balloon.
-        /// </summary>
-        private void DrawBlasts(float dt)
-        {
-            if (_blasts.Count == 0) return;
 
-            _fxFlash.Clear();
-            _fxFire.Clear();
-            _fxSmoke.Clear();
-            _fxRing.Clear();
-
-            for (int i = _blasts.Count - 1; i >= 0; i--)
-            {
-                var b = _blasts[i];
-                b.Ttl -= dt;
-                if (b.Ttl <= 0f) { _blasts.RemoveAt(i); continue; }
-                _blasts[i] = b;
-
-                float total = b.Life > 0.01f ? b.Life : BlastLife;
-                float life = Mathf.Clamp01(1f - b.Ttl / total);       // 0 at detonation, 1 at the end
-                float r = b.Radius;
-
-                // The stages are fractions of the blast's own life, so a bullet puff and a bomb
-                // read as the same event at different scales rather than two different effects.
-                const float FlashUntil = 0.045f;
-                const float FireUntil = 0.34f;
-                const float RingUntil = 0.30f;
-
-                // ---- flash -------------------------------------------------------------------
-                if (life < FlashUntil)
-                {
-                    float f = 1f - life / FlashUntil;
-                    float size = r * (1.1f + 0.5f * f);
-                    _fxFlash.Add(Matrix4x4.TRS(b.Center + Vector3.up * r * 0.35f,
-                                               Quaternion.identity, Vector3.one * size));
-                }
-
-                // ---- fireball ----------------------------------------------------------------
-                if (life < FireUntil)
-                {
-                    float f = life / FireUntil;
-                    float size = r * Mathf.Lerp(0.55f, 1.45f, Mathf.Sqrt(f));
-                    float rise = r * (0.30f + 0.85f * f);
-                    _fxFire.Add(Matrix4x4.TRS(b.Center + Vector3.up * rise,
-                                              Quaternion.Euler(0f, f * 90f, 0f),
-                                              new Vector3(size, size * (1f - 0.25f * f), size)));
-                }
-
-                // ---- smoke, thrown out and up ------------------------------------------------
-                const int puffs = 5;
-                for (int k = 0; k < puffs; k++)
-                {
-                    float a = (k / (float)puffs) * Mathf.PI * 2f + b.Center.x * 0.7f + b.Center.z * 1.3f;
-                    float spread = r * (0.25f + 0.95f * life);
-                    float up = r * (0.35f + 2.1f * life);
-                    // Grows while it billows, then collapses over the last third. There is no
-                    // per-instance alpha on this path, so a puff that merely stopped growing would
-                    // pop out of existence; shrinking to zero is the fade.
-                    float grow = Mathf.Lerp(0.30f, 0.80f, Mathf.Sqrt(life));
-                    float fade = Mathf.SmoothStep(1f, 0f, Mathf.InverseLerp(0.62f, 1f, life));
-                    float size = r * grow * fade;
-                    if (size <= 0.01f) continue;
-
-                    _fxSmoke.Add(Matrix4x4.TRS(
-                        b.Center + new Vector3(Mathf.Cos(a) * spread, up, Mathf.Sin(a) * spread),
-                        Quaternion.Euler(a * 30f, a * 57f, 0f),
-                        Vector3.one * size));
-                }
-
-                // ---- ground ring -------------------------------------------------------------
-                if (life < RingUntil)
-                {
-                    float f = life / RingUntil;
-                    float ring = r * (0.4f + 2.1f * f);
-                    float thickness = Mathf.Lerp(0.9f, 0.04f, f);
-                    _fxRing.Add(Matrix4x4.TRS(b.Center + Vector3.up * 0.06f,
-                                              Quaternion.identity,
-                                              new Vector3(ring, thickness, ring)));
-                }
-            }
-
-            if (_fxRing.Count > 0) DrawInstancedBatched(_discMesh, _blastRingMaterial, _fxRing);
-            if (_fxSmoke.Count > 0) DrawInstancedBatched(_sphereMesh, _blastSmokeMaterial, _fxSmoke);
-            if (_fxFire.Count > 0) DrawInstancedBatched(_sphereMesh, _blastFireMaterial, _fxFire);
-            if (_fxFlash.Count > 0) DrawInstancedBatched(_sphereMesh, _blastFlashMaterial, _fxFlash);
-        }
-
-        private readonly List<Matrix4x4> _fxFlash = new List<Matrix4x4>(16);
-        private readonly List<Matrix4x4> _fxFire = new List<Matrix4x4>(16);
-        private readonly List<Matrix4x4> _fxSmoke = new List<Matrix4x4>(64);
         private readonly List<Matrix4x4> _fxRing = new List<Matrix4x4>(16);
         private readonly List<Matrix4x4> _fxCross = new List<Matrix4x4>(32);
         private Material _aidCaseMaterial = null!;
         private Material _aidCrossMaterial = null!;
 
         private Mesh _sphereMesh = null!;
-        private Material _blastFlashMaterial = null!;
-        private Material _blastFireMaterial = null!;
-        private Material _blastSmokeMaterial = null!;
-        private Material _blastRingMaterial = null!;
 
         private float _muzzleLeft;
         private Material? _heroMuzzleMaterial;
@@ -3462,7 +3342,6 @@ namespace Cipher.Game
             DrawInstancedList(_cubeMesh, _barricadeMaterial, _barricadeMatrices, _barricadeMatrices.Length);
             DrawInstancedList(_cubeMesh, _breachMaterial, _breachMatrices, _breachMatrices.Length);
             DrawAgents();
-            DrawBlasts(Time.deltaTime);
 
             if (_buildMode)
             {
@@ -3478,9 +3357,10 @@ namespace Cipher.Game
                 var m = Matrix4x4.TRS(t.A + d * 0.5f, Quaternion.LookRotation(d / len, Vector3.up), new Vector3(0.07f, 0.07f, len));
                 Graphics.DrawMesh(_cubeMesh, m, t.Turret ? _turretTracerMaterial : _tracerMaterial, 0);
             }
-            // The blast itself is drawn by DrawBlasts. A second, older renderer used to live here --
-            // an outlined orange cylinder growing out of the ground -- and it was drawn ON TOP of the
-            // new explosion, so the owner reported "orange cylinders" twice and was right twice.
+            // `_tracers` now carries exactly one thing: rounds fired AT the player by the signed
+            // who still have sidearms. That contrast is the point -- their weapons are guns and
+            // his are not (ADR-008) -- so this renderer stays and the fireball path it used to sit
+            // beside is gone. SignalFx draws everything the player's side emits.
         }
 
         /// <summary>Seconds a hit body flashes white. Two frames at sixty; longer reads as a lamp.</summary>
@@ -3499,6 +3379,7 @@ namespace Cipher.Game
             int old = _flashLastHealth.Length;
             System.Array.Resize(ref _flashLastHealth, n);
             System.Array.Resize(ref _flashLeft, n);
+            System.Array.Resize(ref _lastAgentPos, n);
             for (int i = old; i < n; i++) _flashLastHealth[i] = -1f;
         }
 
@@ -3517,6 +3398,7 @@ namespace Cipher.Game
         /// <summary>Where every living body is standing this frame, for the contact shadows.</summary>
         private readonly List<Vector3> _blobPositions = new List<Vector3>(512);
         private readonly List<Vector3> _heroBlob = new List<Vector3> { Vector3.zero };
+        private Vector3[] _lastAgentPos = new Vector3[256];
 
         private void DrawAgents()
         {
@@ -3535,6 +3417,24 @@ namespace Cipher.Game
                 // A contact shadow for everyone, promoted body or capsule: it is the thing that
                 // stops a crowd looking like it is hovering a hand's width off the ground.
                 _blobPositions.Add(new Vector3(p.X, 0f, p.Y));
+
+                // The dying implant, drawn at the temple. Restated every frame rather than
+                // announced, so nothing has to tell SignalFx when a body stops failing. The head
+                // sits higher on a promoted body than on a capsule.
+                // Which way they are pointing, from where they were last frame. The sim carries no
+                // heading -- everything it moves follows a flow field, so a heading would be state
+                // that only the renderer wants, in the hot path and in the determinism hash.
+                // SignalFx falls back to a stable per-id placement if this comes out zero.
+                var here = new Vector3(p.X, 0f, p.Y);
+                Vector3 facing = here - _lastAgentPos[id];
+                _lastAgentPos[id] = here;
+
+                if (_world.IsFailing(id))
+                {
+                    bool promoted = _crowd != null && _crowd.Promoted.Contains(id);
+                    var head = new Vector3(p.X, promoted ? 1.62f : 1.05f, p.Y);
+                    _signal.MarkFailing(head, facing, _world.Integrity01(id), id);
+                }
 
                 // Two frames of white when the number goes down. The sim raises no per-agent damage
                 // event, so the renderer remembers the last health it drew and reacts to the drop.
@@ -3592,6 +3492,7 @@ namespace Cipher.Game
             DrawInstancedBatched(_agentMesh, _spitterMaterial, _spitterMatrices);
             DrawInstancedBatched(_cubeMesh, _sapperTargetMaterial, _fxMatrices);
             GroundMarkRenderer.Active?.DrawAgents(_blobPositions, 0.42f);
+            _signal.Draw(Time.deltaTime);
             if (_heroBody != null || _heroT != null)
                 GroundMarkRenderer.Active?.DrawAgents(_heroBlob, 0.5f);
 
