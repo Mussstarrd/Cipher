@@ -143,20 +143,44 @@ namespace Cipher.Game
 
             for (float x = 0f; x < _map.Width; x += span)
             {
-                int cell = Mathf.Clamp(Mathf.FloorToInt(x + span * 0.5f), 0, _map.Width - 1);
-                if (blocked(cell, centreY)) continue;
+                // Pull the last tile back inside the map instead of letting it hang over the edge
+                // of the ground plane. A few centimetres of overlap on one seam is invisible; a
+                // road ending in mid-air is not.
+                float left = span >= _map.Width ? 0f : Mathf.Min(x, _map.Width - span);
+
+                // Test EVERY cell the tile covers, not just the one under its centre. A six-cell
+                // tile tested at its centre steps straight over a one-cell wall: on this map the
+                // wall columns fell between the centres, so the predicate never fired once and the
+                // road was laid clean through all three walls.
+                if (FootprintBlocked(left, span, centreY, widthCells, blocked)) continue;
 
                 var go = UnityEngine.Object.Instantiate(tile, _root);
                 go.transform.rotation = turn;
                 go.transform.localScale = tile.transform.localScale * scale;
                 go.transform.position = new Vector3(
-                    x + span * 0.5f - offset.x,
+                    left + span * 0.5f - offset.x,
                     lift,
                     centreY + 0.5f - offset.z);
 
                 ApplyShared(go, tinted, RoadTint);
                 Placed++;
             }
+        }
+
+        /// <summary>True if any cell under a tile's footprint is blocked.</summary>
+        private bool FootprintBlocked(float left, float span, int centreY, int widthCells,
+                                      Func<int, int, bool> blocked)
+        {
+            int x0 = Mathf.Max(0, Mathf.FloorToInt(left));
+            int x1 = Mathf.Min(_map.Width - 1, Mathf.CeilToInt(left + span) - 1);
+            int half = Mathf.Max(0, widthCells / 2);
+            int y0 = Mathf.Max(0, centreY - half);
+            int y1 = Mathf.Min(_map.Height - 1, centreY + half);
+
+            for (int x = x0; x <= x1; x++)
+                for (int y = y0; y <= y1; y++)
+                    if (blocked(x, y)) return true;
+            return false;
         }
 
         /// <summary>Wet winter asphalt, darker than the leaf litter either side of it.</summary>
@@ -225,17 +249,19 @@ namespace Cipher.Game
                 var swapped = new Material[mats.Length];
                 for (int m = 0; m < mats.Length; m++)
                 {
+                    // An empty material slot has no key to cache under, so it gets its own single
+                    // slot. Without this it was the one case that still allocated a fresh Material
+                    // per renderer per instance, which is precisely what the cache is here to stop.
                     var key = mats[m];
-                    if (key == null || !cache.TryGetValue(key, out var made))
+                    Material? made;
+                    if (key == null)
                     {
-                        made = _reskin(key);
-                        if (forceTint.HasValue)
-                        {
-                            made.color = forceTint.Value;
-                            made.SetColor(BaseColorId, forceTint.Value);
-                            made.mainTexture = null;
-                        }
-                        if (key != null) cache[key] = made;
+                        made = _emptySlotMaterial ??= Tint(_reskin(null), forceTint);
+                    }
+                    else if (!cache.TryGetValue(key, out made))
+                    {
+                        made = Tint(_reskin(key), forceTint);
+                        cache[key] = made;
                     }
                     swapped[m] = made;
                 }
@@ -247,6 +273,18 @@ namespace Cipher.Game
 
         private readonly Dictionary<Material, Material> _propMaterials =
             new Dictionary<Material, Material>();
+
+        private static Material Tint(Material mat, Color? forceTint)
+        {
+            if (!forceTint.HasValue) return mat;
+            mat.color = forceTint.Value;
+            mat.SetColor(BaseColorId, forceTint.Value);
+            mat.mainTexture = null;
+            return mat;
+        }
+
+        /// <summary>The one material standing in for every empty material slot in the kit.</summary>
+        private Material? _emptySlotMaterial;
 
         private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
 

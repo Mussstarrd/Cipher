@@ -1,4 +1,5 @@
 #nullable enable
+using System;
 using System.Collections.Generic;
 using Cipher.Sim.Agents;
 using UnityEngine;
@@ -45,6 +46,13 @@ namespace Cipher.Game
 
         public void AddSlot(Transform slot)
         {
+            // Capacity is the budget the caller sized the pool against; exceeding it silently would
+            // put more skinned characters on screen than the frame was costed for. It used to be
+            // read by nobody, which made it a comment pretending to be a constraint.
+            if (_slots.Count >= Capacity)
+                throw new InvalidOperationException(
+                    $"CivilianCrowd was built for {Capacity} bodies and AddSlot was called again.");
+
             _slots.Add(slot);
             _lastPosition.Add(slot.position);
             _assigned.Add(-1);

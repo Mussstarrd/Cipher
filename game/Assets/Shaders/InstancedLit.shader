@@ -94,12 +94,17 @@ Shader "Exodus/InstancedLit"
                 // the hull open at each seam and the line reads as blurred and smeared.
                 float3 extrudeOS = input.normalOS;
                 #if defined(_SMOOTH_OUTLINE)
-                    // Fall back to the shading normal if the tangent channel is empty. The keyword is
-                    // set per material, so one mesh in a shared material that never went through
-                    // SmoothNormals would otherwise normalize a zero vector and blow the hull to NaN,
-                    // which rasterises as nothing at all: the character silently loses its outline.
+                    // Use the smoothed normal only where SmoothNormals actually wrote one. It stamps
+                    // w = 1 on every vertex it touches, so w is the signature.
+                    //
+                    // Two ways this channel lies. An untouched mesh has an EMPTY tangent channel, and
+                    // normalizing (0,0,0) blows the hull to NaN, which rasterises as nothing: the
+                    // character silently loses its outline. A mesh SmoothNormals bailed on still
+                    // carries the importer's real Mikktspace tangents, which are non-zero and point
+                    // along the surface, so extruding down one shears the hull instead of expanding
+                    // it. The keyword is set per material, so either can ride in on a shared one.
                     float3 smoothed = input.tangentOS.xyz;
-                    if (dot(smoothed, smoothed) > 1e-8) extrudeOS = smoothed;
+                    if (input.tangentOS.w > 0.5 && dot(smoothed, smoothed) > 1e-8) extrudeOS = smoothed;
                 #endif
                 float3 normalWS = normalize(TransformObjectToWorldNormal(extrudeOS));
 
