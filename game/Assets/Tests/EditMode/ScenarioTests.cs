@@ -343,6 +343,70 @@ namespace Cipher.Game.Tests
             Assert.That(File.Exists(next), Is.True,
                         $"{def.Id} falls back to '{def.Next}', which is not a mission file");
         }
+
+        /// <summary>
+        /// EVERY GATE MUST STILL HAVE A ROUTE ONCE THE BUILDINGS ARE ON THE MAP.
+        ///
+        /// `ScenarioReader.Validate` runs a flow field from the vault and refuses a file whose
+        /// WALLS seal a gate — but props became solid on 2026-09-12 and the reader's probe never
+        /// learned about them. So a clubhouse dropped across the only corridor loads perfectly
+        /// clean, and the fault appears as a wave that spawns and then mills about, which is about
+        /// the worst symptom a content bug can have: no error, no crash, just a level that is
+        /// "wrong somehow" in the middle of a playtest.
+        ///
+        /// This is the reader's probe again with <see cref="PropCatalog"/> applied on top, in the
+        /// same order and with the same rules the bootstrap uses (already-solid cells are skipped,
+        /// and the KeepClear lane is never built on). It is the guard that lets a mission be
+        /// authored with real architecture without the author having to hold the whole flow field
+        /// in their head.
+        /// </summary>
+        [Test, TestCaseSource(nameof(ScenarioFiles))]
+        public void PropsNeverSealAGate(string path)
+        {
+            var def = ScenarioReader.Read(File.ReadAllText(path));
+
+            var map = new GridMap(def.Map.Width, def.Map.Height);
+            foreach (var w in def.Map.Walls)
+                for (int x = w.X; x < w.X + w.Width; x++)
+                    for (int y = w.Y; y < w.Y + w.Height; y++)
+                        map.SetWall(x, y, w.Kind, GridMap.DefaultWallHp);
+
+            foreach (var prop in def.Props)
+                foreach (var (x, y) in PropCatalog.Footprint(prop.Kind, prop.X, prop.Y, prop.Yaw))
+                {
+                    if (x < 0 || y < 0 || x >= def.Map.Width || y >= def.Map.Height) continue;
+                    if (map.KindAt(x, y) != WallKind.None) continue;
+                    if (KeepClear(def, x, y)) continue;
+                    map.SetWall(x, y, WallKind.Rock, GridMap.DefaultWallHp);
+                }
+
+            var field = new FlowField(map);
+            field.Compute(def.Vault.X, def.Vault.Y);
+
+            foreach (var sc in def.SpawnCells)
+                Assert.That(field.HasPath(sc.X, sc.Y), Is.True,
+                    $"{def.Id}: the buildings seal the gate '{sc.Gate}' at ({sc.X},{sc.Y}). " +
+                    "The file loads because the reader only probes walls; this is the check that "
+                    + "would have caught it.");
+
+            Assert.That(map.KindAt(def.Vault.X, def.Vault.Y), Is.EqualTo(WallKind.None),
+                $"{def.Id}: a prop is standing on the truck");
+            Assert.That(field.HasPath(def.HeroSpawn.X, def.HeroSpawn.Y), Is.True,
+                $"{def.Id}: the hero cannot walk to the truck");
+        }
+
+        /// <summary>
+        /// FloodBootstrap.KeepClear, restated. Duplicated rather than shared because the bootstrap's
+        /// version reads live hero state and a MonoBehaviour field; what matters is that the two
+        /// agree about the two rules that are about the MAP, which are the only two that can decide
+        /// whether a gate is sealed.
+        /// </summary>
+        private static bool KeepClear(ScenarioDef def, int x, int y)
+        {
+            if (System.Math.Abs(y - def.Map.Height / 2) <= 3) return true;
+            if (x <= 4 || x >= def.Map.Width - 5) return true;
+            return System.Math.Abs(x - def.HeroSpawn.X) <= 3 && System.Math.Abs(y - def.HeroSpawn.Y) <= 3;
+        }
     }
 
     public sealed class ObjectiveTests

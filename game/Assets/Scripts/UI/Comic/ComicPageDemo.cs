@@ -61,7 +61,18 @@ namespace Cipher.Game.UI.Comic
                 {
                     var layout = SampleTruck();
                     layout.Layout(rect);
-                    ComicPages.DrawTruck(layout, "PACK UP  —  the bed is the budget");
+                    // The demo photographs the TOOLKIT, so it hands over copy of its own rather
+                    // than standing a TruckScreen up: a page whose clock is Hurry is the state
+                    // worth having in the kit sheet, because it is the one with the warning band
+                    // and the amber plate on it.
+                    ComicPages.DrawTruck(layout, new TruckPageCopy(
+                        subtitle: "PACK UP  —  the bed is the budget",
+                        clockText: "0:24",
+                        clockLabel: "UNTIL THE SCAN",
+                        warning: "THE SCAN IS CLOSE. 3 STILL ON THE GRAVEL.",
+                        ledger: "TAKING 2  ·  $560          LEAVING 3  ·  $480 bolted down for good",
+                        cabLine: "Your kit rides in the cab — 6 pieces, no bed space.",
+                        urgency: TruckUrgency.Hurry));
                     break;
                 }
             }

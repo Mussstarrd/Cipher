@@ -540,26 +540,156 @@ namespace Cipher.Game.Tests
             Assert.AreEqual(TruckScreenAction.Closed, screen.Apply(Nav(cancel: true)));
         }
 
-        [Test]
-        public void Truck_HeadingCarriesTheClockAndTheLoss()
-        {
-            var host = new TruckRecorder { SecondsLeft = 38f };
-            var screen = new TruckScreen(host);
-            screen.Open(new TruckLoad(), Recoverable());
 
-            StringAssert.Contains("38", screen.Subtitle);
-            StringAssert.Contains("gravel", screen.Subtitle);
-            StringAssert.Contains("scan", screen.Subtitle);
+        // ---------------------------------------------------------------- the gear decision
+
+        /// <summary>Six emplacements and a pack, which is what a real extraction hands the screen.</summary>
+        private static List<IHaulable> RecoverableWithGear()
+        {
+            var list = new List<IHaulable>(Recoverable());
+            var loadout = new Loadout(new HeroConfig());
+            var roller = new ItemRoller(7);
+            for (int i = 0; i < 12; i++)
+            {
+                var item = roller.TryDrop(DropSource.SapperKill, 2, 3);
+                if (item != null) loadout.Pickup(item);
+            }
+            Assert.Greater(loadout.Inventory.Pack.Count, 0, "the fixture needs a pack to test with");
+            for (int i = 0; i < loadout.Inventory.Pack.Count; i++)
+                list.Add(new HauledItem(loadout.Inventory.Pack[i]));
+            return list;
         }
 
         [Test]
-        public void Truck_ExplainsTheTradeInPlainEnglish()
+        public void Truck_GearRidesInTheCabAndIsNotOnThePage()
         {
-            // Owner: "my two towers can come and the truck is only like 4% full". Time and space are
-            // two different budgets and the page has to name both.
+            // THE DECISION, pinned. A dog tag is 0.0005 m3 next to a 2.4 m3 sentry, so with gear on
+            // the page the volume gauge reads nothing and the gravel panel is a wall of identical
+            // blank boxes -- which is exactly what the owner played. ADR-005 says gear is never
+            // what you cut, so it does not compete for the bed and the page says so once.
+            var host = new TruckRecorder();
+            var screen = new TruckScreen(host);
+            var things = RecoverableWithGear();
+
+            screen.Open(new TruckLoad(), things);
+
+            Assert.AreEqual(3, screen.Page.All.Count, "only emplacements are choices on this page");
+            Assert.Greater(screen.CabCount, 0, "the pack still exists, it just rides in the cab");
+            foreach (var crate in screen.Page.All)
+                Assert.GreaterOrEqual(crate.Item.Volume, 0.1f, "nothing bed-scale was dropped");
+        }
+
+        [Test]
+        public void Truck_TheCabLineAccountsForEveryPieceOfKit()
+        {
+            var screen = new TruckScreen(new TruckRecorder());
+            var things = RecoverableWithGear();
+            int gear = 0;
+            foreach (var t in things) if (TruckScreen.RidesInTheCab(t)) gear++;
+
+            screen.Open(new TruckLoad(), things);
+
+            Assert.AreEqual(gear, screen.CabCount);
+            StringAssert.Contains(gear.ToString(), screen.CabLine);
+            StringAssert.Contains("cab", screen.CabLine);
+        }
+
+        [Test]
+        public void Truck_GearNeverEatsBedSpace()
+        {
+            var screen = new TruckScreen(new TruckRecorder());
+            screen.Open(new TruckLoad(), RecoverableWithGear());
+            Assert.AreEqual(0f, screen.Page.Volume, 0.0001f, "an empty bed is empty, gear or no gear");
+            Assert.AreEqual(0f, screen.Page.Weight, 0.0001f);
+        }
+
+        // ---------------------------------------------------------------- the clock
+
+        [Test]
+        public void Truck_TheClockIsItsOwnElementNotAClauseInTheHeading()
+        {
+            // The owner: "after a certain amount of time it just kicked me out". It HAD told him --
+            // in a header line, after two other clauses. The number now has its own stamp, and the
+            // heading is about the cargo.
+            var host = new TruckRecorder { SecondsLeft = 95f };
+            var screen = new TruckScreen(host);
+            screen.Open(new TruckLoad(), Recoverable());
+
+            Assert.AreEqual("1:35", screen.ClockText);
+            StringAssert.Contains("SCAN", screen.ClockLabel.ToUpperInvariant());
+            StringAssert.DoesNotContain("1:35", screen.Subtitle, "the clock does not live in the heading any more");
+            StringAssert.Contains("gravel", screen.Subtitle);
+        }
+
+        [Test]
+        public void Truck_UrgencyRisesTwiceAndTheLastTenSecondsCountOutLoud()
+        {
+            var host = new TruckRecorder { SecondsLeft = 60f };
+            var screen = new TruckScreen(host);
+            screen.Open(new TruckLoad(), Recoverable());
+            Assert.AreEqual(TruckUrgency.Calm, screen.Urgency);
+            Assert.AreEqual(string.Empty, screen.Warning, "a calm page does not shout");
+
+            host.SecondsLeft = 22f;
+            Assert.AreEqual(TruckUrgency.Hurry, screen.Urgency);
+            StringAssert.Contains("SCAN", screen.Warning.ToUpperInvariant());
+
+            host.SecondsLeft = 7f;
+            Assert.AreEqual(TruckUrgency.Final, screen.Urgency);
+            Assert.AreEqual("7", screen.ClockText, "the last ten seconds are a countdown, not a clock");
+            StringAssert.Contains("PULLING OUT", screen.Warning.ToUpperInvariant());
+        }
+
+        [Test]
+        public void Truck_TheWarningNamesWhatLeavingCosts()
+        {
+            // "Time low" is a fact about the clock. "3 stay here" is a fact about his sentries, and
+            // it is the one that makes him press a button.
+            var host = new TruckRecorder { SecondsLeft = 12f };
+            var screen = new TruckScreen(host);
+            screen.Open(new TruckLoad(), Recoverable());
+
+            Assert.AreEqual(3, screen.Page.LeftBehind.Count);
+            StringAssert.Contains("3", screen.Warning);
+        }
+
+        [Test]
+        public void Truck_TheExplainLineSaysWhatRunningOutDoes()
+        {
             StringAssert.Contains("clock", TruckScreen.Explain);
             StringAssert.Contains("bed", TruckScreen.Explain);
             StringAssert.Contains("gravel", TruckScreen.Explain);
+            StringAssert.Contains("drive", TruckScreen.Explain);
+        }
+
+        [Test]
+        public void Truck_TheLedgerPricesBothSidesOfTheChoice()
+        {
+            var screen = new TruckScreen(new TruckRecorder());
+            var things = Recoverable();
+            var truck = new TruckLoad();
+            truck.TryLoad(things[0]); // Sentry T2, $260
+            screen.Open(truck, things);
+
+            StringAssert.Contains("260", screen.Ledger);
+            StringAssert.Contains("LEAVING", screen.Ledger.ToUpperInvariant());
+        }
+
+        [Test]
+        public void Truck_TheCopyStructCarriesEveryWordThePagePrints()
+        {
+            var host = new TruckRecorder { SecondsLeft = 8f };
+            var screen = new TruckScreen(host);
+            screen.Open(new TruckLoad(), Recoverable());
+
+            var copy = screen.Copy;
+            Assert.AreEqual(screen.Subtitle, copy.Subtitle);
+            Assert.AreEqual(screen.ClockText, copy.ClockText);
+            Assert.AreEqual(screen.ClockLabel, copy.ClockLabel);
+            Assert.AreEqual(screen.Warning, copy.Warning);
+            Assert.AreEqual(screen.Ledger, copy.Ledger);
+            Assert.AreEqual(screen.CabLine, copy.CabLine);
+            Assert.AreEqual(screen.Urgency, copy.Urgency);
         }
     }
 }
