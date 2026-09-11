@@ -234,6 +234,7 @@ namespace Cipher.Game
             _hero = new HeroModel(_loadout.Effective, HeroSpawn);
             ApplyLoadoutToWorld();
             if (_crowd == null) BuildCivilianPool();
+            if (_heroBody == null) BuildHeroBody();
             _hero.Aim(new Vec2(-1f, 0f));
             _camYaw = -90f;
             _camPitch = 22f;
@@ -629,6 +630,7 @@ namespace Cipher.Game
             // Promote the nearest agents to real bodies. Everything else stays a capsule.
             if (_crowd != null && _camera != null)
                 _crowd.Sync(_world, _camera.transform.position, TickDt);
+            UpdateHeroBody();
 
             _shotScratch.Clear();
             _turrets.Step(_world, TickDt, _shotScratch);
@@ -1120,6 +1122,9 @@ namespace Cipher.Game
         private bool _hudHidden;
         private AnimationClip? _walkClip;
         private CivilianCrowd? _crowd;
+        private Transform? _heroBody;
+        /// <summary>Model used for the player. Excluded from the civilian pool.</summary>
+        private const string HeroModelName = "Adventurer_Civilian";
         /// <summary>Real bodies for the nearest agents. The rest stay instanced capsules.</summary>
         private const int CivilianPoolSize = 110;
         private bool _lineupMode;
@@ -1220,11 +1225,53 @@ namespace Cipher.Game
             var root = new GameObject("CivilianCrowd").transform;
             _crowd = new CivilianCrowd(root, CivilianPoolSize);
 
+            // The player's model must not also be walking in the horde: seeing yourself in the
+            // crowd you are shooting at reads as a bug, not as variety.
+            var pool = new List<GameObject>();
+            foreach (var prefab in prefabs)
+                if (prefab != null && prefab.name != HeroModelName) pool.Add(prefab);
+            if (pool.Count == 0) pool.AddRange(prefabs);
+
             var rng = new System.Random(20260911);
             for (int i = 0; i < CivilianPoolSize; i++)
-                _crowd.AddSlot(BuildCivilian(prefabs[i % prefabs.Length], root, rng));
+                _crowd.AddSlot(BuildCivilian(pool[i % pool.Count], root, rng));
 
             Debug.Log($"[Crowd] pool of {_crowd.SlotCount} civilians from {prefabs.Length} models");
+        }
+
+        /// <summary>
+        /// Gives the player a body. Same construction as a civilian, but kept out of the crowd pool
+        /// and driven by the hero's own position and facing rather than by an agent id.
+        /// </summary>
+        private void BuildHeroBody()
+        {
+            var prefab = Resources.Load<GameObject>("Civilians/" + HeroModelName);
+            if (prefab == null)
+            {
+                Debug.LogWarning($"[Hero] {HeroModelName} not found; the player stays a capsule");
+                return;
+            }
+
+            EnsureWalkClip();
+            var root = new GameObject("HeroBody").transform;
+            _heroBody = BuildCivilian(prefab, root, new System.Random(1));
+            Debug.Log("[Hero] body built");
+        }
+
+        /// <summary>Keeps the hero's body on the hero. Facing comes from the aim, not from movement.</summary>
+        private void UpdateHeroBody()
+        {
+            if (_heroBody == null) return;
+
+            bool show = !_hero.IsDown && !_match.IsOver;
+            if (_heroBody.gameObject.activeSelf != show) _heroBody.gameObject.SetActive(show);
+            if (!show) return;
+
+            _heroBody.position = new Vector3(_hero.Position.X, 0f, _hero.Position.Y);
+
+            var facing = new Vector3(_hero.Facing.X, 0f, _hero.Facing.Y);
+            if (facing.sqrMagnitude > 1e-6f)
+                _heroBody.rotation = Quaternion.LookRotation(facing.normalized, Vector3.up);
         }
 
         /// <summary>Starts the first wave, so a smoke capture can actually see combat. Harness only.</summary>
@@ -1639,6 +1686,13 @@ namespace Cipher.Game
 
         private void UpdateHeroVisual()
         {
+            // The capsule is the fallback. Once a real body exists it takes over, but the barrel and
+            // the airstrike marker still hang off the capsule transform, so it is hidden rather than
+            // removed.
+            var heroRenderer = _heroT.GetComponent<Renderer>();
+            if (heroRenderer != null && heroRenderer.enabled == (_heroBody != null))
+                heroRenderer.enabled = _heroBody == null;
+
             _heroT.position = ToWorld(_hero.Position, 0.9f);
             var facing = new Vector3(_hero.Facing.X, 0f, _hero.Facing.Y);
             if (facing.sqrMagnitude > 1e-6f) _heroT.rotation = Quaternion.LookRotation(facing, Vector3.up);

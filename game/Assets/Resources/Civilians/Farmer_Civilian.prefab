@@ -51,7 +51,7 @@ PrefabInstance:
     - target: {fileID: 195254801354814361, guid: 104cfc2157f9c92488476aacfc222daf, type: 3}
       propertyPath: m_Mesh
       value: 
-      objectReference: {fileID: -7167274886857529544, guid: 382b31bfa70b3354fa09e28b1f9f8d58, type: 2}
+      objectReference: {fileID: -5085527423279305083, guid: 382b31bfa70b3354fa09e28b1f9f8d58, type: 2}
     - target: {fileID: 919132149155446097, guid: 104cfc2157f9c92488476aacfc222daf, type: 3}
       propertyPath: m_Name
       value: Farmer_Civilian
@@ -63,11 +63,11 @@ PrefabInstance:
     - target: {fileID: 3720554658630495615, guid: 104cfc2157f9c92488476aacfc222daf, type: 3}
       propertyPath: m_Mesh
       value: 
-      objectReference: {fileID: -3094418586616573495, guid: 382b31bfa70b3354fa09e28b1f9f8d58, type: 2}
+      objectReference: {fileID: 1110546851155060714, guid: 382b31bfa70b3354fa09e28b1f9f8d58, type: 2}
     - target: {fileID: 7149117711173880816, guid: 104cfc2157f9c92488476aacfc222daf, type: 3}
       propertyPath: m_Mesh
       value: 
-      objectReference: {fileID: -645815284768582862, guid: 382b31bfa70b3354fa09e28b1f9f8d58, type: 2}
+      objectReference: {fileID: -5041658369618112148, guid: 382b31bfa70b3354fa09e28b1f9f8d58, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

@@ -51,7 +51,7 @@ PrefabInstance:
     - target: {fileID: -2010034775977556949, guid: 340de495d47208c41ad4a30424d11dfd, type: 3}
       propertyPath: m_Mesh
       value: 
-      objectReference: {fileID: 883860070704556467, guid: a33fac57dc353c8478fe3eaedc98a1b7, type: 2}
+      objectReference: {fileID: -4311644806307588368, guid: a33fac57dc353c8478fe3eaedc98a1b7, type: 2}
     - target: {fileID: 919132149155446097, guid: 340de495d47208c41ad4a30424d11dfd, type: 3}
       propertyPath: m_Name
       value: Casual_2_Civilian
@@ -63,11 +63,11 @@ PrefabInstance:
     - target: {fileID: 2402609962050720484, guid: 340de495d47208c41ad4a30424d11dfd, type: 3}
       propertyPath: m_Mesh
       value: 
-      objectReference: {fileID: 6271674037483308048, guid: a33fac57dc353c8478fe3eaedc98a1b7, type: 2}
+      objectReference: {fileID: 4688655478631359672, guid: a33fac57dc353c8478fe3eaedc98a1b7, type: 2}
     - target: {fileID: 4033101500206912115, guid: 340de495d47208c41ad4a30424d11dfd, type: 3}
       propertyPath: m_Mesh
       value: 
-      objectReference: {fileID: 2511864878290383619, guid: a33fac57dc353c8478fe3eaedc98a1b7, type: 2}
+      objectReference: {fileID: -4661698931652261079, guid: a33fac57dc353c8478fe3eaedc98a1b7, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

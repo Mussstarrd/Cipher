@@ -51,11 +51,11 @@ PrefabInstance:
     - target: {fileID: -8661599453817045483, guid: 2d707a18912dc214aaaf4f8dff3aaa21, type: 3}
       propertyPath: m_Mesh
       value: 
-      objectReference: {fileID: 1650844699851240708, guid: 30e700f243e8f7b40abd0e7e0d2da55c, type: 2}
+      objectReference: {fileID: 4427440520089839641, guid: 30e700f243e8f7b40abd0e7e0d2da55c, type: 2}
     - target: {fileID: -1908498204442851885, guid: 2d707a18912dc214aaaf4f8dff3aaa21, type: 3}
       propertyPath: m_Mesh
       value: 
-      objectReference: {fileID: -4344370848521156047, guid: 30e700f243e8f7b40abd0e7e0d2da55c, type: 2}
+      objectReference: {fileID: -801702271791247130, guid: 30e700f243e8f7b40abd0e7e0d2da55c, type: 2}
     - target: {fileID: 919132149155446097, guid: 2d707a18912dc214aaaf4f8dff3aaa21, type: 3}
       propertyPath: m_Name
       value: Casual_Hoodie_Civilian
@@ -67,7 +67,7 @@ PrefabInstance:
     - target: {fileID: 8303387155189092399, guid: 2d707a18912dc214aaaf4f8dff3aaa21, type: 3}
       propertyPath: m_Mesh
       value: 
-      objectReference: {fileID: 2862438506685502210, guid: 30e700f243e8f7b40abd0e7e0d2da55c, type: 2}
+      objectReference: {fileID: 4640400130064561909, guid: 30e700f243e8f7b40abd0e7e0d2da55c, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
