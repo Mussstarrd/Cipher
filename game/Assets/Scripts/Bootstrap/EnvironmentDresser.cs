@@ -33,6 +33,19 @@ namespace Cipher.Game
         public int Placed { get; private set; }
 
         /// <summary>
+        /// Cells this dresser turned solid, newest last.
+        ///
+        /// Scenery you can walk through is scenery, not cover. Owner, 2026-09-11: "I'm able to walk
+        /// through everything in the environment except for the pre-placed walls." A tree trunk and
+        /// an abandoned car should stop you, stop a bullet, and make the horde walk round -- which
+        /// is the whole point of cover props in the design spec.
+        ///
+        /// Recorded in placement order so the caller can give cells BACK if the scatter turns out to
+        /// have sealed a gate off from the vault. Nothing may quietly make a mission unplayable.
+        /// </summary>
+        public List<(int X, int Y)> SolidCells { get; } = new List<(int, int)>();
+
+        /// <summary>
         /// Dresses the map. <paramref name="keepClear"/> is a predicate returning true for cells that
         /// must stay empty, which is how the spawn lane and the objective stay walkable.
         /// </summary>
@@ -58,7 +71,7 @@ namespace Cipher.Game
                         if (!Free(x, y, keepClear)) continue;
 
                         Place(trees[rng.NextInt(trees.Count)], x, y, rng,
-                              scaleMin: 0.85f, scaleMax: 1.35f, pitchCorrection: -90f);
+                              scaleMin: 0.85f, scaleMax: 1.35f, pitchCorrection: -90f, solid: true);
                     }
                 }
             }
@@ -83,7 +96,7 @@ namespace Cipher.Game
                     int x = 3 + rng.NextInt(_map.Width - 6);
                     int y = midLow + rng.NextInt(Mathf.Max(1, midHigh - midLow));
                     if (!Free(x, y, keepClear)) continue;
-                    Place(cars[rng.NextInt(cars.Count)], x, y, rng, 1f, 1f, flatRotation: true);
+                    Place(cars[rng.NextInt(cars.Count)], x, y, rng, 1f, 1f, flatRotation: true, solid: true);
                 }
             }
         }
@@ -300,9 +313,13 @@ namespace Cipher.Game
 
         private void Place(GameObject prefab, int x, int y, Rng rng,
                            float scaleMin, float scaleMax, bool flatRotation = false,
-                           float pitchCorrection = 0f)
+                           float pitchCorrection = 0f, bool solid = false)
         {
             if (prefab == null) return;
+
+            // Rock, not Wall: a tree is not something a sapper opens a hole in, and Rock also stops
+            // a bullet, which is what makes a trunk worth standing behind.
+            if (solid && MakeSolid(x, y)) { /* recorded below */ }
 
             var go = UnityEngine.Object.Instantiate(prefab, _root);
             go.transform.position = new Vector3(
@@ -325,6 +342,24 @@ namespace Cipher.Game
 
         /// <summary>Raised for every scattered prop, so the caller can dress specific ones further.</summary>
         public Action<string, GameObject>? OnPlaced;
+
+        /// <summary>Turns one cell solid, if it is free to take. Returns whether it did.</summary>
+        private bool MakeSolid(int x, int y)
+        {
+            if (x < 0 || y < 0 || x >= _map.Width || y >= _map.Height) return false;
+            if (_map.KindAt(x, y) != WallKind.None) return false;
+            _map.SetWall(x, y, WallKind.Rock, GridMap.DefaultWallHp);
+            SolidCells.Add((x, y));
+            return true;
+        }
+
+        /// <summary>Gives a cell back, when the scatter turned out to block a route.</summary>
+        public void ClearSolid(int x, int y)
+        {
+            if (x < 0 || y < 0 || x >= _map.Width || y >= _map.Height) return;
+            if (_map.KindAt(x, y) != WallKind.Rock) return;
+            _map.SetWall(x, y, WallKind.None, 0);
+        }
 
         /// <summary>Small deterministic generator, so dressing never touches UnityEngine.Random.</summary>
         private struct Rng

@@ -357,8 +357,20 @@ namespace Cipher.Game
                     for (int y = w.Y; y < w.Y + w.Height; y++)
                         _map.SetWall(x, y, w.Kind, GridMap.DefaultWallHp);
 
+            // Dressing comes BEFORE the flow field, because scenery is solid now and the route has
+            // to be computed against the map the player will actually walk in. Get this order wrong
+            // and the preview covenant breaks: the horde would path through trees it cannot enter.
+            if (!_environmentDressed)
+            {
+                var stale = GameObject.Find("Environment");
+                if (stale != null) Destroy(stale);
+                DressEnvironment();
+                _environmentDressed = true;
+            }
+
             _field = new FlowField(_map);
             _field.Compute(GoalX, GoalY);
+            EnsureGatesStillReachable();
             _world = new AgentWorld(_map, _field, new SimConfig(), initialCapacity: 4096);
             _turrets = new TurretSystem();
             // The game opts in to the untimed opening: dig in for as long as you like, and the
@@ -415,13 +427,6 @@ namespace Cipher.Game
             ApplyLoadoutToWorld();
             if (_crowd == null) BuildCivilianPool();
             if (_heroBody == null) BuildHeroBody();
-            if (!_environmentDressed)
-            {
-                var stale = GameObject.Find("Environment");
-                if (stale != null) Destroy(stale);
-                DressEnvironment();
-                _environmentDressed = true;
-            }
             _hero.Aim(new Vec2(-1f, 0f));
             _camYaw = -90f;
             _camPitch = 22f;
@@ -662,6 +667,8 @@ namespace Cipher.Game
                 {
                     WallKind kind = _map.KindAt(x, y);
                     if (kind == WallKind.None || kind == WallKind.Structure) continue;
+                    // Cover cells are solid, not built. The tree or the car already IS the picture.
+                    if (_sceneryCellSet.Contains(y * GridW + x)) continue;
                     BreachStage stage = _map.StageAt(x, y);
                     if (stage == BreachStage.Collapsed) continue;
                     float h = stage == BreachStage.Intact ? 2f : stage == BreachStage.Cracked ? 1.2f : 0.5f;
@@ -701,11 +708,82 @@ namespace Cipher.Game
             _logMatrices = logs.ToArray();
         }
 
+        /// <summary>Cells the environment dresser turned solid this match, newest last.</summary>
+        private readonly List<(int X, int Y)> _sceneryCells = new List<(int, int)>();
+
+        /// <summary>
+        /// The same cells, as a set, because the WALL RENDERER must not draw them.
+        ///
+        /// A cover cell is solid and invisible: the tree is the visual, and the grid entry is only
+        /// there to stop things. Without this, every trunk in the treeline sprouted a chain-link
+        /// fence panel, because the bake reads WallKind.Rock as "the community's perimeter".
+        /// Collision and appearance are separate facts and this is where they part company.
+        /// </summary>
+        private readonly HashSet<int> _sceneryCellSet = new HashSet<int>();
+
+        private void RememberScenery(int x, int y)
+        {
+            _sceneryCells.Add((x, y));
+            _sceneryCellSet.Add(y * GridW + x);
+        }
+
+        private void ForgetScenery(int x, int y)
+        {
+            _map.SetWall(x, y, WallKind.None, 0);
+            _sceneryCellSet.Remove(y * GridW + x);
+        }
+
+        /// <summary>
+        /// Scenery is allowed to make a route longer. It is never allowed to make one impossible.
+        ///
+        /// A deterministic scatter over a hand-authored map can close the last gap through a fence
+        /// line, and the failure is not subtle -- a whole gate's worth of horde stands still for the
+        /// entire mission. So: compute the route, and if any gate has lost it, hand scenery cells
+        /// BACK, newest first, halving the number kept until every gate can reach the vault again.
+        /// Bounded, deterministic, and it logs how much it had to give up.
+        /// </summary>
+        private void EnsureGatesStillReachable()
+        {
+            if (_sceneryCells.Count == 0 || AllGatesHavePath()) return;
+
+            int keep = _sceneryCells.Count;
+            for (int round = 0; round < 8 && keep > 0; round++)
+            {
+                keep /= 2;
+                for (int i = _sceneryCells.Count - 1; i >= keep; i--)
+                {
+                    var cell = _sceneryCells[i];
+                    ForgetScenery(cell.X, cell.Y);
+                }
+                _sceneryCells.RemoveRange(keep, _sceneryCells.Count - keep);
+
+                _field.Compute(GoalX, GoalY);
+                if (AllGatesHavePath())
+                {
+                    Debug.LogWarning($"[Env] scatter sealed a gate; kept {keep} solid props");
+                    return;
+                }
+            }
+
+            Debug.LogError("[Env] a gate has no route to the vault even with no solid scenery; " +
+                           "the scenario's own walls seal it");
+        }
+
+        private bool AllGatesHavePath()
+        {
+            foreach (var gate in SpawnCells)
+                if (!_field.HasPath(gate.X, gate.Y)) return false;
+            return true;
+        }
+
         private bool IsWallCell(int x, int y)
         {
             if (x < 0 || y < 0 || x >= GridW || y >= GridH) return false;
             var k = _map.KindAt(x, y);
-            return k != WallKind.None && k != WallKind.Structure;
+            if (k == WallKind.None || k == WallKind.Structure) return false;
+            // Scenery is not part of a wall RUN, so it must not steer how a fence or a log pile
+            // orients itself; otherwise a tree next to a fence turns the fence sideways.
+            return !_sceneryCellSet.Contains(y * GridW + x);
         }
 
         /// <summary>
@@ -1703,6 +1781,9 @@ namespace Cipher.Game
         /// </summary>
         private void DressEnvironment()
         {
+            _sceneryCells.Clear();
+            _sceneryCellSet.Clear();
+
             var all = Resources.LoadAll<GameObject>("Environment");
             if (all == null || all.Length == 0) return;
 
@@ -1744,8 +1825,17 @@ namespace Cipher.Game
 
             // Built scenery last: it is authored per position, so it wins over the random scatter.
             var site = new SiteProps(root, PropMaterial);
-            foreach (var prop in _scenario.Props) site.Build(prop.Kind, prop.X, prop.Y, prop.Yaw);
+            foreach (var prop in _scenario.Props)
+            {
+                site.Build(prop.Kind, prop.X, prop.Y, prop.Yaw);
+                // Authored props are solid too, and their footprint is bigger than a cell. A
+                // guardhouse you can walk through is a box painted on the ground.
+                MarkPropFootprint(prop);
+            }
             if (site.Placed > 0) Debug.Log($"[Env] {site.Placed} built props");
+
+            foreach (var cell in dresser.SolidCells) RememberScenery(cell.X, cell.Y);
+            Debug.Log($"[Env] {_sceneryCells.Count} cells of cover");
 
             Debug.Log($"[Env] placed {dresser.Placed} props " +
                       $"({trees.Count} tree models, {bushes.Count} bush, {cars.Count} vehicle)");
@@ -1945,6 +2035,33 @@ namespace Cipher.Game
             var state = anim["walk"];
             if (state == null) return;
             state.time = (float)_strideRng.NextDouble() * Mathf.Max(0.01f, state.length);
+        }
+
+        /// <summary>
+        /// Turns an authored prop's footprint solid. Sizes are the built geometry's, rounded out to
+        /// whole cells, because a grid is the only thing in this game that stops anything.
+        /// </summary>
+        private void MarkPropFootprint(PropDef prop)
+        {
+            int half = prop.Kind switch
+            {
+                "Guardhouse" => 1,      // 3x3
+                "JerseyBarrier" => 0,   // 1x1, and it is waist height anyway
+                "Pillar" => 0,
+                _ => 0,
+            };
+
+            int cx = Mathf.FloorToInt(prop.X);
+            int cy = Mathf.FloorToInt(prop.Y);
+            for (int x = cx - half; x <= cx + half; x++)
+                for (int y = cy - half; y <= cy + half; y++)
+                {
+                    if (x < 0 || y < 0 || x >= GridW || y >= GridH) continue;
+                    if (_map.KindAt(x, y) != WallKind.None) continue;
+                    if (KeepClear(x, y)) continue;   // never wall off the lane or the objective
+                    _map.SetWall(x, y, WallKind.Rock, GridMap.DefaultWallHp);
+                    RememberScenery(x, y);
+                }
         }
 
         /// <summary>Cells that must stay empty no matter what the dresser wants.</summary>
@@ -2395,6 +2512,7 @@ namespace Cipher.Game
 
         private static readonly Color32 MapGround = new Color32(24, 24, 30, 210);
         private static readonly Color32 MapWall = new Color32(120, 116, 105, 255);
+        private static readonly Color32 MapCover = new Color32(70, 78, 58, 255);
         private static readonly Color32 MapBarricade = new Color32(170, 140, 80, 255);
         private static readonly Color32 MapBreach = new Color32(255, 110, 20, 255);
         private static readonly Color32 MapTurret = new Color32(70, 150, 230, 255);
@@ -2437,7 +2555,13 @@ namespace Cipher.Game
                     BreachStage stage = _map.StageAt(x, y);
                     if (kind == WallKind.Structure) c = MapTurret;
                     else if (kind != WallKind.None && stage != BreachStage.Collapsed)
-                        c = stage != BreachStage.Intact ? MapBreach : kind == WallKind.Barricade ? MapBarricade : MapWall;
+                        c = stage != BreachStage.Intact ? MapBreach
+                          : kind == WallKind.Barricade ? MapBarricade
+                          // Cover reads as cover on the map, not as a wall: it is a thing to stand
+                          // behind and shoot past, and drawing it in the wall colour turned the
+                          // minimap into static.
+                          : _sceneryCellSet.Contains(i) ? MapCover
+                          : MapWall;
 
                     int agents = _minimapAgents[i];
                     if (agents >= 100000) c = MapSapper;
