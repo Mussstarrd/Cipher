@@ -111,7 +111,7 @@ namespace Cipher.Game.UI.Comic
                 }
                 _halftones = null;
             }
-            _titleStyle = _bodyStyle = _captionStyle = _stampStyle = _pencilStyle = _bigStyle = _tinyStyle = null;
+            _titleStyle = _bodyStyle = _captionStyle = _stampStyle = _pencilStyle = _bigStyle = _midStyle = _tinyStyle = null;
         }
 
         private static void Kill(ref Texture2D? tex)
@@ -308,7 +308,7 @@ namespace Cipher.Game.UI.Comic
 
         // ------------------------------------------------------------------ styles
 
-        private static GUIStyle? _titleStyle, _bodyStyle, _captionStyle, _stampStyle, _pencilStyle, _bigStyle, _tinyStyle;
+        private static GUIStyle? _titleStyle, _bodyStyle, _captionStyle, _stampStyle, _pencilStyle, _bigStyle, _midStyle, _tinyStyle;
 
         private static GUIStyle Style(ref GUIStyle? slot, int size, FontStyle font, TextAnchor anchor, Color colour)
         {
@@ -332,6 +332,7 @@ namespace Cipher.Game.UI.Comic
         private static GUIStyle CaptionStyle => Style(ref _captionStyle, 18, FontStyle.Bold, TextAnchor.MiddleLeft, Ink);
         private static GUIStyle StampStyle => Style(ref _stampStyle, 20, FontStyle.Bold, TextAnchor.MiddleCenter, Amber);
         private static GUIStyle PencilStyle => Style(ref _pencilStyle, 16, FontStyle.Normal, TextAnchor.MiddleLeft, PencilGrey);
+        private static GUIStyle MidStyle => Style(ref _midStyle, 30, FontStyle.Bold, TextAnchor.MiddleCenter, Ink);
         private static GUIStyle BigStyle => Style(ref _bigStyle, 54, FontStyle.Bold, TextAnchor.MiddleCenter, Ink);
 
         // ------------------------------------------------------------------ raw primitives
@@ -391,6 +392,41 @@ namespace Cipher.Game.UI.Comic
             Disc(r.Inset(thickness), Paper);
         }
 
+        /// <summary>
+        /// A line between two points, stamped rather than rotated.
+        ///
+        /// GUIUtility.RotateAroundPivot IS NOT SAFE UNDER A SCALED GUI.matrix, and this whole UI
+        /// draws inside one (BeginScaledUi). It composes the rotation on the wrong side of the
+        /// existing matrix, so the pivot is scaled but the rotation is not: every drawn line came out
+        /// displaced by roughly (scale - 1) x its distance from the origin, which put the paper
+        /// doll's arms and legs about eighty pixels away from the body they were supposed to be
+        /// attached to. It looked like a scribble and it read as a bug in the figure, which is where
+        /// two rounds of fixing went before the matrix was suspected.
+        ///
+        /// Stamping discs along the line needs no matrix at all, and on a paused menu the extra draw
+        /// calls are free. Discs also give the stroke a round cap and a slightly inked edge, which is
+        /// closer to a brush than a rotated rectangle ever was.
+        /// </summary>
+        public static void Stroke(ComicPoint from, ComicPoint to, float thickness, Color colour)
+        {
+            float dx = to.X - from.X;
+            float dy = to.Y - from.Y;
+            float length = Mathf.Sqrt(dx * dx + dy * dy);
+            if (length < 0.5f || thickness <= 0f) return;
+
+            int steps = Mathf.Clamp(Mathf.CeilToInt(length / Mathf.Max(1f, thickness * 0.4f)), 1, 600);
+            float half = thickness * 0.5f;
+            for (int i = 0; i <= steps; i++)
+            {
+                float t = i / (float)steps;
+                float x = from.X + dx * t;
+                float y = from.Y + dy * t;
+                var dot = new ComicRect(x - half, y - half, thickness, thickness);
+                if (thickness >= 4f) Disc(dot, colour);
+                else Fill(dot, colour);
+            }
+        }
+
         public static void Label(ComicRect r, string text, GUIStyle style)
         {
             if (string.IsNullOrEmpty(text)) return;
@@ -415,6 +451,19 @@ namespace Cipher.Game.UI.Comic
             s.alignment = centred ? TextAnchor.MiddleCenter : TextAnchor.MiddleLeft;
             Label(r, text, s);
             s.alignment = was;
+        }
+
+        /// <summary>
+        /// A number that is a fact rather than the headline: a skill's cost, a count. Half the
+        /// height of BigNumber, because a page with two headline numbers on it has none.
+        /// </summary>
+        public static void MidNumber(ComicRect r, string text, Color colour)
+        {
+            var s = MidStyle;
+            var was = s.normal.textColor;
+            s.normal.textColor = colour;
+            Label(r, text, s);
+            s.normal.textColor = was;
         }
 
         /// <summary>The one big number on a page, in ink or in amber. Used for the kit page's ±.</summary>
@@ -479,7 +528,7 @@ namespace Cipher.Game.UI.Comic
             // Deterministic per-position tilt rather than random, so a redraw does not jitter and a
             // screenshot is reproducible.
             float tilt = -5.5f + (Mathf.Abs(r.X * 0.37f + r.Y * 0.11f) % 3f);
-            GUIUtility.RotateAroundPivot(tilt, new Vector2(r.CenterX, r.CenterY));
+            RotateAbout(tilt, r.CenterX, r.CenterY);
 
             var prev = GUI.color;
             GUI.color = Amber;
@@ -489,6 +538,19 @@ namespace Cipher.Game.UI.Comic
             Label(r, text.ToUpperInvariant(), StampStyle);
 
             GUI.matrix = saved;
+        }
+
+        /// <summary>
+        /// Rotate about a pivot, composed on the RIGHT of the current matrix so an outer scale
+        /// survives. GUIUtility.RotateAroundPivot composes it on the other side, which is fine at
+        /// scale 1 and silently wrong at any other — see Stroke for the full story.
+        /// </summary>
+        private static void RotateAbout(float angleDeg, float px, float py)
+        {
+            var pivot = new Vector3(px, py, 0f);
+            GUI.matrix = GUI.matrix
+                * Matrix4x4.TRS(pivot, Quaternion.Euler(0f, 0f, angleDeg), Vector3.one)
+                * Matrix4x4.TRS(-pivot, Quaternion.identity, Vector3.one);
         }
 
         /// <summary>
@@ -517,6 +579,12 @@ namespace Cipher.Game.UI.Comic
         {
             if (r.IsEmpty) return;
             fraction = Mathf.Clamp01(fraction);
+
+            // The label is INK, and on a comic page the ground behind a gauge is the black gutter.
+            // Without a plate of its own the caption simply is not there, which is how the truck
+            // page shipped its two most important numbers invisible.
+            PaperFill(r.Inset(-8f, -6f, -8f, -6f));
+            Border(r.Inset(-8f, -6f, -8f, -6f), 2f);
 
             var labelRect = new ComicRect(r.X, r.Y, r.W, 20f);
             Label(labelRect, label.ToUpperInvariant(), TitleStyle);
@@ -547,17 +615,7 @@ namespace Cipher.Game.UI.Comic
         /// </summary>
         public static void LeaderLine(ComicPoint from, ComicPoint to)
         {
-            float dx = to.X - from.X;
-            float dy = to.Y - from.Y;
-            float length = Mathf.Sqrt(dx * dx + dy * dy);
-            if (length < 0.5f) return;
-
-            var saved = GUI.matrix;
-            float angle = Mathf.Atan2(dy, dx) * Mathf.Rad2Deg;
-            GUIUtility.RotateAroundPivot(angle, new Vector2(from.X, from.Y));
-            InkBlock(new ComicRect(from.X, from.Y - 1f, length, 2f));
-            GUI.matrix = saved;
-
+            Stroke(from, to, 2.5f, Ink);
             Disc(new ComicRect(to.X - 4f, to.Y - 4f, 8f, 8f), Ink);
         }
 
@@ -565,14 +623,30 @@ namespace Cipher.Game.UI.Comic
         /// A comic caption box: paper, hard border, and a solid ink tab down the left edge. The tab is
         /// what says "narration" rather than "field label".
         /// </summary>
-        public static void Caption(ComicRect r, string text)
+        public static void Caption(ComicRect r, string text) => Caption(r, text, wrap: false);
+
+        /// <summary>
+        /// Same box, but the text is allowed to run onto a second line.
+        ///
+        /// Every caption on these pages is one authored sentence, and a sentence that fits at
+        /// 1600x900 does not fit at 1280x720 — the UI scale floors at 1, so a smaller screen is a
+        /// NARROWER page, not a shrunken one. Without this the last three words of the sentence that
+        /// explains the screen are simply cut off, which is the one place on the page it is least
+        /// affordable.
+        /// </summary>
+        public static void Caption(ComicRect r, string text, bool wrap)
         {
             if (r.IsEmpty) return;
             InkBlock(r.Offset(4f, 4f));
             PaperFill(r);
             Border(r, BorderWidth);
             InkBlock(new ComicRect(r.X, r.Y, 10f, r.H));
-            Label(r.Inset(20f, 0f, 8f, 0f), text, CaptionStyle);
+
+            var style = CaptionStyle;
+            bool was = style.wordWrap;
+            style.wordWrap = wrap;
+            Label(r.Inset(20f, 0f, 8f, 0f), text, style);
+            style.wordWrap = was;
         }
 
         // ------------------------------------------------------------------ the figure
@@ -589,52 +663,60 @@ namespace Cipher.Game.UI.Comic
         {
             if (r.IsEmpty) return;
 
-            float w = r.W, h = r.H;
-            float cx = r.X + w * 0.5f;
+            // Every joint is a fraction of the rect, and KitPageLayout.Anchor names the SAME
+            // fractions. That agreement is the whole reason a leader line can be trusted to land on
+            // a hand rather than beside one — change either list and you change both.
+            ComicPoint P(float fx, float fy) => new ComicPoint(r.X + r.W * fx, r.Y + r.H * fy);
 
-            float headD = Mathf.Min(w * 0.30f, h * 0.16f);
-            var head = new ComicRect(cx - headD * 0.5f, r.Y + h * 0.02f, headD, headD);
+            var head = P(0.50f, 0.075f);
+            float headD = Mathf.Min(r.W * 0.30f, r.H * 0.135f);
+            var headBox = new ComicRect(head.X - headD * 0.5f, head.Y - headD * 0.5f, headD, headD);
 
-            float torsoW = w * 0.42f;
-            var torso = new ComicRect(cx - torsoW * 0.5f, head.Bottom + h * 0.05f, torsoW, h * 0.34f);
+            var torso = new ComicRect(r.X + r.W * 0.30f, r.Y + r.H * 0.17f, r.W * 0.40f, r.H * 0.41f);
 
-            // Light comes from the left, as it does in ApplyOvercastWinter; the screen goes on the
-            // right so the UI and the world agree about where the sun is.
-            // The head is an outline only. A halftone square laid over a circle spills past it, and a
-            // clipped screen is not worth a stencil pass in OnGUI for one 30px shape.
-            Disc(head, Ink);
-            Disc(head.Inset(3f), Paper);
+            float limb = Mathf.Max(5f, Mathf.Min(r.W, r.H) * 0.034f);
 
-            InkBlock(new ComicRect(cx - 3f, head.Bottom - 2f, 6f, h * 0.05f + 4f)); // neck
+            InkBlock(new ComicRect(head.X - limb * 0.7f, headBox.Bottom - 3f,
+                                   limb * 1.4f, r.H * 0.17f - (headBox.Bottom - r.Y) + 4f));
+
+            // Arms and legs go down FIRST, so the torso covers the shoulder and hip joints and the
+            // silhouette closes. Drawn as jointed bars between named points rather than as rules at
+            // hand-picked angles: the angle version was unreadable, because an angle is a guess
+            // about where the far end lands and a point is not.
+            Bar(P(0.32f, 0.21f), P(0.17f, 0.36f), limb);
+            Bar(P(0.17f, 0.36f), P(0.14f, 0.52f), limb);
+            Bar(P(0.68f, 0.21f), P(0.83f, 0.36f), limb);
+            Bar(P(0.83f, 0.36f), P(0.86f, 0.52f), limb);
+
+            Bar(P(0.42f, 0.55f), P(0.38f, 0.76f), limb * 1.2f);
+            Bar(P(0.38f, 0.76f), P(0.40f, 0.95f), limb * 1.2f);
+            Bar(P(0.58f, 0.55f), P(0.62f, 0.76f), limb * 1.2f);
+            Bar(P(0.62f, 0.76f), P(0.60f, 0.95f), limb * 1.2f);
 
             PaperFill(torso);
             Border(torso, 3f);
-            Halftone(new ComicRect(torso.CenterX + torso.W * 0.12f, torso.Y + 3f, torso.W * 0.38f - 3f, torso.H - 6f), 0.35f);
+            // Light comes from the left, as it does in ApplyOvercastWinter, so the screen goes right.
+            Halftone(new ComicRect(torso.CenterX + torso.W * 0.10f, torso.Y + 3f,
+                                   torso.W * 0.40f - 3f, torso.H - 6f), 0.2f);
 
-            // Arms and legs as rotated rules with a disc at each end — a jointed stick figure under a
-            // solid torso reads as a body, and is four draw calls instead of a mesh.
-            float armLen = h * 0.26f;
-            Limb(new ComicPoint(torso.X + 4f, torso.Y + 8f), 118f, armLen, 5f);
-            Limb(new ComicPoint(torso.Right - 4f, torso.Y + 8f), 62f, armLen, 5f);
+            Disc(headBox, Ink);
+            Disc(headBox.Inset(3f), Paper);
 
-            float legLen = h * 0.30f;
-            Limb(new ComicPoint(cx - torsoW * 0.22f, torso.Bottom - 2f), 100f, legLen, 6f);
-            Limb(new ComicPoint(cx + torsoW * 0.22f, torso.Bottom - 2f), 80f, legLen, 6f);
-
-            // Hands and feet, at the anchor points the slot boxes aim for.
-            Disc(new ComicRect(r.X + w * 0.20f - 7f, r.Y + h * 0.50f - 7f, 14f, 14f), Ink);
-            Disc(new ComicRect(r.X + w * 0.80f - 7f, r.Y + h * 0.50f - 7f, 14f, 14f), Ink);
-            InkBlock(new ComicRect(r.X + w * 0.40f - 13f, r.Y + h * 0.93f - 5f, 26f, 9f));
-            InkBlock(new ComicRect(r.X + w * 0.60f - 13f, r.Y + h * 0.93f - 5f, 26f, 9f));
+            float hand = limb * 0.9f;
+            Disc(Around(P(0.14f, 0.52f), hand), Ink);
+            Disc(Around(P(0.86f, 0.52f), hand), Ink);
+            InkBlock(new ComicRect(r.X + r.W * 0.40f - hand * 2f, r.Y + r.H * 0.95f - limb * 0.6f,
+                                   hand * 3.4f, limb * 1.2f));
+            InkBlock(new ComicRect(r.X + r.W * 0.60f - hand * 1.4f, r.Y + r.H * 0.95f - limb * 0.6f,
+                                   hand * 3.4f, limb * 1.2f));
         }
 
-        private static void Limb(ComicPoint from, float angleDeg, float length, float thickness)
-        {
-            var saved = GUI.matrix;
-            GUIUtility.RotateAroundPivot(angleDeg, new Vector2(from.X, from.Y));
-            InkBlock(new ComicRect(from.X, from.Y - thickness * 0.5f, length, thickness));
-            GUI.matrix = saved;
-        }
+        private static ComicRect Around(ComicPoint p, float radius)
+            => new ComicRect(p.X - radius, p.Y - radius, radius * 2f, radius * 2f);
+
+        /// <summary>A jointed limb segment. Stamped, not rotated — see Stroke.</summary>
+        private static void Bar(ComicPoint from, ComicPoint to, float thickness)
+            => Stroke(from, to, thickness, Ink);
 
         // ------------------------------------------------------------------ selection
 

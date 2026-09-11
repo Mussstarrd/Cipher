@@ -236,18 +236,18 @@ namespace Cipher.Game.UI.Comic
                 {
                     switch (row)
                     {
-                        case 0: return new ComicPoint(0.46f, 0.07f); // head
-                        case 1: return new ComicPoint(0.42f, 0.32f); // chest
-                        case 2: return new ComicPoint(0.20f, 0.50f); // left hand
-                        default: return new ComicPoint(0.40f, 0.93f); // left foot
+                        case 0: return new ComicPoint(0.42f, 0.075f); // head
+                        case 1: return new ComicPoint(0.36f, 0.28f);  // chest
+                        case 2: return new ComicPoint(0.14f, 0.52f);  // left hand
+                        default: return new ComicPoint(0.40f, 0.95f); // left foot
                     }
                 }
                 switch (row)
                 {
-                    case 0: return new ComicPoint(0.55f, 0.16f); // neck
-                    case 1: return new ComicPoint(0.80f, 0.50f); // right hand
-                    case 2: return new ComicPoint(0.58f, 0.64f); // waist
-                    default: return new ComicPoint(0.60f, 0.93f); // right foot
+                    case 0: return new ComicPoint(0.52f, 0.15f);  // collar
+                    case 1: return new ComicPoint(0.86f, 0.52f);  // right hand
+                    case 2: return new ComicPoint(0.58f, 0.56f);  // waist
+                    default: return new ComicPoint(0.60f, 0.95f); // right foot
                 }
             }
 
@@ -447,5 +447,26 @@ namespace Cipher.Game.UI.Comic
 
         /// <summary>Manual hook for a caller that changed the contents underneath the cursor.</summary>
         public void Refresh() => Recompare();
+
+        /// <summary>
+        /// Put the cursor back where it was. Equipping something rebuilds this object from the model
+        /// — the pack is a different length afterwards — and dumping the player back at the top of
+        /// the left column every time they took an item would make the screen feel like it reset.
+        /// An empty target zone falls through to the first zone that has anything in it.
+        /// </summary>
+        public void SetCursor(KitZone zone, int row)
+        {
+            if (CountIn(zone) <= 0)
+            {
+                if (CountIn(KitZone.SlotsLeft) > 0) zone = KitZone.SlotsLeft;
+                else if (CountIn(KitZone.SlotsRight) > 0) zone = KitZone.SlotsRight;
+                else zone = KitZone.Pack;
+            }
+
+            Zone = zone;
+            int n = CountIn(Zone);
+            Row = n <= 0 ? 0 : Math.Min(Math.Max(0, row), n - 1);
+            Recompare();
+        }
     }
 }

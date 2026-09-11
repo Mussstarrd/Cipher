@@ -28,6 +28,8 @@ namespace Cipher.Game
         private const string FallBackArg = "-exodus-screenshot-fallback";
         private const string EmplacementsArg = "-exodus-screenshot-emplacements";
         private const string StrikeArg = "-exodus-screenshot-strike";
+        private const string ComicArg = "-exodus-comic";
+        private const string ComicKeyboardArg = "-exodus-comic-keyboard";
         private const string YawArg = "-exodus-screenshot-yaw";
         private const string PitchArg = "-exodus-screenshot-pitch";
 
@@ -80,6 +82,7 @@ namespace Cipher.Game
             harness._strike = HasFlag(args, StrikeArg);
             harness._yaw = ReadFloat(args, YawArg, float.NaN);
             harness._pitch = ReadFloat(args, PitchArg, 22f);
+            InstallComicPreview(host, args);
             Debug.Log($"[Screenshot] armed: {path} after {delay:F1}s");
         }
 
@@ -90,6 +93,43 @@ namespace Cipher.Game
             foreach (var a in args)
                 if (string.Equals(a, OverheadArg, StringComparison.OrdinalIgnoreCase)) return true;
             return false;
+        }
+
+        /// <summary>
+        /// Stages one of the rebuilt comic screens over the top of the game, when asked.
+        ///
+        /// It is a separate component rather than another bootstrap hook because these screens hold
+        /// their own models: a capture of the kit page has to show a kit, and mid-mission the real
+        /// one is empty. Added in Awake order before the first OnGUI, so the first frame is already
+        /// the page.
+        /// </summary>
+        private static void InstallComicPreview(GameObject host, string[] args)
+        {
+            string? which = ReadString(args, ComicArg);
+            if (which == null) return;
+
+            var page = which.ToLowerInvariant() switch
+            {
+                "kit" => UI.Comic.ComicScreenPreview.Screen.Kit,
+                "skills" => UI.Comic.ComicScreenPreview.Screen.Skills,
+                "truck" => UI.Comic.ComicScreenPreview.Screen.Truck,
+                "demo" => UI.Comic.ComicScreenPreview.Screen.Demo,
+                _ => UI.Comic.ComicScreenPreview.Screen.Kit,
+            };
+
+            var preview = host.AddComponent<UI.Comic.ComicScreenPreview>();
+            preview.Page = page;
+            preview.PadPrompts = !HasFlag(args, ComicKeyboardArg);
+            Debug.Log($"[Screenshot] comic preview: {page}, pad prompts {preview.PadPrompts}");
+        }
+
+        /// <summary>The string after a flag, or null when the flag is absent.</summary>
+        private static string? ReadString(string[] args, string flag)
+        {
+            if (args == null) return null;
+            for (int i = 0; i < args.Length - 1; i++)
+                if (string.Equals(args[i], flag, StringComparison.OrdinalIgnoreCase)) return args[i + 1];
+            return null;
         }
 
         /// <summary>True when the capture should show the radial build menu open.</summary>

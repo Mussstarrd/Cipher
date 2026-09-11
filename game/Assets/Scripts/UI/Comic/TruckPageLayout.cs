@@ -151,6 +151,12 @@ namespace Cipher.Game.UI.Comic
 
         public ComicRect TruckPanel { get; private set; }
 
+        /// <summary>
+        /// The bonnet, ahead of the cab. A cab alone reads as a box; a cab with a lower nose in
+        /// front of it reads as a vehicle, and it is the cheapest mark on this page.
+        /// </summary>
+        public ComicRect HoodRect { get; private set; }
+
         /// <summary>The cab, drawn as a blunt ink shape ahead of the bed.</summary>
         public ComicRect CabRect { get; private set; }
 
@@ -170,6 +176,16 @@ namespace Cipher.Game.UI.Comic
         public ComicRect WeightGauge { get; private set; }
         public ComicRect VolumeGauge { get; private set; }
 
+        /// <summary>
+        /// A one-line band under the two panels for whatever the cursor is on.
+        ///
+        /// Crate width is volume, which is the honest picture and also means a half-cubic-metre
+        /// rotor is twenty pixels wide and its name is a single letter. The page needs somewhere to
+        /// say what you are actually standing on, and one caption is cheaper than shrinking every
+        /// crate to fit its label.
+        /// </summary>
+        public ComicRect DetailRect { get; private set; }
+
         public void Layout(ComicRect page)
         {
             PageRect = page;
@@ -180,17 +196,20 @@ namespace Cipher.Game.UI.Comic
             // The gauges get a full-width strip along the foot. That is what lets the two panels
             // above be the same size: "equal visual weight" is the brief, so neither the truck nor
             // the loss gets to be the big one.
-            const float gaugeH = 64f;
-            var gaugeStrip = new ComicRect(inner.X, inner.Bottom - gaugeH, inner.W, gaugeH);
+            const float gaugeH = 56f;
+            const float detailH = 32f;
+            var gaugeStrip = new ComicRect(inner.X + 10f, inner.Bottom - gaugeH, inner.W - 20f, gaugeH);
 
-            var body = new ComicRect(inner.X, inner.Y + 44f, inner.W, gaugeStrip.Y - 12f - (inner.Y + 44f));
+            DetailRect = new ComicRect(inner.X, gaugeStrip.Y - 14f - detailH, inner.W, detailH);
+
+            var body = new ComicRect(inner.X, inner.Y + 44f, inner.W, DetailRect.Y - 12f - (inner.Y + 44f));
 
             const float gutter = 14f;
             float halfW = (body.W - gutter) * 0.5f;
             TruckPanel = new ComicRect(body.X, body.Y, halfW, body.H);
             LeftBehindPanel = new ComicRect(body.X + halfW + gutter, body.Y, halfW, body.H);
 
-            float gg = 14f;
+            float gg = 26f;
             float gw = (gaugeStrip.W - gg) * 0.5f;
             WeightGauge = new ComicRect(gaugeStrip.X, gaugeStrip.Y, gw, gaugeStrip.H);
             VolumeGauge = new ComicRect(gaugeStrip.X + gw + gg, gaugeStrip.Y, gw, gaugeStrip.H);
@@ -206,33 +225,52 @@ namespace Cipher.Game.UI.Comic
         {
             var inner = TruckPanel.Inset(14f, 34f, 14f, 14f);
 
-            // Elevation proportions: cab a third, bed two thirds, wheels below the chassis line.
-            float wheelD = Math.Min(46f, inner.H * 0.20f);
-            GroundY = inner.Bottom - 2f;
-            float chassisY = GroundY - wheelD * 0.55f;
+            // THE HEIGHT COMES FROM THE WIDTH, not from the panel.
+            //
+            // A four-door pickup in side elevation is about three times as long as it is tall. The
+            // panel here is nearly square, so a vehicle stretched to fill it stops being a vehicle:
+            // the first version had a cab three hundred pixels tall with its window at the roofline
+            // and photographed as two boxes and two rings rather than a truck.
+            //
+            // Three volumes, not two: nose, cab, bed. The nose is what tells you which way it is
+            // pointing, and which way it is pointing is what makes it a truck about to leave.
+            float vehicleH = Math.Min(inner.H * 0.62f, inner.W * 0.36f);
+            float wheelD = vehicleH * 0.34f;
 
-            float bodyH = Math.Max(40f, chassisY - inner.Y);
-            float cabW = inner.W * 0.26f;
-            float cabH = bodyH * 0.72f;
+            // The ground sits at four fifths down the panel rather than on its floor, so the vehicle
+            // has air over it. A drawing pinned to the bottom edge of its frame reads as a diagram.
+            GroundY = inner.Y + inner.H * 0.78f;
+            float bodyBottom = GroundY - wheelD * 0.45f;
+            float bodyTop = bodyBottom - vehicleH;
 
-            CabRect = new ComicRect(inner.X, chassisY - cabH, cabW, cabH);
-            BedRect = new ComicRect(inner.X + cabW, chassisY - bodyH * 0.58f, inner.W - cabW, bodyH * 0.58f);
+            float hoodW = inner.W * 0.17f;
+            float cabW = inner.W * 0.31f;
+            // The bonnet line sits nearly two thirds up the body. Lower than that and the cab towers
+            // over the nose, which is the silhouette of a box van; this is a pickup.
+            float hoodH = vehicleH * 0.63f;
+
+            HoodRect = new ComicRect(inner.X, bodyBottom - hoodH, hoodW, hoodH);
+            CabRect = new ComicRect(inner.X + hoodW, bodyTop, cabW, vehicleH);
+
+            // Bed walls under half the cab's height: that silhouette is what says pickup and not van.
+            float bedH = vehicleH * 0.56f;
+            BedRect = new ComicRect(CabRect.Right, bodyBottom - bedH, inner.Right - CabRect.Right, bedH);
             BedInner = BedRect.Inset(6f, 6f, 6f, 4f);
 
-            WheelFront = new ComicRect(inner.X + cabW * 0.35f, GroundY - wheelD, wheelD, wheelD);
-            WheelRear = new ComicRect(inner.Right - wheelD * 1.6f, GroundY - wheelD, wheelD, wheelD);
+            // Both wheels overlap the body by half their diameter, so the rings read as arches cut
+            // into it rather than as two circles parked underneath.
+            WheelFront = new ComicRect(inner.X + hoodW * 0.62f, GroundY - wheelD, wheelD, wheelD);
+            WheelRear = new ComicRect(inner.Right - wheelD * 1.9f, GroundY - wheelD, wheelD, wheelD);
 
-            // A crate that fills the whole hold is exactly as wide as the bed. Everything else is a
-            // true fraction of it, which is what makes "the truck is only 4% full" visible instead of
-            // stated.
             _pxPerVolume = MaxVolume > 0f ? BedInner.W / MaxVolume : 0f;
 
+            // Crates fill the bed's depth. Their WIDTH is the variable, because width is volume and
+            // one visual variable per quantity is the rule this page is built on.
             float x = BedInner.X;
             foreach (var c in _bed)
             {
                 float w = c.Item.Volume * _pxPerVolume;
-                float h = BedInner.H * 0.9f;
-                c.Box = new ComicRect(x, BedInner.Bottom - h, w, h);
+                c.Box = new ComicRect(x, BedInner.Y, w, BedInner.H);
                 x += w;
             }
         }
@@ -241,28 +279,48 @@ namespace Cipher.Game.UI.Comic
         {
             var inner = LeftBehindPanel.Inset(14f, 34f, 14f, 14f);
 
-            // Same scale as the bed, wrapped into rows on the gravel. Standing a crate here next to
-            // the bed it did not get into is the entire argument of this screen.
-            float rowH = Math.Min(58f, inner.H * 0.28f);
+            // EXACTLY the same scale and the same crate height as the bed, wrapped into rows on the
+            // gravel. Standing a crate here beside the bed it did not get into is the whole argument
+            // of this screen, and it only works if the two are directly comparable.
+            float crateH = Math.Max(24f, BedInner.H);
+            float rowH = crateH + 26f;
+
+            // Count the rows first so the block can be centred. A single row of crates pinned to the
+            // top of a tall panel looks like a mistake; the same row in the middle of it looks like a
+            // photograph of a driveway with three things standing on it.
+            int rows = 1;
+            float probe = inner.X;
+            foreach (var c in _left)
+            {
+                float w = Math.Max(16f, Math.Min(inner.W, c.Item.Volume * _pxPerVolume));
+                if (probe + w > inner.Right + 0.001f && probe > inner.X)
+                {
+                    rows++;
+                    probe = inner.X;
+                }
+                probe += w + 8f;
+            }
+
+            float block = rows * rowH - 26f;
             float x = inner.X;
-            float y = inner.Y;
+            float y = inner.Y + Math.Max(0f, (inner.H - block) * 0.42f);
 
             foreach (var c in _left)
             {
-                float w = Math.Max(18f, Math.Min(inner.W, c.Item.Volume * _pxPerVolume));
+                float w = Math.Max(16f, Math.Min(inner.W, c.Item.Volume * _pxPerVolume));
                 if (x + w > inner.Right + 0.001f && x > inner.X)
                 {
                     x = inner.X;
-                    y += rowH + 8f;
+                    y += rowH;
                 }
-                if (y + rowH > inner.Bottom + 0.001f)
+                if (y + crateH > inner.Bottom + 0.001f)
                 {
                     // Out of gravel. Park it off-page rather than drawing crates over the caption.
                     c.Box = ComicRect.Zero;
                     continue;
                 }
-                c.Box = new ComicRect(x, y, w, rowH);
-                x += w + 6f;
+                c.Box = new ComicRect(x, y, w, crateH);
+                x += w + 8f;
             }
         }
 
@@ -336,6 +394,31 @@ namespace Cipher.Game.UI.Comic
         }
 
         public TruckAction Back() => TruckAction.Close;
+
+        /// <summary>
+        /// Put a named crate in the bed, cursor or no cursor. The integrator's auto-load walks the
+        /// gravel in value-density order, which is not cursor order, and driving it by moving the
+        /// cursor would leave the player standing somewhere they never navigated to.
+        /// Returns false when it does not fit or is already aboard.
+        /// </summary>
+        public bool Load(TruckCrate crate)
+        {
+            if (crate == null || crate.InBed || !Fits(crate)) return false;
+            crate.InBed = true;
+            Repartition();
+            ClampCursor();
+            return true;
+        }
+
+        /// <summary>Take a named crate back out. Returns false when it was not aboard.</summary>
+        public bool Unload(TruckCrate crate)
+        {
+            if (crate == null || !crate.InBed) return false;
+            crate.InBed = false;
+            Repartition();
+            ClampCursor();
+            return true;
+        }
 
         /// <summary>A crate that moved zones leaves a hole; land on its neighbour, never out of range.</summary>
         private void ClampCursor()
