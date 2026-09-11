@@ -56,6 +56,17 @@ namespace Cipher.Sim.Agents
         public int ChasingCount { get; private set; }
 
         /// <summary>
+        /// True when a body is close enough to the player to be hitting him. A read-only view for
+        /// the renderer, so a body standing on the player throws punches instead of idling.
+        /// </summary>
+        public bool IsInContactWithHero(int id)
+        {
+            if (!HeroIsPrey || id < 0 || id >= Count || !_alive[id]) return false;
+            float reach = _config.HeroContactRange * 1.9f;
+            return Vec2.DistanceSquared(new Vec2(_posX[id], _posY[id]), HeroPosition) <= reach * reach;
+        }
+
+        /// <summary>
         /// Runs the opportunist rules for one agent. Returns true when it has taken movement for
         /// this tick and the ordinary errand should be skipped.
         /// </summary>

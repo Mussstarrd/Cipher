@@ -216,14 +216,17 @@ namespace Cipher.Game
 
                 // Walking is for people who are walking. The clip used to run on everybody all the
                 // time, including agents standing still against a barricade.
-                OnSlotMoved?.Invoke(i, speed);
+                OnSlotMoved?.Invoke(i, world.IsInContactWithHero(id) ? -1f : speed);
             }
         }
 
         /// <summary>Raised when a slot changes occupant, so the view can re-roll that body's stride.</summary>
         public System.Action<int>? OnSlotReassigned;
 
-        /// <summary>Raised each frame with a slot's ground speed, so the view can stop the walk.</summary>
+        /// <summary>
+        /// Raised each frame with a slot's ground speed, so the view can stop the walk. A NEGATIVE
+        /// speed means the body is in contact with the player and should be swinging, not idling.
+        /// </summary>
         public System.Action<int, float>? OnSlotMoved;
 
         private readonly Dictionary<int, Vector3> _chosen = new Dictionary<int, Vector3>(256);

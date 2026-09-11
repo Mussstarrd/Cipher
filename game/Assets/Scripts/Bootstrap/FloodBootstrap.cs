@@ -2259,7 +2259,10 @@ namespace Cipher.Game
             // A body on the ground stays there; locomotion has no say.
             if (_crowd != null && _crowd.IsDying(slot)) return;
 
-            string wanted = speed > 2.6f ? "run" : speed > 0.3f ? "walk" : "idle";
+            // Negative speed is the crowd's signal that this body is ON the player: it punches.
+            // Owner: "when they get to me they just stand there" -- mechanically fixed already, and
+            // this is the half that makes it visibly untrue.
+            string wanted = speed < 0f ? "punch" : speed > 2.6f ? "run" : speed > 0.3f ? "walk" : "idle";
             if (anim[wanted] == null) wanted = "walk";
             if (anim[wanted] == null) return;
 
@@ -2268,7 +2271,7 @@ namespace Cipher.Game
             // Stride matches ground speed, which is most of why a walk cycle reads as real. Idle
             // keeps whatever gentle variation it was given at build time.
             var state = anim[wanted];
-            if (state != null && wanted != "idle")
+            if (state != null && wanted != "idle" && wanted != "punch")
                 state.speed = Mathf.Clamp(speed / (wanted == "run" ? 4.2f : 2.2f), 0.6f, 1.7f);
         }
 
