@@ -48,6 +48,35 @@ namespace Cipher.Sim.Agents
         // --- Intent split (owner, 2026-09-11): not every body runs the same errand. ---
 
         /// <summary>How far a hunter will look for an emplacement before giving up and rejoining.</summary>
+        // ---- Opportunism (owner, 2026-09-11) -------------------------------------------------
+        // "if I'm close to him then they chase and try to kill me and if they run by a turret they
+        //  try to kill the turret". These are the ranges that turn a crowd following a route into a
+        //  crowd that wants something. See AgentWorld.Aggression.cs.
+
+        /// <summary>How close the player has to be before ordinary bodies come for him instead.</summary>
+        public float HeroAggroRange { get; set; } = 8f;
+
+        /// <summary>Close enough to be chewing on him. The game layer owns the damage.</summary>
+        public float HeroContactRange { get; set; } = 1.0f;
+
+        /// <summary>They move faster at a person than they do at a building.</summary>
+        public float ChaseSpeed { get; set; } = 4.2f;
+
+        /// <summary>
+        /// Seconds a body keeps coming after the player leaves its range. Without this, stepping one
+        /// cell back switches the whole crowd off at once and it reads as a light switch.
+        /// </summary>
+        public float AggroMemory { get; set; } = 2.5f;
+
+        /// <summary>While that memory lasts, the range they will follow to is this much wider.</summary>
+        public float AggroStickyScale { get; set; } = 1.6f;
+
+        /// <summary>Arm's reach. An ordinary body only claws a gun it nearly walks into.</summary>
+        public float OpportunistStructureRange { get; set; } = 2.6f;
+
+        /// <summary>An opportunist hits a gun softer than a body that came specifically for guns.</summary>
+        public float OpportunistDamageScale { get; set; } = 0.55f;
+
         public float HunterAcquireRange { get; set; } = 14f;
         /// <summary>Close enough to start tearing at it.</summary>
         public float HunterContactRange { get; set; } = 1.1f;

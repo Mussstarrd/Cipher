@@ -5,76 +5,217 @@
   "tier": 1,
   "next": "act1-02-the-service-road",
   "brief": "Hold the main gate until the county road is clear. They are not mindless. They will find the cheapest way in, and three fence lines with the gaps in the wrong places is the longest walk you can sell them.",
-
   "map": {
-    "width": 64,
-    "height": 48,
+    "width": 128,
+    "height": 96,
     "preset": "arena",
     "walls": [
-      { "rect": [14, 0, 1, 21], "kind": "Static" },
-      { "rect": [14, 27, 1, 21], "kind": "Static" },
-
-      { "rect": [30, 8, 1, 7], "kind": "Wall" },
-      { "rect": [30, 33, 1, 7], "kind": "Wall" },
-      { "rect": [42, 20, 1, 8], "kind": "Wall" }
+      {
+        "rect": [
+          28,
+          0,
+          1,
+          42
+        ],
+        "kind": "Static"
+      },
+      {
+        "rect": [
+          28,
+          54,
+          1,
+          42
+        ],
+        "kind": "Static"
+      },
+      {
+        "rect": [
+          60,
+          16,
+          1,
+          14
+        ],
+        "kind": "Wall"
+      },
+      {
+        "rect": [
+          60,
+          66,
+          1,
+          14
+        ],
+        "kind": "Wall"
+      },
+      {
+        "rect": [
+          84,
+          40,
+          1,
+          16
+        ],
+        "kind": "Wall"
+      }
     ]
   },
-
   "props": [
-    { "kind": "Pillar",        "x": 14.5, "y": 20.4 },
-    { "kind": "Pillar",        "x": 14.5, "y": 27.6 },
-    { "kind": "BoomBarrier",   "x": 15.4, "y": 21.4, "yaw": 90 },
-    { "kind": "Guardhouse",    "x": 17.5, "y": 30.0, "yaw": 200 },
-    { "kind": "JerseyBarrier", "x": 18.0, "y": 23.0, "yaw": 90 },
-    { "kind": "JerseyBarrier", "x": 18.0, "y": 25.5, "yaw": 90 }
+    {
+      "kind": "Pillar",
+      "x": 29.0,
+      "y": 40.8
+    },
+    {
+      "kind": "Pillar",
+      "x": 29.0,
+      "y": 55.2
+    },
+    {
+      "kind": "BoomBarrier",
+      "x": 30.8,
+      "y": 42.8,
+      "yaw": 90
+    },
+    {
+      "kind": "Guardhouse",
+      "x": 35.0,
+      "y": 60.0,
+      "yaw": 200
+    },
+    {
+      "kind": "JerseyBarrier",
+      "x": 36.0,
+      "y": 46.0,
+      "yaw": 90
+    },
+    {
+      "kind": "JerseyBarrier",
+      "x": 36.0,
+      "y": 51.0,
+      "yaw": 90
+    }
   ],
-
-  "heroSpawn": { "x": 56, "y": 24 },
+  "heroSpawn": {
+    "x": 112,
+    "y": 48
+  },
   "spawnCells": [
-    { "x": 1, "y": 24, "gate": "county-road" }
+    {
+      "x": 2,
+      "y": 48,
+      "gate": "county-road"
+    }
   ],
-  "vault": { "x": 62, "y": 24, "hp": 25 },
-
+  "vault": {
+    "x": 124,
+    "y": 48,
+    "hp": 25
+  },
   "economy": {
     "startCash": 400,
     "cashPerKill": 5,
     "waveClearBonusPerWave": 100
   },
-
   "director": {
     "seed": 20260911,
     "sapperFirstAt": 45,
     "spitterFirstAt": 40,
-    "hunterShare": 0.10,
+    "hunterShare": 0.1,
     "wreckerShare": 0.08
   },
-
-  "enemy": { "health": 34 },
-
+  "enemy": {
+    "health": 34
+  },
   "waves": [
-    { "setupSeconds": 25, "count": 40,  "spawnPerSecond": 2.5, "mix": { "Runner": 1.0 } },
-    { "setupSeconds": 20, "count": 60,  "spawnPerSecond": 3.2, "mix": { "Runner": 0.98, "Spitter": 0.02 } },
-    { "setupSeconds": 20, "count": 85,  "spawnPerSecond": 4.0, "mix": { "Runner": 0.95, "Spitter": 0.03, "Sapper": 0.02 } },
-    { "setupSeconds": 20, "count": 115, "spawnPerSecond": 4.8, "mix": { "Runner": 0.93, "Spitter": 0.04, "Sapper": 0.03 } },
-    { "setupSeconds": 20, "count": 150, "spawnPerSecond": 5.6, "mix": { "Runner": 0.90, "Spitter": 0.06, "Sapper": 0.04 } }
+    {
+      "setupSeconds": 25,
+      "count": 40,
+      "spawnPerSecond": 2.5,
+      "mix": {
+        "Runner": 1.0
+      }
+    },
+    {
+      "setupSeconds": 20,
+      "count": 60,
+      "spawnPerSecond": 3.2,
+      "mix": {
+        "Runner": 0.98,
+        "Spitter": 0.02
+      }
+    },
+    {
+      "setupSeconds": 20,
+      "count": 85,
+      "spawnPerSecond": 4.0,
+      "mix": {
+        "Runner": 0.95,
+        "Spitter": 0.03,
+        "Sapper": 0.02
+      }
+    },
+    {
+      "setupSeconds": 20,
+      "count": 115,
+      "spawnPerSecond": 4.8,
+      "mix": {
+        "Runner": 0.93,
+        "Spitter": 0.04,
+        "Sapper": 0.03
+      }
+    },
+    {
+      "setupSeconds": 20,
+      "count": 150,
+      "spawnPerSecond": 5.6,
+      "mix": {
+        "Runner": 0.9,
+        "Spitter": 0.06,
+        "Sapper": 0.04
+      }
+    }
   ],
-
   "safeZoneAfterWaves": [],
-
   "objectives": [
-    { "type": "ClearWaves", "count": 2 },
-    { "type": "ProtectVault", "minHp": 1 }
+    {
+      "type": "ClearWaves",
+      "count": 2
+    },
+    {
+      "type": "ProtectVault",
+      "minHp": 1
+    }
   ],
-
   "rewards": {
     "scrip": 60,
-    "guaranteedDrops": [ { "slot": "Vest", "rarity": "Scavenged", "ilvl": 3 } ],
+    "guaranteedDrops": [
+      {
+        "slot": "Vest",
+        "rarity": "Scavenged",
+        "ilvl": 3
+      }
+    ],
     "unlocks": []
   },
-
   "medals": {
-    "bronze": [ { "type": "Complete" } ],
-    "silver": [ { "type": "VaultHpAtLeast", "value": 20 } ],
-    "gold": [ { "type": "VaultHpAtLeast", "value": 25 }, { "type": "TimeUnder", "seconds": 420 } ]
+    "bronze": [
+      {
+        "type": "Complete"
+      }
+    ],
+    "silver": [
+      {
+        "type": "VaultHpAtLeast",
+        "value": 20
+      }
+    ],
+    "gold": [
+      {
+        "type": "VaultHpAtLeast",
+        "value": 25
+      },
+      {
+        "type": "TimeUnder",
+        "seconds": 420
+      }
+    ]
   }
 }

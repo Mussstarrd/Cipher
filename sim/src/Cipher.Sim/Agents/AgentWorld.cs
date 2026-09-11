@@ -30,6 +30,8 @@ namespace Cipher.Sim.Agents
         private byte[] _intent;
         private byte[] _state;
         private float[] _timer;
+        /// <summary>Seconds of remaining interest in the player. See AgentWorld.Aggression.cs.</summary>
+        private float[] _aggro;
         private int[] _target;
 
         public int Count { get; private set; }
@@ -52,6 +54,7 @@ namespace Cipher.Sim.Agents
             _intent = new byte[capacity];
             _state = new byte[capacity];
             _timer = new float[capacity];
+            _aggro = new float[capacity];
             _target = new int[capacity];
         }
 
@@ -77,7 +80,8 @@ namespace Cipher.Sim.Agents
                 Array.Resize(ref _archetype, newSize);
                 Array.Resize(ref _intent, newSize);
                 Array.Resize(ref _state, newSize);
-                Array.Resize(ref _timer, newSize);
+            Array.Resize(ref _timer, newSize);
+                Array.Resize(ref _aggro, newSize);
                 Array.Resize(ref _target, newSize);
             }
 
@@ -90,6 +94,7 @@ namespace Cipher.Sim.Agents
             _intent[id] = (byte)Intent.Vault;
             _state[id] = 0;
             _timer[id] = 0f;
+            _aggro[id] = 0f;
             _target[id] = -1;
             AliveCount++;
             _hashDirty = true;
@@ -103,6 +108,7 @@ namespace Cipher.Sim.Agents
             RebuildHashIfDirty();
             _map.RefillGates(dt);
             bool gates = _map.GateCount > 0;
+            ChasingCount = 0;
 
             Vec2 goalCenter = GridMap.CellCenter(_flowField.GoalX, _flowField.GoalY);
             float goalRadiusSq = _config.GoalRadius * _config.GoalRadius;
@@ -131,6 +137,10 @@ namespace Cipher.Sim.Agents
                         if (StepSpitter(i, pos, dt, gates)) continue;
                         break;
                 }
+
+                // Opportunity outranks the errand: a person within reach, then a gun within reach,
+                // then whatever they spawned intending to do. See AgentWorld.Aggression.cs.
+                if (StepOpportunist(i, pos, dt, gates)) continue;
 
                 // Ordinary bodies do not all run the same errand (owner, 2026-09-11). Some peel off
                 // for the guns, some go at the walls, and the rest keep coming for the objective.

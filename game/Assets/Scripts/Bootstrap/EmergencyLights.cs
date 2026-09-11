@@ -33,9 +33,48 @@ namespace Cipher.Game
         /// Adds a bar to a vehicle. <paramref name="material"/> makes one material per colour so the
         /// two halves can be driven independently without touching anything else in the scene.
         /// </summary>
-        public static EmergencyLights Attach(GameObject car, float roofHeight, System.Func<Color, Material> material)
+        /// <summary>
+        /// Adds a bar to a vehicle, MEASURED onto its roof.
+        ///
+        /// The first version took a roof height as a number and I passed 1.55, which is a plausible
+        /// roof height for a car and meaningless in this car's local space: an imported FBX carries
+        /// its own scale, so the bar floated in the air above the cruiser with no visible connection
+        /// to it. Same lesson as the road tile and the crowd height -- measure the model, never
+        /// assume its units.
+        /// </summary>
+        public static EmergencyLights Attach(GameObject car, System.Func<Color, Material> material)
         {
             var lights = car.AddComponent<EmergencyLights>();
+
+            // Mesh bounds in the CAR's own space, so the numbers are in the same units as the
+            // localPosition we are about to set.
+            var toLocal = car.transform.worldToLocalMatrix;
+            bool any = false;
+            var box = new Bounds();
+            foreach (var filter in car.GetComponentsInChildren<MeshFilter>())
+            {
+                var mesh = filter.sharedMesh;
+                if (mesh == null) continue;
+                var m = toLocal * filter.transform.localToWorldMatrix;
+                var c = mesh.bounds.center;
+                var e = mesh.bounds.extents;
+                for (int i = 0; i < 8; i++)
+                {
+                    var corner = m.MultiplyPoint3x4(new Vector3(
+                        c.x + ((i & 1) == 0 ? -e.x : e.x),
+                        c.y + ((i & 2) == 0 ? -e.y : e.y),
+                        c.z + ((i & 4) == 0 ? -e.z : e.z)));
+                    if (!any) { box = new Bounds(corner, Vector3.zero); any = true; }
+                    else box.Encapsulate(corner);
+                }
+            }
+            if (!any) box = new Bounds(Vector3.zero, Vector3.one);
+
+            float roofHeight = box.max.y;
+            float barWidth = box.size.x * 0.34f;
+            float barSpan = box.size.x * 0.20f;
+            float barDepth = box.size.z * 0.09f;
+            float barThick = Mathf.Max(box.size.y * 0.07f, 0.02f);
             lights._left = material(Red);
             lights._right = material(Blue);
 
@@ -43,20 +82,22 @@ namespace Cipher.Game
             lights._left = new Material(lights._left);
             lights._right = new Material(lights._right);
 
-            lights.Bar("LightBarL", car.transform, new Vector3(-0.30f, roofHeight, 0f), lights._left);
-            lights.Bar("LightBarR", car.transform, new Vector3(0.30f, roofHeight, 0f), lights._right);
+            // Sized from the car as well: a fixed-size bar is a bar that fits exactly one model.
+            var size = new Vector3(barWidth, barThick, barDepth);
+            lights.Bar("LightBarL", car.transform, new Vector3(-barSpan, roofHeight + barThick * 0.5f, box.center.z), lights._left, size);
+            lights.Bar("LightBarR", car.transform, new Vector3(barSpan, roofHeight + barThick * 0.5f, box.center.z), lights._right, size);
             lights._phase = Random.value * lights.Period;   // no two cars blink together
             return lights;
         }
 
-        private void Bar(string name, Transform parent, Vector3 localPosition, Material mat)
+        private void Bar(string name, Transform parent, Vector3 localPosition, Material mat, Vector3 size)
         {
             var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
             go.name = name;
             Destroy(go.GetComponent<Collider>());
             go.transform.SetParent(parent, false);
             go.transform.localPosition = localPosition;
-            go.transform.localScale = new Vector3(0.55f, 0.16f, 0.34f);
+            go.transform.localScale = size;
             go.GetComponent<Renderer>().sharedMaterial = mat;
         }
 

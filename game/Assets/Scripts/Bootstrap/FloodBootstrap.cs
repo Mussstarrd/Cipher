@@ -1123,6 +1123,11 @@ namespace Cipher.Game
                 bool waiting = _match.AwaitingStart;
                 if (!waiting) _matchSeconds += TickDt;
 
+                // The swarm needs to know where the player is before it steps, because a person
+                // within reach outranks whatever errand a body spawned with. An INPUT to the tick,
+                // like dt, so determinism is unaffected.
+                _world.SetHero(_hero.Position, !_hero.IsDown);
+
                 int breached = _world.ReachedCount - _lastReached;
                 int toSpawn = _match.Tick(TickDt, _world.AliveCount, breached);
                 _lastReached = _world.ReachedCount;
@@ -1947,7 +1952,7 @@ namespace Cipher.Game
             // level lit by flat overcast noon, which makes it a landmark as well as a detail.
             dresser.OnPlaced = (name, go) =>
             {
-                if (name == "Cop") EmergencyLights.Attach(go, roofHeight: 1.55f, PropMaterial);
+                if (name == "Cop") EmergencyLights.Attach(go, PropMaterial);
             };
 
             // Keep the spawn lane, the objective and the hero's ground clear, or the level dresses
@@ -2869,7 +2874,13 @@ namespace Cipher.Game
             else
             {
                 Vector3 focus = _buildMode ? new Vector3(_build.CursorX + 0.5f, 0f, _build.CursorY + 0.5f) : ToWorld(_hero.Position, 0f);
-                targetPos = focus + new Vector3(0f, 34f, -14f);
+                // Height follows the MAP. A fixed 34 units framed the old 64x48 arena and showed a
+                // quarter of a 128x96 one, so the build camera got more useless the bigger the
+                // position -- exactly backwards, since a bigger position is where you need to see
+                // the whole shape of what you are building.
+                float span = Mathf.Max(GridW, GridH);
+                float lift = Mathf.Clamp(span * 0.62f, 26f, 90f);
+                targetPos = focus + new Vector3(0f, lift, -lift * 0.42f);
                 targetRot = Quaternion.Euler(68f, 0f, 0f);
             }
 
