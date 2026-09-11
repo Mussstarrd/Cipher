@@ -259,33 +259,55 @@ namespace Cipher.Game.Match
         }
 
         /// <summary>
-        /// Advances the match. Returns how many runners the caller must spawn this tick.
-        /// <paramref name="aliveRunners"/> is the swarm's live count after its step;
-        /// <paramref name="breachedThisTick"/> runners reached the exit this tick.
-        /// </summary>
-        /// <summary>
-        /// Ends the match from outside, because the scenario's objectives were met.
+        /// The scenario's objectives are all met. What that MEANS depends on whether there is a
+        /// line behind you.
         ///
         /// The phase machine here owns spawning, setup and extraction; it does NOT own what winning
         /// this particular mission means, because that is content. Half of Act One is won by a clock
         /// and not by a kill count, and a wave table cannot express that. So the objectives call
         /// this, and clearing the last wave stays as the backstop for a mission that is just waves.
         ///
-        /// Ignored once the match is over: a win cannot overwrite a loss that already happened.
+        /// Finishing the job does NOT end the mission where there is somewhere to fall back to: it
+        /// opens the PACK-UP WINDOW, because ADR-005's whole loop is that leaving is a thing you do
+        /// under a clock, carrying what fits. The first version of this set Phase = Won directly,
+        /// which skipped extraction and the truck entirely -- and on The Gate, where the objective
+        /// asks for exactly the minimum number of waves before extraction unlocks, it made the
+        /// extraction phase unreachable in mission one.
+        ///
+        /// Ignored once the match is over, and ignored during Extraction: the player is already
+        /// leaving and must not have the window pulled out from under them.
         /// </summary>
-        public void WinByObjective()
+        public void CompleteByObjective()
         {
-            if (IsOver) return;
-            Phase = MatchPhase.Won;
+            if (IsOver || Phase == MatchPhase.Extraction) return;
+
+            if (!HasFallbackPosition)
+            {
+                // Nowhere to go. Holding WAS the mission. (Mission 12 is the only one of these.)
+                Phase = MatchPhase.Won;
+                return;
+            }
+
+            LastWaveDeclared = true;
+            Phase = MatchPhase.Extraction;
+            ExtractTimeLeft = _cycle.ExtractSeconds;
         }
 
-        /// <summary>Ends the match from outside, because an objective failed. See WinByObjective.</summary>
+        /// <summary>
+        /// Ends the match from outside, because an objective failed. Unlike completion this applies
+        /// during extraction too: the vault falling while you are packing is still the vault falling.
+        /// </summary>
         public void LoseByObjective()
         {
             if (IsOver) return;
             Phase = MatchPhase.Lost;
         }
 
+        /// <summary>
+        /// Advances the match. Returns how many runners the caller must spawn this tick.
+        /// <paramref name="aliveRunners"/> is the swarm's live count after its step;
+        /// <paramref name="breachedThisTick"/> runners reached the exit this tick.
+        /// </summary>
         public int Tick(float dt, int aliveRunners, int breachedThisTick)
         {
             if (IsOver || dt <= 0f) return 0;

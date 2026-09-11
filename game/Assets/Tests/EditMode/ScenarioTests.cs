@@ -430,52 +430,219 @@ namespace Cipher.Game.Tests
     /// <summary>The seam where a scenario's objectives take over the match's verdict.</summary>
     public sealed class ObjectiveVerdictTests
     {
-        private static Cipher.Game.Match.MatchState NewMatch() =>
+        private static Cipher.Game.Match.MatchState NewMatch(bool hasFallback = true) =>
             new Cipher.Game.Match.MatchState(
                 new[] { new Cipher.Game.Match.WaveDef(10, 5f, 1f) },
                 new Cipher.Game.Match.EconomyConfig(),
-                vaultHp: 5);
+                vaultHp: 5,
+                hasFallbackPosition: hasFallback);
 
         [Test]
-        public void AnObjectiveCanWinTheMatchBeforeTheWaveTableRunsOut()
+        public void CompletingTheObjectivesOpensThePackUpWindow()
         {
+            // ADR-005: finishing the job is not the end of the mission where there is a line behind
+            // you. It is the cue to unbolt what you can carry and go. Setting Won here instead
+            // skipped extraction and the truck entirely.
             var match = NewMatch();
-            Assert.That(match.Phase, Is.EqualTo(Cipher.Game.Match.MatchPhase.Setup));
-            match.WinByObjective();
+            match.CompleteByObjective();
+
+            Assert.That(match.Phase, Is.EqualTo(Cipher.Game.Match.MatchPhase.Extraction));
+            Assert.That(match.ExtractTimeLeft, Is.GreaterThan(0f));
+            Assert.That(match.LastWaveDeclared, Is.True);
+        }
+
+        [Test]
+        public void WithNowhereToFallBackCompletingSimplyWins()
+        {
+            var match = NewMatch(hasFallback: false);
+            match.CompleteByObjective();
             Assert.That(match.Phase, Is.EqualTo(Cipher.Game.Match.MatchPhase.Won));
         }
 
         [Test]
-        public void AWinCannotOverwriteALossThatAlreadyHappened()
+        public void CompletingAgainDuringExtractionDoesNotRestartTheWindow()
+        {
+            var match = NewMatch();
+            match.CompleteByObjective();
+            float first = match.ExtractTimeLeft;
+
+            match.Tick(3f, aliveRunners: 0, breachedThisTick: 0);
+            match.CompleteByObjective();
+
+            Assert.That(match.ExtractTimeLeft, Is.LessThan(first),
+                        "the pack-up clock must keep running; objectives stay complete every tick");
+        }
+
+        [Test]
+        public void AnObjectiveFailureEndsTheMatchEvenMidExtraction()
+        {
+            // The vault falling while you are loading the truck is still the vault falling.
+            var match = NewMatch();
+            match.CompleteByObjective();
+            match.LoseByObjective();
+            Assert.That(match.Phase, Is.EqualTo(Cipher.Game.Match.MatchPhase.Lost));
+        }
+
+        [Test]
+        public void AnOutcomeIsFinal()
         {
             var match = NewMatch();
             match.LoseByObjective();
-            match.WinByObjective();
+            match.CompleteByObjective();
             Assert.That(match.Phase, Is.EqualTo(Cipher.Game.Match.MatchPhase.Lost),
-                        "an outcome is final; a later objective completing must not rewrite it");
+                        "a later completion must not rewrite a loss");
         }
 
         [Test]
-        public void TheVerdictIsIgnoredOnceTheMatchIsOver()
+        public void TheShippedGateMissionReachesItsPackUpWindow()
         {
-            var match = NewMatch();
-            match.WinByObjective();
-            match.LoseByObjective();
-            Assert.That(match.Phase, Is.EqualTo(Cipher.Game.Match.MatchPhase.Won));
-        }
-
-        [Test]
-        public void TheShippedGateMissionIsWonBeforeItsLastWave()
-        {
-            // The gate asks for two waves out of five. If the objective did not shorten the match,
-            // the mission would be five waves long and the objective would be decoration.
+            // The Gate asks for two of its five waves. If completion ended the match outright, and
+            // MinWavesBeforeExtract is also two, the extraction phase would be unreachable in
+            // mission one -- the exact bug this pair of changes exists to close.
             var def = ScenarioReader.Read(
                 File.ReadAllText(Path.Combine("Assets", "Resources", "Scenarios", "act1-01-the-gate.json")));
             var set = ObjectiveFactory.CreateSet(def.Objectives);
+            var match = new Cipher.Game.Match.MatchState(
+                def.ToWaveTable(), def.Economy, def.VaultHp);
 
             set.Tick(new ObjectiveContext(0f, 1, 2, 0, def.VaultHp, def.VaultHp), 1f);
             Assert.That(set.IsComplete, Is.True);
-            Assert.That(def.Waves.Count, Is.GreaterThan(2));
+
+            match.CompleteByObjective();
+            Assert.That(match.Phase, Is.EqualTo(Cipher.Game.Match.MatchPhase.Extraction));
+            Assert.That(def.Waves.Count, Is.GreaterThan(2), "the objective must shorten the match");
+        }
+    }
+
+    /// <summary>
+    /// Inputs that must fail as a ScenarioException rather than as a crash, a hang, or silence.
+    /// </summary>
+    public sealed class ScenarioHardeningTests
+    {
+        [Test]
+        public void DeeplyNestedInputIsAParseErrorRatherThanAStackOverflow()
+        {
+            // A StackOverflowException cannot be caught in .NET; it takes the process with it. This
+            // is the one input class that could defeat "a bad file is always a parse error".
+            string bomb = new string('[', 50000);
+            Assert.Throws<ScenarioException>(() => JsonValue.Parse(bomb));
+        }
+
+        [TestCase("+5")]
+        [TestCase(".5")]
+        [TestCase("5.")]
+        [TestCase("01")]
+        [TestCase("-")]
+        [TestCase("1e")]
+        [TestCase("1e+")]
+        public void MalformedNumbersAreRejected(string literal)
+        {
+            Assert.Throws<ScenarioException>(() => JsonValue.Parse("{\"n\": " + literal + "}"),
+                                             $"'{literal}' is not JSON and must not be accepted");
+        }
+
+        [Test]
+        public void AnOverflowingNumberIsRejectedRatherThanBecomingInfinity()
+        {
+            // double.TryParse returns true on overflow, so 1e999 used to load as +Infinity and flow
+            // into a spawn rate.
+            Assert.Throws<ScenarioException>(() => JsonValue.Parse("{\"n\": 1e999}"));
+        }
+
+        [Test]
+        public void UnicodeEscapesTakeExactlyFourHexDigits()
+        {
+            // NumberStyles.HexNumber allows surrounding whitespace, so "\u 41 " read as "A".
+            Assert.Throws<ScenarioException>(() => JsonValue.Parse("{\"s\": \"\\u 41 \"}"));
+            Assert.That(JsonValue.Parse("{\"s\": \"\\u0041\"}").Get("s").AsString(), Is.EqualTo("A"));
+        }
+
+        [Test]
+        public void ARawNewlineInAStringIsRejected()
+        {
+            Assert.Throws<ScenarioException>(() => JsonValue.Parse("{\"s\": \"a\nb\"}"));
+        }
+    }
+
+    /// <summary>
+    /// Cross-field validation: the scenarios that LOAD and then play wrong, which is the expensive
+    /// kind of broken.
+    /// </summary>
+    public sealed class ScenarioValidationTests
+    {
+        private const string Base = @"{
+            ""schema"": 1, ""id"": ""t"", ""displayName"": ""T"",
+            ""map"": { ""width"": 32, ""height"": 32, ""walls"": [] },
+            ""heroSpawn"": { ""x"": 30, ""y"": 16 },
+            ""spawnCells"": [ { ""x"": 1, ""y"": 16 } ],
+            ""vault"": { ""x"": 31, ""y"": 16, ""hp"": 10 },
+            ""waves"": [ { ""setupSeconds"": 10, ""count"": 20, ""spawnPerSecond"": 4 } ],
+            ""objectives"": [ { ""type"": ""ClearWaves"", ""count"": 1 } ]
+        }";
+
+        [Test]
+        public void AnObjectiveAskingForMoreWavesThanExistIsRejected()
+        {
+            // Left unchecked, MatchState wins when the waves run out while the HUD still shows the
+            // objective unfinished: the verdict and the display disagree and neither looks wrong.
+            var ex = Assert.Throws<ScenarioException>(
+                () => ScenarioReader.Read(Base.Replace("\"count\": 1", "\"count\": 7")));
+            Assert.That(ex!.Message, Does.Contain("never complete"));
+        }
+
+        [Test]
+        public void AGateWalledOffFromTheVaultIsRejected()
+        {
+            string json = Base.Replace("\"walls\": []",
+                "\"walls\": [ { \"rect\": [10, 0, 1, 32] } ]");
+            var ex = Assert.Throws<ScenarioException>(() => ScenarioReader.Read(json));
+            Assert.That(ex!.Message, Does.Contain("no route"));
+        }
+
+        [Test]
+        public void AWallAcrossTheMapWithAGapIsFine()
+        {
+            string json = Base.Replace("\"walls\": []",
+                "\"walls\": [ { \"rect\": [10, 0, 1, 14] }, { \"rect\": [10, 18, 1, 14] } ]");
+            Assert.DoesNotThrow(() => ScenarioReader.Read(json));
+        }
+
+        [Test]
+        public void SpawningOrDefendingInsideAWallIsRejected()
+        {
+            var ex = Assert.Throws<ScenarioException>(() => ScenarioReader.Read(
+                Base.Replace("\"walls\": []", "\"walls\": [ { \"rect\": [1, 16, 1, 1] } ]")));
+            Assert.That(ex!.Message, Does.Contain("inside a wall"));
+
+            var ex2 = Assert.Throws<ScenarioException>(() => ScenarioReader.Read(
+                Base.Replace("\"walls\": []", "\"walls\": [ { \"rect\": [30, 16, 1, 1] } ]")));
+            Assert.That(ex2!.Message, Does.Contain("hero"));
+        }
+
+        [Test]
+        public void ADuplicatedGateIsRejected()
+        {
+            var ex = Assert.Throws<ScenarioException>(() => ScenarioReader.Read(
+                Base.Replace("[ { \"x\": 1, \"y\": 16 } ]",
+                             "[ { \"x\": 1, \"y\": 16 }, { \"x\": 1, \"y\": 16 } ]")));
+            Assert.That(ex!.Message, Does.Contain("twice"));
+        }
+
+        [Test]
+        public void AbsurdMapSizesAreRejectedAtBothEnds()
+        {
+            Assert.Throws<ScenarioException>(() => ScenarioReader.Read(
+                Base.Replace("\"width\": 32, \"height\": 32", "\"width\": 10, \"height\": 10")));
+            Assert.Throws<ScenarioException>(() => ScenarioReader.Read(
+                Base.Replace("\"width\": 32, \"height\": 32", "\"width\": 100000, \"height\": 100000")));
+        }
+
+        [Test]
+        public void ASeedTooLargeToSurviveTheFileIsRejected()
+        {
+            var ex = Assert.Throws<ScenarioException>(() => ScenarioReader.Read(
+                Base.Replace("\"waves\"", "\"director\": { \"seed\": 1e300 }, \"waves\"")));
+            Assert.That(ex!.Message, Does.Contain("seed"));
         }
     }
 }

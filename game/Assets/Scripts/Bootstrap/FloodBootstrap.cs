@@ -201,6 +201,14 @@ namespace Cipher.Game
 
         private void Awake()
         {
+            // The scenario FIRST. BuildSceneObjects sizes the minimap texture, the ground plane and
+            // the vault from GridW/GridH/GoalX/GoalY, once, for the life of the process. Loading the
+            // mission after it meant those were built from the 64x48 defaults: the first scenario of
+            // any other size would have indexed a 64x48 minimap buffer with 96x64 coordinates every
+            // fifth of a second, and drawn the vault object somewhere the flow field was not aiming.
+            _scenario = LoadScenario(StartingScenarioId);
+            ApplyScenarioShape(_scenario);
+
             BuildSceneObjects();
             NewMatch();
             ScreenshotHarness.InstallIfRequested(gameObject);
@@ -245,9 +253,7 @@ namespace Cipher.Game
 
         private void NewMatch()
         {
-            _scenario = LoadScenario(StartingScenarioId);
-            ApplyScenarioShape(_scenario);
-
+            // Already loaded in Awake, before BuildSceneObjects sized anything by it.
             _map = new GridMap(GridW, GridH);
             foreach (var w in _scenario.Map.Walls)
                 for (int x = w.X; x < w.X + w.Width; x++)
@@ -264,13 +270,18 @@ namespace Cipher.Game
                                     openingIsUntimed: true);
             _objectives = ObjectiveFactory.CreateSet(_scenario.Objectives);
             _focus.Reset();
-            _build = new BuildModel(_map, _world, _turrets, _match, _eco, SpawnCells, GoalX, GoalY, GridW - 12, GridH / 2);
+            _build = new BuildModel(_map, _world, _turrets, _match, _eco, SpawnCells, GoalX, GoalY,
+                                    Mathf.Clamp(GridW - 12, 1, GridW - 2), GridH / 2);
             _world.Structures = _turrets.AsStructureQuery();
             ulong seed = (ulong)System.DateTime.UtcNow.Ticks;
             // The director is seeded from the scenario so a mission plays the same way twice, which
             // is what makes a balance note about wave three mean anything.
             _director = new SpawnDirector(_scenario.Director, _scenario.DirectorSeed);
-            _pickups = new PickupSystem(_map, seed ^ 0xC1FE, minX: 34, maxX: GridW - 4);
+            // Derived from the map, not from the 64-wide graybox: a narrower scenario used to hand
+            // PickupSystem a minX of 34 and GridMap.CellIndex throws on out-of-bounds.
+            _pickups = new PickupSystem(_map, seed ^ 0xC1FE,
+                                        minX: Mathf.Clamp(GridW / 2, 1, GridW - 2),
+                                        maxX: Mathf.Max(2, GridW - 4));
 
             // Carry the permanent tree across restarts; gear and cards are per-position.
             var skills = _loadout?.Skills ?? new SkillState();
@@ -674,7 +685,7 @@ namespace Cipher.Game
                                          _world.AliveCount, _match.VaultHp, _match.VaultMaxHp),
                     TickDt);
                 if (_objectives.IsFailed) _match.LoseByObjective();
-                else if (_objectives.IsComplete) _match.WinByObjective();
+                else if (_objectives.IsComplete) _match.CompleteByObjective();
                 if (toSpawn > 0)
                 {
                     bool sealedIn = false;

@@ -16,6 +16,12 @@ namespace Cipher.Game.Scenarios
     /// </summary>
     public static class ScenarioReader
     {
+        /// <summary>Below this the build cursor, the pickup band and the camera have nowhere to go.</summary>
+        public const int MinMapSize = 24;
+        /// <summary>Above this the grid, the flow field and the minimap texture stop being sane.</summary>
+        public const int MaxMapSize = 512;
+
+
         public static ScenarioDef Read(string json)
         {
             var root = JsonValue.Parse(json);
@@ -68,7 +74,68 @@ namespace Cipher.Game.Scenarios
             if (root.Opt("rewards") is { } rewards) ReadRewards(rewards, def);
             if (root.Opt("medals") is { } medals) ReadMedals(medals, def);
 
+            Validate(def);
             return def;
+        }
+
+        /// <summary>
+        /// Cross-field checks, once everything is read.
+        ///
+        /// These are the ones a per-field check cannot make, and they are the ones that produce a
+        /// mission that LOADS and then plays wrong, which is the expensive failure. A ClearWaves
+        /// count larger than the wave table is the worst of them: the match ends in a win when the
+        /// waves run out while the HUD still shows the objective unfinished, so the game's verdict
+        /// and the game's own display disagree and neither is obviously the bug.
+        /// </summary>
+        private static void Validate(ScenarioDef def)
+        {
+            foreach (var o in def.Objectives)
+            {
+                if (o.Type != "ClearWaves") continue;
+                if (o.Count > def.Waves.Count)
+                    throw new ScenarioException(
+                        $"$.objectives: ClearWaves asks for {o.Count} waves but only {def.Waves.Count} " +
+                        "are defined, so the objective can never complete");
+            }
+
+            var occupied = new HashSet<(int, int)>();
+            foreach (var w in def.Map.Walls)
+                for (int x = w.X; x < w.X + w.Width; x++)
+                    for (int y = w.Y; y < w.Y + w.Height; y++)
+                        occupied.Add((x, y));
+
+            if (occupied.Contains((def.HeroSpawn.X, def.HeroSpawn.Y)))
+                throw new ScenarioException("$.heroSpawn: the hero would start inside a wall");
+            if (occupied.Contains((def.Vault.X, def.Vault.Y)))
+                throw new ScenarioException("$.vault: the vault is inside a wall, so nothing can reach it");
+
+            var seen = new HashSet<(int, int)>();
+            foreach (var sc in def.SpawnCells)
+            {
+                if (occupied.Contains((sc.X, sc.Y)))
+                    throw new ScenarioException(
+                        $"$.spawnCells: the gate at ({sc.X},{sc.Y}) is inside a wall");
+                if (!seen.Add((sc.X, sc.Y)))
+                    throw new ScenarioException(
+                        $"$.spawnCells: ({sc.X},{sc.Y}) is listed twice; each gate spawns on its own");
+            }
+
+            // The map the sim will build, and the same flow field the game uses. A gate with no
+            // route to the vault is a mission where a whole wave stands still, and the cheapest
+            // possible place to find that out is here.
+            var probe = new GridMap(def.Map.Width, def.Map.Height);
+            foreach (var w in def.Map.Walls)
+                for (int x = w.X; x < w.X + w.Width; x++)
+                    for (int y = w.Y; y < w.Y + w.Height; y++)
+                        probe.SetWall(x, y, w.Kind, GridMap.DefaultWallHp);
+
+            var field = new FlowField(probe);
+            field.Compute(def.Vault.X, def.Vault.Y);
+            foreach (var sc in def.SpawnCells)
+                if (!field.HasPath(sc.X, sc.Y))
+                    throw new ScenarioException(
+                        $"$.spawnCells: no route from the gate at ({sc.X},{sc.Y}) to the vault at " +
+                        $"({def.Vault.X},{def.Vault.Y}); the walls seal it off");
         }
 
         private static void ReadMap(JsonValue map, MapDef into)
@@ -76,8 +143,15 @@ namespace Cipher.Game.Scenarios
             map.RejectUnknownKeys("width", "height", "preset", "walls");
             into.Width = map.Get("width").AsInt();
             into.Height = map.Get("height").AsInt();
-            if (into.Width < 8 || into.Height < 8)
-                throw new ScenarioException($"{map.Path}: a map smaller than 8x8 cannot hold a match");
+            // The lower bound is what the match needs to function; the upper bound is what the
+            // machine can allocate. 100000x100000 passes every per-field check and then dies
+            // allocating the grid.
+            if (into.Width < MinMapSize || into.Height < MinMapSize)
+                throw new ScenarioException(
+                    $"{map.Path}: a map smaller than {MinMapSize}x{MinMapSize} cannot hold a match");
+            if (into.Width > MaxMapSize || into.Height > MaxMapSize)
+                throw new ScenarioException(
+                    $"{map.Path}: {into.Width}x{into.Height} is past the {MaxMapSize}x{MaxMapSize} ceiling");
             into.Preset = map.Opt("preset")?.AsString() ?? "arena";
 
             if (map.Opt("walls") is not { } walls) return;
@@ -185,7 +259,9 @@ namespace Cipher.Game.Scenarios
             if (d.Opt("seed") is { } seed)
             {
                 double raw = seed.AsDouble();
-                if (raw < 0) throw new ScenarioException($"{seed.Path}: a seed cannot be negative");
+                if (raw < 0 || raw > 9007199254740992d)   // 2^53, past which a double is not exact
+                    throw new ScenarioException(
+                        $"{seed.Path}: a seed must be between 0 and 2^53, so it survives the file exactly");
                 def.DirectorSeed = (ulong)raw;
             }
         }

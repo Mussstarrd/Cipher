@@ -138,8 +138,18 @@ namespace Cipher.Game.Scenarios
     /// <summary>A small recursive-descent JSON reader. Strict: no comments, no trailing commas.</summary>
     internal sealed class JsonParser
     {
+        /// <summary>
+        /// How deep nesting may go. This is a real defence, not a tidiness rule: a recursive-descent
+        /// parser with no limit answers a file of fifty thousand open brackets with a
+        /// StackOverflowException, which cannot be caught in .NET and takes the process with it. A
+        /// bad scenario file must always be a ScenarioException. Nothing legitimate nests past a
+        /// handful of levels; the deepest the schema goes is map.walls[].rect[], which is four.
+        /// </summary>
+        private const int MaxDepth = 64;
+
         private readonly string _s;
         private int _i;
+        private int _depth;
 
         internal JsonParser(string s) { _s = s; }
 
@@ -168,14 +178,22 @@ namespace Cipher.Game.Scenarios
             char c = _s[_i];
             switch (c)
             {
-                case '{': return ParseObject();
-                case '[': return ParseArray();
+                case '{': return Nested(ParseObject);
+                case '[': return Nested(ParseArray);
                 case '"': return JsonValue.Str(ParseString());
                 case 't': Expect("true"); return JsonValue.Bool(true);
                 case 'f': Expect("false"); return JsonValue.Bool(false);
                 case 'n': Expect("null"); return JsonValue.Null();
                 default: return JsonValue.Number(ParseNumber());
             }
+        }
+
+        private JsonValue Nested(Func<JsonValue> parse)
+        {
+            if (++_depth > MaxDepth)
+                throw Error($"nested more than {MaxDepth} levels deep");
+            try { return parse(); }
+            finally { _depth--; }
         }
 
         private void Expect(string literal)
@@ -240,6 +258,9 @@ namespace Cipher.Game.Scenarios
                 if (AtEnd) throw Error("unterminated string");
                 char c = _s[_i++];
                 if (c == '"') return sb.ToString();
+                // A raw newline or tab inside a string is nearly always a missing closing quote a
+                // few lines up, and reporting it here points at the actual mistake.
+                if (c < ' ') throw Error("a raw control character in a string (missing a closing quote?)");
                 if (c != '\\') { sb.Append(c); continue; }
 
                 if (AtEnd) throw Error("unterminated escape sequence");
@@ -256,9 +277,15 @@ namespace Cipher.Game.Scenarios
                     case 't': sb.Append('\t'); break;
                     case 'u':
                         if (_i + 4 > _s.Length) throw Error("truncated \\u escape");
-                        if (!ushort.TryParse(_s.Substring(_i, 4), NumberStyles.HexNumber,
-                                             CultureInfo.InvariantCulture, out ushort code))
-                            throw Error("malformed \\u escape");
+                        // NumberStyles.HexNumber allows surrounding whitespace, so "\u 41 " would
+                        // otherwise read as 'A'. Four hex digits, exactly.
+                        ushort code = 0;
+                        for (int h = 0; h < 4; h++)
+                        {
+                            int digit = HexDigit(_s[_i + h]);
+                            if (digit < 0) throw Error("malformed \\u escape");
+                            code = (ushort)((code << 4) | digit);
+                        }
                         sb.Append((char)code);
                         _i += 4;
                         break;
@@ -267,21 +294,61 @@ namespace Cipher.Game.Scenarios
             }
         }
 
+        /// <summary>
+        /// Reads a number against the JSON grammar rather than against what double.TryParse will
+        /// tolerate. TryParse accepts "+5", ".5" and "5." and returns true on overflow, so the
+        /// earlier scan-then-parse version let all of those through and turned 1e999 into a positive
+        /// infinity that then flowed into a spawn rate. A mission file is machine data; it should
+        /// mean one thing.
+        /// </summary>
+        private static int HexDigit(char c)
+        {
+            if (c >= '0' && c <= '9') return c - '0';
+            if (c >= 'a' && c <= 'f') return c - 'a' + 10;
+            if (c >= 'A' && c <= 'F') return c - 'A' + 10;
+            return -1;
+        }
+
         private double ParseNumber()
         {
             int start = _i;
-            if (!AtEnd && (_s[_i] == '-' || _s[_i] == '+')) _i++;
-            while (!AtEnd && (char.IsDigit(_s[_i]) || _s[_i] == '.' || _s[_i] == 'e' || _s[_i] == 'E'
-                              || ((_s[_i] == '-' || _s[_i] == '+') && (_s[_i - 1] == 'e' || _s[_i - 1] == 'E'))))
+
+            if (!AtEnd && _s[_i] == '-') _i++;             // leading '+' is not JSON
+
+            int intDigits = Digits();
+            if (intDigits == 0) throw Error("expected a digit");
+            // JSON forbids leading zeros: 0 is fine, 01 is not.
+            if (intDigits > 1 && _s[start + (_s[start] == '-' ? 1 : 0)] == '0')
+                throw Error("a number may not have a leading zero");
+
+            if (!AtEnd && _s[_i] == '.')
+            {
                 _i++;
+                if (Digits() == 0) throw Error("expected a digit after the decimal point");
+            }
+
+            if (!AtEnd && (_s[_i] == 'e' || _s[_i] == 'E'))
+            {
+                _i++;
+                if (!AtEnd && (_s[_i] == '+' || _s[_i] == '-')) _i++;
+                if (Digits() == 0) throw Error("expected a digit in the exponent");
+            }
 
             string token = _s.Substring(start, _i - start);
-            if (token.Length == 0)
-                throw Error($"unexpected character '{(AtEnd ? ' ' : _s[start])}'");
             // InvariantCulture: a machine reading a mission file must not depend on the player's locale.
             if (!double.TryParse(token, NumberStyles.Float, CultureInfo.InvariantCulture, out double value))
                 throw Error($"'{token}' is not a number");
+            if (double.IsInfinity(value) || double.IsNaN(value))
+                throw Error($"'{token}' is out of range");
             return value;
+        }
+
+        /// <summary>Consumes digits and says how many there were.</summary>
+        private int Digits()
+        {
+            int from = _i;
+            while (!AtEnd && _s[_i] >= '0' && _s[_i] <= '9') _i++;
+            return _i - from;
         }
     }
 }
