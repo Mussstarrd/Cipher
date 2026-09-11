@@ -67,6 +67,19 @@ namespace Cipher.Game
                 }
             drone._rotors = rotors;
 
+            // Corner darkening baked into the colour channel. Worth it even though the drone is
+            // usually overhead, because the face the player looks at is the underside, where the
+            // pod and four arms meet the hull.
+            //
+            // RUN BEFORE THE LAMP EXISTS, on purpose. VertexAo swaps each baked renderer onto an AO
+            // variant of its material, and the lamp's material is a per-drone clone that the strobe
+            // in Fly() writes to every frame. Bake the lamp and its renderer would quietly be
+            // showing a copy nobody updates: the amber light stops blinking and nothing says why.
+            //
+            // No blob shadow either: it flies, and a contact shadow under an aircraft at seven
+            // metres is a lie the sun's own cast shadow already tells honestly.
+            VertexAo.Bake(root, "StrikeDrone");
+
             // The amber underside light. Same colour as the implants, because it is the same network.
             drone._lampMaterial = new Material(material(AmberOff));
             var lamp = Box(root.transform, "Lamp", new Vector3(0f, -0.54f, 0.2f),

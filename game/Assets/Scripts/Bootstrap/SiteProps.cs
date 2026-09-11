@@ -59,6 +59,14 @@ namespace Cipher.Game
                     return;
             }
 
+            // Corner and base darkening, baked into the colour channel now that the boxes exist and
+            // their positions relative to each other are known. Cached by kind, so twelve jersey
+            // barriers cost one bake.
+            VertexAo.Bake(pivot.gameObject, kind);
+
+            // And a contact shadow, so the thing sits ON the ground instead of near it.
+            BlobShadows.RegisterProp(pivot.gameObject);
+
             Placed++;
         }
 
