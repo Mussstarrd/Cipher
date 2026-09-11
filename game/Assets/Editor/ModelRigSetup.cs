@@ -7,16 +7,16 @@ using UnityEngine;
 namespace Cipher.Game.Editor
 {
     /// <summary>
-    /// Configures the character FBX rigs so imported clips can actually drive them.
+    /// Turns animation import ON for the character FBXs, so their clips exist as assets at all.
     ///
-    /// The bug this fixes: the models imported with animationType Generic but avatarSetup NoAvatar.
-    /// A generic rig with no avatar cannot be animated by an AnimatorController at all, so every
-    /// character sat in its bind pose looking exactly like a working import that simply had not been
-    /// told to move. Nothing errors; they just stand there in a T-pose.
+    /// That is the only thing this still does, and it is a prerequisite rather than the fix: the
+    /// models import with avatarSetup NoAvatar and no animation, so before this runs there is no
+    /// clip anywhere for <see cref="LegacyClipMaker"/> to copy curves out of.
     ///
-    /// The characters also need the SAME avatar as the shared Animations.fbx, because Quaternius
-    /// ships one clip library for the whole pack rather than clips per character. Copying the avatar
-    /// across is what lets one Walk clip drive all seven.
+    /// The avatar it creates is NOT what makes a civilian walk. The runtime destroys every Animator
+    /// and plays a legacy clip instead (see <see cref="CrowdPrefabBuilder"/>), so re-running this
+    /// will not fix a broken walk cycle. Run it after adding a character to the pack, then rerun
+    /// LegacyClipMaker and CrowdPrefabBuilder.
     ///
     /// Run headless:
     ///   Unity.exe -batchmode -projectPath game -executeMethod Cipher.Game.Editor.ModelRigSetup.Configure -quit
@@ -71,7 +71,7 @@ namespace Cipher.Game.Editor
                 importer.SaveAndReimport();
 
                 done++;
-                Debug.Log($"[RigSetup] {Path.GetFileName(path)}: generic rig, avatar copied");
+                Debug.Log($"[RigSetup] {Path.GetFileName(path)}: generic rig, animation import on");
             }
 
             AssetDatabase.SaveAssets();

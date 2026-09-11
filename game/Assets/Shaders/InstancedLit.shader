@@ -92,10 +92,14 @@ Shader "Exodus/InstancedLit"
                 // Extrude along the SMOOTHED normal where one has been baked. A character mesh splits
                 // vertices at every hard edge and UV seam, so extruding along the shading normal tears
                 // the hull open at each seam and the line reads as blurred and smeared.
+                float3 extrudeOS = input.normalOS;
                 #if defined(_SMOOTH_OUTLINE)
-                    float3 extrudeOS = input.tangentOS.xyz;
-                #else
-                    float3 extrudeOS = input.normalOS;
+                    // Fall back to the shading normal if the tangent channel is empty. The keyword is
+                    // set per material, so one mesh in a shared material that never went through
+                    // SmoothNormals would otherwise normalize a zero vector and blow the hull to NaN,
+                    // which rasterises as nothing at all: the character silently loses its outline.
+                    float3 smoothed = input.tangentOS.xyz;
+                    if (dot(smoothed, smoothed) > 1e-8) extrudeOS = smoothed;
                 #endif
                 float3 normalWS = normalize(TransformObjectToWorldNormal(extrudeOS));
 

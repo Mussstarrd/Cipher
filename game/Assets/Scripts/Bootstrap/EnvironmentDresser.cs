@@ -88,6 +88,168 @@ namespace Cipher.Game
             }
         }
 
+        /// <summary>
+        /// Lays a road along a horizontal corridor.
+        ///
+        /// Everything about the tile is MEASURED, because an imported kit arrives at whatever scale
+        /// and orientation its author used. Two guesses cost real time here. The first took the
+        /// tile's largest horizontal extent as its width, which is its length, so the scale came out
+        /// 1 and the road shipped as a one-cell bar standing proud of the ground like a kerbstone.
+        /// The second assumed the tile lies flat in XZ: this one is authored Z-up, so its footprint
+        /// is in X/Y and it stood on its edge like a fence panel.
+        ///
+        /// So nothing is assumed. The tile is measured, its THINNEST axis is rotated onto Y (that
+        /// axis is the road surface's normal, whichever one it happens to be), its longest remaining
+        /// axis is turned along the corridor, the short one is scaled to the corridor width, and the
+        /// whole thing is sunk so its top face sits a hair above the ground plane rather than as a
+        /// slab on top of it.
+        /// </summary>
+        public void LayRoad(GameObject tile, int centreY, int widthCells, Func<int, int, bool> blocked)
+        {
+            if (tile == null) return;
+
+            var points = CollectMeshCorners(tile);
+            if (points.Count == 0) return;
+
+            // Stand the tile up the right way: the thinnest axis is the surface normal.
+            var raw = BoundsOf(points, Quaternion.identity);
+            Quaternion upright =
+                raw.size.y <= raw.size.x && raw.size.y <= raw.size.z ? Quaternion.identity
+                : raw.size.z <= raw.size.x ? Quaternion.Euler(-90f, 0f, 0f)   // Z-up authoring
+                : Quaternion.Euler(0f, 0f, 90f);                              // X-up authoring
+
+            // Then put its long axis along the corridor, which runs in X.
+            var flat = BoundsOf(points, upright);
+            Quaternion turn = flat.size.x >= flat.size.z
+                ? upright
+                : Quaternion.Euler(0f, 90f, 0f) * upright;
+
+            var laid = BoundsOf(points, turn);
+            float across = laid.size.z;   // kerb to kerb
+            float along = laid.size.x;    // direction of travel
+            if (across <= 1e-4f || along <= 1e-4f) return;
+
+            // Uniform scale, so the surface markings keep their proportions. One tile then covers
+            // `span` cells of road.
+            float scale = widthCells / across;
+            float span = along * scale;
+            if (span < 0.5f) return;
+
+            float lift = SurfaceLift - laid.max.y * scale;
+            var offset = new Vector3(laid.center.x * scale, 0f, laid.center.z * scale);
+
+            // One material per source material for the whole road, not one per tile.
+            var tinted = new Dictionary<Material, Material>();
+
+            for (float x = 0f; x < _map.Width; x += span)
+            {
+                int cell = Mathf.Clamp(Mathf.FloorToInt(x + span * 0.5f), 0, _map.Width - 1);
+                if (blocked(cell, centreY)) continue;
+
+                var go = UnityEngine.Object.Instantiate(tile, _root);
+                go.transform.rotation = turn;
+                go.transform.localScale = tile.transform.localScale * scale;
+                go.transform.position = new Vector3(
+                    x + span * 0.5f - offset.x,
+                    lift,
+                    centreY + 0.5f - offset.z);
+
+                ApplyShared(go, tinted, RoadTint);
+                Placed++;
+            }
+        }
+
+        /// <summary>Wet winter asphalt, darker than the leaf litter either side of it.</summary>
+        private static readonly Color RoadTint = new Color(0.17f, 0.17f, 0.18f);
+
+        /// <summary>How far above the ground plane a flat surface sits. Coplanar faces flicker.</summary>
+        private const float SurfaceLift = 0.012f;
+
+        /// <summary>
+        /// Every mesh corner of a prefab, in the prefab's own space at its own scale.
+        ///
+        /// This instantiates a throwaway copy at the origin rather than doing the matrix arithmetic
+        /// against the asset's transform: an FBX root carries an import scale that the naive
+        /// worldToLocal/localToWorld round trip does not cancel, and the first version of this
+        /// measured a six-metre road tile as two centimetres across.
+        /// </summary>
+        private static List<Vector3> CollectMeshCorners(GameObject prefab)
+        {
+            var points = new List<Vector3>();
+            var probe = UnityEngine.Object.Instantiate(prefab);
+            try
+            {
+                probe.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
+
+                foreach (var filter in probe.GetComponentsInChildren<MeshFilter>())
+                {
+                    var mesh = filter.sharedMesh;
+                    if (mesh == null) continue;
+
+                    var m = filter.transform.localToWorldMatrix;
+                    var c = mesh.bounds.center;
+                    var e = mesh.bounds.extents;
+                    for (int i = 0; i < 8; i++)
+                        points.Add(m.MultiplyPoint3x4(new Vector3(
+                            c.x + ((i & 1) == 0 ? -e.x : e.x),
+                            c.y + ((i & 2) == 0 ? -e.y : e.y),
+                            c.z + ((i & 4) == 0 ? -e.z : e.z))));
+                }
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(probe);
+            }
+            return points;
+        }
+
+        /// <summary>Axis-aligned bounds of a point cloud after <paramref name="rotation"/>.</summary>
+        private static Bounds BoundsOf(List<Vector3> points, Quaternion rotation)
+        {
+            var b = new Bounds(rotation * points[0], Vector3.zero);
+            for (int i = 1; i < points.Count; i++) b.Encapsulate(rotation * points[i]);
+            return b;
+        }
+
+        /// <summary>
+        /// Reskins a prop, sharing one material per distinct source material via
+        /// <paramref name="cache"/>. Without the cache a scattered kit produces a unique Material
+        /// per renderer per instance: hundreds of identical materials, and as many draw calls that
+        /// cannot batch.
+        /// </summary>
+        private void ApplyShared(GameObject go, Dictionary<Material, Material> cache, Color? forceTint)
+        {
+            foreach (var r in go.GetComponentsInChildren<Renderer>())
+            {
+                var mats = r.sharedMaterials;
+                var swapped = new Material[mats.Length];
+                for (int m = 0; m < mats.Length; m++)
+                {
+                    var key = mats[m];
+                    if (key == null || !cache.TryGetValue(key, out var made))
+                    {
+                        made = _reskin(key);
+                        if (forceTint.HasValue)
+                        {
+                            made.color = forceTint.Value;
+                            made.SetColor(BaseColorId, forceTint.Value);
+                            made.mainTexture = null;
+                        }
+                        if (key != null) cache[key] = made;
+                    }
+                    swapped[m] = made;
+                }
+                r.sharedMaterials = swapped;
+            }
+        }
+
+        private void Reskin(GameObject go) => ApplyShared(go, _propMaterials, null);
+
+        private readonly Dictionary<Material, Material> _propMaterials =
+            new Dictionary<Material, Material>();
+
+        private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
+
         private bool Free(int x, int y, Func<int, int, bool> keepClear)
         {
             if (x < 0 || y < 0 || x >= _map.Width || y >= _map.Height) return false;
@@ -115,14 +277,7 @@ namespace Cipher.Game
             go.transform.rotation = Quaternion.Euler(pitchCorrection, yaw, 0f);
             go.transform.localScale *= Mathf.Lerp(scaleMin, scaleMax, rng.NextFloat());
 
-            foreach (var r in go.GetComponentsInChildren<Renderer>())
-            {
-                var mats = r.sharedMaterials;
-                var swapped = new Material[mats.Length];
-                for (int m = 0; m < mats.Length; m++) swapped[m] = _reskin(mats[m]);
-                r.sharedMaterials = swapped;
-            }
-
+            Reskin(go);
             Placed++;
         }
 

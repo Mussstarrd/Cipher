@@ -60,22 +60,38 @@ namespace Cipher.Game
             Promoted.Clear();
             if (_slots.Count == 0 || world == null) return;
 
-            // Pick the nearest living agents. A partial selection rather than a sort: we only need
-            // the closest Capacity of them and the crowd changes every frame anyway.
+            // Pick the nearest living agents. This is a bounded selection, not a sort: only the
+            // closest _slots.Count of a thousand candidates can ever get a body, so the list never
+            // grows past that and the great majority of agents cost one compare against the current
+            // worst. The obvious version sorted the whole in-range set and threw most of that work
+            // away every frame; the comment above it claimed otherwise, which is how it survived.
             _nearest.Clear();
+            int capacity = _slots.Count;
             float rangeSq = PromoteRange * PromoteRange;
+            var flatCamera = new Vector3(cameraPosition.x, 0f, cameraPosition.z);
+
             for (int id = 0; id < world.Count; id++)
             {
                 if (!world.IsAlive(id)) continue;
                 var p = world.PositionOf(id);
                 var world3 = new Vector3(p.X, 0f, p.Y);
-                float d = (world3 - new Vector3(cameraPosition.x, 0f, cameraPosition.z)).sqrMagnitude;
+                float d = (world3 - flatCamera).sqrMagnitude;
                 if (d > rangeSq) continue;
-                _nearest.Add((d, id, world3));
+                if (_nearest.Count == capacity && d >= _nearest[capacity - 1].dist) continue;
+
+                // Binary search for the insertion point, then insert and drop the worst. The list
+                // stays sorted, so index 0 is always the nearest.
+                int lo = 0, hi = _nearest.Count;
+                while (lo < hi)
+                {
+                    int mid = (lo + hi) >> 1;
+                    if (_nearest[mid].dist <= d) lo = mid + 1; else hi = mid;
+                }
+                if (_nearest.Count == capacity) _nearest.RemoveAt(capacity - 1);
+                _nearest.Insert(lo, (d, id, world3));
             }
 
-            _nearest.Sort(static (a, b) => a.dist.CompareTo(b.dist));
-            int n = Mathf.Min(_slots.Count, _nearest.Count);
+            int n = Mathf.Min(capacity, _nearest.Count);
 
             for (int i = 0; i < n; i++)
             {

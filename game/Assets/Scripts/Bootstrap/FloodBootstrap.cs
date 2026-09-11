@@ -1297,11 +1297,14 @@ namespace Cipher.Game
             var trees = new List<GameObject>();
             var bushes = new List<GameObject>();
             var cars = new List<GameObject>();
+            GameObject? roadTile = null;
             foreach (var go in all)
             {
                 if (go == null) continue;
                 string n = go.name;
-                if (n.StartsWith("Bush")) bushes.Add(go);
+                if (n == "Street_Straight") roadTile = go;
+                else if (n.StartsWith("Street") || n.StartsWith("Sign")) continue;
+                else if (n.StartsWith("Bush")) bushes.Add(go);
                 else if (n.Contains("Tree")) trees.Add(go);
                 else cars.Add(go);
             }
@@ -1311,6 +1314,13 @@ namespace Cipher.Game
 
             // Keep the spawn lane, the objective and the hero's ground clear, or the level dresses
             // itself shut and the horde has nowhere to walk.
+            // Road first so props never land on top of it. Six cells wide: the corridor KeepClear
+            // holds open is seven, so the verge stays walkable on both sides.
+            if (roadTile != null)
+                dresser.LayRoad(roadTile, GridH / 2, 6, (x, y) => _map.KindAt(x, y) != WallKind.None);
+            else
+                Debug.LogWarning("[Env] no Street_Straight in Resources/Environment; no road laid");
+
             dresser.Dress(trees, bushes, cars, KeepClear);
 
             Debug.Log($"[Env] placed {dresser.Placed} props " +

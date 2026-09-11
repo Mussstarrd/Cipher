@@ -140,6 +140,22 @@ dotnet run --project sim/tools/Cipher.Sim.Bench -c Release -- --smoke
     PARENT the animation cannot touch. Never size a character at import time or on its spawn frame.
   - Characters live in slot -> pivot -> model. **The animation overwrites the model's own transform
     every frame**, so all placement goes on the slot.
+- **A RELATIVE `-buildPath` RESOLVES AGAINST THE PROJECT DIRECTORY, NOT YOUR SHELL.** Running
+  `Unity.exe -projectPath game ... -buildPath game/Builds/StandaloneWindows64` from the repo root
+  builds into `game/game/Builds/StandaloneWindows64`, reports success, and leaves whatever stale exe
+  was already at the path you meant. The tell is a screenshot that does not change no matter what you
+  fix. **Always pass an absolute `-buildPath`**; `CiBuild` now resolves and prints the absolute
+  destination in `[Cipher] Building ... -> <path>`, so check that line against where you run the exe.
+- **MEASURE AN IMPORTED PREFAB BY INSTANTIATING IT, NOT BY MATRIX ARITHMETIC.** An FBX root carries
+  an import scale that a naive `worldToLocalMatrix * localToWorldMatrix` round trip on the ASSET does
+  not cancel: a six-metre road tile measured as two centimetres. Instantiate a throwaway copy at the
+  origin, read `MeshFilter.sharedMesh.bounds` through `localToWorldMatrix`, destroy it. (Renderer
+  bounds are still useless on a fresh instance — that is a separate trap, see FitToHeight.)
+- **KIT PIECES ARRIVE IN ARBITRARY ORIENTATIONS AND YOU CANNOT ASSUME XZ IS THE FLOOR.** The dead
+  trees import pitched -90; `Street_Straight` is authored **Z-up**, so a road laid flat in XZ stood on
+  its edge like a fence panel. `EnvironmentDresser.LayRoad` now rotates the THINNEST measured axis
+  onto Y and the longest remaining one along the corridor, which is orientation-agnostic. Do that
+  rather than hard-coding a correction per model.
 - **OUTLINES NEED SMOOTHED NORMALS.** An inverted hull extruded along shading normals tears open at
   every hard edge and UV seam, which reads as blur and smear. `SmoothNormals` averages normals by
   position into the tangent channel and the shader extrudes along that under `_SMOOTH_OUTLINE`. The

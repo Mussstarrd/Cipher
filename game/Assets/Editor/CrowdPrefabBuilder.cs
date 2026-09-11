@@ -1,21 +1,29 @@
 #nullable enable
 using System.IO;
-using System.Linq;
 using UnityEditor;
-using UnityEditor.Animations;
 using UnityEngine;
 
 namespace Cipher.Game.Editor
 {
     /// <summary>
-    /// Builds a ready-to-instantiate walking civilian prefab per character.
+    /// Builds a ready-to-instantiate civilian prefab per character: a skinned mesh with smoothed
+    /// normals baked into its tangent channel for the ink outline. That is the whole job.
     ///
-    /// This is the pragmatic path, chosen deliberately over finishing the vertex-animation-texture
-    /// bake first. The VAT bake (see CrowdBaker) is the right technique for a thousand agents and it
-    /// is still the plan, but it is fighting this particular FBX's rig scale, and the thing that
-    /// actually matters right now is seeing real people walk. A plain Animator handles a few hundred
-    /// skinned characters comfortably on this hardware, which is enough for a demo level, and the
-    /// swarm keeps its instanced capsules behind them until the bake lands.
+    /// IT DOES NOT SET UP ANIMATION, and no amount of editing it will make a civilian walk. The
+    /// runtime destroys every Animator on the way in (an Animator suppresses the legacy Animation
+    /// component even while disabled) and plays Resources/Civilians/WalkLegacy.anim through a legacy
+    /// Animation component instead. An AnimatorController used to be built here and looked
+    /// load-bearing; it was not. FloodBootstrap.BuildCivilian deletes it three lines after
+    /// instantiating the prefab, so the whole branch was dead.
+    ///
+    /// The walk cycle therefore lives in exactly two places. To change how a civilian moves, edit
+    /// <see cref="LegacyClipMaker"/> — which builds that clip by copying curves explicitly — or the
+    /// playback in FloodBootstrap.BuildCivilian. CLAUDE.md records the five approaches that failed
+    /// silently before this one, each leaving a bind pose indistinguishable from a working import.
+    ///
+    /// This is a bridge, not the destination: the vertex-animation-texture bake in
+    /// <see cref="CrowdBaker"/> is what eventually makes all thousand agents real. The swarm keeps
+    /// its instanced capsules behind the promoted few until then.
     ///
     /// Run headless:
     ///   Unity.exe -batchmode -projectPath game -executeMethod Cipher.Game.Editor.CrowdPrefabBuilder.BuildAll -quit
@@ -24,27 +32,11 @@ namespace Cipher.Game.Editor
     {
         private const string SourceDir = "Assets/Resources/Characters";
         private const string OutDir = "Assets/Resources/Civilians";
-        private const string ControllerPath = OutDir + "/WalkController.controller";
 
         [MenuItem("Cipher/Crowd/Build Civilian Prefabs")]
         public static void BuildAll()
         {
             Directory.CreateDirectory(OutDir);
-
-            var clip = FindWalkClip();
-            if (clip == null) { Debug.LogError("[Civilians] no Walk clip found"); return; }
-
-            var controller = AnimatorController.CreateAnimatorControllerAtPathWithClip(ControllerPath, clip);
-            if (controller == null) { Debug.LogError("[Civilians] could not create controller"); return; }
-            // Loop the walk. Without this the crowd takes one stride and freezes mid-air.
-            foreach (var layer in controller.layers)
-                foreach (var st in layer.stateMachine.states)
-                    if (st.state.motion is AnimationClip c)
-                    {
-                        var settings = AnimationUtility.GetAnimationClipSettings(c);
-                        settings.loopTime = true;
-                        AnimationUtility.SetAnimationClipSettings(c, settings);
-                    }
 
             int built = 0;
             foreach (var guid in AssetDatabase.FindAssets("t:Model", new[] { SourceDir }))
@@ -72,28 +64,6 @@ namespace Cipher.Game.Editor
                     // seam and the character looks like a smudged pencil sketch.
                     SmoothNormals.ApplyToHierarchy(instance, $"{OutDir}/{name}_smoothmesh.asset");
 
-                    // Unity objects use a "fake null" that ?? does not recognise, so the coalescing
-                    // operator hands back a destroyed component instead of adding a live one.
-                    var animator = instance.GetComponent<Animator>();
-                    if (animator == null) animator = instance.AddComponent<Animator>();
-
-                    // Assign the avatar EXPLICITLY. A generic rig with a null avatar cannot be driven
-                    // by a controller at all: the character sits in its bind pose and nothing errors,
-                    // which is indistinguishable from a working import that was never told to move.
-                    // Runtime diagnostics showed avatar=NULL even after the importer was configured.
-                    var avatar = AssetDatabase.LoadAllAssetsAtPath(path)
-                                              .OfType<Avatar>()
-                                              .FirstOrDefault()
-                                 ?? AssetDatabase.LoadAllAssetsAtPath(SourceDir + "/_Animations.fbx")
-                                                 .OfType<Avatar>()
-                                                 .FirstOrDefault();
-                    if (avatar != null) animator.avatar = avatar;
-                    else Debug.LogWarning($"[Civilians] {name}: no avatar; it will not animate");
-
-                    animator.runtimeAnimatorController = controller;
-                    animator.applyRootMotion = false;   // the simulation moves them, not the clip
-                    animator.cullingMode = AnimatorCullingMode.CullCompletely;
-
                     string outPath = $"{OutDir}/{name}_Civilian.prefab";
                     PrefabUtility.SaveAsPrefabAsset(instance, outPath);
                     built++;
@@ -108,26 +78,6 @@ namespace Cipher.Game.Editor
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
             Debug.Log($"[Civilians] built {built} prefabs");
-        }
-
-        private static AnimationClip? FindWalkClip()
-        {
-            foreach (var guid in AssetDatabase.FindAssets("t:AnimationClip", new[] { SourceDir }))
-            {
-                string path = AssetDatabase.GUIDToAssetPath(guid);
-                var clips = AssetDatabase.LoadAllAssetsAtPath(path)
-                                         .OfType<AnimationClip>()
-                                         .Where(c => !c.name.StartsWith("__preview__"))
-                                         .ToList();
-                var walk = clips.FirstOrDefault(c => c.name.ToLowerInvariant().Contains("walk"));
-                if (walk != null) return walk;
-            }
-            // Fall back to any clip on the shared animation model.
-            var all = AssetDatabase.LoadAllAssetsAtPath(SourceDir + "/_Animations.fbx")
-                                   .OfType<AnimationClip>()
-                                   .Where(c => !c.name.StartsWith("__preview__"))
-                                   .ToList();
-            return all.FirstOrDefault(c => c.name.ToLowerInvariant().Contains("walk")) ?? all.FirstOrDefault();
         }
     }
 }

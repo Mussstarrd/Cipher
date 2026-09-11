@@ -63,7 +63,15 @@ namespace Cipher.Game.Editor
 
         private static void Build(BuildTarget target, BuildTargetGroup group, string fileName)
         {
-            string outDir = ArgAfter("-buildPath") ?? Path.Combine("Builds", target.ToString());
+            // A RELATIVE -buildPath resolves against the PROJECT directory, not the shell's working
+            // directory, because that is what Unity sets as the process cwd. Passing
+            // "game/Builds/StandaloneWindows64" from the repo root therefore silently builds into
+            // game/game/Builds/StandaloneWindows64, and the exe you then run is whatever stale one
+            // was already at the path you expected. That cost an hour of screenshotting a build
+            // from the previous day and concluding a fix had not worked.
+            //
+            // So: resolve it here, and print the absolute path. Callers should pass an absolute one.
+            string outDir = Path.GetFullPath(ArgAfter("-buildPath") ?? Path.Combine("Builds", target.ToString()));
             Directory.CreateDirectory(outDir);
 
             string[] scenes = EditorBuildSettings.scenes.Where(s => s.enabled).Select(s => s.path).ToArray();
