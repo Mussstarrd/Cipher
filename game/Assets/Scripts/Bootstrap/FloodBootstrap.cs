@@ -374,6 +374,9 @@ namespace Cipher.Game
         /// </summary>
         private void ResizeForMap()
         {
+            // Scorch marks and contact shadows belong to the position that earned them.
+            GroundMarkRenderer.Active?.ResetForNewPosition();
+
             if (_minimap == null || _minimap.width != GridW || _minimap.height != GridH)
             {
                 if (_minimap != null) Destroy(_minimap);
@@ -1002,6 +1005,7 @@ namespace Cipher.Game
                 // SMALLER as it is hurt reads as further away, not as nearly dead.
                 float sag = 1f - 0.22f * (1f - hp);
                 props.Root.transform.position = new Vector3(t.X + 0.5f, 0f, t.Y + 0.5f);
+                GroundMarkRenderer.Active?.Queue(props.Root.transform.position, props.GroundRadius);
                 props.Root.transform.localScale =
                     new Vector3(1f + 0.10f * t.Tier, sag * (1f + 0.10f * t.Tier), 1f + 0.10f * t.Tier);
 
@@ -2880,6 +2884,8 @@ namespace Cipher.Game
             foreach (var imp in _impactScratch)
             {
                 _blasts.Add(new Blast { Center = ToWorld(imp.Center, 0.05f), Radius = imp.Radius, Ttl = BlastLife });
+                Decals.Current?.Add(DecalKind.Scorch, ToWorld(imp.Center, 0f), imp.Radius * 0.9f,
+                                    Mathf.Atan2(_hero.StrikeAxis.X, _hero.StrikeAxis.Y) * Mathf.Rad2Deg);
                 _sfx.PlayAt(Sfx.Bomb, ToWorld(imp.Center, 0.5f), 1f, 0.12f);
                 // A bomb shakes you by how close it was, not by whether it was yours.
                 float near = Mathf.Clamp01(1f - Vec2.DistanceSquared(imp.Center, _hero.Position) / (26f * 26f));
@@ -2899,7 +2905,12 @@ namespace Cipher.Game
                     Ttl = TracerLife,
                 });
                 _sfx.Play(Sfx.Shot, 0.75f, 0.08f);
-                if (shot.Killed) _sfx.PlayAt(Sfx.Kill, ToWorld(shot.End, 0.6f), 0.8f, 0.12f);
+                if (shot.Killed)
+                {
+                    _sfx.PlayAt(Sfx.Kill, ToWorld(shot.End, 0.6f), 0.8f, 0.12f);
+                    Decals.Current?.Add(DecalKind.Stain, ToWorld(shot.End, 0f), 0.7f,
+                                        Random.Range(0f, 360f));
+                }
                 else if (shot.Hit) _sfx.Play(Sfx.Hit, 0.5f, 0.15f, minInterval: 0.05f);
                 else if (shot.HitWall)
                 {
@@ -3063,6 +3074,7 @@ namespace Cipher.Game
                 heroRenderer.enabled = _heroBody == null;
 
             _heroT.position = ToWorld(_hero.Position, 0.9f);
+            _heroBlob[0] = ToWorld(_hero.Position, 0f);
             var facing = new Vector3(_hero.Facing.X, 0f, _hero.Facing.Y);
             if (facing.sqrMagnitude > 1e-6f) _heroT.rotation = Quaternion.LookRotation(facing, Vector3.up);
             _barrelT.gameObject.SetActive(!_hero.IsDown && !_buildMode);
@@ -3403,11 +3415,16 @@ namespace Cipher.Game
             Graphics.DrawMeshInstanced(_agentMesh, 0, _agentMaterial, _instanceBuffer, count, _capsuleBlock);
         }
 
+        /// <summary>Where every living body is standing this frame, for the contact shadows.</summary>
+        private readonly List<Vector3> _blobPositions = new List<Vector3>(512);
+        private readonly List<Vector3> _heroBlob = new List<Vector3> { Vector3.zero };
+
         private void DrawAgents()
         {
             _sapperMatrices.Clear();
             _spitterMatrices.Clear();
             _fxMatrices.Clear();
+            _blobPositions.Clear();
             int inBuffer = 0;
             EnsureFlashBuffers(_world.Count);
             float dt = Time.deltaTime;
@@ -3416,6 +3433,9 @@ namespace Cipher.Game
             {
                 if (!_world.IsAlive(id)) continue;
                 Vec2 p = _world.PositionOf(id);
+                // A contact shadow for everyone, promoted body or capsule: it is the thing that
+                // stops a crowd looking like it is hovering a hand's width off the ground.
+                _blobPositions.Add(new Vector3(p.X, 0f, p.Y));
 
                 // Two frames of white when the number goes down. The sim raises no per-agent damage
                 // event, so the renderer remembers the last health it drew and reacts to the drop.
@@ -3454,6 +3474,9 @@ namespace Cipher.Game
             DrawInstancedBatched(_agentMesh, _sapperMaterial, _sapperMatrices);
             DrawInstancedBatched(_agentMesh, _spitterMaterial, _spitterMatrices);
             DrawInstancedBatched(_cubeMesh, _sapperTargetMaterial, _fxMatrices);
+            GroundMarkRenderer.Active?.DrawAgents(_blobPositions, 0.42f);
+            if (_heroBody != null || _heroT != null)
+                GroundMarkRenderer.Active?.DrawAgents(_heroBlob, 0.5f);
 
             // Aid kits: a white case with a red cross, sat on the ground, bobbing so the eye finds it.
             _fxMatrices.Clear();
