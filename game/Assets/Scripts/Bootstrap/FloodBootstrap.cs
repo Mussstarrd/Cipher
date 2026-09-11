@@ -253,6 +253,15 @@ namespace Cipher.Game
         private float _trauma;
         private float _fovCurrent = 60f;
         private Vector3 _camVelocity;
+
+        /// <summary>
+        /// Chase distance multiplier. 1 is the authored shoulder view; wider shows more of the
+        /// position, which matters a great deal now that a map is a whole neighbourhood.
+        /// </summary>
+        private float _zoom = 1f;
+        private float _zoomTarget = 1f;
+        private const float ZoomMin = 0.62f;
+        private const float ZoomMax = 2.1f;
         private bool _snapCamera = true;
 
         private void AddTrauma(float amount) => _trauma = Mathf.Clamp01(_trauma + amount);
@@ -720,30 +729,51 @@ namespace Cipher.Game
         private static readonly Color GroundColour = new Color(0.30f, 0.26f, 0.20f);
         private static readonly Color HazeGrey = new Color(0.58f, 0.61f, 0.65f);
 
+        /// <summary>
+        /// Late afternoon going to dusk, in a Virginia winter. Owner, 2026-09-12: "I think if
+        /// possible maybe we should make it a bit later in the day like dusk."
+        ///
+        /// This is the single biggest lever on how the game looks -- more than any model -- and it
+        /// serves the fiction as well as the picture. ADR-005's scan is coming; a low sun and a long
+        /// shadow say "not much daylight left" without a line of dialogue. ADR-003 asks for half the
+        /// game in daylight, and this is still daylight: it is late, not night.
+        ///
+        /// Three things move together and they have to stay together, or it reads as a colour
+        /// filter rather than a time of day:
+        ///  - the SUN drops to a raking angle and turns warm, so every vertical surface catches an
+        ///    amber edge and shadows get long and blue;
+        ///  - the AMBIENT goes cold, because the fill light at dusk is the sky, not the sun. Warm
+        ///    key against cold fill is what actually makes an evening read;
+        ///  - the SKY gradient steepens and warms at the horizon only.
+        ///
+        /// The haze also thickens, which hides the edge of the play area more cheaply than geometry.
+        /// </summary>
         private void ApplyOvercastWinter()
         {
             var lightGo = new GameObject("Sun");
             var light = lightGo.AddComponent<Light>();
             light.type = LightType.Directional;
-            // Low winter sun, raking from the south-west, so everything casts a long shadow.
-            light.transform.rotation = Quaternion.Euler(26f, -42f, 0f);
-            light.color = new Color(1f, 0.96f, 0.88f);
-            light.intensity = 1.45f;
+            // Very low and raking from the west: long shadows straight across the road corridor.
+            light.transform.rotation = Quaternion.Euler(13f, -58f, 0f);
+            light.color = new Color(1f, 0.80f, 0.57f);
+            light.intensity = 1.30f;
             light.shadows = LightShadows.Soft;
-            light.shadowStrength = 0.72f;
+            light.shadowStrength = 0.80f;
             _sun = light;
 
-            // Trilight ambient reads as an overcast dome: bright sky, dull brown bounce off leaf litter.
+            // Cold fill under a warm key. The ground bounce stays warm because the leaf litter is
+            // catching what is left of the sun.
             RenderSettings.ambientMode = AmbientMode.Trilight;
-            RenderSettings.ambientSkyColor = SkyGrey;
-            RenderSettings.ambientEquatorColor = new Color(0.44f, 0.45f, 0.46f);
-            RenderSettings.ambientGroundColor = new Color(0.26f, 0.22f, 0.18f);
+            RenderSettings.ambientSkyColor = new Color(0.30f, 0.36f, 0.50f);
+            RenderSettings.ambientEquatorColor = new Color(0.38f, 0.36f, 0.40f);
+            RenderSettings.ambientGroundColor = new Color(0.24f, 0.18f, 0.14f);
 
-            // Haze is what sells distance and hides the edge of the play area.
+            // Haze is what sells distance and hides the edge of the play area. Warmer and thicker
+            // than the overcast noon it replaces, because low sun means a lot of air to look through.
             RenderSettings.fog = true;
             RenderSettings.fogMode = FogMode.ExponentialSquared;
-            RenderSettings.fogColor = HazeGrey;
-            RenderSettings.fogDensity = 0.011f;
+            RenderSettings.fogColor = DuskHaze;
+            RenderSettings.fogDensity = 0.0135f;
 
             // A banded procedural sky rather than a flat clear colour. A smooth or empty sky over
             // cel-shaded ground is the fastest way to make stylised art look unfinished, because the
@@ -752,11 +782,11 @@ namespace Cipher.Game
             if (skyShader != null)
             {
                 var sky = new Material(skyShader);
-                sky.SetColor("_SkyTop", new Color(0.40f, 0.47f, 0.57f));
-                sky.SetColor("_SkyHorizon", new Color(0.76f, 0.78f, 0.80f));
-                sky.SetColor("_CloudLight", new Color(0.87f, 0.88f, 0.89f));
-                sky.SetColor("_CloudDark", new Color(0.56f, 0.59f, 0.65f));
-                sky.SetColor("_GroundHaze", HazeGrey);
+                sky.SetColor("_SkyTop", new Color(0.17f, 0.21f, 0.34f));
+                sky.SetColor("_SkyHorizon", new Color(0.86f, 0.61f, 0.40f));
+                sky.SetColor("_CloudLight", new Color(0.93f, 0.72f, 0.55f));
+                sky.SetColor("_CloudDark", new Color(0.40f, 0.36f, 0.46f));
+                sky.SetColor("_GroundHaze", DuskHaze);
                 RenderSettings.skybox = sky;
                 RenderSettings.ambientMode = AmbientMode.Trilight;
 
@@ -766,9 +796,12 @@ namespace Cipher.Game
             {
                 Debug.LogWarning("[Sky] Exodus/ComicSky not found; falling back to a flat clear");
                 _camera.clearFlags = CameraClearFlags.SolidColor;
-                _camera.backgroundColor = HazeGrey;
+                _camera.backgroundColor = DuskHaze;
             }
         }
+
+        /// <summary>The colour distance dissolves into at dusk. Warm, because the sun is on the deck.</summary>
+        private static readonly Color DuskHaze = new Color(0.62f, 0.52f, 0.47f);
 
         private Light? _sun;
 
@@ -3095,6 +3128,21 @@ namespace Cipher.Game
             _camYaw += yawDelta;
             _camPitch = Mathf.Clamp(_camPitch + pitchDelta, PitchMin, PitchMax);
 
+            // Zoom: shoulder buttons on the pad, wheel on the mouse. LB is the build wheel and is
+            // HELD, so zoom takes the triggers' neighbours only on a tap -- reading `isPressed`
+            // here would fight the wheel every time the player opened it.
+            float zoomStep = 0f;
+            if (pad != null)
+            {
+                if (pad.rightShoulder.wasPressedThisFrame) zoomStep += 1f;
+                if (pad.leftShoulder.wasPressedThisFrame && !_buildMode) zoomStep -= 0f;   // LB is the wheel
+                if (pad.dpad.left.wasPressedThisFrame) zoomStep -= 1f;
+            }
+            if (mouse != null) zoomStep -= mouse.scroll.ReadValue().y * 0.006f;
+            if (Mathf.Abs(zoomStep) > 1e-4f)
+                _zoomTarget = Mathf.Clamp(_zoomTarget + zoomStep * 0.22f, ZoomMin, ZoomMax);
+            _zoom = Mathf.Lerp(_zoom, _zoomTarget, 1f - Mathf.Exp(-9f * dt));
+
             Vector3 camFwd = CameraForward();
             Vector3 camRight = new Vector3(camFwd.z, 0f, -camFwd.x);
             _hero.Aim(new Vec2(camFwd.x, camFwd.z));
@@ -3118,7 +3166,8 @@ namespace Cipher.Game
             }
 
             bool fire = (pad != null && pad.rightTrigger.isPressed) || (mouse != null && mouse.leftButton.isPressed);
-            if (fire && _hero.TryFire(_world, Random.Range(-2.5f, 2.5f), out ShotResult shot))
+            if (!fire) _heat = Mathf.Max(0f, _heat - dt * 1.8f);
+            if (fire && _hero.TryFire(_world, NextSpread(), out ShotResult shot))
             {
                 NoteHeroShot();
                 AddTrauma(0.05f);
@@ -3151,6 +3200,41 @@ namespace Cipher.Game
                 else _sfx.Play(Sfx.Refuse, 0.5f, 0f, minInterval: 0.3f);
             }
         }
+
+        /// <summary>
+        /// The spread on the next shot, in degrees.
+        ///
+        /// Owner: "I don't like how my aimstream jumps all over the place wherever I'm aiming, it
+        /// should be zeroed in fairly close to that, it's going too far out."
+        ///
+        /// It was `Random.Range(-2.5f, 2.5f)` -- a flat distribution, so a shot was as likely to
+        /// land at the very edge of the cone as down the middle, and successive shots hopped from
+        /// one edge to the other. That reads as a weapon that cannot be aimed rather than as a
+        /// weapon with spread. Two changes:
+        ///
+        ///  - the cone is TIGHTER (a third of what it was), and
+        ///  - the distribution is TRIANGULAR (two samples averaged), so most shots are near the
+        ///    centre and the edge of the cone is rare. Same worst case, completely different feel.
+        ///
+        /// Sustained fire still opens up, because a weapon that never wanders is not a weapon --
+        /// but it opens from a zeroed centre and settles back when the player stops.
+        /// </summary>
+        private float NextSpread()
+        {
+            const float Base = 0.85f;      // degrees, either side, when the first round leaves
+            const float Sustained = 1.9f;  // where it settles while the trigger is held
+
+            _heat = Mathf.Min(1f, _heat + 0.055f);
+            float cone = Mathf.Lerp(Base, Sustained, _heat);
+
+            // Triangular: the average of two uniform samples. Cheap, and it puts the mass in the
+            // middle where the player is pointing.
+            float u = (Random.value + Random.value) * 0.5f;
+            return (u * 2f - 1f) * cone;
+        }
+
+        /// <summary>How far the barrel has wandered from sustained fire, 0 to 1. Cools when idle.</summary>
+        private float _heat;
 
         /// <summary>Where the camera looks at the ground; falls back to max range along the look axis when looking at the sky.</summary>
         private Vec2 StrikeAimPoint()
@@ -3395,7 +3479,12 @@ namespace Cipher.Game
                 Vector3 fwd = CameraForward();
                 float pr = _camPitch * Mathf.Deg2Rad;
                 Vector3 pivot = heroPos + Vector3.up * ChaseLookHeight;
-                Vector3 offset = -fwd * (ChaseDistance * Mathf.Cos(pr)) + Vector3.up * (ChaseDistance * Mathf.Sin(pr));
+                // Owner: "There should also be a way to zoom in and zoom out my perspective."
+                // The zoom moves the RIG, not the field of view: pulling the camera back shows more
+                // of the map without distorting it, and a chase camera that changes FOV to zoom
+                // makes the world bend every time the player looks around.
+                float dist = ChaseDistance * _zoom;
+                Vector3 offset = -fwd * (dist * Mathf.Cos(pr)) + Vector3.up * (dist * Mathf.Sin(pr));
                 targetPos = pivot + offset;
                 if (targetPos.y < 0.6f) targetPos.y = 0.6f;
                 targetRot = Quaternion.LookRotation(pivot - targetPos, Vector3.up);
