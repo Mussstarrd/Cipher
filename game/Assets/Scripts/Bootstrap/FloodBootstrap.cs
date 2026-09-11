@@ -1499,6 +1499,11 @@ namespace Cipher.Game
 
             dresser.Dress(trees, bushes, cars, KeepClear);
 
+            // Built scenery last: it is authored per position, so it wins over the random scatter.
+            var site = new SiteProps(root, PropMaterial);
+            foreach (var prop in _scenario.Props) site.Build(prop.Kind, prop.X, prop.Y, prop.Yaw);
+            if (site.Placed > 0) Debug.Log($"[Env] {site.Placed} built props");
+
             Debug.Log($"[Env] placed {dresser.Placed} props " +
                       $"({trees.Count} tree models, {bushes.Count} bush, {cars.Count} vehicle)");
         }
@@ -1542,6 +1547,20 @@ namespace Cipher.Game
 
             return false;
         }
+
+        /// <summary>
+        /// One shared material per colour for built scenery. A gate is a few dozen boxes drawing
+        /// from a palette of seven, so caching by colour turns that into seven materials.
+        /// </summary>
+        private Material PropMaterial(Color colour)
+        {
+            if (_propPalette.TryGetValue(colour, out var cached)) return cached;
+            var made = MakeMaterial(colour, instanced: false, ink: InkProp);
+            _propPalette[colour] = made;
+            return made;
+        }
+
+        private readonly Dictionary<Color, Material> _propPalette = new Dictionary<Color, Material>();
 
         /// <summary>Re-materialises an imported prop into the game's comic look.</summary>
         private Material ReskinForComic(Material? source)

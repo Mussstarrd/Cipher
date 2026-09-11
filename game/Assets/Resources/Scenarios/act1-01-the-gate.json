@@ -22,6 +22,24 @@
     ]
   },
 
+  "props": [
+    { "kind": "Pillar",        "x": 16.5, "y": 5.4 },
+    { "kind": "Pillar",        "x": 16.5, "y": 12.6 },
+    { "kind": "Guardhouse",    "x": 19.0, "y": 14.5, "yaw": 200 },
+    { "kind": "BoomBarrier",   "x": 17.4, "y": 6.2,  "yaw": 90 },
+    { "kind": "JerseyBarrier", "x": 19.5, "y": 8.0,  "yaw": 90 },
+    { "kind": "JerseyBarrier", "x": 19.5, "y": 10.4, "yaw": 90 },
+
+    { "kind": "Pillar",        "x": 32.5, "y": 34.4 },
+    { "kind": "Pillar",        "x": 32.5, "y": 41.6 },
+    { "kind": "JerseyBarrier", "x": 35.0, "y": 37.0, "yaw": 90 },
+
+    { "kind": "Pillar",        "x": 48.5, "y": 5.4 },
+    { "kind": "Pillar",        "x": 48.5, "y": 12.6 },
+    { "kind": "Guardhouse",    "x": 51.5, "y": 10.5, "yaw": 160 },
+    { "kind": "BoomBarrier",   "x": 49.4, "y": 12.0, "yaw": 90 }
+  ],
+
   "heroSpawn": { "x": 56, "y": 24 },
   "spawnCells": [
     { "x": 1, "y": 24, "gate": "county-road" }

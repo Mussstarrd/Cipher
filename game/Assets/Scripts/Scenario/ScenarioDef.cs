@@ -94,6 +94,13 @@ namespace Cipher.Game.Scenarios
         /// </summary>
         public List<ActorDef> Actors { get; } = new List<ActorDef>();
 
+        /// <summary>
+        /// Built scenery: gate pillars, a guardhouse, a boom barrier. Decoration only -- nothing
+        /// here blocks pathing or takes damage, because the walls own what is solid and a prop that
+        /// quietly changed a route would break the build preview's covenant.
+        /// </summary>
+        public List<PropDef> Props { get; } = new List<PropDef>();
+
         public EconomyConfig Economy { get; set; } = new EconomyConfig();
         public DirectorConfig Director { get; set; } = new DirectorConfig();
         /// <summary>Seed for this mission's spawn director. Same seed, same match.</summary>
@@ -126,6 +133,15 @@ namespace Cipher.Game.Scenarios
         public int Count { get; set; } = 100;
         public float SpawnPerSecond { get; set; } = 8f;
         public Dictionary<string, float> Mix { get; } = new Dictionary<string, float>();
+    }
+
+    /// <summary>One piece of built scenery. Position is in cells; yaw is degrees.</summary>
+    public sealed class PropDef
+    {
+        public string Kind { get; set; } = "";
+        public float X { get; set; }
+        public float Y { get; set; }
+        public float Yaw { get; set; }
     }
 
     public enum ActorKind { Structure, Process, Crew }

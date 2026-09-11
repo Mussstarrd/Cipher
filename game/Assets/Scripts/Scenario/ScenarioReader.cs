@@ -27,7 +27,7 @@ namespace Cipher.Game.Scenarios
             var root = JsonValue.Parse(json);
             root.RejectUnknownKeys(
                 "schema", "id", "displayName", "tier", "brief", "next", "lastStand", "map", "heroSpawn", "spawnCells",
-                "vault", "actors", "economy", "director", "waves", "safeZoneAfterWaves",
+                "vault", "actors", "props", "economy", "director", "waves", "safeZoneAfterWaves",
                 "objectives", "rewards", "medals");
 
             var def = new ScenarioDef();
@@ -69,6 +69,7 @@ namespace Cipher.Game.Scenarios
             if (def.VaultHp < 1) throw new ScenarioException("$.vault.hp: must be at least 1");
 
             if (root.Opt("actors") is { } actors) ReadActors(actors, def);
+            if (root.Opt("props") is { } props) ReadProps(props, def);
             if (root.Opt("economy") is { } economy) ReadEconomy(economy, def);
             if (root.Opt("director") is { } director) ReadDirector(director, def);
 
@@ -223,6 +224,33 @@ namespace Cipher.Game.Scenarios
                     DurationSeconds = a.Opt("durationSeconds")?.AsFloat() ?? 0f,
                     RequiresHeroWithin = a.Opt("requiresHeroWithin")?.AsFloat() ?? 0f,
                 });
+            }
+        }
+
+        /// <summary>
+        /// Built scenery. Kinds are checked against the builder's list here rather than shrugged at
+        /// during the scene build, so a typo is a load error naming the known kinds instead of a
+        /// prop that simply never appears and is never missed.
+        /// </summary>
+        private static readonly string[] PropKinds = { "Pillar", "Guardhouse", "BoomBarrier", "JerseyBarrier" };
+
+        private static void ReadProps(JsonValue props, ScenarioDef def)
+        {
+            foreach (var pr in props.Items)
+            {
+                pr.RejectUnknownKeys("kind", "x", "y", "yaw");
+                string kind = NonEmpty(pr.Get("kind"), "kind");
+                if (System.Array.IndexOf(PropKinds, kind) < 0)
+                    throw new ScenarioException(
+                        $"{pr.Path}.kind: unknown prop '{kind}'. Known: {string.Join(", ", PropKinds)}");
+
+                float x = pr.Get("x").AsFloat();
+                float y = pr.Get("y").AsFloat();
+                if (x < 0f || y < 0f || x > def.Map.Width || y > def.Map.Height)
+                    throw new ScenarioException(
+                        $"{pr.Path}: a prop at ({x},{y}) is off the {def.Map.Width}x{def.Map.Height} map");
+
+                def.Props.Add(new PropDef { Kind = kind, X = x, Y = y, Yaw = pr.Opt("yaw")?.AsFloat() ?? 0f });
             }
         }
 
