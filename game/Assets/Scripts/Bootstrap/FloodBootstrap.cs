@@ -159,6 +159,23 @@ namespace Cipher.Game
         private Material _grinderMaterial = null!;
         private Matrix4x4[] _instanceBuffer = null!;
         private Matrix4x4[] _wallMatrices = System.Array.Empty<Matrix4x4>();
+
+        // Pre-placed map walls are not grey slabs any more. Owner, 2026-09-11: "those walls are
+        // really going to need to figure out a way to have some kind of texture too they need to be
+        // chain linked fence or piles of chop down trees that have been stacked up to make a
+        // barricade". Both, and which one you get says what the wall IS:
+        //   Rock/Static  = the community's own perimeter  -> chain-link fence, and you can see through it
+        //   Wall         = something the survivors threw up -> felled trees, stacked
+        // There are no textures in this project, so both are built out of instanced primitives,
+        // which is what the whole art direction does anyway.
+        private Matrix4x4[] _fencePostMatrices = System.Array.Empty<Matrix4x4>();
+        private Matrix4x4[] _fenceMeshMatrices = System.Array.Empty<Matrix4x4>();
+        private Matrix4x4[] _fenceRailMatrices = System.Array.Empty<Matrix4x4>();
+        private Matrix4x4[] _logMatrices = System.Array.Empty<Matrix4x4>();
+
+        private Material _fencePostMaterial = null!;
+        private Material _fenceMeshMaterial = null!;
+        private Material _logMaterial = null!;
         private Matrix4x4[] _barricadeMatrices = System.Array.Empty<Matrix4x4>();
         private Matrix4x4[] _breachMatrices = System.Array.Empty<Matrix4x4>();
         private int _bakedMapVersion = -1;
@@ -465,6 +482,11 @@ namespace Cipher.Game
             _discMesh = HarvestMesh(PrimitiveType.Cylinder);
             _agentMaterial = MakeMaterial(new Color(0.75f, 0.15f, 0.12f), instanced: true);
             _wallMaterial = MakeMaterial(new Color(0.35f, 0.33f, 0.30f), instanced: true);
+            // Galvanised steel, weathered timber. The mesh panel is lighter than the posts so the
+            // fence reads as see-through at distance without any transparency.
+            _fencePostMaterial = MakeMaterial(new Color(0.42f, 0.44f, 0.45f), instanced: true);
+            _fenceMeshMaterial = MakeMaterial(new Color(0.62f, 0.64f, 0.66f), instanced: true, ink: InkNone);
+            _logMaterial = MakeMaterial(new Color(0.36f, 0.27f, 0.19f), instanced: true);
             _barricadeMaterial = MakeMaterial(new Color(0.55f, 0.45f, 0.25f), instanced: true);
             _breachMaterial = MakeMaterial(new Color(0.9f, 0.35f, 0.1f), instanced: true);
             _tracerMaterial = MakeMaterial(new Color(1f, 0.95f, 0.5f), instanced: false);
@@ -629,6 +651,11 @@ namespace Cipher.Game
             var walls = new List<Matrix4x4>(256);
             var barricades = new List<Matrix4x4>(256);
             var breaches = new List<Matrix4x4>(16);
+            var posts = new List<Matrix4x4>(256);
+            var panels = new List<Matrix4x4>(256);
+            var rails = new List<Matrix4x4>(256);
+            var logs = new List<Matrix4x4>(512);
+
             for (int y = 0; y < GridH; y++)
             {
                 for (int x = 0; x < GridW; x++)
@@ -638,15 +665,122 @@ namespace Cipher.Game
                     BreachStage stage = _map.StageAt(x, y);
                     if (stage == BreachStage.Collapsed) continue;
                     float h = stage == BreachStage.Intact ? 2f : stage == BreachStage.Cracked ? 1.2f : 0.5f;
-                    var m = Matrix4x4.TRS(new Vector3(x + 0.5f, h * 0.5f, y + 0.5f), Quaternion.identity, new Vector3(1f, h, 1f));
-                    if (stage != BreachStage.Intact) breaches.Add(m);
-                    else if (kind == WallKind.Barricade) barricades.Add(m);
-                    else walls.Add(m);
+                    var centre = new Vector3(x + 0.5f, 0f, y + 0.5f);
+
+                    if (stage != BreachStage.Intact)
+                    {
+                        // A damaged run stays a plain block: the breach stages have to read as
+                        // damage at a glance, and rubble is not a fence or a log pile any more.
+                        breaches.Add(Matrix4x4.TRS(centre + new Vector3(0f, h * 0.5f, 0f),
+                                                   Quaternion.identity, new Vector3(1f, h, 1f)));
+                        continue;
+                    }
+
+                    if (kind == WallKind.Barricade)
+                    {
+                        barricades.Add(Matrix4x4.TRS(centre + new Vector3(0f, h * 0.5f, 0f),
+                                                     Quaternion.identity, new Vector3(1f, h, 1f)));
+                        continue;
+                    }
+
+                    // Which way the run travels, so logs lie along it and posts sit on its line.
+                    bool alongY = IsWallCell(x, y - 1) || IsWallCell(x, y + 1);
+                    var run = alongY ? Quaternion.Euler(0f, 90f, 0f) : Quaternion.identity;
+
+                    if (kind == WallKind.Rock) BakeFence(centre, run, alongY, x, y, posts, panels, rails);
+                    else BakeLogPile(centre, run, x, y, logs);
                 }
             }
+
             _wallMatrices = walls.ToArray();
             _barricadeMatrices = barricades.ToArray();
             _breachMatrices = breaches.ToArray();
+            _fencePostMatrices = posts.ToArray();
+            _fenceMeshMatrices = panels.ToArray();
+            _fenceRailMatrices = rails.ToArray();
+            _logMatrices = logs.ToArray();
+        }
+
+        private bool IsWallCell(int x, int y)
+        {
+            if (x < 0 || y < 0 || x >= GridW || y >= GridH) return false;
+            var k = _map.KindAt(x, y);
+            return k != WallKind.None && k != WallKind.Structure;
+        }
+
+        /// <summary>
+        /// Chain-link, one cell of it: a mesh panel, a top rail, and a post every other cell.
+        ///
+        /// The panel is a thin slab in a LIGHTER grey than the posts with its ink outline switched
+        /// off, which is what makes it read as something you can see through. A real transparent
+        /// material would need a second render pass and would fight the cel shader's banding for no
+        /// gain at this distance.
+        /// </summary>
+        private void BakeFence(Vector3 centre, Quaternion run, bool alongY, int x, int y,
+                               List<Matrix4x4> posts, List<Matrix4x4> panels, List<Matrix4x4> rails)
+        {
+            const float height = 2.1f;
+
+            panels.Add(Matrix4x4.TRS(centre + new Vector3(0f, height * 0.5f, 0f), run,
+                                     new Vector3(1.02f, height - 0.12f, 0.06f)));
+            rails.Add(Matrix4x4.TRS(centre + new Vector3(0f, height - 0.04f, 0f), run,
+                                    new Vector3(1.02f, 0.09f, 0.12f)));
+
+            // A post every other cell along the run, so a long fence is not a forest of uprights.
+            int alternator = alongY ? y : x;
+            if ((alternator & 1) == 0)
+            {
+                float half = 0.5f;
+                var offset = alongY ? new Vector3(0f, 0f, -half) : new Vector3(-half, 0f, 0f);
+                posts.Add(Matrix4x4.TRS(centre + offset + new Vector3(0f, height * 0.5f + 0.05f, 0f),
+                                        run, new Vector3(0.14f, height + 0.1f, 0.14f)));
+            }
+        }
+
+        /// <summary>
+        /// Felled trees stacked into a barricade — the owner's idea, and the right one for a lake
+        /// community with a treeline behind every lot: it is made of the thing the map is full of.
+        ///
+        /// Three courses, each log lying ALONG the run, with per-cell jitter on length and roll so a
+        /// long stretch does not read as extruded fencing. Deterministic from the cell, so the same
+        /// wall looks the same on every run and a screenshot is reproducible.
+        /// </summary>
+        private void BakeLogPile(Vector3 centre, Quaternion run, int x, int y, List<Matrix4x4> logs)
+        {
+            // The built-in cylinder is 2 units tall on Y, so tip it onto the run axis.
+            var lie = run * Quaternion.Euler(0f, 0f, 90f);
+
+            // Four thinner courses rather than three fat ones: a log has to be narrow relative to
+            // its length or it reads as a stacked crate, which is what the first pass looked like.
+            const int courses = 4;
+            for (int course = 0; course < courses; course++)
+            {
+                int h = Hash(x, y, course);
+                float radius = 0.20f + (h & 7) * 0.006f;
+                float length = 1.06f + ((h >> 3) & 7) * 0.010f;
+                float roll = ((h >> 6) & 15) * 1.4f;
+                // Courses nest into the gaps below them, the way a real stack settles.
+                float lift = 0.21f + course * 0.40f;
+                float shove = (((h >> 10) & 7) - 3.5f) * 0.022f;
+                float lean = ((course & 1) == 0 ? 0.06f : -0.06f) + (((h >> 14) & 3) - 1.5f) * 0.02f;
+
+                var offset = run * new Vector3(shove, 0f, lean);
+                logs.Add(Matrix4x4.TRS(
+                    centre + offset + new Vector3(0f, lift, 0f),
+                    lie * Quaternion.Euler(roll, 0f, 0f),
+                    new Vector3(radius * 2f, length * 0.5f, radius * 2f)));
+            }
+        }
+
+        /// <summary>Cheap deterministic hash so a wall dresses itself the same way every run.</summary>
+        private static int Hash(int x, int y, int k)
+        {
+            unchecked
+            {
+                int h = (x * 73856093) ^ (y * 19349663) ^ (k * 83492791);
+                h ^= h >> 13;
+                return h & 0x7FFFFFFF;
+            }
         }
 
         private void SyncTurretObjects()
@@ -2441,6 +2575,10 @@ namespace Cipher.Game
             if (_lineupMode) return;   // lineup capture: nothing but the models
             BakeWallsIfChanged();
             DrawInstancedList(_cubeMesh, _wallMaterial, _wallMatrices, _wallMatrices.Length);
+            DrawInstancedList(_cubeMesh, _fenceMeshMaterial, _fenceMeshMatrices, _fenceMeshMatrices.Length);
+            DrawInstancedList(_cubeMesh, _fencePostMaterial, _fencePostMatrices, _fencePostMatrices.Length);
+            DrawInstancedList(_cubeMesh, _fencePostMaterial, _fenceRailMatrices, _fenceRailMatrices.Length);
+            DrawInstancedList(_discMesh, _logMaterial, _logMatrices, _logMatrices.Length);
             DrawInstancedList(_cubeMesh, _barricadeMaterial, _barricadeMatrices, _barricadeMatrices.Length);
             DrawInstancedList(_cubeMesh, _breachMaterial, _breachMatrices, _breachMatrices.Length);
             DrawAgents();
