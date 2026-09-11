@@ -10,6 +10,41 @@ passes. Nothing outside §5 gets built before it does.
 
 ---
 
+## 0. WHERE THIS ACTUALLY STANDS (updated 2026-09-12)
+
+Phases A through D are **done**, well ahead of the effort estimates below, because two specialists
+worked in parallel throughout and because the owner redirected the premise into the mechanics
+mid-flight (ADR-008, ADR-009) which turned out to make several of the listed items redundant rather
+than adding to them.
+
+| Phase | Estimate | State |
+|---|---|---|
+| A — Response | 3 days | **done** — flash, hitstop, trauma, camera spring, muzzle |
+| B — See yourself | 4 days | **done** — `HudFeedback`: wave cards, vignette, damage wedges, world markers |
+| C — Comic page | 5 days | **done** — kit / skills / pack-up rebuilt and wired; the old text screens deleted |
+| D — Finish the picture | 4 days | **done** — soft shadows, SH ambient, contact shadows, decals, vertex AO, and then the whole map, the signal weapons and the emplacements on top |
+| E — Stranger test | 3 days | **BLOCKED ON THE OWNER.** See `OPEN-DECISIONS.md` §7. |
+
+**The building-kit purchase in §3 rule 4 never happened and is no longer needed.** Every building on
+The Gate is boxes through `SiteProps`, and the map reads as a place. That rule can be retired: the
+Phase D checkpoint it was waiting for has passed without the question needing to be asked. Zero money
+has been spent on this project.
+
+**Three things landed that this plan did not contain**, all owner directives and all larger than
+anything in §4 or §5:
+
+- **ADR-008** — weapons carry malware, not bullets; the implant is decrypted progressively. Rewritten
+  once already after the owner beat the first version's free-death state in a single sitting.
+- **ADR-009** — the truck is the family, and the scan is why you cannot stay. This supplied the
+  campaign's missing motive and retroactively explained three finished-but-unmotivated systems.
+- **An outside review** (2026-09-11) that found nine real defects, every one of which had a green
+  test beside it. `RedTeamRegressionTests.cs` is the residue. **Re-run that pattern after every
+  major layer** — it is now the single highest-yield process we have.
+
+**What is left of this plan:** §5's last two rows, and Phase E, which needs two humans.
+
+---
+
 ## 1. Diagnosis
 
 The gap is not fidelity. It is **response**. The game does not react to the player, and every note from
