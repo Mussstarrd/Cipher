@@ -141,11 +141,18 @@ namespace Cipher.Game
         private readonly List<StrikeImpact> _impactScratch = new List<StrikeImpact>(8);
 
         private struct Tracer { public Vector3 A, B; public float Ttl; public bool Turret; }
-        private struct Blast { public Vector3 Center; public float Radius; public float Ttl; }
+        private struct Blast { public Vector3 Center; public float Radius; public float Ttl; public float Life; }
         private readonly List<Tracer> _tracers = new List<Tracer>(128);
         private readonly List<Blast> _blasts = new List<Blast>(8);
         private const float TracerLife = 0.06f;
-        private const float BlastLife = 0.45f;
+        /// <summary>
+        /// How long a bomb is on screen, in seconds. It was 0.45, which is a blink: the owner's
+        /// complaint about the airstrike ("a bunch of cylinders that pop out of the ground and then
+        /// disappear") was half about the SHAPE and half about the DURATION, and replacing the
+        /// shape alone left the second half of it standing. A bomb now flashes, burns, throws smoke
+        /// that drifts and thins, and leaves a scorch behind.
+        /// </summary>
+        private const float BlastLife = 1.7f;
 
         // ---- build mode ----
         private bool _buildMode;
@@ -1294,7 +1301,7 @@ namespace Cipher.Game
                     // A grinder sweeps rather than fires: show the bite radius, not a tracer.
                     var t = _turrets.Turrets.Count > s.TurretIndex ? _turrets.Turrets[s.TurretIndex] : null;
                     if (t != null)
-                        _blasts.Add(new Blast { Center = new Vector3(t.X + 0.5f, 0.05f, t.Y + 0.5f), Radius = t.Range, Ttl = BlastLife * 0.28f });
+                        _blasts.Add(new Blast { Center = new Vector3(t.X + 0.5f, 0.05f, t.Y + 0.5f), Radius = t.Range, Ttl = 0.5f, Life = 0.5f });
                     _sfx.PlayAt(Sfx.TurretShot, ToWorld(s.From, 1f), 0.4f, 0.2f, minInterval: 0.11f);
                     continue;
                 }
@@ -1561,7 +1568,7 @@ namespace Cipher.Game
                         if (e.B >= 0 && e.B < _turrets.Turrets.Count)
                         {
                             var t = _turrets.Turrets[e.B];
-                            _blasts.Add(new Blast { Center = new Vector3(t.X + 0.5f, 0.05f, t.Y + 0.5f), Radius = 0.7f, Ttl = BlastLife * 0.5f });
+                            _blasts.Add(new Blast { Center = new Vector3(t.X + 0.5f, 0.05f, t.Y + 0.5f), Radius = 0.7f, Ttl = 0.42f, Life = 0.42f });
                             _sfx.PlayAt(Sfx.Hit, new Vector3(t.X + 0.5f, 1f, t.Y + 0.5f), 0.7f, 0.15f, minInterval: 0.2f);
                             if (_turrets.Damage(_map, e.B, (int)e.F)) { Alert("TURRET DESTROYED", 4f); _sfx.PlayAt(Sfx.TurretDestroyed, new Vector3(t.X + 0.5f, 1f, t.Y + 0.5f), 1f, 0.02f); turretsChanged = true; }
                         }
@@ -2634,6 +2641,14 @@ namespace Cipher.Game
             _hero.TryAirstrike();
         }
 
+        /// <summary>Calls a strike down the lane and nothing else, so the bombs can be photographed
+        /// at the moment they land rather than four seconds after. Harness only.</summary>
+        public void CallStrikeForCapture()
+        {
+            _hero.AimStrike(_hero.Position + new Vec2(-14f, 0f));
+            _hero.TryAirstrike();
+        }
+
         /// <summary>Starts the first wave, so a smoke capture can actually see combat. Harness only.</summary>
         public void StartWaveForCapture() => _match.StartWaveNow();
 
@@ -2883,7 +2898,7 @@ namespace Cipher.Game
             _hero.TickStrike(_world, dt, _impactScratch);
             foreach (var imp in _impactScratch)
             {
-                _blasts.Add(new Blast { Center = ToWorld(imp.Center, 0.05f), Radius = imp.Radius, Ttl = BlastLife });
+                _blasts.Add(new Blast { Center = ToWorld(imp.Center, 0.05f), Radius = imp.Radius, Ttl = BlastLife, Life = BlastLife });
                 Decals.Current?.Add(DecalKind.Scorch, ToWorld(imp.Center, 0f), imp.Radius * 0.9f,
                                     Mathf.Atan2(_hero.StrikeAxis.X, _hero.StrikeAxis.Y) * Mathf.Rad2Deg);
                 _sfx.PlayAt(Sfx.Bomb, ToWorld(imp.Center, 0.5f), 1f, 0.12f);
@@ -3261,22 +3276,29 @@ namespace Cipher.Game
                 if (b.Ttl <= 0f) { _blasts.RemoveAt(i); continue; }
                 _blasts[i] = b;
 
-                float life = Mathf.Clamp01(1f - b.Ttl / BlastLife);   // 0 at detonation, 1 at the end
+                float total = b.Life > 0.01f ? b.Life : BlastLife;
+                float life = Mathf.Clamp01(1f - b.Ttl / total);       // 0 at detonation, 1 at the end
                 float r = b.Radius;
 
+                // The stages are fractions of the blast's own life, so a bullet puff and a bomb
+                // read as the same event at different scales rather than two different effects.
+                const float FlashUntil = 0.045f;
+                const float FireUntil = 0.34f;
+                const float RingUntil = 0.30f;
+
                 // ---- flash -------------------------------------------------------------------
-                if (life < 0.12f)
+                if (life < FlashUntil)
                 {
-                    float f = 1f - life / 0.12f;
+                    float f = 1f - life / FlashUntil;
                     float size = r * (1.1f + 0.5f * f);
                     _fxFlash.Add(Matrix4x4.TRS(b.Center + Vector3.up * r * 0.35f,
                                                Quaternion.identity, Vector3.one * size));
                 }
 
                 // ---- fireball ----------------------------------------------------------------
-                if (life < 0.62f)
+                if (life < FireUntil)
                 {
-                    float f = life / 0.62f;
+                    float f = life / FireUntil;
                     float size = r * Mathf.Lerp(0.55f, 1.45f, Mathf.Sqrt(f));
                     float rise = r * (0.30f + 0.85f * f);
                     _fxFire.Add(Matrix4x4.TRS(b.Center + Vector3.up * rise,
@@ -3289,9 +3311,14 @@ namespace Cipher.Game
                 for (int k = 0; k < puffs; k++)
                 {
                     float a = (k / (float)puffs) * Mathf.PI * 2f + b.Center.x * 0.7f + b.Center.z * 1.3f;
-                    float spread = r * (0.25f + 0.70f * life);
-                    float up = r * (0.35f + 1.5f * life);
-                    float size = r * Mathf.Lerp(0.30f, 0.66f, life) * (1f - life * 0.45f);
+                    float spread = r * (0.25f + 0.95f * life);
+                    float up = r * (0.35f + 2.1f * life);
+                    // Grows while it billows, then collapses over the last third. There is no
+                    // per-instance alpha on this path, so a puff that merely stopped growing would
+                    // pop out of existence; shrinking to zero is the fade.
+                    float grow = Mathf.Lerp(0.30f, 0.80f, Mathf.Sqrt(life));
+                    float fade = Mathf.SmoothStep(1f, 0f, Mathf.InverseLerp(0.62f, 1f, life));
+                    float size = r * grow * fade;
                     if (size <= 0.01f) continue;
 
                     _fxSmoke.Add(Matrix4x4.TRS(
@@ -3301,11 +3328,15 @@ namespace Cipher.Game
                 }
 
                 // ---- ground ring -------------------------------------------------------------
-                float ring = r * (0.4f + 2.1f * life);
-                float thickness = Mathf.Lerp(0.9f, 0.06f, life);
-                _fxRing.Add(Matrix4x4.TRS(b.Center + Vector3.up * 0.06f,
-                                          Quaternion.identity,
-                                          new Vector3(ring, thickness, ring)));
+                if (life < RingUntil)
+                {
+                    float f = life / RingUntil;
+                    float ring = r * (0.4f + 2.1f * f);
+                    float thickness = Mathf.Lerp(0.9f, 0.04f, f);
+                    _fxRing.Add(Matrix4x4.TRS(b.Center + Vector3.up * 0.06f,
+                                              Quaternion.identity,
+                                              new Vector3(ring, thickness, ring)));
+                }
             }
 
             if (_fxRing.Count > 0) DrawInstancedBatched(_discMesh, _blastRingMaterial, _fxRing);

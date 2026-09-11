@@ -27,6 +27,7 @@ namespace Cipher.Game
         private const string LineupArg = "-exodus-screenshot-lineup";
         private const string FallBackArg = "-exodus-screenshot-fallback";
         private const string EmplacementsArg = "-exodus-screenshot-emplacements";
+        private const string StrikeArg = "-exodus-screenshot-strike";
 
         private string? _path;
         private float _delay = 8f;
@@ -38,6 +39,8 @@ namespace Cipher.Game
         private bool _lineup;
         private bool _fallBack;
         private bool _emplacements;
+        private bool _strike;
+        private bool _strikeCalled;
         private bool _emplacementsSet;
         private bool _fellBack;
         private bool _lineupSet;
@@ -69,6 +72,7 @@ namespace Cipher.Game
             harness._lineup = HasFlag(args, LineupArg);
             harness._fallBack = HasFlag(args, FallBackArg);
             harness._emplacements = HasFlag(args, EmplacementsArg);
+            harness._strike = HasFlag(args, StrikeArg);
             Debug.Log($"[Screenshot] armed: {path} after {delay:F1}s");
         }
 
@@ -164,6 +168,18 @@ namespace Cipher.Game
                 var be = GetComponent<FloodBootstrap>();
                 if (be != null) be.ShowEmplacementsForCapture();
                 _emplacementsSet = true;
+            }
+
+            // The bomb itself, not its aftermath. The strike has an inbound flight and then walks
+            // its bombs down the line, so the shutter wants to open about a second and a half after
+            // the call -- long enough for the first bomb to land, short enough that the smoke from
+            // it has not yet thinned out. Photographing an effect is the only way to know it is
+            // there; this one lived 0.45s and was never once caught on film.
+            if (_strike && !_strikeCalled && _elapsed > Mathf.Max(0f, _delay - 1.5f))
+            {
+                var bx = GetComponent<FloodBootstrap>();
+                if (bx != null) bx.CallStrikeForCapture();
+                _strikeCalled = true;
             }
 
             if (_skills && !_skillsSet && _elapsed > Mathf.Max(0f, _delay - 1f))
