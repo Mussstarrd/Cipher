@@ -233,6 +233,7 @@ namespace Cipher.Game
 
             _hero = new HeroModel(_loadout.Effective, HeroSpawn);
             ApplyLoadoutToWorld();
+            if (_crowd == null) BuildCivilianPool();
             _hero.Aim(new Vec2(-1f, 0f));
             _camYaw = -90f;
             _camPitch = 22f;
@@ -624,6 +625,10 @@ namespace Cipher.Game
             }
 
             _world.Step(TickDt);
+
+            // Promote the nearest agents to real bodies. Everything else stays a capsule.
+            if (_crowd != null && _camera != null)
+                _crowd.Sync(_world, _camera.transform.position, TickDt);
 
             _shotScratch.Clear();
             _turrets.Step(_world, TickDt, _shotScratch);
@@ -1114,7 +1119,113 @@ namespace Cipher.Game
 
         private bool _hudHidden;
         private AnimationClip? _walkClip;
+        private CivilianCrowd? _crowd;
+        /// <summary>Real bodies for the nearest agents. The rest stay instanced capsules.</summary>
+        private const int CivilianPoolSize = 110;
         private bool _lineupMode;
+
+        /// <summary>
+        /// Builds one walking civilian and returns the SLOT that positions it.
+        ///
+        /// The three-level structure matters and is not decoration. The slot carries position,
+        /// heading and the height correction. The pivot exists so any future orientation fix has
+        /// somewhere to live. The character itself is driven by the animation, which overwrites its
+        /// own transform every frame; anything written there is lost.
+        /// </summary>
+        private Transform BuildCivilian(GameObject template, Transform parent, System.Random rng)
+        {
+            var slot = new GameObject("Civilian");
+            slot.transform.SetParent(parent, false);
+
+            var pivot = new GameObject("Pivot");
+            pivot.transform.SetParent(slot.transform, false);
+            pivot.transform.localRotation = Quaternion.identity;
+
+            var go = Instantiate(template, pivot.transform);
+            go.transform.localPosition = Vector3.zero;
+
+            // Give them the game's own look rather than whatever the FBX shipped with.
+            foreach (var r in go.GetComponentsInChildren<Renderer>())
+            {
+                var mats = r.sharedMaterials;
+                var swapped = new Material[mats.Length];
+                for (int m = 0; m < mats.Length; m++)
+                {
+                    var src = mats[m];
+                    var mat = new Material(LitShader) { enableInstancing = false };
+                    Color tint = src != null && src.HasProperty(BaseColorId)
+                        ? src.GetColor(BaseColorId)
+                        : (src != null ? src.color : Color.grey);
+                    mat.color = tint;
+                    if (mat.HasProperty(BaseColorId)) mat.SetColor(BaseColorId, tint);
+                    if (mat.HasProperty(OutlineWidthId)) mat.SetFloat(OutlineWidthId, InkFigure);
+                    if (mat.HasProperty(SmoothOutlineId))
+                    {
+                        mat.SetFloat(SmoothOutlineId, 1f);
+                        mat.EnableKeyword("_SMOOTH_OUTLINE");
+                    }
+                    if (src != null && src.mainTexture != null) mat.mainTexture = src.mainTexture;
+                    swapped[m] = mat;
+                }
+                r.sharedMaterials = swapped;
+            }
+
+            // An Animator suppresses the legacy Animation component even when disabled, so it has
+            // to go rather than just be switched off.
+            foreach (var a0 in go.GetComponentsInChildren<Animator>()) Destroy(a0);
+
+            if (_walkClip != null && _walkClip.legacy)
+            {
+                var legacy = go.AddComponent<Animation>();
+                legacy.AddClip(_walkClip, "walk");
+                legacy.wrapMode = WrapMode.Loop;
+                legacy.playAutomatically = false;
+                legacy.Play("walk");
+
+                // Desynchronise, or the crowd marches in lockstep, which is the single most obvious
+                // tell that a crowd is fake.
+                var state = legacy["walk"];
+                if (state != null)
+                {
+                    state.time = (float)rng.NextDouble() * _walkClip.length;
+                    state.speed = 0.9f + (float)rng.NextDouble() * 0.25f;
+                }
+            }
+
+            // Size a few frames later, once the walk is posing the mesh: the clip animates scale on
+            // the armature, so a standing measurement is not the shape that ends up on screen.
+            go.AddComponent<FitToHeight>().Configure(slot.transform, 1.8f);
+            return slot.transform;
+        }
+
+        /// <summary>Loads the legacy walk clip once. Null when the art has not been imported.</summary>
+        private void EnsureWalkClip()
+        {
+            if (_walkClip != null) return;
+            _walkClip = Resources.Load<AnimationClip>("Civilians/WalkLegacy");
+        }
+
+        /// <summary>
+        /// Builds the pool of real bodies used for the nearest slice of the swarm. Capacity is
+        /// deliberately modest: these are skinned characters, and the point is that the part of the
+        /// crowd a player can actually read looks like people.
+        /// </summary>
+        private void BuildCivilianPool()
+        {
+            var prefabs = Resources.LoadAll<GameObject>("Civilians");
+            if (prefabs == null || prefabs.Length == 0) return;
+
+            EnsureWalkClip();
+
+            var root = new GameObject("CivilianCrowd").transform;
+            _crowd = new CivilianCrowd(root, CivilianPoolSize);
+
+            var rng = new System.Random(20260911);
+            for (int i = 0; i < CivilianPoolSize; i++)
+                _crowd.AddSlot(BuildCivilian(prefabs[i % prefabs.Length], root, rng));
+
+            Debug.Log($"[Crowd] pool of {_crowd.SlotCount} civilians from {prefabs.Length} models");
+        }
 
         /// <summary>Starts the first wave, so a smoke capture can actually see combat. Harness only.</summary>
         public void StartWaveForCapture() => _match.StartWaveNow();
@@ -1684,6 +1795,8 @@ namespace Cipher.Game
                         _spitterMatrices.Add(Matrix4x4.TRS(new Vector3(p.X, 0.7f, p.Y), Quaternion.identity, new Vector3(0.7f, 0.5f, 0.7f)));
                         continue;
                 }
+                // Anyone wearing a real body this frame must not also be drawn as a capsule.
+                if (_crowd != null && _crowd.Promoted.Contains(id)) continue;
                 _instanceBuffer[inBuffer++] = Matrix4x4.TRS(new Vector3(p.X, 0.6f, p.Y), Quaternion.identity, new Vector3(0.45f, 0.6f, 0.45f));
                 if (inBuffer == MaxInstancesPerDraw)
                 {
