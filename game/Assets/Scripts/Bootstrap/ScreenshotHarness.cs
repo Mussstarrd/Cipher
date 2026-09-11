@@ -28,6 +28,8 @@ namespace Cipher.Game
         private const string FallBackArg = "-exodus-screenshot-fallback";
         private const string EmplacementsArg = "-exodus-screenshot-emplacements";
         private const string StrikeArg = "-exodus-screenshot-strike";
+        private const string YawArg = "-exodus-screenshot-yaw";
+        private const string PitchArg = "-exodus-screenshot-pitch";
 
         private string? _path;
         private float _delay = 8f;
@@ -41,6 +43,9 @@ namespace Cipher.Game
         private bool _emplacements;
         private bool _strike;
         private bool _strikeCalled;
+        private float _yaw = float.NaN;
+        private float _pitch = 22f;
+        private bool _aimed;
         private bool _emplacementsSet;
         private bool _fellBack;
         private bool _lineupSet;
@@ -73,6 +78,8 @@ namespace Cipher.Game
             harness._fallBack = HasFlag(args, FallBackArg);
             harness._emplacements = HasFlag(args, EmplacementsArg);
             harness._strike = HasFlag(args, StrikeArg);
+            harness._yaw = ReadFloat(args, YawArg, float.NaN);
+            harness._pitch = ReadFloat(args, PitchArg, 22f);
             Debug.Log($"[Screenshot] armed: {path} after {delay:F1}s");
         }
 
@@ -87,6 +94,24 @@ namespace Cipher.Game
 
         /// <summary>True when the capture should show the radial build menu open.</summary>
         public static bool WantsWheel(string[] args) => HasFlag(args, WheelArg);
+
+        /// <summary>
+        /// A numeric argument, or <paramref name="fallback"/> when it is absent or unreadable.
+        /// InvariantCulture on purpose, like the scenario reader: a comma-decimal locale must not
+        /// read 22.5 as 225.
+        /// </summary>
+        private static float ReadFloat(string[] args, string flag, float fallback)
+        {
+            if (args == null) return fallback;
+            for (int i = 0; i < args.Length - 1; i++)
+            {
+                if (!string.Equals(args[i], flag, StringComparison.OrdinalIgnoreCase)) continue;
+                if (float.TryParse(args[i + 1], System.Globalization.NumberStyles.Float,
+                                   System.Globalization.CultureInfo.InvariantCulture, out float v))
+                    return v;
+            }
+            return fallback;
+        }
 
         private static bool HasFlag(string[] args, string flag)
         {
@@ -175,6 +200,15 @@ namespace Cipher.Game
             // the call -- long enough for the first bomb to land, short enough that the smoke from
             // it has not yet thinned out. Photographing an effect is the only way to know it is
             // there; this one lived 0.45s and was never once caught on film.
+            // Aimed late, so the bootstrap's own startup cannot overwrite it, and once, so the
+            // player's look input is not fought over every frame.
+            if (!float.IsNaN(_yaw) && !_aimed && _elapsed > Mathf.Max(0f, _delay - 0.4f))
+            {
+                var ba = GetComponent<FloodBootstrap>();
+                if (ba != null) ba.AimCameraForCapture(_yaw, _pitch);
+                _aimed = true;
+            }
+
             if (_strike && !_strikeCalled && _elapsed > Mathf.Max(0f, _delay - 1.5f))
             {
                 var bx = GetComponent<FloodBootstrap>();

@@ -321,4 +321,33 @@ substitute: it references the sim's SOURCE, not its test project.
     a test that still asserts the old contract is a test nobody updated.
   - Gun ladder is now Field Jammer / Decryptor / Worm Lance / Cascade Emitter. "Gold-plated LMG" was
     the last of the retired kingpin fiction still sitting in the loot table.
+- **ADR-009 (Accepted, owner directive): THE TRUCK IS THE FAMILY, AND THE SCAN IS WHY YOU CANNOT
+  STAY.** The owner supplied the campaign's missing motive on 2026-09-11 and it explains three
+  finished-but-unmotivated systems at once. Read the ADR before writing ANY fiction, mission or
+  HUD string.
+  - The game is set **months after the Exodus**; Lake of the Woods was fortified and held. Missions
+    are **a couple of days apart**, which is why damage persists between positions.
+  - **Artificial energy draws them.** That is the rule the community survived on. What starts the
+    campaign is that HALCYON now runs a **hyper-scan** that reads ORGANIC signature too -- there is
+    no going quiet any more, only the gap between sweeps. **The scan cycle and turret aggression are
+    now the same idea seen twice: an emplacement is noise.**
+  - **The truck at the goal is a four-door with his wife and a two-year-old and a nine-year-old in
+    it.** That is the whole reason this is a retreat: a truck only covers so much road between
+    sweeps, and every position held is time not spent moving. Between waves the wife and the
+    nine-year-old get out to repair -- that is `ActorKind.Crew` + `KeepCrewAlive`, built on
+    2026-09-11 and never yet used by a shipped mission.
+  - **PLAYER-FACING STRINGS CHANGED; CODE IDENTIFIERS DID NOT.** `VaultHp`, `ProtectVault` and the
+    scenario JSON `vault` key all stay, for ADR-006's reason. The player reads "THE TRUCK".
+  - The goal object is the `Environment/SUV` model parented under `_vaultT`, which stays an empty
+    anchor so `ResizeForMap` keeps working. **Damage settles and darkens it; it does NOT scale it.**
+    The old cube scaled with HP, and a vehicle that shrinks as it is damaged reads as a bug.
+  - **Not built, deliberately:** energy as a signature the player manages (more guns running = a
+    hotter position, going quiet as a real choice). It is the best lever the fiction has handed us
+    and it is a new system, which the live roadmap freezes. Surfaced to the owner, not buried.
+  - **The family is fictionalised like the community is** (ADR-004): roles, no names, no likenesses,
+    nothing to an external service. The owner's street address never enters this repo.
+- **`-exodus-screenshot-yaw <deg>` / `-pitch <deg>` aim the camera for a capture**, and
+  `-exodus-screenshot-strike` calls an airstrike 1.5s before the shutter. The rig looks west down
+  the lane by default, so the truck -- the most important object on the map -- was always behind the
+  photographer and had never once been photographed.
 - **Was:** owner hero feedback → barricade build-mode with live path preview (Milestone 2 "The Maze").

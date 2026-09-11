@@ -130,7 +130,10 @@ namespace Cipher.Game.Scenarios
         public bool IsFailCondition => true;
         public int Hp { get; private set; }
         public int MaxHp { get; private set; }
-        public string Hud => $"VAULT  {Hp}/{MaxHp}";
+        // ADR-009: the player reads "THE TRUCK"; the identifier stays ProtectVault so the scenario
+        // schema, the save data and every test keep working. Player-facing strings change; code
+        // identifiers do not.
+        public string Hud => $"THE TRUCK  {Hp}/{MaxHp}";
         public float Progress01 => MaxHp <= 0 ? 1f : Math.Max(0f, Hp / (float)MaxHp);
 
         public ObjectiveState Tick(in ObjectiveContext ctx, float dt)

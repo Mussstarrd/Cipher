@@ -406,8 +406,9 @@ namespace Cipher.Game
             // The backdrop is sized from the map too, so it is rebuilt with it.
             if (_backdropRoot != null) { Destroy(_backdropRoot.gameObject); _backdropRoot = null; }
 
+            // The anchor sits ON the ground now; the body hangs off it and does its own sag.
             if (_vaultT != null)
-                _vaultT.position = new Vector3(GoalX + 0.5f, 0.6f, GoalY + 0.5f);
+                _vaultT.position = new Vector3(GoalX + 0.5f, 0f, GoalY + 0.5f);
 
             // The scatter was laid out for the last map's walls and lane. Throw it away and re-dress.
             _environmentDressed = false;
@@ -640,15 +641,49 @@ namespace Cipher.Game
             _cursorT = cursor.transform;
             cursor.SetActive(false);
 
-            var vault = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            vault.name = "Vault";
-            Destroy(vault.GetComponent<Collider>());
-            vault.transform.position = new Vector3(GoalX + 0.5f, 0.6f, GoalY + 0.5f);
-            vault.transform.localScale = new Vector3(1.6f, 1.2f, 1.6f);
-            // Weathered olive, like something worth defending rather than a debug cube.
-            vault.GetComponent<Renderer>().material =
-                MakeMaterial(new Color(0.28f, 0.34f, 0.24f), instanced: false, ink: InkProp);
+            // ADR-009: the thing at the goal is a four-door with his wife in the front and a
+            // two-year-old and a nine-year-old in the back. It was an olive cube, which is fine for
+            // a crate of kit and indefensible for the only reason this campaign is a retreat.
+            //
+            // `_vaultT` stays an empty anchor and the body hangs under it, because everything that
+            // repositions the goal between missions moves the anchor (ResizeForMap) and because the
+            // old code scaled the cube by remaining HP -- a truck that shrinks as it takes damage is
+            // not a tell, it is a bug. The damage tell is on the body instead, below.
+            var vault = new GameObject("Vault");
+            vault.transform.position = new Vector3(GoalX + 0.5f, 0f, GoalY + 0.5f);
             _vaultT = vault.transform;
+
+            var truckPrefab = Resources.Load<GameObject>("Environment/SUV");
+            if (truckPrefab != null)
+            {
+                _truckBody = Instantiate(truckPrefab, _vaultT);
+                _truckBody.name = "FamilyTruck";
+                _truckBody.transform.localPosition = Vector3.zero;
+                // Facing out the way they will leave, not at the gate they are hiding from.
+                _truckBody.transform.localRotation = Quaternion.Euler(0f, 90f, 0f);
+                foreach (var col in _truckBody.GetComponentsInChildren<Collider>()) Destroy(col);
+                foreach (var r in _truckBody.GetComponentsInChildren<Renderer>())
+                {
+                    var swapped = new Material[r.sharedMaterials.Length];
+                    for (int m = 0; m < swapped.Length; m++)
+                        swapped[m] = MakeMaterial(new Color(0.30f, 0.33f, 0.29f), instanced: false, ink: InkProp);
+                    r.sharedMaterials = swapped;
+                }
+                BlobShadows.RegisterProp(_truckBody);
+            }
+            else
+            {
+                // No model is a content problem, not a crash. A box is still better than nothing
+                // at the one place on the map the player must be able to find.
+                var fallback = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                Destroy(fallback.GetComponent<Collider>());
+                fallback.transform.SetParent(_vaultT, false);
+                fallback.transform.localPosition = new Vector3(0f, 0.6f, 0f);
+                fallback.transform.localScale = new Vector3(1.6f, 1.2f, 1.6f);
+                fallback.GetComponent<Renderer>().material =
+                    MakeMaterial(new Color(0.28f, 0.34f, 0.24f), instanced: false, ink: InkProp);
+                _truckBody = fallback;
+            }
 
             var crate = GameObject.CreatePrimitive(PrimitiveType.Cube);
             crate.name = "GunCrate";
@@ -2210,11 +2245,17 @@ namespace Cipher.Game
             float hp = _match.VaultMaxHp <= 0 ? 0f : _match.VaultHp / (float)_match.VaultMaxHp;
             _vaultStyle.normal.textColor = Color.Lerp(new Color(1f, 0.45f, 0.3f),
                                                       new Color(0.75f, 0.95f, 0.7f), hp);
+            // ADR-009: this is not a crate of kit. It is a four-door with his wife in the front
+            // and a two-year-old and a nine-year-old in the back, and it is the only reason any of
+            // this is a retreat rather than a siege. The identifiers stay `Vault` (ADR-006's rule:
+            // renaming code is cosmetic churn with real risk); what the player READS changes.
             GUI.Label(new Rect(x - 110f, y - 28f, 220f, 22f),
-                      $"THE VAULT  {_match.VaultHp}/{_match.VaultMaxHp}", _vaultStyle);
-            GUI.Label(new Rect(x - 110f, y - 8f, 220f, 20f),
-                      "everything you have not carried out yet", _vaultStyle);
+                      $"THE TRUCK  {_match.VaultHp}/{_match.VaultMaxHp}", _vaultStyle);
+            GUI.Label(new Rect(x - 150f, y - 8f, 300f, 20f),
+                      "your family is in it", _vaultStyle);
         }
+
+        private GameObject? _truckBody;
 
         private GUIStyle? _vaultStyle;
 
@@ -2653,6 +2694,18 @@ namespace Cipher.Game
         {
             _hero.AimStrike(_hero.Position + new Vec2(-14f, 0f));
             _hero.TryAirstrike();
+        }
+
+        /// <summary>
+        /// Points the camera somewhere specific for a capture. The rig looks west down the lane by
+        /// default, which means the truck -- the single most important object on the map -- is
+        /// always behind the photographer. Harness only.
+        /// </summary>
+        public void AimCameraForCapture(float yawDegrees, float pitchDegrees)
+        {
+            _camYaw = yawDegrees;
+            _camPitch = Mathf.Clamp(pitchDegrees, PitchMin, PitchMax);
+            _snapCamera = true;
         }
 
         /// <summary>Starts the first wave, so a smoke capture can actually see combat. Harness only.</summary>
@@ -3128,8 +3181,17 @@ namespace Cipher.Game
                 _markerT.localScale = new Vector3(_hero.StrikeLineWidth * scale, 0.02f, _hero.StrikeLineLength * scale);
             }
 
-            float vaultHp = (float)_match.VaultHp / _match.VaultMaxHp;
-            _vaultT.localScale = new Vector3(1.6f, 0.3f + 1.2f * vaultHp, 1.6f);
+            // Damage settles the truck onto its springs and takes the light out of it. It never
+            // changes size: a shrinking vehicle reads as a rendering bug, and this is the object
+            // the player is being asked to care about most.
+            float vaultHp = _match.VaultMaxHp <= 0 ? 1f : (float)_match.VaultHp / _match.VaultMaxHp;
+            if (_truckBody != null)
+            {
+                float sag = (1f - vaultHp) * 0.22f;
+                float lean = (1f - vaultHp) * 4.5f;
+                _truckBody.transform.localPosition = new Vector3(0f, -sag, 0f);
+                _truckBody.transform.localRotation = Quaternion.Euler(0f, 90f, lean);
+            }
 
             _crateT.gameObject.SetActive(_pickups.CrateActive);
             if (_pickups.CrateActive)
@@ -3694,7 +3756,7 @@ namespace Cipher.Game
                 _ => "TURF LOST",
             };
             GUI.Label(new Rect(12, 32, 1000, 28),
-                $"${_match.Bank.Cash}   Wave {_match.WaveNumber}/{_match.WaveCount}   {phase}   Vault {_match.VaultHp}/{_match.VaultMaxHp}");
+                $"${_match.Bank.Cash}   Wave {_match.WaveNumber}/{_match.WaveCount}   {phase}   Truck {_match.VaultHp}/{_match.VaultMaxHp}");
 
             if (_match.CanDeclareLastWave)
             {
