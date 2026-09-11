@@ -199,6 +199,26 @@ dotnet run --project sim/tools/Cipher.Sim.Bench -c Release -- --smoke
     plane and the vault object all live across a position change. Add to that list when you add
     something map-shaped, and verify with `-exodus-screenshot-fallback`, which jumps straight to the
     next position under a camera.
+- **A RAY MARCH THAT SAMPLES ITS OWN ORIGIN CELL BLINDS THE SHOOTER.** `Movement.FirstBlockedCell`
+  used to start at travelled = 0. A turret stands on a cell marked `WallKind.Structure`, which is
+  blocked, so every turret in the game found a wall at distance zero, acquired nothing and **never
+  fired** -- and it shipped, because every line-of-sight test asked "can it see THROUGH a wall" and
+  none asked "can it see at all". Found by the owner, not by us.
+  - **The lesson is the test, not the fix.** When you add a restriction, test the UNRESTRICTED case
+    too. `TurretSightTests` now asserts a turret with a clear shot fires, as well as that a wall
+    stops it.
+- **CROWD BODIES MUST KEEP THEIR AGENT.** Assigning slot i to the i-th nearest agent each frame is
+  correct about WHICH agents get a body and wrong about which body: two agents swapping distance
+  order swap models, and the owner saw characters "scan switching from skin to skin to skin". A slot
+  holds its agent until that agent dies or leaves range.
+- **THE CONTROLLER IS THE DESIGN-CENTRE INPUT ON BOTH PLATFORMS** (ADR-002) and it is easy to forget
+  while testing on a keyboard. The skill tree shipped with no gamepad binding at all and every
+  on-screen prompt named keyboard keys. Any new panel needs a pad binding, a pad way OUT, and
+  prompts that name the device in the player's hands.
+- **ENEMY COUNT CAME DOWN AND HEALTH WENT UP (owner, 2026-09-11):** "less zombies... more robust.
+  quality over quantity." Health is per-scenario (`enemy.health`); The Gate is 40-150 bodies at 34 hp
+  rather than 150-700 at 10. The thousand-agent number in the pitch was the old flood fantasy;
+  ADR-003's enemy is people, and people need to be individually legible.
 - **ACTORS ARE WHAT FIVE OF TWELVE MISSIONS ARE FOUGHT OVER** (`Scripts/Scenario/Actors.cs`).
   Process (a clock), Structure (a transformer), Crew (a person). `HoldUntil`, `ProtectActors` and
   `KeepCrewAlive` are implemented against them.
