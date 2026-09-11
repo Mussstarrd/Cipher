@@ -72,7 +72,7 @@ namespace Cipher.Game.Hero
     /// </summary>
     public sealed class HeroModel
     {
-        private readonly HeroConfig _cfg;
+        private HeroConfig _cfg;
 
         public Vec2 Position { get; private set; }
         public Vec2 Facing { get; private set; } = new Vec2(1f, 0f);
@@ -109,6 +109,20 @@ namespace Cipher.Game.Hero
             Health = config.MaxHealth;
             StrikeTarget = spawn + Facing * config.AirstrikeMinRange;
         }
+
+        /// <summary>
+        /// Swaps in a new config after gear or an upgrade changed the numbers. Health is carried
+        /// across as a FRACTION, so a card that raises max health heals proportionally rather than
+        /// either wasting the bonus or topping the player up for free mid-wave.
+        /// </summary>
+        public void Retune(HeroConfig config)
+        {
+            if (config == null) throw new ArgumentNullException(nameof(config));
+            float fraction = _cfg.MaxHealth > 0f ? Health / _cfg.MaxHealth : 1f;
+            _cfg = config;
+            Health = Math.Clamp(fraction, 0f, 1f) * _cfg.MaxHealth;
+        }
+
 
         /// <summary>Cooldowns tick down here; call once per frame or sim tick with that dt.</summary>
         public void Tick(float dt)

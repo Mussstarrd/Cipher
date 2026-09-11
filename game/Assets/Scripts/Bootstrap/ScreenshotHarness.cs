@@ -20,11 +20,17 @@ namespace Cipher.Game
         private const string PathArg = "-exodus-screenshot";
         private const string DelayArg = "-exodus-screenshot-delay";
         private const string OverheadArg = "-exodus-screenshot-overhead";
+        private const string WheelArg = "-exodus-screenshot-wheel";
+        private const string ProgressArg = "-exodus-screenshot-progression";
 
         private string? _path;
         private float _delay = 8f;
         private bool _overhead;
+        private bool _wheel;
+        private bool _progression;
         private bool _viewSet;
+        private bool _wheelSet;
+        private bool _progressionSet;
         private float _elapsed;
         private bool _captured;
         private float _shotAt;
@@ -41,6 +47,8 @@ namespace Cipher.Game
             harness._path = path;
             harness._delay = delay;
             harness._overhead = WantsOverhead(args);
+            harness._wheel = WantsWheel(args);
+            harness._progression = HasFlag(args, ProgressArg);
             Debug.Log($"[Screenshot] armed: {path} after {delay:F1}s");
         }
 
@@ -50,6 +58,17 @@ namespace Cipher.Game
             if (args == null) return false;
             foreach (var a in args)
                 if (string.Equals(a, OverheadArg, StringComparison.OrdinalIgnoreCase)) return true;
+            return false;
+        }
+
+        /// <summary>True when the capture should show the radial build menu open.</summary>
+        public static bool WantsWheel(string[] args) => HasFlag(args, WheelArg);
+
+        private static bool HasFlag(string[] args, string flag)
+        {
+            if (args == null) return false;
+            foreach (var a in args)
+                if (string.Equals(a, flag, StringComparison.OrdinalIgnoreCase)) return true;
             return false;
         }
 
@@ -90,6 +109,20 @@ namespace Cipher.Game
                 var bootstrap = GetComponent<FloodBootstrap>();
                 if (bootstrap != null) bootstrap.EnterTacticalViewForCapture();
                 _viewSet = true;
+            }
+
+            if (_progression && !_progressionSet && _elapsed > Mathf.Max(0f, _delay - 1f))
+            {
+                var bp = GetComponent<FloodBootstrap>();
+                if (bp != null) bp.ShowProgressionForCapture();
+                _progressionSet = true;
+            }
+
+            if (_wheel && !_wheelSet && _elapsed > Mathf.Max(0f, _delay - 1f))
+            {
+                var bootstrap = GetComponent<FloodBootstrap>();
+                if (bootstrap != null) bootstrap.OpenBuildWheelForCapture(1);
+                _wheelSet = true;
             }
 
             if (!_captured)

@@ -4,6 +4,7 @@ using Cipher.Game.Audio;
 using Cipher.Game.Build;
 using Cipher.Game.Hero;
 using Cipher.Game.Match;
+using Cipher.Game.Progression;
 using Cipher.Game.UI;
 using Cipher.Sim.Agents;
 using Cipher.Sim.Core;
@@ -70,6 +71,19 @@ namespace Cipher.Game
 
         // ---- hero ----
         private readonly HeroConfig _heroCfg = new HeroConfig();
+
+        // Progression. The loadout is the ONLY thing that turns gear, cards and the tree into
+        // numbers the hero feels; everything else reads Effective and stays ignorant.
+        private Loadout _loadout = null!;
+        private ItemRoller _loot = null!;
+        private int _lastLevel = 1;
+        private int _lastSapperAlive;
+        private int _lastSpitterAlive;
+        private string _lootNotice = "";
+        private float _lootNoticeTimer;
+        private bool _showInventory;
+        private IReadOnlyList<Improvisation> _cardOffer = System.Array.Empty<Improvisation>();
+        private int _cardCursor;
         private HeroModel _hero = null!;
         private static readonly Vec2 HeroSpawn = new Vec2(GridW - 6f, GridH / 2f);
         private Transform _heroT = null!;
@@ -197,6 +211,13 @@ namespace Cipher.Game
             ulong seed = (ulong)System.DateTime.UtcNow.Ticks;
             _director = new SpawnDirector(new DirectorConfig(), seed);
             _pickups = new PickupSystem(_map, seed ^ 0xC1FE, minX: 34, maxX: GridW - 4);
+
+            // Carry the permanent tree across restarts; gear and cards are per-position.
+            var skills = _loadout?.Skills ?? new SkillState();
+            _loadout = new Loadout(_heroCfg, new Inventory(), new ImprovisationDeck(seed ^ 0xA11CE), skills);
+            _loot = new ItemRoller(seed ^ 0x9E3779B9UL);
+            _lastLevel = _loadout.Skills.Level;
+            _cardOffer = System.Array.Empty<Improvisation>();
             _matchSeconds = 0f;
             _alerts.Clear();
             _lastPhase = MatchPhase.Setup;
@@ -204,7 +225,8 @@ namespace Cipher.Game
             _strikeWasInbound = false;
             GunTiers.Apply(_heroCfg, 0);
 
-            _hero = new HeroModel(_heroCfg, HeroSpawn);
+
+            _hero = new HeroModel(_loadout.Effective, HeroSpawn);
             _hero.Aim(new Vec2(-1f, 0f));
             _camYaw = -90f;
             _camPitch = 22f;
@@ -523,8 +545,15 @@ namespace Cipher.Game
                 switch (_match.Phase)
                 {
                     case MatchPhase.Wave: _sfx.Play(Sfx.WaveHorn, 0.9f, 0.02f); break;
-                    case MatchPhase.Setup: _sfx.Play(Sfx.WaveClear, 0.9f, 0.01f); break;
-                    case MatchPhase.Extraction: _sfx.Play(Sfx.WaveClear, 1f, 0f); break;
+                    case MatchPhase.Setup:
+                        _sfx.Play(Sfx.WaveClear, 0.9f, 0.01f);
+                        OnWaveCleared();
+                        break;
+                    case MatchPhase.Extraction:
+                        _sfx.Play(Sfx.WaveClear, 1f, 0f);
+                        OnWaveCleared();
+                        AwardXp(LevelCurve.XpForExtraction(_match.WavesCleared));
+                        break;
                     case MatchPhase.Extracted: _sfx.Play(Sfx.Win, 0.85f, 0f); break;
                     case MatchPhase.Won: _sfx.Play(Sfx.Win, 1f, 0f); break;
                     case MatchPhase.Lost: _sfx.Play(Sfx.Lose, 1f, 0f); break;
@@ -617,7 +646,130 @@ namespace Cipher.Game
             // Kills from any source pay out (hero, turrets, airstrike).
             int kills = (int)(_world.TotalKills - _lastKills);
             _lastKills = (int)_world.TotalKills;
-            _match.ReportKills(kills);
+            // The two thinking archetypes always drop and are worth far more experience, which is
+            // what makes hunting them the right play. The sim does not raise a "died" event per
+            // archetype, so infer it from the living count falling. Approximate but stable.
+            int sappersNow = _world.CountAlive(Archetype.Sapper);
+            int spittersNow = _world.CountAlive(Archetype.Spitter);
+            int sapperDeaths = Mathf.Max(0, _lastSapperAlive - sappersNow);
+            int spitterDeaths = Mathf.Max(0, _lastSpitterAlive - spittersNow);
+            _lastSapperAlive = sappersNow;
+            _lastSpitterAlive = spittersNow;
+
+            for (int i = 0; i < sapperDeaths; i++)
+            {
+                AwardXp(LevelCurve.XpForKill(true, false));
+                var d = _loot.TryDrop(DropSource.SapperKill, 1, _match.WaveIndex);
+                if (d != null) TakeLoot(d);
+            }
+            for (int i = 0; i < spitterDeaths; i++)
+            {
+                AwardXp(LevelCurve.XpForKill(false, true));
+                var d = _loot.TryDrop(DropSource.SpitterKill, 1, _match.WaveIndex);
+                if (d != null) TakeLoot(d);
+            }
+
+            if (kills > 0)
+            {
+                // Scrounger affixes and supply cards multiply the take.
+                _match.Bank.Earn(_loadout.CashForKills(kills, _eco.CashPerKill));
+                AwardXp(kills * LevelCurve.XpForKill(false, false));
+
+                // Ordinary bodies almost never drop. The rate lives in the roller.
+                for (int k = 0; k < kills; k++)
+                {
+                    var drop = _loot.TryDrop(DropSource.RunnerKill, 1, _match.WaveIndex);
+                    if (drop != null) TakeLoot(drop);
+                }
+            }
+        }
+
+        /// <summary>Experience in, level-ups and skill points out, with a notice for the player.</summary>
+        private void AwardXp(int amount)
+        {
+            if (amount <= 0) return;
+            int gained = _loadout.Skills.AddXp(amount);
+            if (gained <= 0) return;
+
+            _lastLevel = _loadout.Skills.Level;
+            Alert($"LEVEL {_lastLevel}  ({_loadout.Skills.UnspentPoints} skill points)", 4f);
+            _sfx.Play(Sfx.Pickup, 1f, 0f);
+        }
+
+        /// <summary>
+        /// Picks a drop up without stopping play. The inventory decides on its own whether it is an
+        /// upgrade, worth carrying, or junk that turns straight into Scrip.
+        /// </summary>
+        private void TakeLoot(ItemInstance item)
+        {
+            var result = _loadout.Pickup(item);
+            _lootNoticeTimer = 3.5f;
+            _lootNotice = result.Outcome switch
+            {
+                PickupOutcome.EquippedEmptySlot => $"EQUIPPED  {item}",
+                PickupOutcome.Upgraded => $"UPGRADE  {item}",
+                PickupOutcome.Stowed => $"stowed  {item}",
+                PickupOutcome.AutoScrapped => $"scrapped for {result.ScripGained} scrip  {item.Name}",
+                _ => $"pack full, left it  {item.Name}",
+            };
+            if (result.Outcome is PickupOutcome.EquippedEmptySlot or PickupOutcome.Upgraded)
+            {
+                _hero.Retune(_loadout.Effective);
+                _sfx.Play(Sfx.Pickup, 0.9f, 0.02f);
+            }
+        }
+
+        /// <summary>
+        /// A wave is down. Pay experience, drop one guaranteed piece, and deal the pick-one-of-three.
+        /// The card lands exactly when the player is deciding whether to take another wave, which is
+        /// the decision the whole scan cycle is built around.
+        /// </summary>
+        private void OnWaveCleared()
+        {
+            AwardXp(LevelCurve.XpForWaveCleared(_match.WaveNumber));
+
+            var drop = _loot.TryDrop(DropSource.WaveClear, 1, _match.WaveIndex);
+            if (drop != null) TakeLoot(drop);
+
+            _cardOffer = _loadout.Deck.Deal();
+            _cardCursor = 0;
+        }
+
+        /// <summary>Reads the card pick. Blocks other input while the offer is up.</summary>
+        private void ReadCardInput()
+        {
+            if (_cardOffer.Count == 0) return;
+            var pad = Gamepad.current;
+            var kb = Keyboard.current;
+
+            if ((pad != null && (pad.dpad.left.wasPressedThisFrame || pad.leftStick.left.wasPressedThisFrame))
+                || (kb != null && kb.leftArrowKey.wasPressedThisFrame))
+            { _cardCursor = (_cardCursor - 1 + _cardOffer.Count) % _cardOffer.Count; _sfx.Play(Sfx.MenuTick, 0.6f, 0f); }
+
+            if ((pad != null && (pad.dpad.right.wasPressedThisFrame || pad.leftStick.right.wasPressedThisFrame))
+                || (kb != null && kb.rightArrowKey.wasPressedThisFrame))
+            { _cardCursor = (_cardCursor + 1) % _cardOffer.Count; _sfx.Play(Sfx.MenuTick, 0.6f, 0f); }
+
+            for (int i = 0; i < _cardOffer.Count && kb != null; i++)
+            {
+                var key = i == 0 ? kb.digit1Key : i == 1 ? kb.digit2Key : kb.digit3Key;
+                if (key.wasPressedThisFrame) { _cardCursor = i; TakeCard(); return; }
+            }
+
+            bool confirm = (pad != null && pad.buttonSouth.wasPressedThisFrame)
+                           || (kb != null && (kb.enterKey.wasPressedThisFrame || kb.spaceKey.wasPressedThisFrame));
+            if (confirm) TakeCard();
+        }
+
+        private void TakeCard()
+        {
+            var card = _loadout.TakeImprovisation(_cardCursor);
+            _cardOffer = System.Array.Empty<Improvisation>();
+            if (card == null) return;
+
+            _hero.Retune(_loadout.Effective);
+            Alert($"{card.Name} — {card.Text}", 4f);
+            _sfx.Play(Sfx.MenuConfirm, 1f, 0f);
         }
 
         private void HandleSimEvents()
@@ -698,6 +850,14 @@ namespace Cipher.Game
             var pad = Gamepad.current;
             var kb = Keyboard.current;
             if (_declineNoticeTimer > 0f) _declineNoticeTimer = Mathf.Max(0f, _declineNoticeTimer - Time.deltaTime);
+            if (_lootNoticeTimer > 0f) _lootNoticeTimer = Mathf.Max(0f, _lootNoticeTimer - Time.deltaTime);
+
+            // An offer on the table owns the input until it is answered.
+            if (_cardOffer.Count > 0) { ReadCardInput(); return; }
+
+            if ((pad != null && pad.buttonNorth.wasPressedThisFrame && !_buildMode)
+                || (kb != null && kb.iKey.wasPressedThisFrame))
+                _showInventory = !_showInventory;
             // Tab is still a plain toggle for keyboard players who just want in and out.
             bool toggle = kb != null && kb.tabKey.wasPressedThisFrame;
             if (toggle)
@@ -743,6 +903,38 @@ namespace Cipher.Game
                     _declineNoticeTimer = 3f;
                 }
             }
+        }
+
+        /// <summary>Deals an upgrade offer and opens the kit panel, for a capture. Harness only.</summary>
+        public void ShowProgressionForCapture()
+        {
+            _loadout.Skills.AddXp(LevelCurve.TotalXpFor(4));
+            _lastLevel = _loadout.Skills.Level;
+
+            var roller = new ItemRoller(42);
+            for (int i = 0; i < 6; i++)
+            {
+                var item = roller.TryDrop(DropSource.SapperKill, 2, 3);
+                if (item != null) _loadout.Pickup(item);
+            }
+            _hero.Retune(_loadout.Effective);
+
+            _cardOffer = _loadout.Deck.Deal();
+            _cardCursor = 1;
+            _showInventory = true;
+        }
+
+        /// <summary>Opens the radial for a capture, aimed at one option. Screenshot harness only.</summary>
+        public void OpenBuildWheelForCapture(int option)
+        {
+            if (!_buildMode) SetBuildMode(true);
+            // Deliberately NOT setting _wheelHeld: the input driver treats that as "button was
+            // down last frame" and would close the wheel the instant it sees it released.
+            _wheel.Open(_build.Options.Count, option);
+            _focus.TryEngage();
+            float angle = BuildWheel.AngleForIndex(Mathf.Clamp(option, 0, Mathf.Max(0, _build.Options.Count - 1)),
+                                                  _build.Options.Count);
+            _wheel.Aim(Mathf.Sin(angle), Mathf.Cos(angle));
         }
 
         /// <summary>Tactical camera, for the screenshot harness. Shows the field and the crowd.</summary>
@@ -1440,7 +1632,14 @@ namespace Cipher.Game
                 GUI.Label(new Rect(12, 104, 1000, 24),
                     $"{(pad ? "D-pad down" : "L")}: call this your last wave here  ({_match.PrepSecondsRemaining:F0}s prep left for the next line)");
             }
-            GUI.Label(new Rect(12, 152, 600, 24), _focus.StatusLine());
+            GUI.Label(new Rect(12, 152, 900, 24),
+                $"{_focus.StatusLine()}    LV {_loadout.Skills.Level}  " +
+                $"xp {_loadout.Skills.XpIntoLevel}/{Mathf.Max(1, _loadout.Skills.XpNeededForNext)}  " +
+                $"scrip {_loadout.Inventory.Scrip}" +
+                (_loadout.Skills.UnspentPoints > 0 ? $"   [{_loadout.Skills.UnspentPoints} skill points]" : ""));
+
+            if (_lootNoticeTimer > 0f && _lootNotice.Length > 0)
+                GUI.Label(new Rect(12, 176, 1200, 24), _lootNotice);
 
             if (_declineNoticeTimer > 0f && _declineNotice.Length > 0)
             {
@@ -1503,6 +1702,9 @@ namespace Cipher.Game
             if (_showMinimap && !_pauseMenu.IsOpen) DrawMinimap();
 
             // The wheel paints over the HUD but under the pause menu.
+            // An offer owns the screen while it is up, so the kit panel stands down.
+            if (_showInventory && _cardOffer.Count == 0 && !_pauseMenu.IsOpen) DrawInventory();
+            if (_cardOffer.Count > 0 && !_pauseMenu.IsOpen) DrawCardOffer();
             if (_wheel.IsOpen && !_pauseMenu.IsOpen && !_match.IsOver) DrawBuildWheel();
 
             if (_pauseMenu.IsOpen) DrawPauseMenu();
@@ -1543,6 +1745,91 @@ namespace Cipher.Game
             GUI.Label(new Rect(0, _uiH * 0.38f, _uiW, 60), title, _centerStyle);
             GUI.Label(new Rect(0, _uiH * 0.38f + 64, _uiW, 70), sub, _subStyle);
         }
+
+        /// <summary>
+        /// The pick-one-of-three. Deliberately a row of three cards and one button: a Bloons-style
+        /// tree needs full gamepad tree navigation, and this lands the reward at the exact moment
+        /// the player is weighing another wave.
+        /// </summary>
+        private void DrawCardOffer()
+        {
+            var prev = GUI.color;
+            GUI.color = new Color(0f, 0f, 0f, 0.62f);
+            GUI.DrawTexture(new Rect(0f, 0f, _uiW, _uiH), Texture2D.whiteTexture);
+            GUI.color = prev;
+
+            _cardStyle ??= new GUIStyle(GUI.skin.box)
+            {
+                fontSize = 19, alignment = TextAnchor.UpperCenter, wordWrap = true, padding = new RectOffset(14, 14, 16, 14),
+            };
+
+            GUI.Label(new Rect(_uiW * 0.5f - 400f, _uiH * 0.22f, 800f, 34f),
+                      "WAVE DOWN — take one", _subStyle);
+
+            const float w = 300f, h = 190f, gap = 28f;
+            float total = _cardOffer.Count * w + (_cardOffer.Count - 1) * gap;
+            float x0 = _uiW * 0.5f - total * 0.5f;
+            float y = _uiH * 0.5f - h * 0.5f;
+
+            for (int i = 0; i < _cardOffer.Count; i++)
+            {
+                var card = _cardOffer[i];
+                bool sel = i == _cardCursor;
+                GUI.color = sel ? new Color(1f, 0.86f, 0.38f, 0.98f) : new Color(0.82f, 0.85f, 0.9f, 0.9f);
+                GUI.Box(new Rect(x0 + i * (w + gap), y, w, h),
+                        $"{i + 1}. {card.Name}{System.Environment.NewLine}{System.Environment.NewLine}{card.Text}" +
+                        $"{System.Environment.NewLine}{System.Environment.NewLine}[{card.Path}]",
+                        _cardStyle);
+            }
+            GUI.color = prev;
+
+            var dom = _loadout.Deck.DominantPath();
+            string commit = dom.HasValue
+                ? $"you are leaning {dom.Value} ({_loadout.Deck.CountFor(dom.Value)})"
+                : "no path yet";
+            GUI.Label(new Rect(_uiW * 0.5f - 400f, y + h + 22f, 800f, 28f),
+                      $"{commit}   —   arrows / d-pad to choose, A or Enter to take, 1-3 direct", _subStyle);
+        }
+
+        /// <summary>What is worn and what is in the pack. Read-only for now; the sort happens between missions.</summary>
+        private void DrawInventory()
+        {
+            var prev = GUI.color;
+            GUI.color = new Color(0f, 0f, 0f, 0.72f);
+            GUI.DrawTexture(new Rect(_uiW - 560f, 60f, 548f, _uiH - 120f), Texture2D.whiteTexture);
+            GUI.color = prev;
+
+            _invStyle ??= new GUIStyle(GUI.skin.label) { fontSize = 17, wordWrap = true, richText = false };
+
+            float y = 74f;
+            GUI.Label(new Rect(_uiW - 546f, y, 520f, 26f),
+                      $"KIT     scrip {_loadout.Inventory.Scrip}     (I to close)", _invStyle);
+            y += 30f;
+
+            foreach (Slot slot in System.Enum.GetValues(typeof(Slot)))
+            {
+                var item = _loadout.Inventory.Equipped(slot);
+                GUI.Label(new Rect(_uiW - 546f, y, 520f, 24f),
+                          item == null ? $"{slot,-10} —" : $"{slot,-10} {item}", _invStyle);
+                y += 24f;
+            }
+
+            y += 12f;
+            GUI.Label(new Rect(_uiW - 546f, y, 520f, 24f),
+                      $"PACK  {_loadout.Inventory.Pack.Count}/{_loadout.Inventory.PackCapacity}", _invStyle);
+            y += 26f;
+            for (int i = 0; i < _loadout.Inventory.Pack.Count && y < _uiH - 90f; i++)
+            {
+                var it = _loadout.Inventory.Pack[i];
+                float delta = _loadout.Inventory.UpgradeDelta(it);
+                GUI.Label(new Rect(_uiW - 546f, y, 520f, 24f),
+                          $"{it}   {(delta >= 0f ? "+" : "")}{delta:F1}", _invStyle);
+                y += 24f;
+            }
+        }
+
+        private GUIStyle? _cardStyle;
+        private GUIStyle? _invStyle;
 
         /// <summary>
         /// The radial build menu. Replaces the row of corner text the owner rightly called a legend
