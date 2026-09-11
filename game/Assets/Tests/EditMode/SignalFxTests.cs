@@ -15,36 +15,77 @@ namespace Cipher.Game.Tests
     /// in a way that reads as "the effect feels a bit off" a month later. So the curves get tests
     /// and the pixels get photographs, and neither substitutes for the other.
     ///
-    /// Two of these are DESIGN rules rather than maths, written down as tests on purpose: there is
-    /// no orange in the palette (ADR-003 made this a weapon against a device, not a bomb), and the
-    /// failing tell desaturates rather than darkening toward red (ADR-003 forbids blood and rot).
-    /// Both are the kind of rule that quietly erodes during a tuning pass.
+    /// Several of these are DESIGN rules rather than maths, written down as tests on purpose: the
+    /// EMP stays cold, the weapons stay gold, the implant stays orange and far enough from the
+    /// weapons to be told apart, and the failing tell desaturates rather than darkening toward red
+    /// (ADR-003 forbids blood and rot). All are the kind of rule that quietly erodes during a
+    /// tuning pass and that nobody notices has gone until a playtest.
     /// </summary>
     public sealed class SignalFxTests
     {
         // ------------------------------------------------------------------ the palette
 
         [Test]
-        public void PaletteHasNoFireInIt()
+        public void TheEmpStaysCold()
         {
-            foreach (var c in SignalFx.Palette)
+            // The owner called the EMP fantastic on 2026-09-11 while asking for amber WEAPONS.
+            // Warming the burst to match them would throw away the one effect that already works
+            // AND collapse the two most important signals in the game into one colour.
+            foreach (var c in SignalFx.EmpPalette)
             {
-                // Everything is neutral or cold: an orange has red well above blue. This is the
-                // rule ADR-003 implies and the one a later "make it pop" pass would break first.
                 Assert.That(c.b, Is.GreaterThanOrEqualTo(c.r - 0.001f),
-                            $"signal palette colour {c} is warmer than it is cold");
+                            $"EMP colour {c} is warmer than it is cold");
                 Assert.That(c.b, Is.GreaterThanOrEqualTo(c.g - 0.001f),
-                            $"signal palette colour {c} is warmer than it is cold");
+                            $"EMP colour {c} is warmer than it is cold");
             }
         }
 
         [Test]
-        public void TheImplantIsTheOnlyWarmColourAndItIsADevice()
+        public void EveryWeaponColourIsAmber()
+        {
+            // Owner, 2026-09-11: "more like a microwave pulses and I think more yellow or Amber
+            // instead of blue". Red above blue is what makes a colour warm at all.
+            foreach (var c in SignalFx.WeaponPalette)
+            {
+                Assert.That(c.r, Is.GreaterThan(c.b + 0.1f), $"weapon colour {c} is not warm");
+                Assert.That(c.g, Is.GreaterThan(c.b + 0.1f), $"weapon colour {c} is warm but not amber");
+            }
+        }
+
+        [Test]
+        public void TheWeaponAmberCannotBeMistakenForTheImplantAmber()
+        {
+            // THE ONE THAT MATTERS. Both are warm, so they are separated on GREEN -- the channel
+            // that moves a warm colour between gold and orange. Shooting is gold; a chip dying is
+            // orange. Let these two drift together and the player can no longer tell his own fire
+            // from the tell it produces, which is the whole reason the tell exists.
+            Assert.That(SignalFx.Implant.g, Is.LessThanOrEqualTo(SignalFx.ImplantGreenCeiling));
+
+            foreach (var c in SignalFx.WeaponPalette)
+            {
+                Assert.That(c.g, Is.GreaterThanOrEqualTo(SignalFx.WeaponGreenFloor),
+                            $"weapon colour {c} has drifted toward the implant's orange");
+                Assert.That(c.g - SignalFx.Implant.g, Is.GreaterThan(0.12f),
+                            $"weapon colour {c} is too close to the implant to be told apart");
+            }
+        }
+
+        [Test]
+        public void TheImplantIsADeviceAndNotAFire()
         {
             // Amber, and the same amber as the cargo drone's underside lamp. It is allowed to be
             // warm because it is a light on a machine, not a fire.
             Assert.That(SignalFx.Implant.r, Is.GreaterThan(SignalFx.Implant.b));
             Assert.That(SignalFx.Implant.g, Is.GreaterThan(SignalFx.Implant.b));
+        }
+
+        [Test]
+        public void ThePulseOutlivesNothingAndTheTellOutlivesIt()
+        {
+            // The second separator, after hue: a shot is a flicker and a dying chip is a two and a
+            // half second event. Anything warm still on screen a second later is a body.
+            Assert.That(SignalFx.BeamLife, Is.LessThan(0.4f), "a shot that lingers becomes a beam");
+            Assert.That(SignalFx.BeamLife, Is.GreaterThan(0.12f), "a shot too short to see travel is a tracer");
         }
 
         // ------------------------------------------------------------------ the EMP
@@ -181,62 +222,124 @@ namespace Cipher.Game.Tests
             Assert.That(Curves.ArcNode(9, 3, 2), Is.Not.EqualTo(Curves.ArcNode(10, 3, 2)));
         }
 
-        // ------------------------------------------------------------------ the beam
+        // ------------------------------------------------------------------ the pulse
 
         [Test]
-        public void BeamHeadTravelsFromMuzzleToTargetAndStops()
+        public void PulseFrontTravelsFromHornToTargetAndStops()
         {
-            Assert.That(Curves.Beam(0f).HeadT, Is.EqualTo(0f));
-            Assert.That(Curves.Beam(0.2f).HeadT, Is.GreaterThan(0f).And.LessThan(1f));
-            Assert.That(Curves.Beam(0.5f).HeadT, Is.EqualTo(1f));
-            Assert.That(Curves.Beam(1f).HeadT, Is.EqualTo(1f));
+            Assert.That(Curves.Pulse(0f).FrontT, Is.EqualTo(0f));
+            Assert.That(Curves.Pulse(0.2f).FrontT, Is.GreaterThan(0f).And.LessThan(1f));
+            Assert.That(Curves.Pulse(0.5f).FrontT, Is.EqualTo(1f));
+            Assert.That(Curves.Pulse(1f).FrontT, Is.EqualTo(1f));
         }
 
         [Test]
-        public void BeamTailNeverOvertakesTheHead()
+        public void PulseFrontDeceleratesRatherThanFlyingLikeARound()
+        {
+            // Constant speed is a projectile. Energy spreading into air leaves fast and settles,
+            // so the first half of the flight must cover more than half the distance.
+            Assert.That(Curves.Pulse(0.23f).FrontT, Is.GreaterThan(0.5f));
+        }
+
+        [Test]
+        public void PulseTailNeverOvertakesTheFront()
         {
             for (float t = 0f; t <= 1f; t += 0.01f)
             {
-                var f = Curves.Beam(t);
-                Assert.That(f.TailT, Is.LessThanOrEqualTo(f.HeadT + 1e-4f), $"tail passed the head at {t}");
+                var f = Curves.Pulse(t);
+                Assert.That(f.BackT, Is.LessThanOrEqualTo(f.FrontT + 1e-4f), $"tail passed the front at {t}");
             }
         }
 
         [Test]
-        public void BeamTerminalBurstOnlyHappensAfterTheHeadArrives()
+        public void PulseBloomOnlyHappensAfterTheFrontArrives()
         {
-            Assert.That(Curves.Beam(0.2f).BurstAlpha, Is.EqualTo(0f));
-            Assert.That(Curves.Beam(0.5f).BurstAlpha, Is.GreaterThan(0f));
-            Assert.That(Curves.Beam(1f).BurstAlpha, Is.EqualTo(0f).Within(1e-5f));
+            Assert.That(Curves.Pulse(0.2f).BloomAlpha, Is.EqualTo(0f));
+            Assert.That(Curves.Pulse(0.5f).BloomAlpha, Is.GreaterThan(0f));
+            Assert.That(Curves.Pulse(1f).BloomAlpha, Is.EqualTo(0f).Within(1e-5f));
         }
 
         [Test]
-        public void DashesAreSpacedInMetresSoRangeDoesNotChangeTheirSize()
+        public void WavefrontsAreSpacedInMetresSoRangeDoesNotChangeTheFrequency()
         {
-            // The bug this prevents: spacing dashes as fractions of the length, which makes a long
-            // shot's dashes long and reads as the packet slowing down the further you shoot.
-            Curves.DashSpan(0, 40f, 0f, 1f, out float nearA, out float nearB);
-            Curves.DashSpan(0, 4f, 0f, 1f, out float farA, out float farB);
-            Assert.That((nearB - nearA) * 40f, Is.EqualTo((farB - farA) * 4f).Within(1e-3f));
+            // The bug this prevents: spacing fronts as fractions of the length, which would make
+            // the same weapon appear to change wavelength with how far the player is shooting.
+            Curves.Wavefront(0, 40f, 0f, 40f, 0f, out float nearA, out _, out _);
+            Curves.Wavefront(1, 40f, 0f, 40f, 0f, out float nearB, out _, out _);
+            Curves.Wavefront(0, 4f, 0f, 4f, 0f, out float farA, out _, out _);
+            Curves.Wavefront(1, 4f, 0f, 4f, 0f, out float farB, out _, out _);
+            Assert.That(nearA - nearB, Is.EqualTo(Curves.WaveSpacing).Within(1e-3f));
+            Assert.That(farA - farB, Is.EqualTo(Curves.WaveSpacing).Within(1e-3f));
         }
 
         [Test]
-        public void DashesOutsideTheDrawnWindowAreSkipped()
+        public void WavefrontsTravelOutwardWithTheFrontAndNeverBackward()
         {
-            // Ahead of the head.
-            Assert.That(Curves.DashSpan(6, 40f, 0f, 0.05f, out _, out _), Is.False);
-            // Behind the tail.
-            Assert.That(Curves.DashSpan(0, 40f, 0.9f, 1f, out _, out _), Is.False);
-            // Inside it.
-            Assert.That(Curves.DashSpan(2, 40f, 0f, 1f, out _, out _), Is.True);
+            // Every front in the train sits between the packet's tail and its leading edge, and
+            // they are ordered: front 0 is the leading one. A train that ran the other way would
+            // point the shot at the shooter.
+            float previous = float.PositiveInfinity;
+            for (int k = 0; k < Curves.MaxWavefronts; k++)
+            {
+                if (!Curves.Wavefront(k, 30f, 4f, 40f, 0.3f, out float d, out _, out _)) continue;
+                Assert.That(d, Is.LessThan(previous), $"front {k} did not fall behind front {k - 1}");
+                Assert.That(d, Is.GreaterThanOrEqualTo(4f - 1e-4f), $"front {k} escaped out of the tail");
+                Assert.That(d, Is.LessThanOrEqualTo(30f + 1e-4f), $"front {k} overtook the leading edge");
+                previous = d;
+            }
         }
 
         [Test]
-        public void DashCountCoversTheWholeLance()
+        public void ThePacketIsBrightestAtItsLeadingEdge()
         {
-            int n = Curves.DashCount(40f);
-            Assert.That(n * (Curves.DashLength + Curves.DashGap), Is.GreaterThanOrEqualTo(40f));
-            Assert.That(Curves.DashCount(0f), Is.EqualTo(0));
+            // THIS IS THE ARROW. The gameplay job of the effect is to say which way the shot went,
+            // and with the hard bead deleted the brightness gradient is what says it.
+            Curves.Wavefront(0, 30f, 0f, 40f, 0f, out _, out _, out float head);
+            Curves.Wavefront(Curves.MaxWavefronts - 1, 30f, 0f, 40f, 0f, out _, out _, out float tail);
+            Assert.That(head, Is.GreaterThan(tail * 3f), "the packet has no direction in it");
+        }
+
+        [Test]
+        public void ThePacketIsFiniteSoItCannotBecomeAContinuousBeam()
+        {
+            // The owner read the old effect as a laser. A train with no end is a laser whatever
+            // colour it is, so the count is capped and the cap is a design rule, not a budget.
+            Assert.That(Curves.WavefrontCount(1000f), Is.EqualTo(Curves.MaxWavefronts));
+            Assert.That(Curves.WavefrontCount(0f), Is.EqualTo(0));
+            Assert.That(Curves.Wavefront(Curves.MaxWavefronts, 500f, 0f, 500f, 0f, out _, out _, out _),
+                        Is.False);
+        }
+
+        [Test]
+        public void WavefrontsOnlyEverSpreadOut()
+        {
+            // A wave that necks down onto its target is a beam being focused, which is the read
+            // this whole pass exists to get rid of.
+            float previous = -1f;
+            for (float u = 0f; u <= 1f; u += 0.02f)
+            {
+                float r = Curves.PulseRadius(u);
+                Assert.That(r, Is.GreaterThanOrEqualTo(previous), $"the wavefront narrowed at {u}");
+                previous = r;
+            }
+            Assert.That(Curves.PulseRadius(1f), Is.GreaterThan(Curves.PulseRadius(0f) * 3f),
+                        "a carrier that does not visibly diverge is a lance");
+        }
+
+        [Test]
+        public void TheShimmerNeverPutsAHoleInThePacket()
+        {
+            // A front that blinks to nothing leaves a gap, and the gap reads as missing geometry
+            // rather than as energy breathing.
+            for (float phase = 0f; phase < 20f; phase += 0.13f)
+            {
+                for (int k = 0; k < 4; k++)
+                {
+                    if (!Curves.Wavefront(k, 30f, 0f, 40f, phase, out _, out float r, out float amp)) continue;
+                    Assert.That(amp, Is.GreaterThan(0.05f), $"front {k} went dark at phase {phase}");
+                    Assert.That(r, Is.GreaterThan(0f), $"front {k} collapsed at phase {phase}");
+                }
+            }
         }
 
         // ------------------------------------------------------------------ the failing tell

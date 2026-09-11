@@ -5,7 +5,7 @@ using UnityEngine;
 namespace Cipher.Game
 {
     /// <summary>
-    /// The visual vocabulary of the SIGNAL weapons: the EMP burst, the emitter lance that replaces
+    /// The visual vocabulary of the SIGNAL weapons: the EMP burst, the microwave pulse that replaces
     /// the bullet tracer, the tell on a body whose chip is dying, and the jammer field an area
     /// turret lays on the ground.
     ///
@@ -77,12 +77,17 @@ namespace Cipher.Game
         public const float EmpLife = 1.15f;
 
         /// <summary>
-        /// How long an emitter lance lives. Longer than the 0.06s ballistic tracer it replaces, on
-        /// purpose: a bullet is allowed to be a line that was there and is gone, but a packet has
-        /// to be SEEN travelling or it is just a line again. 0.16s is four frames of flight at
-        /// sixty and still short enough that a fast weapon does not smear.
+        /// How long one pulse lives. Longer than the 0.06s ballistic tracer it replaces, on
+        /// purpose: a bullet is allowed to be a line that was there and is gone, but a wave has to
+        /// be SEEN propagating or it is just a line again.
+        ///
+        /// 0.22 rather than the lance's 0.16. A train of wavefronts needs enough frames for the
+        /// eye to catch the SECOND one arriving where the first was, which is the entire
+        /// difference between a wave and a bar; at 0.16 a sixty-hertz display got nine frames and
+        /// the packet was over before the read landed. It is still short enough that a fast weapon
+        /// does not smear into a solid rope.
         /// </summary>
-        public const float BeamLife = 0.16f;
+        public const float BeamLife = 0.22f;
 
         private const int MaxInstancesPerDraw = 1023;
 
@@ -97,8 +102,25 @@ namespace Cipher.Game
         // ------------------------------------------------------------------ palette
 
         /// <summary>
-        /// The whole palette, in one place, so "no orange" is a thing you can read rather than a
-        /// thing you have to trust. <see cref="Palette"/> exposes it to the tests.
+        /// The whole palette, in one place, in THREE families that must never be mistaken for one
+        /// another. Colour is the coarsest thing a player reads in a firefight and it is the first
+        /// thing that gets muddled when effects are tuned one at a time, so the families are named
+        /// here and asserted in the tests rather than left to whoever edits next.
+        ///
+        ///   COLD (the EMP)      white core, electric blue shell, blue ground stamp. A cargo
+        ///                       drone's hard electromagnetic pulse. The owner called this one
+        ///                       fantastic on 2026-09-11 and it is deliberately UNCHANGED.
+        ///   WARM (the weapons)  amber-gold. The hero's emitter, the turrets', and the Brush Hog's
+        ///                       broadcast field. A carrier cooking a chip, not a bolt of anything.
+        ///   ORANGE (the chip)   one small deep-orange light at a temple, and the cream flare it
+        ///                       throws at the instant it is hit.
+        ///
+        /// THE WEAPONS AND THE CHIP ARE BOTH WARM AND THAT IS THE TRAP. They are separated on the
+        /// GREEN channel, which is what moves a warm colour between gold and orange: every weapon
+        /// colour sits at g >= <see cref="WeaponGreenFloor"/> and the implant at
+        /// g &lt;= <see cref="ImplantGreenCeiling"/>. Keep any new colour on the right side of its
+        /// family's line or "am I shooting or is that one dying" stops being answerable at a
+        /// glance. (Hue is only the first of five separators -- see <see cref="Curves.Pulse"/>.)
         /// </summary>
         public static readonly Color Core = new Color(1.00f, 1.00f, 1.00f);
         public static readonly Color Shell = new Color(0.33f, 0.80f, 1.00f);
@@ -106,20 +128,69 @@ namespace Cipher.Game
         public static readonly Color Ring = new Color(0.62f, 0.94f, 1.00f);
         public static readonly Color Arc = new Color(0.86f, 0.98f, 1.00f);
         public static readonly Color Stamp = new Color(0.30f, 0.68f, 0.95f);
-        public static readonly Color Emitter = new Color(0.62f, 0.95f, 1.00f);
-        public static readonly Color TurretBeam = new Color(0.42f, 0.70f, 1.00f);
-        public static readonly Color Jammer = new Color(0.26f, 0.62f, 0.92f);
 
-        /// <summary>The implant's own colour. The one warm note in the file, and it is a DEVICE.</summary>
-        public static readonly Color Implant = new Color(1.00f, 0.66f, 0.16f);
+        // ---- the weapons: amber, and on the YELLOW side of amber -------------------------------
 
-        /// <summary>What the implant flares to at the moment the decrypt lands.</summary>
+        /// <summary>The body of a wavefront. The colour the player will say the gun "is".</summary>
+        public static readonly Color Pulse = new Color(1.00f, 0.84f, 0.36f);
+
+        /// <summary>
+        /// The leading front and the hit flash. Nearly white, because the front of a pulse is the
+        /// hot part -- and because a packet whose head is the same gold as its body is a stick.
+        /// </summary>
+        public static readonly Color PulseCore = new Color(1.00f, 0.97f, 0.82f);
+
+        /// <summary>The air the carrier is passing through. Only ever drawn at low alpha.</summary>
+        public static readonly Color PulseHaze = new Color(1.00f, 0.78f, 0.30f);
+
+        /// <summary>The hero's emitter: the brighter of the two, because it is his.</summary>
+        public static readonly Color Emitter = new Color(1.00f, 0.88f, 0.44f);
+
+        /// <summary>An emplacement's. Deeper, so the player can tell his own fire from his guns'.</summary>
+        public static readonly Color TurretBeam = new Color(1.00f, 0.80f, 0.32f);
+
+        /// <summary>The Brush Hog's broadcast field on the ground.</summary>
+        public static readonly Color Jammer = new Color(0.98f, 0.74f, 0.26f);
+
+        /// <summary>No weapon colour may go below this on green, or it starts reading as an implant.</summary>
+        public const float WeaponGreenFloor = 0.72f;
+
+        /// <summary>And the implant may not go above this, or it starts reading as a shot.</summary>
+        public const float ImplantGreenCeiling = 0.58f;
+
+        // ---- the chip: deep orange, and only ever the size of a thumbnail ----------------------
+
+        /// <summary>
+        /// The implant's own colour. A DEVICE, not fire.
+        ///
+        /// Pushed from 0.66 green to 0.55 on 2026-09-11 when the weapons went amber. At 0.66 it sat
+        /// eight hundredths off the Brush Hog's field and the two warm things in the game were the
+        /// same warm thing; at 0.55 the chip is plainly orange beside a plainly gold shot.
+        /// </summary>
+        public static readonly Color Implant = new Color(1.00f, 0.55f, 0.09f);
+
+        /// <summary>
+        /// What the implant flares to at the moment the decrypt lands. Close to
+        /// <see cref="PulseCore"/> on purpose: this flare IS the pulse arriving, and the handoff
+        /// from the shot to the tell should look like one event rather than two.
+        /// </summary>
         public static readonly Color ImplantFlare = new Color(1.00f, 0.93f, 0.72f);
 
-        /// <summary>Everything the palette contains, for the test that asserts none of it is fire.</summary>
+        /// <summary>The EMP's colours. Cold, and staying cold.</summary>
+        public static IReadOnlyList<Color> EmpPalette => new[] { Core, Shell, Echo, Ring, Arc, Stamp };
+
+        /// <summary>Everything a weapon puts in the air.</summary>
+        public static IReadOnlyList<Color> WeaponPalette => new[]
+        {
+            Pulse, PulseCore, PulseHaze, Emitter, TurretBeam, Jammer,
+        };
+
+        /// <summary>Every colour in the file, for the tests that police the family lines.</summary>
         public static IReadOnlyList<Color> Palette => new[]
         {
-            Core, Shell, Echo, Ring, Arc, Stamp, Emitter, TurretBeam, Jammer,
+            Core, Shell, Echo, Ring, Arc, Stamp,
+            Pulse, PulseCore, PulseHaze, Emitter, TurretBeam, Jammer,
+            Implant, ImplantFlare,
         };
 
         // ------------------------------------------------------------------ live effects
@@ -163,7 +234,7 @@ namespace Cipher.Game
         // Batches, keyed by mesh. Filled every frame and flushed at the end, so ten bursts and two
         // hundred failing bodies still cost one draw call per mesh rather than one per effect.
         private readonly Batch _spheres = new Batch(256);
-        private readonly Batch _rings = new Batch(512);
+        private readonly Batch _rings = new Batch(1024);
         private readonly Batch _bars = new Batch(1024);
         private readonly Batch _quads = new Batch(128);
 
@@ -198,7 +269,7 @@ namespace Cipher.Game
             Current = this;
         }
 
-        /// <summary>Live bursts and lances. Diagnostics and tests.</summary>
+        /// <summary>Live bursts and pulses in the air. Diagnostics and tests.</summary>
         public int EmpCount => _emps.Count;
 
         public int BeamCount => _beams.Count;
@@ -221,7 +292,7 @@ namespace Cipher.Game
 
         /// <summary>
         /// One shot from a signal weapon. <paramref name="landed"/> is whether it found a chip --
-        /// a shot that hit a wall gets the lance but not the terminal burst, because nothing in
+        /// a shot that hit a wall gets the pulse but not the terminal bloom, because nothing in
         /// the wall was decrypted.
         /// </summary>
         public void AddBeam(Vector3 from, Vector3 to, SignalBeam kind, bool landed)
@@ -457,46 +528,91 @@ namespace Cipher.Game
                 if (len < 1e-3f) continue;
                 Vector3 dir = d / len;
 
-                var f = Curves.Beam(b.Age / BeamLife);
+                var f = Curves.Pulse(b.Age / BeamLife);
+                if (f.Alpha <= 0.002f && f.BloomAlpha <= 0.002f) continue;
 
-                // ---- outer glow -------------------------------------------------------------
-                // The full drawn span, fat and faint, drawn first so the dashes sit inside it.
-                // This is the thing that makes a one-centimetre line visible at forty metres.
-                if (f.Alpha > 0.002f && f.HeadT > f.TailT)
+                float frontD = len * f.FrontT;
+                float backD = len * f.BackT;
+
+                // A rotation that points the RING MESH'S NORMAL down the shot. The ring is
+                // authored in XZ with a +Y normal, so LookRotation puts +Z on the shot and the
+                // extra 90 about X brings +Y round onto it. Every wavefront is therefore a disc
+                // standing ACROSS the line of fire, which is the whole read: the player is looking
+                // at fronts of a wave, not at a bar someone drew between two points.
+                var across = Quaternion.LookRotation(dir, Vector3.up) * Quaternion.Euler(90f, 0f, 0f);
+
+                // ---- the air the carrier is passing through ---------------------------------
+                // One stretched sphere covering the drawn span, at low alpha, with the rim
+                // QUANTISED into four bands. On a smooth ellipsoid that is what produces the
+                // shimmer: seen from the side the bands run along the axis like a heat column,
+                // and seen from behind the shooter -- the chase camera's normal view, so the
+                // common case -- they are concentric rings receding toward the target. It is the
+                // heat haze and it costs one instance, because the banding is the shader's.
+                if (f.Alpha > 0.002f && frontD > backD + 0.05f)
                 {
-                    Vector3 g0 = b.A + dir * (len * f.TailT);
-                    Vector3 g1 = b.A + dir * (len * f.HeadT);
-                    AddSegment(_bars, g0, g1, 0.34f, b.Ink, f.Alpha * 0.13f, Shape.Glow);
+                    float mid = (frontD + backD) * 0.5f;
+                    float span = frontD - backD;
+                    float fat = Curves.PulseRadius(len <= 0f ? 0f : mid / len) * 1.8f;
+                    _spheres.Add(Matrix4x4.TRS(b.A + dir * mid,
+                                               Quaternion.LookRotation(dir, Vector3.up),
+                                               new Vector3(fat, fat, span)),
+                                 PulseHaze, f.Alpha * 0.09f, Shape.Haze);
                 }
 
-                // ---- dashed body ------------------------------------------------------------
-                // A packet, not a bullet: the lance is BROKEN into equal pieces with gaps, which
-                // is the single cheapest way to say "this is data" instead of "this is a round".
-                int dashes = Curves.DashCount(len);
-                for (int k = 0; k < dashes; k++)
+                // ---- the wavefronts ---------------------------------------------------------
+                // A finite TRAIN of discs behind the front, spaced in metres and travelling with
+                // it. Finite on purpose: a train that reached all the way back to the muzzle
+                // would be a continuous tube, which is the laser the owner rejected. Twenty
+                // fronts is a packet with a bright leading edge and a dark end, and the direction
+                // of travel is readable from one still frame because of it.
+                int fronts = Curves.WavefrontCount(frontD - backD);
+                for (int k = 0; k < fronts; k++)
                 {
-                    if (!Curves.DashSpan(k, len, f.TailT, f.HeadT, out float t0, out float t1)) continue;
-                    Vector3 p0 = b.A + dir * (len * t0);
-                    Vector3 p1 = b.A + dir * (len * t1);
-                    AddSegment(_bars, p0, p1, 0.115f, b.Ink, f.Alpha, Shape.Solid);
+                    if (!Curves.Wavefront(k, frontD, backD, len, f.Phase,
+                                          out float dist, out float radius, out float amp)) continue;
+
+                    Vector3 at = b.A + dir * dist;
+                    float d2 = radius * 2f;
+
+                    // The front itself, hot; and a wider, fainter ghost half a beat outside it, so
+                    // the edge of each front is soft rather than a hairline. A hard edge on a
+                    // wavefront is the single thing that makes energy read as a cut.
+                    // The LEADING front is drawn harder than the rest. With the hard white bead
+                    // gone something still has to be the head of the packet, and one front at
+                    // nearly twice the brightness of the one behind it does that without putting a
+                    // projectile back on the end of the shot.
+                    float lead = k == 0 ? 0.62f : 0.38f;
+                    _rings.Add(Matrix4x4.TRS(at, across, new Vector3(d2, 1f, d2)),
+                               Color.Lerp(b.Ink, PulseCore, amp * amp), f.Alpha * amp * lead, Shape.Wave);
+                    _rings.Add(Matrix4x4.TRS(at, across, new Vector3(d2 * 1.34f, 1f, d2 * 1.34f)),
+                               PulseHaze, f.Alpha * amp * 0.12f, Shape.Wave);
                 }
 
-                // ---- leading head -----------------------------------------------------------
-                if (f.Alpha > 0.002f && f.HeadT < 1f)
+                // ---- the leading edge -------------------------------------------------------
+                // SOFT, which is the note. The lance had a hard opaque white bead here and that
+                // bead was most of why it read as a projectile; a pulse has no nose cone. This is
+                // a glow with no occlusion at all, a little bigger than the front it sits on.
+                if (f.Alpha > 0.002f && f.FrontT < 1f)
                 {
-                    Vector3 head = b.A + dir * (len * f.HeadT);
-                    _spheres.Add(Matrix4x4.TRS(head, Quaternion.identity, Vector3.one * 0.30f),
-                                 Core, f.Alpha, Shape.Solid);
+                    // ONE soft glow, and no bright core inside it. The first build of this put a
+                    // near-white sphere here and it photographed as a HEADLIGHT: a round hot thing
+                    // with a trail behind it is a projectile whatever the trail is made of. The
+                    // leading wavefront above is the head now, and this is only the air around it.
+                    float r = Curves.PulseRadius(f.FrontT);
+                    Vector3 head = b.A + dir * frontD;
+                    _spheres.Add(Matrix4x4.TRS(head, Quaternion.identity, Vector3.one * (r * 2.4f)),
+                                 PulseHaze, f.Alpha * 0.11f, Shape.Glow);
                 }
 
-                // ---- terminal burst ---------------------------------------------------------
-                // What a landed packet looks like: a small version of the EMP, on one person.
-                if (b.Landed && f.BurstAlpha > 0.002f)
+                // ---- arrival -----------------------------------------------------------------
+                // What a landed packet looks like: the carrier collapsing onto one chip. Gold,
+                // not blue -- the blue burst belongs to the drone's EMP and nothing else.
+                if (b.Landed && f.BloomAlpha > 0.002f)
                 {
-                    _spheres.Add(Matrix4x4.TRS(b.B, Quaternion.identity, Vector3.one * f.BurstScale),
-                                 Shell, f.BurstAlpha, Shape.Shell);
-                    _spheres.Add(Matrix4x4.TRS(b.B, Quaternion.identity, Vector3.one * (f.BurstScale * 0.45f)),
-                                 Core, f.BurstAlpha * 0.9f, Shape.Solid);
+                    _spheres.Add(Matrix4x4.TRS(b.B, Quaternion.identity, Vector3.one * f.BloomScale),
+                                 Pulse, f.BloomAlpha, Shape.Shell);
+                    _spheres.Add(Matrix4x4.TRS(b.B, Quaternion.identity, Vector3.one * (f.BloomScale * 0.42f)),
+                                 PulseCore, f.BloomAlpha * 0.85f, Shape.Glow);
                 }
             }
         }
@@ -612,7 +728,7 @@ namespace Cipher.Game
         /// glow or a flat mark, and keeping that to four named cases is what stops the effects
         /// drifting apart from each other as they get tuned.
         /// </summary>
-        private enum Shape { Solid, Shell, WideShell, Glow, Flat }
+        private enum Shape { Solid, Shell, WideShell, Glow, Haze, Wave, Flat }
 
         /// <summary>x = rim power, y = rim strength, z = bands, w = occlusion.</summary>
         private static Vector4 ParamsFor(Shape shape) => shape switch
@@ -633,6 +749,17 @@ namespace Cipher.Game
             Shape.WideShell => new Vector4(2.2f, 1f, 2f, 0.20f),
             // Pure additive haze. Never occludes; it is light in the air.
             Shape.Glow => new Vector4(1.2f, 0.30f, 2f, 0f),
+            // The pulse's heat column. Four bands rather than two, because here the banding is the
+            // POINT -- on a smooth stretched sphere a quantised rim is a set of concentric
+            // wavefronts drawn for free, and two steps is not enough of them to read as a shimmer.
+            // Low rim power so the bands reach well in from the silhouette instead of hugging it.
+            Shape.Haze => new Vector4(1.35f, 0.62f, 4f, 0f),
+            // A wavefront. Flat like a ring, but it barely HIDES anything: twenty fronts stacked
+            // along the view direction at the ring's usual 0.85 occlusion paint out the world
+            // behind the shot, and a weapon that erases the thing it is aimed at is unusable. Low
+            // occlusion is what keeps a packet reading as energy in front of a street rather than
+            // as a hole cut in one.
+            Shape.Wave => new Vector4(1f, 0f, 1f, 0.18f),
             // Rings and ground marks: no view dependence at all, they are already the right shape.
             _ => new Vector4(1f, 0f, 1f, 0.85f),
         };
@@ -908,9 +1035,29 @@ namespace Cipher.Game
             /// </summary>
             public const int ArcFirstDrawnNode = 1;
 
-            /// <summary>Metres of lit dash and unlit gap along an emitter lance.</summary>
-            public const float DashLength = 0.45f;
-            public const float DashGap = 0.55f;
+            /// <summary>
+            /// Metres between one wavefront and the next. In METRES, never in fractions of the
+            /// shot: spacing by fraction would make a long shot's wavefronts far apart and a short
+            /// one's crowded, so the same weapon would appear to change frequency with range.
+            /// A carrier has one wavelength and the player should be able to see that it does.
+            /// </summary>
+            public const float WaveSpacing = 1.35f;
+
+            /// <summary>
+            /// How many wavefronts a packet carries, at most.
+            ///
+            /// This is a DESIGN cap before it is a cost cap. A train that ran all the way back to
+            /// the muzzle would be a continuous tube of light, and a continuous tube of light is
+            /// the laser blast the owner rejected. Fourteen fronts is about nineteen metres of
+            /// packet: enough that a shot across the lane still fills the frame, short enough that
+            /// even the longest shot has a visibly empty end behind it, which is what says the
+            /// energy is going that way.
+            /// </summary>
+            public const int MaxWavefronts = 14;
+
+            /// <summary>Radius of the wavefront as it leaves the horn, and once it has spread.</summary>
+            public const float WaveNearRadius = 0.13f;
+            public const float WaveFarRadius = 0.46f;
 
             /// <summary>How long a jammer sweep takes to travel from the emplacement to the rim.</summary>
             public const float JammerPeriod = 1.35f;
@@ -926,9 +1073,9 @@ namespace Cipher.Game
             private const float ArcUntil = 0.62f;
             private const float StampGrow = 0.32f;
 
-            // Beam stages.
-            private const float TravelUntil = 0.42f;
-            private const float TailFrom = 0.34f;
+            // Pulse stages.
+            private const float TravelUntil = 0.46f;
+            private const float TailFrom = 0.30f;
 
             /// <summary>One EMP burst at one instant. All scales are multiples of the blast radius.</summary>
             public struct EmpFrame
@@ -1013,70 +1160,128 @@ namespace Cipher.Game
                 return f;
             }
 
-            /// <summary>One emitter lance at one instant, in fractions along its own length.</summary>
-            public struct BeamFrame
+            /// <summary>One pulse at one instant, in fractions along its own length.</summary>
+            public struct PulseFrame
             {
-                /// <summary>Where the leading head has reached, 0 at the muzzle, 1 at the target.</summary>
-                public float HeadT;
+                /// <summary>Where the leading front has reached, 0 at the horn, 1 at the target.</summary>
+                public float FrontT;
 
-                /// <summary>Where the trailing end has reached. It starts late and catches up.</summary>
-                public float TailT;
+                /// <summary>Where the packet's trailing end is. It starts late and catches up.</summary>
+                public float BackT;
 
                 public float Alpha;
-                public float BurstScale, BurstAlpha;
+
+                /// <summary>Drives the shimmer. Advances with age, so the train breathes.</summary>
+                public float Phase;
+
+                /// <summary>The carrier collapsing onto the chip it found.</summary>
+                public float BloomScale, BloomAlpha;
             }
 
             /// <summary>
-            /// A packet leaving and arriving, rather than a line that was briefly there. The head
-            /// travels for the first 42% of the life and the tail then chases it in, so the lance
-            /// streams INTO the target and vanishes from the muzzle end -- which is the read that
-            /// separates a transmission from a bullet.
+            /// A microwave pulse propagating, rather than a bolt being fired.
+            ///
+            /// THE OWNER READ THE PREVIOUS VERSION AS A LASER AND HE WAS RIGHT TO. It was a
+            /// straight bar with a hard bright bead on the end, which is the drawing of a beam
+            /// weapon whatever colour it is painted; the colour was only the half of it he could
+            /// name. What replaces it is a train of concentric fronts travelling out along the
+            /// axis inside a banded column of haze, with a soft leading edge and an empty tail.
+            ///
+            /// FIVE THINGS SEPARATE THIS FROM THE DYING-CHIP TELL, which is the other warm thing
+            /// on the screen and the one it must never be confused with:
+            ///
+            ///   1. HUE      gold (g >= <see cref="WeaponGreenFloor"/>) against the implant's
+            ///               orange (g &lt;= <see cref="ImplantGreenCeiling"/>).
+            ///   2. LIFETIME <see cref="BeamLife"/> is 0.22s. The tell runs the sim's whole 2.5s
+            ///               failure. Anything warm that is still there a second later is a body.
+            ///   3. MOTION   these fronts EXPAND and travel away; the tell's rings CONTRACT onto a
+            ///               head. Opposite directions, which the eye reads before it reads colour.
+            ///   4. AXIS     these discs stand ACROSS the line of fire, at any angle the shot
+            ///               happens to take. The tell's rings are always flat and horizontal.
+            ///   5. PLACE    this lives in the air between a muzzle and a target and touches no
+            ///               body; the tell is pinned to a temple at head height, and its rings
+            ///               and crackle stayed COLD BLUE precisely so the pair cannot merge.
             /// </summary>
-            public static BeamFrame Beam(float age01)
+            public static PulseFrame Pulse(float age01)
             {
                 float t = Mathf.Clamp01(age01);
-                var f = default(BeamFrame);
-                f.HeadT = Mathf.Clamp01(t / TravelUntil);
-                f.TailT = t <= TailFrom ? 0f : Out3(Mathf.Clamp01((t - TailFrom) / (1f - TailFrom)));
+                var f = default(PulseFrame);
+
+                // Decelerating, not linear. A front that arrives at constant speed is a bullet;
+                // one that leaves fast and settles in is energy spreading into air.
+                f.FrontT = Out3(Mathf.Clamp01(t / TravelUntil));
+                f.BackT = t <= TailFrom ? 0f : Out3(Mathf.Clamp01((t - TailFrom) / (1f - TailFrom)));
+                if (f.BackT > f.FrontT) f.BackT = f.FrontT;
+
                 f.Alpha = t < 0.5f ? 1f : Mathf.Clamp01((1f - t) / 0.5f);
+                f.Phase = t * 9f;
 
                 if (t >= TravelUntil)
                 {
                     float k = (t - TravelUntil) / (1f - TravelUntil);
-                    f.BurstScale = Mathf.Lerp(0.25f, 1.15f, Mathf.Sqrt(k));
-                    f.BurstAlpha = Mathf.Pow(1f - k, 1.5f);
+                    f.BloomScale = Mathf.Lerp(0.30f, 1.30f, Mathf.Sqrt(k));
+                    f.BloomAlpha = Mathf.Pow(1f - k, 1.5f);
                 }
                 return f;
             }
 
-            /// <summary>How many dashes fit along a lance of this length.</summary>
-            public static int DashCount(float length)
+            /// <summary>
+            /// How wide the wavefront is at <paramref name="u"/> along the shot.
+            ///
+            /// It only ever GROWS. A beam that necks down onto its target is a beam being focused,
+            /// which is the laser read again; a broadcast carrier diverges the whole way and the
+            /// player should be able to see that the far end of his own shot is the loose end.
+            /// Square-rooted so most of the spread happens early and the shape is a horn rather
+            /// than a wedge.
+            /// </summary>
+            public static float PulseRadius(float u)
+                => Mathf.Lerp(WaveNearRadius, WaveFarRadius, Mathf.Sqrt(Mathf.Clamp01(u)));
+
+            /// <summary>How many wavefronts are alive in a packet whose drawn span is this long.</summary>
+            public static int WavefrontCount(float span)
             {
-                if (length <= 0f) return 0;
-                return Mathf.Max(1, Mathf.CeilToInt(length / (DashLength + DashGap)));
+                if (span <= 0f) return 0;
+                return Mathf.Clamp(Mathf.CeilToInt(span / WaveSpacing) + 1, 0, MaxWavefronts);
             }
 
             /// <summary>
-            /// The span of dash <paramref name="index"/>, as fractions along the lance, clipped to
-            /// the drawn window between the tail and the head. False when this dash is entirely
-            /// outside the window, which is most of them for most of the flight.
-            ///
-            /// Dashes are spaced in METRES, not in fractions, so a lance across the map and a lance
-            /// across a room have the same dash size. Spacing them in fractions would have made a
-            /// long shot's dashes long, which reads as a slower packet the further you shoot.
+            /// Wavefront <paramref name="index"/> of a packet, counted back from the leading front.
+            /// Returns false when it has fallen off the trailing end, which is how the train stays
+            /// finite without anything having to remember which fronts it already retired.
             /// </summary>
-            public static bool DashSpan(int index, float length, float tail01, float head01,
-                                        out float t0, out float t1)
+            /// <param name="frontDist">Distance from the muzzle to the leading front, in metres.</param>
+            /// <param name="backDist">Distance to the packet's trailing end, in metres.</param>
+            /// <param name="length">The whole shot's length, for the spread envelope.</param>
+            /// <param name="phase">From <see cref="PulseFrame.Phase"/>; drives the shimmer.</param>
+            /// <param name="dist">Out: where this front is, in metres from the muzzle.</param>
+            /// <param name="radius">Out: its radius in metres.</param>
+            /// <param name="amp">Out: 0..1 brightness. 1 at the leading front, falling off behind.</param>
+            public static bool Wavefront(int index, float frontDist, float backDist, float length,
+                                         float phase, out float dist, out float radius, out float amp)
             {
-                t0 = 0f; t1 = 0f;
-                if (length <= 1e-4f) return false;
+                dist = 0f; radius = 0f; amp = 0f;
+                if (index < 0 || index >= MaxWavefronts) return false;
 
-                float period = DashLength + DashGap;
-                float a = index * period;
-                float b = a + DashLength;
-                t0 = Mathf.Max(Mathf.Clamp01(a / length), Mathf.Clamp01(tail01));
-                t1 = Mathf.Min(Mathf.Clamp01(b / length), Mathf.Clamp01(head01));
-                return t1 - t0 > 1e-3f;
+                dist = frontDist - index * WaveSpacing;
+                if (dist < backDist || dist < 0f) return false;
+
+                radius = PulseRadius(length <= 0f ? 0f : dist / length);
+
+                // Brightest at the front and dying back through the packet. Squared, so the fall
+                // is steep near the head: that gradient is the arrow. Without it a train of equal
+                // rings is a ladder and a ladder has no direction.
+                float k = index / (float)MaxWavefronts;
+                amp = (1f - k) * (1f - k) * (1f - k);
+
+                // The shimmer. A slow travelling wave across the train, never down to nothing --
+                // a front that blinks out entirely leaves a hole in the packet and the hole reads
+                // as a gap in the geometry rather than as energy breathing.
+                amp *= 0.74f + 0.26f * Mathf.Sin(index * 1.9f - phase * 2.2f);
+
+                // And the front fattens a little as it flickers, which is the part that stops the
+                // discs looking like a stack of identical washers threaded on a wire.
+                radius *= 0.92f + 0.16f * Mathf.Sin(index * 1.1f - phase * 1.7f);
+                return amp > 0.004f;
             }
 
             /// <summary>One failing chip at one instant.</summary>
@@ -1297,7 +1502,7 @@ namespace Cipher.Game
         }
     }
 
-    /// <summary>Which weapon fired a lance. Only the colour differs; the shape is one idea.</summary>
+    /// <summary>Which weapon fired a pulse. Only the colour differs; the shape is one idea.</summary>
     public enum SignalBeam
     {
         /// <summary>The hero's emitter. Cyan-white, the player's own colour.</summary>
