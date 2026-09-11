@@ -330,6 +330,15 @@ namespace Cipher.Game.Hero
         /// </summary>
         public float TakeDamage(float damage) => ApplyDamageToSelf(damage);
 
+        /// <summary>Restores health, capped at max. Returns what was actually restored.</summary>
+        public float Heal(float amount)
+        {
+            if (amount <= 0f || IsDown) return 0f;
+            float before = Health;
+            Health = Math.Min(_cfg.MaxHealth, Health + amount);
+            return Health - before;
+        }
+
         private float ApplyDamageToSelf(float damage)
         {
             if (damage <= 0f || IsDown) return 0f;

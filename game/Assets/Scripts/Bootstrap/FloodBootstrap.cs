@@ -84,6 +84,9 @@ namespace Cipher.Game
         private BuildModel _build = null!;
         private SpawnDirector _director = null!;
         private PickupSystem _pickups = null!;
+        private AidKits _aidKits = null!;
+        /// <summary>Where the dresser put vehicles this position; aid kits spawn beside them.</summary>
+        private readonly List<Vec2> _aidSpots = new List<Vec2>();
         private float _matchSeconds;
         private readonly List<SimEvent> _eventScratch = new List<SimEvent>(32);
         private readonly List<(string Text, float Ttl)> _alerts = new List<(string, float)>(8);
@@ -432,6 +435,8 @@ namespace Cipher.Game
             _director = new SpawnDirector(_scenario.Director, _scenario.DirectorSeed);
             // Derived from the map, not from the 64-wide graybox: a narrower scenario used to hand
             // PickupSystem a minX of 34 and GridMap.CellIndex throws on out-of-bounds.
+            _aidKits = new AidKits(_map, _aidSpots, seed ^ 0xA1D5);
+            _aidKits.PlaceOpening();
             _pickups = new PickupSystem(_map, seed ^ 0xC1FE,
                                         minX: Mathf.Clamp(GridW / 2, 1, GridW - 2),
                                         maxX: Mathf.Max(2, GridW - 4));
@@ -542,6 +547,8 @@ namespace Cipher.Game
             _breachMaterial = MakeMaterial(new Color(0.9f, 0.35f, 0.1f), instanced: true);
             // No ink on either: an outline around a fireball reads as a balloon.
             _sphereMesh = HarvestMesh(PrimitiveType.Sphere);
+            _aidCaseMaterial = MakeMaterial(new Color(0.92f, 0.92f, 0.90f), instanced: true);
+            _aidCrossMaterial = MakeMaterial(new Color(0.85f, 0.14f, 0.12f), instanced: true, ink: InkNone);
             // No ink on any of these: an outline around a fireball reads as a balloon.
             _blastFlashMaterial = MakeMaterial(new Color(1f, 0.97f, 0.86f), instanced: true, ink: InkNone);
             _blastFireMaterial = MakeMaterial(new Color(0.98f, 0.52f, 0.14f), instanced: true, ink: InkNone);
@@ -1263,6 +1270,18 @@ namespace Cipher.Game
             }
             HandleSimEvents();
             _build.TickDrones(_hero.Position, TickDt);
+            float restored = _aidKits.Tick(TickDt, _hero.Position, _hero.Health, _heroCfg.MaxHealth,
+                                           _hero.IsDown, out bool tookKit);
+            if (restored > 0f)
+            {
+                _hero.Heal(restored);
+                if (tookKit)
+                {
+                    _sfx.Play(Sfx.MenuConfirm, 0.9f, 0f);
+                    Alert($"+{Mathf.RoundToInt(_heroCfg.MaxHealth * _aidKits.HealFraction)} health", 2.2f);
+                }
+            }
+
             if (_pickups.Tick(_matchSeconds, TickDt, _hero.Position, _heroCfg))
             {
                 Alert($"GUN UPGRADE: {_pickups.GunName}", 3f);
@@ -1371,6 +1390,7 @@ namespace Cipher.Game
         /// </summary>
         private void OnWaveCleared()
         {
+            _aidKits.OnWaveCleared();
             AwardXp(LevelCurve.XpForWaveCleared(_match.WaveNumber));
 
             var drop = _loot.TryDrop(DropSource.WaveClear, 1, _match.WaveIndex);
@@ -2037,9 +2057,17 @@ namespace Cipher.Game
 
             // The cruiser keeps its bar running. Owner asked, and it is the only moving light in a
             // level lit by flat overcast noon, which makes it a landmark as well as a detail.
+            _aidSpots.Clear();
             dresser.OnPlaced = (name, go) =>
             {
                 if (name == "Cop") EmergencyLights.Attach(go, PropMaterial);
+                // A first-aid box lives in a car. Kits spawn a step beside each vehicle, which also
+                // gives the player a reason to cross the open ground the bigger maps now have.
+                if (!name.Contains("Tree") && !name.StartsWith("Bush") && !name.StartsWith("Street"))
+                {
+                    var p = go.transform.position;
+                    _aidSpots.Add(new Vec2(p.x + 1.6f, p.z + 0.4f));
+                }
             };
 
             // Keep the spawn lane, the objective and the hero's ground clear, or the level dresses
@@ -3162,6 +3190,9 @@ namespace Cipher.Game
         private readonly List<Matrix4x4> _fxFire = new List<Matrix4x4>(16);
         private readonly List<Matrix4x4> _fxSmoke = new List<Matrix4x4>(64);
         private readonly List<Matrix4x4> _fxRing = new List<Matrix4x4>(16);
+        private readonly List<Matrix4x4> _fxCross = new List<Matrix4x4>(32);
+        private Material _aidCaseMaterial = null!;
+        private Material _aidCrossMaterial = null!;
 
         private Mesh _sphereMesh = null!;
         private Material _blastFlashMaterial = null!;
@@ -3307,6 +3338,22 @@ namespace Cipher.Game
             DrawInstancedBatched(_agentMesh, _sapperMaterial, _sapperMatrices);
             DrawInstancedBatched(_agentMesh, _spitterMaterial, _spitterMatrices);
             DrawInstancedBatched(_cubeMesh, _sapperTargetMaterial, _fxMatrices);
+
+            // Aid kits: a white case with a red cross, sat on the ground, bobbing so the eye finds it.
+            _fxMatrices.Clear();
+            _fxCross.Clear();
+            for (int i = 0; i < _aidKits.Kits.Count; i++)
+            {
+                var k = _aidKits.Kits[i];
+                float bob = 0.28f + 0.06f * Mathf.Sin(Time.time * 3f + k.X);
+                var at = new Vector3(k.X, bob, k.Y);
+                var rot = Quaternion.Euler(0f, Time.time * 40f + k.X * 30f, 0f);
+                _fxMatrices.Add(Matrix4x4.TRS(at, rot, new Vector3(0.62f, 0.34f, 0.44f)));
+                _fxCross.Add(Matrix4x4.TRS(at + rot * new Vector3(0f, 0.18f, 0f), rot, new Vector3(0.36f, 0.02f, 0.10f)));
+                _fxCross.Add(Matrix4x4.TRS(at + rot * new Vector3(0f, 0.18f, 0f), rot, new Vector3(0.10f, 0.02f, 0.36f)));
+            }
+            if (_fxMatrices.Count > 0) DrawInstancedBatched(_cubeMesh, _aidCaseMaterial, _fxMatrices);
+            if (_fxCross.Count > 0) DrawInstancedBatched(_cubeMesh, _aidCrossMaterial, _fxCross);
 
             // Repair drones hover over their cell; dim when the hero is too far to power them.
             _fxMatrices.Clear();
