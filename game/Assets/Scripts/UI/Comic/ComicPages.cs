@@ -91,7 +91,8 @@ namespace Cipher.Game.UI.Comic
             // Only an improvement gets the accent. Amber means "the implant lit up"; spending it on a
             // downgrade would make the one colour in this UI mean nothing.
             if (page.DeltaSign > 0) ComicInk.Halftone(delta.Inset(4f), 0.5f, ComicInk.Amber);
-            else if (page.DeltaSign < 0) ComicInk.Halftone(delta.Inset(4f), 0.35f);
+            // A LOSS GETS NO SCREEN AT ALL. A halftone behind a minus sign eats the minus sign,
+            // and "is that a 0.8 or a -0.8" is the one question this number exists to answer.
             ComicInk.Border(delta, ComicInk.BorderWidth);
 
             string text = page.HasComparison ? page.DeltaText : "—";
@@ -160,12 +161,22 @@ namespace Cipher.Game.UI.Comic
                     break;
 
                 case SkillState.Available:
+                {
                     ComicInk.PaperFill(r);
+                    // An AMBER SPINE means "you have already put points here".
+                    //
+                    // Without it a node at rank 2 of 5 and a node at rank 0 print identically,
+                    // because both are buyable — which is exactly what the first capture showed, and
+                    // it makes a whole column of investment invisible. The stamp is reserved for a
+                    // node that is finished; this is the mark for one that is under way.
+                    if (box.Node.Invested) ComicInk.Fill(new ComicRect(r.X + 3f, r.Y + 3f, 6f, r.H - 6f), ComicInk.Amber);
                     ComicInk.Border(r, 2f);
-                    ComicInk.Body(new ComicRect(r.X + 9f, r.Y + 6f, r.W - 60f, 22f), box.Node.Name);
-                    ComicInk.Small(new ComicRect(r.X + 9f, r.Bottom - 22f, r.W - 60f, 18f), box.Node.Text);
-                    ComicInk.BigNumber(new ComicRect(r.Right - 52f, r.Y, 44f, r.H), box.Node.Cost.ToString(), ComicInk.Ink);
+                    float textX = r.X + (box.Node.Invested ? 17f : 9f);
+                    ComicInk.Body(new ComicRect(textX, r.Y + 6f, r.Right - 54f - textX, 22f), box.Node.Name);
+                    ComicInk.Small(new ComicRect(textX, r.Bottom - 22f, r.Right - 54f - textX, 18f), box.Node.Text);
+                    ComicInk.MidNumber(new ComicRect(r.Right - 48f, r.Y, 40f, r.H), box.Node.Cost.ToString(), ComicInk.Ink);
                     break;
+                }
 
                 default:
                     ComicInk.Pencil(r, $"{box.Node.Name}   {box.Node.Cost}");
@@ -218,6 +229,12 @@ namespace Cipher.Game.UI.Comic
                 if (page.Zone == TruckZone.LeftBehind && ReferenceEquals(crate, page.Selected)) ComicInk.Cursor(crate.Box);
             }
 
+            var picked = page.Selected;
+            ComicInk.Caption(page.DetailRect, picked == null
+                ? "nothing selected"
+                : $"{picked.Item.Name.ToUpperInvariant()}     {picked.Item.Weight:F0} kg     "
+                  + $"{picked.Item.Volume:F1} m3     {(picked.InBed ? "— coming with you" : "— staying here")}");
+
             ComicInk.Gauge(page.WeightGauge, page.WeightFraction,
                            $"Weight  {page.Weight:F0} / {page.MaxWeight:F0} kg");
             ComicInk.Gauge(page.VolumeGauge, page.VolumeFraction,
@@ -229,20 +246,77 @@ namespace Cipher.Game.UI.Comic
             var truck = page.TruckPanel;
             ComicInk.InkBlock(new ComicRect(truck.X + 14f, page.GroundY, truck.W - 28f, 3f));
 
+            var hood = page.HoodRect;
+            ComicInk.PaperFill(hood);
+            ComicInk.Border(hood, ComicInk.BorderWidth);
+            // Grille and lamp. Two marks, and the truck is suddenly facing somewhere.
+            ComicInk.InkBlock(new ComicRect(hood.X + 3f, hood.Y + hood.H * 0.34f, 7f, hood.H * 0.34f));
+            ComicInk.Halftone(new ComicRect(hood.X + 12f, hood.Y + hood.H * 0.30f, hood.W * 0.34f, hood.H * 0.42f), 0.5f);
+
             var cab = page.CabRect;
             ComicInk.PaperFill(cab);
             ComicInk.Border(cab, ComicInk.BorderWidth);
-            // A window band and a wheel arch are the two marks that turn a box into a truck.
-            var window = new ComicRect(cab.X + 8f, cab.Y + 8f, cab.W - 16f, cab.H * 0.34f);
+
+            // A window band high in the cab, a pillar splitting windscreen from door glass, and a
+            // dark sill under it. The glass is nearly paper so the people inside it read as ink.
+            var window = new ComicRect(cab.X + 10f, cab.Y + cab.H * 0.13f, cab.W - 20f, cab.H * 0.34f);
             ComicInk.InkBlock(window);
-            ComicInk.Halftone(window.Inset(3f), 0.68f, ComicInk.Paper);
+            ComicInk.Halftone(window.Inset(3f), 0.85f, ComicInk.Paper);
+            DrawCabOccupants(window.Inset(3f));
+            ComicInk.InkBlock(new ComicRect(window.X + window.W * 0.30f, window.Y, 4f, window.H));
+            ComicInk.InkBlock(new ComicRect(window.X, window.Bottom + 5f, window.W, 4f));
+
+            // Two door shuts and a handle. Three marks, and the cab stops being a paper rectangle.
+            float shut = cab.X + cab.W * 0.42f;
+            float doorTop = window.Bottom + 9f;
+            float doorH = Mathf.Max(0f, cab.Bottom - doorTop - 4f);
+            ComicInk.InkBlock(new ComicRect(shut, doorTop, 2f, doorH));
+            ComicInk.InkBlock(new ComicRect(cab.Right - 5f, doorTop, 2f, doorH));
+            ComicInk.InkBlock(new ComicRect(shut + 9f, doorTop + 14f, 17f, 4f));
 
             var bed = page.BedRect;
             ComicInk.PaperFill(bed);
             ComicInk.Border(bed, ComicInk.BorderWidth);
 
-            ComicInk.Ring(page.WheelFront, 8f, ComicInk.Ink);
-            ComicInk.Ring(page.WheelRear, 8f, ComicInk.Ink);
+            // Wheels last, over the body, so each ring reads as an arch cut into the panel.
+            ComicInk.Ring(page.WheelFront, 9f, ComicInk.Ink);
+            ComicInk.Ring(page.WheelRear, 9f, ComicInk.Ink);
+            ComicInk.Disc(page.WheelFront.Inset(page.WheelFront.W * 0.34f), ComicInk.Ink);
+            ComicInk.Disc(page.WheelRear.Inset(page.WheelRear.W * 0.34f), ComicInk.Ink);
+        }
+
+        /// <summary>
+        /// Three heads in the cab window: one adult and, behind her, two small ones.
+        ///
+        /// ADR-009 made the truck the family, and this page is the one place in the game where the
+        /// player is asked to choose what comes with them. Drawing them is what turns a cargo
+        /// manifest into a decision about the bed space left over around two car seats. It gets three
+        /// outlined circles and nothing else — no faces, no names, no mechanic. The ADR is explicit
+        /// that they are roles rather than identities, and a page that laboured the point would be
+        /// worse than one that never made it.
+        /// </summary>
+        private static void DrawCabOccupants(ComicRect window)
+        {
+            if (window.W < 34f || window.H < 14f) return;
+
+            float adult = Mathf.Min(window.H * 0.52f, window.W * 0.20f);
+            float child = adult * 0.70f;
+            float baseY = window.Bottom;
+
+            Occupant(window.X + window.W * 0.14f, baseY, adult);
+            Occupant(window.X + window.W * 0.50f, baseY, child);
+            Occupant(window.X + window.W * 0.74f, baseY, child);
+        }
+
+        /// <summary>A head and a pair of shoulders in solid ink, cut off by the sill.</summary>
+        private static void Occupant(float cx, float baseY, float headD)
+        {
+            if (headD < 4f) return;
+            float shoulderW = headD * 1.7f;
+            float headY = baseY - headD * 2.1f;
+            ComicInk.Disc(new ComicRect(cx - headD * 0.5f, headY, headD, headD), ComicInk.Ink);
+            ComicInk.InkBlock(new ComicRect(cx - shoulderW * 0.5f, headY + headD * 0.9f,
+                                            shoulderW, baseY - (headY + headD * 0.9f)));
         }
 
         private static void DrawCrate(TruckCrate crate, bool inked)
@@ -252,16 +326,40 @@ namespace Cipher.Game.UI.Comic
 
             if (!inked)
             {
-                ComicInk.Pencil(r, crate.Item.Name);
+                // A ground rule under every crate, so the gravel is a place rather than a list.
+                ComicInk.InkBlock(new ComicRect(r.X - 3f, r.Bottom + 2f, r.W + 6f, 2f));
+                ComicInk.Pencil(r, string.Empty);
+                // A lid line: three pixels that stop a hatched rectangle looking like a swatch.
+                ComicInk.Fill(new ComicRect(r.X + 2f, r.Y + r.H * 0.22f, r.W - 4f, 1f), ComicInk.PencilGrey);
+
+                // Width is volume and volume is the argument, so a narrow crate does NOT grow to fit
+                // its label — it goes unnamed and the caption band names whatever the cursor is on.
+                if (r.W > 56f)
+                {
+                    var tag = new ComicRect(r.X + 5f, r.CenterY - 11f, r.W - 10f, 22f);
+                    ComicInk.PaperFill(tag);
+                    ComicInk.Fill(new ComicRect(tag.X, tag.Y, tag.W, 1f), ComicInk.PencilGrey);
+                    ComicInk.Fill(new ComicRect(tag.X, tag.Bottom - 1f, tag.W, 1f), ComicInk.PencilGrey);
+                    ComicInk.Small(tag.Inset(4f, 0f, 3f, 0f), crate.Item.Name);
+                }
                 return;
             }
 
             ComicInk.PaperFill(r);
             // Darkness is weight. Two crates that take the same floor can print very differently, and
             // that is the whole "a heavy sentry or four light rotors" trade ADR-005 asks the player to make.
-            ComicInk.Halftone(r.Inset(3f), crate.ShadeDensity * 0.7f);
+            ComicInk.Halftone(r.Inset(3f), crate.ShadeDensity * 0.55f);
             ComicInk.Border(r, 2f);
-            if (r.W > 54f) ComicInk.Small(new ComicRect(r.X + 5f, r.CenterY - 9f, r.W - 10f, 18f), crate.Item.Name);
+
+            // The name goes on a stencilled paper band, not straight onto the screen. Small ink text
+            // over a halftone is unreadable at any density worth printing.
+            if (r.W > 56f)
+            {
+                var band = new ComicRect(r.X + 5f, r.CenterY - 11f, r.W - 10f, 22f);
+                ComicInk.PaperFill(band);
+                ComicInk.Border(band, 1f);
+                ComicInk.Small(band.Inset(4f, 0f, 3f, 0f), crate.Item.Name);
+            }
         }
     }
 }

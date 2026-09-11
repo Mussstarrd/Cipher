@@ -28,7 +28,15 @@ namespace Cipher.Game.UI.Comic
         /// <summary>Which dossier column this belongs in — a discipline, not a tree depth.</summary>
         public readonly int Column;
 
-        public SkillNodeView(string id, string name, string text, SkillState state, int cost, int column)
+        /// <summary>
+        /// Points have already gone in here. Orthogonal to <see cref="State"/> on purpose: a
+        /// stacking node at rank 2 of 5 is both bought-into AND still buyable, and a page that can
+        /// only say one of those loses the player's whole record of what they invested in.
+        /// </summary>
+        public readonly bool Invested;
+
+        public SkillNodeView(string id, string name, string text, SkillState state, int cost, int column,
+                             bool invested = false)
         {
             Id = id ?? string.Empty;
             Name = name ?? string.Empty;
@@ -36,6 +44,7 @@ namespace Cipher.Game.UI.Comic
             State = state;
             Cost = cost;
             Column = Math.Max(0, column);
+            Invested = invested;
         }
 
         public override string ToString() => $"{Name} [{State}] {Cost}pt";
@@ -133,7 +142,11 @@ namespace Cipher.Game.UI.Comic
             var inner = page.Inset(18f);
 
             CaptionRect = new ComicRect(inner.X, inner.Y, inner.W * 0.62f, 34f);
-            PointsStampRect = new ComicRect(inner.Right - inner.W * 0.22f, inner.Y - 4f, inner.W * 0.22f, 44f);
+            // Narrow, and pulled in off the edge: the stamp is drawn TILTED, so its corners sit
+            // outside this rect and a stamp flush with the margin prints half of itself into the
+            // gutter and the rest off the screen.
+            float stampW = Math.Min(200f, inner.W * 0.15f);
+            PointsStampRect = new ComicRect(inner.Right - stampW - 10f, inner.Y - 2f, stampW, 42f);
 
             // The detail caption is a fixed band at the foot. Fixed, not proportional: it holds one
             // sentence and one sentence is one height.
@@ -264,6 +277,33 @@ namespace Cipher.Game.UI.Comic
         }
 
         public SkillsAction Back() => SkillsAction.Close;
+
+        /// <summary>
+        /// Put the cursor back after the page was rebuilt from a changed model. Buying a node
+        /// changes every state on the page, so the integrator rebuilds; landing back on the top of
+        /// the first column each time would lose the player's place mid-purchase.
+        /// </summary>
+        public void SetCursor(int column, int row)
+        {
+            int n = _columns.Count;
+            if (n == 0) return;
+
+            column = Clamp(column, 0, n - 1);
+            if (_columns[column].Count == 0)
+            {
+                for (int c = 0; c < n; c++)
+                {
+                    if (_columns[c].Count == 0) continue;
+                    column = c;
+                    break;
+                }
+            }
+
+            Column = column;
+            int rows = _columns[Column].Count;
+            Row = rows == 0 ? 0 : Clamp(row, 0, rows - 1);
+            ScrollToCursor();
+        }
 
         private static int Clamp(int v, int lo, int hi) => v < lo ? lo : v > hi ? hi : v;
     }
