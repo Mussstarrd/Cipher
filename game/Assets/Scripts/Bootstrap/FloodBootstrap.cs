@@ -83,6 +83,9 @@ namespace Cipher.Game
         private float _lootNoticeTimer;
         private bool _showInventory;
         private bool _showSkills;
+        private TruckLoad? _truck;
+        private List<IHaulable> _recoverable = new List<IHaulable>();
+        private int _truckCursor;
         private int _skillCursor;
         private IReadOnlyList<Improvisation> _cardOffer = System.Array.Empty<Improvisation>();
         private int _cardCursor;
@@ -554,8 +557,8 @@ namespace Cipher.Game
                         break;
                     case MatchPhase.Extraction:
                         _sfx.Play(Sfx.WaveClear, 1f, 0f);
-                        OnWaveCleared();
                         AwardXp(LevelCurve.XpForExtraction(_match.WavesCleared));
+                        OpenTruck();
                         break;
                     case MatchPhase.Extracted: _sfx.Play(Sfx.Win, 0.85f, 0f); break;
                     case MatchPhase.Won: _sfx.Play(Sfx.Win, 1f, 0f); break;
@@ -867,8 +870,9 @@ namespace Cipher.Game
             if (_declineNoticeTimer > 0f) _declineNoticeTimer = Mathf.Max(0f, _declineNoticeTimer - Time.deltaTime);
             if (_lootNoticeTimer > 0f) _lootNoticeTimer = Mathf.Max(0f, _lootNoticeTimer - Time.deltaTime);
 
-            // An offer on the table owns the input until it is answered.
+            // An offer on the table owns the input until it is answered, and so does the truck.
             if (_cardOffer.Count > 0) { ReadCardInput(); return; }
+            if (_match.Phase == MatchPhase.Extraction) { ReadTruckInput(kb, pad); return; }
 
             if ((pad != null && pad.buttonNorth.wasPressedThisFrame && !_buildMode)
                 || (kb != null && kb.iKey.wasPressedThisFrame))
@@ -1735,6 +1739,7 @@ namespace Cipher.Game
             // The wheel paints over the HUD but under the pause menu.
             // An offer owns the screen while it is up, so the kit panel stands down.
             if (_showInventory && !_showSkills && _cardOffer.Count == 0 && !_pauseMenu.IsOpen) DrawInventory();
+            if (_match.Phase == MatchPhase.Extraction && !_pauseMenu.IsOpen) DrawTruck();
             if (_showSkills && !_pauseMenu.IsOpen) DrawSkillTree();
             if (_cardOffer.Count > 0 && !_pauseMenu.IsOpen) DrawCardOffer();
             if (_wheel.IsOpen && !_pauseMenu.IsOpen && !_match.IsOver) DrawBuildWheel();
@@ -1776,6 +1781,118 @@ namespace Cipher.Game
             GUI.color = prev;
             GUI.Label(new Rect(0, _uiH * 0.38f, _uiW, 60), title, _centerStyle);
             GUI.Label(new Rect(0, _uiH * 0.38f + 64, _uiW, 70), sub, _subStyle);
+        }
+
+        /// <summary>
+        /// The pack-up window opened. Build the list of what is standing and what it costs to haul.
+        /// Weight and volume are separate limits on purpose: a sentry is heavy and compact, a
+        /// barricade panel is light and enormous, so four light guns against one heavy one is a real
+        /// choice rather than a number to maximise.
+        /// </summary>
+        private void OpenTruck()
+        {
+            _truck = new TruckLoad();
+            _truckCursor = 0;
+            _recoverable = new List<IHaulable>();
+
+            for (int i = 0; i < _turrets.Turrets.Count; i++)
+            {
+                var t = _turrets.Turrets[i];
+                if (!t.Alive) continue;
+                string name = _turrets.Families[t.Family].Name;
+                // Heavier guns are heavier to carry. Rough, tunable, and legible on the card.
+                float weight = 60f + t.DamagePerShot * 2.4f;
+                float volume = 0.55f + t.Range * 0.06f;
+                _recoverable.Add(new SalvagedEmplacement(name + " T" + (t.Tier + 1),
+                                                         new Haulage(weight, volume), t.Invested));
+            }
+
+            // Gear you are wearing rides with you regardless; only the pack competes for space.
+            for (int i = 0; i < _loadout.Inventory.Pack.Count; i++)
+                _recoverable.Add(new HauledItem(_loadout.Inventory.Pack[i]));
+        }
+
+        private void ReadTruckInput(Keyboard? kb, Gamepad? pad)
+        {
+            if (_truck == null || _recoverable.Count == 0) return;
+
+            bool up = (kb != null && kb.upArrowKey.wasPressedThisFrame)
+                      || (pad != null && pad.dpad.up.wasPressedThisFrame);
+            bool down = (kb != null && kb.downArrowKey.wasPressedThisFrame)
+                        || (pad != null && pad.dpad.down.wasPressedThisFrame);
+            if (up) { _truckCursor = (_truckCursor - 1 + _recoverable.Count) % _recoverable.Count; _sfx.Play(Sfx.MenuTick, 0.6f, 0f); }
+            if (down) { _truckCursor = (_truckCursor + 1) % _recoverable.Count; _sfx.Play(Sfx.MenuTick, 0.6f, 0f); }
+
+            bool toggle = (kb != null && (kb.enterKey.wasPressedThisFrame || kb.spaceKey.wasPressedThisFrame))
+                          || (pad != null && pad.buttonSouth.wasPressedThisFrame);
+            if (toggle)
+            {
+                var thing = _recoverable[_truckCursor];
+                if (_truck.IsLoaded(thing))
+                {
+                    _truck.Unload(thing);
+                    _sfx.Play(Sfx.MenuTick, 0.7f, 0f);
+                }
+                else
+                {
+                    // Loading costs window time as well as bed space: unbolting is not free.
+                    var salvage = _match.TrySalvage(thing.RecoveredValue);
+                    var outcome = salvage == SalvageResult.Ok ? _truck.TryLoad(thing) : LoadOutcome.TooHeavy;
+                    _declineNoticeTimer = 2f;
+                    _declineNotice = salvage != SalvageResult.Ok
+                        ? "no time left to unbolt it"
+                        : outcome switch
+                        {
+                            LoadOutcome.Loaded => "loaded " + thing.HaulName,
+                            LoadOutcome.TooHeavy => "too heavy for the bed",
+                            LoadOutcome.TooBulky => "no room left",
+                            _ => "already on",
+                        };
+                    _sfx.Play(outcome == LoadOutcome.Loaded ? Sfx.MenuConfirm : Sfx.MenuTick, 0.8f, 0f);
+                }
+            }
+
+            if (kb != null && kb.lKey.wasPressedThisFrame) _match.PullOutNow();
+        }
+
+        private void DrawTruck()
+        {
+            if (_truck == null) return;
+            var prev = GUI.color;
+            GUI.color = new Color(0f, 0f, 0f, 0.74f);
+            GUI.DrawTexture(new Rect(0f, 0f, _uiW, _uiH), Texture2D.whiteTexture);
+            GUI.color = prev;
+
+            _invStyle ??= new GUIStyle(GUI.skin.label) { fontSize = 17, wordWrap = true };
+
+            GUI.Label(new Rect(_uiW * 0.5f - 460f, 54f, 920f, 30f),
+                      "LOAD THE TRUCK - " + _match.ExtractTimeLeft.ToString("F0") + "s before the next scan",
+                      _subStyle);
+            GUI.Label(new Rect(_uiW * 0.5f - 460f, 86f, 920f, 26f),
+                      _truck.Weight.ToString("F0") + "/" + _truck.MaxWeight.ToString("F0") + " kg      "
+                      + _truck.Volume.ToString("F1") + "/" + _truck.MaxVolume.ToString("F1") + " m3      "
+                      + "value " + _truck.TotalValue, _subStyle);
+
+            float y = 130f;
+            for (int i = 0; i < _recoverable.Count && y < _uiH - 120f; i++)
+            {
+                var thing = _recoverable[i];
+                bool on = _truck.IsLoaded(thing);
+                bool sel = i == _truckCursor;
+                GUI.color = sel ? new Color(1f, 0.86f, 0.38f, 1f)
+                          : on ? new Color(0.6f, 0.95f, 0.65f, 0.95f)
+                          : _truck.Fits(thing) ? new Color(0.86f, 0.9f, 0.94f, 0.92f)
+                          : new Color(0.6f, 0.5f, 0.5f, 0.85f);
+                GUI.Label(new Rect(_uiW * 0.5f - 460f, y, 920f, 24f),
+                          (sel ? "> " : "  ") + (on ? "[X] " : "[ ] ")
+                          + thing.HaulName.PadRight(26) + "  " + thing.Haulage
+                          + "   worth " + thing.RecoveredValue, _invStyle);
+                y += 24f;
+            }
+            GUI.color = prev;
+
+            GUI.Label(new Rect(_uiW * 0.5f - 460f, y + 18f, 920f, 26f),
+                      "up/down to move, A or Enter to load or unload, L to pull out now", _subStyle);
         }
 
         /// <summary>

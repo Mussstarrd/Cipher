@@ -114,6 +114,14 @@ namespace Cipher.Game.Progression
             }
         }
 
+        /// <summary>Already on the truck? Cheaper and clearer than pulling LINQ into the HUD.</summary>
+        public bool IsLoaded(IHaulable thing)
+        {
+            if (thing == null) return false;
+            for (int i = 0; i < _loaded.Count; i++) if (ReferenceEquals(_loaded[i], thing)) return true;
+            return false;
+        }
+
         public bool Fits(IHaulable thing)
             => thing != null
                && Weight + thing.Haulage.Weight <= MaxWeight
@@ -122,7 +130,7 @@ namespace Cipher.Game.Progression
         public LoadOutcome TryLoad(IHaulable thing)
         {
             if (thing == null) throw new ArgumentNullException(nameof(thing));
-            if (_loaded.Contains(thing)) return LoadOutcome.AlreadyLoaded;
+            if (IsLoaded(thing)) return LoadOutcome.AlreadyLoaded;
 
             if (Weight + thing.Haulage.Weight > MaxWeight) return LoadOutcome.TooHeavy;
             if (Volume + thing.Haulage.Volume > MaxVolume) return LoadOutcome.TooBulky;
