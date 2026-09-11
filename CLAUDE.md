@@ -423,4 +423,26 @@ substitute: it references the sim's SOURCE, not its test project.
   - **The repair crew's window was unreachable by construction**: `Setup` only begins once the field
     is provably empty, so ADR-009's danger radius and scramble-back could never fire. They now stay
     out into the next wave until something gets close, which is the tension the ADR asked for.
+- **PHASE C SHIPPED: THE THREE SCREENS ARE COMIC PAGES AND THEY ARE WIRED** (`Scripts/UI/Comic/`).
+  `KitScreen` / `SkillsScreen` / `TruckScreen` adapt the real `Loadout`, `SkillState` and `TruckLoad`
+  onto the page layouts, own their own input, and are drawn from `OnGUI`. The old `DrawInventory`,
+  `DrawSkillTree`, `DrawTruck`, `ReadSkillInput`, `ReadTruckInput` and `StickStep` are DELETED.
+  - **There is deliberately no `Toggle()`.** An open screen is checked FIRST in the input method and
+    returns `true`, so the bootstrap never reaches its own opening binding while a page is up. That
+    is structurally why the button that opens a screen can no longer close it -- the owner's "once
+    I'm in my skills if I press up again it exits out". A flag you must remember to check is a flag
+    someone will forget; an early return is not.
+  - **`GUIUtility.RotateAroundPivot` IS NOT SAFE UNDER A SCALED `GUI.matrix`**, and this entire UI
+    draws inside one (`BeginScaledUi`). It composes on the wrong side of the existing matrix, so the
+    pivot is scaled and the rotation is not: every rotated element is displaced by roughly
+    `(scale - 1) x distance from origin`. The paper doll's arms and legs landed ~80px off its body.
+    Use `ComicInk.Stroke` (discs along a line, no matrix) or `ComicInk`'s correctly-composed
+    `RotateAbout`.
+  - `Cipher.Game.UI.Comic` is imported into the bootstrap **as an alias** (`using Comic = ...`):
+    `SkillState` exists in both it and `Cipher.Game.Progression`, one a view enum and one the model.
+  - `-exodus-comic kit|skills|truck|demo` stages a page over a real player build on real models, and
+    a build with `-exodus-comic kit` is a ten-second controller test.
+  - **Gear on the truck page reads as noise** -- a dog tag is 0.0005 m3 beside a 2.4 m3 sentry. ADR-005
+    says gear is never what you cut, so the page arguably should show emplacements only and say gear
+    rides free. Design call, not made.
 - **Was:** owner hero feedback → barricade build-mode with live path preview (Milestone 2 "The Maze").

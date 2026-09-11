@@ -7,6 +7,9 @@ using Cipher.Game.Match;
 using Cipher.Game.Scenarios;
 using Cipher.Game.Progression;
 using Cipher.Game.UI;
+// `SkillState` exists in both Progression and UI.Comic (one is the model, one is a view
+// enum), so the Comic namespace is aliased rather than imported wholesale.
+using Comic = Cipher.Game.UI.Comic;
 using Cipher.Sim.Agents;
 using Cipher.Sim.Core;
 using Cipher.Sim.Emplacements;
@@ -125,12 +128,11 @@ namespace Cipher.Game
         private int _lastSpitterAlive;
         private string _lootNotice = "";
         private float _lootNoticeTimer;
-        private bool _showInventory;
-        private bool _showSkills;
+        private Comic.KitScreen _kitScreen = null!;
+        private Comic.SkillsScreen _skillsScreen = null!;
+        private Comic.TruckScreen _truckScreen = null!;
         private TruckLoad? _truck;
         private List<IHaulable> _recoverable = new List<IHaulable>();
-        private int _truckCursor;
-        private int _skillCursor;
         private IReadOnlyList<Improvisation> _cardOffer = System.Array.Empty<Improvisation>();
         private int _cardCursor;
         private HeroModel _hero = null!;
@@ -468,6 +470,22 @@ namespace Cipher.Game
             // Carry the permanent tree across restarts; gear and cards are per-position.
             var skills = _loadout?.Skills ?? new SkillState();
             _loadout = new Loadout(_heroCfg, new Inventory(), new ImprovisationDeck(seed ^ 0xA11CE), skills);
+
+            // Phase C: the three screens the owner called "computer gibberish" are comic pages now.
+            // They own their own input and consume it entirely while open, which is structurally why
+            // the button that opens one can no longer close it.
+            var comicHost = new Comic.DelegateComicHost(
+                notice: t => { _declineNotice = t; _declineNoticeTimer = 2.5f; },
+                tick:   () => _sfx.Play(Sfx.MenuTick, 0.6f, 0f),
+                accept: () => _sfx.Play(Sfx.MenuConfirm, 0.9f, 0f),
+                refuse: () => _sfx.Play(Sfx.MenuTick, 0.8f, 0f));
+
+            _kitScreen = new Comic.KitScreen(_loadout, comicHost, ApplyLoadoutToWorld);
+            _skillsScreen = new Comic.SkillsScreen(_loadout, comicHost, ApplyLoadoutToWorld);
+            _truckScreen = new Comic.TruckScreen(new Comic.DelegateTruckHost(comicHost,
+                secondsLeft: () => _match.ExtractTimeLeft,
+                unbolt:      v  => _match.TrySalvage(v) == SalvageResult.Ok,
+                pullOut:     () => _match.PullOutNow()));
             _loot = new ItemRoller(seed ^ 0x9E3779B9UL);
             _lastLevel = _loadout.Skills.Level;
             _cardOffer = System.Array.Empty<Improvisation>();
@@ -517,13 +535,11 @@ namespace Cipher.Game
             for (int i = 0; i < _flashLastHealth.Length; i++) { _flashLastHealth[i] = -1f; _flashLeft[i] = 0f; }
             // Panels do not survive a position either: input is not read while the match is over,
             // so a skill tree left open could not be closed and drew over the debrief.
-            _showInventory = false;
-            _showSkills = false;
-            _showTruck = false;
+            _kitScreen.Hide();
+            _skillsScreen.Hide();
+            _truckScreen.Hide();
             _truck = null;
             _recoverable = new List<IHaulable>();
-            _skillCursor = 0;
-            _truckCursor = 0;
             _tracers.Clear();
             _bakedMapVersion = -1;
             SyncTurretObjects();
@@ -1213,7 +1229,7 @@ namespace Cipher.Game
                         // had to leave behind -- read zero for a player who walked away from six
                         // turrets, which is the one number the screen exists to show.
                         ReportAbandonedEmplacements();
-                        _showTruck = false;
+                        _truckScreen.Hide();
                         break;
                     case MatchPhase.Won: _sfx.Play(Sfx.Win, 1f, 0f); break;
                     case MatchPhase.Lost: _sfx.Play(Sfx.Lose, 1f, 0f); break;
@@ -1650,34 +1666,24 @@ namespace Cipher.Game
             // away was turning an unlosable position into an unplayable one. It is especially bad
             // for a SurviveSeconds objective, which completes mid-wave and drops the player
             // straight into the window with the horde on the field.
-            if (_match.Phase == MatchPhase.Extraction && _showTruck) { ReadTruckInput(kb, pad); return; }
-            if (_match.Phase == MatchPhase.Extraction
-                && ((pad != null && pad.dpad.right.wasPressedThisFrame)
-                    || (kb != null && kb.iKey.wasPressedThisFrame)))
-            {
-                _showTruck = true;
-                return;
-            }
-
-            // B closes whatever is open. A panel with no way out on the design-centre input device
-            // is a panel the owner could not leave: "i cant get to my inventory or skills or any of
-            // that shit on controller".
-            if (pad != null && pad.buttonEast.wasPressedThisFrame && (_showInventory || _showSkills))
-            {
-                _showInventory = false;
-                _showSkills = false;
-                _sfx.Play(Sfx.MenuTick, 0.6f, 0f);
-                return;
-            }
+            // AN OPEN SCREEN IS CHECKED FIRST AND SWALLOWS THE FRAME. That ordering is the fix
+            // for the owner's "once I'm in my skills if I press up again it exits out": the
+            // bootstrap never reaches its own opening binding while a page is up, so only B, Back
+            // or Escape can close one. It is a structural guarantee rather than a flag to remember.
+            if (_kitScreen.IsOpen)    { _kitScreen.HandleInput();    return; }
+            if (_skillsScreen.IsOpen) { _skillsScreen.HandleInput(); return; }
+            if (_truckScreen.IsOpen)  { _truckScreen.HandleInput();  return; }
 
             // D-PAD RIGHT for the kit, not Y. Y is the airstrike, and binding the kit to it meant
             // calling a strike opened the inventory -- owner: "When I press why it opens my
-            // inventory that is also my airstrike button".
+            // inventory that is also my airstrike button". During the pack-up the same button
+            // opens the truck, because that is what "what am I carrying" means in that window.
             if ((pad != null && pad.dpad.right.wasPressedThisFrame && !_buildMode)
                 || (kb != null && kb.iKey.wasPressedThisFrame))
             {
-                _showInventory = !_showInventory;
-                _showSkills = false;
+                if (_match.Phase == MatchPhase.Extraction) _truckScreen.Show();
+                else _kitScreen.Show();
+                return;
             }
 
             // D-pad up is the skill tree. It was keyboard-only, on a game whose design-centre input
@@ -1686,10 +1692,9 @@ namespace Cipher.Game
             if ((pad != null && pad.dpad.up.wasPressedThisFrame && !_buildMode)
                 || (kb != null && kb.kKey.wasPressedThisFrame))
             {
-                _showSkills = !_showSkills;
-                _showInventory = false;
+                _skillsScreen.Show();
+                return;
             }
-            if (_showSkills) { ReadSkillInput(kb, pad); return; }
             // Tab is still a plain toggle for keyboard players who just want in and out.
             bool toggle = kb != null && kb.tabKey.wasPressedThisFrame;
             if (toggle)
@@ -1753,7 +1758,7 @@ namespace Cipher.Game
 
             _cardOffer = _loadout.Deck.Deal();
             _cardCursor = 1;
-            _showInventory = true;
+            _kitScreen.Show();
         }
 
         /// <summary>
@@ -2839,8 +2844,7 @@ namespace Cipher.Game
             _loadout.SpendSkillPoint("t-marks");
             _loadout.SpendSkillPoint("d-lanes");
             ApplyLoadoutToWorld();
-            _skillCursor = 1;
-            _showSkills = true;
+            _skillsScreen.Show();
         }
 
         /// <summary>Opens the radial for a capture, aimed at one option. Screenshot harness only.</summary>
@@ -3907,9 +3911,12 @@ namespace Cipher.Game
 
             // The wheel paints over the HUD but under the pause menu.
             // An offer owns the screen while it is up, so the kit panel stands down.
-            if (_showInventory && !_showSkills && _cardOffer.Count == 0 && !_pauseMenu.IsOpen) DrawInventory();
-            if (_match.Phase == MatchPhase.Extraction && _showTruck && !_pauseMenu.IsOpen) DrawTruck();
-            if (_showSkills && !_pauseMenu.IsOpen) DrawSkillTree();
+            if (_cardOffer.Count == 0 && !_pauseMenu.IsOpen)
+            {
+                _kitScreen.Draw(_uiW, _uiH);
+                _skillsScreen.Draw(_uiW, _uiH);
+                _truckScreen.Draw(_uiW, _uiH);
+            }
             if (_cardOffer.Count > 0 && !_pauseMenu.IsOpen) DrawCardOffer();
             if (_wheel.IsOpen && !_pauseMenu.IsOpen && !_match.IsOver) DrawBuildWheel();
 
@@ -3959,7 +3966,6 @@ namespace Cipher.Game
         /// choice rather than a number to maximise.
         /// </summary>
         /// <summary>Whether the loading screen is up. The window runs whether it is or not.</summary>
-        private bool _showTruck;
 
         /// <summary>Counts what the truck could not take, once the pack-up window has closed.</summary>
         private void ReportAbandonedEmplacements()
@@ -3975,9 +3981,7 @@ namespace Cipher.Game
 
         private void OpenTruck()
         {
-            _showTruck = true;
             _truck = new TruckLoad();
-            _truckCursor = 0;
             _recoverable = new List<IHaulable>();
 
             for (int i = 0; i < _turrets.Turrets.Count; i++)
@@ -3995,247 +3999,15 @@ namespace Cipher.Game
             // Gear you are wearing rides with you regardless; only the pack competes for space.
             for (int i = 0; i < _loadout.Inventory.Pack.Count; i++)
                 _recoverable.Add(new HauledItem(_loadout.Inventory.Pack[i]));
+
+            _truckScreen.Open(_truck, _recoverable);
         }
 
-        private void ReadTruckInput(Keyboard? kb, Gamepad? pad)
-        {
-            // CLOSE FIRST, and before any early return. This panel used to have no way out at all:
-            // once it was up it swallowed every frame, so opening it meant watching the pack-up
-            // window run down with no movement, no fire and no pull-out. An empty list made it
-            // worse by returning before even the pull-out key was read.
-            bool close = (kb != null && (kb.tabKey.wasPressedThisFrame || kb.iKey.wasPressedThisFrame))
-                         || (pad != null && (pad.buttonEast.wasPressedThisFrame
-                                             || pad.buttonNorth.wasPressedThisFrame));
-            if (close) { _showTruck = false; _sfx.Play(Sfx.MenuTick, 0.6f, 0f); return; }
 
-            // Pull out early, from either device. This was keyboard-only, which left a pad player
-            // with no exit at all once the panel was open.
-            if ((kb != null && kb.lKey.wasPressedThisFrame)
-                || (pad != null && pad.dpad.left.wasPressedThisFrame))
-            {
-                if (_match.PullOutNow()) { _showTruck = false; _sfx.Play(Sfx.WaveClear, 0.9f, 0f); }
-                return;
-            }
 
-            if (_truck == null || _recoverable.Count == 0) return;
 
-            bool up = (kb != null && kb.upArrowKey.wasPressedThisFrame) || StickStep(pad, +1);
-            bool down = (kb != null && kb.downArrowKey.wasPressedThisFrame) || StickStep(pad, -1);
-            if (up) { _truckCursor = (_truckCursor - 1 + _recoverable.Count) % _recoverable.Count; _sfx.Play(Sfx.MenuTick, 0.6f, 0f); }
-            if (down) { _truckCursor = (_truckCursor + 1) % _recoverable.Count; _sfx.Play(Sfx.MenuTick, 0.6f, 0f); }
 
-            bool toggle = (kb != null && (kb.enterKey.wasPressedThisFrame || kb.spaceKey.wasPressedThisFrame))
-                          || (pad != null && pad.buttonSouth.wasPressedThisFrame);
-            if (toggle)
-            {
-                var thing = _recoverable[_truckCursor];
-                if (_truck.IsLoaded(thing))
-                {
-                    _truck.Unload(thing);
-                    _sfx.Play(Sfx.MenuTick, 0.7f, 0f);
-                }
-                else if (!_truck.Fits(thing))
-                {
-                    // Check the bed BEFORE spending window time or paying out. Charging first meant
-                    // a piece that did not fit still paid its full value and still cost four seconds,
-                    // and since it never entered the truck the same piece could be sold again every
-                    // four seconds until the window closed. Free money, found in review.
-                    _declineNoticeTimer = 2f;
-                    _declineNotice = _truck.Weight + thing.Haulage.Weight > _truck.MaxWeight
-                        ? "too heavy for the bed"
-                        : "no room left";
-                    _sfx.Play(Sfx.MenuTick, 0.8f, 0f);
-                }
-                else
-                {
-                    // It fits. Now unbolting can charge the window and pay out.
-                    var salvage = _match.TrySalvage(thing.RecoveredValue);
-                    if (salvage != SalvageResult.Ok)
-                    {
-                        _declineNotice = "no time left to unbolt it";
-                        _sfx.Play(Sfx.MenuTick, 0.8f, 0f);
-                    }
-                    else
-                    {
-                        var outcome = _truck.TryLoad(thing);
-                        _declineNotice = outcome == LoadOutcome.Loaded
-                            ? "loaded " + thing.HaulName
-                            : "could not load it";
-                        _sfx.Play(outcome == LoadOutcome.Loaded ? Sfx.MenuConfirm : Sfx.MenuTick, 0.8f, 0f);
-                    }
-                    _declineNoticeTimer = 2f;
-                }
-            }
 
-            // Fill the bed by value density. A convenience, not a strategy: it optimises value per
-            // unit carried, which is not always what the player wants at the next position.
-            if ((kb != null && kb.fKey.wasPressedThisFrame)
-                || (pad != null && pad.buttonWest.wasPressedThisFrame))
-            {
-                int before = _truck.Loaded.Count;
-                var affordable = new List<IHaulable>();
-                for (int i = 0; i < _recoverable.Count; i++)
-                    if (!_truck.IsLoaded(_recoverable[i])) affordable.Add(_recoverable[i]);
-
-                foreach (var thing in affordable)
-                {
-                    if (!_truck.Fits(thing)) continue;
-                    if (_match.TrySalvage(thing.RecoveredValue) != SalvageResult.Ok) break;
-                    _truck.TryLoad(thing);
-                }
-
-                _declineNotice = $"auto-loaded {_truck.Loaded.Count - before}";
-                _declineNoticeTimer = 2f;
-                _sfx.Play(Sfx.MenuConfirm, 0.8f, 0f);
-            }
-
-        }
-
-        private void DrawTruck()
-        {
-            if (_truck == null) return;
-            var prev = GUI.color;
-            GUI.color = new Color(0f, 0f, 0f, 0.74f);
-            GUI.DrawTexture(new Rect(0f, 0f, _uiW, _uiH), Texture2D.whiteTexture);
-            GUI.color = prev;
-
-            _invStyle ??= new GUIStyle(GUI.skin.label) { fontSize = 17, wordWrap = true };
-
-            GUI.Label(new Rect(_uiW * 0.5f - 460f, 54f, 920f, 30f),
-                      "LOAD THE TRUCK - " + _match.ExtractTimeLeft.ToString("F0") + "s before the next scan",
-                      _subStyle);
-            GUI.Label(new Rect(_uiW * 0.5f - 460f, 86f, 920f, 26f),
-                      _truck.Weight.ToString("F0") + "/" + _truck.MaxWeight.ToString("F0") + " kg      "
-                      + _truck.Volume.ToString("F1") + "/" + _truck.MaxVolume.ToString("F1") + " m3      "
-                      + "value " + _truck.TotalValue, _subStyle);
-
-            float y = 130f;
-            for (int i = 0; i < _recoverable.Count && y < _uiH - 120f; i++)
-            {
-                var thing = _recoverable[i];
-                bool on = _truck.IsLoaded(thing);
-                bool sel = i == _truckCursor;
-                GUI.color = sel ? new Color(1f, 0.86f, 0.38f, 1f)
-                          : on ? new Color(0.6f, 0.95f, 0.65f, 0.95f)
-                          : _truck.Fits(thing) ? new Color(0.86f, 0.9f, 0.94f, 0.92f)
-                          : new Color(0.6f, 0.5f, 0.5f, 0.85f);
-                GUI.Label(new Rect(_uiW * 0.5f - 460f, y, 920f, 24f),
-                          (sel ? "> " : "  ") + (on ? "[X] " : "[ ] ")
-                          + thing.HaulName.PadRight(26) + "  " + thing.Haulage
-                          + "   worth " + thing.RecoveredValue, _invStyle);
-                y += 24f;
-            }
-            GUI.color = prev;
-
-            GUI.Label(new Rect(_uiW * 0.5f - 460f, y + 18f, 920f, 26f),
-                      "up/down to move, A or Enter to load or unload, F auto-load, L to pull out now", _subStyle);
-        }
-
-        /// <summary>
-        /// Spending permanent points. Deliberately a flat list rather than a drawn graph: the
-        /// prerequisites already impose the shape, and a list navigates on a gamepad without any of
-        /// the tree-cursor UX that is still unproven here.
-        /// </summary>
-        /// <summary>
-        /// One menu step per stick flick. The stick is analogue and a panel is a list, so it needs
-        /// a threshold plus a latch, or a single nudge scrolls the whole list in three frames.
-        /// </summary>
-        private bool StickStep(Gamepad? pad, int sign)
-        {
-            if (pad == null) return false;
-            float y = pad.leftStick.ReadValue().y;
-
-            if (Mathf.Abs(y) < 0.45f) { _stickLatched = false; return false; }
-            if (_stickLatched) return false;
-
-            bool matches = sign > 0 ? y > 0f : y < 0f;
-            if (!matches) return false;
-
-            _stickLatched = true;
-            return true;
-        }
-
-        private bool _stickLatched;
-
-        private void ReadSkillInput(Keyboard? kb, Gamepad? pad)
-        {
-            var all = SkillCatalogue.All;
-            if (all.Count == 0) return;
-
-            // The LEFT STICK scrolls. D-pad up is the key that opened this panel, so using it to
-            // move the cursor as well meant the first press closed the panel again and there was no
-            // way to reach anything -- owner: "once I'm in my skills if I press up again it exits
-            // out of my skills so that's counterproductive there's no way for me to scroll".
-            bool up = (kb != null && kb.upArrowKey.wasPressedThisFrame) || StickStep(pad, +1);
-            bool down = (kb != null && kb.downArrowKey.wasPressedThisFrame) || StickStep(pad, -1);
-            if (up) { _skillCursor = (_skillCursor - 1 + all.Count) % all.Count; _sfx.Play(Sfx.MenuTick, 0.6f, 0f); }
-            if (down) { _skillCursor = (_skillCursor + 1) % all.Count; _sfx.Play(Sfx.MenuTick, 0.6f, 0f); }
-
-            bool buy = (kb != null && (kb.enterKey.wasPressedThisFrame || kb.spaceKey.wasPressedThisFrame))
-                       || (pad != null && pad.buttonSouth.wasPressedThisFrame);
-            if (!buy) return;
-
-            var node = all[_skillCursor];
-            var result = _loadout.SpendSkillPoint(node.Id);
-            if (result == SpendResult.Ok)
-            {
-                ApplyLoadoutToWorld();
-                _sfx.Play(Sfx.MenuConfirm, 0.9f, 0f);
-                Alert($"{node.Name} — {node.Text}", 3f);
-            }
-            else
-            {
-                _sfx.Play(Sfx.MenuTick, 0.7f, 0f);
-                _declineNotice = result switch
-                {
-                    SpendResult.NotEnoughPoints => "not enough skill points",
-                    SpendResult.PrerequisiteMissing => $"needs {SkillCatalogue.Find(node.Requires!)?.Name}",
-                    SpendResult.AtMaxRank => "already at max rank",
-                    _ => "cannot buy that",
-                };
-                _declineNoticeTimer = 2.5f;
-            }
-        }
-
-        private void DrawSkillTree()
-        {
-            var prev = GUI.color;
-            GUI.color = new Color(0f, 0f, 0f, 0.8f);
-            GUI.DrawTexture(new Rect(0f, 0f, _uiW, _uiH), Texture2D.whiteTexture);
-            GUI.color = prev;
-
-            _invStyle ??= new GUIStyle(GUI.skin.label) { fontSize = 17, wordWrap = true };
-
-            GUI.Label(new Rect(_uiW * 0.5f - 460f, 54f, 920f, 30f),
-                      $"SKILLS     level {_loadout.Skills.Level}     {_loadout.Skills.UnspentPoints} points to spend     " +
-                      $"({(Gamepad.current != null ? "B or D-pad up" : "K")} to close)",
-                      _subStyle);
-
-            var all = SkillCatalogue.All;
-            float y = 100f;
-            for (int i = 0; i < all.Count; i++)
-            {
-                var node = all[i];
-                int rank = _loadout.Skills.RankOf(node.Id);
-                bool sel = i == _skillCursor;
-                bool affordable = _loadout.Skills.CanSpend(node.Id) == SpendResult.Ok;
-
-                GUI.color = sel ? new Color(1f, 0.86f, 0.38f, 1f)
-                          : affordable ? new Color(0.86f, 0.9f, 0.94f, 0.95f)
-                          : new Color(0.55f, 0.56f, 0.6f, 0.85f);
-
-                string lockNote = node.Requires != null && !_loadout.Skills.IsBought(node.Requires)
-                    ? $"  (needs {SkillCatalogue.Find(node.Requires)?.Name})" : "";
-                GUI.Label(new Rect(_uiW * 0.5f - 460f, y, 920f, 24f),
-                          $"{(sel ? ">" : " ")} [{node.Path,-8}] {node.Name,-20} {rank}/{node.MaxRank}   {node.Cost}pt   {node.Text}{lockNote}",
-                          _invStyle);
-                y += 24f;
-            }
-            GUI.color = prev;
-
-            GUI.Label(new Rect(_uiW * 0.5f - 460f, y + 16f, 920f, 26f),
-                      "up/down to move, A or Enter to buy", _subStyle);
-        }
 
         /// <summary>
         /// The pick-one-of-three. Deliberately a row of three cards and one button: a Bloons-style
@@ -4282,43 +4054,6 @@ namespace Cipher.Game
                       $"{commit}   —   arrows / d-pad to choose, A or Enter to take, 1-3 direct", _subStyle);
         }
 
-        /// <summary>What is worn and what is in the pack. Read-only for now; the sort happens between missions.</summary>
-        private void DrawInventory()
-        {
-            var prev = GUI.color;
-            GUI.color = new Color(0f, 0f, 0f, 0.72f);
-            GUI.DrawTexture(new Rect(_uiW - 560f, 60f, 548f, _uiH - 120f), Texture2D.whiteTexture);
-            GUI.color = prev;
-
-            _invStyle ??= new GUIStyle(GUI.skin.label) { fontSize = 17, wordWrap = true, richText = false };
-
-            float y = 74f;
-            GUI.Label(new Rect(_uiW - 546f, y, 520f, 26f),
-                      $"KIT     scrip {_loadout.Inventory.Scrip}     " +
-                      $"({(Gamepad.current != null ? "B" : "I")} to close)", _invStyle);
-            y += 30f;
-
-            foreach (Slot slot in System.Enum.GetValues(typeof(Slot)))
-            {
-                var item = _loadout.Inventory.Equipped(slot);
-                GUI.Label(new Rect(_uiW - 546f, y, 520f, 24f),
-                          item == null ? $"{slot,-10} —" : $"{slot,-10} {item}", _invStyle);
-                y += 24f;
-            }
-
-            y += 12f;
-            GUI.Label(new Rect(_uiW - 546f, y, 520f, 24f),
-                      $"PACK  {_loadout.Inventory.Pack.Count}/{_loadout.Inventory.PackCapacity}", _invStyle);
-            y += 26f;
-            for (int i = 0; i < _loadout.Inventory.Pack.Count && y < _uiH - 90f; i++)
-            {
-                var it = _loadout.Inventory.Pack[i];
-                float delta = _loadout.Inventory.UpgradeDelta(it);
-                GUI.Label(new Rect(_uiW - 546f, y, 520f, 24f),
-                          $"{it}   {(delta >= 0f ? "+" : "")}{delta:F1}", _invStyle);
-                y += 24f;
-            }
-        }
 
         private GUIStyle? _cardStyle;
         private GUIStyle? _invStyle;
