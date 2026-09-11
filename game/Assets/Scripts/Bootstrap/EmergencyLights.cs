@@ -1,4 +1,5 @@
 #nullable enable
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Cipher.Game
@@ -70,6 +71,34 @@ namespace Cipher.Game
             }
             if (!any) box = new Bounds(Vector3.zero, Vector3.one);
 
+            // THE MODEL ALREADY HAS A LIGHT BAR. Use it rather than building a second one.
+            //
+            // The owner reported "two sets of lights flashing" -- because there were. `Cop.fbx`
+            // ships a node called `Lights` on its roof, and this method was bolting our own bar on
+            // top of it. The first version of this bug was our bar floating in the air (fixed by
+            // measuring the roof); the second was our bar sitting neatly beside the one that was
+            // already there, which is harder to see in a screenshot and just as wrong.
+            //
+            // **Before adding geometry to an imported model, look for what the model already has.**
+            var bar = FindLightSubmeshes(car, out var owner);
+            if (owner != null && bar.Count > 0)
+            {
+                // Only the bar's slots get our materials; every other slot keeps the shared one it
+                // came in with, so the rest of the car still batches with every other prop.
+                var slots = owner.sharedMaterials;
+                lights._left = material(Red);
+                lights._right = material(Blue);
+                for (int i = 0; i < bar.Count; i++)
+                    slots[bar[i]] = i % 2 == 0 ? lights._left : lights._right;
+                owner.sharedMaterials = slots;
+
+                // One lens means one bar that can only alternate as a whole, which still reads at
+                // distance -- plenty of real bars do exactly that.
+                lights._single = bar.Count < 2;
+                lights._phase = Random.value * lights.Period;
+                return lights;
+            }
+
             float roofHeight = box.max.y;
             float barWidth = box.size.x * 0.34f;
             float barSpan = box.size.x * 0.20f;
@@ -89,6 +118,64 @@ namespace Cipher.Game
             lights._phase = Random.value * lights.Period;   // no two cars blink together
             return lights;
         }
+
+        /// <summary>
+        /// The submeshes of <paramref name="car"/> that make up its light bar, or an empty list.
+        ///
+        /// TWO WRONG ANSWERS CAME BEFORE THIS ONE, and the shape of the mistake is worth keeping.
+        /// First I looked for a child node called "light" or "siren": kit models name their parts
+        /// whatever the artist felt like, and `Cop.fbx` has exactly four nodes -- a body and three
+        /// wheel groups. Then I looked for a small child renderer sitting on the roof: there is no
+        /// such child, because **the bar is not a separate object at all**. It is baked into the
+        /// body mesh as two of its eight submeshes.
+        ///
+        /// So the search has to go one level below the renderer. For each submesh, take the bounds
+        /// of the vertices its own triangles actually touch, and keep the ones that sit high on the
+        /// car and are small. That finds a roof-mounted bar on any vehicle in any kit, whatever
+        /// anybody called it.
+        ///
+        /// The general lesson, which cost two builds: **a model's structure is a fact to be
+        /// measured, not a convention to be assumed.** Same family as the road tile that measured
+        /// two centimetres and the characters that animated their own scale.
+        /// </summary>
+        private static List<int> FindLightSubmeshes(GameObject car, out Renderer? owner)
+        {
+            owner = null;
+            var found = new List<int>();
+
+            foreach (var filter in car.GetComponentsInChildren<MeshFilter>())
+            {
+                var mesh = filter.sharedMesh;
+                var renderer = filter.GetComponent<Renderer>();
+                if (mesh == null || renderer == null || mesh.subMeshCount < 2) continue;
+
+                var verts = mesh.vertices;
+                var whole = mesh.bounds;
+                float roofLine = whole.min.y + whole.size.y * 0.80f;
+                float wholeVolume = Mathf.Max(1e-6f, whole.size.x * whole.size.y * whole.size.z);
+
+                for (int sub = 0; sub < mesh.subMeshCount; sub++)
+                {
+                    var tris = mesh.GetTriangles(sub);
+                    if (tris.Length == 0) continue;
+
+                    var b = new Bounds(verts[tris[0]], Vector3.zero);
+                    for (int t = 1; t < tris.Length; t++) b.Encapsulate(verts[tris[t]]);
+
+                    if (b.center.y < roofLine) continue;
+                    float volume = b.size.x * b.size.y * b.size.z;
+                    if (volume > wholeVolume * 0.06f) continue;
+
+                    found.Add(sub);
+                }
+
+                if (found.Count > 0) { owner = renderer; return found; }
+            }
+            return found;
+        }
+
+        /// <summary>True when the whole bar alternates together rather than half at a time.</summary>
+        private bool _single;
 
         private void Bar(string name, Transform parent, Vector3 localPosition, Material mat, Vector3 size)
         {
@@ -111,6 +198,11 @@ namespace Cipher.Game
             // Hard alternation rather than a fade: a strobe is a square wave, and the cel shader
             // would band a fade into a square wave anyway.
             bool leftOn = _phase < Period * 0.5f;
+            if (_single)
+            {
+                Paint(_left, leftOn ? Red : Blue);
+                return;
+            }
             Paint(_left, leftOn ? Red : Dark);
             Paint(_right, leftOn ? Dark : Blue);
         }
@@ -126,7 +218,7 @@ namespace Cipher.Game
         private void OnDestroy()
         {
             if (_left != null) Destroy(_left);
-            if (_right != null) Destroy(_right);
+            if (_right != null && !ReferenceEquals(_right, _left)) Destroy(_right);
         }
     }
 }

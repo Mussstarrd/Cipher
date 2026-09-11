@@ -157,6 +157,12 @@ namespace Cipher.Sim.Agents
                     case Archetype.Spitter:
                         if (StepSpitter(i, pos, dt, gates)) continue;
                         break;
+                    case Archetype.Collector:
+                        // ADR-011: it was sent for HIM. It does not path to the goal, and it does
+                        // not get the opportunist, pace or intent behaviour below -- all of which
+                        // describe a crowd, which is exactly what a Collector is not.
+                        if (StepCollector(i, pos, dt, gates)) continue;
+                        break;
                 }
 
                 // A body with a sidearm stops and shoots rather than closing, but only when it can

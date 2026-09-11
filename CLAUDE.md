@@ -555,4 +555,18 @@ substitute: it references the sim's SOURCE, not its test project.
   - ~30% of a wave becomes machines, which moves the balance of every area weapon. A mission with
     few humanoids should make the drone a bad buy -- the build bar must never hold a thing that is
     right every time.
+- **THE GUN LADDER IS FOUR WEAPONS AND FOUR SHOTS** (`HeroEmitter.cs` + `Curves.PulseProfile`,
+  2026-09-12). Field Jammer / Decryptor / Worm Lance / Cascade Emitter each have their own geometry
+  in the hand and their own pulse in the air. `_emitter.SetTier(_pickups.GunTier)` is restated every
+  frame from the hero sync, and the shot leaves `_emitter.Muzzle`, not the middle of his chest.
+  - **REACH AND SPAN ARE A TESTED CONTRACT AND DELIBERATELY NOT A SIZE RAMP.** The first pass had
+    the Field Jammer spraying wider than everything above it, which made **the worst weapon the
+    biggest thing on screen** and inverted the whole ladder in the one frame a player looks at.
+    `TheCrudestWeaponIsNeverTheBiggestThingOnScreen` pins it.
+  - **The amber separation holds by construction now, not by care.** `Curves.FrontColour` only ever
+    interpolates between two colours already inside `WeaponPalette`, so no tuning of any rung can
+    cross `WeaponGreenFloor`. The emplacement profile is asserted unchanged to the original
+    constants, and `TheEmpStaysCold` still guards the EMP.
+  - Muzzle flash is still the bootstrap's own material and is NOT tier-aware; `HeroEmitter.Muzzle`
+    is exposed for whoever wires it.
 - **Was:** owner hero feedback → barricade build-mode with live path preview (Milestone 2 "The Maze").

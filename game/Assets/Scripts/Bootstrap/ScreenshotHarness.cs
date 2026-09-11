@@ -40,6 +40,7 @@ namespace Cipher.Game
         private const string FallBackArg = "-exodus-screenshot-fallback";
         private const string EmplacementsArg = "-exodus-screenshot-emplacements";
         private const string StrikeArg = "-exodus-screenshot-strike";
+        private const string CollectorArg = "-exodus-screenshot-collector";
         private const string ComicArg = "-exodus-comic";
         private const string ComicKeyboardArg = "-exodus-comic-keyboard";
         private const string YawArg = "-exodus-screenshot-yaw";
@@ -62,6 +63,8 @@ namespace Cipher.Game
         private bool _emplacements;
         private bool _strike;
         private bool _strikeCalled;
+        private bool _collector;
+        private bool _collectorSpawned;
         private float _yaw = float.NaN;
         private float _pitch = 22f;
         private bool _aimed;
@@ -100,6 +103,7 @@ namespace Cipher.Game
             harness._fallBack = HasFlag(args, FallBackArg);
             harness._emplacements = HasFlag(args, EmplacementsArg);
             harness._strike = HasFlag(args, StrikeArg);
+            harness._collector = HasFlag(args, CollectorArg);
             harness._yaw = ReadFloat(args, YawArg, float.NaN);
             harness._pitch = ReadFloat(args, PitchArg, 22f);
             InstallComicPreview(host, args);
@@ -288,6 +292,16 @@ namespace Cipher.Game
                 var ba = GetComponent<FloodBootstrap>();
                 if (ba != null) ba.AimCameraForCapture(_yaw, _pitch);
                 _aimed = true;
+            }
+
+            // Early enough that it has walked into frame by the time the shutter opens: a
+            // Collector is deliberately slow, which is exactly the property that makes it awkward
+            // to photograph.
+            if (_collector && !_collectorSpawned && _elapsed > Mathf.Max(0f, _delay - 6f))
+            {
+                var bc = GetComponent<FloodBootstrap>();
+                if (bc != null) bc.SpawnCollectorForCapture();
+                _collectorSpawned = true;
             }
 
             if (_strike && !_strikeCalled && _elapsed > Mathf.Max(0f, _delay - 1.5f))

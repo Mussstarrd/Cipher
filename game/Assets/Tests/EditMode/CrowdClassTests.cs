@@ -95,6 +95,26 @@ namespace Cipher.Game.Tests
                         "most of a wave is still ordinary people -- ADR-003's whole point");
         }
 
+        [Test]
+        public void AnArchetypeTheCastingHasNeverHeardOfGetsNoCrowdBody()
+        {
+            // ADR-011's Collector landed while this was being written: it builds its own body, one
+            // or two to a field. If an unknown archetype fell through to "ordinary citizen" it would
+            // be drawn TWICE -- its own model plus a borrowed coat -- and the next archetype after
+            // it would do the same. Own is the default, and the crowd excludes it by construction
+            // because no slots are built for it.
+            foreach (Archetype a in System.Enum.GetValues(typeof(Archetype)))
+            {
+                var c = CrowdCasting.ClassOf(a, 5, 5);
+                bool known = a == Archetype.Runner || a == Archetype.Sapper || a == Archetype.Spitter;
+                if (known) Assert.That(CrowdCasting.HasCrowdBody(c), Is.True, $"{a} lost its body");
+                else Assert.That(c, Is.EqualTo(BodyClass.Own), $"{a} would borrow a citizen's body");
+            }
+            Assert.That(CrowdCasting.HasCrowdBody(BodyClass.Own), Is.False);
+            Assert.That(CrowdCasting.Built.Length, Is.EqualTo((int)BodyClass.Own),
+                        "a slot count for Own would hand crowd bodies to things that have their own");
+        }
+
         // ---- the silhouette contract ----------------------------------------------------------
 
         [Test]
@@ -189,12 +209,12 @@ namespace Cipher.Game.Tests
             var impostors = new CrowdImpostors(material);
             try
             {
-                for (int c = 0; c < 4; c++)
+                for (int c = 0; c < CrowdCasting.Built.Length; c++)
                     for (int lod = 0; lod < CrowdImpostors.LodCount; lod++)
                     {
                         var mesh = impostors.MeshFor((BodyClass)c, lod);
                         Assert.That(mesh, Is.Not.Null, $"{(BodyClass)c} lod {lod}");
-                        Assert.That(mesh.vertexCount, Is.GreaterThan(0));
+                        Assert.That(mesh!.vertexCount, Is.GreaterThan(0));
                     }
             }
             finally { Object.DestroyImmediate(material); }
@@ -212,15 +232,30 @@ namespace Cipher.Game.Tests
             {
                 for (int lod = 0; lod < CrowdImpostors.LodCount; lod++)
                 {
-                    float person = impostors.MeshFor(BodyClass.Signed, lod).bounds.max.y;
-                    float machine = impostors.MeshFor(BodyClass.Humanoid, lod).bounds.max.y;
+                    float person = impostors.MeshFor(BodyClass.Signed, lod)!.bounds.max.y;
+                    float machine = impostors.MeshFor(BodyClass.Humanoid, lod)!.bounds.max.y;
                     Assert.That(machine, Is.GreaterThan(person + 0.15f),
                                 $"at lod {lod} a machine is no longer visibly taller than a person");
 
-                    float sapper = impostors.MeshFor(BodyClass.Sapper, lod).bounds.max.y;
+                    float sapper = impostors.MeshFor(BodyClass.Sapper, lod)!.bounds.max.y;
                     Assert.That(sapper, Is.GreaterThan(person),
                                 $"at lod {lod} the Sapper lost his hard hat");
                 }
+            }
+            finally { Object.DestroyImmediate(material); }
+        }
+
+        [Test]
+        public void AClassWithItsOwnBodyHasNoSilhouetteAndQueuesNothing()
+        {
+            var material = new Material(Shader.Find("Unlit/Color") ?? Shader.Find("Sprites/Default"));
+            var impostors = new CrowdImpostors(material);
+            try
+            {
+                Assert.That(impostors.MeshFor(BodyClass.Own, 0), Is.Null);
+                impostors.Begin();
+                impostors.Add(BodyClass.Own, Vector3.zero, Vector3.forward, 10f, Vector4.one);
+                Assert.That(impostors.Queued, Is.Zero, "a Collector was drawn as a crowd silhouette");
             }
             finally { Object.DestroyImmediate(material); }
         }
@@ -232,10 +267,10 @@ namespace Cipher.Game.Tests
             var impostors = new CrowdImpostors(material);
             try
             {
-                for (int c = 0; c < 4; c++)
+                for (int c = 0; c < CrowdCasting.Built.Length; c++)
                     for (int lod = 0; lod < CrowdImpostors.LodCount; lod++)
                     {
-                        var b = impostors.MeshFor((BodyClass)c, lod).bounds;
+                        var b = impostors.MeshFor((BodyClass)c, lod)!.bounds;
                         Assert.That(b.min.y, Is.GreaterThanOrEqualTo(-0.02f),
                                     $"{(BodyClass)c} lod {lod} sinks into the ground");
                         Assert.That(b.min.y, Is.LessThan(0.12f),

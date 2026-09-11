@@ -29,6 +29,17 @@ namespace Cipher.Game
 
         /// <summary>The tower-hunter. ADR-003: "a hacked humanoid with an industrial sprayer".</summary>
         Spitter = 3,
+
+        /// <summary>
+        /// Brings its own body and must never be given a crowd slot. The Collector (ADR-011) is
+        /// three times the mass of a person and is built by hand, one or two to a field.
+        ///
+        /// THIS IS THE DEFAULT FOR ANYTHING NEW. An archetype the casting has never heard of gets
+        /// no crowd body at all rather than an ordinary citizen's, because a thing that is drawn
+        /// TWICE -- once as its own model and once wearing somebody's coat -- is a bug you see
+        /// immediately, and a thing that is drawn as the wrong species is a bug you argue about.
+        /// </summary>
+        Own = 4,
     }
 
     /// <summary>
@@ -66,10 +77,11 @@ namespace Cipher.Game
         {
             switch (archetype)
             {
+                case Archetype.Runner:
+                    return Fraction(id, seed) < HumanoidShare ? BodyClass.Humanoid : BodyClass.Signed;
                 case Archetype.Sapper: return BodyClass.Sapper;
                 case Archetype.Spitter: return BodyClass.Spitter;
-                default:
-                    return Fraction(id, seed) < HumanoidShare ? BodyClass.Humanoid : BodyClass.Signed;
+                default: return BodyClass.Own;
             }
         }
 
@@ -135,5 +147,12 @@ namespace Cipher.Game
 
         /// <summary>True for the classes drawn as machines rather than as skinned people.</summary>
         public static bool IsMachine(BodyClass c) => c == BodyClass.Humanoid || c == BodyClass.Spitter;
+
+        /// <summary>
+        /// True for classes the crowd has bodies for. <see cref="BodyClass.Own"/> is false, and
+        /// because no slots are ever built for it the crowd excludes it by construction -- there is
+        /// no flag anybody has to remember to check.
+        /// </summary>
+        public static bool HasCrowdBody(BodyClass c) => (int)c < Built.Length;
     }
 }

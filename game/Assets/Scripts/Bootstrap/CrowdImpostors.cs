@@ -144,8 +144,15 @@ namespace Cipher.Game
             }
         }
 
-        /// <summary>The silhouette used for a class at a tier. Exposed so tests can measure it.</summary>
-        public Mesh MeshFor(BodyClass c, int lod) => _meshes[(int)c * LodCount + Mathf.Clamp(lod, 0, 1)];
+        /// <summary>
+        /// The silhouette used for a class at a tier, or null for a class that brings its own body.
+        /// Exposed so tests can measure it.
+        /// </summary>
+        public Mesh? MeshFor(BodyClass c, int lod)
+        {
+            if (!CrowdCasting.HasCrowdBody(c)) return null;
+            return _meshes[(int)c * LodCount + Mathf.Clamp(lod, 0, 1)];
+        }
 
         // ---- the silhouettes -------------------------------------------------------------------
         //
@@ -278,6 +285,11 @@ namespace Cipher.Game
         /// </summary>
         public void Add(BodyClass c, Vector3 position, Vector3 travel, float distance, Vector4 colour)
         {
+            // A Collector is drawn by hand and its caller returns before reaching here; this is the
+            // belt to that pair of braces, and it is a skip rather than a clamp on purpose -- an
+            // agent silently wearing the wrong silhouette is worse than one the caller forgot.
+            if (!CrowdCasting.HasCrowdBody(c)) return;
+
             int lod = distance > DetailRange ? 1 : 0;
             int bucket = (int)c * LodCount + lod;
 

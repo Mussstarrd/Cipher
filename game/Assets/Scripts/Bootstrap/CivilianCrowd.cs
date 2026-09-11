@@ -55,7 +55,8 @@ namespace Cipher.Game
         /// </summary>
         public Func<int, BodyClass>? Classify;
 
-        private const int ClassCount = 4;
+        /// <summary>Every <see cref="BodyClass"/>, including Own -- which never has any slots.</summary>
+        private const int ClassCount = 5;
 
         private readonly List<Transform> _slots = new List<Transform>();
         private readonly List<BodyClass> _slotClass = new List<BodyClass>();
@@ -294,6 +295,7 @@ namespace Cipher.Game
         private readonly List<int>[] _freeByClass =
         {
             new List<int>(128), new List<int>(64), new List<int>(32), new List<int>(32),
+            new List<int>(0),   // Own: stays empty, which is what excludes those agents
         };
 
         private readonly int[] _nextFree = new int[ClassCount];

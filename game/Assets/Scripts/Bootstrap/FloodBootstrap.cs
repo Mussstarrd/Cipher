@@ -139,6 +139,7 @@ namespace Cipher.Game
         private Vec2 HeroSpawn = new Vec2(58f, 24f);
         private Transform _heroT = null!;
         private Transform _barrelT = null!;
+        private HeroEmitter _emitter = null!;
         private Transform _markerT = null!;
         private StrikeDrone? _strikeDrone;
         private readonly List<StrikeImpact> _impactScratch = new List<StrikeImpact>(8);
@@ -575,7 +576,9 @@ namespace Cipher.Game
             // The ground is most of the screen, and one flat colour across it is most of the screen
             // doing nothing. Generated at startup rather than shipped, so a clean checkout rebuilds
             // it and there is still not a single texture file in this project.
-            _groundTexture = WorldBackdrop.BuildGroundTexture(512, GroundColour, 20260911UL);
+            // 1024 rather than 512: the ground is the single largest surface on screen and the
+            // player walks with their nose a metre off it.
+            _groundTexture = WorldBackdrop.BuildGroundTexture(1024, GroundColour, 20260911UL);
             var groundMat = MakeMaterial(Color.white, instanced: false, ink: InkNone);
             groundMat.mainTexture = _groundTexture;
             // Eight-unit tiles. Half a unit per tile made the repeat a visible grid, which is worse
@@ -628,14 +631,10 @@ namespace Cipher.Game
             heroGo.GetComponent<Renderer>().material = MakeMaterial(new Color(1f, 0.84f, 0.2f), instanced: false);
             _heroT = heroGo.transform;
 
-            var barrel = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            barrel.name = "Barrel";
-            Destroy(barrel.GetComponent<Collider>());
-            barrel.transform.SetParent(_heroT, worldPositionStays: false);
-            barrel.transform.localPosition = new Vector3(0f, 0.25f, 0.9f);
-            barrel.transform.localScale = new Vector3(0.18f, 0.18f, 1.1f);
-            barrel.GetComponent<Renderer>().material = MakeMaterial(new Color(0.12f, 0.12f, 0.12f), instanced: false);
-            _barrelT = barrel.transform;
+            // The weapon is four weapons now, not one box. HeroEmitter owns the geometry per tier
+            // and cancels the hero capsule's non-uniform scale itself.
+            _emitter = HeroEmitter.Build(_heroT, PropMaterial);
+            _barrelT = _emitter.Root.transform;
 
             var marker = GameObject.CreatePrimitive(PrimitiveType.Cube);
             marker.name = "StrikeMarker";
@@ -2469,6 +2468,12 @@ namespace Cipher.Game
             }
         }
 
+        /// <summary>
+        /// How far the strike has to be aimed before its marker is drawn, in cells. Below this the
+        /// box would be sitting on the player.
+        /// </summary>
+        private const float StrikeMarkerMinRange = 7f;
+
         private GUIStyle? _scanStyle;
         private GUIStyle? _vaultStyle;
 
@@ -3021,6 +3026,13 @@ namespace Cipher.Game
             _snapCamera = true;
         }
 
+        /// <summary>Puts a Collector on the field in front of the player. Harness only.</summary>
+        public void SpawnCollectorForCapture()
+        {
+            var at = _hero.Position + new Vec2(-9f, 0f);
+            _world.SpawnArchetype(at, Archetype.Collector);
+        }
+
         /// <summary>Starts the first wave, so a smoke capture can actually see combat. Harness only.</summary>
         public void StartWaveForCapture() => _match.StartWaveNow();
 
@@ -3301,9 +3313,12 @@ namespace Cipher.Game
                 NoteHeroShot();
                 AddTrauma(0.05f);
                 _muzzleLeft = HitFlashSeconds;
-                _signal.AddBeam(ToWorld(shot.Origin, 0.75f),
+                // From the horn, not from the middle of his chest: the emitter hangs off his right
+                // and a pulse that starts anywhere else reads as coming from the wrong object.
+                var muzzle = _emitter.Muzzle != null ? _emitter.Muzzle.position : ToWorld(shot.Origin, 0.75f);
+                _signal.AddBeam(muzzle,
                                 ToWorld(shot.End, shot.Hit ? 0.9f : 0.75f),
-                                SignalBeam.Emitter, landed: shot.Hit);
+                                SignalBeam.Emitter, landed: shot.Hit, tier: _pickups.GunTier);
                 _sfx.Play(Sfx.Shot, 0.75f, 0.08f);
                 if (shot.Killed)
                 {
@@ -3444,7 +3459,10 @@ namespace Cipher.Game
                 // Rare archetypes are flagged with big negative-free sentinels so they always win the pixel.
                 switch (_world.ArchetypeOf(id))
                 {
-                    case Archetype.Sapper: _minimapAgents[idx] = 100000; break;
+                    // A Collector outranks everything: it is the one thing on the map worth
+                    // knowing the position of at all times.
+                    case Archetype.Collector: _minimapAgents[idx] = 200000; break;
+                    case Archetype.Sapper: if (_minimapAgents[idx] < 200000) _minimapAgents[idx] = 100000; break;
                     case Archetype.Spitter: if (_minimapAgents[idx] < 100000) _minimapAgents[idx] = 50000; break;
                     default: if (_minimapAgents[idx] < 50000) _minimapAgents[idx]++; break;
                 }
@@ -3507,6 +3525,9 @@ namespace Cipher.Game
             var facing = new Vector3(_hero.Facing.X, 0f, _hero.Facing.Y);
             if (facing.sqrMagnitude > 1e-6f) _heroT.rotation = Quaternion.LookRotation(facing, Vector3.up);
             _barrelT.gameObject.SetActive(!_hero.IsDown && !_buildMode);
+            // Restated every frame rather than on pickup: a tier can also arrive from a loadout
+            // change or a fall-back, and the crate event is not the only way it moves.
+            _emitter.SetTier(_pickups.GunTier);
 
             bool showMarker = !_hero.IsDown && !_buildMode && !_match.IsOver;
             _markerT.gameObject.SetActive(showMarker);
@@ -3525,6 +3546,20 @@ namespace Cipher.Game
                     _strikeDrone.Park();
                 }
             }
+            // DO NOT PUT IT UNDER HIS FEET. Owner: "My character shouldn't have that background aim
+            // rectangle around him."
+            //
+            // The strike marker is aimed by looking, so whenever the player tips the camera down --
+            // which is most of the time in a chase view -- the aim point lands on the hero and the
+            // marker becomes a dirty rectangle he is standing in. It reads as a rendering artefact,
+            // not as a targeting box, and he has now asked about it twice.
+            //
+            // It only appears when the strike is actually available AND aimed somewhere worth
+            // aiming, which is also the only time it carries information.
+            float aimAway = Mathf.Sqrt(Vec2.DistanceSquared(_hero.StrikeTarget, _hero.Position));
+            showMarker = showMarker && _hero.AirstrikeReady && aimAway > StrikeMarkerMinRange;
+            _markerT.gameObject.SetActive(showMarker);
+
             if (showMarker)
             {
                 Vec2 m = _hero.StrikeTarget;
@@ -3740,6 +3775,24 @@ namespace Cipher.Game
         private float[] _flashLeft = System.Array.Empty<float>();
         private static readonly int InstanceColorId = Shader.PropertyToID("_InstanceColor");
 
+        /// <summary>
+        /// Puts the <paramref name="slot"/>-th Collector body where its agent is, building one on
+        /// first use. Slot order follows agent id, which is stable for the life of an agent, so a
+        /// body does not swap between two Collectors mid-fight -- the same rule CLAUDE.md records
+        /// for the crowd after the owner saw characters "scan switching from skin to skin".
+        /// </summary>
+        private void PlaceCollector(int slot, Vector3 at, Vector3 facing, float integrity01)
+        {
+            while (_collectorBodies.Count <= slot)
+                _collectorBodies.Add(CollectorBody.Build(c => MakeMaterial(c, instanced: false, ink: InkProp)));
+
+            var body = _collectorBodies[slot];
+            if (!body.gameObject.activeSelf) body.gameObject.SetActive(true);
+            body.Follow(at, facing, integrity01);
+
+            GroundMarkRenderer.Active?.Queue(at, 1.15f);
+        }
+
         private void EnsureFlashBuffers(int count)
         {
             if (_flashLastHealth.Length >= count) return;
@@ -3756,6 +3809,13 @@ namespace Cipher.Game
         private readonly List<Vector3> _heroBlob = new List<Vector3> { Vector3.zero };
 
         /// <summary>
+        /// Bodies for the Collectors. A handful at most, pooled and hidden rather than destroyed,
+        /// because ADR-011 says one or two on a field -- an instanced draw would buy nothing and
+        /// cost them their shadows, and these are the thing the player is looking at.
+        /// </summary>
+        private readonly List<CollectorBody> _collectorBodies = new List<CollectorBody>(4);
+
+        /// <summary>
         /// Bar fraction below which the implant visibly gives up. A little wider than the sim's
         /// `FrailtyBelow` so the warning arrives slightly before the stumbling does.
         /// </summary>
@@ -3766,6 +3826,7 @@ namespace Cipher.Game
         {
             _fxMatrices.Clear();
             _blobPositions.Clear();
+            int collectorsSeen = 0;
             EnsureFlashBuffers(_world.Count);
             float dt = Time.deltaTime;
 
@@ -3806,6 +3867,15 @@ namespace Cipher.Game
                     bool promoted = _crowd != null && _crowd.Promoted.Contains(id);
                     var head = new Vector3(p.X, promoted ? 1.62f : 1.05f, p.Y);
                     _signal.MarkFailing(head, facing, _world.Integrity01(id), id);
+                }
+
+                // A Collector gets a real body rather than a capsule and skips the crowd pass
+                // entirely: it is three times the mass of a person (ADR-011), it is the thing the
+                // player is looking at, and there are one or two of them.
+                if (_world.ArchetypeOf(id) == Archetype.Collector)
+                {
+                    PlaceCollector(collectorsSeen++, here, facing, _world.Integrity01(id));
+                    continue;
                 }
 
                 // Two frames of white when the number goes down. The sim raises no per-agent damage
@@ -3865,6 +3935,9 @@ namespace Cipher.Game
             }
             _impostors.Draw();
             DrawInstancedBatched(_cubeMesh, _sapperTargetMaterial, _fxMatrices);
+            for (int i = collectorsSeen; i < _collectorBodies.Count; i++)
+                _collectorBodies[i].gameObject.SetActive(false);
+
             GroundMarkRenderer.Active?.DrawAgents(_blobPositions, 0.42f);
             _signal.Draw(Time.deltaTime);
             if (_heroBody != null || _heroT != null)
