@@ -1069,6 +1069,12 @@ namespace Cipher.Game
                                        t.Range, 0.35f + 0.65f * hp);
                 props.Root.transform.localScale =
                     new Vector3(1f + 0.10f * t.Tier, sag * (1f + 0.10f * t.Tier), 1f + 0.10f * t.Tier);
+                // Tier buys visible hardware; damage takes pieces off and puts the emitters out one
+                // by one. Two channels, because "fewer horns" alone cannot say which of the two it
+                // is -- and without these calls every emplacement sits at tier 0 and full health
+                // no matter what the board says.
+                props.SetTier(t.Tier);
+                props.SetIntegrity(hp);
 
                 if (props.Rotor != null)
                 {

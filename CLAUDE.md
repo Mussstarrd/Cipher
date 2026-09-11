@@ -475,4 +475,27 @@ substitute: it references the sim's SOURCE, not its test project.
     48-cell map in fourteen seconds, reaches the goal, leaves the world, and the test then measures
     how fast it WALKS rather than how fast it dies. `FailingChipTests.Penned` walls the eight
     neighbouring cells with Rock.
+- **THE SHOT IS A MICROWAVE PULSE, IN AMBER** (owner, 2026-09-12: "the shots don't need to be laser
+  blasts we're looking at more like a microwave pulses and I think more yellow or Amber instead of
+  blue"). The lance is deleted. A shot is a finite train of concentric wavefronts standing ACROSS
+  the line of fire, travelling out along the axis inside a banded haze column.
+  - **The weapon's amber and the implant's amber are separated by RULE, not by habit.** Warm colours
+    move between gold and orange on GREEN, so `WeaponGreenFloor` / `ImplantGreenCeiling` hold them
+    apart and are asserted in tests. Four more separations back it up: lifetime (0.22s against the
+    full decrypt), direction (fronts expand away, the tell's rings contract onto a head), axis
+    (discs stand at the shot's angle, the tell's rings are flat), and place (the pulse never touches
+    a body). **The EMP deliberately stays COLD** -- the owner called it fantastic, and blue is also
+    what buys the amber its room. `TheEmpStaysCold` guards it.
+  - The shimmer is the shader's existing quantised rim on a stretched smooth sphere, so the pass is
+    logically unchanged: still one pass, instancing + fog, no `Fallback`, no new keywords.
+- **THE EMPLACEMENTS ARE SALVAGE, NOT HARDWARE** (`TurretProps.cs`). A Sentry is a satellite dish off
+  a roof on a surveyor's tripod, strapped for elevation, fed by a car battery on a pallet. A Brush
+  Hog is a pole transformer on a plank skid with a collar of horns. **Tall-and-pointing against
+  wide-and-low is a TESTED contract** (`SentryHeight`/`BrushHogSpan`), because the ink silhouette is
+  all that survives across a golf course.
+  - **Tier and damage are separate visual channels.** Tier adds hardware; damage takes pieces off,
+    leans the emplacement and puts the amber emitters out one at a time. "Fewer horns" alone cannot
+    say which of the two it is -- that ambiguity only showed up in the damage screenshot.
+  - `props.SetTier(t.Tier)` / `props.SetIntegrity(hp)` are called from `SyncTurretObjects`. Without
+    them everything silently sits at tier 0 and full health, which is what shipped before.
 - **Was:** owner hero feedback → barricade build-mode with live path preview (Milestone 2 "The Maze").
