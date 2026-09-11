@@ -76,6 +76,20 @@ namespace Cipher.Game.Editor
                     // operator hands back a destroyed component instead of adding a live one.
                     var animator = instance.GetComponent<Animator>();
                     if (animator == null) animator = instance.AddComponent<Animator>();
+
+                    // Assign the avatar EXPLICITLY. A generic rig with a null avatar cannot be driven
+                    // by a controller at all: the character sits in its bind pose and nothing errors,
+                    // which is indistinguishable from a working import that was never told to move.
+                    // Runtime diagnostics showed avatar=NULL even after the importer was configured.
+                    var avatar = AssetDatabase.LoadAllAssetsAtPath(path)
+                                              .OfType<Avatar>()
+                                              .FirstOrDefault()
+                                 ?? AssetDatabase.LoadAllAssetsAtPath(SourceDir + "/_Animations.fbx")
+                                                 .OfType<Avatar>()
+                                                 .FirstOrDefault();
+                    if (avatar != null) animator.avatar = avatar;
+                    else Debug.LogWarning($"[Civilians] {name}: no avatar; it will not animate");
+
                     animator.runtimeAnimatorController = controller;
                     animator.applyRootMotion = false;   // the simulation moves them, not the clip
                     animator.cullingMode = AnimatorCullingMode.CullCompletely;

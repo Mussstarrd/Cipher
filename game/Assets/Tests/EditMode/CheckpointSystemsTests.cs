@@ -580,5 +580,84 @@ namespace Cipher.Game.Tests
 
             Assert.AreEqual(1.08f, loadout.TurretDamageMultiplier, 0.0001f);
         }
+
+        // ---------------------------------------------------------------- review regressions
+        //
+        // Both of these were found by a review pass, and both had a test that passed while the
+        // feature was broken. A bug fixed twice becomes a test (hard rule 2).
+
+        [Test]
+        public void AnItemThatDoesNotFitIsNeverPaidFor()
+        {
+            // The exploit: salvage charged the window and paid the bank BEFORE checking the bed.
+            // A piece that did not fit was paid for anyway, never entered the truck, and so could
+            // be sold again every few seconds for the rest of the window.
+            var m = Match();
+            m.StartWaveNow();
+            var truck = new TruckLoad(maxWeight: 100f, maxVolume: 10f);
+            var heavy = new SalvagedEmplacement("Sentry .50", new Haulage(190f, 1.1f), 150);
+
+            Assert.IsFalse(truck.Fits(heavy), "precondition: it must not fit");
+
+            // The fixed order is: check fit, and only then charge and pay.
+            int cashBefore = m.Bank.Cash;
+            if (truck.Fits(heavy))
+            {
+                m.TrySalvage(heavy.RecoveredValue);
+                truck.TryLoad(heavy);
+            }
+
+            Assert.AreEqual(cashBefore, m.Bank.Cash, "a piece that does not fit must not pay out");
+            Assert.AreEqual(0, truck.Loaded.Count);
+        }
+
+        [Test]
+        public void LoadingTheSamePieceTwiceIsRefused()
+        {
+            var truck = new TruckLoad();
+            var rotor = new SalvagedEmplacement("Rotor", new Haulage(70f, 0.9f), 120);
+
+            Assert.AreEqual(LoadOutcome.Loaded, truck.TryLoad(rotor));
+            Assert.AreEqual(LoadOutcome.AlreadyLoaded, truck.TryLoad(rotor));
+            Assert.AreEqual(1, truck.Loaded.Count, "no duplicate payouts from one piece");
+        }
+
+        [Test]
+        public void WithNoTurretsTheWreckerShareDoesNotSecretlyDouble()
+        {
+            // The hunter band used to fall THROUGH into the wrecker band when no turret existed,
+            // so wreckers ran at hunter+wrecker share exactly when the player had no guns up.
+            var cfg = new DirectorConfig();
+            var withGuns = new SpawnDirector(cfg, 4242);
+            var without = new SpawnDirector(cfg, 4242);
+
+            int wreckersWithGuns = 0, wreckersWithout = 0;
+            const int n = 4000;
+            for (int i = 0; i < n; i++)
+            {
+                if (withGuns.DecideIntent(View(3)) == Cipher.Sim.Agents.Intent.WreckWall) wreckersWithGuns++;
+                if (without.DecideIntent(View(0)) == Cipher.Sim.Agents.Intent.WreckWall) wreckersWithout++;
+            }
+
+            float share = wreckersWithout / (float)n;
+            Assert.That(share, Is.EqualTo(cfg.WreckerShare).Within(0.03f),
+                $"wrecker share without turrets was {share:P1}, expected about {cfg.WreckerShare:P1}");
+            Assert.That(wreckersWithout, Is.EqualTo(wreckersWithGuns).Within(n * 0.03f),
+                "the wrecker share must not depend on whether turrets exist");
+        }
+
+        [Test]
+        public void WithNoTurretsTheHunterBandBecomesVault()
+        {
+            var d = new SpawnDirector(new DirectorConfig(), 99);
+            int vault = 0;
+            const int n = 2000;
+            for (int i = 0; i < n; i++)
+                if (d.DecideIntent(View(0)) == Cipher.Sim.Agents.Intent.Vault) vault++;
+
+            // Everything that is not a wrecker must be heading for the objective.
+            float expected = 1f - new DirectorConfig().WreckerShare;
+            Assert.That(vault / (float)n, Is.EqualTo(expected).Within(0.03f));
+        }
     }
 }

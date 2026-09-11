@@ -93,8 +93,14 @@ namespace Cipher.Game.Match
         {
             float roll = _rng.NextFloat();
 
-            if (view.TurretCount > 0 && roll < _cfg.HunterShare) return Intent.HuntStructure;
-            if (roll < _cfg.HunterShare + _cfg.WreckerShare) return Intent.WreckWall;
+            // The hunter band and the wrecker band must not overlap. Testing them as two independent
+            // thresholds meant that with no turrets on the board the hunter band fell THROUGH into
+            // the wrecker band, so the wrecker share silently became eighteen percent instead of
+            // eight exactly when the player had no guns up. Found in review.
+            if (roll < _cfg.HunterShare)
+                return view.TurretCount > 0 ? Intent.HuntStructure : Intent.Vault;
+            if (roll < _cfg.HunterShare + _cfg.WreckerShare)
+                return Intent.WreckWall;
             return Intent.Vault;
         }
 

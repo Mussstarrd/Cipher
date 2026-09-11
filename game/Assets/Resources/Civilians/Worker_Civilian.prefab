@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1001 &3737177500889080211
+--- !u!1001 &6370726910572636046
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
@@ -59,36 +59,36 @@ PrefabInstance:
     - target: {fileID: 4595341946183965872, guid: c472d0c85806bda439616e9d1ccbdf94, type: 3}
       propertyPath: m_Mesh
       value: 
-      objectReference: {fileID: 2879229775812571388, guid: 614146473ed15e344b964c48c4872316, type: 2}
+      objectReference: {fileID: -926665313387678008, guid: 614146473ed15e344b964c48c4872316, type: 2}
     - target: {fileID: 6441656993231495786, guid: c472d0c85806bda439616e9d1ccbdf94, type: 3}
       propertyPath: m_Mesh
       value: 
-      objectReference: {fileID: -7120100019434129131, guid: 614146473ed15e344b964c48c4872316, type: 2}
+      objectReference: {fileID: 2363790581716635847, guid: 614146473ed15e344b964c48c4872316, type: 2}
     - target: {fileID: 8269711499249147325, guid: c472d0c85806bda439616e9d1ccbdf94, type: 3}
       propertyPath: m_Mesh
       value: 
-      objectReference: {fileID: -2860672501419718460, guid: 614146473ed15e344b964c48c4872316, type: 2}
+      objectReference: {fileID: 2649725764379870666, guid: 614146473ed15e344b964c48c4872316, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: c472d0c85806bda439616e9d1ccbdf94, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 8910291812221060093}
+      addedObject: {fileID: 7817340183823307625}
   m_SourcePrefab: {fileID: 100100000, guid: c472d0c85806bda439616e9d1ccbdf94, type: 3}
---- !u!1 &4547640510308572354 stripped
+--- !u!1 &6100186781615463135 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: c472d0c85806bda439616e9d1ccbdf94, type: 3}
-  m_PrefabInstance: {fileID: 3737177500889080211}
+  m_PrefabInstance: {fileID: 6370726910572636046}
   m_PrefabAsset: {fileID: 0}
---- !u!95 &8910291812221060093
+--- !u!95 &7817340183823307625
 Animator:
   serializedVersion: 7
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4547640510308572354}
+  m_GameObject: {fileID: 6100186781615463135}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
   m_Controller: {fileID: 9100000, guid: b8d285cb71d876a49a096529e8a52393, type: 2}

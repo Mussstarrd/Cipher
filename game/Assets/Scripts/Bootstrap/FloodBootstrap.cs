@@ -1010,12 +1010,13 @@ namespace Cipher.Game
                 slot.transform.localRotation =
                     Quaternion.Euler(0f, 180f + (float)(rng.NextDouble() - 0.5) * 18f, 0f);
 
-                // The clip is authored Z-up (Blender), so an animated character lies on its back.
-                // A corrective pivot between the slot and the character stands it up without the
-                // animation being able to overwrite the correction.
+                // A pivot sits between the slot and the character so placement and animation never
+                // fight. It used to carry a 90-degree correction, needed only while the characters
+                // were stuck in their bind pose: once the clip actually drives them it supplies the
+                // right orientation itself, and the correction tipped everyone onto their backs.
                 var pivot = new GameObject("Pivot");
                 pivot.transform.SetParent(slot.transform, false);
-                pivot.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+                pivot.transform.localRotation = Quaternion.identity;
 
                 var go = Instantiate(template, pivot.transform);
                 go.name = template.name + "_" + i;
@@ -1023,19 +1024,44 @@ namespace Cipher.Game
 
                 // Desynchronise the walk cycle or the crowd marches in lockstep, which is the
                 // single most obvious tell that a crowd is fake.
-                var anim = go.GetComponentInChildren<Animator>();
-                if (anim != null && anim.runtimeAnimatorController != null)
+                // Drive the walk with the legacy Animation component. See LegacyClipMaker for the
+                // three approaches that failed silently before this one.
+                if (_walkClip == null)
                 {
-                    anim.cullingMode = AnimatorCullingMode.AlwaysAnimate;
-                    // Desynchronise the walk cycle or the crowd marches in lockstep, which is the
-                    // single most obvious tell that a crowd is fake.
-                    anim.Update((float)rng.NextDouble() * 1.3f);
+                    _walkClip = Resources.Load<AnimationClip>("Civilians/WalkLegacy");
+                    Debug.Log($"[Anim] legacy walk = {(_walkClip != null ? _walkClip.name : "NONE")} " +
+                              $"legacy={(_walkClip != null && _walkClip.legacy)}");
                 }
 
-                // Size them AFTER the animator has evaluated a pose. This clip animates scale on the
-                // armature, so a character that measures 1.98 m standing still measures sixty once
-                // it starts walking. Editor-time bounds cannot see that; a driven frame can.
-                ScaleToHumanHeight(go, slot);
+                // DESTROY the Animator rather than disable it. The legacy Animation component is
+                // suppressed while an Animator exists on the same GameObject, disabled or not, so a
+                // merely-disabled Animator leaves the character silently stuck in its bind pose.
+                foreach (var a0 in go.GetComponentsInChildren<Animator>()) Destroy(a0);
+
+                if (_walkClip != null && _walkClip.legacy)
+                {
+                    var legacy = go.AddComponent<Animation>();
+                    legacy.AddClip(_walkClip, "walk");
+                    legacy.wrapMode = WrapMode.Loop;
+                    legacy.playAutomatically = false;
+                    legacy.Play("walk");
+
+                    // Desynchronise, or the crowd marches in lockstep, which is the single most
+                    // obvious tell that a crowd is fake.
+                    var state = legacy["walk"];
+                    if (i == 0)
+                        Debug.Log($"[Anim] legacy state={(state != null ? "ok" : "NULL")} " +
+                                  $"isPlaying={legacy.isPlaying} clipCount={legacy.GetClipCount()}");
+                    if (state != null)
+                    {
+                        state.time = (float)rng.NextDouble() * _walkClip.length;
+                        state.speed = 0.9f + (float)rng.NextDouble() * 0.25f;
+                    }
+                }
+
+                // Size them a few frames later, once the walk is actually posing the mesh. Measuring
+                // now would measure the bind pose, which is not the shape that ends up on screen.
+                go.AddComponent<FitToHeight>().Configure(slot.transform, 1.8f);
 
                 // Give them the game's own look rather than whatever the FBX shipped with.
                 foreach (var r in go.GetComponentsInChildren<Renderer>())
@@ -1071,12 +1097,12 @@ namespace Cipher.Game
             // bounds put the camera inside somebody or aimed it at empty sky, because bounds on
             // freshly spawned animated characters are not trustworthy on the frame you spawn them.
             // The crowd's layout is known, so the camera can be too.
-            const float CrowdZ = 22f;
+            const float CrowdZ = 20f;
             root.transform.position = new Vector3(GridW * 0.5f, 0f, CrowdZ);
 
             if (_camera != null)
             {
-                _camera.transform.position = new Vector3(GridW * 0.5f, 1.55f, CrowdZ - 7f);
+                _camera.transform.position = new Vector3(GridW * 0.5f, 1.6f, CrowdZ - 9f);
                 _camera.transform.rotation = Quaternion.Euler(1.5f, 0f, 0f);
                 _camera.nearClipPlane = 0.1f;
             }
@@ -1087,30 +1113,8 @@ namespace Cipher.Game
         }
 
         private bool _hudHidden;
+        private AnimationClip? _walkClip;
         private bool _lineupMode;
-
-        /// <summary>
-        /// Rescales a spawned character so it stands about 1.8 m, measured from its renderers AFTER
-        /// the animator has posed it. Every attempt to do this at import time was wrong, because the
-        /// walk clip animates scale on the armature and edit-time bounds never see it.
-        /// </summary>
-        private static void ScaleToHumanHeight(GameObject go, GameObject slot, float target = 1.8f)
-        {
-            var renderers = go.GetComponentsInChildren<Renderer>();
-            if (renderers.Length == 0) return;
-
-            var b = renderers[0].bounds;
-            for (int i = 1; i < renderers.Length; i++) b.Encapsulate(renderers[i].bounds);
-
-            float h = b.size.y;
-            if (h <= 1e-4f || !float.IsFinite(h)) return;
-
-            float factor = target / h;
-            if (factor <= 0f || !float.IsFinite(factor)) return;
-            slot.transform.localScale *= factor;   // scale the wrapper, not the animated root
-            Debug.Log($"[Scale] {go.name}: measured {h:F3} factor {factor:F4} -> slot scale {slot.transform.localScale.y:F4} at {slot.transform.position}");
-
-        }
 
         /// <summary>Starts the first wave, so a smoke capture can actually see combat. Harness only.</summary>
         public void StartWaveForCapture() => _match.StartWaveNow();
@@ -2011,23 +2015,59 @@ namespace Cipher.Game
                     _truck.Unload(thing);
                     _sfx.Play(Sfx.MenuTick, 0.7f, 0f);
                 }
+                else if (!_truck.Fits(thing))
+                {
+                    // Check the bed BEFORE spending window time or paying out. Charging first meant
+                    // a piece that did not fit still paid its full value and still cost four seconds,
+                    // and since it never entered the truck the same piece could be sold again every
+                    // four seconds until the window closed. Free money, found in review.
+                    _declineNoticeTimer = 2f;
+                    _declineNotice = _truck.Weight + thing.Haulage.Weight > _truck.MaxWeight
+                        ? "too heavy for the bed"
+                        : "no room left";
+                    _sfx.Play(Sfx.MenuTick, 0.8f, 0f);
+                }
                 else
                 {
-                    // Loading costs window time as well as bed space: unbolting is not free.
+                    // It fits. Now unbolting can charge the window and pay out.
                     var salvage = _match.TrySalvage(thing.RecoveredValue);
-                    var outcome = salvage == SalvageResult.Ok ? _truck.TryLoad(thing) : LoadOutcome.TooHeavy;
+                    if (salvage != SalvageResult.Ok)
+                    {
+                        _declineNotice = "no time left to unbolt it";
+                        _sfx.Play(Sfx.MenuTick, 0.8f, 0f);
+                    }
+                    else
+                    {
+                        var outcome = _truck.TryLoad(thing);
+                        _declineNotice = outcome == LoadOutcome.Loaded
+                            ? "loaded " + thing.HaulName
+                            : "could not load it";
+                        _sfx.Play(outcome == LoadOutcome.Loaded ? Sfx.MenuConfirm : Sfx.MenuTick, 0.8f, 0f);
+                    }
                     _declineNoticeTimer = 2f;
-                    _declineNotice = salvage != SalvageResult.Ok
-                        ? "no time left to unbolt it"
-                        : outcome switch
-                        {
-                            LoadOutcome.Loaded => "loaded " + thing.HaulName,
-                            LoadOutcome.TooHeavy => "too heavy for the bed",
-                            LoadOutcome.TooBulky => "no room left",
-                            _ => "already on",
-                        };
-                    _sfx.Play(outcome == LoadOutcome.Loaded ? Sfx.MenuConfirm : Sfx.MenuTick, 0.8f, 0f);
                 }
+            }
+
+            // Fill the bed by value density. A convenience, not a strategy: it optimises value per
+            // unit carried, which is not always what the player wants at the next position.
+            if ((kb != null && kb.fKey.wasPressedThisFrame)
+                || (pad != null && pad.buttonWest.wasPressedThisFrame))
+            {
+                int before = _truck.Loaded.Count;
+                var affordable = new List<IHaulable>();
+                for (int i = 0; i < _recoverable.Count; i++)
+                    if (!_truck.IsLoaded(_recoverable[i])) affordable.Add(_recoverable[i]);
+
+                foreach (var thing in affordable)
+                {
+                    if (!_truck.Fits(thing)) continue;
+                    if (_match.TrySalvage(thing.RecoveredValue) != SalvageResult.Ok) break;
+                    _truck.TryLoad(thing);
+                }
+
+                _declineNotice = $"auto-loaded {_truck.Loaded.Count - before}";
+                _declineNoticeTimer = 2f;
+                _sfx.Play(Sfx.MenuConfirm, 0.8f, 0f);
             }
 
             if (kb != null && kb.lKey.wasPressedThisFrame) _match.PullOutNow();
@@ -2070,7 +2110,7 @@ namespace Cipher.Game
             GUI.color = prev;
 
             GUI.Label(new Rect(_uiW * 0.5f - 460f, y + 18f, 920f, 26f),
-                      "up/down to move, A or Enter to load or unload, L to pull out now", _subStyle);
+                      "up/down to move, A or Enter to load or unload, F auto-load, L to pull out now", _subStyle);
         }
 
         /// <summary>
