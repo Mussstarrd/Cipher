@@ -85,7 +85,7 @@ namespace Cipher.Game.Tests
             => new SalvagedEmplacement("Sentry .50", new Haulage(190f, 1.1f), 150);
 
         private static SalvagedEmplacement Rotor()
-            => new SalvagedEmplacement("Chop-Shop Rotor", new Haulage(70f, 0.9f), 120);
+            => new SalvagedEmplacement("Brush Hog", new Haulage(70f, 0.9f), 120);
 
         private static SalvagedEmplacement Panel()
             => new SalvagedEmplacement("Barricade Panel", new Haulage(15f, 1.6f), 20);

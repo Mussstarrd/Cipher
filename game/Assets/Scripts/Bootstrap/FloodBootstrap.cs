@@ -118,6 +118,7 @@ namespace Cipher.Game
         private Transform _heroT = null!;
         private Transform _barrelT = null!;
         private Transform _markerT = null!;
+        private StrikeDrone? _strikeDrone;
         private readonly List<StrikeImpact> _impactScratch = new List<StrikeImpact>(8);
 
         private struct Tracer { public Vector3 A, B; public float Ttl; public bool Turret; }
@@ -537,6 +538,10 @@ namespace Cipher.Game
                 MakeMaterial(new Color(0.24f, 0.19f, 0.16f), instanced: false, ink: InkNone);
             _markerT = marker.transform;
 
+            // The delivery vehicle. Built once and parked; see StrikeDrone for why it is a hijacked
+            // cargo drone rather than an air force that does not exist in this world.
+            _strikeDrone = StrikeDrone.Build(PropMaterial);
+
             var cursor = GameObject.CreatePrimitive(PrimitiveType.Cube);
             cursor.name = "BuildCursor";
             Destroy(cursor.GetComponent<Collider>());
@@ -861,47 +866,96 @@ namespace Cipher.Game
             }
         }
 
+        private readonly List<TurretProps> _turretProps = new List<TurretProps>();
+
+        /// <summary>How long a muzzle flash hangs around. Two frames at sixty; any more reads as a lamp.</summary>
+        private const float MuzzleFlashLife = 0.045f;
+
+        private readonly List<float> _turretFlash = new List<float>();
+        private readonly List<Vector3> _turretAim = new List<Vector3>();
+
         private void SyncTurretObjects()
         {
             var list = _turrets.Turrets;
-            while (_turretGos.Count > list.Count)
+
+            while (_turretProps.Count > list.Count)
             {
-                Destroy(_turretGos[_turretGos.Count - 1]);
-                _turretGos.RemoveAt(_turretGos.Count - 1);
+                Destroy(_turretProps[_turretProps.Count - 1].Root);
+                _turretProps.RemoveAt(_turretProps.Count - 1);
+                _turretFlash.RemoveAt(_turretFlash.Count - 1);
+                _turretAim.RemoveAt(_turretAim.Count - 1);
             }
-            while (_turretGos.Count < list.Count)
+
+            while (_turretProps.Count < list.Count)
             {
-                var go = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-                go.name = "Turret";
-                go.name = "Turret";
-                Destroy(go.GetComponent<Collider>());
-                go.GetComponent<Renderer>().material = _turretMaterial;
-                var head = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                Destroy(head.GetComponent<Collider>());
-                head.transform.SetParent(go.transform, false);
-                head.transform.localPosition = new Vector3(0f, 1.1f, 0f);
-                head.transform.localScale = new Vector3(0.6f, 0.45f, 1.2f);
-                head.GetComponent<Renderer>().material = _turretMaterial;
-                _turretGos.Add(go);
+                int i = _turretProps.Count;
+                bool area = _turrets.FamilyOfTurret(i).Mode == FireMode.Area;
+                _turretProps.Add(TurretProps.Build(area, PropMaterial));
+                _turretFlash.Add(0f);
+                _turretAim.Add(Vector3.forward);
             }
+
+            float dt = Time.deltaTime;
             for (int i = 0; i < list.Count; i++)
             {
                 var t = list[i];
-                float hp = (float)t.Hp / t.MaxHp;
-                bool area = _turrets.FamilyOfTurret(i).Mode == FireMode.Area;
-                var go = _turretGos[i];
-                go.transform.position = new Vector3(t.X + 0.5f, 0.7f, t.Y + 0.5f);
-                go.transform.localScale = new Vector3(0.9f + 0.15f * t.Tier, 0.4f + 0.6f * hp, 0.9f + 0.15f * t.Tier);
-                // Grinders spin and wear a different colour so the two families read apart at a glance.
-                go.GetComponent<Renderer>().material = area ? _grinderMaterial : _turretMaterial;
-                var head = go.transform.GetChild(0);
-                head.GetComponent<Renderer>().material = area ? _grinderMaterial : _turretMaterial;
-                head.localScale = area ? new Vector3(1.5f, 0.25f, 0.35f) : new Vector3(0.6f, 0.45f, 1.2f);
-                head.localRotation = area ? Quaternion.Euler(0f, Time.time * 520f, 0f) : Quaternion.identity;
+                var props = _turretProps[i];
+                float hp = t.MaxHp <= 0 ? 0f : (float)t.Hp / t.MaxHp;
+
+                // Damage sags the whole emplacement rather than shrinking it: a turret that gets
+                // SMALLER as it is hurt reads as further away, not as nearly dead.
+                float sag = 1f - 0.22f * (1f - hp);
+                props.Root.transform.position = new Vector3(t.X + 0.5f, 0f, t.Y + 0.5f);
+                props.Root.transform.localScale =
+                    new Vector3(1f + 0.10f * t.Tier, sag * (1f + 0.10f * t.Tier), 1f + 0.10f * t.Tier);
+
+                if (props.Rotor != null)
+                {
+                    // Blades idle slowly and spin up when there is something to cut, so a brush hog
+                    // tells you it has a target before the first body reaches it.
+                    bool hot = _world.CountWithin(t.Center, t.Range) > 0;
+                    props.Rotor.localRotation *= Quaternion.Euler(0f, (hot ? 1500f : 140f) * dt, 0f);
+                }
+
+                if (props.Head != null)
+                {
+                    var aim = _turretAim[i];
+                    if (aim.sqrMagnitude > 1e-6f)
+                        props.Head.rotation = Quaternion.Slerp(props.Head.rotation,
+                                                               Quaternion.LookRotation(aim, Vector3.up),
+                                                               1f - Mathf.Exp(-14f * dt));
+                }
+
+                if (_turretFlash[i] > 0f)
+                {
+                    _turretFlash[i] -= dt;
+                    if (_turretFlash[i] <= 0f && props.Muzzle != null)
+                        props.Muzzle.localScale = Vector3.zero;
+                }
             }
         }
 
-        // ------------------------------------------------------------------ frame
+        /// <summary>
+        /// Points a turret at what it just shot, and lights the muzzle.
+        ///
+        /// Aim comes from the SHOT rather than from a target query, so what the barrel points at and
+        /// what the gun actually hit are the same thing by construction. A turret whose barrel lags
+        /// its own tracer is the tell that the visuals are decoration.
+        /// </summary>
+        private void NoteTurretShot(in TurretShot shot)
+        {
+            int i = shot.TurretIndex;
+            if (i < 0 || i >= _turretProps.Count) return;
+
+            var from = new Vector3(shot.From.X, 0f, shot.From.Y);
+            var to = new Vector3(shot.To.X, 0f, shot.To.Y);
+            var aim = to - from;
+            if (aim.sqrMagnitude > 1e-6f) _turretAim[i] = aim.normalized;
+
+            _turretFlash[i] = MuzzleFlashLife;
+            var muzzle = _turretProps[i].Muzzle;
+            if (muzzle != null) muzzle.localScale = new Vector3(0.26f, 0.26f, 0.42f);
+        }
 
         private void Update()
         {
@@ -1090,6 +1144,7 @@ namespace Cipher.Game
             _turrets.Step(_world, TickDt, _shotScratch);
             foreach (var s in _shotScratch)
             {
+                NoteTurretShot(in s);
                 if (s.Area)
                 {
                     // A grinder sweeps rather than fires: show the bite radius, not a tracer.
@@ -2217,6 +2272,23 @@ namespace Cipher.Game
         /// </summary>
         public void FallBackForCapture() => AdvanceToNextPosition();
 
+        /// <summary>
+        /// Plants one of each emplacement family beside the lane and calls a strike down it, so a
+        /// capture can show what the towers and the delivery drone actually look like. Harness only.
+        /// </summary>
+        public void ShowEmplacementsForCapture()
+        {
+            int laneY = GoalY;
+            int near = Mathf.Clamp(GridW - 14, 1, GridW - 2);
+            _turrets.Place(_map, near, Mathf.Clamp(laneY - 5, 1, GridH - 2), 0);
+            _turrets.Place(_map, near - 3, Mathf.Clamp(laneY + 5, 1, GridH - 2), 1);
+            _turrets.Place(_map, near - 7, Mathf.Clamp(laneY - 6, 1, GridH - 2), 0);
+            SyncTurretObjects();
+
+            _hero.AimStrike(_hero.Position + new Vec2(-14f, 0f));
+            _hero.TryAirstrike();
+        }
+
         /// <summary>Starts the first wave, so a smoke capture can actually see combat. Harness only.</summary>
         public void StartWaveForCapture() => _match.StartWaveNow();
 
@@ -2651,6 +2723,21 @@ namespace Cipher.Game
 
             bool showMarker = !_hero.IsDown && !_buildMode && !_match.IsOver;
             _markerT.gameObject.SetActive(showMarker);
+
+            if (_strikeDrone != null)
+            {
+                if (_hero.StrikeInbound)
+                {
+                    var ax = _hero.StrikeAxis;
+                    _strikeDrone.Fly(ToWorld(_hero.StrikeTarget, 0f),
+                                     new Vector3(ax.X, 0f, ax.Y),
+                                     _hero.StrikeProgress01);
+                }
+                else
+                {
+                    _strikeDrone.Park();
+                }
+            }
             if (showMarker)
             {
                 Vec2 m = _hero.StrikeTarget;

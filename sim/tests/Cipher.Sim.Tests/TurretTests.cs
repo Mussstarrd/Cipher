@@ -177,7 +177,7 @@ namespace Cipher.Sim.Tests
             turrets.Place(map, 8, 8, Grinder);
 
             Assert.Equal("Sentry .50", turrets.FamilyOfTurret(0).Name);
-            Assert.Equal("Chop-Shop Rotor", turrets.FamilyOfTurret(1).Name);
+            Assert.Equal("Brush Hog", turrets.FamilyOfTurret(1).Name);
             Assert.Equal("Twin .50", turrets.NextTier(0)!.Name);
             Assert.Equal("Barbed Drum", turrets.NextTier(1)!.Name);
             Assert.Equal(FireMode.Area, turrets.FamilyOfTurret(1).Mode);

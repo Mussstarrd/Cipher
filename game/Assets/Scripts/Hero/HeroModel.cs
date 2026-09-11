@@ -106,6 +106,26 @@ namespace Cipher.Game.Hero
         public float StrikeLineWidth => _cfg.AirstrikeBombRadius * 2f;
         /// <summary>True from the call until the last bomb lands.</summary>
         public bool StrikeInbound => _strikeBombsLeft > 0;
+
+        /// <summary>
+        /// How far through the run the delivery is, 0 to 1: the approach, then the bombs walking the
+        /// line. The game flies the drone on this, so what is overhead and what is landing agree.
+        /// </summary>
+        public float StrikeProgress01
+        {
+            get
+            {
+                int total = Math.Max(1, _cfg.AirstrikeBombCount);
+                if (_strikeBombsLeft <= 0) return 1f;
+                // The approach is the first third of the pass; the drop is the rest.
+                float approach = _cfg.AirstrikeInboundDelay <= 0f ? 1f
+                               : 1f - Math.Max(0f, _strikeTimer) / _cfg.AirstrikeInboundDelay;
+                if (total - _strikeBombsLeft == 0 && _strikeTimer > 0f)
+                    return Math.Clamp(approach, 0f, 1f) * 0.34f;
+                float dropped = (total - _strikeBombsLeft) / (float)total;
+                return 0.34f + Math.Clamp(dropped, 0f, 1f) * 0.66f;
+            }
+        }
         public float StrikeTimeToImpact => Math.Max(0f, _strikeTimer);
 
         private int _strikeBombsLeft;

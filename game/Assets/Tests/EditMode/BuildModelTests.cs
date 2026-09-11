@@ -60,7 +60,7 @@ namespace Cipher.Game.Tests
             Assert.AreEqual("Sentry .50", r.Build.ItemName);
             r.Build.CycleItem(1);
             Assert.AreEqual(BuildItem.Turret, r.Build.Item);
-            Assert.AreEqual("Chop-Shop Rotor", r.Build.ItemName);
+            Assert.AreEqual("Brush Hog", r.Build.ItemName);
             r.Build.CycleItem(1);
             Assert.AreEqual(BuildItem.RepairDrone, r.Build.Item);
             r.Build.CycleItem(1);

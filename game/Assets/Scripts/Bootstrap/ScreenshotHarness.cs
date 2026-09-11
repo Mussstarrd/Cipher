@@ -26,6 +26,7 @@ namespace Cipher.Game
         private const string StartArg = "-exodus-screenshot-start";
         private const string LineupArg = "-exodus-screenshot-lineup";
         private const string FallBackArg = "-exodus-screenshot-fallback";
+        private const string EmplacementsArg = "-exodus-screenshot-emplacements";
 
         private string? _path;
         private float _delay = 8f;
@@ -36,6 +37,8 @@ namespace Cipher.Game
         private bool _start;
         private bool _lineup;
         private bool _fallBack;
+        private bool _emplacements;
+        private bool _emplacementsSet;
         private bool _fellBack;
         private bool _lineupSet;
         private bool _started;
@@ -65,6 +68,7 @@ namespace Cipher.Game
             harness._start = HasFlag(args, StartArg);
             harness._lineup = HasFlag(args, LineupArg);
             harness._fallBack = HasFlag(args, FallBackArg);
+            harness._emplacements = HasFlag(args, EmplacementsArg);
             Debug.Log($"[Screenshot] armed: {path} after {delay:F1}s");
         }
 
@@ -149,6 +153,15 @@ namespace Cipher.Game
                 var bf = GetComponent<FloodBootstrap>();
                 if (bf != null) bf.FallBackForCapture();
                 _fellBack = true;
+            }
+
+            // Late enough that the wave is on the field, early enough that the strike is still in
+            // the air when the shutter opens.
+            if (_emplacements && !_emplacementsSet && _elapsed > Mathf.Max(0f, _delay - 1.1f))
+            {
+                var be = GetComponent<FloodBootstrap>();
+                if (be != null) be.ShowEmplacementsForCapture();
+                _emplacementsSet = true;
             }
 
             if (_skills && !_skillsSet && _elapsed > Mathf.Max(0f, _delay - 1f))

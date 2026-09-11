@@ -68,13 +68,19 @@ namespace Cipher.Sim.Emplacements
                 new TurretTier("Overwatch", cost: 200, damageMultiplier: 1f, rangeBonus: 4f, hpBonus: 100),
             });
 
-        /// <summary>Short, all-round, hits everything at once. Wants to sit at a corner where the crowd bunches.</summary>
+        /// <summary>
+        /// Short, all-round, hits everything at once. Wants to sit at a corner where the crowd bunches.
+        ///
+        /// A rotary mower deck off a tractor, spun up off a generator: the most plausible area weapon
+        /// a rural property actually owns. It was called the "Chop-Shop Rotor", which is vocabulary
+        /// from the kingpin fiction ADR-003 retired -- there is no chop shop in a lake community.
+        /// </summary>
         public static TurretFamily Grinder { get; } = new TurretFamily(
-            "Chop-Shop Rotor", cost: 120, range: 2.2f, damagePerShot: 2.75f, shotsPerSecond: 8f, maxHp: 260, FireMode.Area,
+            "Brush Hog", cost: 120, range: 2.2f, damagePerShot: 2.75f, shotsPerSecond: 8f, maxHp: 260, FireMode.Area,
             new[]
             {
-                new TurretTier("Barbed Drum", cost: 110, damageMultiplier: 1.7f, rangeBonus: 0f, hpBonus: 90),
-                new TurretTier("Wide Throw", cost: 180, damageMultiplier: 1f, rangeBonus: 1f, hpBonus: 90),
+                new TurretTier("Flail Drum", cost: 110, damageMultiplier: 1.7f, rangeBonus: 0f, hpBonus: 90),
+                new TurretTier("Wide Deck", cost: 180, damageMultiplier: 1f, rangeBonus: 1f, hpBonus: 90),
             });
 
         public static TurretFamily[] All { get; } = { Sentry, Grinder };

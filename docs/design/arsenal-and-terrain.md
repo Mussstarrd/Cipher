@@ -20,7 +20,7 @@ Today there is one turret (Sentry .50: range 10, 60 dps, targets the runner near
 | Family | v0 unit | Cost | Range | Damage | Targets | The failure it answers |
 |---|---|---|---|---|---|---|
 | **Line** | Sentry .50 (exists) | $150 | 10 | 60 dps single | first toward vault | leakers down a long lane |
-| **Grinder** | Chop-Shop Rotor | $120 | 2.2 (all round) | 22 dps to **everything** in radius, no target cap | n/a | the crowd that walks past your single-target gun |
+| **Grinder** | Brush Hog | $120 | 2.2 (all round) | 22 dps to **everything** in radius, no target cap | n/a | the crowd that walks past your single-target gun |
 | **Roving** | Cartel Gunship | $260 | 6 while moving | 35 dps single | nearest on its route | a hole you cannot predict |
 
 **Grinder** is the owner's "one that spins to do AoE of people passing it". Cheap, short, and it wants to be *inside* the maze at a corner where the crowd bunches, which teaches maze shape. It is deliberately terrible in the open.
