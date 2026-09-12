@@ -398,10 +398,26 @@ namespace Cipher.Game
             if (!_modelChecked)
             {
                 _modelChecked = true;
-                _model = Resources.Load<GameObject>(ModelPath);
+
+                // OFF BY DEFAULT, AND THAT IS A TASTE DECISION, NOT A BUG.
+                //
+                // Owner, 2026-09-12, on seeing the Quaternius robot in a street at dusk: "these
+                // robots look ridiculous, it looks like we're trying to smash genres together from
+                // free stuff and it really really shows". He is right, and recolouring it did not
+                // help: it is a FRIENDLY TOY ROBOT -- round head, mitts, a bouncy walk -- built for
+                // a cheerful sci-fi game, being asked to play a hacked service unit stalking a lake
+                // community. The mismatch is proportion and attitude, which no material fixes.
+                //
+                // The boxes go back in because MachineBody's own header was right about them: hard
+                // surfaces under an ink outline, speaking the same language as the turrets and the
+                // guardhouse. The whole model pipeline stays exactly where it is -- it is proven,
+                // and it is what the bought character art will arrive through.
+                bool wanted = System.Array.IndexOf(System.Environment.GetCommandLineArgs(),
+                                                   "-exodus-machine-models") >= 0;
+                _model = wanted ? Resources.Load<GameObject>(ModelPath) : null;
                 Debug.Log(_model != null
-                    ? "[Machines] using the robot model"
-                    : "[Machines] no robot model on disk; falling back to boxes");
+                    ? "[Machines] using the robot model (-exodus-machine-models)"
+                    : "[Machines] boxes, by choice; pass -exodus-machine-models for the model path");
             }
 
             if (_model == null) return MachineBody.Build(kind, _attic, Shared);
