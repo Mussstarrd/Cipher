@@ -114,6 +114,9 @@ namespace Cipher.Game
         /// </summary>
         public static readonly Color SprayerGreen = new Color(0.35f, 0.9f, 0.25f);
 
+        /// <summary>The kind's livery. Public so the model path can tint toward it.</summary>
+        public static Color ShellColourOf(MachineKind kind) => ShellOf(kind);
+
         private static Color ShellOf(MachineKind kind) => kind switch
         {
             MachineKind.Groundskeeper => Municipal,
@@ -352,11 +355,23 @@ namespace Cipher.Game
         /// One machine, parented to <paramref name="parent"/>, ready to be driven by
         /// <see cref="MachineGait"/>.
         /// </summary>
+        /// <summary>
+        /// Where the real machine model lives, if the pack has been fetched.
+        ///
+        /// Resources rather than a serialized reference because the whole scene is built in code --
+        /// there is no prefab in a scene file to hang an inspector slot off.
+        /// </summary>
+        private const string ModelPath = "Machines/Robot_Machine";
+
+        /// <summary>Loaded once per factory; null when the art pack is not on disk.</summary>
+        private GameObject? _model;
+        private bool _modelChecked;
+
         public GameObject Create(MachineKind kind, Transform parent)
         {
             if (!_prototypes.TryGetValue(kind, out var prototype))
             {
-                prototype = MachineBody.Build(kind, _attic, Shared);
+                prototype = BuildPrototype(kind);
                 prototype.SetActive(false);
                 _prototypes[kind] = prototype;
             }
@@ -365,6 +380,76 @@ namespace Cipher.Game
             clone.name = prototype.name;
             clone.SetActive(true);
             return clone;
+        }
+
+        /// <summary>
+        /// A real robot when the art pack is present, the boxes when it is not.
+        ///
+        /// The boxes are NOT dead code and this is not a migration. MachineBody's header argues the
+        /// case for them and most of it still stands: a hard-surface thing made of hard surfaces,
+        /// under an ink outline, beside a guardhouse made the same way. What changed is only the
+        /// premise it rested on -- "a robot from any other pack is a different skeleton, so it would
+        /// arrive with none of that" -- because this pack carries its own rig AND its own clips, so
+        /// it costs an import rather than a session in the swamp. `art/free/` is gitignored, so a
+        /// clean checkout has no model and must still run.
+        /// </summary>
+        private GameObject BuildPrototype(MachineKind kind)
+        {
+            if (!_modelChecked)
+            {
+                _modelChecked = true;
+                _model = Resources.Load<GameObject>(ModelPath);
+                Debug.Log(_model != null
+                    ? "[Machines] using the robot model"
+                    : "[Machines] no robot model on disk; falling back to boxes");
+            }
+
+            if (_model == null) return MachineBody.Build(kind, _attic, Shared);
+
+            var go = UnityEngine.Object.Instantiate(_model, _attic);
+            go.name = $"Machine_{kind}";
+            Reskin(go, kind);
+            return go;
+        }
+
+        /// <summary>
+        /// Puts the machine on our own shader, keeping the model's internal colour separation.
+        ///
+        /// Flattening the whole robot to one colour would be simpler and worse: it would throw away
+        /// the joints, the eyes and the panel breaks the model already has, and leave a silhouette
+        /// filled in with poster paint. Instead every submesh's OWN colour is read and pulled toward
+        /// the kind's livery, which keeps the robot legible up close and still makes a Sprayer read
+        /// as green at sixty metres -- the Spitter tell the crowd depends on.
+        ///
+        /// Going through <see cref="Shared"/> is what puts it on Exodus/InstancedLit, so it gets the
+        /// cel banding and the inverted-hull ink outline like everything else. It also keeps the
+        /// material count bounded: Shared caches by colour, so four kinds of robot cost a handful of
+        /// materials rather than one per body.
+        /// </summary>
+        private void Reskin(GameObject go, MachineKind kind)
+        {
+            Color livery = MachineBody.ShellColourOf(kind);
+
+            foreach (var r in go.GetComponentsInChildren<Renderer>(true))
+            {
+                var src = r.sharedMaterials;
+                var dst = new Material[src.Length];
+                for (int i = 0; i < src.Length; i++)
+                {
+                    Color own = livery;
+                    var m = src[i];
+                    if (m != null)
+                    {
+                        if (m.HasProperty("_BaseColor")) own = m.GetColor("_BaseColor");
+                        else if (m.HasProperty("_Color")) own = m.color;
+                    }
+
+                    // Two thirds the part's own colour, one third the livery: enough to tell the
+                    // kinds apart without repainting the robot.
+                    dst[i] = Shared(Color.Lerp(own, livery, 0.34f));
+                }
+                r.sharedMaterials = dst;
+            }
         }
     }
 }

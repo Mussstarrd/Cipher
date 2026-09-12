@@ -82,6 +82,24 @@ namespace Cipher.Game
     public sealed class MachineGait : MonoBehaviour
     {
         private Transform? _chassis, _legL, _legR;
+
+        /// <summary>
+        /// Set when this machine is a real model with its own clips rather than a box rig.
+        ///
+        /// The two paths are exclusive on purpose. A model carries an authored walk; swinging its
+        /// root around procedurally on top of that fights the animation for the same transform and
+        /// produces a robot that skates while its legs do something unrelated.
+        /// </summary>
+        private Animation? _anim;
+        private string _clip = string.Empty;
+        private bool _bound;
+
+        /// <summary>Above this, in metres per second, the walk becomes the run.</summary>
+        private const float RunAbove = 3.1f;
+
+        /// <summary>Metres per second the walk clip was authored for; playback scales off it.</summary>
+        private const float WalkReference = 1.5f;
+
         private Vector3 _chassisRest;
         private float _phase;
         private Vector3 _last;
@@ -97,7 +115,12 @@ namespace Cipher.Game
 
         private void Bind()
         {
-            if (_chassis != null) return;
+            // A flag, not a null check on _chassis: a model machine has no "Chassis" child, so the
+            // old guard re-ran Find on three names every frame forever and never succeeded.
+            if (_bound) return;
+            _bound = true;
+
+            _anim = GetComponentInChildren<Animation>(true);
             _chassis = transform.Find("Chassis");
             _legL = transform.Find("LegL");
             _legR = transform.Find("LegR");
@@ -120,6 +143,7 @@ namespace Cipher.Game
             _speed = 0f;
             _last = transform.position;
             transform.localRotation = Quaternion.identity;
+            _clip = string.Empty;   // so the next occupant re-crossfades instead of holding a death pose
         }
 
         /// <summary>Go over. The machine equivalent of the death clip: it topples, it does not vanish.</summary>
@@ -144,6 +168,8 @@ namespace Cipher.Game
             // Smoothed, because the sim steps on a fixed tick and the view does not: the raw
             // per-frame delta alternates between a full step and zero, which makes the legs judder.
             _speed = Mathf.Lerp(_speed, measured, 1f - Mathf.Exp(-9f * dt));
+
+            if (_anim != null) { DriveClips(); return; }
 
             if (_dying)
             {
@@ -227,5 +253,42 @@ namespace Cipher.Game
 
         private static MachineGait? At(MachineGait?[] gaits, int slot)
             => slot >= 0 && slot < gaits.Length ? gaits[slot] : null;
+
+        /// <summary>
+        /// Picks the clip the machine's own speed asks for.
+        ///
+        /// Speed is MEASURED off the transform rather than asked of the sim, exactly as the box rig
+        /// does it, so this needs no wiring back to the crowd and cannot disagree with where the
+        /// body actually went. Playback rate scales with speed so the feet do not skate; clamped,
+        /// because a machine shoved to twice its speed should look hurried, not comic.
+        /// </summary>
+        private void DriveClips()
+        {
+            if (_anim == null) return;
+
+            if (_dying)
+            {
+                Play("machine_death", 0.12f);
+                return;
+            }
+
+            string want = _speed < 0.2f ? "machine_idle"
+                        : _speed < RunAbove ? "machine_walk"
+                        : "machine_run";
+            Play(want, 0.18f);
+
+            var state = _anim[want];
+            if (state != null && want != "machine_idle")
+                state.speed = Mathf.Clamp(_speed / WalkReference, 0.55f, 1.9f);
+        }
+
+        private void Play(string clip, float blend)
+        {
+            if (_anim == null || _clip == clip) return;
+            if (_anim[clip] == null) return;   // pack built without this one; keep what is playing
+            _anim.CrossFade(clip, blend);
+            _clip = clip;
+        }
+
     }
 }
