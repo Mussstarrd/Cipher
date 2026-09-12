@@ -444,9 +444,17 @@ namespace Cipher.Game
                         else if (m.HasProperty("_Color")) own = m.color;
                     }
 
-                    // Two thirds the part's own colour, one third the livery: enough to tell the
-                    // kinds apart without repainting the robot.
-                    dst[i] = Shared(Color.Lerp(own, livery, 0.34f));
+                    // MOSTLY THE LIVERY, AND THAT IS THE POINT. Owner, 2026-09-12: the robots
+                    // came out amber, and amber is SPOKEN FOR -- ADR-008 separates the weapon's
+                    // amber from the implant's amber on the green channel and asserts it in tests,
+                    // so a third enemy class wearing the same hue quietly spends a colour the game
+                    // uses to mean "signal". The model's own orange was winning at a third.
+                    //
+                    // Not a flat repaint either: the remaining fifth of the part's own colour is
+                    // what keeps the joints, eyes and panel breaks separated, the same reasoning as
+                    // CrowdBodies.Tint ("a pull toward orange rather than a repaint") applied in
+                    // the other direction.
+                    dst[i] = Shared(Color.Lerp(own, livery, 0.82f));
                 }
                 r.sharedMaterials = dst;
             }
