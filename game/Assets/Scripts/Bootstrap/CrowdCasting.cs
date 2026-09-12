@@ -66,6 +66,12 @@ namespace Cipher.Game
         /// Applied to Runners only. Spitters are machines unconditionally, so the share of the
         /// crowd that reads as mechanical ends up slightly above this, which is correct: "like 30%"
         /// is a texture, not a quota.
+        ///
+        /// **The simulation owns this number too** (<see cref="AgentWorld.MachineShare"/>) and the
+        /// bootstrap pushes this value into it, because ADR-010's drone can only convert machines:
+        /// the sim has to be able to answer "is that one a machine" for a rule, and the renderer
+        /// has to give the same answer for a picture, or the player aims at a robot and is told
+        /// there is nothing there.
         /// </summary>
         public const float HumanoidShare = 0.30f;
 
@@ -88,23 +94,15 @@ namespace Cipher.Game
         /// <summary>
         /// A stable value in [0,1) from an id and a seed. A hash rather than an RNG: nothing is
         /// sequenced, nothing is stored, and asking twice costs nothing.
+        ///
+        /// **THE IMPLEMENTATION LIVES IN THE SIMULATION** (<see cref="AgentWorld.MachineFraction"/>)
+        /// and this forwards to it. It used to be a second copy of the same avalanche, sitting in
+        /// the renderer, and the copies happened to agree -- which is the dangerous version of this
+        /// bug, because nothing fails until somebody tunes one of them. Once ADR-010's drone could
+        /// convert a machine, "which bodies are machines" stopped being a question about pictures
+        /// and became a rule, and a rule has exactly one home.
         /// </summary>
-        public static float Fraction(int id, int seed)
-        {
-            // A 32-bit avalanche (Murmur3's finaliser). The point is that consecutive ids -- which
-            // is exactly how the spawn director hands them out -- do not come out in runs, so a
-            // wave does not arrive as eleven machines followed by twenty people.
-            unchecked
-            {
-                uint h = (uint)id * 2654435761u ^ (uint)seed * 2246822519u;
-                h ^= h >> 16;
-                h *= 0x85EBCA6Bu;
-                h ^= h >> 13;
-                h *= 0xC2B2AE35u;
-                h ^= h >> 16;
-                return (h >> 8) * (1f / 16777216f);   // top 24 bits, so the float is exact
-            }
-        }
+        public static float Fraction(int id, int seed) => AgentWorld.MachineFraction(id, seed);
 
         // ---- the pool ------------------------------------------------------------------------
         //

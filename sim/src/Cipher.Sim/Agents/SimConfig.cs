@@ -147,6 +147,38 @@ namespace Cipher.Sim.Agents
         /// <summary>It goes through an emplacement rather than around it, and quickly.</summary>
         public float CollectorStructureDamage { get; set; } = 34f;
 
+        // ------------------------------------------------- Turncoat converts (ADR-010)
+
+        /// <summary>
+        /// How long a converted machine keeps fighting for the player before it burns out.
+        ///
+        /// A convert is NOT a permanent unit. The drone does not repair anything -- it re-points a
+        /// machine that is still running HALCYON's firmware, and the moment it does, the network
+        /// starts taking it back. Mechanically this is what keeps the drone from snowballing: two
+        /// good conversions in a heavy wave is a swing, not an army, and the player has to keep
+        /// earning it. It is implemented as an ordinary decrypt drain, so a convert also weakens
+        /// visibly as it goes, exactly like everything else on the field (ADR-008).
+        /// </summary>
+        public float TurnedSeconds { get; set; } = 18f;
+
+        /// <summary>How far a convert will look for something still working for HALCYON.</summary>
+        public float TurnedSeekRange { get; set; } = 16f;
+
+        /// <summary>Close enough to put hands on one.</summary>
+        public float TurnedReach { get; set; } = 1.3f;
+
+        /// <summary>Converts move with purpose, like hunters. They are on borrowed time.</summary>
+        public float TurnedSpeed { get; set; } = 3.4f;
+
+        public float TurnedAttackInterval { get; set; } = 0.8f;
+
+        /// <summary>
+        /// What a convert's swing takes off another chip. Deliberately below a turret's output:
+        /// the convert's value is that it fights INSIDE the crowd, pulling bodies off their errand,
+        /// not that it out-damages an emplacement the player paid for.
+        /// </summary>
+        public float TurnedDamage { get; set; } = 9f;
+
         /// <summary>
         /// A gun ignores a body already due to fall within this long. Replaces "ignore anything
         /// infected", which after the decrypt rewrite would mean ignoring almost everyone.

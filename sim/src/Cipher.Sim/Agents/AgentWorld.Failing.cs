@@ -181,6 +181,12 @@ namespace Cipher.Sim.Agents
             AliveCount--;
             _hashDirty = true;
 
+            // A CONVERT BURNING OUT IS NOT A KILL AND MUST NOT BE PAID FOR. Without this the
+            // turncoat drone quietly prints money: convert a machine, wait eighteen seconds,
+            // collect a bounty on your own machine expiring, repeat. It also lies to the HUD --
+            // the player did not kill that one, they lost it. ADR-010.
+            if (_turned[id]) { _turned[id] = false; TurnedCount--; return; }
+
             TotalBroken++;
             TotalKills++;
             NoteBroken((Archetype)_archetype[id]);

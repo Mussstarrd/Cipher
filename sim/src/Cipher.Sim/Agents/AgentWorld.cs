@@ -63,6 +63,7 @@ namespace Cipher.Sim.Agents
             _aggro = new float[capacity];
             _pace = new float[capacity];
             _armed = new bool[capacity];
+            _turned = new bool[capacity];
             _target = new int[capacity];
         }
 
@@ -94,6 +95,7 @@ namespace Cipher.Sim.Agents
                 Array.Resize(ref _aggro, newSize);
                 Array.Resize(ref _pace, newSize);
                 Array.Resize(ref _armed, newSize);
+                Array.Resize(ref _turned, newSize);
                 Array.Resize(ref _target, newSize);
             }
 
@@ -111,6 +113,7 @@ namespace Cipher.Sim.Agents
             _aggro[id] = 0f;
             _pace[id] = 1f;
             _armed[id] = false;
+            _turned[id] = false;
             _target[id] = -1;
             AliveCount++;
             _hashDirty = true;
@@ -135,7 +138,10 @@ namespace Cipher.Sim.Agents
 
                 var pos = new Vec2(_posX[i], _posY[i]);
 
-                if (Vec2.DistanceSquared(pos, goalCenter) <= goalRadiusSq)
+                // A convert never reaches the vault. It fights where it stands and burns out;
+                // letting one "arrive" would have the player's own machine damage the thing it
+                // was bought to protect.
+                if (!_turned[i] && Vec2.DistanceSquared(pos, goalCenter) <= goalRadiusSq)
                 {
                     // Arrived: leaves the sim. The match layer turns ReachedCount deltas into vault damage.
                     // A body can arrive with its chip already broken, and this is the second of the
@@ -148,6 +154,12 @@ namespace Cipher.Sim.Agents
                     ReachedCount++;
                     continue;
                 }
+
+                // ADR-010: a convert is on the player's side now and runs nothing below this --
+                // not the errand, not the opportunist, not the pace. It stopped being part of the
+                // crowd the moment the drone took it, and this branch has to come BEFORE the
+                // archetype switch or a turned Spitter would go on spitting at the player's guns.
+                if (_turned[i]) { StepTurned(i, pos, dt, gates); continue; }
 
                 switch ((Archetype)_archetype[i])
                 {
@@ -245,7 +257,7 @@ namespace Cipher.Sim.Agents
             foreach (int hashId in _queryScratch)
             {
                 int id = _hashToAgent[hashId];
-                if (!_alive[id]) continue;
+                if (!IsHostile(id)) continue;
                 if (Infect(id, damage)) kills++;
             }
 
@@ -279,7 +291,7 @@ namespace Cipher.Sim.Agents
             foreach (int hashId in _queryScratch)
             {
                 int id = _hashToAgent[hashId];
-                if (!_alive[id]) continue;
+                if (!IsHostile(id)) continue;
                 if (Vec2.DistanceSquared(center, new Vec2(_posX[id], _posY[id])) <= rSq)
                     total += ThreatScale(id);
             }
@@ -297,7 +309,7 @@ namespace Cipher.Sim.Agents
             foreach (int hashId in _queryScratch)
             {
                 int id = _hashToAgent[hashId];
-                if (!_alive[id]) continue;
+                if (!IsHostile(id)) continue;
                 if (Vec2.DistanceSquared(center, new Vec2(_posX[id], _posY[id])) <= rSq) n++;
             }
             return n;
@@ -330,7 +342,7 @@ namespace Cipher.Sim.Agents
             foreach (int hashId in _queryScratch)
             {
                 int id = _hashToAgent[hashId];
-                if (!_alive[id] || IsSpokenFor(id)) continue;
+                if (!IsShootable(id)) continue;
                 Vec2 rel = new Vec2(_posX[id], _posY[id]) - origin;
                 float t = Vec2.Dot(rel, dir);
                 if (t < 0f || t > maxDistance) continue;
@@ -359,7 +371,7 @@ namespace Cipher.Sim.Agents
             foreach (int hashId in _queryScratch)
             {
                 int id = _hashToAgent[hashId];
-                if (!_alive[id]) continue;
+                if (!IsHostile(id)) continue;
                 var (cx, cy) = _map.WorldToCell(new Vec2(_posX[id], _posY[id]));
                 float cost = _flowField.IntegrationCostAt(cx, cy);
                 if (cost < bestCost || (cost == bestCost && id < best))
@@ -390,7 +402,7 @@ namespace Cipher.Sim.Agents
             foreach (int hashId in _queryScratch)
             {
                 int id = _hashToAgent[hashId];
-                if (!_alive[id] || IsSpokenFor(id)) continue;
+                if (!IsShootable(id)) continue;
                 float distSq = Vec2.DistanceSquared(center, new Vec2(_posX[id], _posY[id]));
                 if (distSq < bestDistSq || (distSq == bestDistSq && id < best))
                 {
@@ -436,7 +448,7 @@ namespace Cipher.Sim.Agents
                 hash = Mix(hash, BitConverter.SingleToInt32Bits(_posX[i]));
                 hash = Mix(hash, BitConverter.SingleToInt32Bits(_posY[i]));
                 hash = Mix(hash, BitConverter.SingleToInt32Bits(_health[i]));
-                hash = Mix(hash, _archetype[i] | (_state[i] << 8) | (_intent[i] << 16));
+                hash = Mix(hash, _archetype[i] | (_state[i] << 8) | (_intent[i] << 16) | (_turned[i] ? 1 << 24 : 0));
                 hash = Mix(hash, BitConverter.SingleToInt32Bits(_timer[i]));
                 hash = Mix(hash, _target[i]);
             }

@@ -436,6 +436,15 @@ namespace Cipher.Game
             _field.Compute(GoalX, GoalY);
             EnsureGatesStillReachable();
             _world = new AgentWorld(_map, _field, new SimConfig(), initialCapacity: 4096);
+            // ADR-010: ONE rule about which bodies are machines, pushed into the simulation so the
+            // drone's conversion check and the crowd's choice of model are the same answer. The
+            // casting seed follows the position, so a given road sends the same mix every time it
+            // is loaded and a different mix at the next position.
+            // Narrowed deliberately: the authored seeds are dates, so the low 32 bits carry all
+            // the variation there is, and the hash avalanches them anyway.
+            _castingSeed = unchecked((int)_scenario.DirectorSeed);
+            _world.MachineSeed = _castingSeed;
+            _world.MachineShare = CrowdCasting.HumanoidShare;
             _turrets = new TurretSystem();
             // The game opts in to the untimed opening: dig in for as long as you like, and the
             // first wave comes when you press start.
@@ -1277,7 +1286,10 @@ namespace Cipher.Game
                 _world.SetHero(_hero.Position, !_hero.IsDown);
 
                 int breached = _world.ReachedCount - _lastReached;
-                int toSpawn = _match.Tick(TickDt, _world.AliveCount, breached);
+                // HOSTILE, not alive. A convert (ADR-010) is a living agent on the player's side,
+                // and a wave that counted it would stay open until the player's own machine burned
+                // out -- clear bonus late, pack-up window late, nothing on screen explaining why.
+                int toSpawn = _match.Tick(TickDt, _world.HostileCount, breached);
                 _lastReached = _world.ReachedCount;
 
                 // Actors first: the objectives read their state, so a generator wrecked this tick
