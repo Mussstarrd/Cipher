@@ -226,6 +226,15 @@ namespace Cipher.Game
 
         // ---- audio ----
         private SoundBank _sfx = null!;
+
+        /// <summary>
+        /// Sky, light, fog, rain and the ambient beds, as ONE object.
+        ///
+        /// They are four systems that have to agree, and the failure worth designing against is
+        /// three of them changing at a position boundary and the fourth not -- rain falling out of
+        /// a clear dusk, or a woodland dawn playing under a night sky.
+        /// </summary>
+        private Atmosphere _atmos = null!;
         private MatchPhase _lastPhase = MatchPhase.Setup;
         private bool _wasDown;
         private bool _strikeWasInbound;
@@ -282,6 +291,7 @@ namespace Cipher.Game
             NewMatch();
 
             ScreenshotHarness.InstallIfRequested(gameObject);
+            ClipHarness.InstallIfRequested(gameObject);
         }
 
         // ------------------------------------------------------------------ setup
@@ -366,6 +376,10 @@ namespace Cipher.Game
             _scenario = LoadScenario(next);
             ApplyScenarioShape(_scenario);
             ResizeForMap();
+            // A new position gets its own remembered sky. A CROSSFADE, not a cut -- he drove here,
+            // it is a continuous moment, and a hard change of weather at a loading boundary reads
+            // as a bug rather than as time passing.
+            _atmos.Reseed(_scenario.DirectorSeed, _camera);
             NewMatch();
         }
 
@@ -574,7 +588,11 @@ namespace Cipher.Game
             camGo.AddComponent<AudioListener>();
             _sfx = new SoundBank(transform) { MasterVolume = 0.8f };
 
-            ApplyOvercastWinter();
+            // The fixed overcast dusk became one of five conditions, picked from the position's
+            // own seed (owner: "weather effects randomized into map load"). The Gate's seed still
+            // rolls DuskClear, constant for constant, so the shipped look is unchanged by default.
+            _atmos = Atmosphere.Create(transform, _camera, _scenario.DirectorSeed);
+            _sun = _atmos.Sun;
             ApplyColourGrade();
 
             var ground = GameObject.CreatePrimitive(PrimitiveType.Plane);
@@ -736,79 +754,14 @@ namespace Cipher.Game
         private static readonly Color GroundColour = new Color(0.30f, 0.26f, 0.20f);
         private static readonly Color HazeGrey = new Color(0.58f, 0.61f, 0.65f);
 
-        /// <summary>
-        /// Late afternoon going to dusk, in a Virginia winter. Owner, 2026-09-12: "I think if
-        /// possible maybe we should make it a bit later in the day like dusk."
-        ///
-        /// This is the single biggest lever on how the game looks -- more than any model -- and it
-        /// serves the fiction as well as the picture. ADR-005's scan is coming; a low sun and a long
-        /// shadow say "not much daylight left" without a line of dialogue. ADR-003 asks for half the
-        /// game in daylight, and this is still daylight: it is late, not night.
-        ///
-        /// Three things move together and they have to stay together, or it reads as a colour
-        /// filter rather than a time of day:
-        ///  - the SUN drops to a raking angle and turns warm, so every vertical surface catches an
-        ///    amber edge and shadows get long and blue;
-        ///  - the AMBIENT goes cold, because the fill light at dusk is the sky, not the sun. Warm
-        ///    key against cold fill is what actually makes an evening read;
-        ///  - the SKY gradient steepens and warms at the horizon only.
-        ///
-        /// The haze also thickens, which hides the edge of the play area more cheaply than geometry.
-        /// </summary>
-        private void ApplyOvercastWinter()
-        {
-            var lightGo = new GameObject("Sun");
-            var light = lightGo.AddComponent<Light>();
-            light.type = LightType.Directional;
-            // Very low and raking from the west: long shadows straight across the road corridor.
-            light.transform.rotation = Quaternion.Euler(13f, -58f, 0f);
-            light.color = new Color(1f, 0.80f, 0.57f);
-            light.intensity = 1.30f;
-            light.shadows = LightShadows.Soft;
-            light.shadowStrength = 0.80f;
-            _sun = light;
+        // ApplyOvercastWinter and DuskHaze lived here and have been DELETED, not disabled.
+        //
+        // The fixed overcast dusk is now one of five seeded conditions in Weather.cs, and its
+        // numbers survived constant for constant as Weather.Profile(Sky.DuskClear) -- WeatherTests
+        // asserts them, so if that test ever fails the game default look has changed. Two places
+        // that can set the sky is how the sky ends up half set: the position rolls rain and the
+        // light stays a clear evening.
 
-            // Cold fill under a warm key. The ground bounce stays warm because the leaf litter is
-            // catching what is left of the sun.
-            RenderSettings.ambientMode = AmbientMode.Trilight;
-            RenderSettings.ambientSkyColor = new Color(0.30f, 0.36f, 0.50f);
-            RenderSettings.ambientEquatorColor = new Color(0.38f, 0.36f, 0.40f);
-            RenderSettings.ambientGroundColor = new Color(0.24f, 0.18f, 0.14f);
-
-            // Haze is what sells distance and hides the edge of the play area. Warmer and thicker
-            // than the overcast noon it replaces, because low sun means a lot of air to look through.
-            RenderSettings.fog = true;
-            RenderSettings.fogMode = FogMode.ExponentialSquared;
-            RenderSettings.fogColor = DuskHaze;
-            RenderSettings.fogDensity = 0.0135f;
-
-            // A banded procedural sky rather than a flat clear colour. A smooth or empty sky over
-            // cel-shaded ground is the fastest way to make stylised art look unfinished, because the
-            // eye reads the mismatch before it reads anything else.
-            var skyShader = Shader.Find("Exodus/ComicSky");
-            if (skyShader != null)
-            {
-                var sky = new Material(skyShader);
-                sky.SetColor("_SkyTop", new Color(0.17f, 0.21f, 0.34f));
-                sky.SetColor("_SkyHorizon", new Color(0.86f, 0.61f, 0.40f));
-                sky.SetColor("_CloudLight", new Color(0.93f, 0.72f, 0.55f));
-                sky.SetColor("_CloudDark", new Color(0.40f, 0.36f, 0.46f));
-                sky.SetColor("_GroundHaze", DuskHaze);
-                RenderSettings.skybox = sky;
-                RenderSettings.ambientMode = AmbientMode.Trilight;
-
-                if (_camera != null) _camera.clearFlags = CameraClearFlags.Skybox;
-            }
-            else if (_camera != null)
-            {
-                Debug.LogWarning("[Sky] Exodus/ComicSky not found; falling back to a flat clear");
-                _camera.clearFlags = CameraClearFlags.SolidColor;
-                _camera.backgroundColor = DuskHaze;
-            }
-        }
-
-        /// <summary>The colour distance dissolves into at dusk. Warm, because the sun is on the deck.</summary>
-        private static readonly Color DuskHaze = new Color(0.62f, 0.52f, 0.47f);
 
         private Light? _sun;
 
@@ -1265,6 +1218,12 @@ namespace Cipher.Game
             }
             _sfx.SetHordeIntensity(_hordeIntensity);
             _sfx.Update(dt);
+            // UNSCALED, deliberately. Adrenaline focus slows the world; slowing the rain and the
+            // wind with it turns a tactical pause into an underwater one. The hero's POSITION goes
+            // in rather than a speed, so Atmosphere derives the footstep cadence itself and can
+            // discard the teleport when a position changes.
+            _atmos.Update(Time.unscaledDeltaTime, _camera, _hordeIntensity,
+                          ToWorld(_hero.Position, 0f));
         }
 
         private void FixedTick()
@@ -1818,6 +1777,52 @@ namespace Cipher.Game
         /// player having built something -- so a capture run cannot be relied on to contain either,
         /// and "I did not see one" and "it is broken" look identical.
         /// </summary>
+        /// <summary>
+        /// Puts a crowd UP THE LANE from the hero, walking into frame. Harness only.
+        ///
+        /// <see cref="SpawnOneOfEachForCapture"/> spreads its agents sideways, across Y, which is
+        /// right for a lineup that has to prove each class is legible and useless for footage: they
+        /// stand beside the camera rather than coming at it. This spawns down -X instead -- the axis
+        /// the rig looks along and the axis the flow field pulls on -- in ranks, so the crowd is
+        /// already moving and already spread when the first frame is grabbed.
+        ///
+        /// The wave table is not touched. Filming cannot wait the twenty-odd seconds a body needs to
+        /// cross a 48-cell map from the spawn edge, and a clip of an empty street is what the first
+        /// take actually produced.
+        /// </summary>
+        public void SpawnMobForCapture(int ranks = 7)
+        {
+            var at = _hero.Position;
+            int spawned = 0;
+
+            for (int r = 0; r < ranks; r++)
+            {
+                // Ranks march away from the camera; the nearest is far enough out that nobody pops
+                // into being inside the frame's first second.
+                float x = at.X - 14f - r * 4.5f;
+
+                for (int i = 0; i < 5; i++)
+                {
+                    float y = at.Y - 7f + i * 3.5f;
+
+                    // ADR-010 puts roughly a third of a wave on machines, and a trailer that shows
+                    // only people misrepresents what the fight looks like. Deterministic by
+                    // position rather than random: the same take twice is the same take.
+                    var kind = ((r * 5 + i) % 3) switch
+                    {
+                        0 when r % 2 == 0 => Archetype.Sapper,
+                        1 when r % 3 == 0 => Archetype.Spitter,
+                        _ => Archetype.Runner,
+                    };
+
+                    _world.SpawnArchetype(new Vec2(x, y), kind);
+                    spawned++;
+                }
+            }
+
+            Debug.Log($"[Capture] spawned a mob of {spawned} up the lane");
+        }
+
         public void SpawnOneOfEachForCapture()
         {
             var at = _hero.Position;
@@ -3031,12 +3036,35 @@ namespace Cipher.Game
             _hero.TryAirstrike();
         }
 
+        /// <summary>
+        /// Stands the emplacements up and nothing else. Harness only.
+        ///
+        /// <see cref="ShowEmplacementsForCapture"/> also calls an airstrike, which is right for a
+        /// still that wants to show both at once and wrong for a clip whose whole job is to show the
+        /// area tower working on its own. Family 1 is the Brush Hog -- FireMode.Area, 2.4m reach --
+        /// and it is placed at the lane corner where the crowd bunches, because a 2.4m radius tower
+        /// sited anywhere else is a tower that never fires.
+        /// </summary>
+        public void PlaceTurretsForCapture()
+        {
+            int laneY = GoalY;
+            int near = Mathf.Clamp(GridW - 14, 1, GridW - 2);
+            _turrets.Place(_map, near, Mathf.Clamp(laneY - 5, 1, GridH - 2), 0);
+            _turrets.Place(_map, near - 3, Mathf.Clamp(laneY, 1, GridH - 2), 1);
+            _turrets.Place(_map, near - 3, Mathf.Clamp(laneY + 4, 1, GridH - 2), 1);
+            _turrets.Place(_map, near - 7, Mathf.Clamp(laneY - 6, 1, GridH - 2), 0);
+            SyncTurretObjects();
+        }
+
         /// <summary>Calls a strike down the lane and nothing else, so the bombs can be photographed
         /// at the moment they land rather than four seconds after. Harness only.</summary>
         public void CallStrikeForCapture()
         {
             _hero.AimStrike(_hero.Position + new Vec2(-14f, 0f));
-            _hero.TryAirstrike();
+            bool fired = _hero.TryAirstrike();
+            Debug.Log($"[Capture] strike requested: fired={fired} ready={_hero.AirstrikeReady} " +
+                      $"cooldown={_hero.AirstrikeCooldown:F2} inbound={_hero.StrikeInbound} down={_hero.IsDown} " +
+                      $"phase={_match.Phase}");
         }
 
         /// <summary>
@@ -4038,7 +4066,15 @@ namespace Cipher.Game
             if (toggleMap) _showMinimap = !_showMinimap;
 
             bool mute = (gamepad != null && gamepad.buttonNorth.wasPressedThisFrame) || (keyboard != null && keyboard.mKey.wasPressedThisFrame);
-            if (mute) { _sfx.Muted = !_sfx.Muted; if (!_sfx.Muted) _sfx.Play(Sfx.MenuConfirm, 0.7f, 0f); }
+            // M mutes EVERYTHING, not just the synthesised effects. The ambient beds are much
+            // louder in practice than any single effect, so a mute that left rain and wind running
+            // would read as broken rather than as a setting.
+            if (mute)
+            {
+                _sfx.Muted = !_sfx.Muted;
+                _atmos.SetMuted(_sfx.Muted);
+                if (!_sfx.Muted) _sfx.Play(Sfx.MenuConfirm, 0.7f, 0f);
+            }
 
             bool up = (gamepad != null && (gamepad.dpad.up.wasPressedThisFrame || gamepad.leftStick.up.wasPressedThisFrame))
                    || (keyboard != null && (keyboard.upArrowKey.wasPressedThisFrame || keyboard.wKey.wasPressedThisFrame));
@@ -4104,8 +4140,29 @@ namespace Cipher.Game
         private void OnGUI()
         {
             if (_hudHidden) return;
+
+            // A clip wants the game, not the instrumentation. The fps readout, the control list and
+            // the minimap are all correct and all fatal to footage -- they say "tech demo" in the
+            // first frame, which is the exact thing the engine readout was already moved down the
+            // screen to stop saying.
+            //
+            // The world-space bars STAY. They are diegetic enough to read as part of the game rather
+            // than as a debug overlay, and they are the only way a viewer sees ADR-008 at all: that
+            // a body keeps coming after it is hit and drains out over seconds.
+            if (_cinematic)
+            {
+                BeginScaledUi();
+                DrawWorldMarkers();
+                return;
+            }
+
             OnGuiInner();
         }
+
+        /// <summary>Strips the HUD to its world-space markers for a capture. Harness only.</summary>
+        public void EnterCinematicForCapture() => _cinematic = true;
+
+        private bool _cinematic;
 
         private void OnGuiInner()
         {
