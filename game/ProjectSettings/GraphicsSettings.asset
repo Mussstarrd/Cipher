@@ -39,6 +39,7 @@ GraphicsSettings:
   - {fileID: 4800000, guid: 7457f7fcdd1220744bb0f974f786264e, type: 3}
   - {fileID: 4800000, guid: 3b7c41d9e0a54f8db26c1f5a90d3e742, type: 3}
   - {fileID: 4800000, guid: 5c9a1f42b6e84d1eb0f27c3a9d5e4813, type: 3}
+  - {fileID: 4800000, guid: bfa036c4a4e918944a7e78f81628c677, type: 3}
   m_PreloadedShaders: []
   m_PreloadShadersBatchTimeLimit: -1
   m_SpritesDefaultMaterial: {fileID: 10754, guid: 0000000000000000f000000000000000, type: 0}
@@ -49,7 +50,7 @@ GraphicsSettings:
   m_DefaultMobileRenderingPath: 1
   m_TierSettings: []
   m_LightmapStripping: 0
-  m_FogStripping: 0
+  m_FogStripping: 1
   m_InstancingStripping: 2
   m_BrgStripping: 0
   m_LightmapKeepPlain: 1
