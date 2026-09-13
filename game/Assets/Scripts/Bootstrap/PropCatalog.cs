@@ -115,6 +115,18 @@ namespace Cipher.Game
 
                 // Decoration proper: a lamp post does not stop anybody and should not be allowed to
                 // pretend it does. An empty footprint is a supported answer, not a missing one.
+                // A LANDMARK, AND DELIBERATELY NOT AN OBSTRUCTION (design pillar P6).
+                //
+                // Eight metres tall against houses of six to eight, so it clears the roofline and
+                // can be seen from most of the position -- which is the entire job. A landmark only
+                // works if it contrasts with what is immediately around it, and a tower over a
+                // street of bungalows does.
+                //
+                // Its footprint is None on purpose. The Gate's geometry is pinned by tests that
+                // count the holes in the barricade column, and a landmark has no business perturbing
+                // the ground a position is balanced on. It is legs on a pad; you can walk under it.
+                ["WaterTower"] = None,
+
                 ["StreetLamp"] = None,
                 ["PicnicTable"] = None,
                 ["Mailbox"] = None,

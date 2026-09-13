@@ -50,6 +50,11 @@ namespace Cipher.Game.Editor
             // biggest remaining box. Shop_02 measures 15.5 x 10.9m against a 16x12 footprint --
             // the closest native fit in the pack, and no scaling needed.
             ["Clubhouse"] = new[] { TownPrefabs + "/Buildings/SM_Bld_Shop_02.prefab" },
+
+            // P6's named landmark, and it is a Farm asset in a residential map on purpose: a lake
+            // community's water tower is exactly the sort of municipal thing that stands over the
+            // bungalows. 2.7 x 2.8m and 8.4m tall -- it clears every roof on the position.
+            ["WaterTower"] = new[] { "Assets/Synty/PolygonFarm/Prefabs/Buildings/SM_Bld_WaterTower_01.prefab" },
         };
 
         [MenuItem("Cipher/Art/Build Synty Props")]

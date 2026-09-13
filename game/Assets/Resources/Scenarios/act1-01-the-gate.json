@@ -4,7 +4,7 @@
   "displayName": "The Gate",
   "tier": 1,
   "next": "act1-02-the-service-road",
-  "brief": "Hold the main gate until the county road is clear. The clubhouse and the pool fence do half your work for you: there is one way through this end of the community that is shorter than walking round, and it runs straight past your truck. Close it, and make them take the long way.",
+  "brief": "Your truck is at the crossroads. It is the one place on this end of the community you can reach every approach from, and the one place every approach can reach you. The county road comes in from the west and the back road from the east; the pool fence and the clubhouse lawn let them through the sides. You have one gun and there are four ways in. Decide which one you are standing in, and build something for the other three.",
   "map": {
     "width": 128,
     "height": 96,
@@ -435,6 +435,16 @@
       "x": 94.0,
       "y": 43.5,
       "yaw": 180
+    },
+    {
+      "kind": "WaterTower",
+      "x": 82.0,
+      "y": 15.0
+    },
+    {
+      "kind": "WaterTower",
+      "x": 84.0,
+      "y": 82.0
     }
   ],
   "heroSpawn": {

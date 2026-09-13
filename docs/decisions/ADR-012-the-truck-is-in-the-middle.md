@@ -75,6 +75,19 @@ biased along the direction of retreat, and different from The Gate's dead centre
 identical crossroads is the failure mode this ADR warns about two paragraphs down. Flank shares set
 to 0.30 and 0.36, scaled to their approach counts.
 
+**The written brief was wrong and is rewritten.** The Gate's brief told the player "there is one
+way through this end of the community that is shorter than walking round... close it, and make them
+take the long way." That was true of the corridor and is false of the crossroads: closing one lane
+now sends the wave to the other three rather than the long way round. It is the first thing a player
+reads, so a stale brief is not a cosmetic problem — it teaches the wrong game. Rewritten to teach the
+shape instead: one gun, four ways in, build for the three you are not standing in.
+
+**The chase camera now has buildings on every side.** Parked at the back wall, the truck had open
+ground behind it and the camera could swing freely. At the crossroads it is surrounded, and a low
+pitch with the camera swung toward a nearby house puts the near wall through the lens — reproduced
+at yaw 151, pitch 10. Camera-versus-building collision was always latent and this promoted it to a
+real problem. NOT fixed here; recorded so it is not rediscovered as a mystery.
+
 ## What this does NOT mean
 
 **Not every position is a rosette.** Twelve identical crossroads would be as monotonous as twelve

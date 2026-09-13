@@ -143,6 +143,7 @@ namespace Cipher.Game
                 case "BrushPile": BrushPile(pivot, seed); break;
                 case "PalletStack": PalletStack(pivot, seed); break;
                 case "Dumpster": Dumpster(pivot); break;
+                case "WaterTower": WaterTower(pivot); break;
                 case "StreetLamp": StreetLamp(pivot); break;
                 case "PicnicTable": PicnicTable(pivot); break;
                 case "Mailbox": Mailbox(pivot); break;
@@ -218,6 +219,33 @@ namespace Cipher.Game
         /// </summary>
         private static string HouseAoKey(int seed) =>
             $"House{(((seed >> 6) & 3) != 0 ? 1 : 0)}{(seed >> 8) & 1}";
+
+        /// <summary>
+        /// The fallback water tower: a tank on four legs.
+        ///
+        /// Only drawn when the bought model is absent, which is any clean checkout -- art/ and the
+        /// generated prop prefabs are both gitignored. It exists so the LANDMARK still reads at that
+        /// point, because a position designed around a tower you can see from the far gate plays
+        /// differently from one where it is missing.
+        /// </summary>
+        private void WaterTower(Transform parent)
+        {
+            var paint = new Color(0.62f, 0.64f, 0.63f);
+            var steel = new Color(0.34f, 0.35f, 0.37f);
+
+            Box(parent, "Tank", new Vector3(0f, 6.6f, 0f), new Vector3(2.6f, 2.4f, 2.6f), paint);
+            Box(parent, "Cap", new Vector3(0f, 8.0f, 0f), new Vector3(1.7f, 0.5f, 1.7f), paint);
+
+            for (int i = 0; i < 4; i++)
+            {
+                float sx = (i & 1) == 0 ? -1f : 1f;
+                float sz = (i & 2) == 0 ? -1f : 1f;
+                Box(parent, $"Leg{i}", new Vector3(sx * 0.95f, 2.7f, sz * 0.95f),
+                    new Vector3(0.22f, 5.4f, 0.22f), steel);
+            }
+
+            Box(parent, "Brace", new Vector3(0f, 3.1f, 0f), new Vector3(2.2f, 0.16f, 2.2f), steel);
+        }
 
         /// <summary>A brick gate pillar with a cap. The thing a community gate is actually made of.</summary>
         private void Pillar(Transform parent)
