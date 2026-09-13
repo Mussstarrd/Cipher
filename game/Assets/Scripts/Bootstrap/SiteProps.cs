@@ -203,7 +203,79 @@ namespace Cipher.Game
             var go = UnityEngine.Object.Instantiate(variants[(seed >> 3) % variants.Length], pivot);
             go.transform.localPosition = Vector3.zero;
             go.transform.localRotation = Quaternion.identity;
+            SitOnTheGround(go.transform, kind);
+            BuryTheFoundation(go.transform, kind);
             return true;
+        }
+
+        /// <summary>
+        /// Drops a bought model until its lowest rendered point is on y=0.
+        ///
+        /// Owner, 2026-09-13: "All of the structures are above the ground their Foundation is like
+        /// 3 ft above the ground which is putting the doors like 3 ft above the ground". He is
+        /// right, and the cause is that a prefab's PIVOT is wherever its author put it -- for these
+        /// packs, at the floor level of the building rather than the underside of the foundation
+        /// slab it stands on. We place every prop at localPosition zero on a pivot sitting at y=0,
+        /// which lines up the FLOOR with the ground and leaves the slab hanging below it, and the
+        /// door a slab's thickness up in the air.
+        ///
+        /// So: measure rather than assume. A per-pack constant would be wrong the moment a pack
+        /// with a different convention arrives, and every model whose pivot is already at its base
+        /// measures a zero offset and is left alone. Renderer bounds are world space and the pivot
+        /// carries no scale, so the minimum Y IS the correction.
+        /// </summary>
+        private static void SitOnTheGround(Transform model, string kind)
+        {
+            var renderers = model.GetComponentsInChildren<Renderer>(includeInactive: false);
+            float lowest = float.PositiveInfinity;
+            foreach (var r in renderers)
+            {
+                // Particles and trails have bounds that mean nothing here and can be enormous.
+                if (r is ParticleSystemRenderer or TrailRenderer or LineRenderer) continue;
+                var b = r.bounds;
+                if (b.size == Vector3.zero) continue;
+                if (b.min.y < lowest) lowest = b.min.y;
+            }
+
+            if (float.IsPositiveInfinity(lowest)) return;
+            if (Mathf.Abs(lowest) < 0.01f) return;          // already standing on it
+
+            model.position -= new Vector3(0f, lowest, 0f);
+            if (Mathf.Abs(lowest) > 0.05f)
+                Debug.Log($"[Props] {kind}: model sat {lowest:F2}m off the ground, dropped onto it");
+        }
+
+        /// <summary>
+        /// How far a building is sunk so its DOOR meets the ground.
+        ///
+        /// Owner, 2026-09-13: "their Foundation is like 3 ft above the ground which is putting the
+        /// doors like 3 ft above the ground". Measuring proved the models are not floating -- a
+        /// house sat 10cm BELOW y=0 before SitOnTheGround corrected it -- so the gap is not a
+        /// placement bug. It is the model's own plinth: these houses ship with a tall foundation
+        /// band and a front door on TOP of it, and no porch, steps or stoop to reach that door.
+        /// Seating such a model perfectly on the ground is exactly what produces a door in mid-air.
+        ///
+        /// Two ways to fix it: model a set of steps for every door, or put the plinth where a
+        /// plinth actually is -- mostly underground. The second is one number and looks right from
+        /// every angle, and a foundation you cannot see is the normal case for a house.
+        /// </summary>
+        private static float FoundationSink(string kind) => kind switch
+        {
+            "House" => 0.42f,
+            "Clubhouse" => 0.42f,
+            "CommunityCentre" => 0.42f,
+            "PoolHouse" => 0.35f,
+            "Guardhouse" => 0.30f,
+            // Everything else stands on the ground rather than on footings: a water tower's legs,
+            // a lamp post's base, a dumpster. Sinking those would just hide them.
+            _ => 0f,
+        };
+
+        private static void BuryTheFoundation(Transform model, string kind)
+        {
+            float sink = FoundationSink(kind);
+            if (sink <= 0f) return;
+            model.position -= new Vector3(0f, sink, 0f);
         }
 
         /// <summary>Loaded once per kind per process: Resources.Load is not free at 57 props.</summary>

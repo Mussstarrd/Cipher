@@ -874,18 +874,22 @@ namespace Cipher.Game
                         continue;
                     }
 
-                    if (kind == WallKind.Barricade)
-                    {
-                        barricades.Add(Matrix4x4.TRS(centre + new Vector3(0f, h * 0.5f, 0f),
-                                                     Quaternion.identity, new Vector3(1f, h, 1f)));
-                        continue;
-                    }
-
-                    // Which way the run travels, so logs lie along it and posts sit on its line.
+                    // Which way the run travels, so limbs lean along it and posts sit on its line.
                     bool alongY = IsWallCell(x, y - 1) || IsWallCell(x, y + 1);
                     var run = alongY ? Quaternion.Euler(0f, 90f, 0f) : Quaternion.identity;
 
+                    // THE PLAYER'S OWN BARRICADES GET THE BRUSH TREATMENT TOO (owner, 2026-09-13:
+                    // "the barricades that are built in the game need to not just look like
+                    // Minecraft blocks they need to look like stacks of twigs or fences"). They
+                    // were the one wall kind still drawn as a unit cube, which is doubly wrong
+                    // because they are the wall the player looks at most -- they chose where it
+                    // goes and they watch it get chewed. The improvised baker already existed for
+                    // map walls, so this is the renderer the owner asked for the first time.
+                    //
+                    // Offset by a cell so a player barricade never hashes identical to a map wall
+                    // standing in the same place: same vocabulary, different pile.
                     if (kind == WallKind.Rock) BakeFence(centre, run, alongY, x, y, posts, panels, rails);
+                    else if (kind == WallKind.Barricade) ImprovisedBarricade.Bake(centre, run, x + 977, y + 311, logs);
                     else ImprovisedBarricade.Bake(centre, run, x, y, logs);
                 }
             }
