@@ -4,21 +4,24 @@
 
 | rank | strategy | total ratio | saved |
 |---|---|---|---|
-| 1 | gen1.media-auto | 2.740x | 63.50% |
-| 2 | gen1.media-pngf | 2.521x | 60.34% |
-| 3 | gen1.text-token | 2.468x | 59.48% |
-| 4 | brotli-11 | 2.348x | 57.40% |
-| 5 | gen1.media-lpc | 2.281x | 56.16% |
-| 6 | bz2-9 | 2.129x | 53.04% |
-| 7 | gen1.text-lzmax | 2.127x | 52.99% |
-| 8 | lzma-6 | 2.124x | 52.91% |
-| 9 | lzma-9e | 2.122x | 52.87% |
-| 10 | gen1.struct-csv | 2.069x | 51.66% |
-| 11 | gen1.struct-logs | 2.063x | 51.53% |
-| 12 | zstd-22 | 2.021x | 50.53% |
-| 13 | zstd-19 | 2.020x | 50.50% |
-| 14 | gzip-9 | 1.925x | 48.04% |
-| 15 | zstd-3 | 1.881x | 46.83% |
+| 1 | gen2.x-auto | 3.016x | 66.85% |
+| 2 | gen2.auto | 3.014x | 66.82% |
+| 3 | gen1.media-auto | 2.740x | 63.50% |
+| 4 | gen1.media-pngf | 2.521x | 60.34% |
+| 5 | gen1.text-token | 2.468x | 59.48% |
+| 6 | brotli-11 | 2.348x | 57.40% |
+| 7 | gen1.media-lpc | 2.281x | 56.16% |
+| 8 | bz2-9 | 2.129x | 53.04% |
+| 9 | gen1.text-lzmax | 2.127x | 52.99% |
+| 10 | lzma-6 | 2.124x | 52.91% |
+| 11 | lzma-9e | 2.122x | 52.87% |
+| 12 | gen2.x-struct | 2.115x | 52.72% |
+| 13 | gen1.struct-csv | 2.069x | 51.66% |
+| 14 | gen1.struct-logs | 2.063x | 51.53% |
+| 15 | zstd-22 | 2.021x | 50.53% |
+| 16 | zstd-19 | 2.020x | 50.50% |
+| 17 | gzip-9 | 1.925x | 48.04% |
+| 18 | zstd-3 | 1.881x | 46.83% |
 
 ## Per file
 
@@ -28,6 +31,8 @@
 |---|---|---|---|---|---|
 | gen1.media-auto | 1.533x | 34.76% | 0.1 | 1.2 | gen1-media |
 | gen1.media-lpc | 1.533x | 34.76% | 0.4 | 1.2 | gen1-media |
+| gen2.auto | 1.533x | 34.76% | 0.1 | 1.2 | gen2-auto |
+| gen2.x-auto | 1.533x | 34.76% | 0.1 | 1.3 | gen2-crossover |
 | gen1.media-pngf | 1.188x | 15.80% | 0.1 | 17.0 | gen1-media |
 | brotli-11 | 1.184x | 15.51% | 0.2 | 82.6 | gen0 |
 | gen1.text-token | 1.184x | 15.51% | 0.2 | 75.3 | gen1-text |
@@ -38,6 +43,7 @@
 | gzip-9 | 1.009x | 0.89% | 29.1 | 209.2 | gen0 |
 | zstd-19 | 1.009x | 0.85% | 9.7 | 1158.8 | gen0 |
 | zstd-22 | 1.009x | 0.85% | 10.7 | 1177.3 | gen0 |
+| gen2.x-struct | 1.009x | 0.85% | 8.7 | 1301.9 | gen2-crossover |
 | gen1.struct-csv | 1.009x | 0.85% | 7.6 | 567.3 | gen1-structured |
 | gen1.struct-logs | 1.009x | 0.85% | 9.9 | 733.1 | gen1-structured |
 | zstd-3 | 1.000x | -0.00% | 948.2 | 5011.0 | gen0 |
@@ -47,6 +53,8 @@
 | strategy | ratio | saved | comp MB/s | decomp MB/s | tag |
 |---|---|---|---|---|---|
 | gen1.text-token | 408.324x | 99.76% | 0.3 | 42.9 | gen1-text |
+| gen2.auto | 407.900x | 99.75% | 0.1 | 43.2 | gen2-auto |
+| gen2.x-auto | 407.900x | 99.75% | 0.1 | 43.3 | gen2-crossover |
 | bz2-9 | 182.298x | 99.45% | 7.7 | 94.8 | gen0 |
 | gen1.text-lzmax | 156.847x | 99.36% | 1.0 | 602.3 | gen1-text |
 | lzma-9e | 151.237x | 99.34% | 0.8 | 657.9 | gen0 |
@@ -57,6 +65,7 @@
 | gen1.media-auto | 102.293x | 99.02% | 0.2 | 1820.7 | gen1-media |
 | gen1.media-lpc | 102.293x | 99.02% | 0.2 | 2743.2 | gen1-media |
 | gen1.media-pngf | 102.293x | 99.02% | 0.4 | 2797.8 | gen1-media |
+| gen2.x-struct | 102.293x | 99.02% | 1.6 | 7199.4 | gen2-crossover |
 | gen1.struct-csv | 102.214x | 99.02% | 1.6 | 1541.5 | gen1-structured |
 | gen1.struct-logs | 102.214x | 99.02% | 1.5 | 3978.3 | gen1-structured |
 | zstd-3 | 101.032x | 99.01% | 1430.4 | 4395.8 | gen0 |
@@ -68,6 +77,8 @@
 |---|---|---|---|---|---|
 | gen1.media-auto | 1.851x | 45.99% | 0.4 | 3.5 | gen1-media |
 | gen1.media-pngf | 1.851x | 45.99% | 0.4 | 3.5 | gen1-media |
+| gen2.auto | 1.851x | 45.99% | 0.1 | 3.6 | gen2-auto |
+| gen2.x-auto | 1.851x | 45.99% | 0.1 | 3.6 | gen2-crossover |
 | brotli-11 | 1.372x | 27.14% | 0.1 | 90.4 | gen0 |
 | gen1.text-token | 1.372x | 27.14% | 0.1 | 83.9 | gen1-text |
 | lzma-6 | 1.154x | 13.37% | 3.9 | 15.0 | gen0 |
@@ -76,6 +87,7 @@
 | zstd-19 | 1.020x | 1.93% | 5.2 | 569.8 | gen0 |
 | zstd-22 | 1.020x | 1.93% | 7.4 | 773.9 | gen0 |
 | gen1.media-lpc | 1.020x | 1.93% | 1.7 | 604.1 | gen1-media |
+| gen2.x-struct | 1.020x | 1.93% | 8.5 | 797.6 | gen2-crossover |
 | gen1.struct-csv | 1.020x | 1.93% | 7.2 | 525.4 | gen1-structured |
 | gen1.struct-logs | 1.020x | 1.93% | 7.9 | 521.2 | gen1-structured |
 | bz2-9 | 1.018x | 1.73% | 9.9 | 15.5 | gen0 |
@@ -86,7 +98,10 @@
 
 | strategy | ratio | saved | comp MB/s | decomp MB/s | tag |
 |---|---|---|---|---|---|
+| gen2.x-auto | 8.377x | 88.06% | 0.1 | 7.6 | gen2-crossover |
+| gen2.x-struct | 8.377x | 88.06% | 0.7 | 7.5 | gen2-crossover |
 | gen1.struct-logs | 8.342x | 88.01% | 3.2 | 68.9 | gen1-structured |
+| gen2.auto | 8.342x | 88.01% | 0.1 | 68.6 | gen2-auto |
 | bz2-9 | 6.651x | 84.97% | 9.1 | 36.8 | gen0 |
 | gen1.text-token | 6.651x | 84.97% | 0.1 | 31.8 | gen1-text |
 | brotli-11 | 5.676x | 82.38% | 0.5 | 383.4 | gen0 |
@@ -107,6 +122,8 @@
 | strategy | ratio | saved | comp MB/s | decomp MB/s | tag |
 |---|---|---|---|---|---|
 | gen1.text-token | 1.000x | -0.00% | 1.0 | 3822.0 | gen1-text |
+| gen2.auto | 1.000x | -0.00% | 0.3 | 3367.6 | gen2-auto |
+| gen2.x-auto | 1.000x | -0.00% | 0.3 | 3473.4 | gen2-crossover |
 | brotli-11 | 1.000x | -0.00% | 2.7 | 1620.7 | gen0 |
 | zstd-19 | 1.000x | -0.01% | 13.1 | 4754.1 | gen0 |
 | zstd-22 | 1.000x | -0.01% | 13.7 | 4170.5 | gen0 |
@@ -115,6 +132,7 @@
 | gen1.media-lpc | 1.000x | -0.01% | 2.1 | 1702.7 | gen1-media |
 | gen1.media-pngf | 1.000x | -0.01% | 0.7 | 1265.4 | gen1-media |
 | gen1.text-lzmax | 1.000x | -0.01% | 2.1 | 904.7 | gen1-text |
+| gen2.x-struct | 1.000x | -0.01% | 11.3 | 8107.9 | gen2-crossover |
 | gen1.struct-csv | 1.000x | -0.01% | 8.5 | 3427.8 | gen1-structured |
 | gen1.struct-logs | 1.000x | -0.01% | 9.7 | 2836.3 | gen1-structured |
 | lzma-6 | 1.000x | -0.03% | 4.1 | 1202.8 | gen0 |
@@ -126,7 +144,10 @@
 
 | strategy | ratio | saved | comp MB/s | decomp MB/s | tag |
 |---|---|---|---|---|---|
+| gen2.x-auto | 11.549x | 91.34% | 0.1 | 1.5 | gen2-crossover |
+| gen2.x-struct | 11.549x | 91.34% | 0.4 | 1.5 | gen2-crossover |
 | gen1.struct-csv | 11.336x | 91.18% | 1.8 | 8.7 | gen1-structured |
+| gen2.auto | 11.335x | 91.18% | 0.1 | 8.9 | gen2-auto |
 | gen1.text-token | 7.903x | 87.35% | 0.2 | 7.0 | gen1-text |
 | gen1.text-lzmax | 6.042x | 83.45% | 2.2 | 60.5 | gen1-text |
 | lzma-9e | 6.039x | 83.44% | 2.1 | 61.0 | gen0 |
@@ -147,12 +168,15 @@
 | strategy | ratio | saved | comp MB/s | decomp MB/s | tag |
 |---|---|---|---|---|---|
 | gen1.text-token | 9.047x | 88.95% | 0.1 | 0.4 | gen1-text |
+| gen2.auto | 9.046x | 88.95% | 0.1 | 0.3 | gen2-auto |
+| gen2.x-auto | 9.046x | 88.95% | 0.1 | 0.3 | gen2-crossover |
 | bz2-9 | 7.990x | 87.48% | 12.2 | 35.3 | gen0 |
 | zstd-19 | 5.789x | 82.72% | 2.5 | 874.3 | gen0 |
 | zstd-22 | 5.789x | 82.72% | 2.5 | 830.1 | gen0 |
 | gen1.media-auto | 5.788x | 82.72% | 0.2 | 825.5 | gen1-media |
 | gen1.media-lpc | 5.788x | 82.72% | 0.4 | 760.9 | gen1-media |
 | gen1.media-pngf | 5.788x | 82.72% | 0.3 | 709.1 | gen1-media |
+| gen2.x-struct | 5.788x | 82.72% | 2.4 | 797.7 | gen2-crossover |
 | gen1.struct-csv | 5.788x | 82.72% | 2.3 | 691.6 | gen1-structured |
 | gen1.struct-logs | 5.788x | 82.72% | 2.2 | 871.1 | gen1-structured |
 | gen1.text-lzmax | 5.784x | 82.71% | 2.0 | 102.0 | gen1-text |
