@@ -351,6 +351,7 @@ namespace Cipher.Game.Scenarios
         {
             d.RejectUnknownKeys("seed", "sapperFirstAt", "sapperChance", "spitterFirstAt",
                                 "spitterChance", "spitterPity", "hunterShare", "wreckerShare",
+                                "flankShare", "flankPaceScale",
                                 "maxSappersAlive", "maxSpittersAlive", "maxActiveBreaches");
 
             var cfg = new DirectorConfig();
@@ -361,6 +362,23 @@ namespace Cipher.Game.Scenarios
             cfg.SpitterPity = d.Opt("spitterPity")?.AsFloat() ?? cfg.SpitterPity;
             cfg.HunterShare = d.Opt("hunterShare")?.AsFloat() ?? cfg.HunterShare;
             cfg.WreckerShare = d.Opt("wreckerShare")?.AsFloat() ?? cfg.WreckerShare;
+
+            // HOW MUCH OF A WAVE ARRIVES SOMEWHERE OTHER THAN THE FRONT DOOR, and it is now a
+            // per-mission number because it is the single strongest layout lever we have.
+            //
+            // It defaulted to 0.08 and no scenario set it, which is why The Gate played as one
+            // corridor despite having three authored gates: eight percent is noise, not a second
+            // front, and the flow field correctly sent everyone else down the one cheapest path.
+            // A second lane only exists if the wave is ASSIGNED to it -- Kingdom Rush's Icewind
+            // Pass spawns half its wave from the far side rather than hoping the pathfinder picks
+            // it. This also happens to be the anti-camping lever: the player is one body with one
+            // gun, so two live fronts turn their own presence into a budget they must spend.
+            cfg.FlankShare = d.Opt("flankShare")?.AsFloat() ?? cfg.FlankShare;
+            cfg.FlankPaceScale = d.Opt("flankPaceScale")?.AsFloat() ?? cfg.FlankPaceScale;
+
+            if (cfg.FlankShare < 0f || cfg.FlankShare > 1f)
+                throw new ScenarioException(
+                    $"{d.Path}: flankShare is {cfg.FlankShare:0.##}; it is a share of the wave and must be 0..1");
             cfg.MaxSappersAlive = d.Opt("maxSappersAlive")?.AsInt() ?? cfg.MaxSappersAlive;
             cfg.MaxSpittersAlive = d.Opt("maxSpittersAlive")?.AsInt() ?? cfg.MaxSpittersAlive;
             cfg.MaxActiveBreaches = d.Opt("maxActiveBreaches")?.AsInt() ?? cfg.MaxActiveBreaches;

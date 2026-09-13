@@ -10,88 +10,432 @@
     "height": 96,
     "preset": "arena",
     "walls": [
-      { "rect": [28, 0, 1, 42], "kind": "Static" },
-      { "rect": [28, 54, 1, 42], "kind": "Static" },
-
-      { "rect": [38, 24, 21, 1], "kind": "Static" },
-      { "rect": [38, 25, 1, 15], "kind": "Static" },
-      { "rect": [58, 25, 1, 15], "kind": "Static" },
-      { "rect": [38, 40, 8, 1], "kind": "Static" },
-      { "rect": [50, 40, 9, 1], "kind": "Static" },
-
-      { "rect": [70, 74, 8, 1], "kind": "Static" },
-      { "rect": [82, 74, 8, 1], "kind": "Static" },
-
-      { "rect": [60, 16, 1, 14], "kind": "Wall" },
-      { "rect": [60, 66, 1, 14], "kind": "Wall" },
-      { "rect": [84, 40, 1, 16], "kind": "Wall" }
+      {
+        "rect": [
+          28,
+          0,
+          1,
+          42
+        ],
+        "kind": "Static"
+      },
+      {
+        "rect": [
+          28,
+          54,
+          1,
+          42
+        ],
+        "kind": "Static"
+      },
+      {
+        "rect": [
+          38,
+          24,
+          21,
+          1
+        ],
+        "kind": "Static"
+      },
+      {
+        "rect": [
+          38,
+          25,
+          1,
+          15
+        ],
+        "kind": "Static"
+      },
+      {
+        "rect": [
+          58,
+          25,
+          1,
+          15
+        ],
+        "kind": "Static"
+      },
+      {
+        "rect": [
+          38,
+          40,
+          8,
+          1
+        ],
+        "kind": "Static"
+      },
+      {
+        "rect": [
+          50,
+          40,
+          9,
+          1
+        ],
+        "kind": "Static"
+      },
+      {
+        "rect": [
+          70,
+          74,
+          8,
+          1
+        ],
+        "kind": "Static"
+      },
+      {
+        "rect": [
+          82,
+          74,
+          8,
+          1
+        ],
+        "kind": "Static"
+      },
+      {
+        "rect": [
+          60,
+          16,
+          1,
+          14
+        ],
+        "kind": "Wall"
+      },
+      {
+        "rect": [
+          60,
+          66,
+          1,
+          14
+        ],
+        "kind": "Wall"
+      },
+      {
+        "rect": [
+          84,
+          40,
+          1,
+          16
+        ],
+        "kind": "Wall"
+      }
     ]
   },
   "props": [
-    { "kind": "Pillar", "x": 29.0, "y": 40.8 },
-    { "kind": "Pillar", "x": 29.0, "y": 55.2 },
-    { "kind": "BoomBarrier", "x": 30.8, "y": 42.8, "yaw": 90 },
-    { "kind": "Guardhouse", "x": 33.0, "y": 41.0, "yaw": 15 },
-    { "kind": "JerseyBarrier", "x": 36.0, "y": 46.0, "yaw": 90 },
-    { "kind": "JerseyBarrier", "x": 36.0, "y": 51.0, "yaw": 90 },
-
-    { "kind": "PoolDeck", "x": 48.0, "y": 31.0 },
-    { "kind": "PoolHouse", "x": 42.0, "y": 37.0, "yaw": 180 },
-    { "kind": "Bleachers", "x": 53.0, "y": 36.0, "yaw": 180 },
-    { "kind": "PicnicTable", "x": 44.0, "y": 26.0, "yaw": 20 },
-    { "kind": "PicnicTable", "x": 53.0, "y": 27.0, "yaw": -35 },
-    { "kind": "StreetLamp", "x": 57.0, "y": 38.0 },
-
-    { "kind": "CommunityCentre", "x": 78.0, "y": 32.0 },
-    { "kind": "StreetLamp", "x": 87.0, "y": 40.0 },
-
-    { "kind": "House", "x": 34.0, "y": 20.0 },
-    { "kind": "House", "x": 46.0, "y": 18.0 },
-    { "kind": "House", "x": 66.0, "y": 19.0 },
-    { "kind": "House", "x": 64.0, "y": 33.0 },
-    { "kind": "House", "x": 94.0, "y": 36.0 },
-    { "kind": "House", "x": 106.0, "y": 33.0 },
-    { "kind": "House", "x": 117.0, "y": 39.0 },
-    { "kind": "House", "x": 98.0, "y": 21.0 },
-    { "kind": "House", "x": 110.0, "y": 22.0 },
-
-    { "kind": "Clubhouse", "x": 80.0, "y": 66.0, "yaw": 180 },
-    { "kind": "House", "x": 36.0, "y": 58.0, "yaw": 180 },
-    { "kind": "House", "x": 48.0, "y": 58.0, "yaw": 180 },
-    { "kind": "House", "x": 62.0, "y": 58.0, "yaw": 180 },
-    { "kind": "House", "x": 40.0, "y": 72.0, "yaw": 180 },
-    { "kind": "House", "x": 54.0, "y": 74.0, "yaw": 180 },
-    { "kind": "House", "x": 66.0, "y": 76.0, "yaw": 180 },
-    { "kind": "House", "x": 96.0, "y": 63.0, "yaw": 180 },
-    { "kind": "House", "x": 110.0, "y": 60.0, "yaw": 180 },
-    { "kind": "House", "x": 100.0, "y": 78.0, "yaw": 180 },
-    { "kind": "House", "x": 116.0, "y": 70.0, "yaw": 180 },
-
-    { "kind": "BrushPile", "x": 33.0, "y": 44.0, "yaw": 12 },
-    { "kind": "BrushPile", "x": 33.0, "y": 53.0, "yaw": -20 },
-    { "kind": "PalletStack", "x": 37.0, "y": 43.0, "yaw": 8 },
-    { "kind": "BrushPile", "x": 82.0, "y": 43.0, "yaw": 6 },
-    { "kind": "PalletStack", "x": 82.0, "y": 53.0, "yaw": -14 },
-    { "kind": "Dumpster", "x": 86.0, "y": 43.0, "yaw": 90 },
-    { "kind": "Dumpster", "x": 86.0, "y": 53.0, "yaw": 90 },
-    { "kind": "JerseyBarrier", "x": 87.0, "y": 47.0, "yaw": 90 },
-    { "kind": "JerseyBarrier", "x": 87.0, "y": 50.0, "yaw": 90 },
-
-    { "kind": "StreetLamp", "x": 34.0, "y": 44.0 },
-    { "kind": "StreetLamp", "x": 50.0, "y": 44.0 },
-    { "kind": "StreetLamp", "x": 66.0, "y": 44.0 },
-    { "kind": "StreetLamp", "x": 98.0, "y": 44.0 },
-    { "kind": "StreetLamp", "x": 114.0, "y": 44.0 },
-    { "kind": "StreetLamp", "x": 42.0, "y": 53.0 },
-    { "kind": "StreetLamp", "x": 58.0, "y": 53.0 },
-    { "kind": "StreetLamp", "x": 74.0, "y": 53.0 },
-    { "kind": "StreetLamp", "x": 106.0, "y": 53.0 },
-
-    { "kind": "Mailbox", "x": 36.0, "y": 53.5 },
-    { "kind": "Mailbox", "x": 48.0, "y": 53.5 },
-    { "kind": "Mailbox", "x": 62.0, "y": 53.5 },
-    { "kind": "Mailbox", "x": 64.0, "y": 43.5, "yaw": 180 },
-    { "kind": "Mailbox", "x": 94.0, "y": 43.5, "yaw": 180 }
+    {
+      "kind": "Pillar",
+      "x": 29.0,
+      "y": 40.8
+    },
+    {
+      "kind": "Pillar",
+      "x": 29.0,
+      "y": 55.2
+    },
+    {
+      "kind": "BoomBarrier",
+      "x": 30.8,
+      "y": 42.8,
+      "yaw": 90
+    },
+    {
+      "kind": "Guardhouse",
+      "x": 33.0,
+      "y": 41.0,
+      "yaw": 15
+    },
+    {
+      "kind": "JerseyBarrier",
+      "x": 36.0,
+      "y": 46.0,
+      "yaw": 90
+    },
+    {
+      "kind": "JerseyBarrier",
+      "x": 36.0,
+      "y": 51.0,
+      "yaw": 90
+    },
+    {
+      "kind": "PoolDeck",
+      "x": 48.0,
+      "y": 31.0
+    },
+    {
+      "kind": "PoolHouse",
+      "x": 42.0,
+      "y": 37.0,
+      "yaw": 180
+    },
+    {
+      "kind": "Bleachers",
+      "x": 53.0,
+      "y": 36.0,
+      "yaw": 180
+    },
+    {
+      "kind": "PicnicTable",
+      "x": 44.0,
+      "y": 26.0,
+      "yaw": 20
+    },
+    {
+      "kind": "PicnicTable",
+      "x": 53.0,
+      "y": 27.0,
+      "yaw": -35
+    },
+    {
+      "kind": "StreetLamp",
+      "x": 57.0,
+      "y": 38.0
+    },
+    {
+      "kind": "CommunityCentre",
+      "x": 78.0,
+      "y": 32.0
+    },
+    {
+      "kind": "StreetLamp",
+      "x": 87.0,
+      "y": 40.0
+    },
+    {
+      "kind": "House",
+      "x": 34.0,
+      "y": 20.0
+    },
+    {
+      "kind": "House",
+      "x": 46.0,
+      "y": 18.0
+    },
+    {
+      "kind": "House",
+      "x": 66.0,
+      "y": 19.0
+    },
+    {
+      "kind": "House",
+      "x": 64.0,
+      "y": 33.0
+    },
+    {
+      "kind": "House",
+      "x": 94.0,
+      "y": 36.0
+    },
+    {
+      "kind": "House",
+      "x": 106.0,
+      "y": 33.0
+    },
+    {
+      "kind": "House",
+      "x": 117.0,
+      "y": 39.0
+    },
+    {
+      "kind": "House",
+      "x": 98.0,
+      "y": 21.0
+    },
+    {
+      "kind": "House",
+      "x": 110.0,
+      "y": 22.0
+    },
+    {
+      "kind": "Clubhouse",
+      "x": 80.0,
+      "y": 66.0,
+      "yaw": 180
+    },
+    {
+      "kind": "House",
+      "x": 36.0,
+      "y": 58.0,
+      "yaw": 180
+    },
+    {
+      "kind": "House",
+      "x": 48.0,
+      "y": 58.0,
+      "yaw": 180
+    },
+    {
+      "kind": "House",
+      "x": 62.0,
+      "y": 58.0,
+      "yaw": 180
+    },
+    {
+      "kind": "House",
+      "x": 40.0,
+      "y": 72.0,
+      "yaw": 180
+    },
+    {
+      "kind": "House",
+      "x": 54.0,
+      "y": 74.0,
+      "yaw": 180
+    },
+    {
+      "kind": "House",
+      "x": 66.0,
+      "y": 76.0,
+      "yaw": 180
+    },
+    {
+      "kind": "House",
+      "x": 96.0,
+      "y": 63.0,
+      "yaw": 180
+    },
+    {
+      "kind": "House",
+      "x": 110.0,
+      "y": 60.0,
+      "yaw": 180
+    },
+    {
+      "kind": "House",
+      "x": 100.0,
+      "y": 78.0,
+      "yaw": 180
+    },
+    {
+      "kind": "House",
+      "x": 116.0,
+      "y": 70.0,
+      "yaw": 180
+    },
+    {
+      "kind": "BrushPile",
+      "x": 33.0,
+      "y": 44.0,
+      "yaw": 12
+    },
+    {
+      "kind": "BrushPile",
+      "x": 33.0,
+      "y": 53.0,
+      "yaw": -20
+    },
+    {
+      "kind": "PalletStack",
+      "x": 37.0,
+      "y": 43.0,
+      "yaw": 8
+    },
+    {
+      "kind": "BrushPile",
+      "x": 82.0,
+      "y": 43.0,
+      "yaw": 6
+    },
+    {
+      "kind": "PalletStack",
+      "x": 82.0,
+      "y": 53.0,
+      "yaw": -14
+    },
+    {
+      "kind": "Dumpster",
+      "x": 86.0,
+      "y": 43.0,
+      "yaw": 90
+    },
+    {
+      "kind": "Dumpster",
+      "x": 86.0,
+      "y": 53.0,
+      "yaw": 90
+    },
+    {
+      "kind": "JerseyBarrier",
+      "x": 87.0,
+      "y": 47.0,
+      "yaw": 90
+    },
+    {
+      "kind": "JerseyBarrier",
+      "x": 87.0,
+      "y": 50.0,
+      "yaw": 90
+    },
+    {
+      "kind": "StreetLamp",
+      "x": 34.0,
+      "y": 44.0
+    },
+    {
+      "kind": "StreetLamp",
+      "x": 50.0,
+      "y": 44.0
+    },
+    {
+      "kind": "StreetLamp",
+      "x": 66.0,
+      "y": 44.0
+    },
+    {
+      "kind": "StreetLamp",
+      "x": 98.0,
+      "y": 44.0
+    },
+    {
+      "kind": "StreetLamp",
+      "x": 114.0,
+      "y": 44.0
+    },
+    {
+      "kind": "StreetLamp",
+      "x": 42.0,
+      "y": 53.0
+    },
+    {
+      "kind": "StreetLamp",
+      "x": 58.0,
+      "y": 53.0
+    },
+    {
+      "kind": "StreetLamp",
+      "x": 74.0,
+      "y": 53.0
+    },
+    {
+      "kind": "StreetLamp",
+      "x": 106.0,
+      "y": 53.0
+    },
+    {
+      "kind": "Mailbox",
+      "x": 36.0,
+      "y": 53.5
+    },
+    {
+      "kind": "Mailbox",
+      "x": 48.0,
+      "y": 53.5
+    },
+    {
+      "kind": "Mailbox",
+      "x": 62.0,
+      "y": 53.5
+    },
+    {
+      "kind": "Mailbox",
+      "x": 64.0,
+      "y": 43.5,
+      "yaw": 180
+    },
+    {
+      "kind": "Mailbox",
+      "x": 94.0,
+      "y": 43.5,
+      "yaw": 180
+    }
   ],
   "heroSpawn": {
     "x": 112,
@@ -131,7 +475,8 @@
     "sapperFirstAt": 45,
     "spitterFirstAt": 40,
     "hunterShare": 0.1,
-    "wreckerShare": 0.08
+    "wreckerShare": 0.08,
+    "flankShare": 0.34
   },
   "enemy": {
     "health": 34
