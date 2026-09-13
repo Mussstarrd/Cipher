@@ -4,6 +4,7 @@ using System.Globalization;
 using System.IO;
 using System.Threading;
 using Cipher.Game.Scenarios;
+using Cipher.Sim.Core;
 using Cipher.Sim.Grid;
 using NUnit.Framework;
 
@@ -475,6 +476,87 @@ namespace Cipher.Game.Tests
 
             UnityEngine.Debug.Log($"[P3] {def.Id}: best merge at ({best.X},{best.Y}) — " +
                                   $"{bestGates} of {def.SpawnCells.Count} gates, {bestDistance} cells from the truck");
+        }
+
+        /// <summary>
+        /// Design pillar P4: every approach can be covered from somewhere you are allowed to build.
+        ///
+        /// The pillar is informational, not compositional — "leading lines" are folklore, and any
+        /// corridor produces perspective convergence whether a designer meant it or not. The real
+        /// question is whether a player standing on buildable ground can SEE what is coming down the
+        /// lane that ground covers. A slot with no sightline is a guess, and guessing is not strategy.
+        ///
+        /// So this asks the question the way the game will: it places a notional Sentry on every
+        /// buildable cell near the truck and counts how much of each gate's approach that cell can
+        /// actually see, using <see cref="Movement.FirstBlockedCell"/> — the same march the turrets
+        /// use. A lane nothing can see is a lane emplacements cannot defend, which quietly turns a
+        /// tower defence into a game about standing in the right place personally.
+        ///
+        /// It reports the number as well as asserting on it, because the interesting use is
+        /// comparative: the doc's escalation lever #3 is "later positions get SHORTER engagement
+        /// lanes", and that is this number going down on purpose.
+        /// </summary>
+        [Test, TestCaseSource(nameof(ScenarioFiles))]
+        public void EveryApproachCanBeSeenFromBuildableGround(string path)
+        {
+            var def = ScenarioReader.Read(File.ReadAllText(path));
+            var map = BuildSolidMap(def);
+
+            var field = new FlowField(map);
+            field.Compute(def.Vault.X, def.Vault.Y);
+
+            // Sentry reach, from TurretCatalog. Hard-coded rather than referenced because the test
+            // is about the SHAPE of the ground, and it should not start passing because someone
+            // buffed a tower's range.
+            const float SentryRange = 10f;
+            const int DefensibleRadius = 26;   // how far out a first build realistically reaches
+            const int MinCovered = 5;
+
+            foreach (var sc in def.SpawnCells)
+            {
+                // The part of this gate's route that is close enough to the truck to be worth
+                // defending. Covering the far end of a forty-cell walk is not a real option.
+                var approach = new List<(int X, int Y)>();
+                foreach (var cell in WalkToGoal(map, field, sc.X, sc.Y, def.Vault.X, def.Vault.Y))
+                {
+                    int dx = cell.X - def.Vault.X, dy = cell.Y - def.Vault.Y;
+                    if (dx * dx + dy * dy <= DefensibleRadius * DefensibleRadius) approach.Add(cell);
+                }
+
+                int best = 0;
+                (int X, int Y) bestSlot = (-1, -1);
+
+                for (int y = def.Vault.Y - DefensibleRadius; y <= def.Vault.Y + DefensibleRadius; y++)
+                for (int x = def.Vault.X - DefensibleRadius; x <= def.Vault.X + DefensibleRadius; x++)
+                {
+                    if (x < 0 || y < 0 || x >= def.Map.Width || y >= def.Map.Height) continue;
+                    if (map.KindAt(x, y) != WallKind.None) continue;   // cannot build in a building
+
+                    int seen = 0;
+                    var from = new Vec2(x + 0.5f, y + 0.5f);
+
+                    foreach (var cell in approach)
+                    {
+                        var to = new Vec2(cell.X + 0.5f, cell.Y + 0.5f);
+                        var delta = new Vec2(to.X - from.X, to.Y - from.Y);
+                        float distance = delta.Length;
+                        if (distance > SentryRange) continue;
+
+                        if (!Movement.FirstBlockedCell(map, from, delta, distance, out _, out _, out _))
+                            seen++;
+                    }
+
+                    if (seen > best) { best = seen; bestSlot = (x, y); }
+                }
+
+                Assert.That(best, Is.GreaterThanOrEqualTo(MinCovered),
+                    $"{def.Id}: the approach from '{sc.Gate}' cannot be covered — the best buildable " +
+                    $"cell near the truck sees only {best} cells of it. A lane no emplacement can see " +
+                    "is a lane only the player's own body can hold. See level-design-principles.md, P4.");
+
+                UnityEngine.Debug.Log($"[P4] {def.Id} / {sc.Gate}: best slot ({bestSlot.X},{bestSlot.Y}) " +
+                                      $"covers {best} of {approach.Count} approach cells");
+            }
         }
 
         /// <summary>

@@ -137,8 +137,30 @@ rules out difficulty-by-inflation. Layout levers, in the order we should spend t
   cells, the Service Road 2/4 at 49, the Pump House 3/4 at 11. **The Gate is the weakest of the three
   and it is the opening position**, which wants fixing by layout.
 
+- **P4 is measured and guarded too.** `EveryApproachCanBeSeenFromBuildableGround` places a notional
+  Sentry on every buildable cell near the truck and counts how much of each gate's approach it can
+  see, using the turrets' own line-of-sight march. A lane nothing can see is a lane emplacements
+  cannot defend, which quietly turns a tower defence into a game about standing in the right place
+  personally.
+
+  Two things fell out of the first run, both worth more than the pass:
+
+  1. **The pool approach at The Gate is the worst-covered lane in the game — 16 of 34 cells.** Every
+     other lane in every position runs 68–84%. Half of that approach arrives unseen.
+  2. **GATES ARE NOT FRONTS.** On the Service Road, one slot at (88,41) is the best cover for BOTH
+     the cattle gate and the north lots, and (88,68) covers both the washed-out fence and the
+     shoreline. The Pump House does the same: (78,56) is best for the county road and the north
+     shore. So four authored gates are really **two defensive fronts**, and ADR-012's anti-camping
+     argument — "any lane the player stands in is three lanes they are not standing in" — is
+     weaker than it was written. It is closer to "one lane they are not standing in".
+
+  That second one is a measurement worth keeping: the count of approaches is not the count of
+  decisions. **Approaches that share a covering slot are one front wearing two names.**
+
 **Next, in order:**
-- P4: a sightline check from every buildable slot to the approach it covers.
+- Pull the pool approach's coverage up, or accept it as a deliberately blind lane and say so.
+- Check whether positions 2 and 3 want their gate pairs genuinely separated, now that they are known
+  to collapse.
   (sightline from every buildable slot).
 - Elevation (P5): nothing in the game is currently above ground level except roofs nobody can reach.
 - Landmarks (P6): the water tower does not exist yet.
