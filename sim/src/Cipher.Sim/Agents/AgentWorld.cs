@@ -46,9 +46,23 @@ namespace Cipher.Sim.Agents
         /// <summary>Closest a hunter has ever been to its gun, squared. Refills the budget when beaten.</summary>
         private float[] _errandBest;
 
+        /// <summary>Cell each body was in last tick, so "has it got anywhere" is one comparison.</summary>
+        private int[] _lastCell;
+        /// <summary>Seconds since this body last changed cell or landed a blow.</summary>
+        private float[] _still;
+        /// <summary>Seconds left ignoring archetype and errand behaviour, after a no-progress trip.</summary>
+        private float[] _mute;
+
         public int Count { get; private set; }
         public int AliveCount { get; private set; }
         public int ReachedCount { get; private set; }
+
+        /// <summary>
+        /// Times the no-progress watchdog has had to intervene. Exposed because a safety net that
+        /// silently fires constantly is a different bug from one that never fires, and neither is
+        /// visible without a number.
+        /// </summary>
+        public int NoProgressTrips { get; private set; }
         public long TotalKills { get; private set; }
 
         public AgentWorld(GridMap map, IFlowField flowField, SimConfig config, int initialCapacity = 1024)
@@ -75,6 +89,9 @@ namespace Cipher.Sim.Agents
             _target = new int[capacity];
             _errand = new float[capacity];
             _errandBest = new float[capacity];
+            _lastCell = new int[capacity];
+            _still = new float[capacity];
+            _mute = new float[capacity];
         }
 
         public Vec2 PositionOf(int id) => new Vec2(_posX[id], _posY[id]);
@@ -109,11 +126,17 @@ namespace Cipher.Sim.Agents
                 Array.Resize(ref _target, newSize);
                 Array.Resize(ref _errand, newSize);
                 Array.Resize(ref _errandBest, newSize);
+                Array.Resize(ref _lastCell, newSize);
+                Array.Resize(ref _still, newSize);
+                Array.Resize(ref _mute, newSize);
             }
 
             int id = Count++;
             _errand[id] = _config.HunterPursuitSeconds;
             _errandBest[id] = float.PositiveInfinity;
+            _lastCell[id] = -1;
+            _still[id] = 0f;
+            _mute[id] = 0f;
             _posX[id] = position.X;
             _posY[id] = position.Y;
             _health[id] = health;
@@ -174,6 +197,42 @@ namespace Cipher.Sim.Agents
                 // crowd the moment the drone took it, and this branch has to come BEFORE the
                 // archetype switch or a turned Spitter would go on spitting at the player's guns.
                 if (_turned[i]) { StepTurned(i, pos, dt, gates); continue; }
+
+                // NO-PROGRESS WATCHDOG. See SimConfig.NoProgressSeconds for why this is a general
+                // mechanism rather than a fourth bespoke give-up. A Collector is exempt: ADR-011
+                // says it gets none of the crowd's behaviour, and it walks at the hero rather than
+                // at the objective, so "put it back on the road" would mean nothing.
+                bool muted = false;
+                if (_archetype[i] != (byte)Archetype.Collector)
+                {
+                    int cell = _map.CellIndex(Math.Clamp((int)pos.X, 0, _map.Width - 1),
+                                              Math.Clamp((int)pos.Y, 0, _map.Height - 1));
+                    if (cell != _lastCell[i]) { _lastCell[i] = cell; _still[i] = 0f; }
+                    else _still[i] += dt;
+
+                    if (_mute[i] > 0f) { _mute[i] -= dt; muted = true; }
+                    else if (_still[i] >= _config.NoProgressSeconds)
+                    {
+                        // Forget the errand AND the archetype's own target, so that when the mute
+                        // lapses the body re-plans from where it actually is rather than resuming
+                        // the loop it was stuck in.
+                        _mute[i] = _config.NoProgressMuteSeconds;
+                        _intent[i] = (byte)Intent.Vault;
+                        _target[i] = -1;
+                        _state[i] = 0;
+                        _plans.Remove(i);
+                        _still[i] = 0f;
+                        NoProgressTrips++;
+                        muted = true;
+                    }
+                }
+
+                if (muted)
+                {
+                    // Straight at the objective, at its own pace, and nothing else.
+                    StepRunner(i, pos, dt, gates, _config.MoveSpeed * _pace[i]);
+                    continue;
+                }
 
                 switch ((Archetype)_archetype[i])
                 {

@@ -128,6 +128,7 @@ namespace Cipher.Sim.Agents
             if (_timer[i] <= 0f)
             {
                 _timer[i] = _config.HunterAttackInterval;
+                _still[i] = 0f;              // tearing at a gun IS progress
                 _events.Add(new SimEvent(SimEventKind.StructureMauled, i, best,
                                          _config.HunterStructureDamage * ThreatScale(i)));
             }
@@ -158,6 +159,7 @@ namespace Cipher.Sim.Agents
                 if (_timer[i] <= 0f)
                 {
                     _timer[i] = _config.WreckerAttackInterval;
+                    _still[i] = 0f;          // pulling at a wall IS progress; see NoProgressSeconds
                     if (DamageWall(wx, wy, _config.WreckerWallDamage * ThreatScale(i), 1f))
                     {
                         // Something gave. That is progress, so the patience is refilled.

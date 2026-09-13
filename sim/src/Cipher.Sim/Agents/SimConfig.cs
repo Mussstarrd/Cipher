@@ -230,5 +230,29 @@ namespace Cipher.Sim.Agents
         /// something it will never get through.
         /// </summary>
         public float WreckerPatienceSeconds { get; set; } = 45f;
+
+        /// <summary>
+        /// How long a body may hold the same cell, without landing a blow on anything, before the
+        /// sim stops believing whatever errand it thinks it is on.
+        ///
+        /// THE BACKSTOP FOR A WHOLE CLASS OF BUG. Three separate behaviours shipped with the same
+        /// defect -- the structure hunter, the wall wrecker, and (still open) the spitter's
+        /// approach: each returned "handled" unconditionally, so a body that could not finish its
+        /// errand never fell through to anything else, never reached the objective, and never died.
+        /// Each one froze a wave. Rather than wait to discover the fourth, any body that has stopped
+        /// getting anywhere is put back on the road for a few seconds.
+        ///
+        /// Landing an attack counts as getting somewhere, which is what makes this safe: a wrecker
+        /// legitimately stands still for about 27 seconds breaking a 200hp barricade, and a Sapper
+        /// stands still for the whole plant. Both keep resetting the clock while they work.
+        /// </summary>
+        public float NoProgressSeconds { get; set; } = 18f;
+
+        /// <summary>
+        /// How long a tripped body ignores its specialised behaviour and simply walks at the
+        /// objective. Not a punishment and not a cure -- just long enough to break the loop and get
+        /// it onto ground where its errand can be reconsidered honestly.
+        /// </summary>
+        public float NoProgressMuteSeconds { get; set; } = 8f;
 }
 }

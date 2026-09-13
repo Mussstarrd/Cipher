@@ -1916,7 +1916,8 @@ namespace Cipher.Game
             // tell them apart.
             Debug.Log($"[Census] t={_matchSeconds:F0}s wave {_match?.WaveNumber ?? -1} phase {_match?.Phase.ToString() ?? "?"} | director chose: "
                     + $"sappers {_director?.SappersSpawned ?? -1}, spitters {_director?.SpittersSpawned ?? -1}"
-                    + $" | turrets {_turrets?.Turrets.Count ?? -1}, breachable walls {BreachableWallCount()}");
+                    + $" | turrets {_turrets?.Turrets.Count ?? -1}, breachable walls {BreachableWallCount()}"
+                    + $" | no-progress trips {_world?.NoProgressTrips ?? -1}");
         }
 
         public void ShowCharacterLineupForCapture()

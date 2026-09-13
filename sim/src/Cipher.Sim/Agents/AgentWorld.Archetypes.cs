@@ -210,6 +210,7 @@ namespace Cipher.Sim.Agents
             {
                 _state[i] = (byte)SapperState.Plant;
                 _timer[i] = _config.SapperPlantSeconds;
+                _still[i] = 0f;              // planting is the whole job; standing still is correct
                 _events.Add(new SimEvent(SimEventKind.BreachPlanting, i, wall, _config.SapperPlantSeconds));
                 return true;
             }
@@ -375,6 +376,7 @@ namespace Cipher.Sim.Agents
             if (_timer[i] <= 0f)
             {
                 _timer[i] += _config.SpitterAttackInterval;
+                _still[i] = 0f;              // a glob in the air IS progress
                 _events.Add(new SimEvent(SimEventKind.StructureHit, i, best,
                                          _config.SpitterDamage * ThreatScale(i)));
             }
