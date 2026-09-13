@@ -735,6 +735,43 @@ substitute: it references the sim's SOURCE, not its test project.
   broken while behaving perfectly, which is why the census prints the breachable count next to the
   director's tally.
 
+- **AN ERRAND WITH NO EXIT IS A BODY THAT CAN NEVER BE RESOLVED.** Three separate behaviours
+  shipped with the identical defect, and each one froze a wave for minutes at a time:
+  `StepStructureHunter` steered at a gun and returned `true` on every tick it was out of contact;
+  `StepWallWrecker` returned `true` for as long as ANY wall sat within `WreckerSearchCells`;
+  `StepSpitter` re-acquires and approaches with no way to fail. A body that cannot finish its errand
+  never falls through to anything else, never reaches the objective, and never dies -- so **the wave
+  cannot clear and the mission cannot end.** When adding any behaviour that returns "handled",
+  the first question is what makes it return false. `_errand` is the shared clock for the intent
+  layer; `NoProgressSeconds` is the backstop for everything else, and **landing a blow resets it**
+  because a wrecker legitimately stands still for ~27s breaking a 200hp wall and a Sapper stands
+  still for the whole plant.
+- **A MECHANISM THAT EXISTS AND A MECHANISM THAT READS ARE DIFFERENT CLAIMS, AND ONLY ONE OF THEM
+  IS TESTABLE BY READING CODE.** Three of the owner's complaints in one session were all this, and
+  in every case the code was present and the calibration made it imperceptible:
+  - "my laser sounds like it's just clicking" -- `Sfx.Shot` was **70ms** end to end, `Sfx.Hit`
+    **30ms**. A sound that stops dead 70ms after it starts IS a click, however good those 70ms are.
+  - "there's no physical movements when I'm being attacked" -- shake amplitude was trauma SQUARED,
+    so a bite at 0.12 trauma moved the camera about **six thousandths of a world unit**.
+  - "the truck still just looks like a generic geometry shape" -- it had a model; every material on
+    it was being overwritten with one flat colour.
+  None of these is findable by reading the code, which looks correct in all three cases. **Render it
+  and look at it, or export it and listen to it.** `SfxExporter` (`Cipher/Audio/Export SFX to WAV`)
+  exists for exactly this: every sound in this game is maths, and before it the only way to judge one
+  was to launch a build, start a round and wait for the event to happen.
+- **RECOIL IS NOT SHAKE.** Shake is noise and says "something violent happened nearby". Recoil is a
+  DIRECTION: the view rises and settles, identically, every shot. Adding trauma on firing could
+  never have read as a gun going off no matter how big the number got. Apply it AFTER the camera
+  slerp or it gets smoothed away -- the entire value of a kick is that it is instant on the frame
+  the shot leaves.
+- **BOUGHT ART ARRIVES FINISHED; OUR OWN BOXES DO NOT. DO NOT RUN ONE THROUGH THE OTHER'S PATH.**
+  The flat-colour material override is correct for the free untextured models in
+  `Resources/Environment/` and destroys anything bought. Anything from `SyntyPropBuilder` is already
+  on `Exodus/InstancedLit` with its atlas in `_BaseMap`, and the right handling is to **leave its
+  materials alone**. Related: `_BaseColor` white is right for a TEXTURED material (the shader's grey
+  default darkens bought art 40%) and wrong for one with no map at all, which it paints pure white --
+  that is what put a blank white rectangle where the truck's windscreen should have been.
+
 - **`waves[].mix` DOES NOT STEER ANYTHING. THE DIRECTOR KNOBS DO.** The mix block is parsed,
   validated to sum to 1, stored on `WaveSpec` -- and read by nothing, because the spawn director is
   global rather than per-wave. `WaveSpec`'s own doc comment has always said so; it is a placeholder
