@@ -3,7 +3,7 @@
   "id": "act1-05-the-fairway",
   "displayName": "The Fairway",
   "tier": 3,
-  "next": "",
+  "next": "act1-06-crowbar",
   "brief": "The west course, at first light, in fog. There is nothing out here to put a wall between you and them -- no houses, no fences, one long green hill. They will come out of it a hundred metres wide and you will finally see how many there are. Hold until the scan, then go.",
   "map": {
     "width": 140,

@@ -30,6 +30,7 @@ art/review/
 # Unity player builds (local). Releases are CI artifacts only.
 game/Builds/
 game/out/
+build/
 
 # Import and tooling logs (local only)
 .artifacts/
