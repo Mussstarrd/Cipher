@@ -81,6 +81,22 @@ namespace Cipher.Game
                 ["House"] = Centred(6, 9),
                 // The clubhouse is the biggest single obstruction on the map and is placed so that
                 // the gap between it and the blocked road is a pinch the player can hold.
+                //
+                // STAYS 16x12 EVEN THOUGH THE MODEL IS 15.5 x 10.9m, and that is the opposite call
+                // to the one the House got. Worth the words, because the rule is not "the footprint
+                // always follows the art".
+                //
+                // The House GREW to fit its model, because a model larger than its footprint sticks
+                // out of the solid ground into somewhere people can walk, and doors you can walk
+                // through are worse than a spare cell. Here the model is SMALLER than the footprint,
+                // so the error is half a metre of solid ground with no wall drawn on it -- invisible
+                // beside a sixteen-metre building.
+                //
+                // And shrinking it is not free: taking the clubhouse to 16x11 widened the gap beside
+                // it and opened A THIRD HOLE in the barricade column, which
+                // TheRoadIsBlockedAndTheOnlyWayPastItIsTwoPinches caught immediately. That gap is
+                // the thing this whole position is built around. The art bends to the level here,
+                // because the level is load-bearing and half a metre is not.
                 ["Clubhouse"] = Centred(16, 12),
                 // Rec centre / gym: a tall hall with a lower entrance wing off the front. The wing
                 // is a second rect rather than a bigger box, because an L reads as a building and a

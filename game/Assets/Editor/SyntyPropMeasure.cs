@@ -26,11 +26,13 @@ namespace Cipher.Game.Editor
     {
         private static readonly string[] Wanted =
         {
-            "Assets/Synty/PolygonTown/Prefabs/Buildings/Presets/SM_Bld_House_Preset_01.prefab",
-            "Assets/Synty/PolygonTown/Prefabs/Buildings/Presets/SM_Bld_House_Preset_04.prefab",
-            "Assets/Synty/PolygonTown/Prefabs/Buildings/Presets/SM_Bld_House_Preset_07.prefab",
+            "Assets/Synty/PolygonTown/Prefabs/Buildings/SM_Bld_Church_01.prefab",
             "Assets/Synty/PolygonTown/Prefabs/Buildings/SM_Bld_Shop_01.prefab",
-            "Assets/Synty/PolygonTown/Prefabs/Props/SM_Prop_LampStanding_01.prefab",
+            "Assets/Synty/PolygonTown/Prefabs/Buildings/SM_Bld_Shop_02.prefab",
+            "Assets/Synty/PolygonTown/Prefabs/Buildings/SM_Bld_Shop_03.prefab",
+            "Assets/Synty/PolygonTown/Prefabs/Buildings/SM_Bld_Shop_Concrete_01.prefab",
+            "Assets/Synty/PolygonTown/Prefabs/Buildings/SM_Bld_GardenShed_01.prefab",
+            "Assets/Synty/PolygonTown/Prefabs/Buildings/Presets/SM_Bld_House_Preset_Garage_01.prefab",
         };
 
         [MenuItem("Cipher/Art/Measure Synty Props")]

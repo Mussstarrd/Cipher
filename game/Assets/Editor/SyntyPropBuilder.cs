@@ -45,6 +45,11 @@ namespace Cipher.Game.Editor
                 TownPrefabs + "/Buildings/Presets/SM_Bld_House_Preset_02.prefab",
                 TownPrefabs + "/Buildings/Presets/SM_Bld_House_Preset_03.prefab",
             },
+
+            // The clubhouse is the biggest single obstruction on the map, so it was also the
+            // biggest remaining box. Shop_02 measures 15.5 x 10.9m against a 16x12 footprint --
+            // the closest native fit in the pack, and no scaling needed.
+            ["Clubhouse"] = new[] { TownPrefabs + "/Buildings/SM_Bld_Shop_02.prefab" },
         };
 
         [MenuItem("Cipher/Art/Build Synty Props")]
