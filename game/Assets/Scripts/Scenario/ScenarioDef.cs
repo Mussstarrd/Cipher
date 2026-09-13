@@ -65,6 +65,19 @@ namespace Cipher.Game.Scenarios
     public sealed class ScenarioDef
     {
         /// <summary>
+        /// The sky this position is authored under, or null to roll one from the seed.
+        ///
+        /// Weather is randomised per map load by request, and that stays the default — variety is
+        /// the point and most positions do not care. But `campaign-act1.md` gives several missions a
+        /// time of day as part of their BEAT rather than their dressing: mission 5 is "first light,
+        /// fog", mission 6 is night, mission 8 is "limited sight, jammed minimap". Rolling dice for
+        /// those would throw away the thing the mission is about.
+        ///
+        /// So: authored when it carries meaning, random when it does not.
+        /// </summary>
+        public Sky? Sky { get; set; }
+
+        /// <summary>
         /// Design pillars this position deliberately breaks, and why.
         ///
         /// The pillar tests in `ScenarioTests` encode `docs/design/level-design-principles.md`, and

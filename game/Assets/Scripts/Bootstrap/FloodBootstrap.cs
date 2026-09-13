@@ -418,7 +418,7 @@ namespace Cipher.Game
             // A new position gets its own remembered sky. A CROSSFADE, not a cut -- he drove here,
             // it is a continuous moment, and a hard change of weather at a loading boundary reads
             // as a bug rather than as time passing.
-            _atmos.Reseed(_scenario.DirectorSeed, _camera);
+            _atmos.Reseed(_scenario.DirectorSeed, _camera, _scenario.Sky);
             NewMatch();
         }
 
@@ -630,7 +630,7 @@ namespace Cipher.Game
             // The fixed overcast dusk became one of five conditions, picked from the position's
             // own seed (owner: "weather effects randomized into map load"). The Gate's seed still
             // rolls DuskClear, constant for constant, so the shipped look is unchanged by default.
-            _atmos = Atmosphere.Create(transform, _camera, _scenario.DirectorSeed);
+            _atmos = Atmosphere.Create(transform, _camera, _scenario.DirectorSeed, _scenario.Sky);
             _sun = _atmos.Sun;
             ApplyColourGrade();
 

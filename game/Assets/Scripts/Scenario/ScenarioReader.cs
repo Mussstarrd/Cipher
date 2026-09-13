@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Cipher.Game.Match;
 using Cipher.Sim.Grid;
 
+
 namespace Cipher.Game.Scenarios
 {
     /// <summary>
@@ -28,7 +29,7 @@ namespace Cipher.Game.Scenarios
             root.RejectUnknownKeys(
                 "schema", "id", "displayName", "tier", "brief", "next", "lastStand", "map", "heroSpawn", "spawnCells",
                 "vault", "actors", "props", "economy", "director", "cycle", "enemy", "waves", "safeZoneAfterWaves",
-                "objectives", "rewards", "medals", "pillarExceptions");
+                "objectives", "rewards", "medals", "pillarExceptions", "sky");
 
             var def = new ScenarioDef();
 
@@ -99,6 +100,19 @@ namespace Cipher.Game.Scenarios
             if (root.Opt("medals") is { } medals) ReadMedals(medals, def);
 
             Validate(def);
+            // An authored sky, when the mission's beat depends on one. Strict like every other
+            // field here: a typo must be an error naming the legal values, never a silent fallback
+            // to whatever the dice said.
+            var skyNode = root.Opt("sky");
+            if (skyNode != null)
+            {
+                string raw = skyNode.AsString();
+                if (!System.Enum.TryParse<Sky>(raw, ignoreCase: true, out var sky))
+                    throw new ScenarioException(
+                        $"{skyNode.Path}: '{raw}' is not a sky. Legal: {string.Join(", ", System.Enum.GetNames(typeof(Sky)))}");
+                def.Sky = sky;
+            }
+
             // Deliberate pillar breaks, each with a written reason. See ScenarioDef.PillarExceptions.
             var exceptions = new List<PillarException>();
             var ex = root.Opt("pillarExceptions");

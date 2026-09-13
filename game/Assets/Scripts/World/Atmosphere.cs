@@ -50,10 +50,12 @@ namespace Cipher.Game
         }
 
         /// <summary>Builds the atmosphere and applies the seeded condition immediately.</summary>
-        public static Atmosphere Create(Transform parent, Camera? camera, ulong seed)
+        public static Atmosphere Create(Transform parent, Camera? camera, ulong seed, Sky? forced = null)
         {
             var atmos = new Atmosphere(parent, unchecked((int)seed));
-            atmos.Set(Weather.Resolve(seed), camera, snapAudio: true);
+            // An authored sky beats the roll. Most positions want the variety; a few have a time
+            // of day as part of their beat and cannot be left to dice.
+            atmos.Set(forced ?? Weather.Resolve(seed), camera, snapAudio: true);
             return atmos;
         }
 
@@ -61,11 +63,11 @@ namespace Cipher.Game
         /// Re-rolls for a new position. Call this from wherever the scenario changes, alongside
         /// the other things that have to be re-pointed when the map does.
         /// </summary>
-        public void Reseed(ulong seed, Camera? camera)
+        public void Reseed(ulong seed, Camera? camera, Sky? forced = null)
         {
             // Not snapped: a position change is a continuous moment for the player (they drove
             // here), so the beds crossfade rather than cut.
-            Set(Weather.Resolve(seed), camera, snapAudio: false);
+            Set(forced ?? Weather.Resolve(seed), camera, snapAudio: false);
         }
 
         /// <summary>Forces a named condition. For the screenshot harness and for debugging.</summary>
