@@ -171,7 +171,19 @@ rules out difficulty-by-inflation. Layout levers, in the order we should spend t
   Worth noting what that means: **the ramp document was right and the scenario had drifted from it.**
   The test did not invent a requirement, it caught content that had fallen behind its own design.
 
+- **P6 covers all three shipped positions.** Two water towers each, sited by searching for the
+  ground with the most clearance from every other prop at 20–48 cells from the truck, rather than by
+  eye. Footprint stays `None`, so a landmark cannot disturb the geometry the P2/P3/P4 tests now pin.
+
+**A content gap found while siting them:** the Pump House carries **9 props** against The Gate's 59
+and the Service Road's 77. The clearance search returned distances of 50+ cells there because there
+is almost nothing to be clear of. It is not broken — it passes every geometric test — it is simply
+*bare*, and a position the player reaches third should not look like a greybox next to the two before
+it. Dressing it is content work, not design work, and it is the cheapest visible win left on the
+board.
+
 **Next, in order:**
+- Dress the Pump House. 9 props is a greybox.
 - Pull the pool approach's coverage up, or accept it as a deliberately blind lane and say so.
 - Check whether positions 2 and 3 want their gate pairs genuinely separated, now that they are known
   to collapse.
