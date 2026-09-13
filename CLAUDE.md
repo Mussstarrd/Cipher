@@ -96,7 +96,7 @@ substitute: it references the sim's SOURCE, not its test project.
 - **Verify rendering, never infer it.** Compiling is not rendering and tests passing is not rendering. Use the screenshot harness: `ProjectExodus.exe -exodus-screenshot <path.png> -exodus-screenshot-delay <sec> [-exodus-screenshot-overhead]`. An external screen grab CANNOT see the player's GPU surface and returns the desktop wallpaper, so the game has to capture itself.
 - **Lighting is an overcast Virginia winter** (`FloodBootstrap.ApplyOvercastWinter`): low raking sun at 26 degrees, soft shadows, trilight ambient off a grey sky and brown leaf litter, exponential-squared haze. This carries more of the look than the models will; don't flatten it.
 - **Never build Android locally** on the owner's 16 GB laptop; it was OOM-killed doing so. The `android` job in `unity.yml` is opt-in via workflow_dispatch.
-- **ADR-007 picks the crowd-rendering path and the art lane.** Crowds are **Vertex Animation Textures + `DrawMeshInstanced`** with three distance LOD tiers, NOT DOTS - adopting Entities Graphics would mean converting `sim/` to ECS and losing determinism, and needs its own ADR if ever revisited. Art lane is the **stylised Synty POLYGON** set, about $135, chosen because every civilian pack shares one humanoid rig (which VAT batching requires) and polycount is the whole game at a thousand agents. **Owner has not yet approved the purchase; it blocks every date in `docs/design/ROADMAP-graphical-beta.md`.**
+- **ADR-007 picks the crowd-rendering path and the art lane.** Crowds are **Vertex Animation Textures + `DrawMeshInstanced`** with three distance LOD tiers, NOT DOTS - adopting Entities Graphics would mean converting `sim/` to ECS and losing determinism, and needs its own ADR if ever revisited. Art lane is the **stylised Synty POLYGON** set, about $135, chosen because every civilian pack shares one humanoid rig (which VAT batching requires) and polycount is the whole game at a thousand agents. ~~Owner has not yet approved the purchase~~ **BOUGHT 2026-09-12** (SyntyPass, $120, 3-month minimum). The subscription is a RENTAL: cancelling means no new development with the assets, so it stays live until launch or until packs are bought outright. Note ADR-007's rig reasoning held up exactly -- every POLYGON and Sidekick character shares one Humanoid rig, which is why the crowd's walk clip also drives a three-metre Collector.
 - **Owner checkpoint 2026-09-11 shipped** (`docs/design/owner-requests-2026-09-11.md` has his words verbatim). Nine of ten requests are code:
   - **Untimed opening.** `MatchState.AwaitingStart` holds the first wave until the player presses start, and nothing ages while it waits, so setting up does not eat the scan cycle. Between-wave setups stay timed.
   - **Gear.** `Progression/` has `Stats`, `Items`, `Loot`, `Inventory`. Eight slots, five rarities, one power budget so any two items compare by a single number. Auto-scrap on pickup keeps loot from becoming admin. **Vocabulary was re-skinned off the retired kingpin fiction; the maths is the design memo's.**
@@ -610,4 +610,99 @@ substitute: it references the sim's SOURCE, not its test project.
     render entirely in JavaScript, so the scraper sees a shell with no file list and reports
     `[dir?]` for a few subfolders. Fixing it needs a headless browser or a Cloud API key.
     `tools/art/FETCH-THESE-BY-HAND.md` has the four links and the folder names to unzip into.
+- **THE ART IS BOUGHT AND THE CROWD IS REAL PEOPLE (2026-09-12/13).** SyntyPass, $120, seven packs
+  pulled. `art/`, `game/Assets/Synty/`, `Resources/Props/`, `Resources/Collector/` and every
+  generated `SM_Chr_*` / `Synty_*` / `*_smoothmesh.asset` are **gitignored, and that is not tidiness
+  -- THIS REPO IS PUBLIC.** Synty's EULA forbids redistributing source assets, and baking someone's
+  mesh into a new file does not change who owns it. Everything is regenerable from menu items under
+  `Cipher/Crowd/` and `Cipher/Art/`.
+- **SYNTY CLIPS ARE HUMANOID-RETARGETED, AND COPYING THEIR CURVES INTO LEGACY CLIPS CANNOT WORK.**
+  Three builds were spent on it and every one put the whole crowd flat on its back in the road. The
+  raw transform curves are not in the character's rest-pose space; Mecanim reconciling the two is not
+  an optimisation on top, it IS the mechanism, and legacy playback skips it. Dropping the root track,
+  keeping its rotation, and a corrective pitch on a wrapper were all tried -- all of them guesses at
+  a number that cannot exist, because **the offset lives between two REST POSES and is not in the
+  animation at all**. Bought characters keep their Humanoid rig and get an Animator with a real
+  controller. `LegacyClipMaker` is still correct for the CC0 pack, whose clips come from a library
+  matched to those bodies; do not "unify" the two paths.
+  - The bootstrap's two Animator-destroy sites now **keep any Animator that has a controller**. That
+    rule was right for CC0 models (which ship an Animator with no clips, where it is pure obstruction)
+    and exactly backwards for bought art.
+  - `SkinnedGait` is `MachineGait` for Animator bodies: same four crowd events, same Intercept
+    wiring. Without it a Synty body walks correctly, takes fire and **keeps walking** -- the identical
+    "dies by vanishing" bug the machines once had, reopened by new art rather than new code.
+  - It claimed ZERO slots on its first run because `BuildCivilian` added an `Animation` component to
+    every body and the filter treated that as proof a body was legacy. **Unity suppresses an Animation
+    component whenever a controllered Animator is present**, so that component did nothing at all --
+    except cost a bug. A controllered Animator is the only test now.
+- **SYNTY'S ATLAS HANGS OFF `_Albedo_Map`.** Their materials are Shader Graph, so `_BaseMap`,
+  `_MainTex` and `mainTexture` all miss, silently, and you get characters sharing one untextured
+  material -- which reads as a shader bug rather than a lookup miss. Everything bought is rebuilt onto
+  `Exodus/InstancedLit` with that texture in `_BaseMap`, which keeps Synty's colour work and puts it
+  under our ink outline. `_BaseColor` must be set to **white** or the shader's grey default quietly
+  darkens every bought asset by 40%.
+- **A FOOTPRINT IS THE WALL LINE, AND ROOFS OVERHANG IT.** The chase camera pulls in short of any
+  `WallKind.Rock` cell (marched through the grid with `Movement.FirstBlockedCell` -- the bought
+  buildings have **no colliders**, so a physics cast sails straight through a house). The skin is
+  **1.8m**, not the 0.55m that seems sufficient: at 0.55 the rig sat correctly outside the footprint
+  and directly **under the eaves**, which renders as the dark inside of a building and looks exactly
+  like the bug it was meant to fix. The maths was right and the picture was wrong and both were
+  telling the truth.
+- **WHICH BENDS -- THE ART OR THE LEVEL -- DEPENDS ON WHICH WAY THE ERROR RUNS.** The House footprint
+  GREW (6x5 -> 6x9) to fit its model, because a model larger than its footprint sticks out into
+  walkable ground and shrinking it would have taken its doors below the height of the people walking
+  past them. The Clubhouse footprint STAYED 16x12 although its model is 15.5 x 10.9, because shrinking
+  it widened the gap beside it and **opened a third hole in the barricade column** --
+  `TheRoadIsBlockedAndTheOnlyWayPastItIsTwoPinches` caught it immediately. Art bends to the level when
+  the level is load-bearing; the level bends to the art when the error would be visible.
+- **ADR-012: THE TRUCK IS IN THE MIDDLE** (owner directive). The goal sits at the centre of a position
+  with approaches converging on it, not against the back wall. Read the ADR before authoring a
+  position. It also records what this does NOT mean -- twelve identical crossroads would be as
+  monotonous as twelve corridors.
+- **"ONLY ONE PINCH GETS USED" WAS NEVER A PATHFINDING PROBLEM.** This file used to blame the flow
+  field. It was wrong. `DirectorConfig.FlankShare` defaulted to **0.08** and no scenario overrode it,
+  so a position with three authored gates sent 92% of every wave through the front door. A second
+  route exists only if the wave is ASSIGNED to it. `flankShare` / `flankPaceScale` are authorable per
+  scenario now and validated 0..1.
+- **THE DESIGN PILLARS ARE TESTS, NOT OPINIONS** (`ScenarioTests`, and they keep finding things):
+  - `EveryPositionHasTwoRealFronts` (P2) counts **fronts, not gates** -- two gates whose best covering
+    ground is within 20m are one front wearing two names. It failed on first run: the Pump House's
+    four gates all resolved to ONE front, and the fix was already written in
+    `the-contracting-perimeter.md`, which specifies five approaches there. The content had drifted
+    from its own ramp document.
+  - `EveryPositionOwesTheAreaTowerAMergePoint` (P3) requires two gates' routes to meet **more than six
+    cells from the truck** -- every route ends at the truck, so asserting on the truck would pass
+    forever and prove nothing.
+  - `EveryApproachCanBeSeenFromBuildableGround` (P4) places a notional Sentry on every buildable cell
+    and counts how much of each approach it can see, using the turrets' own line-of-sight march.
+  - All three walk the field by **descending integration cost**, not by following `DirectionAt`: the
+    direction is a normalised float for steering an agent, and rounding it to a neighbour each step
+    drifts off the path the crowd would really take.
+- **HARNESS FLAGS ADDED 2026-09-12/13.** `-exodus-clip <dir>` records a frame sequence (uses
+  `Time.captureDeltaTime`, so encoding cost never becomes a hitch in the footage);
+  `-exodus-scenario <id>` opens straight onto any position -- **before this, position three could not
+  be looked at at all**, only played to; `-exodus-perf <seconds>` samples frame times and prints
+  percentiles; `-exodus-cam-diag` prints the camera's wanted/allowed/target/actual;
+  `-exodus-machine-models` re-enables the box-robot model path.
+- **MEASURE FRAME COST WITH PERCENTILES AND A FRAME-COUNT WARM-UP.** A mean hides the thing that ruins
+  a game: forty good frames and one 60ms frame average out fine and read as a stutter. And a
+  time-only warm-up is satisfied by **one frame longer than the warm-up** -- startup took 4.9s in a
+  single frame, the gate opened inside it, and the harness reported a 4.8-second gameplay stall in a
+  game whose real p99 is 7ms. The tell was `alive 0` printed beside the hitch: the field was empty, so
+  no crowd could have been to blame. **Print the agent count next to any performance number.**
+  Current desktop: The Gate 165 fps (p99 7.0ms), the Pump House 147 fps (p99 11.6ms), no frame over
+  100ms. **Android is still entirely unmeasured.**
+- **THE MACHINE CLASS IS SWITCHED OFF UNTIL IT HAS ART.** `CrowdCasting.HumanoidShare` is 0;
+  ADR-003's 30% is kept as `DesignShare`. They were `CreatePrimitive` cubes, defensible while every
+  enemy was a box and indefensible the moment real people walked in beside them. The bought library
+  has no answer either -- its only robot content is the POLYGON Mech Pack, whose own store keywords
+  say "gundam", and ADR-003's machines are a delivery walker and a clubhouse attendant. The Spitter is
+  **still a box** and is deliberately left so: ADR-003 names it a hacked humanoid with a sprayer, and
+  recasting it as a person would edit the fiction rather than defer it. Owner's call.
+- **WHEN SOMETHING FAILS SILENTLY, PRINT THE STATE -- and this file has said so for weeks.** It was
+  broken three times in one session: two builds guessing at the camera before probing the grid (which
+  answered it in one), a working camera fix reverted as "unverified" when the answer was to instrument
+  it harder, and a phantom stall chased because the agent count was not printed. Every one of those
+  cost more than the print would have.
+
 - **Was:** owner hero feedback → barricade build-mode with live path preview (Milestone 2 "The Maze").
