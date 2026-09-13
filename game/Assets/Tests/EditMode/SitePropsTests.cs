@@ -42,12 +42,16 @@ namespace Cipher.Game.Tests
         [Test]
         public void ABuildingClaimsItsWholeFloorPlan()
         {
+            // SIX BY NINE, not six by five. The footprint grew when the house stopped being a box
+            // we drew and became a bought model measuring 6.4m x 8.9m: the alternative was scaling
+            // the model down, which would have taken its doors below the height of the people
+            // walking past them. The number here follows the art deliberately.
             var house = Cells("House", 50f, 30f);
-            Assert.That(house, Has.Count.EqualTo(30), "a house is six cells by five");
-            Assert.That(house, Contains.Item((47, 28)));
-            Assert.That(house, Contains.Item((52, 32)));
-            Assert.That(house.Contains((46, 28)), Is.False);
-            Assert.That(house.Contains((53, 32)), Is.False);
+            Assert.That(house, Has.Count.EqualTo(54), "a house is six cells by nine");
+            Assert.That(house, Contains.Item((47, 26)));
+            Assert.That(house, Contains.Item((52, 34)));
+            Assert.That(house.Contains((46, 26)), Is.False);
+            Assert.That(house.Contains((53, 34)), Is.False);
         }
 
         [Test]
@@ -57,12 +61,11 @@ namespace Cipher.Game.Tests
             var turned = Cells("House", 50f, 30f, 90f);
 
             Assert.That(turned, Has.Count.EqualTo(flat.Count));
-            // Six along x and five along y becomes five along x and six along y.
-            Assert.That(Span(turned), Is.EqualTo((5, 6)));
-            Assert.That(Span(flat), Is.EqualTo((6, 5)));
-            Assert.That(turned, Contains.Item((48, 28)));
-            Assert.That(turned, Contains.Item((52, 33)));
-            Assert.That(turned.Contains((47, 28)), Is.False);
+            // Six along x and nine along y becomes nine along x and six along y. The house being
+            // deeper than it is wide is exactly why this test matters more than it used to: a
+            // square footprint would have hidden a broken quarter turn.
+            Assert.That(Span(turned), Is.EqualTo((9, 6)));
+            Assert.That(Span(flat), Is.EqualTo((6, 9)));
         }
 
         [Test]

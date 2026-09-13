@@ -111,6 +111,23 @@ namespace Cipher.Game
             // the whole street.
             int seed = Hash(Mathf.FloorToInt(x), Mathf.FloorToInt(z));
 
+            // A BOUGHT MODEL WHEN THERE IS ONE, our own boxes when there is not.
+            //
+            // This is the only line of the prop system that changes for bought art, and that is the
+            // point: PropCatalog owns a prop's FOOTPRINT in grid cells and this class owns its
+            // shape. Swapping the shape cannot touch the cells written into the one GridMap before
+            // the first flow field, so hard rule 4 -- the preview can never lie -- holds by
+            // construction rather than by care.
+            if (TryModel(kind, pivot, seed))
+            {
+                // No VertexAo bake and no box-derived shadow key: both were written for geometry we
+                // generated and whose box layout we knew. A bought model brings its own baked
+                // lighting in its atlas.
+                if (!NoBlobShadow.Contains(kind)) BlobShadows.RegisterProp(pivot.gameObject);
+                Placed++;
+                return;
+            }
+
             switch (kind)
             {
                 case "Pillar": Pillar(pivot); break;
@@ -148,6 +165,47 @@ namespace Cipher.Game
 
             Placed++;
         }
+
+        /// <summary>
+        /// Instantiates a bought prop for this kind, when one has been built.
+        ///
+        /// Variants are chosen with the SAME per-cell seed that already decides siding colour and
+        /// chimney side, so a street is mixed rather than a row of one repeated house, and the mix
+        /// is stable: a screenshot taken twice is the same screenshot, and inserting a prop earlier
+        /// in the scenario does not repaint the whole neighbourhood.
+        ///
+        /// Placed at NATIVE SCALE. Nothing here resizes the model to fit the grid -- the footprint
+        /// in PropCatalog is authored to fit the model instead. See the House entry there.
+        /// </summary>
+        private bool TryModel(string kind, Transform pivot, int seed)
+        {
+            if (!_modelCache.TryGetValue(kind, out var variants))
+            {
+                var found = new List<GameObject>();
+                for (int v = 0; v < 8; v++)
+                {
+                    var prefab = Resources.Load<GameObject>($"Props/{kind}_{v:00}");
+                    if (prefab == null) break;
+                    found.Add(prefab);
+                }
+                variants = found.Count > 0 ? found.ToArray() : System.Array.Empty<GameObject>();
+                _modelCache[kind] = variants;
+
+                Debug.Log(variants.Length > 0
+                    ? $"[Props] {kind}: {variants.Length} bought variants"
+                    : $"[Props] {kind}: no bought model, drawing boxes");
+            }
+
+            if (variants.Length == 0) return false;
+
+            var go = UnityEngine.Object.Instantiate(variants[(seed >> 3) % variants.Length], pivot);
+            go.transform.localPosition = Vector3.zero;
+            go.transform.localRotation = Quaternion.identity;
+            return true;
+        }
+
+        /// <summary>Loaded once per kind per process: Resources.Load is not free at 57 props.</summary>
+        private readonly Dictionary<string, GameObject[]> _modelCache = new Dictionary<string, GameObject[]>();
 
         /// <summary>
         /// The AO cache key for a house: its GEOMETRY variant, not its colour.

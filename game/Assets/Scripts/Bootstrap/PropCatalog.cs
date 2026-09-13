@@ -66,10 +66,19 @@ namespace Cipher.Game
                 ["JerseyBarrier"] = Centred(1, 1),
 
                 // --- the community ---
-                // A house is the unit the whole neighbourhood is measured in. Six by five is big
-                // enough to break a sightline and small enough that a row of them leaves gardens
-                // between, and the gardens are the routes.
-                ["House"] = Centred(6, 5),
+                // A house is the unit the whole neighbourhood is measured in. Wide enough to break
+                // a sightline, and a row of them still leaves gardens between -- and the gardens
+                // are the routes.
+                //
+                // SIX BY NINE BECAUSE THAT IS WHAT THE MODEL MEASURES. It was 6x5 while a house was
+                // a box we drew ourselves and could size to the grid. The bought house is 6.4m x
+                // 8.9m, and the choice was to grow the footprint or shrink the model. Shrinking it
+                // would also shrink its doors, to about four feet -- shorter than the people walking
+                // past them, which is the kind of wrongness nobody can name and everybody sees.
+                //
+                // The footprint follows the art here, and not the other way round, because the
+                // footprint is the thing we can author freely and the door height is not.
+                ["House"] = Centred(6, 9),
                 // The clubhouse is the biggest single obstruction on the map and is placed so that
                 // the gap between it and the blocked road is a pinch the player can hold.
                 ["Clubhouse"] = Centred(16, 12),
