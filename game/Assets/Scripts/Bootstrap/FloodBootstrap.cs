@@ -263,8 +263,29 @@ namespace Cipher.Game
         /// Chase distance multiplier. 1 is the authored shoulder view; wider shows more of the
         /// position, which matters a great deal now that a map is a whole neighbourhood.
         /// </summary>
-        private float _zoom = 1f;
-        private float _zoomTarget = 1f;
+        /// <summary>
+        /// The zoom steps RB cycles through, nearest first.
+        ///
+        /// DISCRETE, NOT CONTINUOUS, and that is the fix for a real complaint: "when I tap RB the
+        /// game zooms out but there's no way to zoom back in". There WAS a way -- D-pad left -- and
+        /// nobody could have guessed it, which makes it the same as there not being one. One button
+        /// that cycles and wraps cannot strand you at the far end, and it needs no prompt to teach.
+        /// </summary>
+        private static readonly float[] ZoomNotches = { 0.95f, 1.45f, 2.10f };
+
+        /// <summary>
+        /// Which notch the game opens on. Owner, 2026-09-12: "the baseline zoom out level should be
+        /// a little more because the more zoomed out it is the better it looks."
+        ///
+        /// He is right and it is not only taste: this is a tower defence as much as it is a
+        /// third-person game, and a player who cannot see the lane cannot read the fight they are
+        /// being asked to build against.
+        /// </summary>
+        private const int ZoomDefaultNotch = 1;
+
+        private int _zoomNotch = ZoomDefaultNotch;
+        private float _zoom = ZoomNotches[ZoomDefaultNotch];
+        private float _zoomTarget = ZoomNotches[ZoomDefaultNotch];
         private const float ZoomMin = 0.62f;
         private const float ZoomMax = 2.1f;
         private bool _snapCamera = true;
@@ -3358,16 +3379,39 @@ namespace Cipher.Game
             // Zoom: shoulder buttons on the pad, wheel on the mouse. LB is the build wheel and is
             // HELD, so zoom takes the triggers' neighbours only on a tap -- reading `isPressed`
             // here would fight the wheel every time the player opened it.
-            float zoomStep = 0f;
+            // RB steps out one notch and WRAPS from the furthest back to the nearest, so the
+            // control is a cycle rather than a ramp with a dead end. D-pad left still steps the
+            // other way for anyone who wants it, but nothing depends on knowing that any more.
             if (pad != null)
             {
-                if (pad.rightShoulder.wasPressedThisFrame) zoomStep += 1f;
-                if (pad.leftShoulder.wasPressedThisFrame && !_buildMode) zoomStep -= 0f;   // LB is the wheel
-                if (pad.dpad.left.wasPressedThisFrame) zoomStep -= 1f;
+                if (pad.rightShoulder.wasPressedThisFrame)
+                {
+                    _zoomNotch = (_zoomNotch + 1) % ZoomNotches.Length;
+                    _zoomTarget = ZoomNotches[_zoomNotch];
+                }
+                if (pad.dpad.left.wasPressedThisFrame)
+                {
+                    _zoomNotch = (_zoomNotch + ZoomNotches.Length - 1) % ZoomNotches.Length;
+                    _zoomTarget = ZoomNotches[_zoomNotch];
+                }
+                // LB is the build wheel and is HELD; it must never also zoom.
             }
-            if (mouse != null) zoomStep -= mouse.scroll.ReadValue().y * 0.006f;
-            if (Mathf.Abs(zoomStep) > 1e-4f)
-                _zoomTarget = Mathf.Clamp(_zoomTarget + zoomStep * 0.22f, ZoomMin, ZoomMax);
+
+            // The mouse wheel stays continuous -- a notch is the right shape for a thumb on a pad
+            // and the wrong shape for a wheel under a finger. It re-points the notch at whatever it
+            // lands nearest, so a later RB continues from where the player actually is rather than
+            // jumping back to wherever the pad last left off.
+            float wheel = mouse != null ? -mouse.scroll.ReadValue().y * 0.006f : 0f;
+            if (Mathf.Abs(wheel) > 1e-4f)
+            {
+                _zoomTarget = Mathf.Clamp(_zoomTarget + wheel * 0.22f, ZoomMin, ZoomMax);
+
+                int nearest = 0;
+                for (int i = 1; i < ZoomNotches.Length; i++)
+                    if (Mathf.Abs(ZoomNotches[i] - _zoomTarget) < Mathf.Abs(ZoomNotches[nearest] - _zoomTarget))
+                        nearest = i;
+                _zoomNotch = nearest;
+            }
             _zoom = Mathf.Lerp(_zoom, _zoomTarget, 1f - Mathf.Exp(-9f * dt));
 
             Vector3 camFwd = CameraForward();
@@ -4302,7 +4346,7 @@ namespace Cipher.Game
             else
             {
                 GUI.Label(new Rect(12, 108, 1200, 28),
-                    (pad ? "LS move  RS look  RT fire  Y airstrike  LB build  View start wave  Menu pause"
+                    (pad ? "LS move  RS look  RT fire  Y airstrike  RB zoom  LB build  View start wave  Menu pause"
                          : "WASD move  mouse look  LMB fire  RMB/Q airstrike  Tab build  Enter start wave  Esc pause")
                     + $"     gun: {_pickups.GunName}");
             }

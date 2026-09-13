@@ -32,8 +32,33 @@ namespace Cipher.Game
         private Material? _eyeMaterial;
         private float _bob;
 
+        /// <summary>
+        /// Where the bought boss lives, when the art pack has been imported.
+        ///
+        /// The Brute of Synty's four, for ADR-011's brief: "the butcher from Diablo, all huge belly
+        /// and like three times the size of a person".
+        /// </summary>
+        private const string ModelPath = "Collector/SM_Chr_ZombieBoss_Brute_01";
+
+        /// <summary>True when this body is a real model rather than the primitive composite.</summary>
+        private bool _isModel;
+
         public static CollectorBody Build(Func<Color, Material> material)
         {
+            // A REAL MODEL WHEN THERE IS ONE, the primitives when there is not, and the primitives
+            // are not dead code: art/ is gitignored, so a clean checkout has no Synty pack and must
+            // still run. The composite below is also the only version whose proportions we control,
+            // which is worth keeping while the owner decides between four bought silhouettes.
+            var prefab = Resources.Load<GameObject>(ModelPath);
+            if (prefab != null)
+            {
+                var go = Instantiate(prefab);
+                go.name = "Collector";
+                var model = go.AddComponent<CollectorBody>();
+                model._isModel = true;
+                return model;
+            }
+
             var root = new GameObject("Collector");
             var body = root.AddComponent<CollectorBody>();
 
@@ -104,9 +129,17 @@ namespace Cipher.Game
                 transform.rotation = Quaternion.LookRotation(facing.normalized, Vector3.up);
 
             // A slow lateral roll rather than a bounce: weight shifting from one leg to the other.
+            //
+            // ONLY FOR THE PRIMITIVE BODY. A real model is carrying an authored walk cycle that
+            // already has weight in it, and rolling the whole transform on top of one is the same
+            // mistake as MachineGait's procedural swing over the robot's clip: two systems moving
+            // the same object, and the animation loses.
             _bob += Time.deltaTime;
-            float roll = Mathf.Sin(_bob * 2.6f) * 4.5f;
-            transform.rotation *= Quaternion.Euler(0f, 0f, roll);
+            if (!_isModel)
+            {
+                float roll = Mathf.Sin(_bob * 2.6f) * 4.5f;
+                transform.rotation *= Quaternion.Euler(0f, 0f, roll);
+            }
 
             // The belly swings a beat behind the body, which is most of what sells the mass.
             if (_belly != null)
