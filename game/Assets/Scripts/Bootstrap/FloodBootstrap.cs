@@ -1934,7 +1934,19 @@ namespace Cipher.Game
                 // DESTROY the Animator rather than disable it. The legacy Animation component is
                 // suppressed while an Animator exists on the same GameObject, disabled or not, so a
                 // merely-disabled Animator leaves the character silently stuck in its bind pose.
-                foreach (var a0 in go.GetComponentsInChildren<Animator>()) Destroy(a0);
+                // KEEP an Animator that has a controller; destroy the rest.
+                //
+                // The rule this replaces was right for the CC0 pack and wrong for bought art. Those
+                // models ship with an Animator and NO clips, so it was pure obstruction -- an Animator
+                // suppresses the legacy Animation component even when disabled, leaving a body silently
+                // stuck in its bind pose. Synty characters are the opposite case: their clips are
+                // authored for Humanoid retargeting, and the Animator IS the mechanism that makes them
+                // work. Destroying it there is what put the whole crowd flat on its back in the road.
+                //
+                // A controller is the right test because it is exactly the difference: a leftover
+                // importer Animator, or one this project deliberately wired up.
+                foreach (var a0 in go.GetComponentsInChildren<Animator>())
+                    if (a0.runtimeAnimatorController == null) Destroy(a0);
 
                 if (_walkClip != null && _walkClip.legacy)
                 {
@@ -2109,7 +2121,19 @@ namespace Cipher.Game
 
             // An Animator suppresses the legacy Animation component even when disabled, so it has
             // to go rather than just be switched off.
-            foreach (var a0 in go.GetComponentsInChildren<Animator>()) Destroy(a0);
+            // KEEP an Animator that has a controller; destroy the rest.
+            //
+            // The rule this replaces was right for the CC0 pack and wrong for bought art. Those
+            // models ship with an Animator and NO clips, so it was pure obstruction -- an Animator
+            // suppresses the legacy Animation component even when disabled, leaving a body silently
+            // stuck in its bind pose. Synty characters are the opposite case: their clips are
+            // authored for Humanoid retargeting, and the Animator IS the mechanism that makes them
+            // work. Destroying it there is what put the whole crowd flat on its back in the road.
+            //
+            // A controller is the right test because it is exactly the difference: a leftover
+            // importer Animator, or one this project deliberately wired up.
+            foreach (var a0 in go.GetComponentsInChildren<Animator>())
+                if (a0.runtimeAnimatorController == null) Destroy(a0);
 
             EnsureClips();
             if (_clips.Count > 0)
