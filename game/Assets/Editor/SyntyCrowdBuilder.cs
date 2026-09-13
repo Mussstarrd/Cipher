@@ -44,7 +44,23 @@ namespace Cipher.Game.Editor
         private const string OutDir = "Assets/Resources/Civilians";
         private const string Retired = "Assets/RetiredQuaterniusCivilians";
         private const string AnimDir = "Assets/Synty/AnimationBaseLocomotion/Animations/Polygon/Masculine";
+        private const string IdleFbx = AnimDir + "/Idle/A_Idle_Standing_Masc.fbx";
         private const string WalkFbx = AnimDir + "/Locomotion/Walk/A_Walk_F_Masc.fbx";
+        private const string RunFbx = AnimDir + "/Locomotion/Run/A_Run_F_Masc.fbx";
+
+        /// <summary>
+        /// Metres per second each clip looks right at, and the whole cure for skating feet.
+        ///
+        /// These clips carry NO root motion -- measured, averageSpeed is zero on all of them -- so
+        /// there is no authored pace to read off them and the blend thresholds are the only place
+        /// the information can live. They are set against the sim, not against taste: SimConfig's
+        /// MoveSpeed is 3 m/s, which is a jog, so a body crossing the map sits most of the way
+        /// toward Run and a body pressed against a wall sits at Idle instead of scrubbing a walk
+        /// cycle in place.
+        /// </summary>
+        private const float IdleAt = 0f;
+        private const float WalkAt = 1.5f;
+        private const float RunAt = 3.6f;
         private const string ControllerPath = OutDir + "/SyntyCrowd.controller";
 
         [MenuItem("Cipher/Crowd/Build Synty Crowd")]
@@ -54,6 +70,8 @@ namespace Cipher.Game.Editor
 
             EnsureHumanoid(CharModels);
             EnsureHumanoid("Assets/Synty/AnimationBaseLocomotion/Animations/Polygon/Masculine/Locomotion/Walk");
+            EnsureHumanoid("Assets/Synty/AnimationBaseLocomotion/Animations/Polygon/Masculine/Locomotion/Run");
+            EnsureHumanoid("Assets/Synty/AnimationBaseLocomotion/Animations/Polygon/Masculine/Idle");
             RetireQuaternius();
 
             var controller = BuildController();
@@ -92,23 +110,65 @@ namespace Cipher.Game.Editor
         }
 
         /// <summary>
-        /// One controller, one looping state, the walk clip in it.
-        ///
-        /// Deliberately not a blend tree yet. The crowd's whole job right now is to be walking at
-        /// you, and a state machine with speed parameters is a second problem that should not be
-        /// solved in the same change as "do these characters stand up at all".
+        /// Idle, walk and run on a 1D blend tree driven by a Speed parameter in metres per second.
         /// </summary>
         private static AnimatorController? BuildController()
         {
-            var walk = AssetDatabase.LoadAllAssetsAtPath(WalkFbx)
-                                    .OfType<AnimationClip>()
-                                    .FirstOrDefault(c => !c.name.StartsWith("__preview__"));
-            if (walk == null) { Debug.LogError($"[Synty] no walk clip in {WalkFbx}"); return null; }
+            var idle = Clip(IdleFbx);
+            var walk = Clip(WalkFbx);
+            var run = Clip(RunFbx);
+            if (idle == null || walk == null || run == null)
+            {
+                Debug.LogError("[Synty] idle/walk/run not all present; cannot build a blend tree");
+                return null;
+            }
 
-            var controller = AnimatorController.CreateAnimatorControllerAtPathWithClip(ControllerPath, walk);
-            Debug.Log($"[Synty] controller from '{walk.name}' ({walk.length:F2}s, humanMotion={walk.humanMotion})");
+            var controller = AnimatorController.CreateAnimatorControllerAtPath(ControllerPath);
+            controller.AddParameter(SpeedParam, AnimatorControllerParameterType.Float);
+
+            // A ONE-DIMENSIONAL BLEND TREE, NOT A SINGLE STATE WITH ITS PLAYBACK SCALED.
+            //
+            // The first version had one walk state and scaled animator.speed by
+            // travelSpeed / a constant, and it skated visibly. It could not do anything else: these
+            // clips have no root motion, so scaling playback changes how fast the legs cycle without
+            // changing how far a stride covers, and the two only agree at exactly one speed. Worse,
+            // a stationary body got a very slow walk rather than an idle -- the "walking in place"
+            // half of the same bug.
+            //
+            // A blend tree fixes both by asking the right question. Instead of "how fast should this
+            // clip play", it asks "which clip is this body's speed", and at zero that answer is
+            // standing still.
+            var tree = new BlendTree
+            {
+                name = "Locomotion",
+                blendType = BlendTreeType.Simple1D,
+                blendParameter = SpeedParam,
+                useAutomaticThresholds = false,
+            };
+            tree.AddChild(idle, IdleAt);
+            tree.AddChild(walk, WalkAt);
+            tree.AddChild(run, RunAt);
+
+            AssetDatabase.AddObjectToAsset(tree, controller);
+
+            var machine = controller.layers[0].stateMachine;
+            var state = machine.AddState("Locomotion");
+            state.motion = tree;
+            machine.defaultState = state;
+
+            EditorUtility.SetDirty(controller);
+            Debug.Log($"[Synty] blend tree: idle '{idle.name}' @{IdleAt}, walk '{walk.name}' @{WalkAt}, " +
+                      $"run '{run.name}' @{RunAt} m/s");
             return controller;
         }
+
+        /// <summary>The parameter SkinnedGait writes each frame. Metres per second, not a 0..1 ratio.</summary>
+        public const string SpeedParam = "Speed";
+
+        private static AnimationClip? Clip(string fbx) =>
+            AssetDatabase.LoadAllAssetsAtPath(fbx)
+                         .OfType<AnimationClip>()
+                         .FirstOrDefault(c => !c.name.StartsWith("__preview__"));
 
         /// <summary>
         /// Moves the CC0 civilians OUT of Resources/Civilians, without deleting them.

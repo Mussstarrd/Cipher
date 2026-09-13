@@ -22,8 +22,23 @@ namespace Cipher.Game
     [DisallowMultipleComponent]
     public sealed class SkinnedGait : MonoBehaviour
     {
-        /// <summary>Metres per second the walk clip was authored for; playback scales off it.</summary>
-        private const float WalkReference = 1.45f;
+        /// <summary>
+        /// The blend-tree parameter, in METRES PER SECOND rather than a 0..1 ratio.
+        ///
+        /// Feeding a real speed keeps the calibration in one place -- the tree's thresholds, which
+        /// were set against SimConfig.MoveSpeed -- instead of splitting it between a normaliser here
+        /// and thresholds there, where the two drift apart and nobody can say which is wrong.
+        /// </summary>
+        private static readonly int SpeedId = Animator.StringToHash("Speed");
+
+        /// <summary>
+        /// How quickly the blend follows a change of speed.
+        ///
+        /// Damped, because the crowd's reported speed is noisy -- the sim steps on a fixed tick and
+        /// the view does not, so the raw per-frame figure alternates between a full step and zero.
+        /// Feeding that straight in makes a body flicker between walk and run every frame.
+        /// </summary>
+        private const float BlendSmoothing = 0.12f;
 
         /// <summary>How long the body takes to go over. Matched to the machines, so a mixed wave falls together.</summary>
         public float FallSeconds { get; set; } = 0.85f;
@@ -65,12 +80,14 @@ namespace Cipher.Game
             if (_animator == null || _dying) return;
 
             // A NEGATIVE SPEED MEANS CONTACT, not reverse. The crowd signals "this body is on the
-            // hero right now" by passing -1, which the legacy path answers with a punch clip. There
-            // is no attack clip in Base Locomotion, so the honest thing is to stop the stride dead
-            // rather than have someone mauling the player at a brisk walk.
-            if (metresPerSecond < 0f) { _animator.speed = 0.12f; return; }
+            // hero right now" by passing -1. There is no attack clip in Base Locomotion, so the
+            // honest answer is to stand still rather than have someone mauling the player at a jog.
+            float target = metresPerSecond < 0f ? 0f : metresPerSecond;
 
-            _animator.speed = Mathf.Clamp(metresPerSecond / WalkReference, 0.05f, 1.8f);
+            // SetFloat's own damping, rather than a lerp we keep ourselves: it is frame-rate correct
+            // and it is the thing the Animator samples, so there is no second copy of the value to
+            // fall out of step.
+            _animator.SetFloat(SpeedId, target, BlendSmoothing, Time.deltaTime);
         }
 
         /// <summary>Go over. The chip finished its decrypt and the body is no longer being driven.</summary>
@@ -100,6 +117,7 @@ namespace Cipher.Game
 
             _animator.enabled = true;
             _animator.speed = 1f;
+            _animator.SetFloat(SpeedId, 0f);   // a new occupant starts standing, not mid-sprint
 
             // Desynchronise. Fifty bodies entering on the same frame otherwise march in perfect
             // step, which is the single most obvious tell that a crowd is fake.

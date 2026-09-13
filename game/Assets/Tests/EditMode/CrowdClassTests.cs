@@ -52,16 +52,28 @@ namespace Cipher.Game.Tests
         {
             // The spawn director hands out consecutive ids, so a hash that correlates on adjacent
             // inputs would deliver a wave as blocks of one species. The avalanche exists for this.
-            int longest = 0, run = 0;
-            var previous = BodyClass.Signed;
-            for (int id = 0; id < 2000; id++)
+            //
+            // PINNED TO THE DESIGN SHARE, NOT THE LIVE ONE. The machine class is switched off while
+            // it has no art to draw it with, and at a share of zero every body is Signed, every run
+            // is 2000 long, and this test fails while testing nothing -- the distribution it exists
+            // to guard is not even exercised. What is under test here is the HASH, so the hash is
+            // what it sets up.
+            float live = CrowdCasting.HumanoidShare;
+            CrowdCasting.HumanoidShare = CrowdCasting.DesignShare;
+            try
             {
-                var c = CrowdCasting.ClassOf(Archetype.Runner, id, 3);
-                run = c == previous ? run + 1 : 1;
-                previous = c;
-                longest = Mathf.Max(longest, run);
+                int longest = 0, run = 0;
+                var previous = BodyClass.Signed;
+                for (int id = 0; id < 2000; id++)
+                {
+                    var c = CrowdCasting.ClassOf(Archetype.Runner, id, 3);
+                    run = c == previous ? run + 1 : 1;
+                    previous = c;
+                    longest = Mathf.Max(longest, run);
+                }
+                Assert.That(longest, Is.LessThan(24), "the wave arrives in species blocks");
             }
-            Assert.That(longest, Is.LessThan(24), "the wave arrives in species blocks");
+            finally { CrowdCasting.HumanoidShare = live; }
         }
 
         [Test]

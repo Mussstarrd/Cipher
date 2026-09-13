@@ -73,7 +73,35 @@ namespace Cipher.Game
         /// has to give the same answer for a picture, or the player aims at a robot and is told
         /// there is nothing there.
         /// </summary>
-        public const float HumanoidShare = 0.30f;
+        public static float HumanoidShare { get; set; } = NoMachineArtYet;
+
+        /// <summary>
+        /// ZERO, UNTIL THE MACHINES HAVE ART THAT BELONGS IN THIS GAME.
+        ///
+        /// ADR-003's number is 0.30 and it is not retired -- about a third of a wave SHOULD be
+        /// hacked service humanoids, and <see cref="DesignShare"/> keeps that figure. The problem is
+        /// purely that we have nothing to draw them with. They are built from CreatePrimitive cubes
+        /// and cylinders, which was a defensible look while every enemy was a box, and became
+        /// indefensible the moment real people walked in beside them. Owner, 2026-09-12: "it is
+        /// still full of your block robots and everybody is walking in place sliding everywhere."
+        ///
+        /// The bought library has no answer either. Its only robot content is the POLYGON Mech Pack,
+        /// which is military walkers -- its own store keywords say "gundam" -- and ADR-003's machines
+        /// are a delivery walker, a groundskeeper and a clubhouse attendant. Putting a battle mech in
+        /// a lake community would be the same genre collision the owner already rejected once.
+        ///
+        /// So the class is switched off rather than shipped ugly. A coherent crowd of real people is
+        /// worth more right now than an incoherent crowd with more variety in it, and this is one
+        /// number to put back.
+        ///
+        /// THE SIM AGREES BY CONSTRUCTION: FloodBootstrap pushes this into AgentWorld.MachineShare,
+        /// so ADR-010's turncoat drone is told there is nothing to convert rather than converting
+        /// something the player cannot see.
+        /// </summary>
+        public const float NoMachineArtYet = 0f;
+
+        /// <summary>ADR-003's intended share, for when there is art. Not currently in force.</summary>
+        public const float DesignShare = 0.30f;
 
         /// <summary>
         /// The body class for an agent. <paramref name="seed"/> is the match seed, so two matches
