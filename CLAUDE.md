@@ -683,7 +683,8 @@ substitute: it references the sim's SOURCE, not its test project.
   `-exodus-scenario <id>` opens straight onto any position -- **before this, position three could not
   be looked at at all**, only played to; `-exodus-perf <seconds>` samples frame times and prints
   percentiles; `-exodus-cam-diag` prints the camera's wanted/allowed/target/actual;
-  `-exodus-machine-models` re-enables the box-robot model path.
+  `-exodus-machine-models` re-enables the box-robot model path. `-exodus-autoplay <seconds>` plays the position
+  through the real build model (above).
 - **MEASURE FRAME COST WITH PERCENTILES AND A FRAME-COUNT WARM-UP.** A mean hides the thing that ruins
   a game: forty good frames and one 60ms frame average out fine and read as a stutter. And a
   time-only warm-up is satisfied by **one frame longer than the warm-up** -- startup took 4.9s in a
@@ -699,6 +700,21 @@ substitute: it references the sim's SOURCE, not its test project.
   say "gundam", and ADR-003's machines are a delivery walker and a clubhouse attendant. The Spitter is
   **still a box** and is deliberately left so: ADR-003 names it a hacked humanoid with a sprayer, and
   recasting it as a person would edit the fiction rather than defer it. Owner's call.
+- **THE FOLDER IS NOT THE NAMESPACE. EVERYTHING UNDER `Assets/Scripts/` IS PLAIN `Cipher.Game`.**
+  `Assets/Scripts/Bootstrap/FloodBootstrap.cs` declares `namespace Cipher.Game`, not
+  `Cipher.Game.Bootstrap`, and so does everything beside it. A new file given the folder-shaped
+  namespace compiles perfectly, exports a real type, and is **invisible to every caller** -- the
+  error lands on the CALL SITE (`CS0103: the name does not exist`), never on the new file, and the
+  build log cheerfully lists the file in the compile set the whole time. Four rebuilds went into
+  that. `grep -n "^namespace" <the file beside yours>` before writing a new script, not after.
+- **`-exodus-autoplay <seconds>` PLAYS THE GAME; USE IT BEFORE JUDGING ANY POSITION.** It builds
+  through the real `BuildModel` and then lets the match run, so waves actually clear and the second
+  half of a mission executes. It does not shoot, repair, dodge or re-site, so its results are a
+  FLOOR and only comparable BETWEEN positions -- see `docs/design/autoplay-baseline.md` for the
+  campaign table and the blind spots. It immediately overturned a change I was about to make:
+  Crowbar looked punishing in isolation and is in fact **the only position in the campaign that
+  clears a wave** against the same bot that loses The Pump House in 52 seconds.
+
 - **A SAPPER CAN ONLY BE BORN DURING A WAVE'S SPAWN WINDOW, AND THAT WINDOW IS SHORT.**
   `sapperFirstAt` and `sapperSpacing` are written in match seconds but they are only ever SAMPLED on
   a spawn event -- `SpawnDirector.Decide` runs once per body, and nothing calls it between waves.
