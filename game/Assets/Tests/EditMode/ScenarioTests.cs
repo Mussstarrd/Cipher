@@ -127,6 +127,52 @@ namespace Cipher.Game.Tests
         }";
 
         [Test]
+        public void AMixKeyMustNameARealArchetype()
+        {
+            // This reader is strict everywhere else -- an unknown top-level key is a hard error --
+            // and `mix` was the one place that accepted anything at all. Since the field does not
+            // steer archetype selection yet (see WaveSpec), a misspelled name was doubly invisible:
+            // it did nothing, and it did nothing in exactly the way a correct name does nothing.
+            string json = Minimal.Replace(
+                @"""spawnPerSecond"": 4 }",
+                @"""spawnPerSecond"": 4, ""mix"": { ""Saper"": 1.0 } }");
+            var ex = Assert.Throws<ScenarioException>(() => ScenarioReader.Read(json));
+            Assert.That(ex!.Message, Does.Contain("Saper"));
+            Assert.That(ex.Message, Does.Contain("Sapper"), "the message should show what was meant");
+        }
+
+        [Test]
+        public void ARealArchetypeInTheMixIsAccepted()
+        {
+            string json = Minimal.Replace(
+                @"""spawnPerSecond"": 4 }",
+                @"""spawnPerSecond"": 4, ""mix"": { ""Runner"": 0.8, ""Sapper"": 0.2 } }");
+            var def = ScenarioReader.Read(json);
+            Assert.That(def.Waves[0].Mix["Sapper"], Is.EqualTo(0.2f).Within(0.0001f));
+        }
+
+        [Test]
+        public void SapperSpacingCannotBeZero()
+        {
+            // Zero spacing is not "very aggressive", it is a sapper on every spawn -- a different
+            // game, arrived at by a typo.
+            string json = Minimal.Replace(
+                @"""objectives"":",
+                @"""director"": { ""sapperSpacing"": 0 }, ""objectives"":");
+            var ex = Assert.Throws<ScenarioException>(() => ScenarioReader.Read(json));
+            Assert.That(ex!.Message, Does.Contain("sapperSpacing"));
+        }
+
+        [Test]
+        public void SapperSpacingIsAuthorable()
+        {
+            string json = Minimal.Replace(
+                @"""objectives"":",
+                @"""director"": { ""sapperSpacing"": 22 }, ""objectives"":");
+            Assert.That(ScenarioReader.Read(json).Director.SapperSpacing, Is.EqualTo(22f));
+        }
+
+        [Test]
         public void ReadsTheMinimalScenario()
         {
             var def = ScenarioReader.Read(Minimal);

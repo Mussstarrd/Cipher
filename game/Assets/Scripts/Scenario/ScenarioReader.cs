@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using Cipher.Game.Match;
+using Cipher.Sim.Agents;
 using Cipher.Sim.Grid;
 
 
@@ -390,7 +391,8 @@ namespace Cipher.Game.Scenarios
             d.RejectUnknownKeys("seed", "sapperFirstAt", "sapperChance", "spitterFirstAt",
                                 "spitterChance", "spitterPity", "hunterShare", "wreckerShare",
                                 "flankShare", "flankPaceScale",
-                                "maxSappersAlive", "maxSpittersAlive", "maxActiveBreaches");
+                                "maxSappersAlive", "maxSpittersAlive", "maxActiveBreaches",
+                                "sapperSpacing");
 
             var cfg = new DirectorConfig();
             cfg.SapperFirstAt = d.Opt("sapperFirstAt")?.AsFloat() ?? cfg.SapperFirstAt;
@@ -417,6 +419,17 @@ namespace Cipher.Game.Scenarios
             if (cfg.FlankShare < 0f || cfg.FlankShare > 1f)
                 throw new ScenarioException(
                     $"{d.Path}: flankShare is {cfg.FlankShare:0.##}; it is a share of the wave and must be 0..1");
+            // THE FLOOR BETWEEN SAPPERS, and it has to be per-mission because it is the only
+            // knob that decides whether a Sapper is an event or a mechanic. The global 60s is
+            // right for a position where one shows up to punish a lazy wall. It is wrong for the
+            // position that INTRODUCES them: mission 6 is "your own maze", and one sapper a minute
+            // against a grid you are actively walling is a curiosity, not a lesson.
+            cfg.SapperSpacing = d.Opt("sapperSpacing")?.AsFloat() ?? cfg.SapperSpacing;
+            if (cfg.SapperSpacing <= 0f)
+                throw new ScenarioException(
+                    $"{d.Path}: sapperSpacing is {cfg.SapperSpacing:0.##}; zero or less means a sapper "
+                    + "every single spawn, which is not an escalation, it is a different game");
+
             cfg.MaxSappersAlive = d.Opt("maxSappersAlive")?.AsInt() ?? cfg.MaxSappersAlive;
             cfg.MaxSpittersAlive = d.Opt("maxSpittersAlive")?.AsInt() ?? cfg.MaxSpittersAlive;
             cfg.MaxActiveBreaches = d.Opt("maxActiveBreaches")?.AsInt() ?? cfg.MaxActiveBreaches;
@@ -482,6 +495,15 @@ namespace Cipher.Game.Scenarios
                     {
                         float share = mix.Get(key).AsFloat();
                         if (share < 0f) throw new ScenarioException($"{mix.Path}.{key}: a share cannot be negative");
+                        // A MIX KEY MUST NAME A REAL ARCHETYPE. Everything else in this reader is
+                        // strict -- an unknown top-level key is a hard error -- and this was the one
+                        // place that took anything at all. "Sapper" and "Saper" were equally welcome
+                        // and equally silent, which is the worst possible combination in a file the
+                        // author cannot run.
+                        if (!System.Enum.IsDefined(typeof(Archetype), key))
+                            throw new ScenarioException(
+                                $"{mix.Path}.{key}: not an archetype. Known: "
+                                + string.Join(", ", System.Enum.GetNames(typeof(Archetype))));
                         spec.Mix[key] = share;
                         total += share;
                     }

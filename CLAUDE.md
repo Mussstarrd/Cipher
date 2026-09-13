@@ -699,6 +699,18 @@ substitute: it references the sim's SOURCE, not its test project.
   say "gundam", and ADR-003's machines are a delivery walker and a clubhouse attendant. The Spitter is
   **still a box** and is deliberately left so: ADR-003 names it a hacked humanoid with a sprayer, and
   recasting it as a person would edit the fiction rather than defer it. Owner's call.
+- **`waves[].mix` DOES NOT STEER ANYTHING. THE DIRECTOR KNOBS DO.** The mix block is parsed,
+  validated to sum to 1, stored on `WaveSpec` -- and read by nothing, because the spawn director is
+  global rather than per-wave. `WaveSpec`'s own doc comment has always said so; it is a placeholder
+  kept so that making the director per-wave is a change in one class instead of in six mission
+  files. It is still a trap, because it looks exactly like the archetype lever and it validates.
+  Authoring a Sapper escalation there and expecting sappers is a wasted mission. **The levers that
+  actually fire are `director.sapperChance` / `sapperFirstAt` / `sapperSpacing` / `maxSappersAlive`
+  / `maxActiveBreaches`,** and the defaults (1 sapper per 200 spawns, 60s apart, 1 alive) are tuned
+  for a position where one turns up to punish a lazy wall -- not for the position that teaches them.
+  Mix keys are now validated against the `Archetype` enum: `"Saper"` used to be accepted in silence,
+  which is the worst case, since it fails identically to a correct key.
+
 - **WHEN SOMETHING FAILS SILENTLY, PRINT THE STATE -- and this file has said so for weeks.** It was
   broken three times in one session: two builds guessing at the camera before probing the grid (which
   answered it in one), a working camera fix reverted as "unverified" when the answer was to instrument
