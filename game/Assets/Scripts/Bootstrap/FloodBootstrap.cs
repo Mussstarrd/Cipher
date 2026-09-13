@@ -331,6 +331,7 @@ namespace Cipher.Game
             ScreenshotHarness.InstallIfRequested(gameObject);
             ClipHarness.InstallIfRequested(gameObject);
             PerfHarness.InstallIfRequested(gameObject);
+            AutoPlayHarness.InstallIfRequested(gameObject);
         }
 
         // ------------------------------------------------------------------ setup
@@ -3218,6 +3219,115 @@ namespace Cipher.Game
         public int AliveForPerf => _world?.AliveCount ?? -1;
 
         /// <summary>Starts the first wave, so a smoke capture can actually see combat. Harness only.</summary>
+        // ---------------------------------------------------------------- autoplay
+        // Enough of the match surface for a harness to PLAY the game instead of watching wave one
+        // stall forever. Without a player nothing dies, wave one never clears, and every wave after
+        // it -- plus every Spitter, which needs a turret to hunt, and every Sapper worth the name,
+        // which needs a player-built wall to sap -- has literally never run outside a human session.
+
+        public MatchPhase PhaseForCapture => _match.Phase;
+        public int WaveNumberForCapture => _match.WaveNumber;
+        public int WaveCountForCapture => _match.WaveCount;
+        public int VaultHpForCapture => _match.VaultHp;
+        public int VaultMaxHpForCapture => _match.VaultMaxHp;
+        public int CashForCapture => _match.Bank.Cash;
+        public long KillsForCapture => _world?.TotalKills ?? 0;
+        public int TurretCountForCapture => _turrets?.Turrets.Count ?? 0;
+        public int BreachableWallsForCapture => BreachableWallCount();
+        public (int spotted, int planted, int opened, int collapsed) BreachTallyForCapture =>
+            (_sappersSpotted, _breachesPlanted, _breachesOpened, _breachesCollapsed);
+
+        /// <summary>
+        /// Spends whatever is in the bank on a defence, through the SAME BuildModel the player
+        /// drives -- cost, legality and the seal rules all apply. A harness that called
+        /// _turrets.Place directly would be testing a code path nobody can reach with a controller.
+        ///
+        /// Sites are chosen geometrically, on rings around the truck, and simply offered to
+        /// TryPlace: the model is the authority on whether a cell is legal, so the harness does not
+        /// need to reimplement -- or drift from -- that judgement.
+        /// </summary>
+        public int AutoBuildForCapture(int maxTurrets, int maxBarricades)
+        {
+            if (_build == null) return 0;
+
+            int turretOption = -1, barricadeOption = -1;
+            for (int i = 0; i < _build.Options.Count; i++)
+            {
+                if (turretOption < 0 && _build.Options[i].Item == BuildItem.Turret) turretOption = i;
+                if (barricadeOption < 0 && _build.Options[i].Item == BuildItem.Barricade) barricadeOption = i;
+            }
+
+            int built = 0;
+            built += AutoBuildRing(turretOption, maxTurrets, radius: 11, step: 23);
+            // Barricades go OUTSIDE the guns, in CONTINUOUS RUNS across a street rather than
+            // scattered on a ring. This is not tidiness: a Sapper only plants when breaching SAVES
+            // WALKING (PlanSapper scores walk-to-wall plus the far side's integration cost against
+            // the route it already has), so a barricade you can simply walk around is a barricade
+            // no Sapper will ever look at twice. The first version of this harness sprinkled eight
+            // of them round a circle, and the director chose three Sappers that targeted nothing.
+            built += AutoWallStreets(barricadeOption, maxBarricades, radius: 16);
+            SyncTurretObjects();
+            return built;
+        }
+
+        /// <summary>
+        /// Lays barricades in runs that span a street, the way a player does: walk out from the
+        /// truck along a heading, then build sideways until the run hits something solid. A run
+        /// that reaches scenery on both ends has actually closed a route, which is the only kind of
+        /// wall the Sapper's cost model can see.
+        /// </summary>
+        private int AutoWallStreets(int option, int wanted, int radius)
+        {
+            if (option < 0 || wanted <= 0) return 0;
+            _build.SelectOption(option);
+
+            int built = 0;
+            // Four headings, because a centred objective is approached from four sides (ADR-012).
+            for (int q = 0; q < 4 && built < wanted; q++)
+            {
+                int dx = q == 0 ? 1 : q == 1 ? -1 : 0;
+                int dy = q == 2 ? 1 : q == 3 ? -1 : 0;
+                int ax = GoalX + dx * radius, ay = GoalY + dy * radius;
+
+                // Sideways is perpendicular to the heading.
+                int sx = dy, sy = dx;
+                for (int step = -6; step <= 6 && built < wanted; step++)
+                {
+                    int x = ax + sx * step, y = ay + sy * step;
+                    if (x < 1 || y < 1 || x >= GridW - 1 || y >= GridH - 1) continue;
+                    _build.SetCursor(x, y);
+                    if (_build.TryPlace()) built++;
+                }
+            }
+            return built;
+        }
+
+        private int AutoBuildRing(int option, int wanted, int radius, int step)
+        {
+            if (option < 0 || wanted <= 0) return 0;
+            _build.SelectOption(option);
+
+            int built = 0;
+            // Walk the ring in a fixed stride so the sites are spread rather than clustered, and
+            // deterministic so two runs of the harness are comparable.
+            for (int d = 0; d < 360 && built < wanted; d += step)
+            {
+                float rad = d * Mathf.Deg2Rad;
+                for (int shrink = 0; shrink <= 6; shrink++)
+                {
+                    int r = radius - shrink;
+                    if (r < 3) break;
+                    int x = GoalX + Mathf.RoundToInt(Mathf.Cos(rad) * r);
+                    int y = GoalY + Mathf.RoundToInt(Mathf.Sin(rad) * r);
+                    if (x < 1 || y < 1 || x >= GridW - 1 || y >= GridH - 1) continue;
+
+                    _build.SetCursor(x, y);
+                    if (_build.TryPlace()) { built++; break; }
+                }
+            }
+            return built;
+        }
+
         public void StartWaveForCapture() => _match.StartWaveNow();
 
         /// <summary>Opens the skill screen with points banked, for a capture. Harness only.</summary>
