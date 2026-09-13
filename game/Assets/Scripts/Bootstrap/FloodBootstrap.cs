@@ -330,6 +330,7 @@ namespace Cipher.Game
 
             ScreenshotHarness.InstallIfRequested(gameObject);
             ClipHarness.InstallIfRequested(gameObject);
+            PerfHarness.InstallIfRequested(gameObject);
         }
 
         // ------------------------------------------------------------------ setup
@@ -3173,6 +3174,9 @@ namespace Cipher.Game
             var at = _hero.Position + new Vec2(-9f, 0f);
             _world.SpawnArchetype(at, Archetype.Collector);
         }
+
+        /// <summary>Living agents, for the perf harness to correlate a hitch against. Harness only.</summary>
+        public int AliveForPerf => _world?.AliveCount ?? -1;
 
         /// <summary>Starts the first wave, so a smoke capture can actually see combat. Harness only.</summary>
         public void StartWaveForCapture() => _match.StartWaveNow();
