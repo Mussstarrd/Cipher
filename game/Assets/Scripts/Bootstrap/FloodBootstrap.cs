@@ -3302,9 +3302,22 @@ namespace Cipher.Game
                 {
                     _stallGaveUpLogged = true;
                     Debug.LogWarning($"[Stall] wave {_match.WaveNumber} STILL frozen after " +
-                                     $"{MaxStallSappersPerWave} sappers, {_world.HostileCount} up. " +
-                                     "Bodies that cannot progress and cannot be reached -- see " +
-                                     "docs/design/autoplay-baseline.md, this is not solved.");
+                                     $"{MaxStallSappersPerWave} sappers, {_world.HostileCount} up.");
+                    // NAME THE BODIES. Two fixes have now been aimed at this freeze on a guess --
+                    // one of them a sim change that passes its own unit test and does nothing here,
+                    // because the bodies turned out not to be sealed at all. Print what they
+                    // actually are before touching anything else.
+                    for (int id = 0; id < _world.Count; id++)
+                    {
+                        if (!_world.IsAlive(id)) continue;
+                        var at = _world.PositionOf(id);
+                        int cx = Mathf.Clamp((int)at.X, 0, GridW - 1);
+                        int cy = Mathf.Clamp((int)at.Y, 0, GridH - 1);
+                        Debug.LogWarning($"[Stall]   id {id} {_world.ArchetypeOf(id)}/{_world.IntentOf(id)} " +
+                                         $"at ({at.X:F1},{at.Y:F1}) cell ({cx},{cy}) " +
+                                         $"hasPath={_field.HasPath(cx, cy)} onGate={_map.IsGate(cx, cy)} " +
+                                         $"wall={_map.KindAt(cx, cy)}");
+                    }
                 }
                 _lastProgressAt = _matchSeconds;
                 return;

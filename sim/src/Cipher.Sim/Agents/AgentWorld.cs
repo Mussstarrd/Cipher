@@ -197,6 +197,21 @@ namespace Cipher.Sim.Agents
                         break;
                 }
 
+                // A BODY THAT CANNOT REACH THE OBJECTIVE GOES AT WHAT IS STOPPING IT.
+                //
+                // The flow field's direction on an unreachable cell is zero -- it was never
+                // written -- so a Runner sealed into a pocket by player walls follows nothing. It
+                // drifts on separation alone and stands there until something kills it. That is not
+                // a stalemate the player has to break, it is a wave that cannot end: measured on
+                // Crowbar, four bodies behind a barricade run no turret covered held wave one open
+                // for SIX MINUTES while the kill count moved by one.
+                //
+                // Wrecking is the behaviour that already exists for exactly this situation, so a
+                // pathless body borrows it rather than getting one of its own. It also reads right:
+                // they came for the truck, the way is shut, they pull at the thing shutting it.
+                var (px, py) = _map.WorldToCell(pos);
+                if (!_flowField.HasPath(px, py) && StepWallWrecker(i, pos, dt, gates)) continue;
+
                 // Pace is the individual's own: sprinters are on you while the slow ones are still
                 // crossing the field, which is what gives a wave a shape.
                 StepRunner(i, pos, dt, gates, _config.MoveSpeed * _pace[i]);

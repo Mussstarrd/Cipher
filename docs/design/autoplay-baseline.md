@@ -66,10 +66,35 @@ gate. Capped at **three per wave** — it is a deadlock breaker, not a difficult
 it sends roughly twenty extra bodies across five minutes, which is a second wave nobody asked for.
 
 **What this does not fix.** Progress resumed (kills went 40 → 49 where they had gone 40 → 40), but
-the wave still did not clear. Three or four bodies remain that cannot make progress and cannot be
-reached, and three sappers did not change that. After the cap is spent the game now logs a loud
-warning rather than freezing quietly. The root cause — agents that neither advance nor die behind
-player walls — **is not solved**, and it is the single most important open problem on this list.
+the wave still did not clear. After the cap is spent the game logs a loud warning rather than
+freezing quietly — and that warning now **names every body still up**, which finally produced a
+diagnosis instead of another guess:
+
+```
+[Stall] id  2 Runner/HuntStructure at (79.1,56.5) hasPath=True  wall=None
+[Stall] id 21 Runner/WreckWall     at (56.0,40.1) hasPath=True  wall=Barricade
+[Stall] id 24 Runner/WreckWall     at (46.1,50.0) hasPath=True  wall=Barricade
+[Stall] id 44 Sapper/Vault         at (43.0,42.0) hasPath=True  wall=None
+```
+
+**Every one of them has a path.** The freeze was never about sealed bodies, which is what the first
+two attempts at it assumed. Three separate causes, in descending order of blame:
+
+1. **`StepStructureHunter` has no give-up.** It acquires the nearest turret within
+   `HunterAcquireRange`, and while the distance exceeds `HunterContactRange` it steers and returns
+   `true` — *every tick, forever*. A hunter with a barricade between it and the gun slides along
+   the wall and never closes, never falls through to the objective, and never dies. This is the
+   main offender and the next thing to fix.
+2. **Wall wreckers are working, just slowly.** Two of the four are chewing a barricade at
+   `WreckerWallDamage` per `WreckerAttackInterval` against `DefaultWallHp` 200. Nine collapses in
+   420 seconds is progress, and arguably correct; it is only a problem because nothing else is
+   happening.
+3. **A stall-sent Sapper that does not arrive.** Pathed, `Intent.Vault`, and not closing. Unexplained.
+
+A sim change did land alongside this diagnosis and is worth keeping on its own merits: a body whose
+cell has no path now falls back to wrecking, because `DirectionAt` on an unreachable cell returns a
+zero vector and such a body previously followed nothing at all. It has tests
+(`SealedBodyTests`). **It does not fix the freeze**, because the frozen bodies were never sealed.
 
 ## Known blind spots
 
