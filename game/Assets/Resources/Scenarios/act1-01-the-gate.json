@@ -438,8 +438,8 @@
     }
   ],
   "heroSpawn": {
-    "x": 112,
-    "y": 48
+    "x": 64,
+    "y": 44
   },
   "spawnCells": [
     {
@@ -458,10 +458,15 @@
       "y": 76,
       "gate": "clubhouse-lawn",
       "flank": true
+    },
+    {
+      "x": 126,
+      "y": 48,
+      "gate": "the-back-road"
     }
   ],
   "vault": {
-    "x": 124,
+    "x": 64,
     "y": 48,
     "hp": 25
   },
