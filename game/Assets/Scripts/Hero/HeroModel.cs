@@ -13,7 +13,12 @@ namespace Cipher.Game.Hero
         public float MoveSpeed { get; set; } = 7f;            // cells / s (runners do 3)
         public float MaxHealth { get; set; } = 100f;
         public float FireInterval { get; set; } = 1f / 12f;   // twelve packets a second
-        public float GunDamage { get; set; } = 6f;            // runners have 10 hp: two taps
+        // TWO TAPS. That comment used to say "runners have 10 hp: two taps" while the scenarios
+        // give them 34. The gun was tuned once, the content moved 3.4x, and nobody moved the gun:
+        // six hits per body at twelve a second, half a second of held trigger for something that
+        // does not react until the sixth round. The owner's kids: "cool but not fun". Restored to
+        // the documented intent against the health the content actually ships.
+        public float GunDamage { get; set; } = 17f;           // runners have 34 hp: two taps
         public float GunRange { get; set; } = 25f;
         public float GunHitRadius { get; set; } = 0.45f;
         // Wider than SimConfig.HeroContactRange, deliberately and with margin: the swarm closes to

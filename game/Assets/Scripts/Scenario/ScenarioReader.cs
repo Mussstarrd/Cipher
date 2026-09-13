@@ -392,7 +392,7 @@ namespace Cipher.Game.Scenarios
                                 "spitterChance", "spitterPity", "hunterShare", "wreckerShare",
                                 "flankShare", "flankPaceScale",
                                 "maxSappersAlive", "maxSpittersAlive", "maxActiveBreaches",
-                                "sapperSpacing");
+                                "sapperSpacing", "collectorAtWave");
 
             var cfg = new DirectorConfig();
             cfg.SapperFirstAt = d.Opt("sapperFirstAt")?.AsFloat() ?? cfg.SapperFirstAt;
@@ -430,6 +430,9 @@ namespace Cipher.Game.Scenarios
                     $"{d.Path}: sapperSpacing is {cfg.SapperSpacing:0.##}; zero or less means a sapper "
                     + "every single spawn, which is not an escalation, it is a different game");
 
+            cfg.CollectorAtWave = d.Opt("collectorAtWave")?.AsInt() ?? cfg.CollectorAtWave;
+            if (cfg.CollectorAtWave < 0)
+                throw new ScenarioException($"{d.Path}: collectorAtWave is {cfg.CollectorAtWave}; use 0 for never");
             cfg.MaxSappersAlive = d.Opt("maxSappersAlive")?.AsInt() ?? cfg.MaxSappersAlive;
             cfg.MaxSpittersAlive = d.Opt("maxSpittersAlive")?.AsInt() ?? cfg.MaxSpittersAlive;
             cfg.MaxActiveBreaches = d.Opt("maxActiveBreaches")?.AsInt() ?? cfg.MaxActiveBreaches;

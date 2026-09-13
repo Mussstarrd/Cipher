@@ -635,7 +635,7 @@ namespace Cipher.Game
             {
                 float mid = (frontD + backD) * 0.5f;
                 float span = frontD - backD;
-                float fat = Curves.PulseRadius(p, len <= 0f ? 0f : mid / len) * 1.8f * p.HazeFat;
+                float fat = Curves.PulseRadius(p, len <= 0f ? 0f : mid / len) * 1.15f * p.HazeFat;
                 _spheres.Add(Matrix4x4.TRS(b.A + dir * mid,
                                            Quaternion.LookRotation(dir, Vector3.up),
                                            new Vector3(fat, fat, span)),
@@ -1180,8 +1180,17 @@ namespace Cipher.Game
             public const int MaxWavefronts = 14;
 
             /// <summary>Radius of the wavefront as it leaves the horn, and once it has spread.</summary>
-            public const float WaveNearRadius = 0.13f;
-            public const float WaveFarRadius = 0.46f;
+            // Owner: "the graphic of my laser blaster is too big, it radiates and basically covers
+            // the entire mob I'm trying to shoot at instead of being a targeted laser point. I need
+            // to hit this laser point at the chip in their head, I don't just need to breathe on
+            // them." The pulse fattened from 0.13 to 0.46m of RADIUS and then the haze multiplied
+            // that by 1.8 -- a metre and a half of glow. A weapon whose picture is wider than its
+            // target cannot communicate aim, and aim is the whole skill.
+            // Still DIVERGENT -- WavefrontsOnlyEverSpreadOut holds the 3x, because a carrier that
+            // necks down reads as a focused beam and that was the previous pass's whole point --
+            // but at a scale where the whole picture is thinner than a wrist.
+            public const float WaveNearRadius = 0.03f;
+            public const float WaveFarRadius = 0.095f;
 
             /// <summary>How long a jammer sweep takes to travel from the emplacement to the rim.</summary>
             public const float JammerPeriod = 1.35f;

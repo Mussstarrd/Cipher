@@ -22,7 +22,10 @@ namespace Cipher.Game.Tests
         {
             var (_, world) = World();
             var hero = new HeroModel(new HeroConfig(), new Vec2(5f, 5f));
-            int target = world.Spawn(new Vec2(12f, 5f), 10f);
+            // 34 hp: the health the scenarios actually give a runner. The test used to spawn 10,
+            // matching a comment in HeroConfig that the content had left behind by 3.4x, and
+            // "two taps" was true of nothing in the shipped game.
+            int target = world.Spawn(new Vec2(12f, 5f), 34f);
 
             Assert.IsTrue(hero.TryFire(world, 0f, out var s1));
             Assert.IsTrue(s1.Hit);

@@ -320,7 +320,10 @@ namespace Cipher.Game
         /// third-person game, and a player who cannot see the lane cannot read the fight they are
         /// being asked to build against.
         /// </summary>
-        private const int ZoomDefaultNotch = 1;
+        // Owner: "there's no real situational awareness of what's going on, there's just a truck
+        // and then you're immediately surrounded". And earlier: "the more zoomed out it is the
+        // better it looks". Start at the widest notch; RB still cycles.
+        private const int ZoomDefaultNotch = 2;
 
         private int _zoomNotch = ZoomDefaultNotch;
         private float _zoom = ZoomNotches[ZoomDefaultNotch];
@@ -969,9 +972,14 @@ namespace Cipher.Game
                     //
                     // Offset by a cell so a player barricade never hashes identical to a map wall
                     // standing in the same place: same vocabulary, different pile.
-                    if (kind == WallKind.Rock) BakeFence(centre, run, alongY, x, y, posts, panels, rails);
-                    else if (kind == WallKind.Barricade) ImprovisedBarricade.Bake(centre, run, x + 977, y + 311, logs);
-                    else ImprovisedBarricade.Bake(centre, run, x, y, logs);
+                    // Owner: "the stacked branches just look like clumps of brown all over the map".
+                    // The Gate has 64 cells of map wall, and every one of them was a brush pile.
+                    // Map walls -- the ones that were already there when you arrived -- are FENCES
+                    // now, which is what stands between suburban lots. Brush is reserved for the
+                    // walls the PLAYER throws up in a hurry: few, and exactly where they chose, so
+                    // a brown pile on the map now means "you built this".
+                    if (kind == WallKind.Barricade) ImprovisedBarricade.Bake(centre, run, x + 977, y + 311, logs);
+                    else BakeFence(centre, run, alongY, x, y, posts, panels, rails);
                 }
             }
 
@@ -1295,6 +1303,7 @@ namespace Cipher.Game
                             $"{_match.CurrentWave.Count} of them, from the {GateNames()}" +
                             (_match.LastWaveDeclared ? "   -   your last one here" : ""));
                         _waveStartKills = (int)_world.TotalKills;
+                        SendTheCollectorIfItIsTime();
                         _waveStartCash = _match.Bank.TotalEarned;
                         _waveStartSeconds = _matchSeconds;
                         break;
@@ -2476,6 +2485,28 @@ namespace Cipher.Game
             }
             _emitter.Remount(hand, _heroBody.forward);
             Debug.Log("[Hero] weapon mounted on the right hand");
+        }
+
+        /// <summary>
+        /// ADR-011's boss, at the start of the scenario's chosen wave, from the main gate furthest
+        /// from the truck so it has the whole road to walk down and be seen on. It walks at HIM,
+        /// not the truck, which is what makes it the first enemy that cannot be solved by building.
+        /// </summary>
+        private void SendTheCollectorIfItIsTime()
+        {
+            int at = _scenario.Director.CollectorAtWave;
+            if (at <= 0 || _match.WaveNumber != at || _mainGates.Length == 0) return;
+
+            var (gx, gy) = _mainGates[0];
+            float best = -1f;
+            foreach (var g in _mainGates)
+            {
+                float d = (g.Item1 - GoalX) * (g.Item1 - GoalX) + (g.Item2 - GoalY) * (g.Item2 - GoalY);
+                if (d > best) { best = d; (gx, gy) = g; }
+            }
+            _world.SpawnArchetype(new Vec2(gx + 0.5f, gy + 0.5f), Archetype.Collector);
+            Alert("THE COLLECTOR -- it is not here for the truck", 5f);
+            Debug.Log($"[Boss] Collector sent at wave {at} from ({gx},{gy})");
         }
 
         /// <summary>Keeps the hero's body on the hero. Facing comes from the aim, not from movement.</summary>

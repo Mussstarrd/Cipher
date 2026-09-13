@@ -261,11 +261,14 @@ namespace Cipher.Game
         /// </summary>
         private static float FoundationSink(string kind) => kind switch
         {
-            "House" => 0.42f,
-            "Clubhouse" => 0.42f,
-            "CommunityCentre" => 0.42f,
-            "PoolHouse" => 0.35f,
-            "Guardhouse" => 0.30f,
+            // 0.42 was set from a screenshot taken from above; the owner, at ground level: "still
+            // elevated 2 ft above the ground so the doors are probably like four feet off". The
+            // plinth on these models is deeper than it looks from the air.
+            "House" => 0.90f,
+            "Clubhouse" => 0.90f,
+            "CommunityCentre" => 0.90f,
+            "PoolHouse" => 0.75f,
+            "Guardhouse" => 0.60f,
             // Everything else stands on the ground rather than on footings: a water tower's legs,
             // a lamp post's base, a dumpster. Sinking those would just hide them.
             _ => 0f,

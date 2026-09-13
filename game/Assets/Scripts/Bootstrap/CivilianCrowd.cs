@@ -40,7 +40,14 @@ namespace Cipher.Game
         public int ActiveBudget { get; set; } = int.MaxValue;
 
         /// <summary>Agents further than this from the camera are never promoted.</summary>
-        public float PromoteRange { get; set; } = 34f;
+        // Owner: "the crusty looking robots are still running around everywhere". They were not
+        // the machine class, which is off -- they were THIS: every body further than PromoteRange
+        // from the camera is drawn as the crowd's box-mesh impostor, the old block person, and at
+        // the pulled-back zoom he plays at, 34 metres covers about a third of a wave. The other two
+        // thirds were robots. Wide enough now that a whole wave on a 128-cell position is real
+        // bodies; the impostors remain as the safety net for something enormous. 86 Animator bodies
+        // measured at 165 fps, so this is not a performance trade at these wave sizes.
+        public float PromoteRange { get; set; } = 80f;
 
         /// <summary>
         /// What kind of body an agent wants. An agent may only be given a slot of its own class.

@@ -50,6 +50,15 @@ namespace Cipher.Game.Match
         /// <summary>Share that go at a barricade rather than walking round it.</summary>
         public float WreckerShare { get; set; } = 0.08f;
         public float SapperSpacing { get; set; } = 60f;
+
+        /// <summary>
+        /// The wave at whose start a Collector walks in from a main gate, or 0 for never.
+        ///
+        /// Owner: "I still haven't seen a boss." Nobody had. Archetype.Collector was created in
+        /// exactly one place -- a screenshot-harness method -- and by nothing the match could ever
+        /// reach. ADR-011 wrote the enemy; this is the line that puts it in the game.
+        /// </summary>
+        public int CollectorAtWave { get; set; } = 0;
         public int MaxSappersAlive { get; set; } = 1;
         public int MaxActiveBreaches { get; set; } = 1;
         /// <summary>When a spawn has no path (full seal), a Sapper is forced this often regardless of chance.</summary>

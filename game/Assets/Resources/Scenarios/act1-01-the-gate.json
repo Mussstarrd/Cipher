@@ -482,7 +482,7 @@
   },
   "economy": {
     "startCash": 400,
-    "cashPerKill": 5,
+    "cashPerKill": 12,
     "waveClearBonusPerWave": 100
   },
   "director": {
@@ -491,7 +491,8 @@
     "spitterFirstAt": 40,
     "hunterShare": 0.1,
     "wreckerShare": 0.08,
-    "flankShare": 0.34
+    "flankShare": 0.34,
+    "collectorAtWave": 3
   },
   "enemy": {
     "health": 34
@@ -499,16 +500,16 @@
   "waves": [
     {
       "setupSeconds": 25,
-      "count": 40,
-      "spawnPerSecond": 2.5,
+      "count": 16,
+      "spawnPerSecond": 1.6,
       "mix": {
         "Runner": 1.0
       }
     },
     {
       "setupSeconds": 20,
-      "count": 60,
-      "spawnPerSecond": 3.2,
+      "count": 24,
+      "spawnPerSecond": 2.0,
       "mix": {
         "Runner": 0.98,
         "Spitter": 0.02
@@ -516,8 +517,8 @@
     },
     {
       "setupSeconds": 20,
-      "count": 85,
-      "spawnPerSecond": 4.0,
+      "count": 36,
+      "spawnPerSecond": 2.4,
       "mix": {
         "Runner": 0.95,
         "Spitter": 0.03,
@@ -526,8 +527,8 @@
     },
     {
       "setupSeconds": 20,
-      "count": 115,
-      "spawnPerSecond": 4.8,
+      "count": 50,
+      "spawnPerSecond": 2.8,
       "mix": {
         "Runner": 0.93,
         "Spitter": 0.04,
@@ -536,8 +537,8 @@
     },
     {
       "setupSeconds": 20,
-      "count": 150,
-      "spawnPerSecond": 5.6,
+      "count": 70,
+      "spawnPerSecond": 3.2,
       "mix": {
         "Runner": 0.9,
         "Spitter": 0.06,

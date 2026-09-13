@@ -8,7 +8,9 @@ namespace Cipher.Game.Match
     public sealed class EconomyConfig
     {
         public int StartCash { get; set; } = 400;
-        public int CashPerKill { get; set; } = 5;
+        // At $5 a kill and $150 a turret, forty seconds of perfect shooting bought one gun. A wave
+        // should buy a decision, not a fraction of one.
+        public int CashPerKill { get; set; } = 12;
         public int WaveClearBonusPerWave { get; set; } = 100;   // x wave number
         public int BarricadeCost { get; set; } = 20;
         // Turret prices live on the turret family in the sim catalogue, not here.
