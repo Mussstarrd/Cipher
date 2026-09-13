@@ -2047,7 +2047,16 @@ namespace Cipher.Game
         private Transform? _heroBody;
         private bool _environmentDressed;
         /// <summary>Model used for the player. Excluded from the civilian pool.</summary>
-        private const string HeroModelName = "Adventurer_Civilian";
+        /// <summary>
+        /// Which body the player wears. Excluded from the crowd pool by CrowdBodies.SplitPool, so
+        /// the man you are must never also be walking at you.
+        ///
+        /// The Biker, of the nineteen Synty archetypes, because ADR-003's protagonist is a veteran
+        /// who refused the implant and the money on principle -- and because dark leather is the one
+        /// silhouette in that pack that separates instantly from a street of pastel civilians. The
+        /// old Adventurer was a CC0 fantasy model and is retired with the rest of that pack.
+        /// </summary>
+        private const string HeroModelName = "SM_Chr_Biker_01_Civilian";
         /// <summary>Real bodies for the nearest agents. The rest stay instanced capsules.</summary>
         private const int CivilianPoolSize = 110;
         private bool _lineupMode;
