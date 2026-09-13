@@ -14,6 +14,11 @@ namespace Cipher.Game.Audio
         Pickup, WaveHorn, WaveClear, Win, Lose,
         Hurt, Down,
         MenuOpen, MenuTick, MenuConfirm,
+
+        // THE CROWD AND THE PLACE. Owner: "no birds chirping or forest sounds or feet shuffling
+        // or people grunting or breathing heavily as they run faster or smacking attacking sounds
+        // or impact sounds". None of these existed. See CrowdFoley for how they are placed.
+        Step, Breath, Grunt, Bite, TruckHit, DeathGrunt, Bird, Cricket,
     }
 
     /// <summary>
@@ -149,6 +154,72 @@ namespace Cipher.Game.Audio
                     return Normalize(Concat(
                         Tone(0.25f, 330f, 0.01f, 8f, 1f, 4), Tone(0.25f, 294f, 0.01f, 8f, 1f, 4), Tone(0.25f, 262f, 0.01f, 8f, 1f, 4),
                         Mix((Tone(1.2f, 131f, 0.02f, 2.5f, 1f, 5), 1f, 0f), (Tone(1.2f, 139f, 0.02f, 2.5f, 0.6f, 5), 1f, 0f))), 0.7f);
+
+                // ---- the crowd -----------------------------------------------------------
+                // A footfall on gravel: a crunch with a small thump under it. Short, because it
+                // plays a great many times and the tail of the last one must not still be going
+                // when the next lands.
+                case Sfx.Step:
+                    return Normalize(Mix(
+                        (HighPass(NoiseBurst(0.055f, 70f, 211), 1300f), 1f, 0f),
+                        (LowPass(NoiseBurst(0.045f, 90f, 223), 420f), 0.7f, 0f)), 0.5f);
+
+                // An exhale: breath is noise shaped by the mouth, so it is band-passed noise with
+                // a slow decay and nothing tonal in it at all.
+                case Sfx.Breath:
+                    return Normalize(FadeOut(LowPass(HighPass(NoiseBurst(0.30f, 8f, 307), 280f), 2100f), 0.08f), 0.45f);
+
+                // Effort. A VOICE is a pitch with harmonics and breath over it, and a grunt is that
+                // pitch falling: the sweep is the vocal cords, the tone adds the harmonics, the
+                // filtered noise is the throat.
+                case Sfx.Grunt:
+                    return Normalize(Mix(
+                        (Sweep(0.18f, 165f, 92f, 11f), 1f, 0f),
+                        (Tone(0.15f, 130f, 0.01f, 14f, 0.55f, 4), 0.8f, 0.01f),
+                        (LowPass(NoiseBurst(0.16f, 18f, 401), 1500f), 0.45f, 0f)), 0.6f);
+
+                // Teeth and hands landing on someone: a slap transient over a dull body.
+                case Sfx.Bite:
+                    return Normalize(Mix(
+                        (HighPass(NoiseBurst(0.02f, 160f, 503), 2400f), 0.6f, 0f),
+                        (Sweep(0.05f, 900f, 290f, 60f), 1f, 0.004f),
+                        (LowPass(NoiseBurst(0.10f, 38f, 509), 950f), 0.9f, 0.006f)), 0.7f);
+
+                // Bodies hitting a vehicle: a low thud with the panel ringing after it. This is
+                // the sound of the objective taking damage, and it had NO sound at all.
+                case Sfx.TruckHit:
+                    return Normalize(Mix(
+                        (Sweep(0.22f, 180f, 55f, 14f), 1f, 0f),
+                        (Tone(0.34f, 220f, 0.002f, 9f, 0.5f, 5), 0.5f, 0.01f),
+                        (LowPass(NoiseBurst(0.18f, 22f, 601), 900f), 0.8f, 0f)), 0.85f);
+
+                // The last sound a body makes. Longer and lower than the grunt, falling all the way.
+                case Sfx.DeathGrunt:
+                    return Normalize(Mix(
+                        (Sweep(0.32f, 170f, 68f, 8f), 1f, 0f),
+                        (Tone(0.28f, 112f, 0.01f, 8f, 0.5f, 5), 0.7f, 0.02f),
+                        (LowPass(NoiseBurst(0.30f, 10f, 701), 1400f), 0.4f, 0f)), 0.6f);
+
+                // ---- the place -----------------------------------------------------------
+                // Three notes, up-down-up, high and thin. Pitch jitter at play time makes it a
+                // different bird each time.
+                case Sfx.Bird:
+                    return Normalize(HighPass(Concat(
+                        Sweep(0.06f, 2800f, 3600f, 25f, 0.8f), Silence(0.05f),
+                        Sweep(0.05f, 3400f, 2600f, 30f, 0.7f), Silence(0.08f),
+                        Sweep(0.07f, 3000f, 4200f, 25f, 0.6f)), 1500f), 0.35f);
+
+                // Stridulation: a train of tiny clicks at a fixed rate. Eight of them is one chirp.
+                case Sfx.Cricket:
+                {
+                    var parts = new float[16][];
+                    for (int i = 0; i < 8; i++)
+                    {
+                        parts[i * 2] = Tone(0.018f, 4300f, 0.001f, 220f, 0.7f);
+                        parts[i * 2 + 1] = Silence(0.022f);
+                    }
+                    return Normalize(HighPass(Concat(parts), 2500f), 0.25f);
+                }
 
                 case Sfx.Hurt:
                     return Normalize(Mix(

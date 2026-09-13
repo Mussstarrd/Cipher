@@ -1384,6 +1384,10 @@ namespace Cipher.Game
                 _world.SetHero(_hero.Position, !_hero.IsDown);
 
                 int breached = _world.ReachedCount - _lastReached;
+                // The objective taking damage made NO SOUND. Every other event in this game has
+                // one; the single event the whole mission is about did not.
+                if (breached > 0 && _vaultT != null)
+                    _sfx.PlayAt(Sfx.TruckHit, _vaultT.position, 0.95f, 0.08f, minInterval: 0.2f);
                 // HOSTILE, not alive. A convert (ADR-010) is a living agent on the player's side,
                 // and a wave that counted it would stay open until the player's own machine burned
                 // out -- clear bonus late, pack-up window late, nothing on screen explaining why.
@@ -1458,6 +1462,7 @@ namespace Cipher.Game
             // Promote the nearest agents to real bodies. Everything else stays a capsule.
             if (_crowd != null && _camera != null)
                 _crowd.Sync(_world, _camera.transform.position, TickDt);
+                _foley?.Tick(_crowd, _crowdSlots, _world, ToWorld(_hero.Position, 0f), _atmos.Sky, TickDt);
             UpdateHeroBody();
 
             _shotScratch.Clear();
@@ -1488,10 +1493,12 @@ namespace Cipher.Game
                 var bite = NearestAgentWorld(_hero.Position, _heroCfg.ContactRadius * 1.2f);
                 _feedback.NoteDamage(ToWorld(_hero.Position, 0f), bite, _camYaw);
                 AddHitPunch(bite, 0.30f);
+                // The ATTACKER's sound, at the attacker, as well as the hero's own hurt below.
+                _sfx.PlayAt(Sfx.Bite, bite, 0.9f, 0.12f, minInterval: 0.18f);
             }
             if (bitten > 0f && _hurtCooldown <= 0f)
             {
-                _sfx.Play(Sfx.Hurt, 0.8f, 0.1f);
+                _sfx.Play(Sfx.Hurt, 1.0f, 0.1f);
                 _hurtCooldown = 0.35f;
             }
             if (_hero.ConsumedSecondWindThisTick)
@@ -2189,6 +2196,9 @@ namespace Cipher.Game
         private AnimationClip? _walkClip;
         private Animation? _heroAnim;
 
+        /// <summary>Footsteps, breath, grunts, birds. See CrowdFoley.</summary>
+        private CrowdFoley? _foley;
+
         /// <summary>The bought hero's Animator, when he has one. Drives the same blend tree as the crowd.</summary>
         private Animator? _heroAnimator;
         private bool _gunInHand;
@@ -2447,6 +2457,7 @@ namespace Cipher.Game
             // new art rather than new code. MUST come after MachineGait.Intercept and after the four
             // handler assignments above: each wrapper decorates whatever it finds on the crowd.
             SkinnedGait.Intercept(_crowd, _crowdSlots);
+            _foley = new CrowdFoley(_sfx);
 
             Debug.Log($"[Crowd] {_crowd.SlotCount} bodies "
                     + $"({_crowd.SlotsOfClass(BodyClass.Signed)} signed, "
@@ -3972,10 +3983,11 @@ namespace Cipher.Game
                 if (shot.Killed)
                 {
                     _sfx.PlayAt(Sfx.Kill, ToWorld(shot.End, 0.6f), 0.8f, 0.12f);
+                    _sfx.PlayAt(Sfx.DeathGrunt, ToWorld(shot.End, 1.3f), 0.7f, 0.18f, minInterval: 0.12f);
                     Decals.Current?.Add(DecalKind.Stain, ToWorld(shot.End, 0f), 0.7f,
                                         Random.Range(0f, 360f));
                 }
-                else if (shot.Hit) _sfx.Play(Sfx.Hit, 0.5f, 0.15f, minInterval: 0.05f);
+                else if (shot.Hit) _sfx.Play(Sfx.Hit, 0.85f, 0.15f, minInterval: 0.05f);
                 else if (shot.HitWall)
                 {
                     _sfx.PlayAt(Sfx.Place, ToWorld(shot.End, 0.8f), 0.35f, 0.2f, minInterval: 0.09f);

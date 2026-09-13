@@ -42,7 +42,11 @@ namespace Cipher.Game.Audio
             _wind = MakeSource(root, "wind", spatial: false);
             _wind.clip = ToClip("WindLoop", SoundRecipes.WindLoop());
             _wind.loop = true;
-            _wind.volume = 0.22f;
+            // 0.22 was the loudest thing in the mix: a procedural noise loop, always on, under a
+            // wind-in-trees recording and a woodland bed that are ALSO mostly noise. Three layers
+            // of hiss is what the owner heard as "an ocean breeze", and it buried everything the
+            // world does. The place should be heard in its birds and its people, not its hiss.
+            _wind.volume = 0.07f;
             _wind.Play();
 
             _horde = MakeSource(root, "horde", spatial: false);
