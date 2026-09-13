@@ -1,5 +1,6 @@
 #nullable enable
 using System.Collections.Generic;
+using System.Linq;
 using Cipher.Game.Audio;
 using Cipher.Game.Build;
 using Cipher.Game.Hero;
@@ -1994,16 +1995,22 @@ namespace Cipher.Game
         public void LogCrowdCensusForCapture()
         {
             if (_crowd == null) { Debug.Log("[Census] no crowd"); return; }
-            var worn = new int[4];
+            // Sized by the ENUM, not by a literal. This was `new int[4]` for the four crowd classes,
+            // and the Collector is a fifth: the moment a boss stood on the field, every harness
+            // that prints a census threw IndexOutOfRange each frame -- and since the screenshot
+            // harness prints one before it shoots, a boss could never be photographed at all.
+            int classes = System.Enum.GetValues(typeof(BodyClass)).Length;
+            var worn = new int[classes];
             for (int slot = 0; slot < _crowd.SlotCount; slot++)
                 if (_crowd.AgentInSlot(slot) >= 0) worn[(int)_crowd.ClassOfSlot(slot)]++;
 
-            var live = new int[4];
+            var live = new int[classes];
             for (int id = 0; id < _world.Count; id++)
                 if (_world.IsAlive(id)) live[(int)ClassOfAgent(id)]++;
 
-            Debug.Log($"[Census] alive signed {live[0]} humanoid {live[1]} sapper {live[2]} spitter {live[3]}"
-                    + $" | bodies signed {worn[0]} humanoid {worn[1]} sapper {worn[2]} spitter {worn[3]}");
+            string Row(int[] n) => string.Join(" ", System.Enum.GetNames(typeof(BodyClass))
+                .Select((name, i) => $"{name.ToLowerInvariant()} {n[i]}"));
+            Debug.Log($"[Census] alive {Row(live)} | bodies {Row(worn)}");
             Debug.Log($"[Census] since start: sappers spotted {_sappersSpotted}, breaches planted "
                     + $"{_breachesPlanted}, opened {_breachesOpened}, collapsed {_breachesCollapsed}");
             // The DIRECTOR'S own tally, beside the world's. "No sapper on the field" has three
