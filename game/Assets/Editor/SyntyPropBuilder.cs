@@ -55,6 +55,16 @@ namespace Cipher.Game.Editor
             // community's water tower is exactly the sort of municipal thing that stands over the
             // bungalows. 2.7 x 2.8m and 8.4m tall -- it clears every roof on the position.
             ["WaterTower"] = new[] { "Assets/Synty/PolygonFarm/Prefabs/Buildings/SM_Bld_WaterTower_01.prefab" },
+
+            // THE TRUCK. Not scenery -- it is the objective, it is centred on every position by
+            // ADR-012, and it is therefore the one object on screen in every single frame of this
+            // game. It was a free untextured SUV wearing a flat olive override, which is why the
+            // owner called it "a generic geometry shape".
+            //
+            // A box truck rather than a car: the campaign is a retreat, and this is a family plus
+            // everything they could carry. It also gives the map centre a silhouette big enough to
+            // find from any corner, which is what ADR-012 needs it to be.
+            ["FamilyTruck"] = new[] { "Assets/Synty/PolygonTown/Prefabs/Vehicles/SM_Veh_Truck_01.prefab" },
         };
 
         [MenuItem("Cipher/Art/Build Synty Props")]
@@ -126,8 +136,28 @@ namespace Cipher.Game.Editor
 
                     if (tex != null && cache.TryGetValue(tex, out var got)) { dst[i] = got; continue; }
 
-                    var made = new Material(shader) { name = tex != null ? $"Prop_{tex.name}" : "Prop_Untextured" };
-                    made.SetColor("_BaseColor", Color.white);
+                    // AN UNTEXTURED MATERIAL KEEPS ITS OWN COLOUR. White is the right default for
+                    // a TEXTURED material -- the shader's grey would darken every bought asset by
+                    // 40% -- but applying it to a material that has no map at all paints the thing
+                    // pure white. The truck's windscreen is the case that found this: a glass
+                    // material carries a colour and no albedo, so the objective at the centre of
+                    // every map had a blank white rectangle where its window should be.
+                    Color tint = Color.white;
+                    if (tex == null && m != null)
+                    {
+                        foreach (var prop in new[] { "_BaseColor", "_Color", "_Tint" })
+                        {
+                            if (!m.HasProperty(prop)) continue;
+                            tint = m.GetColor(prop);
+                            break;
+                        }
+                    }
+
+                    string madeName = tex != null
+                        ? $"Prop_{tex.name}"
+                        : $"Prop_Flat_{ColorUtility.ToHtmlStringRGB(tint)}";
+                    var made = new Material(shader) { name = madeName };
+                    made.SetColor("_BaseColor", tint);
                     if (tex != null) made.SetTexture("_BaseMap", tex);
 
                     // A LIGHTER INK LINE THAN A CHARACTER GETS. A building is large and close to the

@@ -790,22 +790,46 @@ namespace Cipher.Game
             vault.transform.position = new Vector3(GoalX + 0.5f, 0f, GoalY + 0.5f);
             _vaultT = vault.transform;
 
-            var truckPrefab = Resources.Load<GameObject>("Environment/SUV");
+            // THE BOUGHT TRUCK FIRST, the old free model only as a fallback.
+            //
+            // The flat-colour override below is the whole reason this read as "a generic geometry
+            // shape": it replaced EVERY material on the model with one olive constant, which threw
+            // away any texture the model had. That was defensible for Environment/SUV, a free model
+            // with nothing useful in its atlas, and it is exactly wrong for bought art -- the same
+            // trap CLAUDE.md records against `_Albedo_Map`, landing on the one object that is on
+            // screen in every frame of the game.
+            //
+            // Props/FamilyTruck comes out of SyntyPropBuilder already rebuilt onto
+            // Exodus/InstancedLit with its real atlas in _BaseMap, so the correct handling is to
+            // leave its materials completely alone.
+            bool boughtTruck = true;
+            var truckPrefab = Resources.Load<GameObject>("Props/FamilyTruck_00");
+            if (truckPrefab == null)
+            {
+                boughtTruck = false;
+                truckPrefab = Resources.Load<GameObject>("Environment/SUV");
+            }
             if (truckPrefab != null)
             {
                 _truckBody = Instantiate(truckPrefab, _vaultT);
                 _truckBody.name = "FamilyTruck";
                 _truckBody.transform.localPosition = Vector3.zero;
                 // Facing out the way they will leave, not at the gate they are hiding from.
-                _truckBody.transform.localRotation = Quaternion.Euler(0f, 90f, 0f);
+                _truckBody.transform.localRotation = Quaternion.Euler(0f, TruckYaw, 0f);
                 foreach (var col in _truckBody.GetComponentsInChildren<Collider>()) Destroy(col);
-                foreach (var r in _truckBody.GetComponentsInChildren<Renderer>())
+
+                if (!boughtTruck)
                 {
-                    var swapped = new Material[r.sharedMaterials.Length];
-                    for (int m = 0; m < swapped.Length; m++)
-                        swapped[m] = MakeMaterial(new Color(0.30f, 0.33f, 0.29f), instanced: false, ink: InkProp);
-                    r.sharedMaterials = swapped;
+                    foreach (var r in _truckBody.GetComponentsInChildren<Renderer>())
+                    {
+                        var swapped = new Material[r.sharedMaterials.Length];
+                        for (int m = 0; m < swapped.Length; m++)
+                            swapped[m] = MakeMaterial(new Color(0.30f, 0.33f, 0.29f), instanced: false, ink: InkProp);
+                        r.sharedMaterials = swapped;
+                    }
                 }
+                else SitTruckOnTheGround(_truckBody.transform);
+
                 BlobShadows.RegisterProp(_truckBody);
             }
             else
@@ -2595,6 +2619,32 @@ namespace Cipher.Game
         private GameObject? _crewAdult;
         private GameObject? _crewChild;
 
+        /// <summary>
+        /// Which way the truck points. A constant because it is written in two places -- here and
+        /// in the sag-and-lean damage tell -- and a heading that disagrees with itself would snap
+        /// the truck round the first time it took a hit.
+        /// </summary>
+        private const float TruckYaw = 90f;
+
+        /// <summary>
+        /// Drops the truck until its lowest rendered point is on the ground, the same measure-do
+        /// -not-assume rule SiteProps uses for buildings. A vehicle prefab's pivot is usually at
+        /// axle height, and the objective floating a wheel's worth above the road is the sort of
+        /// thing nobody can unsee once they have seen it.
+        /// </summary>
+        private static void SitTruckOnTheGround(Transform model)
+        {
+            float lowest = float.PositiveInfinity;
+            foreach (var r in model.GetComponentsInChildren<Renderer>())
+            {
+                if (r is ParticleSystemRenderer or TrailRenderer or LineRenderer) continue;
+                if (r.bounds.size == Vector3.zero) continue;
+                lowest = Mathf.Min(lowest, r.bounds.min.y);
+            }
+            if (float.IsPositiveInfinity(lowest) || Mathf.Abs(lowest) < 0.01f) return;
+            model.position -= new Vector3(0f, lowest, 0f);
+        }
+
         private GameObject? _truckBody;
 
         /// <summary>
@@ -4085,7 +4135,7 @@ namespace Cipher.Game
                 float sag = (1f - vaultHp) * 0.22f;
                 float lean = (1f - vaultHp) * 4.5f;
                 _truckBody.transform.localPosition = new Vector3(0f, -sag, 0f);
-                _truckBody.transform.localRotation = Quaternion.Euler(0f, 90f, lean);
+                _truckBody.transform.localRotation = Quaternion.Euler(0f, TruckYaw, lean);
             }
 
             _crateT.gameObject.SetActive(_pickups.CrateActive);
