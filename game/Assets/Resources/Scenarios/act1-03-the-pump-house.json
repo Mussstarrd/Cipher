@@ -197,6 +197,11 @@
       "y": 104,
       "gate": "north-shore-path",
       "flank": true
+    },
+    {
+      "x": 140,
+      "y": 56,
+      "gate": "the-service-track"
     }
   ],
   "vault": {

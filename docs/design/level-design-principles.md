@@ -157,6 +157,20 @@ rules out difficulty-by-inflation. Layout levers, in the order we should spend t
   That second one is a measurement worth keeping: the count of approaches is not the count of
   decisions. **Approaches that share a covering slot are one front wearing two names.**
 
+- **P2 is counted as FRONTS now, not gates** (`EveryPositionHasTwoRealFronts`), which is the
+  distinction measuring P4 produced. Two gates whose best covering ground is within twenty metres are
+  one front wearing two names, and the player is never asked to divide themselves between them.
+
+  **It failed on first run and found a real defect:** the Pump House's four gates all resolved to a
+  single front at (78,56). Every gate was WEST of a goal at x=94, so everything funnelled in from one
+  side and one emplacement covered the position. `the-contracting-perimeter.md` had already specified
+  **five** approaches there — "two roads, the shore, two flanks" — and only four were authored. The
+  missing second road is now `the-service-track` on the east edge, and the position reads 5 gates ->
+  2 fronts.
+
+  Worth noting what that means: **the ramp document was right and the scenario had drifted from it.**
+  The test did not invent a requirement, it caught content that had fallen behind its own design.
+
 **Next, in order:**
 - Pull the pool approach's coverage up, or accept it as a deliberately blind lane and say so.
 - Check whether positions 2 and 3 want their gate pairs genuinely separated, now that they are known

@@ -479,6 +479,111 @@ namespace Cipher.Game.Tests
         }
 
         /// <summary>
+        /// Design pillar P2, counted honestly: a position needs two live FRONTS, not two gates.
+        ///
+        /// The distinction is not pedantry, it is the pillar's whole content, and measuring P4
+        /// produced it. On the Service Road the single best covering slot for the cattle gate is
+        /// ALSO the best slot for the north lots; the same happens on the Pump House. Four authored
+        /// gates, two places to stand. ADR-012 argued that centring the goal defeats camping because
+        /// "any lane the player stands in is three lanes they are not standing in" — if two gates
+        /// share a slot, that is closer to one.
+        ///
+        /// So this counts what the player actually has to divide themselves between: gates whose
+        /// best covering ground is far enough apart that one body, or one turret, cannot serve both.
+        /// Approaches that share a covering slot are ONE FRONT WEARING TWO NAMES.
+        ///
+        /// Deliberately not asserting a number above two. Twelve positions are meant to escalate
+        /// (approach vectors are levers #2 in the doc), so demanding three would fail the opening
+        /// position for being an opening position.
+        /// </summary>
+        [Test, TestCaseSource(nameof(ScenarioFiles))]
+        public void EveryPositionHasTwoRealFronts(string path)
+        {
+            var def = ScenarioReader.Read(File.ReadAllText(path));
+            var map = BuildSolidMap(def);
+
+            var field = new FlowField(map);
+            field.Compute(def.Vault.X, def.Vault.Y);
+
+            // The best place to cover each gate from, which is the thing that defines a front.
+            var slots = new List<(int X, int Y, string Gate)>();
+            foreach (var sc in def.SpawnCells)
+            {
+                var slot = BestCoveringSlot(def, map, field, sc.X, sc.Y);
+                if (slot.X >= 0) slots.Add((slot.X, slot.Y, sc.Gate));
+            }
+
+            // Two slots are the same front when one emplacement could plausibly serve both. A Sentry
+            // reaches 10m; twice that is the generous reading, and being generous here makes the
+            // test harder to pass rather than easier, which is the right direction for a guard.
+            const float SameFront = 20f;
+
+            var fronts = new List<(int X, int Y, List<string> Gates)>();
+            foreach (var slot in slots)
+            {
+                var joined = fronts.Find(f =>
+                {
+                    float dx = f.X - slot.X, dy = f.Y - slot.Y;
+                    return dx * dx + dy * dy <= SameFront * SameFront;
+                });
+
+                if (joined.Gates != null) joined.Gates.Add(slot.Gate);
+                else fronts.Add((slot.X, slot.Y, new List<string> { slot.Gate }));
+            }
+
+            string summary = string.Join(" | ", fronts.ConvertAll(f => $"({f.X},{f.Y}) {string.Join("+", f.Gates)}"));
+            UnityEngine.Debug.Log($"[P2] {def.Id}: {def.SpawnCells.Count} gates -> {fronts.Count} fronts: {summary}");
+
+            Assert.That(fronts.Count, Is.GreaterThanOrEqualTo(2),
+                $"{def.Id}: {def.SpawnCells.Count} gates collapse to {fronts.Count} front — one place to " +
+                "stand covers everything, so the player is never asked to choose. " +
+                "See level-design-principles.md, pillar P2.");
+        }
+
+        /// <summary>
+        /// The buildable cell near the truck that sees the most of a gate's approach.
+        ///
+        /// Shared by the P2 and P4 tests so "where would you cover this lane from" has one answer.
+        /// </summary>
+        private static (int X, int Y, int Seen) BestCoveringSlot(ScenarioDef def, GridMap map, FlowField field,
+                                                                 int gateX, int gateY)
+        {
+            const float SentryRange = 10f;
+            const int DefensibleRadius = 26;
+
+            var approach = new List<(int X, int Y)>();
+            foreach (var cell in WalkToGoal(map, field, gateX, gateY, def.Vault.X, def.Vault.Y))
+            {
+                int ax = cell.X - def.Vault.X, ay = cell.Y - def.Vault.Y;
+                if (ax * ax + ay * ay <= DefensibleRadius * DefensibleRadius) approach.Add(cell);
+            }
+
+            int best = 0, bx = -1, by = -1;
+
+            for (int y = def.Vault.Y - DefensibleRadius; y <= def.Vault.Y + DefensibleRadius; y++)
+            for (int x = def.Vault.X - DefensibleRadius; x <= def.Vault.X + DefensibleRadius; x++)
+            {
+                if (x < 0 || y < 0 || x >= def.Map.Width || y >= def.Map.Height) continue;
+                if (map.KindAt(x, y) != WallKind.None) continue;
+
+                int seen = 0;
+                var from = new Vec2(x + 0.5f, y + 0.5f);
+
+                foreach (var cell in approach)
+                {
+                    var delta = new Vec2(cell.X + 0.5f - from.X, cell.Y + 0.5f - from.Y);
+                    float distance = delta.Length;
+                    if (distance > SentryRange) continue;
+                    if (!Movement.FirstBlockedCell(map, from, delta, distance, out _, out _, out _)) seen++;
+                }
+
+                if (seen > best) { best = seen; bx = x; by = y; }
+            }
+
+            return (bx, by, best);
+        }
+
+        /// <summary>
         /// Design pillar P4: every approach can be covered from somewhere you are allowed to build.
         ///
         /// The pillar is informational, not compositional — "leading lines" are folklore, and any
