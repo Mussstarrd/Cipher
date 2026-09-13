@@ -2157,7 +2157,17 @@ namespace Cipher.Game
                 if (a0.runtimeAnimatorController == null) Destroy(a0);
 
             EnsureClips();
-            if (_clips.Count > 0)
+            // A BODY THAT ALREADY HAS AN ANIMATOR WANTS NOTHING TO DO WITH THIS.
+            //
+            // Unity suppresses an Animation component whenever a controllered Animator sits on the
+            // same object, so adding one to a bought character achieves exactly nothing -- except
+            // that SkinnedGait.Intercept used the presence of an Animation component to decide a
+            // body was legacy, skipped every single Synty slot, and left the whole crowd unable to
+            // die. A component that does nothing is never free; this one cost a bug.
+            bool animatorDriven = go.GetComponentInChildren<Animator>(true) is { } a
+                                  && a.runtimeAnimatorController != null;
+
+            if (_clips.Count > 0 && !animatorDriven)
             {
                 var legacy = go.AddComponent<Animation>();
                 foreach (var pair in _clips) legacy.AddClip(pair.Value, pair.Key);
@@ -2282,6 +2292,13 @@ namespace Cipher.Game
             // them -- which is why a machine would walk fine and then die by vanishing. This puts
             // the gaits in front of the handlers. It MUST come after the assignments.
             MachineGait.Intercept(_crowd, _crowdSlots);
+
+            // And the same treatment for bodies that animate through an ANIMATOR, which the bought
+            // characters do. They have no Animation component either, so without this they walk
+            // correctly and then die by vanishing -- the identical bug the machines had, reopened by
+            // new art rather than new code. MUST come after MachineGait.Intercept and after the four
+            // handler assignments above: each wrapper decorates whatever it finds on the crowd.
+            SkinnedGait.Intercept(_crowd, _crowdSlots);
 
             Debug.Log($"[Crowd] {_crowd.SlotCount} bodies "
                     + $"({_crowd.SlotsOfClass(BodyClass.Signed)} signed, "
