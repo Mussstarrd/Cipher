@@ -123,6 +123,13 @@ rules out difficulty-by-inflation. Layout levers, in the order we should spend t
   **The Gate is set to 0.34** — roughly a third of every wave now arrives through the pool fence or
   the clubhouse lawn instead of the front door. P2, on the position that needed it most.
 
+- **ADR-012**: the goal is centred and approached from several sides. The Gate is at the
+  crossroads; positions 2 and 3 came in from their back walls to 69% and 65% with flank shares of
+  0.30 and 0.36, scaled to the approach counts `the-contracting-perimeter.md` already asked for.
+  All three shipped positions now satisfy P2.
+- **Houses are bought models at native scale**, with the House footprint grown 6x5 -> 6x9 to fit
+  them rather than the model shrunk to fit the grid. P5 and P6 are still untouched.
+
 **Next, in order:**
 - Audit all three shipped positions against P3 (a convergence point for the Brush Hog) and P4
   (sightline from every buildable slot).

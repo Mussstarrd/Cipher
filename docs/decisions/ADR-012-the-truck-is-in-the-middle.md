@@ -62,11 +62,18 @@ budget already has.
 **The preview covenant is untouched.** This is geometry and spawn assignment; nothing about the flow
 field, `BuildValidator`, or hard rule 4 changes.
 
-**Every other position inherits the question.** `act1-02-the-service-road` and
-`act1-03-the-pump-house` still place their goals the old way. They are not wrong yet — a fighting
-retreat can legitimately include a position with its back to something — but a *default* of
-back-wall placement is now a bug, and `docs/design/the-contracting-perimeter.md` should be re-read
-against this before position 4 is authored.
+**Every other position inherited the question, and it is answered (2026-09-12).**
+`act1-02-the-service-road` and `act1-03-the-pump-house` both placed their goals at 96% and 93%
+across their maps, with every gate on the west edge — the same corridor The Gate was, and both with
+`flankShare` unset at the 0.08 default, so their authored flanks were noise.
+
+They were **not** centred, deliberately. `the-contracting-perimeter.md` already asks position 2 for
+four approaches and position 3 for five, and both already had the gates; what they lacked was
+traffic through them and a goal that the approaches could converge *on*. The goals moved in to **69%
+and 65%** rather than to 50%: far enough from the wall that four gates genuinely surround them, still
+biased along the direction of retreat, and different from The Gate's dead centre — because twelve
+identical crossroads is the failure mode this ADR warns about two paragraphs down. Flank shares set
+to 0.30 and 0.36, scaled to their approach counts.
 
 ## What this does NOT mean
 

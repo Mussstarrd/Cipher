@@ -172,8 +172,8 @@
     }
   ],
   "heroSpawn": {
-    "x": 128,
-    "y": 56
+    "x": 94,
+    "y": 50
   },
   "spawnCells": [
     {
@@ -200,7 +200,7 @@
     }
   ],
   "vault": {
-    "x": 134,
+    "x": 94,
     "y": 56,
     "hp": 30
   },
@@ -221,7 +221,8 @@
     "spitterFirstAt": 20,
     "spitterChance": 0.012,
     "hunterShare": 0.18,
-    "wreckerShare": 0.1
+    "wreckerShare": 0.1,
+    "flankShare": 0.36
   },
   "enemy": {
     "health": 46
