@@ -47,6 +47,7 @@ namespace Cipher.Game.Editor
         private const string IdleFbx = AnimDir + "/Idle/A_Idle_Standing_Masc.fbx";
         private const string WalkFbx = AnimDir + "/Locomotion/Walk/A_Walk_F_Masc.fbx";
         private const string RunFbx = AnimDir + "/Locomotion/Run/A_Run_F_Masc.fbx";
+        private const string SprintFbx = AnimDir + "/Locomotion/Sprint/A_Sprint_F_Masc.fbx";
 
         /// <summary>
         /// Metres per second each clip looks right at, and the whole cure for skating feet.
@@ -58,9 +59,24 @@ namespace Cipher.Game.Editor
         /// toward Run and a body pressed against a wall sits at Idle instead of scrubbing a walk
         /// cycle in place.
         /// </summary>
+        // MEASURED, NOT TYPED. These are the speeds the clips were authored at, read off the feet
+        // by ClipStrideMeasure (2026-09-13): while a foot is planted the body moves over it, which
+        // in an in-place clip is that foot sweeping backward relative to the hips at exactly the
+        // ground speed. The previous values -- 1.5 walk, 3.6 run -- were guesses, and the tool that
+        // was supposed to check them read the root bone, which does not move in an in-place clip,
+        // printed 0.00 m/s, and nobody noticed that a zero is not a measurement.
+        //
+        // The run clip is authored at about TWO metres per second, not 3.6. A body crossing the map
+        // at SimConfig.MoveSpeed (3 m/s) was being shown a run cycle meant for 2 m/s: the feet
+        // covered two-thirds of the ground and the remaining third was slide. That is the owner's
+        // "constantly walking in place and sliding across the map", to the number.
+        //
+        // Sprint is added as a fourth node so that 3 m/s falls INSIDE the tree (run..sprint) rather
+        // than past its last node, where the blend clamps and every faster body skates again.
         private const float IdleAt = 0f;
-        private const float WalkAt = 1.5f;
-        private const float RunAt = 3.6f;
+        private const float WalkAt = 1.38f;
+        private const float RunAt = 1.96f;
+        private const float SprintAt = 6.33f;
         private const string ControllerPath = OutDir + "/SyntyCrowd.controller";
 
         [MenuItem("Cipher/Crowd/Build Synty Crowd")]
@@ -117,9 +133,10 @@ namespace Cipher.Game.Editor
             var idle = Clip(IdleFbx);
             var walk = Clip(WalkFbx);
             var run = Clip(RunFbx);
-            if (idle == null || walk == null || run == null)
+            var sprint = Clip(SprintFbx);
+            if (idle == null || walk == null || run == null || sprint == null)
             {
-                Debug.LogError("[Synty] idle/walk/run not all present; cannot build a blend tree");
+                Debug.LogError("[Synty] idle/walk/run/sprint not all present; cannot build a blend tree");
                 return null;
             }
 
@@ -148,6 +165,7 @@ namespace Cipher.Game.Editor
             tree.AddChild(idle, IdleAt);
             tree.AddChild(walk, WalkAt);
             tree.AddChild(run, RunAt);
+            tree.AddChild(sprint, SprintAt);
 
             AssetDatabase.AddObjectToAsset(tree, controller);
 
@@ -158,7 +176,7 @@ namespace Cipher.Game.Editor
 
             EditorUtility.SetDirty(controller);
             Debug.Log($"[Synty] blend tree: idle '{idle.name}' @{IdleAt}, walk '{walk.name}' @{WalkAt}, " +
-                      $"run '{run.name}' @{RunAt} m/s");
+                      $"run '{run.name}' @{RunAt}, sprint '{sprint.name}' @{SprintAt} m/s (measured)");
             return controller;
         }
 

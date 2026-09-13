@@ -134,6 +134,41 @@ namespace Cipher.Game
         private readonly Transform?[] _muzzles = new Transform?[MaxTier + 1];
         private int _tier = -1;
 
+        /// <summary>
+        /// Moves the whole weapon from the hero's root onto his hand.
+        ///
+        /// Owner: "it seems like there should be a gun in my hand but there's not there's just
+        /// like a gun floating next to my hand". Exactly right, and exactly what Build does: it
+        /// hangs the emitter off the hero's ROOT at a fixed offset (Mount), which was the only
+        /// option when the hero was a capsule with no hands. He has hands now -- a Humanoid avatar
+        /// exposes them -- and a weapon parented to the root stays put while the arm that should be
+        /// holding it swings through a walk cycle beside it.
+        ///
+        /// The barrel is pointed down the aim direction at the moment of mounting and the offset
+        /// is applied in that frame, so this does not need to know which way the hand bone's own
+        /// axes happen to face. From then on the hand carries it.
+        /// </summary>
+        private static float InverseScale(float v) => Mathf.Abs(v) < 1e-4f ? 1f : 1f / v;
+
+        public void Remount(Transform hand, Vector3 aim)
+        {
+            var t = Root.transform;
+            t.SetParent(hand, worldPositionStays: false);
+
+            // Same scale-cancelling as Build: whatever the bone's inherited scale is, the numbers
+            // in this file have to keep meaning metres.
+            Vector3 sc = hand.lossyScale;
+            t.localScale = new Vector3(InverseScale(sc.x), InverseScale(sc.y), InverseScale(sc.z));
+            t.localPosition = Vector3.zero;
+
+            if (aim.sqrMagnitude > 1e-6f)
+                t.rotation = Quaternion.LookRotation(aim.normalized, Vector3.up);
+
+            // Grip a little ahead of the wrist and a touch below it, so the stock is in the palm
+            // rather than inside the forearm.
+            t.position += t.forward * 0.07f - Vector3.up * 0.03f;
+        }
+
         private HeroEmitter(GameObject root, Func<Color, Material> material)
         {
             Root = root;

@@ -2167,6 +2167,12 @@ namespace Cipher.Game
         private bool _hudHidden;
         private AnimationClip? _walkClip;
         private Animation? _heroAnim;
+
+        /// <summary>The bought hero's Animator, when he has one. Drives the same blend tree as the crowd.</summary>
+        private Animator? _heroAnimator;
+        private bool _gunInHand;
+        private static readonly int HeroSpeedId = Animator.StringToHash("Speed");
+        private const float HeroBlendSmoothing = 0.12f;
         private float _heroFiring;
 
         /// <summary>Called when the hero shoots, so his body plays the shot rather than miming it.</summary>
@@ -2448,6 +2454,25 @@ namespace Cipher.Game
             Debug.Log("[Hero] body built");
         }
 
+        /// <summary>
+        /// Hangs the weapon on the hero's right hand bone. Idempotent; sets <see cref="_gunInHand"/>
+        /// even on failure so a missing bone is logged once rather than every frame.
+        /// </summary>
+        private void PutTheGunInHisHand()
+        {
+            _gunInHand = true;
+            if (_heroAnimator == null || _emitter == null || _heroBody == null) return;
+
+            var hand = _heroAnimator.GetBoneTransform(HumanBodyBones.RightHand);
+            if (hand == null)
+            {
+                Debug.LogWarning("[Hero] avatar has no RightHand bone; the weapon stays on the root");
+                return;
+            }
+            _emitter.Remount(hand, _heroBody.forward);
+            Debug.Log("[Hero] weapon mounted on the right hand");
+        }
+
         /// <summary>Keeps the hero's body on the hero. Facing comes from the aim, not from movement.</summary>
         private void UpdateHeroBody()
         {
@@ -2465,6 +2490,29 @@ namespace Cipher.Game
             var facing = new Vector3(_hero.Facing.X, 0f, _hero.Facing.Y);
             if (facing.sqrMagnitude > 1e-6f)
                 _heroBody.rotation = Quaternion.LookRotation(facing.normalized, Vector3.up);
+
+            // A BOUGHT HERO IS DRIVEN BY HIS ANIMATOR, AND THIS METHOD USED TO WALK STRAIGHT PAST HIM.
+            //
+            // Everything below this block drives a legacy Animation component, which a Synty body
+            // does not have -- its motion comes from Humanoid retargeting through an Animator, the
+            // session's central lesson. So for the bought hero `_heroAnim` was null, the method
+            // returned, and his Speed parameter was NEVER SET: an idle-posed body being slid across
+            // the road by the position write above. The owner called it "glitchy", which is
+            // generous.
+            //
+            // He wears the crowd's controller, so he speaks the crowd's language: Speed in metres
+            // per second, damped the same way SkinnedGait damps it and for the same reason (the
+            // per-frame figure alternates between a full sim step and zero).
+            _heroAnimator ??= _heroBody.GetComponentInChildren<Animator>(true);
+            if (_heroAnimator != null && _heroAnimator.runtimeAnimatorController != null)
+            {
+                _heroAnimator.SetFloat(HeroSpeedId, speed, HeroBlendSmoothing, dt);
+                // Once, and only once his skeleton exists to hang it on.
+                if (!_gunInHand) PutTheGunInHisHand();
+                // No fire or aim clip exists in the bought set (Base Locomotion ships none), so the
+                // trigger pulls through whatever the legs are doing. Recorded as a content gap.
+                return;
+            }
 
             // The protagonist carries a rifle, so his set is the gun one: he holds it when still,
             // moves with it up, and the shoot clip plays over the top when he pulls the trigger.
