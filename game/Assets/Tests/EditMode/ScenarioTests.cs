@@ -364,21 +364,7 @@ namespace Cipher.Game.Tests
         public void PropsNeverSealAGate(string path)
         {
             var def = ScenarioReader.Read(File.ReadAllText(path));
-
-            var map = new GridMap(def.Map.Width, def.Map.Height);
-            foreach (var w in def.Map.Walls)
-                for (int x = w.X; x < w.X + w.Width; x++)
-                    for (int y = w.Y; y < w.Y + w.Height; y++)
-                        map.SetWall(x, y, w.Kind, GridMap.DefaultWallHp);
-
-            foreach (var prop in def.Props)
-                foreach (var (x, y) in PropCatalog.Footprint(prop.Kind, prop.X, prop.Y, prop.Yaw))
-                {
-                    if (x < 0 || y < 0 || x >= def.Map.Width || y >= def.Map.Height) continue;
-                    if (map.KindAt(x, y) != WallKind.None) continue;
-                    if (KeepClear(def, x, y)) continue;
-                    map.SetWall(x, y, WallKind.Rock, GridMap.DefaultWallHp);
-                }
+            var map = BuildSolidMap(def);
 
             var field = new FlowField(map);
             field.Compute(def.Vault.X, def.Vault.Y);
@@ -393,6 +379,141 @@ namespace Cipher.Game.Tests
                 $"{def.Id}: a prop is standing on the truck");
             Assert.That(field.HasPath(def.HeroSpawn.X, def.HeroSpawn.Y), Is.True,
                 $"{def.Id}: the hero cannot walk to the truck");
+        }
+
+        /// <summary>
+        /// The walls and the prop footprints, in the order and with the rules the bootstrap uses.
+        ///
+        /// Shared by the seal test and the P3 merge test so the two can never disagree about what
+        /// is solid — which would be the worst possible way for either of them to be wrong.
+        /// </summary>
+        private static GridMap BuildSolidMap(ScenarioDef def)
+        {
+            var map = new GridMap(def.Map.Width, def.Map.Height);
+
+            foreach (var w in def.Map.Walls)
+                for (int x = w.X; x < w.X + w.Width; x++)
+                    for (int y = w.Y; y < w.Y + w.Height; y++)
+                        map.SetWall(x, y, w.Kind, GridMap.DefaultWallHp);
+
+            foreach (var prop in def.Props)
+                foreach (var (x, y) in PropCatalog.Footprint(prop.Kind, prop.X, prop.Y, prop.Yaw))
+                {
+                    if (x < 0 || y < 0 || x >= def.Map.Width || y >= def.Map.Height) continue;
+                    if (map.KindAt(x, y) != WallKind.None) continue;
+                    if (KeepClear(def, x, y)) continue;
+                    map.SetWall(x, y, WallKind.Rock, GridMap.DefaultWallHp);
+                }
+
+            return map;
+        }
+
+        /// <summary>
+        /// Design pillar P3: every position owes the area tower a place where lanes actually merge.
+        ///
+        /// The Brush Hog is `FireMode.Area` with a **2.4 metre** reach. On a long straight lane it is
+        /// strictly worse than a Sentry, everywhere, all game — and a tower family that is never the
+        /// right answer is a documented sign of a badly balanced tower defence. So a position that
+        /// offers it nowhere to be is not a neutral position; it is one where a third of the build
+        /// bar is decoration.
+        ///
+        /// WHY "AWAY FROM THE GOAL" IS THE WHOLE TEST. Every path ends at the truck, so the truck is
+        /// trivially a merge point and asserting on it would pass forever while proving nothing. What
+        /// makes the area family interesting is a merge OUT IN THE FIELD — somewhere the player can
+        /// choose to hold, rather than the last two cells before they lose. Six cells is the line:
+        /// far enough that holding it is a decision, close enough to be reachable on a first build.
+        ///
+        /// This measures the real thing rather than a proxy: it walks the actual flow field the
+        /// actual sim will use, from every authored gate, and asks which cells more than one gate's
+        /// traffic crosses.
+        /// </summary>
+        [Test, TestCaseSource(nameof(ScenarioFiles))]
+        public void EveryPositionOwesTheAreaTowerAMergePoint(string path)
+        {
+            var def = ScenarioReader.Read(File.ReadAllText(path));
+            var map = BuildSolidMap(def);
+
+            var field = new FlowField(map);
+            field.Compute(def.Vault.X, def.Vault.Y);
+
+            // Which gates' traffic crosses each cell.
+            var crossedBy = new Dictionary<(int X, int Y), HashSet<int>>();
+            for (int i = 0; i < def.SpawnCells.Count; i++)
+            {
+                var sc = def.SpawnCells[i];
+                foreach (var cell in WalkToGoal(map, field, sc.X, sc.Y, def.Vault.X, def.Vault.Y))
+                {
+                    if (!crossedBy.TryGetValue(cell, out var set))
+                        crossedBy[cell] = set = new HashSet<int>();
+                    set.Add(i);
+                }
+            }
+
+            const int MinCellsFromGoal = 6;
+            (int X, int Y) best = (-1, -1);
+            int bestGates = 0, bestDistance = 0;
+
+            foreach (var (cell, gates) in crossedBy)
+            {
+                if (gates.Count < 2) continue;
+                int dx = cell.X - def.Vault.X, dy = cell.Y - def.Vault.Y;
+                int distance = (int)System.Math.Sqrt(dx * dx + dy * dy);
+                if (distance < MinCellsFromGoal) continue;
+
+                // Prefer more lanes; break ties by the merge that happens furthest out, because a
+                // player who can hold it early keeps more of the position.
+                if (gates.Count > bestGates || (gates.Count == bestGates && distance > bestDistance))
+                {
+                    best = cell; bestGates = gates.Count; bestDistance = distance;
+                }
+            }
+
+            Assert.That(bestGates, Is.GreaterThanOrEqualTo(2),
+                $"{def.Id}: no two gates' routes meet more than {MinCellsFromGoal} cells from the truck, " +
+                "so the Brush Hog has nowhere on this position where an area weapon beats a Sentry. " +
+                "See docs/design/level-design-principles.md, pillar P3.");
+
+            UnityEngine.Debug.Log($"[P3] {def.Id}: best merge at ({best.X},{best.Y}) — " +
+                                  $"{bestGates} of {def.SpawnCells.Count} gates, {bestDistance} cells from the truck");
+        }
+
+        /// <summary>
+        /// Walks the flow field from a cell to the goal by DESCENDING INTEGRATION COST.
+        ///
+        /// Cost descent rather than following <c>DirectionAt</c>: the direction is a normalised float
+        /// vector meant for steering an agent, and rounding it to a neighbour every step accumulates
+        /// error into a path that drifts off the one the crowd would really take. The integration
+        /// cost is the field's own ground truth and stepping down it cannot drift.
+        /// </summary>
+        private static IEnumerable<(int X, int Y)> WalkToGoal(GridMap map, FlowField field,
+                                                              int startX, int startY, int goalX, int goalY)
+        {
+            int x = startX, y = startY;
+            int guard = map.Width * map.Height;
+
+            while (guard-- > 0)
+            {
+                yield return (x, y);
+                if (x == goalX && y == goalY) yield break;
+
+                float best = field.IntegrationCostAt(x, y);
+                int bx = -1, by = -1;
+
+                for (int dy = -1; dy <= 1; dy++)
+                for (int dx = -1; dx <= 1; dx++)
+                {
+                    if (dx == 0 && dy == 0) continue;
+                    int nx = x + dx, ny = y + dy;
+                    if (nx < 0 || ny < 0 || nx >= map.Width || ny >= map.Height) continue;
+                    if (map.KindAt(nx, ny) != WallKind.None) continue;
+
+                    float c = field.IntegrationCostAt(nx, ny);
+                    if (c < best) { best = c; bx = nx; by = ny; }
+                }
+
+                if (bx < 0) yield break;   // a local minimum; the seal test owns that case
+                x = bx; y = by;
+            }
         }
 
         /// <summary>

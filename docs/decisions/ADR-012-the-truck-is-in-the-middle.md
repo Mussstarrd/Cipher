@@ -52,8 +52,18 @@ defence, and the answer to convergent pressure is emplacements. But it does mean
 numbers are now wrong until someone plays it**, and tuning them by intuition rather than by playing
 would be guessing. Flagged, not fixed.
 
-**The Brush Hog finally has a home.** The centre of a crossroads is a convergence point by
-definition. Every later position owes the area family the same courtesy.
+**The Brush Hog has a home, but a smaller one than this ADR first claimed.** "The centre of a
+crossroads is a convergence point by definition" is true and was the wrong thing to be satisfied by.
+Measured (`EveryPositionOwesTheAreaTowerAMergePoint`, 2026-09-13), The Gate's best merge is **two of
+four gates, seven cells from the truck** — against the Service Road's forty-nine and the Pump House's
+eleven with three of four. So centring the goal bought convergence AT the objective and almost none
+before it: four approaches that stay four approaches until the last moment.
+
+That is not a failure of ADR-012 — an area weapon at the truck is a real, correct last line — but it
+does mean The Gate is currently the WEAKEST position for the area family of the three shipped, which
+is a strange property for the tutorial-adjacent one. Recorded rather than patched: the fix is layout
+(funnel two approaches together before they arrive) and layout on the opening position is worth an
+owner's eye rather than another unattended edit.
 
 **Camping is no longer a solution.** Any lane the player stands in is three lanes they are not
 standing in. Their own presence becomes a budget, which is exactly the property the emplacement

@@ -130,8 +130,15 @@ rules out difficulty-by-inflation. Layout levers, in the order we should spend t
 - **Houses are bought models at native scale**, with the House footprint grown 6x5 -> 6x9 to fit
   them rather than the model shrunk to fit the grid. P5 and P6 are still untouched.
 
+- **P3 is measured and guarded**, not argued about. `EveryPositionOwesTheAreaTowerAMergePoint`
+  walks the real flow field from every authored gate and finds the cells more than one gate's traffic
+  crosses, at least six cells out from the truck — because every route ends at the truck, so asserting
+  on the truck itself would pass forever and prove nothing. As of 2026-09-13: The Gate 2/4 gates at 7
+  cells, the Service Road 2/4 at 49, the Pump House 3/4 at 11. **The Gate is the weakest of the three
+  and it is the opening position**, which wants fixing by layout.
+
 **Next, in order:**
-- Audit all three shipped positions against P3 (a convergence point for the Brush Hog) and P4
+- P4: a sightline check from every buildable slot to the approach it covers.
   (sightline from every buildable slot).
 - Elevation (P5): nothing in the game is currently above ground level except roofs nobody can reach.
 - Landmarks (P6): the water tower does not exist yet.
