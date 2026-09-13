@@ -82,11 +82,31 @@ now sends the wave to the other three rather than the long way round. It is the 
 reads, so a stale brief is not a cosmetic problem — it teaches the wrong game. Rewritten to teach the
 shape instead: one gun, four ways in, build for the three you are not standing in.
 
-**The chase camera now has buildings on every side.** Parked at the back wall, the truck had open
-ground behind it and the camera could swing freely. At the crossroads it is surrounded, and a low
-pitch with the camera swung toward a nearby house puts the near wall through the lens — reproduced
-at yaw 151, pitch 10. Camera-versus-building collision was always latent and this promoted it to a
-real problem. NOT fixed here; recorded so it is not rediscovered as a mystery.
+**The chase camera now has buildings on every side, and ONE ATTEMPT TO FIX IT FAILED.** Parked at
+the back wall the truck had open ground behind it and the camera could swing freely. At the
+crossroads it is surrounded, so the rig regularly ends up inside a house. Reproduce it with
+`-exodus-screenshot-yaw 0 -exodus-screenshot-pitch 12`: the hero stands at (64,44), the house at
+(64,33) occupies y29–37, and the rig wants to sit at y≈31.
+
+The attempt was to march the hero→camera line through the grid and pull the rig in short of any
+`WallKind.Rock` cell, reusing `Movement.FirstBlockedCell` — the same march that decides whether a
+turret can see a target, so that "is something in the way" has one definition. A physics cast is not
+an option: the bought buildings are imported meshes with no colliders, so a SphereCast reports clear
+straight through a house.
+
+**What was established, so the next attempt does not re-derive it:**
+- The grid data is correct. Probed live: `KindAt(64, 29..37)` is `Rock` for every cell of that house.
+- The march is correct when called directly. From `(64.5, 44.5)` heading `(0,−1)` it returns
+  blocked at cell `(64,37)`, distance `6.8`, kind `Rock` — exactly right.
+- Feeding that through the offset maths puts the rig at y≈38.2, clear of the wall at 37.5.
+- **And yet the camera still renders from inside the house.** So the defect is somewhere between
+  the returned distance and the rig's final transform, not in the grid or the march.
+
+The change was REVERTED rather than shipped, because code that does not move the symptom is worse
+than no code: it looks like the problem is handled. Prime suspects for next time, in order — the
+`SmoothDamp` that follows `targetPos` (a pulled-in target still has to be reached, and the rig may
+simply be lagging through the wall), `_snapCamera` consumption, and whether `_zoom` has settled at
+the moment of capture.
 
 ## What this does NOT mean
 
