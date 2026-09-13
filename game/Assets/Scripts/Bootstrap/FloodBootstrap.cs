@@ -71,6 +71,16 @@ namespace Cipher.Game
         /// <summary>Which mission the game opens on. The campaign picker replaces this later.</summary>
         private const string StartingScenarioId = "act1-01-the-gate";
 
+        /// <summary>The scenario id from the command line, or null for the campaign opening.</summary>
+        private static string? ScenarioOverride()
+        {
+            var args = System.Environment.GetCommandLineArgs();
+            for (int i = 0; i < args.Length - 1; i++)
+                if (string.Equals(args[i], "-exodus-scenario", System.StringComparison.OrdinalIgnoreCase))
+                    return args[i + 1];
+            return null;
+        }
+
         private ScenarioDef _scenario = null!;
         private ObjectiveSet _objectives = null!;
         private ActorSystem _actors = null!;
@@ -305,7 +315,14 @@ namespace Cipher.Game
             // mission after it meant those were built from the 64x48 defaults: the first scenario of
             // any other size would have indexed a 64x48 minimap buffer with 96x64 coordinates every
             // fifth of a second, and drawn the vault object somewhere the flow field was not aiming.
-            _scenario = LoadScenario(StartingScenarioId);
+            // -exodus-scenario <id> opens straight onto any position.
+            //
+            // Added because position three could not be LOOKED AT. The only way to reach it was to
+            // play or fall back through the two before it, so a dressing pass there was verifiable
+            // by unit test and by nothing else -- and "the tests pass" is not an answer to "does it
+            // look like anywhere". Every position after this one has the same problem, so the flag
+            // is worth more than the one screenshot that prompted it.
+            _scenario = LoadScenario(ScenarioOverride() ?? StartingScenarioId);
             ApplyScenarioShape(_scenario);
 
             BuildSceneObjects();

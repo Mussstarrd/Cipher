@@ -143,6 +143,7 @@ namespace Cipher.Game
                 case "BrushPile": BrushPile(pivot, seed); break;
                 case "PalletStack": PalletStack(pivot, seed); break;
                 case "Dumpster": Dumpster(pivot); break;
+                case "TransformerBay": TransformerBay(pivot); break;
                 case "WaterTower": WaterTower(pivot); break;
                 case "StreetLamp": StreetLamp(pivot); break;
                 case "PicnicTable": PicnicTable(pivot); break;
@@ -219,6 +220,36 @@ namespace Cipher.Game
         /// </summary>
         private static string HouseAoKey(int seed) =>
             $"House{(((seed >> 6) & 3) != 0 ? 1 : 0)}{(seed >> 8) & 1}";
+
+        /// <summary>
+        /// A pad-mounted transformer pair behind a rail: the unit a substation yard is built from.
+        ///
+        /// Boxes, per CLAUDE.md's standing decision about built scenery. Under the ink shader a grey
+        /// can on a concrete pad with a bright hazard plate reads as electrical plant, and what would
+        /// look cheap is a photoreal transformer standing next to a guardhouse made of cuboids.
+        /// </summary>
+        private void TransformerBay(Transform parent)
+        {
+            var pad = new Color(0.46f, 0.46f, 0.45f);
+            var can = new Color(0.40f, 0.43f, 0.44f);
+            var rail = new Color(0.30f, 0.31f, 0.33f);
+            var hazard = new Color(0.86f, 0.66f, 0.12f);
+
+            Box(parent, "Pad", new Vector3(0f, 0.09f, 0f), new Vector3(3.8f, 0.18f, 2.8f), pad);
+
+            // Two cans rather than one: a pair reads as plant, a single box reads as a crate.
+            Box(parent, "CanL", new Vector3(-0.85f, 0.95f, 0f), new Vector3(1.25f, 1.55f, 1.35f), can);
+            Box(parent, "CanR", new Vector3(0.85f, 0.85f, 0.1f), new Vector3(1.1f, 1.35f, 1.2f), can);
+            Box(parent, "Bushing", new Vector3(-0.85f, 1.85f, 0f), new Vector3(0.9f, 0.3f, 0.9f), rail);
+
+            // The hazard plate is the only saturated colour, so the eye finds the yard at distance.
+            Box(parent, "Plate", new Vector3(-0.85f, 1.0f, -0.72f), new Vector3(0.45f, 0.55f, 0.06f), hazard);
+
+            // A waist-high rail on the approach side: reads as "keep out" without blocking sight.
+            Box(parent, "RailTop", new Vector3(0f, 1.0f, -1.5f), new Vector3(3.8f, 0.09f, 0.09f), rail);
+            Box(parent, "RailPostL", new Vector3(-1.8f, 0.5f, -1.5f), new Vector3(0.1f, 1.0f, 0.1f), rail);
+            Box(parent, "RailPostR", new Vector3(1.8f, 0.5f, -1.5f), new Vector3(0.1f, 1.0f, 0.1f), rail);
+        }
 
         /// <summary>
         /// The fallback water tower: a tank on four legs.

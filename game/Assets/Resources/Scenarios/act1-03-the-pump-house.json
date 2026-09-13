@@ -154,6 +154,184 @@
       "kind": "WaterTower",
       "x": 76.0,
       "y": 14.0
+    },
+    {
+      "kind": "TransformerBay",
+      "x": 118.0,
+      "y": 42.0
+    },
+    {
+      "kind": "TransformerBay",
+      "x": 118.0,
+      "y": 68.0
+    },
+    {
+      "kind": "TransformerBay",
+      "x": 126.0,
+      "y": 42.0
+    },
+    {
+      "kind": "TransformerBay",
+      "x": 126.0,
+      "y": 68.0
+    },
+    {
+      "kind": "TransformerBay",
+      "x": 134.0,
+      "y": 42.0
+    },
+    {
+      "kind": "TransformerBay",
+      "x": 134.0,
+      "y": 68.0
+    },
+    {
+      "kind": "TransformerBay",
+      "x": 120.0,
+      "y": 48.0
+    },
+    {
+      "kind": "TransformerBay",
+      "x": 132.0,
+      "y": 48.0
+    },
+    {
+      "kind": "StreetLamp",
+      "x": 44.0,
+      "y": 48.0
+    },
+    {
+      "kind": "StreetLamp",
+      "x": 60.0,
+      "y": 48.0
+    },
+    {
+      "kind": "StreetLamp",
+      "x": 76.0,
+      "y": 48.0
+    },
+    {
+      "kind": "StreetLamp",
+      "x": 60.0,
+      "y": 64.0
+    },
+    {
+      "kind": "StreetLamp",
+      "x": 76.0,
+      "y": 64.0
+    },
+    {
+      "kind": "StreetLamp",
+      "x": 104.0,
+      "y": 44.0
+    },
+    {
+      "kind": "StreetLamp",
+      "x": 104.0,
+      "y": 68.0
+    },
+    {
+      "kind": "StreetLamp",
+      "x": 116.0,
+      "y": 56.0
+    },
+    {
+      "kind": "StreetLamp",
+      "x": 136.0,
+      "y": 56.0
+    },
+    {
+      "kind": "StreetLamp",
+      "x": 40.0,
+      "y": 30.0
+    },
+    {
+      "kind": "StreetLamp",
+      "x": 40.0,
+      "y": 84.0
+    },
+    {
+      "kind": "StreetLamp",
+      "x": 88.0,
+      "y": 30.0
+    },
+    {
+      "kind": "PalletStack",
+      "x": 42.0,
+      "y": 64.0,
+      "yaw": 12
+    },
+    {
+      "kind": "PalletStack",
+      "x": 45.0,
+      "y": 57.0,
+      "yaw": -20
+    },
+    {
+      "kind": "Dumpster",
+      "x": 128.0,
+      "y": 38.0,
+      "yaw": 90
+    },
+    {
+      "kind": "Dumpster",
+      "x": 36.0,
+      "y": 44.0,
+      "yaw": 0
+    },
+    {
+      "kind": "JerseyBarrier",
+      "x": 100.0,
+      "y": 44.0,
+      "yaw": 0
+    },
+    {
+      "kind": "JerseyBarrier",
+      "x": 100.0,
+      "y": 68.0,
+      "yaw": 0
+    },
+    {
+      "kind": "JerseyBarrier",
+      "x": 86.0,
+      "y": 40.0,
+      "yaw": 90
+    },
+    {
+      "kind": "JerseyBarrier",
+      "x": 86.0,
+      "y": 72.0,
+      "yaw": 90
+    },
+    {
+      "kind": "BrushPile",
+      "x": 56.0,
+      "y": 20.0,
+      "yaw": 6
+    },
+    {
+      "kind": "BrushPile",
+      "x": 72.0,
+      "y": 100.0,
+      "yaw": 6
+    },
+    {
+      "kind": "BrushPile",
+      "x": 108.0,
+      "y": 20.0,
+      "yaw": 6
+    },
+    {
+      "kind": "BrushPile",
+      "x": 110.0,
+      "y": 98.0,
+      "yaw": 6
+    },
+    {
+      "kind": "BrushPile",
+      "x": 24.0,
+      "y": 66.0,
+      "yaw": 6
     }
   ],
   "actors": [

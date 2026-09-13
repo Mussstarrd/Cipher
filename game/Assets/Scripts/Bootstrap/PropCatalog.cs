@@ -115,6 +115,15 @@ namespace Cipher.Game
 
                 // Decoration proper: a lamp post does not stop anybody and should not be allowed to
                 // pretend it does. An empty footprint is a supported answer, not a missing one.
+                // A transformer bay: the substation furniture position 3 is named after.
+                //
+                // Four by three and SOLID, unlike the water tower, because that is the point of it.
+                // the-contracting-perimeter.md gives the Pump House "hazard ground -- some of the
+                // best firing positions are now inside the spill radius", and a yard full of things
+                // you cannot stand on is how that reads before any hazard rule exists. Small enough
+                // that a few of them shape a yard without walling it.
+                ["TransformerBay"] = Centred(4, 3),
+
                 // A LANDMARK, AND DELIBERATELY NOT AN OBSTRUCTION (design pillar P6).
                 //
                 // Eight metres tall against houses of six to eight, so it clears the roofline and
