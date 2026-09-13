@@ -727,13 +727,13 @@
   },
   "director": {
     "seed": 20260915,
-    "sapperFirstAt": 25.0,
+    "sapperFirstAt": 8.0,
     "spitterFirstAt": 40,
     "hunterShare": 0.1,
     "wreckerShare": 0.22,
     "flankShare": 0.3,
-    "sapperChance": 0.045,
-    "sapperSpacing": 22.0,
+    "sapperChance": 0.08,
+    "sapperSpacing": 6.0,
     "maxSappersAlive": 2,
     "maxActiveBreaches": 2
   },

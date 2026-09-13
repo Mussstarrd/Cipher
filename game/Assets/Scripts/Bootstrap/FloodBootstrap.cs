@@ -1580,18 +1580,22 @@ namespace Cipher.Game
                 switch (e.Kind)
                 {
                     case SimEventKind.SapperTargeted:
+                        _sappersSpotted++;
                         Alert("SAPPER SPOTTED — it is heading for your wall", 4f);
                         _sfx.Play(Sfx.SapperSpotted, 0.9f, 0f, minInterval: 2f);
                         break;
                     case SimEventKind.BreachPlanting:
+                        _breachesPlanted++;
                         Alert($"BREACH IN {e.F:F0}s — kill the Sapper or bring a drone", 4f);
                         _sfx.PlayAt(Sfx.BreachPlanting, CellWorld(e.B, 1f), 1f, 0f, minInterval: 1f);
                         break;
                     case SimEventKind.BreachStage:
+                        if (e.A >= 0) _breachesOpened++;
                         if (e.A >= 0) { Alert("WALL BREACHED — they are coming through", 4f); _sfx.PlayAt(Sfx.BreachOpened, CellWorld(e.B, 1f), 1f, 0.03f); }
                         else if ((int)e.F > (int)BreachStage.Cracked) { Alert("BREACH WIDENING", 3f); _sfx.PlayAt(Sfx.BreachOpened, CellWorld(e.B, 1f), 0.7f, 0.08f); }
                         break;
                     case SimEventKind.BreachCollapsed:
+                        _breachesCollapsed++;
                         Alert("WALL COLLAPSED", 4f);
                         _sfx.PlayAt(Sfx.WallCollapsed, CellWorld(e.B, 1f), 1f, 0.02f);
                         break;
@@ -1897,6 +1901,15 @@ namespace Cipher.Game
 
             Debug.Log($"[Census] alive signed {live[0]} humanoid {live[1]} sapper {live[2]} spitter {live[3]}"
                     + $" | bodies signed {worn[0]} humanoid {worn[1]} sapper {worn[2]} spitter {worn[3]}");
+            Debug.Log($"[Census] since start: sappers spotted {_sappersSpotted}, breaches planted "
+                    + $"{_breachesPlanted}, opened {_breachesOpened}, collapsed {_breachesCollapsed}");
+            // The DIRECTOR'S own tally, beside the world's. "No sapper on the field" has three
+            // different causes -- never chosen, chosen and already dead, or chosen and standing
+            // there with nothing breachable to walk to -- and only these two numbers side by side
+            // tell them apart.
+            Debug.Log($"[Census] t={_matchSeconds:F0}s wave {_match?.WaveNumber ?? -1} phase {_match?.Phase.ToString() ?? "?"} | director chose: "
+                    + $"sappers {_director?.SappersSpawned ?? -1}, spitters {_director?.SpittersSpawned ?? -1}"
+                    + $" | turrets {_turrets?.Turrets.Count ?? -1}, breachable walls {BreachableWallCount()}");
         }
 
         public void ShowCharacterLineupForCapture()
@@ -3176,6 +3189,32 @@ namespace Cipher.Game
         }
 
         /// <summary>Living agents, for the perf harness to correlate a hitch against. Harness only.</summary>
+        // A RUNNING TALLY, NOT A SNAPSHOT. The census counts who is wearing a body at the moment
+        // of the shutter, which cannot answer "did any sapper ever reach a wall" -- one that lived,
+        // planted and died between two samples is invisible to it, and so is one that never
+        // spawned. These are the only numbers that distinguish "the mechanic is off" from "the
+        // mechanic fired and I missed it", which is the exact pair CLAUDE.md keeps warning about.
+        private int _sappersSpotted, _breachesPlanted, _breachesOpened, _breachesCollapsed;
+
+        /// <summary>
+        /// Cells a Sapper could actually choose. A Sapper needs something BREACHABLE, and scenery
+        /// is Rock: on a position whose barricades are all player-built this reads zero until the
+        /// player builds one, which is the mission's whole premise and also the reason a headless
+        /// run can look broken when it is behaving perfectly.
+        /// </summary>
+        private int BreachableWallCount()
+        {
+            if (_world == null) return -1;
+            var map = _world.Map;
+            int n = 0;
+            for (int i = 0; i < map.Width * map.Height; i++)
+            {
+                var k = map.KindAt(i % map.Width, i / map.Width);
+                if (k == WallKind.Wall || k == WallKind.Barricade) n++;
+            }
+            return n;
+        }
+
         public int AliveForPerf => _world?.AliveCount ?? -1;
 
         /// <summary>Starts the first wave, so a smoke capture can actually see combat. Harness only.</summary>

@@ -699,6 +699,26 @@ substitute: it references the sim's SOURCE, not its test project.
   say "gundam", and ADR-003's machines are a delivery walker and a clubhouse attendant. The Spitter is
   **still a box** and is deliberately left so: ADR-003 names it a hacked humanoid with a sprayer, and
   recasting it as a person would edit the fiction rather than defer it. Owner's call.
+- **A SAPPER CAN ONLY BE BORN DURING A WAVE'S SPAWN WINDOW, AND THAT WINDOW IS SHORT.**
+  `sapperFirstAt` and `sapperSpacing` are written in match seconds but they are only ever SAMPLED on
+  a spawn event -- `SpawnDirector.Decide` runs once per body, and nothing calls it between waves.
+  Crowbar's wave one is 42 bodies at 2.5/s: a **sixteen-second** window. A `sapperFirstAt` of 25s
+  therefore fired never, in silence, and the census read `sappers 0` with every knob set correctly.
+  Two consequences worth knowing before tuning:
+  - A threshold later than the last spawn of the last reachable wave can never fire.
+  - **Spacing longer than a wave's spawn window means at most one sapper per wave**, whatever the
+    chance is set to. Escalation then comes from wave SIZE, not from the chance: Crowbar goes 42
+    bodies to 157, so 6s spacing gives one sapper in wave one and about four in wave five.
+  Headless runs cannot show more than the first wave's worth, because with no player nothing clears
+  wave one and wave two never starts. That is a property of the harness, not a bug in the mission.
+- **A SAPPER WITH NO BREACHABLE WALL IS A RUNNER IN A DIFFERENT COAT.** `PlanSapper` needs a cell of
+  `WallKind.Wall` or `Barricade`; scenery is `Rock` and does not count. On a position whose only
+  breachable walls are player-built, `breachable walls` reads **0** until the player builds one, and
+  a Sapper that spawns before then targets nothing and raises no `SapperTargeted`. For mission 6
+  that is the premise -- "Sappers debut against player walls" -- but it means a headless run looks
+  broken while behaving perfectly, which is why the census prints the breachable count next to the
+  director's tally.
+
 - **`waves[].mix` DOES NOT STEER ANYTHING. THE DIRECTOR KNOBS DO.** The mix block is parsed,
   validated to sum to 1, stored on `WaveSpec` -- and read by nothing, because the spawn director is
   global rather than per-wave. `WaveSpec`'s own doc comment has always said so; it is a placeholder
