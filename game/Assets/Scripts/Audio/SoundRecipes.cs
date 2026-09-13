@@ -33,17 +33,42 @@ namespace Cipher.Game.Audio
         {
             switch (sfx)
             {
+                // A GUNSHOT IS A TRANSIENT, A BODY AND A PLACE. This used to be 70ms of noise over
+                // a 60ms sweep and nothing else, and the owner's description of it was exact: "my
+                // laser sounds like it's just clicking". It was not a mix problem. A sound that
+                // stops dead 70ms after it starts IS a click, however well built the first 70ms
+                // are -- there was no body under the crack and no room around it.
+                //
+                // Four layers, and the last two are what the old one was missing entirely:
+                //   CRACK   the supersonic snap. Short, bright, unchanged in character.
+                //   BODY    the low end of the discharge, with real weight and a slower decay.
+                //   SLAP    the crack again 55ms later, quieter and dulled -- the report coming
+                //           back off the houses across the street. This single layer is most of
+                //           the difference between "in a place" and "in a vacuum".
+                //   TAIL    low-passed noise decaying over a third of a second: the street itself
+                //           ringing. Quiet enough to feel rather than hear.
                 case Sfx.Shot:
-                    // Crack (high-passed noise) over a short low thump.
                     return Normalize(Mix(
-                        (HighPass(NoiseBurst(0.07f, 70f, 11), 900f), 1f, 0f),
-                        (Sweep(0.06f, 180f, 60f, 40f), 0.8f, 0f)), 0.75f);
+                        (HighPass(NoiseBurst(0.05f, 95f, 11), 1100f), 1.0f, 0f),
+                        (Sweep(0.16f, 220f, 52f, 17f), 0.95f, 0f),
+                        (LowPass(HighPass(NoiseBurst(0.05f, 80f, 17), 700f), 3200f), 0.34f, 0.055f),
+                        (LowPass(NoiseBurst(0.34f, 12f, 29), 1400f), 0.20f, 0.02f)), 0.8f);
+
+                // Impact on a body: a slap with something behind it, not a tick. Still short --
+                // this plays many times a second in a firefight and cannot be allowed to smear.
                 case Sfx.Hit:
-                    return Normalize(FadeOut(Sweep(0.03f, 1800f, 900f, 90f), 0.01f), 0.35f);
+                    return Normalize(Mix(
+                        (FadeOut(Sweep(0.035f, 1700f, 820f, 80f), 0.01f), 1f, 0f),
+                        (LowPass(NoiseBurst(0.07f, 46f, 71), 900f), 0.55f, 0.004f)), 0.42f);
+
+                // A body going down. Given a tail so it lands with some finality rather than
+                // stopping the instant it starts -- this is the sound that has to feel like a
+                // consequence, because it is the one the player is working for.
                 case Sfx.Kill:
                     return Normalize(Mix(
-                        (LowPass(NoiseBurst(0.12f, 40f, 23), 1200f), 1f, 0f),
-                        (Sweep(0.12f, 240f, 70f, 30f), 0.9f, 0f)), 0.6f);
+                        (LowPass(NoiseBurst(0.14f, 34f, 23), 1200f), 1f, 0f),
+                        (Sweep(0.20f, 240f, 62f, 19f), 0.95f, 0f),
+                        (LowPass(NoiseBurst(0.30f, 11f, 31), 700f), 0.28f, 0.03f)), 0.65f);
 
                 case Sfx.StrikeCall:
                     return Normalize(Concat(Beep(0.07f, 880f), Silence(0.05f), Beep(0.07f, 880f), Silence(0.05f), Beep(0.14f, 1320f)), 0.5f);
@@ -56,10 +81,16 @@ namespace Cipher.Game.Audio
                         (Sweep(0.5f, 110f, 35f, 7f), 1.2f, 0f),
                         (HighPass(NoiseBurst(0.12f, 60f, 41), 1500f), 0.5f, 0f)), 0.95f);
 
+                // The same architecture as Sfx.Shot but DELIBERATELY TIGHTER. A turret fires far
+                // more often than the player does, and half a dozen of them firing a sound with a
+                // third of a second of tail turns the whole position to mush. Short slap, short
+                // tail, and a quieter mix: it should read as a place full of guns, not as one gun
+                // played six times.
                 case Sfx.TurretShot:
                     return Normalize(Mix(
-                        (HighPass(NoiseBurst(0.045f, 110f, 53), 1400f), 1f, 0f),
-                        (Sweep(0.04f, 320f, 120f, 60f), 0.5f, 0f)), 0.4f);
+                        (HighPass(NoiseBurst(0.04f, 125f, 53), 1600f), 1f, 0f),
+                        (Sweep(0.09f, 330f, 105f, 30f), 0.55f, 0f),
+                        (LowPass(NoiseBurst(0.14f, 26f, 59), 1100f), 0.20f, 0.035f)), 0.44f);
 
                 case Sfx.Place:
                     return Normalize(Mix(
