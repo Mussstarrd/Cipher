@@ -52,7 +52,35 @@ an object exposing `name`, `compress(bytes) -> bytes`,
 `decompress(bytes) -> bytes`. The harness disqualifies anything that isn't
 byte-exact on the roundtrip.
 
-## Results
+## Results (loop ran to convergence, 4 generations)
 
-See `knowledge/LEADERBOARD.md` for current standings and
-`knowledge/learnings/` for what each generation figured out.
+Per-file bests discovered by the loop, versus the best off-the-shelf codec
+for that file (all lossless, byte-verified):
+
+| file | best baseline (gen 0) | lab best | bytes saved vs baseline |
+|---|---|---|---|
+| text.txt | bz2-9, 7.99x | gen1.text-token, 9.05x | 12% |
+| code.py | bz2-9, 182x | gen1.text-token, 408x | 55% |
+| logs.jsonl | bz2-9, 6.65x | gen2.x-struct, 8.38x | 21% |
+| series.csv | lzma-9e, 6.04x | gen2.x-struct, 11.55x | 48% |
+| audio.pcm | brotli-11, 1.18x | gen3.audio-sin, 1.58x | 25% |
+| image.rgb | brotli-11, 1.37x | gen1.media-pngf, 1.85x | 26% |
+| random.bin | 1.00x | 1.00x | 0% (control — as theory requires) |
+
+Whole corpus: the best single baseline (brotli-11) manages 2.35x; the lab's
+content-routing ensemble (`gen2.x-auto`) reaches **3.02x**, with the gen3
+audio result closing the last measured gap after that ensemble was built.
+
+The loop stopped by its own criterion: after generation 3, every file class
+measures at or within ~1% of its empirical entropy floor (each generation's
+learnings quantify the floor it hit and the ideas that *didn't* work). Full
+standings in `knowledge/LEADERBOARD.md`; the story of what each generation
+learned from the previous one is in `knowledge/learnings/`.
+
+Try the end product:
+
+```bash
+python -m lab.cipher pack corpus/logs.jsonl /tmp/logs.cph            # ~8x smaller
+CIPHER_KEY=secret python -m lab.cipher pack corpus/logs.jsonl /tmp/logs.cph.enc --encrypt
+python -m lab.cipher unpack /tmp/logs.cph.enc /tmp/logs.out          # byte-identical
+```
