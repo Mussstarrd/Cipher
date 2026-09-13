@@ -220,5 +220,15 @@ namespace Cipher.Sim.Agents
         public int WreckerSearchCells { get; set; } = 10;
         public float WreckerAttackInterval { get; set; } = 0.8f;
         public float WreckerWallDamage { get; set; } = 6f;
+
+        /// <summary>
+        /// How long a wrecker keeps at a wall that is not giving before it abandons the errand.
+        ///
+        /// Generous ON PURPOSE: a 200hp barricade at WreckerWallDamage per WreckerAttackInterval
+        /// takes about 27 seconds, so a wrecker that is genuinely working always finishes. This
+        /// only catches the one that is not -- interrupted, shoved off by separation, or pulling at
+        /// something it will never get through.
+        /// </summary>
+        public float WreckerPatienceSeconds { get; set; } = 45f;
 }
 }

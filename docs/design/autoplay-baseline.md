@@ -78,18 +78,42 @@ diagnosis instead of another guess:
 ```
 
 **Every one of them has a path.** The freeze was never about sealed bodies, which is what the first
-two attempts at it assumed. Three separate causes, in descending order of blame:
+two attempts at it assumed. Three separate causes, in descending order of blame. **Two are now fixed** — and they turned out
+to be the same bug wearing different clothes, which is the part worth remembering: *every
+specialised behaviour in this sim returned `true` unconditionally and had no way to fail.* An
+errand with no exit is a body that can never be resolved.
 
-1. **`StepStructureHunter` has no give-up.** It acquires the nearest turret within
+1. **FIXED — `StepStructureHunter` had no give-up.** It acquires the nearest turret within
    `HunterAcquireRange`, and while the distance exceeds `HunterContactRange` it steers and returns
    `true` — *every tick, forever*. A hunter with a barricade between it and the gun slides along
    the wall and never closes, never falls through to the objective, and never dies. This is the
    main offender and the next thing to fix.
-2. **Wall wreckers are working, just slowly.** Two of the four are chewing a barricade at
-   `WreckerWallDamage` per `WreckerAttackInterval` against `DefaultWallHp` 200. Nine collapses in
-   420 seconds is progress, and arguably correct; it is only a problem because nothing else is
-   happening.
-3. **A stall-sent Sapper that does not arrive.** Pathed, `Intent.Vault`, and not closing. Unexplained.
+2. **FIXED — wrecking was a career, not an errand.** `StepWallWrecker` returned `true` for as long
+   as *any* wall sat within `WreckerSearchCells`, with no completion. On a position where the
+   player has built fifty barricades, a wrecker demolishes the neighbourhood for the rest of the
+   match and never once goes at the truck. The field was not stuck, it was **busy**. The errand now
+   ends when the hole is open — go through it, that was the point — with a generous patience budget
+   for the wrecker that is getting nowhere. Wave one went from never clearing to clearing, and
+   kills over the same 420s went 41 → 108.
+3. **OPEN — a Spitter and a Sapper that do not arrive.** With the first two fixed the freeze now
+   happens in wave *two*, with exactly two bodies left:
+
+   ```
+   [Stall] id  44 Spitter/Vault at (78.0,64.8) hasPath=True
+   [Stall] id 108 Sapper/Vault  at (36.1,52.1) hasPath=True
+   ```
+
+   Both pathed, both stationary, both at the ARCHETYPE layer rather than the intent layer, so the
+   errand budget does not reach them. `StepSpitter` re-acquires the nearest turret every tick and
+   approaches; with fourteen guns on the map one is always in range, so it can approach forever.
+   It does have a wall fallback, but that only fires on *zero* movement — a body sliding
+   tangentially along a barricade keeps moving and never trips it.
+
+   Given three instances of one bug, the next fix should probably be structural: a no-progress
+   watchdog in `AgentWorld.Step` that sends any body back to the objective when it has not changed
+   cell for a while, rather than a fourth bespoke give-up. It needs care — a wrecker legitimately
+   stands still for ~27s breaking a 200hp wall, and a Sapper stands still while planting — so the
+   watchdog has to reset on *doing damage*, not only on moving.
 
 A sim change did land alongside this diagnosis and is worth keeping on its own merits: a body whose
 cell has no path now falls back to wrecking, because `DirectionAt` on an unreachable cell returns a

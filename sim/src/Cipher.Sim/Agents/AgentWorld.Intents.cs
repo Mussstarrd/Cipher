@@ -37,6 +37,10 @@ namespace Cipher.Sim.Agents
         {
             int id = SpawnInternal(position, health, Archetype.Runner);
             _intent[id] = (byte)intent;
+            // Each errand keeps its own clock, so it has to be set where the errand is handed out.
+            _errand[id] = intent == Intent.WreckWall
+                ? _config.WreckerPatienceSeconds
+                : _config.HunterPursuitSeconds;
             return id;
         }
 
@@ -93,13 +97,13 @@ namespace Cipher.Sim.Agents
                 // The budget is spent only while FAILING to close. Getting nearer than this hunter
                 // has ever been refills it, so a long legitimate chase round a building is free and
                 // only a chase that has stopped making ground runs out.
-                if (bestDistSq < _pursuitBest[i])
+                if (bestDistSq < _errandBest[i])
                 {
-                    _pursuitBest[i] = bestDistSq;
-                    _pursuit[i] = _config.HunterPursuitSeconds;
+                    _errandBest[i] = bestDistSq;
+                    _errand[i] = _config.HunterPursuitSeconds;
                 }
-                _pursuit[i] -= dt;
-                if (_pursuit[i] <= 0f)
+                _errand[i] -= dt;
+                if (_errand[i] <= 0f)
                 {
                     // Back to the objective, permanently: the switch in Step only calls this for
                     // Intent.HuntStructure, so clearing it is what stops the re-acquire next tick.
@@ -114,8 +118,8 @@ namespace Cipher.Sim.Agents
             }
 
             // In contact: the chase worked, so it costs nothing.
-            _pursuit[i] = _config.HunterPursuitSeconds;
-            _pursuitBest[i] = 0f;
+            _errand[i] = _config.HunterPursuitSeconds;
+            _errandBest[i] = 0f;
 
             // In contact. Tearing at a turret is the game layer's business to resolve, because the
             // sim does not own emplacement health; it just reports that it is happening.
@@ -138,16 +142,35 @@ namespace Cipher.Sim.Agents
         {
             var (cx, cy) = _map.WorldToCell(pos);
 
-            // Already touching something breakable? Pull at it.
+            // WRECKING IS AN ERRAND, NOT A CAREER. This returned true for as long as ANY wall sat
+            // within WreckerSearchCells, with no way to finish -- so on a position where the player
+            // has built fifty barricades, a wrecker demolishes the neighbourhood for the rest of
+            // the match and never once goes at the truck. Two of them held a Crowbar wave open
+            // indefinitely: the field was not stuck, it was BUSY. The config has always described
+            // these as the share "that go at a barricade rather than walking round it", which is a
+            // body dealing with the wall IN ITS WAY, not a demolition contract.
+            //
+            // So the errand ends when the hole is made, and a patience budget catches the wrecker
+            // that is getting nowhere.
             if (TryFindAdjacentWall(cx, cy, out int wx, out int wy))
             {
                 _timer[i] -= dt;
                 if (_timer[i] <= 0f)
                 {
                     _timer[i] = _config.WreckerAttackInterval;
-                    DamageWall(wx, wy, _config.WreckerWallDamage * ThreatScale(i), 1f);
+                    if (DamageWall(wx, wy, _config.WreckerWallDamage * ThreatScale(i), 1f))
+                    {
+                        // Something gave. That is progress, so the patience is refilled.
+                        _errand[i] = _config.WreckerPatienceSeconds;
+                        if (_map.StageAt(wx, wy) == BreachStage.Collapsed)
+                        {
+                            // The hole is open. Go through it -- that was the entire point.
+                            _intent[i] = (byte)Intent.Vault;
+                            return false;
+                        }
+                    }
                 }
-                return true;
+                return SpendErrand(i, dt);
             }
 
             // Otherwise head for the nearest wall within reach, scanning in a fixed order so the
@@ -155,8 +178,22 @@ namespace Cipher.Sim.Agents
             if (!FindNearestWallCell(cx, cy, _config.WreckerSearchCells, out int tx, out int ty))
                 return false;
 
+            if (!SpendErrand(i, dt)) return false;
             SteerToward(i, pos, GridMap.CellCenter(tx, ty), dt, _config.MoveSpeed, gates);
             return true;
+        }
+
+        /// <summary>
+        /// Charges dt to the current errand. Returns false once it is spent, having sent the body
+        /// back to the objective -- the caller returns false too, which drops it through to
+        /// StepRunner on the same tick rather than wasting one standing still.
+        /// </summary>
+        private bool SpendErrand(int i, float dt)
+        {
+            _errand[i] -= dt;
+            if (_errand[i] > 0f) return true;
+            _intent[i] = (byte)Intent.Vault;
+            return false;
         }
 
         /// <summary>Straight-line steering with separation, sharing the runner's movement rules.</summary>

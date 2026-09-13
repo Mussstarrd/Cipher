@@ -37,10 +37,14 @@ namespace Cipher.Sim.Agents
         /// <summary>Per-agent sidearm flag. See AgentWorld.Pace.cs.</summary>
         private bool[] _armed;
         private int[] _target;
-        /// <summary>Seconds of chase a structure hunter has left before it gives up.</summary>
-        private float[] _pursuit;
-        /// <summary>Closest a hunter has ever been to its gun, squared. Resets the budget when beaten.</summary>
-        private float[] _pursuitBest;
+        /// <summary>
+        /// Seconds this body keeps at its CURRENT ERRAND before giving up and going back to the
+        /// objective. Shared by the hunter and the wrecker because a body has exactly one errand at
+        /// a time, and because both of them had the same bug: an intent with no way to end.
+        /// </summary>
+        private float[] _errand;
+        /// <summary>Closest a hunter has ever been to its gun, squared. Refills the budget when beaten.</summary>
+        private float[] _errandBest;
 
         public int Count { get; private set; }
         public int AliveCount { get; private set; }
@@ -69,8 +73,8 @@ namespace Cipher.Sim.Agents
             _armed = new bool[capacity];
             _turned = new bool[capacity];
             _target = new int[capacity];
-            _pursuit = new float[capacity];
-            _pursuitBest = new float[capacity];
+            _errand = new float[capacity];
+            _errandBest = new float[capacity];
         }
 
         public Vec2 PositionOf(int id) => new Vec2(_posX[id], _posY[id]);
@@ -103,13 +107,13 @@ namespace Cipher.Sim.Agents
                 Array.Resize(ref _armed, newSize);
                 Array.Resize(ref _turned, newSize);
                 Array.Resize(ref _target, newSize);
-                Array.Resize(ref _pursuit, newSize);
-                Array.Resize(ref _pursuitBest, newSize);
+                Array.Resize(ref _errand, newSize);
+                Array.Resize(ref _errandBest, newSize);
             }
 
             int id = Count++;
-            _pursuit[id] = _config.HunterPursuitSeconds;
-            _pursuitBest[id] = float.PositiveInfinity;
+            _errand[id] = _config.HunterPursuitSeconds;
+            _errandBest[id] = float.PositiveInfinity;
             _posX[id] = position.X;
             _posY[id] = position.Y;
             _health[id] = health;
