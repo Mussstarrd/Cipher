@@ -46,9 +46,18 @@ namespace Cipher.Game.Match
         // --- Intent split (owner, 2026-09-11). Most still come for the objective. ---
 
         /// <summary>Share of ordinary bodies that peel off for the nearest emplacement.</summary>
-        public float HunterShare { get; set; } = 0.10f;
+        // Owner: "everybody needs to have their focus on the truck with my family, unless I'm in
+        // close vicinity then they're focused on me, and if I do have barricades that are blocking
+        // the most convenient path then we divert somebody to go destroy that barricade."
+        //
+        // That describes a wave with a PURPOSE, and eighteen percent of every wave was peeling off
+        // at spawn to do something else. The opportunist rules already cover the middle clause --
+        // anyone who gets near him turns on him, no share needed -- so these two only need to be
+        // enough that the player sometimes sees a gun rushed or a wall attacked, never enough to
+        // dilute what the wave is for.
+        public float HunterShare { get; set; } = 0.04f;
         /// <summary>Share that go at a barricade rather than walking round it.</summary>
-        public float WreckerShare { get; set; } = 0.08f;
+        public float WreckerShare { get; set; } = 0.05f;
         public float SapperSpacing { get; set; } = 60f;
 
         /// <summary>
@@ -175,12 +184,19 @@ namespace Cipher.Game.Match
         public Archetype Decide(in DirectorView v)
         {
             // Sapper: forced on a seal, scripted first appearance, then rare with spacing and caps.
+            // A FULL SEAL OVERRIDES THE CAPS, and it is tested BEFORE them. Owner: "when I
+            // enclose the truck in barricades it seemed like the spawn points locked up." They did.
+            // The room check below is gated on MaxSappersAlive (1) and MaxActiveBreaches (1), so
+            // once one sapper was walking and one breach was open, a sealed position could issue
+            // nothing at all -- and a player who had walled himself in completely was watching a
+            // wave that could never arrive. The caps exist to stop sappers being spam; they must
+            // not be able to stop the game.
+            if (v.AnySpawnSealed && v.MatchSeconds - _lastSapperAt >= _cfg.SealedSapperSpacing)
+                return Take(Archetype.Sapper, v.MatchSeconds);
+
             bool sapperRoom = v.SappersAlive < _cfg.MaxSappersAlive && v.ActiveBreaches < _cfg.MaxActiveBreaches;
             if (sapperRoom)
             {
-                if (v.AnySpawnSealed && v.MatchSeconds - _lastSapperAt >= _cfg.SealedSapperSpacing)
-                    return Take(Archetype.Sapper, v.MatchSeconds);
-
                 if (!_firstSapperDone && v.MatchSeconds >= _cfg.SapperFirstAt)
                     return Take(Archetype.Sapper, v.MatchSeconds);
 

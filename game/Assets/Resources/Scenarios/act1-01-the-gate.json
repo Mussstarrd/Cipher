@@ -144,18 +144,6 @@
       "yaw": 15
     },
     {
-      "kind": "JerseyBarrier",
-      "x": 36.0,
-      "y": 46.0,
-      "yaw": 90
-    },
-    {
-      "kind": "JerseyBarrier",
-      "x": 36.0,
-      "y": 51.0,
-      "yaw": 90
-    },
-    {
       "kind": "PoolDeck",
       "x": 48.0,
       "y": 31.0
@@ -171,18 +159,6 @@
       "x": 53.0,
       "y": 36.0,
       "yaw": 180
-    },
-    {
-      "kind": "PicnicTable",
-      "x": 44.0,
-      "y": 26.0,
-      "yaw": 20
-    },
-    {
-      "kind": "PicnicTable",
-      "x": 53.0,
-      "y": 27.0,
-      "yaw": -35
     },
     {
       "kind": "StreetLamp",
@@ -206,18 +182,8 @@
     },
     {
       "kind": "House",
-      "x": 46.0,
-      "y": 18.0
-    },
-    {
-      "kind": "House",
       "x": 66.0,
       "y": 19.0
-    },
-    {
-      "kind": "House",
-      "x": 64.0,
-      "y": 33.0
     },
     {
       "kind": "House",
@@ -226,18 +192,8 @@
     },
     {
       "kind": "House",
-      "x": 106.0,
-      "y": 33.0
-    },
-    {
-      "kind": "House",
       "x": 117.0,
       "y": 39.0
-    },
-    {
-      "kind": "House",
-      "x": 98.0,
-      "y": 21.0
     },
     {
       "kind": "House",
@@ -252,19 +208,7 @@
     },
     {
       "kind": "House",
-      "x": 36.0,
-      "y": 58.0,
-      "yaw": 180
-    },
-    {
-      "kind": "House",
       "x": 48.0,
-      "y": 58.0,
-      "yaw": 180
-    },
-    {
-      "kind": "House",
-      "x": 62.0,
       "y": 58.0,
       "yaw": 180
     },
@@ -276,20 +220,8 @@
     },
     {
       "kind": "House",
-      "x": 54.0,
-      "y": 74.0,
-      "yaw": 180
-    },
-    {
-      "kind": "House",
       "x": 66.0,
       "y": 76.0,
-      "yaw": 180
-    },
-    {
-      "kind": "House",
-      "x": 96.0,
-      "y": 63.0,
       "yaw": 180
     },
     {
@@ -300,69 +232,9 @@
     },
     {
       "kind": "House",
-      "x": 100.0,
-      "y": 78.0,
-      "yaw": 180
-    },
-    {
-      "kind": "House",
       "x": 116.0,
       "y": 70.0,
       "yaw": 180
-    },
-    {
-      "kind": "BrushPile",
-      "x": 33.0,
-      "y": 44.0,
-      "yaw": 12
-    },
-    {
-      "kind": "BrushPile",
-      "x": 33.0,
-      "y": 53.0,
-      "yaw": -20
-    },
-    {
-      "kind": "PalletStack",
-      "x": 37.0,
-      "y": 43.0,
-      "yaw": 8
-    },
-    {
-      "kind": "BrushPile",
-      "x": 82.0,
-      "y": 43.0,
-      "yaw": 6
-    },
-    {
-      "kind": "PalletStack",
-      "x": 82.0,
-      "y": 53.0,
-      "yaw": -14
-    },
-    {
-      "kind": "Dumpster",
-      "x": 86.0,
-      "y": 43.0,
-      "yaw": 90
-    },
-    {
-      "kind": "Dumpster",
-      "x": 86.0,
-      "y": 53.0,
-      "yaw": 90
-    },
-    {
-      "kind": "JerseyBarrier",
-      "x": 87.0,
-      "y": 47.0,
-      "yaw": 90
-    },
-    {
-      "kind": "JerseyBarrier",
-      "x": 87.0,
-      "y": 50.0,
-      "yaw": 90
     },
     {
       "kind": "StreetLamp",
@@ -453,7 +325,7 @@
   },
   "spawnCells": [
     {
-      "x": 2,
+      "x": 14,
       "y": 48,
       "gate": "county-road"
     },
@@ -470,7 +342,7 @@
       "flank": true
     },
     {
-      "x": 126,
+      "x": 114,
       "y": 48,
       "gate": "the-back-road"
     }

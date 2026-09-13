@@ -34,6 +34,90 @@ namespace Cipher.Game.Audio
             return bank;
         }
 
+        /// <summary>
+        /// A two-bar loop to sit under the whole game at low volume.
+        ///
+        /// Owner: "Can we get some kind of music track playing in the background at a low volume.
+        /// Like a Jay Z instrumental from The Blueprint album ... I know it can't be licensed but
+        /// for now let's do it if possible."
+        ///
+        /// It cannot be licensed and it is not going to be, so this is the nearest honest thing:
+        /// the same ARRANGEMENT, built from scratch. Boom-bap at 86 BPM, which is roughly where
+        /// that record sits -- kick on the one and the and-of-two, snare hard on two and four, a
+        /// walking minor bass, and a sparse minor-seventh stab on the downbeat. No sample, no
+        /// melody lifted, nothing to clear.
+        ///
+        /// Deliberately SPARSE. This plays for the entire length of a position and the player is
+        /// listening for a sapper; a loop with a hook in it would be unbearable by wave three.
+        /// </summary>
+        public static float[] MusicLoop()
+        {
+            const float Bpm = 86f;
+            float beat = 60f / Bpm;
+            float bar = beat * 4f;
+            float length = bar * 2f;
+
+            var layers = new List<(float[] Samples, float Gain, float Offset)>();
+
+            void At(float[] s, float gain, float beats) => layers.Add((s, gain, beats * beat));
+
+            // Kick: a short pitch drop with a click on the front. The click is what survives a
+            // laptop speaker after the 55Hz body has been thrown away by the driver.
+            float[] Kick() => Normalize(Mix(
+                (Sweep(0.24f, 130f, 44f, 24f), 1f, 0f),
+                (HighPass(NoiseBurst(0.012f, 300f, 9001), 1800f), 0.28f, 0f)), 0.95f);
+
+            // Snare: noise over a tuned body, which is what a snare drum physically is.
+            float[] Snare() => Normalize(Mix(
+                (HighPass(NoiseBurst(0.16f, 34f, 9013), 900f), 1f, 0f),
+                (Tone(0.10f, 190f, 0.001f, 40f, 0.6f, 2), 0.7f, 0f)), 0.8f);
+
+            // Closed hat: very short, very bright, quiet. The pulse, not the point.
+            float[] Hat() => Normalize(HighPass(NoiseBurst(0.035f, 150f, 9029), 6000f), 0.34f);
+
+            // Bass note: a sine with a little harmonic content so it reads on a small speaker.
+            float[] Bass(float hz, float len) => Normalize(Tone(len, hz, 0.008f, 5.5f, 1f, 3), 0.7f);
+
+            // A minor-seventh stab, filtered dark so it sits behind everything.
+            float[] Stab(float root)
+            {
+                var notes = new (float[] Samples, float Gain, float Offset)[4];
+                float[] ratios = { 1f, 1.1892f, 1.4983f, 1.7818f };   // root, m3, 5, m7
+                for (int i = 0; i < 4; i++)
+                    notes[i] = (Tone(0.55f, root * ratios[i], 0.012f, 6.5f, 1f, 2), 0.55f, 0f);
+                return Normalize(LowPass(Mix(notes), 1500f), 0.42f);
+            }
+
+            // A2 and G2: two chords, one per bar, which is all the movement this needs.
+            float[] roots = { 110.00f, 98.00f };
+
+            for (int b = 0; b < 2; b++)
+            {
+                float b0 = b * 4f;
+                float root = roots[b];
+
+                At(Kick(), 0.90f, b0 + 0f);
+                At(Kick(), 0.72f, b0 + 1.5f);
+                At(Kick(), 0.55f, b0 + 3.25f);
+                At(Snare(), 0.62f, b0 + 1f);
+                At(Snare(), 0.62f, b0 + 3f);
+                for (int e = 0; e < 8; e++)
+                    At(Hat(), e % 2 == 0 ? 0.18f : 0.11f, b0 + e * 0.5f);
+
+                At(Bass(root, 0.62f), 0.62f, b0 + 0f);
+                At(Bass(root, 0.34f), 0.44f, b0 + 1.5f);
+                At(Bass(root * 1.4983f, 0.5f), 0.40f, b0 + 2.5f);
+                At(Stab(root), 0.30f, b0 + 0f);
+            }
+
+            var mixed = Mix(layers.ToArray());
+            // Trimmed to exactly two bars so the loop point lands on the downbeat.
+            int want = (int)(length * Waveforms.SampleRate);
+            var loop = new float[want];
+            System.Array.Copy(mixed, loop, System.Math.Min(want, mixed.Length));
+            return Normalize(loop, 0.62f);
+        }
+
         public static float[] Build(Sfx sfx)
         {
             switch (sfx)

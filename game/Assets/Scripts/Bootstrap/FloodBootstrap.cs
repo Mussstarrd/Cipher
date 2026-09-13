@@ -326,6 +326,10 @@ namespace Cipher.Game
         // better it looks". Start at the widest notch; RB still cycles.
         private const int ZoomDefaultNotch = 2;
 
+        /// <summary>Build-camera heights, as a fraction of the map-fitted lift. RB cycles them.</summary>
+        private static readonly float[] BuildZoomNotches = { 0.34f, 0.62f, 1.0f };
+        private int _buildZoom = 1;
+
         private int _zoomNotch = ZoomDefaultNotch;
         private float _zoom = ZoomNotches[ZoomDefaultNotch];
         private float _zoomTarget = ZoomNotches[ZoomDefaultNotch];
@@ -448,6 +452,12 @@ namespace Cipher.Game
         /// Materials the last position's leftover cycle time bought, banked for this one.
         /// Consumed by <see cref="NewMatch"/> and then cleared.
         /// </summary>
+        /// <summary>
+        /// Truck damage carried into the next position, or 0 for a fresh campaign. See MatchState's
+        /// constructor for why this is not reset between levels.
+        /// </summary>
+        private int _carriedVaultHp;
+
         private int _carriedCash;
 
         /// <summary>What the truck brought out of the last position, for the after-action line.</summary>
@@ -467,6 +477,7 @@ namespace Cipher.Game
             _carriedCash = Mathf.RoundToInt(_match.PrepSecondsRemaining * _match.Cycle.PrepDollarsPerSecond)
                            + _match.Salvaged;
             _carriedCount = _match.SalvagedCount;
+            _carriedVaultHp = _match.VaultHp;
 
             // The chain runs out before Act One does: missions 3 to 12 are designed but not
             // authored. Falling back from the last authored position starts the act over rather
@@ -569,7 +580,8 @@ namespace Cipher.Game
             _match = new MatchState(_scenario.ToWaveTable(), _eco, _scenario.VaultHp,
                                     cycle: _scenario.Cycle,
                                     hasFallbackPosition: _scenario.HasFallbackPosition,
-                                    openingIsUntimed: true);
+                                    openingIsUntimed: true,
+                                    vaultHpNow: _carriedVaultHp);
             int carried = _carriedCash;
             if (carried > 0) _match.Bank.Earn(carried);
             _actors = new ActorSystem(_scenario.Actors);
@@ -3792,6 +3804,14 @@ namespace Cipher.Game
 
             if (pad != null && pad.buttonEast.wasPressedThisFrame) { SetBuildMode(false); _sfx.Play(Sfx.MenuConfirm, 0.7f, 0f); return; }
 
+            // RB is zoom in the chase camera, so it is zoom here too rather than a second verb.
+            if ((pad != null && pad.rightShoulder.wasPressedThisFrame)
+                || (kb != null && kb.rKey.wasPressedThisFrame))
+            {
+                _buildZoom = (_buildZoom + 1) % BuildZoomNotches.Length;
+                _sfx.Play(Sfx.MenuTick, 0.6f, 0f);
+            }
+
             // Stepped cursor: first step immediately, then 8 cells/s, 16 cells/s after 0.6 s held.
             Vector2 dir = Vector2.zero;
             if (pad != null)
@@ -4400,10 +4420,34 @@ namespace Cipher.Game
                 // quarter of a 128x96 one, so the build camera got more useless the bigger the
                 // position -- exactly backwards, since a bigger position is where you need to see
                 // the whole shape of what you are building.
+                // Owner: "when you go to build mode there's like a fog that makes it so you
+                // can't really see what's going on, it'd be cool if you could zoom down so that you
+                // would be able to have more precision with laying your barricades and towers".
+                //
+                // Both halves are the same mistake: the rig climbs to 0.62 x the map span -- up to
+                // NINETY metres on a big position -- and then looks down through exponential-squared
+                // fog. At that range the fog integral is most of the image, so the world greys out
+                // exactly when the player most needs to read it. Lifting the fog alone would still
+                // leave him placing a one-metre barricade from ninety metres up.
+                //
+                // So the build camera zooms too. Three notches, and the tight one is close enough
+                // to put a barricade on the cell he meant.
                 float span = Mathf.Max(GridW, GridH);
-                float lift = Mathf.Clamp(span * 0.62f, 26f, 90f);
+                float lift = Mathf.Clamp(span * 0.62f, 26f, 90f) * BuildZoomNotches[_buildZoom];
                 targetPos = focus + new Vector3(0f, lift, -lift * 0.42f);
                 targetRot = Quaternion.Euler(68f, 0f, 0f);
+            }
+
+            // THE FOG COMES OFF FOR THE BUILD VIEW. It is an atmospheric effect authored for a
+            // camera standing in the world at eye height; from a rig looking down from tens of
+            // metres it is just a grey wash over the thing being read. Restored the moment the
+            // player drops back into the chase camera, so the position still looks like itself.
+            if (_atmos != null)
+            {
+                float want = _camMode == CameraMode.Tactical ? _atmos.Profile.FogDensity * 0.18f
+                                                             : _atmos.Profile.FogDensity;
+                RenderSettings.fogDensity = Mathf.Lerp(RenderSettings.fogDensity, want,
+                                                       1f - Mathf.Exp(-8f * dt));
             }
 
             // A new position snaps; gliding in from wherever the rig last was reads as a cutscene

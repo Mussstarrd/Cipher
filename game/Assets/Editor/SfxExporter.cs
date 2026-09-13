@@ -41,6 +41,22 @@ namespace Cipher.Game.Editor
                 written++;
                 Debug.Log($"[Sfx] {sfx}: {samples.Length / (float)Waveforms.SampleRate:F3}s -> {path}");
             }
+            // The loops too. They are not in the Sfx enum -- they are AudioSource clips rather
+            // than one-shots -- and they are the two things a listener most wants to judge on their
+            // own, because they play for the whole match.
+            foreach (var (name, samples) in new[]
+                     {
+                         ("MusicLoop", SoundRecipes.MusicLoop()),
+                         ("WindLoop", SoundRecipes.WindLoop()),
+                         ("HordeLoop", SoundRecipes.HordeLoop()),
+                     })
+            {
+                string loopPath = Path.Combine(dir, $"{name}.wav");
+                File.WriteAllBytes(loopPath, Wav(samples, Waveforms.SampleRate));
+                written++;
+                Debug.Log($"[Sfx] {name}: {samples.Length / (float)Waveforms.SampleRate:F2}s -> {loopPath}");
+            }
+
             Debug.Log($"[Sfx] exported {written} sounds to {dir}");
         }
 

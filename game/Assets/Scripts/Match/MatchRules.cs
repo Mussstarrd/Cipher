@@ -102,6 +102,32 @@ namespace Cipher.Game.Match
         public int WaveCount => _waves.Count;
         public float SetupTimeLeft { get; private set; }
         public int SpawnedThisWave { get; private set; }
+        /// <summary>
+        /// How long the last few bodies may hold a wave open before it clears anyway.
+        ///
+        /// Owner: "Towards the end of every wave there are always stragglers that lock up the level
+        /// for like 2 minutes trying to search him down." He is describing the clear condition,
+        /// which was aliveRunners == 0 -- every body, no exceptions, however far away and however
+        /// stuck. One runner behind a shed at the far corner of a 128-cell map held the whole
+        /// position hostage, and the player's only move was to go and find it.
+        ///
+        /// Kill them all quickly and the wave still clears INSTANTLY: the timer only starts once
+        /// the count is already down to the last few, so a clean sweep never waits. What it removes
+        /// is the search.
+        /// </summary>
+        private const float MopUpSeconds = 12f;
+
+        /// <summary>Seconds left on the mop-up grace for the current wave.</summary>
+        public float MopUpLeft { get; private set; } = MopUpSeconds;
+
+        /// <summary>
+        /// How many bodies count as "the last few" -- a tenth of the wave, never fewer than two and
+        /// never more than five. A proportion rather than a constant because a wave of 16 and a wave
+        /// of 70 do not have the same idea of a straggler.
+        /// </summary>
+        private static int StragglerFloor(int waveCount)
+            => Math.Clamp((int)Math.Round(waveCount * 0.10), 2, 5);
+
         public int VaultHp { get; private set; }
         public int VaultMaxHp { get; }
         public Bank Bank { get; }
@@ -181,7 +207,8 @@ namespace Cipher.Game.Match
             int vaultHp = 25,
             ScanCycleConfig? cycle = null,
             bool hasFallbackPosition = true,
-            bool openingIsUntimed = false)
+            bool openingIsUntimed = false,
+            int vaultHpNow = 0)
         {
             _waves = waves ?? throw new ArgumentNullException(nameof(waves));
             if (waves.Count == 0) throw new ArgumentException("Need at least one wave.", nameof(waves));
@@ -190,7 +217,13 @@ namespace Cipher.Game.Match
             HasFallbackPosition = hasFallbackPosition;
             OpeningIsUntimed = openingIsUntimed;
             Bank = new Bank(economy.StartCash);
-            VaultMaxHp = VaultHp = Math.Max(1, vaultHp);
+            VaultMaxHp = Math.Max(1, vaultHp);
+            // CARRIED, not reset. Owner: "I think that your truck life needs to stay the same in
+            // between levels, you have to manage that 25 lives the entire game." He is right that
+            // the alternative has no stakes: a position you nearly lost and a position you walked
+            // through cost exactly the same once the loading screen passed, so nothing you did on
+            // the last road mattered on this one. 0 means a fresh campaign.
+            VaultHp = vaultHpNow > 0 ? Math.Min(vaultHpNow, VaultMaxHp) : VaultMaxHp;
             SetupTimeLeft = _waves[0].SetupSeconds;
         }
 
@@ -356,6 +389,7 @@ namespace Cipher.Game.Match
                     {
                         Phase = MatchPhase.Wave;
                         SpawnedThisWave = 0;
+                        MopUpLeft = MopUpSeconds;
                         _spawnAccumulator = 0f;
                     }
                     return 0;
@@ -369,8 +403,13 @@ namespace Cipher.Game.Match
                         _spawnAccumulator -= toSpawn;
                         SpawnedThisWave += toSpawn;
                     }
-                    else if (aliveRunners == 0)
+                    else if (aliveRunners <= StragglerFloor(CurrentWave.Count)
+                             && (aliveRunners == 0 || (MopUpLeft -= dt) <= 0f))
                     {
+                        // The survivors are NOT deleted. They keep walking, and they walk into
+                        // the next wave -- which is the honest version of this: the road does not
+                        // empty just because a counter rolled over.
+                        MopUpLeft = MopUpSeconds;
                         WavesCleared++;
                         int bonus = _eco.WaveClearBonusPerWave * WaveNumber;
                         if (LastWaveDeclared && _declaredBeforeSpawn)

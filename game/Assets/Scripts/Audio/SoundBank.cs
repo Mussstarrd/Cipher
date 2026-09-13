@@ -24,6 +24,11 @@ namespace Cipher.Game.Audio
         private float _hordeTarget;
 
         public float MasterVolume { get; set; } = 1f;
+
+        /// <summary>How loud the background loop sits. One number, so it is one edit to change.</summary>
+        public const float MusicVolume = 0.13f;
+
+        private readonly AudioSource _music;
         public bool Muted { get; set; }
 
         public SoundBank(Transform parent)
@@ -48,6 +53,14 @@ namespace Cipher.Game.Audio
             // world does. The place should be heard in its birds and its people, not its hiss.
             _wind.volume = 0.07f;
             _wind.Play();
+
+            // THE BED UNDER EVERYTHING. Quiet on purpose: the player is listening for a sapper,
+            // and a loop he can hum by wave three is a loop he will mute.
+            _music = MakeSource(root, "music", spatial: false);
+            _music.clip = ToClip("MusicLoop", SoundRecipes.MusicLoop());
+            _music.loop = true;
+            _music.volume = MusicVolume;
+            _music.Play();
 
             _horde = MakeSource(root, "horde", spatial: false);
             _horde.clip = ToClip("HordeLoop", SoundRecipes.HordeLoop());
@@ -113,7 +126,8 @@ namespace Cipher.Game.Audio
 
         public void Update(float dt)
         {
-            if (Muted) { _horde.volume = 0f; _wind.volume = 0f; return; }
+            if (Muted) { _horde.volume = 0f; _wind.volume = 0f; _music.volume = 0f; return; }
+            _music.volume = MusicVolume;
             float target = _hordeTarget * 0.7f * MasterVolume;
             _horde.volume = Mathf.Lerp(_horde.volume, target, 1f - Mathf.Exp(-2.5f * dt));
             _horde.pitch = 0.85f + 0.3f * _hordeTarget;

@@ -230,11 +230,27 @@ namespace Cipher.Sim.Agents
             return false;
         }
 
+        /// <summary>
+        /// What a WRECKER will go at, which is narrower than what can be damaged.
+        ///
+        /// Owner: "I think we need to not have mobs randomly roaming the map just chewing on random
+        /// objects ... if I do have barricades that are blocking the most convenient path then we
+        /// divert somebody to go destroy that barricade but we don't want to just pepper mobs all
+        /// around the map."
+        ///
+        /// This used to accept WallKind.Wall as well, and The Gate ships SIXTY-FOUR cells of it --
+        /// the fences and lot lines that were there before the player arrived. So a wrecker walked
+        /// to whatever fence happened to be within ten cells and pulled at it, anywhere on the map,
+        /// for no reason the player could see. Only BARRICADE now: the thing the player put there,
+        /// on purpose, in the way. Everything else is scenery and a body walks round it.
+        ///
+        /// DamageWall is deliberately left alone -- a stray round or a bomb may still chip a map
+        /// wall. This is about what a body CHOOSES to walk to.
+        /// </summary>
         private bool IsBreakable(int x, int y)
         {
             if (x < 0 || y < 0 || x >= _map.Width || y >= _map.Height) return false;
-            var kind = _map.KindAt(x, y);
-            if (kind == WallKind.None || kind == WallKind.Rock) return false;
+            if (_map.KindAt(x, y) != WallKind.Barricade) return false;
             return _map.StageAt(x, y) != BreachStage.Collapsed;
         }
 
