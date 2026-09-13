@@ -264,8 +264,32 @@ namespace Cipher.Game
         private const float HitstopScale = 0.08f;
         private const float TraumaDecay = 1.9f;
         private float _hitstop;
-        /// <summary>0..1 camera trauma. Shake is trauma squared, so small hits barely register and big ones do.</summary>
+        /// <summary>0..1 camera trauma. Big events dominate; see ShakeAmplitude for the curve.</summary>
         private float _trauma;
+
+        // ------------------------------------------------------------------ recoil and punch
+        // RECOIL IS NOT SHAKE, which is why adding trauma on firing never read as anything. Shake
+        // is noise: it says "something violent happened nearby". Recoil is a DIRECTION: the gun
+        // pushes the view up and the view settles back, every shot, the same way. The owner's
+        // words were "there's no physical movements when I'm being attacked or when I'm shooting",
+        // and for shooting this is the missing half -- the trauma was there and the direction
+        // was not.
+        private float _recoilPitch;
+        /// <summary>Degrees of kick per shot, and how fast the view settles back.</summary>
+        private const float RecoilPerShot = 1.35f;
+        private const float RecoilMax = 3.2f;
+        private const float RecoilRecover = 9f;
+
+        /// <summary>
+        /// A shove in the direction the damage came from, in world space, decaying.
+        ///
+        /// The other half of the owner's note. Being hit already drew a directional wedge on the
+        /// HUD, which tells you WHERE it came from but does not make you FEEL it. A short push of
+        /// the camera along that same vector costs nothing and is read instantly, because it is
+        /// what a body does when something hits it.
+        /// </summary>
+        private Vector3 _hitPunch;
+        private const float HitPunchRecover = 7f;
         private float _fovCurrent = 60f;
         private Vector3 _camVelocity;
 
@@ -301,6 +325,34 @@ namespace Cipher.Game
         private bool _snapCamera = true;
 
         private void AddTrauma(float amount) => _trauma = Mathf.Clamp01(_trauma + amount);
+
+        /// <summary>
+        /// Trauma to shake amplitude.
+        ///
+        /// This was trauma SQUARED, defended in a comment as making a rifle shot barely stir the
+        /// camera while a bomb stops you aiming. The order of things was right and the curve was
+        /// too steep to survive it: squaring 0.12 -- the trauma from being bitten -- gives 0.014,
+        /// which multiplied by the shake amplitude is about six thousandths of a world unit. It was
+        /// not subtle, it was ABSENT, and the owner reported exactly that.
+        ///
+        /// Pow 1.5 keeps the whole point of the original (a bomb at 0.75 still lands thirteen times
+        /// harder than a bite at 0.12) while leaving the small end perceptible instead of
+        /// theoretical.
+        /// </summary>
+        private static float ShakeAmplitude(float trauma) => Mathf.Pow(trauma, 1.5f);
+
+        /// <summary>Kick from firing: the view rises and settles. See _recoilPitch.</summary>
+        private void AddRecoil() => _recoilPitch = Mathf.Min(RecoilMax, _recoilPitch + RecoilPerShot);
+
+        /// <summary>Shove from being hit, along the vector the damage arrived on.</summary>
+        private void AddHitPunch(Vector3 fromWorld, float strength)
+        {
+            Vector3 away = ToWorld(_hero.Position, 0f) - fromWorld;
+            away.y = 0f;
+            if (away.sqrMagnitude < 1e-4f) return;
+            _hitPunch += away.normalized * strength;
+            if (_hitPunch.magnitude > 0.9f) _hitPunch = _hitPunch.normalized * 0.9f;
+        }
         private readonly PauseMenuModel _pauseMenu = new PauseMenuModel();
         private readonly HudFeedback _feedback = new HudFeedback();
         private GUIStyle? _menuTitleStyle;
@@ -1149,6 +1201,10 @@ namespace Cipher.Game
             TickBodyFlashes(Time.unscaledDeltaTime);
             _feedback.Tick(Time.unscaledDeltaTime);
             _trauma = Mathf.Max(0f, _trauma - Time.unscaledDeltaTime * TraumaDecay);
+            float settle = Time.unscaledDeltaTime;
+            _recoilPitch = Mathf.Max(0f, _recoilPitch - _recoilPitch * RecoilRecover * settle
+                                         - 0.15f * settle);
+            _hitPunch = Vector3.Lerp(_hitPunch, Vector3.zero, 1f - Mathf.Exp(-HitPunchRecover * settle));
 
             float dt = Time.deltaTime;
 
@@ -1387,11 +1443,12 @@ namespace Cipher.Game
             float bitten = _hero.ApplyContact(_world, TickDt);
             if (bitten > 0f)
             {
-                AddTrauma(0.12f);
+                AddTrauma(0.22f);
                 // Where the teeth are: the centroid of everything in reach. Good enough to say
                 // "behind you", which is the only thing the wedge has to say.
                 var bite = NearestAgentWorld(_hero.Position, _heroCfg.ContactRadius * 1.2f);
                 _feedback.NoteDamage(ToWorld(_hero.Position, 0f), bite, _camYaw);
+                AddHitPunch(bite, 0.30f);
             }
             if (bitten > 0f && _hurtCooldown <= 0f)
             {
@@ -1622,7 +1679,8 @@ namespace Cipher.Game
                         _hero.TakeDamage(e.F);
                         var from = ToWorld(_world.PositionOf(e.A), 1.15f);
                         _feedback.NoteDamage(ToWorld(_hero.Position, 0f), from, _camYaw);
-                        AddTrauma(0.10f);
+                        AddTrauma(0.20f);
+                        AddHitPunch(from, 0.22f);
                         _tracers.Add(new Tracer
                         {
                             A = from,
@@ -3758,6 +3816,7 @@ namespace Cipher.Game
             {
                 NoteHeroShot();
                 AddTrauma(0.05f);
+                AddRecoil();
                 _muzzleLeft = HitFlashSeconds;
                 // From the horn, not from the middle of his chest: the emitter hangs off his right
                 // and a pulse that starts anywhere else reads as coming from the wrong object.
@@ -4215,13 +4274,20 @@ namespace Cipher.Game
             if (_trauma > 0f)
             {
                 float t = Time.unscaledTime * 21f;
-                float amp = _trauma * _trauma;
+                float amp = ShakeAmplitude(_trauma);
                 var shake = new Vector3((Mathf.PerlinNoise(t, 0.3f) - 0.5f) * 0.42f,
                                         (Mathf.PerlinNoise(0.7f, t) - 0.5f) * 0.30f,
                                         0f) * amp;
                 _camera.transform.position += _camera.transform.rotation * shake;
                 _camera.transform.rotation *= Quaternion.Euler(0f, 0f, (Mathf.PerlinNoise(t, t) - 0.5f) * 2.4f * amp);
             }
+
+            // Recoil AFTER the shake and after the slerp, so it is not smoothed away: the whole
+            // value of a kick is that it is instant on the frame the shot leaves.
+            if (_recoilPitch > 0.001f)
+                _camera.transform.rotation *= Quaternion.Euler(-_recoilPitch, 0f, 0f);
+            if (_hitPunch.sqrMagnitude > 1e-5f)
+                _camera.transform.position += _hitPunch;
 
             // FOV breathes: tighter while firing, wider at rest. Small, and the whole world moves.
             float fovTarget = _camMode == CameraMode.Chase ? (_muzzleLeft > 0f ? 57f : 61f) : 60f;
