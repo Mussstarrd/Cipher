@@ -1,0 +1,4 @@
+zstandard>=0.22
+brotli>=1.1
+numpy>=1.26
+cryptography>=42
