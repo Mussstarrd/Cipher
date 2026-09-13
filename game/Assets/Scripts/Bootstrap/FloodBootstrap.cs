@@ -1350,6 +1350,8 @@ namespace Cipher.Game
                         else _world.SpawnArchetype(pos, a);
                     }
                 }
+
+                BreakStalledWave();
             }
 
             _world.Step(TickDt);
@@ -3225,6 +3227,109 @@ namespace Cipher.Game
         // it -- plus every Spitter, which needs a turret to hunt, and every Sapper worth the name,
         // which needs a player-built wall to sap -- has literally never run outside a human session.
 
+        // --------------------------------------------------------- the stalled wave
+        // Seconds of no kill and no truck damage before the far side sends someone to open the
+        // wall. Long enough that an ordinary lull never trips it, short enough that a player is
+        // not watching a frozen field wondering whether the game is broken.
+        private const float StallSeconds = 14f;
+
+        /// <summary>Stall sappers already sent for the current wave. Capped: see BreakStalledWave.</summary>
+        private const int MaxStallSappersPerWave = 3;
+
+        private float _lastProgressAt;
+        private int _lastProgressKills;
+        private int _lastProgressVaultHp = int.MinValue;
+        private int _stallSappersThisWave;
+        private int _stallSapperWave = -1;
+        private bool _stallGaveUpLogged;
+
+        /// <summary>
+        /// A wave that has finished spawning, still has bodies on the field, and has stopped making
+        /// any progress at all gets a Sapper sent to it.
+        ///
+        /// THIS CLOSES A CIRCLE THAT COULD NOT CLOSE ITSELF. Sappers are only ever issued by
+        /// SpawnDirector.Decide, which runs once per spawned body -- so the counter to a player
+        /// wall can only be issued WHILE A WAVE IS SPAWNING. A wall built during setup stops the
+        /// wave; the stopped wave never dies; the wave that never dies means no next wave; no next
+        /// wave means no spawn stream; and the Sapper that exists precisely to answer that wall is
+        /// never issued. The wall had made itself uncounterable by working.
+        ///
+        /// Measured before the fix, on Crowbar with a funded defence: 40 of 42 down by t=60s, and
+        /// then SIX MINUTES in which the kill count moved by one. Two bodies stood behind a
+        /// barricade run no turret covered, and the mission could not end. Player walls were a hard
+        /// counter with no counterplay, which is the opposite of what
+        /// the-contracting-perimeter.md asks of mission 6: "the ground still funnels, but only
+        /// while it holds."
+        ///
+        /// Deliberately NOT a free extra wave: one body, and only while the field stays frozen.
+        /// </summary>
+        private void BreakStalledWave()
+        {
+            if (_match.Phase != MatchPhase.Wave) return;
+
+            // Progress is a kill OR a hit on the truck. Either means the position is still being
+            // played and nobody needs help.
+            int kills = (int)_world.TotalKills;
+            if (kills != _lastProgressKills || _match.VaultHp != _lastProgressVaultHp)
+            {
+                _lastProgressKills = kills;
+                _lastProgressVaultHp = _match.VaultHp;
+                _lastProgressAt = _matchSeconds;
+                return;
+            }
+
+            bool stillArriving = _match.SpawnedThisWave < _match.CurrentWave.Count;
+            if (stillArriving || _world.HostileCount <= 0) { _lastProgressAt = _matchSeconds; return; }
+            if (_matchSeconds - _lastProgressAt < StallSeconds) return;
+
+            // From a main gate, not a flank: this is a deliberate answer to a wall, and it should
+            // come up the road the player can see.
+            if (_stallSapperWave != _match.WaveNumber)
+            {
+                _stallSapperWave = _match.WaveNumber;
+                _stallSappersThisWave = 0;
+                _stallGaveUpLogged = false;
+            }
+
+            // CAPPED, because this is a deadlock breaker and not a difficulty knob. Uncapped it
+            // sends one every StallSeconds for as long as the freeze lasts, which on a well-walled
+            // position is a second wave nobody asked for -- measured at roughly twenty extra bodies
+            // across five minutes. Three is enough to answer a wall; if three did not move the
+            // count, the problem is not one the far side can solve by sending more people.
+            if (_stallSappersThisWave >= MaxStallSappersPerWave)
+            {
+                if (!_stallGaveUpLogged)
+                {
+                    _stallGaveUpLogged = true;
+                    Debug.LogWarning($"[Stall] wave {_match.WaveNumber} STILL frozen after " +
+                                     $"{MaxStallSappersPerWave} sappers, {_world.HostileCount} up. " +
+                                     "Bodies that cannot progress and cannot be reached -- see " +
+                                     "docs/design/autoplay-baseline.md, this is not solved.");
+                }
+                _lastProgressAt = _matchSeconds;
+                return;
+            }
+
+            var gate = _mainGates.Length > 0 ? _mainGates[0] : (SpawnCells[0].X, SpawnCells[0].Y);
+            _world.SpawnArchetype(new Vec2(gate.Item1 + 0.5f, gate.Item2 + 0.5f), Archetype.Sapper);
+            _stallSappersThisWave++;
+            _lastProgressAt = _matchSeconds;
+            Debug.Log($"[Stall] wave {_match.WaveNumber} frozen {StallSeconds:F0}s with " +
+                      $"{_world.HostileCount} still up -- sapper {_stallSappersThisWave}/" +
+                      $"{MaxStallSappersPerWave} sent from ({gate.Item1},{gate.Item2})");
+        }
+
+        /// <summary>
+        /// Hands the bank money so a harness can afford a defence the opening $400 cannot buy.
+        ///
+        /// This is a PROBE, not a balance setting. Its only job is to get a mechanic to execute at
+        /// all: mission 6's premise is Sappers against player walls, and no bot had ever built a
+        /// wall solid enough for a Sapper to want, because a single barricade run across a street
+        /// costs more than the whole opening purse. A result measured with this on says "the
+        /// mechanic works", never "the position is balanced".
+        /// </summary>
+        public void GrantCashForCapture(int amount) => _match.Bank.Earn(amount);
+
         public MatchPhase PhaseForCapture => _match.Phase;
         public int WaveNumberForCapture => _match.WaveNumber;
         public int WaveCountForCapture => _match.WaveCount;
@@ -3258,20 +3363,26 @@ namespace Cipher.Game
             }
 
             int built = 0;
-            built += AutoBuildRing(turretOption, maxTurrets, radius: 11, step: 23);
-            // Barricades go OUTSIDE the guns, in CONTINUOUS RUNS across a street rather than
-            // scattered on a ring. This is not tidiness: a Sapper only plants when breaching SAVES
-            // WALKING (PlanSapper scores walk-to-wall plus the far side's integration cost against
-            // the route it already has), so a barricade you can simply walk around is a barricade
-            // no Sapper will ever look at twice. The first version of this harness sprinkled eight
-            // of them round a circle, and the director chose three Sappers that targeted nothing.
+            // WALLS FIRST when there is money for both. The ring of guns is the cheaper thing to
+            // get right and the barricade run is the thing that stops existing the moment cash runs
+            // short -- which is exactly how the first baseline ended up with five stray barricades
+            // and no closed route anywhere on the map.
             built += AutoWallStreets(barricadeOption, maxBarricades, radius: 16);
+            built += AutoBuildRing(turretOption, maxTurrets, radius: 11, step: 23);
+
             SyncTurretObjects();
             return built;
         }
 
         /// <summary>
-        /// Lays barricades in runs that span a street, the way a player does: walk out from the
+        /// Lays barricades in runs that span a street, the way a player does. A Sapper only plants
+        /// when breaching SAVES WALKING -- PlanSapper scores walk-to-wall plus the far side's
+        /// integration cost against the route already available -- so a barricade you can simply
+        /// walk around is one no Sapper will ever look at twice. The first version of this harness
+        /// sprinkled eight of them round a circle and the director chose three Sappers that
+        /// targeted nothing, which was the sim being right and the harness being wrong.
+        ///
+        /// So: walk out from the
         /// truck along a heading, then build sideways until the run hits something solid. A run
         /// that reaches scenery on both ends has actually closed a route, which is the only kind of
         /// wall the Sapper's cost model can see.

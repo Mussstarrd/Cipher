@@ -25,17 +25,27 @@ namespace Cipher.Game
     public sealed class AutoPlayHarness : MonoBehaviour
     {
         private const string Arg = "-exodus-autoplay";
+        private const string CashArg = "-exodus-autoplay-cash";
+        private const string TurretArg = "-exodus-autoplay-turrets";
         private const float ReportEvery = 30f;
 
         /// <summary>Turrets and barricades bought at each setup phase, cash permitting.</summary>
-        private const int TurretsPerSetup = 3;
-        private const int BarricadesPerSetup = 8;
+        private const int DefaultTurretsPerSetup = 3;
+        // Enough to actually SPAN four streets (13 cells a side, four headings), not a token
+        // sprinkle. The bank is the real limiter -- on the opening $400 this still buys about five
+        // -- but when there IS money the run must be allowed to close a route, because a barricade
+        // that leaves a gap is one the Sapper's cost model correctly ignores. Eight was the number
+        // that produced twenty-four barricades across three waves and not one sapper interested in
+        // any of them.
+        private const int BarricadesPerSetup = 52;
 
         private FloodBootstrap _game = null!;
         private float _budgetSeconds;
         private float _elapsed;
         private float _sinceReport;
         private int _lastWaveBuiltFor = -1;
+        private int _grantPerSetup;
+        private int _turretsPerSetup = DefaultTurretsPerSetup;
         private bool _done;
 
         public static void InstallIfRequested(GameObject host)
@@ -49,10 +59,30 @@ namespace Cipher.Game
                 var h = host.AddComponent<AutoPlayHarness>();
                 h._game = host.GetComponent<FloodBootstrap>();
                 h._budgetSeconds = seconds;
-                Debug.Log($"[Auto] armed: up to {seconds:F0}s, building {TurretsPerSetup} turrets " +
-                          $"and {BarricadesPerSetup} barricades at each setup");
+                h._grantPerSetup = ReadCashGrant(argv);
+                h._turretsPerSetup = ReadIntArg(argv, TurretArg, DefaultTurretsPerSetup);
+                Debug.Log($"[Auto] armed: up to {seconds:F0}s, building {h._turretsPerSetup} turrets " +
+                          $"and {BarricadesPerSetup} barricades at each setup" +
+                          (h._grantPerSetup > 0 ? $" | PROBE: ${h._grantPerSetup} granted per setup, "
+                                                + "these results measure the mechanic, not the balance" : ""));
                 return;
             }
+        }
+
+        /// <summary>
+        /// Optional cash per setup. A PROBE: the opening $400 cannot buy a barricade run that
+        /// actually closes a street, so without this no bot ever builds a wall a Sapper would want,
+        /// and mission 6's premise stays untested. Results with it on say the mechanic works; they
+        /// say nothing about whether the position is fair.
+        /// </summary>
+        private static int ReadCashGrant(string[] argv) => ReadIntArg(argv, CashArg, 0);
+
+        private static int ReadIntArg(string[] argv, string name, int fallback)
+        {
+            for (int i = 0; i < argv.Length - 1; i++)
+                if (argv[i] == name && int.TryParse(argv[i + 1], out int v) && v > 0)
+                    return v;
+            return fallback;
         }
 
         private void Update()
@@ -69,7 +99,8 @@ namespace Cipher.Game
                 if (_lastWaveBuiltFor != _game.WaveNumberForCapture)
                 {
                     _lastWaveBuiltFor = _game.WaveNumberForCapture;
-                    int built = _game.AutoBuildForCapture(TurretsPerSetup, BarricadesPerSetup);
+                    if (_grantPerSetup > 0) _game.GrantCashForCapture(_grantPerSetup);
+                    int built = _game.AutoBuildForCapture(_turretsPerSetup, BarricadesPerSetup);
                     Debug.Log($"[Auto] wave {_game.WaveNumberForCapture} setup: built {built}, " +
                               $"${_game.CashForCapture} left, {_game.TurretCountForCapture} turrets, " +
                               $"{_game.BreachableWallsForCapture} breachable walls");

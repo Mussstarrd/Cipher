@@ -44,11 +44,41 @@ file and are the two worth a human's attention first.
 the opposite of what I expected from a centred objective with six approaches. Worth keeping in mind
 before anyone "fixes" its difficulty.
 
+## The frozen wave (found 2026-09-13, partly fixed)
+
+Funding the bot properly (`-exodus-autoplay-cash 6000 -exodus-autoplay-turrets 10`) so it could
+build a defence that actually holds produced the worst result in the project so far, and it is not
+a harness artifact:
+
+> Crowbar, wave 1. Truck untouched at 30/30. Forty of forty-two down by t=60s. Then **six minutes
+> in which the kill count moved by one.** Two bodies stood behind a barricade run no turret
+> covered, the wave could not clear, and the mission could not end.
+
+The designed answer to a player wall is the Sapper. It could not come. Sappers are issued only by
+`SpawnDirector.Decide`, which runs **once per spawned body** — so the counter to a wall can only be
+issued *while a wave is spawning*. A wall built during setup stops the wave; the stopped wave never
+dies; no next wave means no spawn stream; and the Sapper that exists precisely to answer that wall
+is never issued. **The wall had made itself uncounterable by working.**
+
+`BreakStalledWave` closes that circle: a wave that has finished spawning, still has bodies up, and
+has gone `StallSeconds` (14s) with no kill *and* no truck damage gets a Sapper sent from a main
+gate. Capped at **three per wave** — it is a deadlock breaker, not a difficulty knob, and uncapped
+it sends roughly twenty extra bodies across five minutes, which is a second wave nobody asked for.
+
+**What this does not fix.** Progress resumed (kills went 40 → 49 where they had gone 40 → 40), but
+the wave still did not clear. Three or four bodies remain that cannot make progress and cannot be
+reached, and three sappers did not change that. After the cap is spent the game now logs a loud
+warning rather than freezing quietly. The root cause — agents that neither advance nor die behind
+player walls — **is not solved**, and it is the single most important open problem on this list.
+
 ## Known blind spots
 
-- **The bot cannot afford a wall.** It spends its $400 opening on turrets and has roughly five
-  barricades left — not enough to span a street on any heading. So player-wall Sapper behaviour is
-  still unobserved, and mission 6's premise remains unverified by machine.
+- **Sapper planting is still unobserved.** `-exodus-autoplay-cash` now lets the bot buy a real
+  wall (52 barricades spanning four streets), and sappers do reach it — but none has ever planted,
+  because `PlanSapper` only targets a wall whose breach SAVES WALKING, and the bot's four straight
+  runs leave the diagonals open, so walking around stays cheap. That is the sim being right and the
+  bot being a poor imitation of a player, who walls a choke rather than a compass rose. Mission 6's
+  premise remains unverified by machine.
 - **Sappers plant only when breaching SAVES WALKING** (`PlanSapper` scores walk-to-wall plus the far
   side's integration cost against the route already available). A barricade you can walk around is
   one no Sapper will look at. Crowbar's director chose three Sappers and every one of them targeted
