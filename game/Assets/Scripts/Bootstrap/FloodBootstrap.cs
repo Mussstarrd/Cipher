@@ -276,9 +276,14 @@ namespace Cipher.Game
         // was not.
         private float _recoilPitch;
         /// <summary>Degrees of kick per shot, and how fast the view settles back.</summary>
-        private const float RecoilPerShot = 1.35f;
-        private const float RecoilMax = 3.2f;
-        private const float RecoilRecover = 9f;
+        // Owner, first play: "the camera shake on shooting is unplayable". He was right, and the
+        // reason is that these were tuned for ONE shot and the trigger is held. A kick that has not
+        // settled before the next round STACKS, and at 3.2 degrees of headroom the view was climbing
+        // and shuddering for the whole burst. Recoil is now a small impulse that is fully home again
+        // before the next shot can land, so a burst reads as a rhythm rather than a seizure.
+        private const float RecoilPerShot = 0.32f;
+        private const float RecoilMax = 0.75f;
+        private const float RecoilRecover = 22f;
 
         /// <summary>
         /// A shove in the direction the damage came from, in world space, decaying.
@@ -3913,7 +3918,10 @@ namespace Cipher.Game
             if (fire && _hero.TryFire(_world, NextSpread(), out ShotResult shot))
             {
                 NoteHeroShot();
-                AddTrauma(0.05f);
+                // NO TRAUMA ON FIRING. Shake decays at TraumaDecay per second and a held trigger
+                // adds to it many times a second, so under sustained fire it climbed to a constant
+                // tremor the player could not aim through -- which is what "unplayable" meant.
+                // Recoil is the kick from shooting. Shake is for things that happen TO you.
                 AddRecoil();
                 _muzzleLeft = HitFlashSeconds;
                 // From the horn, not from the middle of his chest: the emitter hangs off his right
