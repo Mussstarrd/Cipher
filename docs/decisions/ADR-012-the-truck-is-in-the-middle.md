@@ -82,31 +82,30 @@ now sends the wave to the other three rather than the long way round. It is the 
 reads, so a stale brief is not a cosmetic problem — it teaches the wrong game. Rewritten to teach the
 shape instead: one gun, four ways in, build for the three you are not standing in.
 
-**The chase camera now has buildings on every side, and ONE ATTEMPT TO FIX IT FAILED.** Parked at
-the back wall the truck had open ground behind it and the camera could swing freely. At the
-crossroads it is surrounded, so the rig regularly ends up inside a house. Reproduce it with
-`-exodus-screenshot-yaw 0 -exodus-screenshot-pitch 12`: the hero stands at (64,44), the house at
-(64,33) occupies y29–37, and the rig wants to sit at y≈31.
+**The chase camera now has buildings on every side, and it is fixed (2026-09-13).** Parked at the
+back wall the truck had open ground behind it and the rig could swing freely. At the crossroads it is
+surrounded, so the camera regularly ended up inside a house. Repro:
+`-exodus-screenshot-yaw 0 -exodus-screenshot-pitch 12`.
 
-The attempt was to march the hero→camera line through the grid and pull the rig in short of any
+The fix marches the hero→camera line through the grid and pulls the rig in short of any
 `WallKind.Rock` cell, reusing `Movement.FirstBlockedCell` — the same march that decides whether a
-turret can see a target, so that "is something in the way" has one definition. A physics cast is not
-an option: the bought buildings are imported meshes with no colliders, so a SphereCast reports clear
-straight through a house.
+turret can see a target, so "is something in the way" keeps one definition. A physics cast was never
+available: the bought buildings are imported meshes with no colliders, so a `SphereCast` reports
+clear straight through a house. Only Rock counts; a knee-high barricade must not yank the camera.
 
-**What was established, so the next attempt does not re-derive it:**
-- The grid data is correct. Probed live: `KindAt(64, 29..37)` is `Rock` for every cell of that house.
-- The march is correct when called directly. From `(64.5, 44.5)` heading `(0,−1)` it returns
-  blocked at cell `(64,37)`, distance `6.8`, kind `Rock` — exactly right.
-- Feeding that through the offset maths puts the rig at y≈38.2, clear of the wall at 37.5.
-- **And yet the camera still renders from inside the house.** So the defect is somewhere between
-  the returned distance and the rig's final transform, not in the grid or the march.
+**The part that cost two increments is the skin, and it is about ROOFS, not walls.** A footprint is
+the wall line, and Synty's eaves overhang it by the better part of a metre. At a 0.55 m skin the rig
+sat at y=38.3 with the wall at 37.5 — correctly outside the footprint by every measure, and directly
+underneath the roof, which renders as the dark inside of a building and looks exactly like the bug it
+was meant to fix. The diagnostic insisted the maths was right while the picture insisted it was
+wrong, **and both were telling the truth**. The skin is 1.8 m, which also covers the ink outline,
+since an inverted hull stands off the geometry and the visible edge of a building is always further
+out than the building.
 
-The change was REVERTED rather than shipped, because code that does not move the symptom is worse
-than no code: it looks like the problem is handled. Prime suspects for next time, in order — the
-`SmoothDamp` that follows `targetPos` (a pulled-in target still has to be reached, and the rig may
-simply be lagging through the wall), `_snapCamera` consumption, and whether `_zoom` has settled at
-the moment of capture.
+The lesson is the diagnostic, not the number: `-exodus-cam-diag` prints wanted / allowed / target /
+actual every 120 frames. Printing the target AND the rig's real position is what separated "the pull
+is not happening" from "the pull is happening and is not far enough", which two builds of reasoning
+had not.
 
 ## What this does NOT mean
 

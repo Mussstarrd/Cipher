@@ -3777,6 +3777,70 @@ namespace Cipher.Game
             }
         }
 
+        private float _camDiagT;
+        private bool _camDiagArmed =
+            System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-exodus-cam-diag") >= 0;
+
+        /// <summary>
+        /// How far back the chase rig can sit before it is inside the architecture.
+        ///
+        /// MARCHED THROUGH THE GRID, NOT PHYSICS-CAST. The bought buildings are imported meshes with
+        /// no colliders, so a SphereCast sails through a house and reports clear. The grid always
+        /// knows: a building writes its footprint into the ONE GridMap during the scene build, the
+        /// same data the flow field and the build preview read. It also reuses the march that
+        /// decides whether a turret can see a target, so "is something in the way" has one
+        /// definition rather than two that can drift.
+        ///
+        /// ONLY ROCK COUNTS -- that is the architecture. A barricade is knee-high and yanking the
+        /// camera in every time the hero stands behind his own sandbags would be worse than the
+        /// problem. The march restarts past anything that is not Rock instead of stopping there.
+        /// </summary>
+        private float CameraDistanceClearOfWalls(Vector3 pivot, Vector3 forward, float pitchRadians, float wanted)
+        {
+            if (_map == null || wanted <= 0.01f) return wanted;
+
+            float horizontal = wanted * Mathf.Cos(pitchRadians);
+            if (horizontal <= 0.05f) return wanted;
+
+            var from = new Vec2(pivot.x, pivot.z);
+            var dir = new Vec2(-forward.x, -forward.z);
+            float travelled = 0f;
+
+            for (int i = 0; i < 4; i++)
+            {
+                float remaining = horizontal - travelled;
+                if (remaining <= 0.05f) break;
+
+                var origin = new Vec2(from.X + dir.X * travelled, from.Y + dir.Y * travelled);
+                if (!Movement.FirstBlockedCell(_map, origin, dir, remaining, out int cx, out int cy, out float hit))
+                    break;
+
+                if (_map.KindAt(cx, cy) == WallKind.Rock)
+                {
+                    // STOP WELL SHORT, AND THE NUMBER IS ABOUT ROOFS, NOT WALLS.
+                    //
+                    // A footprint is the WALL line. A house has eaves, and Synty's overhang theirs by
+                    // the better part of a metre. At a skin of 0.55 the rig sat at 38.3 with the wall
+                    // at 37.5 -- correctly outside the footprint by every measure, and underneath the
+                    // roof, which renders as the dark inside of a building and looks exactly like the
+                    // bug it was supposed to fix. The diagnostic said the maths was right while the
+                    // picture said it was wrong, and both were telling the truth.
+                    //
+                    // The ink outline adds to this: it is an inverted hull that stands off the
+                    // geometry, so the visible edge of a building is always further out than the
+                    // building.
+                    const float Skin = 1.8f;
+                    float allowed = Mathf.Max(1.2f, travelled + hit - Skin);
+                    if (allowed >= horizontal) break;
+                    return allowed / Mathf.Max(0.01f, Mathf.Cos(pitchRadians));
+                }
+
+                travelled += hit + 0.3f;
+            }
+
+            return wanted;
+        }
+
         private void UpdateCamera(float dt)
         {
             if (_lineupMode) return;   // the lineup capture owns the camera
@@ -3794,11 +3858,26 @@ namespace Cipher.Game
                 // The zoom moves the RIG, not the field of view: pulling the camera back shows more
                 // of the map without distorting it, and a chase camera that changes FOV to zoom
                 // makes the world bend every time the player looks around.
-                float dist = ChaseDistance * _zoom;
+                float wanted = ChaseDistance * _zoom;
+                float dist = CameraDistanceClearOfWalls(pivot, fwd, pr, wanted);
+
                 Vector3 offset = -fwd * (dist * Mathf.Cos(pr)) + Vector3.up * (dist * Mathf.Sin(pr));
                 targetPos = pivot + offset;
                 if (targetPos.y < 0.6f) targetPos.y = 0.6f;
                 targetRot = Quaternion.LookRotation(pivot - targetPos, Vector3.up);
+
+                // Where the rig WANTED to be, where it is ALLOWED to be, and where it actually is.
+                // The previous attempt proved the grid and the march were both right and the camera
+                // still rendered from inside a house, so the question left is whether the pulled-in
+                // target is reached -- SmoothDamp has to travel, and a rig chasing a target through
+                // a wall is inside the wall the whole way.
+                if (_camDiagArmed && Time.frameCount % 120 == 0)
+                {
+                    Debug.Log($"[CamDiag] f{Time.frameCount} mode={_camMode} yaw {_camYaw:F0} pitch {_camPitch:F0} " +
+                              $"zoom {_zoom:F2} | wanted {wanted:F2} allowed {dist:F2} | " +
+                              $"target ({targetPos.x:F1},{targetPos.z:F1}) " +
+                              $"actual ({_camera.transform.position.x:F1},{_camera.transform.position.z:F1})");
+                }
             }
             else
             {
