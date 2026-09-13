@@ -33,7 +33,16 @@ namespace Cipher.Game.Tests
         {
             var seen = new HashSet<Sky>();
             for (ulong seed = 0; seed < 500; seed++) seen.Add(Weather.Pick(seed));
-            CollectionAssert.AreEquivalent(All, seen, "some condition is unreachable");
+            // ROLLABLE conditions only. This said "every condition" and was right until Night
+            // existed: Night is authored per scenario and sits past the end of the weight table on
+            // purpose, because ADR-003 wants half the game in daylight and campaign-act1.md hands
+            // night to specific missions as part of their beat. Asserting it were reachable would
+            // demand exactly the behaviour the design forbids. NightIsNeverRolled covers the other
+            // direction; the rest of the enum must still be reachable, which is the real bug this
+            // has always guarded -- a weight of zero, or a table that stops short of a shipped sky.
+            var rollable = new System.Collections.Generic.List<Sky>(All);
+            rollable.Remove(Sky.Night);
+            CollectionAssert.AreEquivalent(rollable, seen, "some rollable condition is unreachable");
         }
 
         [Test]
@@ -353,5 +362,33 @@ namespace Cipher.Game.Tests
                 Assert.LessOrEqual(p.y, halfH + 1e-3f, $"drop {i} rose out of the top");
             }
         }
-    }
+    
+        /// <summary>
+        /// Night is authored, never stumbled into.
+        ///
+        /// ADR-003 asks for half the game in daylight, and campaign-act1.md hands night to specific
+        /// missions as part of their beat -- mission 6 is "your own maze, night", mission 8 is
+        /// "limited sight, jammed minimap". A night that turned up by chance on a position designed
+        /// to be read at distance would silently be a different mission from the authored one.
+        ///
+        /// The mechanism is that the weight table is SHORTER than the enum, which works and is
+        /// invisible: appending one more weight would start rolling night and nothing would say so.
+        /// This is the thing that says so.
+        /// </summary>
+        [Test]
+        public void NightIsNeverRolled()
+        {
+            for (ulong seed = 0; seed < 20000; seed++)
+                if (Weather.Pick(seed) == Sky.Night)
+                    Assert.Fail($"seed {seed} rolled Night. The weight table must stay shorter than " +
+                                "the Sky enum -- night is authored per scenario, never random.");
+
+            // And the profile must still exist, because scenarios ask for it by name.
+            var night = Weather.Profile(Sky.Night);
+            Assert.That(night.Sky, Is.EqualTo(Sky.Night));
+            Assert.That(night.FogDensity, Is.GreaterThan(Weather.Profile(Sky.DuskClear).FogDensity),
+                "night should shorten the sightline, not merely dim it");
+            Assert.That(night.SunIntensity, Is.LessThan(Weather.Profile(Sky.DuskClear).SunIntensity));
+        }
+}
 }

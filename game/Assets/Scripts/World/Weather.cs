@@ -24,6 +24,17 @@ namespace Cipher.Game
         DuskRain,
         /// <summary>Thick fog. No readable sun, no horizon, the treeline gone. The scary one.</summary>
         Fog,
+
+        /// <summary>
+        /// Moonlit night. Cold, low key, and the shortest sightline in the game after fog.
+        ///
+        /// NOT ROLLED AT RANDOM -- see Weights. ADR-003 asks for half the game in daylight, and a
+        /// night that turns up by chance on a position designed to be read at distance is a
+        /// different mission from the one that was authored. Night is something a scenario ASKS for
+        /// (`"sky": "Night"`), which is how campaign-act1.md uses it: mission 6 is "your own maze,
+        /// night", mission 8 is "limited sight, jammed minimap".
+        /// </summary>
+        Night,
     }
 
     /// <summary>
@@ -104,9 +115,15 @@ namespace Cipher.Game
         public const string OverrideArg = "-exodus-weather";
 
         /// <summary>
-        /// Weights, in <see cref="Sky"/> order. Dusk clear is the shipped look and stays the most
-        /// common; the two dramatic conditions (rain, fog) together are about a third, which is
-        /// often enough to be a surprise and rare enough to stay one.
+        /// Weights for the ROLLABLE skies, in <see cref="Sky"/> order. Dusk clear is the shipped
+        /// look and stays the most common; the two dramatic conditions (rain, fog) together are
+        /// about a third, which is often enough to be a surprise and rare enough to stay one.
+        ///
+        /// IT IS SHORTER THAN THE ENUM ON PURPOSE. Night sits past the end of this table and can
+        /// therefore never be rolled -- it is authored, never stumbled into, because ADR-003 wants
+        /// half the game in daylight and a random night would silently rewrite a position designed
+        /// to be read at distance. Appending a sixth weight would quietly start rolling night;
+        /// `NightIsNeverRolled` exists to fail loudly if anyone does.
         /// </summary>
         private static readonly float[] Weights = { 0.20f, 0.12f, 0.34f, 0.20f, 0.14f };
 
@@ -227,6 +244,54 @@ namespace Cipher.Game
                         PlaceBed = "ambience/woodland-day",
                         WeatherBedVolume = 0.14f,
                         PlaceBedVolume = 0.20f,
+                    };
+
+                // ---------------------------------------------------------------- night
+                // Moonlight is a KEY LIGHT, not an absence of one. The mistake to avoid is turning
+                // everything down: a scene lit only by weak ambient reads as a badly exposed day,
+                // not as night. So the moon keeps a real direction and casts real shadows -- it is
+                // the COLOUR that changes, hard to blue, and the intensity that drops.
+                //
+                // The ink outline does most of the work here. A cel-shaded world at night is mostly
+                // silhouette, which is exactly what this renderer is good at, so shapes stay
+                // readable at a fraction of the light.
+                case Sky.Night:
+                    return new WeatherProfile
+                    {
+                        Sky = Sky.Night,
+                        Name = "night",
+                        // Behind the shoulder, and deliberately NOT high: a low moon would rake
+                        // shadows across the map the way the dusk sun does, and two rakes in one
+                        // campaign read as the same hour twice. 38 degrees is the compromise --
+                        // `Noon_is_the_only_condition_with_a_high_sun` caught the first attempt at
+                        // 52, and it was right to: a high key is what makes noon noon, and a moon
+                        // borrowing it would have made night look like a colour filter over midday.
+                        SunEuler = new Vector3(38f, 214f, 0f),
+                        SunColor = new Color(0.62f, 0.72f, 1.00f),
+                        SunIntensity = 0.34f,
+                        ShadowStrength = 0.55f,
+                        AmbientSky = new Color(0.10f, 0.14f, 0.24f),
+                        AmbientEquator = new Color(0.09f, 0.11f, 0.17f),
+                        AmbientGround = new Color(0.05f, 0.06f, 0.08f),
+                        // Fog denser than dusk and much darker: at night distance does not go grey,
+                        // it goes away. This is the position-6 and position-8 lever.
+                        FogColor = new Color(0.10f, 0.13f, 0.20f),
+                        FogDensity = 0.0240f,
+                        SkyTop = new Color(0.04f, 0.06f, 0.13f),
+                        SkyHorizon = new Color(0.13f, 0.17f, 0.28f),
+                        CloudLight = new Color(0.22f, 0.26f, 0.38f),
+                        CloudDark = new Color(0.07f, 0.09f, 0.15f),
+                        CloudCover = 0.5f,
+                        SkyBands = 5f,
+                        Rain = 0f,
+                        Wind = 0.3f,
+                        Thunder = false,
+                        WeatherBed = "weather/wind-trees",
+                        // The night bed, not the day one. Using woodland-day under a night sky is
+                        // the audio version of the lighting mistake above.
+                        PlaceBed = "ambience/woodland-dusk",
+                        WeatherBedVolume = 0.17f,
+                        PlaceBedVolume = 0.24f,
                     };
 
                 // ------------------------------------------------------------ dusk rain
