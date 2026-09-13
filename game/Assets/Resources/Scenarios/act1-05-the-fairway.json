@@ -1,0 +1,416 @@
+{
+  "schema": 1,
+  "id": "act1-05-the-fairway",
+  "displayName": "The Fairway",
+  "tier": 3,
+  "next": "",
+  "brief": "The west course, at first light, in fog. There is nothing out here to put a wall between you and them -- no houses, no fences, one long green hill. They will come out of it a hundred metres wide and you will finally see how many there are. Hold until the scan, then go.",
+  "map": {
+    "width": 140,
+    "height": 120,
+    "preset": "arena",
+    "walls": [
+      {
+        "rect": [
+          0,
+          0,
+          140,
+          1
+        ],
+        "kind": "Static"
+      },
+      {
+        "rect": [
+          0,
+          119,
+          140,
+          1
+        ],
+        "kind": "Static"
+      },
+      {
+        "rect": [
+          139,
+          0,
+          1,
+          120
+        ],
+        "kind": "Static"
+      },
+      {
+        "rect": [
+          58,
+          59,
+          26,
+          3
+        ],
+        "kind": "Static"
+      }
+    ]
+  },
+  "props": [
+    {
+      "kind": "BrushPile",
+      "x": 20.0,
+      "y": 14.0,
+      "yaw": 8
+    },
+    {
+      "kind": "BrushPile",
+      "x": 34.0,
+      "y": 14.0,
+      "yaw": 8
+    },
+    {
+      "kind": "BrushPile",
+      "x": 48.0,
+      "y": 14.0,
+      "yaw": 8
+    },
+    {
+      "kind": "BrushPile",
+      "x": 62.0,
+      "y": 14.0,
+      "yaw": 8
+    },
+    {
+      "kind": "BrushPile",
+      "x": 76.0,
+      "y": 14.0,
+      "yaw": 8
+    },
+    {
+      "kind": "BrushPile",
+      "x": 20.0,
+      "y": 26.0,
+      "yaw": 8
+    },
+    {
+      "kind": "BrushPile",
+      "x": 34.0,
+      "y": 26.0,
+      "yaw": 8
+    },
+    {
+      "kind": "BrushPile",
+      "x": 48.0,
+      "y": 26.0,
+      "yaw": 8
+    },
+    {
+      "kind": "BrushPile",
+      "x": 62.0,
+      "y": 26.0,
+      "yaw": 8
+    },
+    {
+      "kind": "BrushPile",
+      "x": 76.0,
+      "y": 26.0,
+      "yaw": 8
+    },
+    {
+      "kind": "BrushPile",
+      "x": 20.0,
+      "y": 94.0,
+      "yaw": 8
+    },
+    {
+      "kind": "BrushPile",
+      "x": 34.0,
+      "y": 94.0,
+      "yaw": 8
+    },
+    {
+      "kind": "BrushPile",
+      "x": 48.0,
+      "y": 94.0,
+      "yaw": 8
+    },
+    {
+      "kind": "BrushPile",
+      "x": 62.0,
+      "y": 94.0,
+      "yaw": 8
+    },
+    {
+      "kind": "BrushPile",
+      "x": 76.0,
+      "y": 94.0,
+      "yaw": 8
+    },
+    {
+      "kind": "BrushPile",
+      "x": 20.0,
+      "y": 106.0,
+      "yaw": 8
+    },
+    {
+      "kind": "BrushPile",
+      "x": 34.0,
+      "y": 106.0,
+      "yaw": 8
+    },
+    {
+      "kind": "BrushPile",
+      "x": 48.0,
+      "y": 106.0,
+      "yaw": 8
+    },
+    {
+      "kind": "BrushPile",
+      "x": 62.0,
+      "y": 106.0,
+      "yaw": 8
+    },
+    {
+      "kind": "BrushPile",
+      "x": 76.0,
+      "y": 106.0,
+      "yaw": 8
+    },
+    {
+      "kind": "StreetLamp",
+      "x": 70.0,
+      "y": 44.0
+    },
+    {
+      "kind": "StreetLamp",
+      "x": 70.0,
+      "y": 76.0
+    },
+    {
+      "kind": "StreetLamp",
+      "x": 86.0,
+      "y": 40.0
+    },
+    {
+      "kind": "StreetLamp",
+      "x": 86.0,
+      "y": 80.0
+    },
+    {
+      "kind": "StreetLamp",
+      "x": 100.0,
+      "y": 60.0
+    },
+    {
+      "kind": "PicnicTable",
+      "x": 78.0,
+      "y": 52.0
+    },
+    {
+      "kind": "PicnicTable",
+      "x": 78.0,
+      "y": 68.0
+    },
+    {
+      "kind": "WaterTower",
+      "x": 110.0,
+      "y": 24.0
+    },
+    {
+      "kind": "WaterTower",
+      "x": 110.0,
+      "y": 96.0
+    },
+    {
+      "kind": "BrushPile",
+      "x": 60.0,
+      "y": 60.0,
+      "yaw": 10
+    },
+    {
+      "kind": "BrushPile",
+      "x": 64.0,
+      "y": 60.0,
+      "yaw": 10
+    },
+    {
+      "kind": "BrushPile",
+      "x": 68.0,
+      "y": 60.0,
+      "yaw": 10
+    },
+    {
+      "kind": "BrushPile",
+      "x": 72.0,
+      "y": 60.0,
+      "yaw": 10
+    },
+    {
+      "kind": "BrushPile",
+      "x": 76.0,
+      "y": 60.0,
+      "yaw": 10
+    },
+    {
+      "kind": "BrushPile",
+      "x": 80.0,
+      "y": 60.0,
+      "yaw": 10
+    }
+  ],
+  "heroSpawn": {
+    "x": 92,
+    "y": 54
+  },
+  "spawnCells": [
+    {
+      "x": 2,
+      "y": 30,
+      "gate": "the-ninth-tee"
+    },
+    {
+      "x": 2,
+      "y": 45,
+      "gate": "the-west-rough"
+    },
+    {
+      "x": 2,
+      "y": 60,
+      "gate": "the-fairway"
+    },
+    {
+      "x": 2,
+      "y": 75,
+      "gate": "the-cart-path"
+    },
+    {
+      "x": 2,
+      "y": 90,
+      "gate": "the-pond-side"
+    },
+    {
+      "x": 60,
+      "y": 6,
+      "gate": "north-treeline",
+      "flank": true
+    },
+    {
+      "x": 60,
+      "y": 114,
+      "gate": "south-treeline",
+      "flank": true
+    }
+  ],
+  "vault": {
+    "x": 92,
+    "y": 60,
+    "hp": 30
+  },
+  "economy": {
+    "startCash": 400,
+    "cashPerKill": 5,
+    "waveClearBonusPerWave": 100
+  },
+  "director": {
+    "seed": 20260914,
+    "sapperFirstAt": 45,
+    "spitterFirstAt": 40,
+    "hunterShare": 0.1,
+    "wreckerShare": 0.08,
+    "flankShare": 0.18
+  },
+  "enemy": {
+    "health": 52
+  },
+  "waves": [
+    {
+      "setupSeconds": 25,
+      "count": 72,
+      "spawnPerSecond": 4.25,
+      "mix": {
+        "Runner": 0.94,
+        "Spitter": 0.06
+      }
+    },
+    {
+      "setupSeconds": 20,
+      "count": 108,
+      "spawnPerSecond": 5.44,
+      "mix": {
+        "Runner": 0.94,
+        "Spitter": 0.06
+      }
+    },
+    {
+      "setupSeconds": 20,
+      "count": 153,
+      "spawnPerSecond": 6.8,
+      "mix": {
+        "Runner": 0.94,
+        "Spitter": 0.06
+      }
+    },
+    {
+      "setupSeconds": 20,
+      "count": 207,
+      "spawnPerSecond": 8.16,
+      "mix": {
+        "Runner": 0.94,
+        "Spitter": 0.06
+      }
+    },
+    {
+      "setupSeconds": 20,
+      "count": 270,
+      "spawnPerSecond": 9.52,
+      "mix": {
+        "Runner": 0.94,
+        "Spitter": 0.06
+      }
+    }
+  ],
+  "safeZoneAfterWaves": [],
+  "objectives": [
+    {
+      "type": "SurviveSeconds",
+      "seconds": 240
+    },
+    {
+      "type": "ProtectVault",
+      "minHp": 1
+    }
+  ],
+  "rewards": {
+    "scrip": 60,
+    "guaranteedDrops": [
+      {
+        "slot": "Vest",
+        "rarity": "Scavenged",
+        "ilvl": 3
+      }
+    ],
+    "unlocks": []
+  },
+  "medals": {
+    "bronze": [
+      {
+        "type": "Complete"
+      }
+    ],
+    "silver": [
+      {
+        "type": "VaultHpAtLeast",
+        "value": 20
+      }
+    ],
+    "gold": [
+      {
+        "type": "VaultHpAtLeast",
+        "value": 25
+      },
+      {
+        "type": "TimeUnder",
+        "seconds": 420
+      }
+    ]
+  },
+  "pillarExceptions": [
+    {
+      "pillar": "P2",
+      "reason": "The Fairway is the scale mission and the campaign document calls it the deliberate spike: an open fairway with nothing to funnel with at all, where they come out of the fog a hundred metres wide. Having nowhere good to stand IS the lesson, which is why the objective is SurviveSeconds and the position cannot be held. Giving it a second front would mean putting a wood across the course and teaching the opposite thing."
+    }
+  ]
+}

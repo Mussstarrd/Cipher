@@ -182,6 +182,19 @@ is almost nothing to be clear of. It is not broken — it passes every geometric
 it. Dressing it is content work, not design work, and it is the cheapest visible win left on the
 board.
 
+- **A pillar can be broken on purpose, in writing.** `pillarExceptions` in a scenario names the
+  pillar and the reason, and the reader REFUSES a reason under twenty characters — an exception
+  nobody had to justify in writing is a disabled test. The test prints the reason rather than merely
+  skipping, because a silent skip is indistinguishable from a test somebody switched off.
+
+  **The Fairway (position 5) excuses P2**, and the collision was worth having: the campaign document
+  calls mission 5 "the deliberate spike — an open fairway with nothing to funnel with at all", and
+  P2 demands two defensible fronts. Measured, its seven gates collapse to one. Both are right.
+  Having nowhere good to stand IS that position's lesson, which is why its objective is
+  `SurviveSeconds` and it cannot be held; giving it a second front would mean putting a wood across
+  the course and teaching the opposite thing. The alternative — distorting the level to satisfy the
+  test, or weakening the test to tolerate the level — would have quietly damaged one or the other.
+
 **Next, in order:**
 - Dress the Pump House. 9 props is a greybox.
 - Pull the pool approach's coverage up, or accept it as a deliberately blind lane and say so.

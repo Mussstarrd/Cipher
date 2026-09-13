@@ -3,7 +3,7 @@
   "id": "act1-04-the-gate-falls",
   "displayName": "The Gate Falls",
   "tier": 3,
-  "next": "",
+  "next": "act1-05-the-fairway",
   "brief": "You know this road. You held it once with a pistol and a pile of brush, and you are back on it with four times the kit. It will not be enough, and that is not a mistake you made. Hold until the truck is loaded, then go. Losing ground is not the same as losing.",
   "map": {
     "width": 128,

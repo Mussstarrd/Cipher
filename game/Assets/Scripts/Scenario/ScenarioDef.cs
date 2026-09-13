@@ -64,6 +64,20 @@ namespace Cipher.Game.Scenarios
     /// </summary>
     public sealed class ScenarioDef
     {
+        /// <summary>
+        /// Design pillars this position deliberately breaks, and why.
+        ///
+        /// The pillar tests in `ScenarioTests` encode `docs/design/level-design-principles.md`, and
+        /// a good rule still has exceptions -- the campaign document calls mission 5 "the deliberate
+        /// spike: an open fairway with nothing to funnel with at all", which is a direct and
+        /// intentional collision with P2's demand for two defensible fronts.
+        ///
+        /// The exception exists so the choice is EXPLICIT AND ARGUED rather than either distorting a
+        /// level to satisfy a test or weakening a test to tolerate a level. A reason is mandatory:
+        /// an exception nobody had to justify in writing is just a disabled test.
+        /// </summary>
+        public IReadOnlyList<PillarException> PillarExceptions { get; set; } = System.Array.Empty<PillarException>();
+
         public const int SupportedSchema = 1;
 
         public int Schema { get; set; } = SupportedSchema;
@@ -231,5 +245,15 @@ namespace Cipher.Game.Scenarios
         public List<Criterion> Bronze { get; } = new List<Criterion>();
         public List<Criterion> Silver { get; } = new List<Criterion>();
         public List<Criterion> Gold { get; } = new List<Criterion>();
+    }
+
+    /// <summary>One pillar a position deliberately breaks, with the reason it is allowed to.</summary>
+    public sealed class PillarException
+    {
+        /// <summary>The pillar id from level-design-principles.md, e.g. "P2".</summary>
+        public string Pillar { get; set; } = string.Empty;
+
+        /// <summary>Why this position is allowed to break it. Required, and printed by the test.</summary>
+        public string Reason { get; set; } = string.Empty;
     }
 }

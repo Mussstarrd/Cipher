@@ -28,7 +28,7 @@ namespace Cipher.Game.Scenarios
             root.RejectUnknownKeys(
                 "schema", "id", "displayName", "tier", "brief", "next", "lastStand", "map", "heroSpawn", "spawnCells",
                 "vault", "actors", "props", "economy", "director", "cycle", "enemy", "waves", "safeZoneAfterWaves",
-                "objectives", "rewards", "medals");
+                "objectives", "rewards", "medals", "pillarExceptions");
 
             var def = new ScenarioDef();
 
@@ -99,6 +99,30 @@ namespace Cipher.Game.Scenarios
             if (root.Opt("medals") is { } medals) ReadMedals(medals, def);
 
             Validate(def);
+            // Deliberate pillar breaks, each with a written reason. See ScenarioDef.PillarExceptions.
+            var exceptions = new List<PillarException>();
+            var ex = root.Opt("pillarExceptions");
+            if (ex != null)
+            {
+                int i = 0;
+                foreach (var e in ex.Items)
+                {
+                    e.RejectUnknownKeys("pillar", "reason");
+
+                    string pillar = e.Get("pillar").AsString();
+                    string reason = e.Get("reason").AsString();
+
+                    if (string.IsNullOrWhiteSpace(reason) || reason.Trim().Length < 20)
+                        throw new ScenarioException(
+                            $"{e.Path}: pillarExceptions[{i}].reason must actually argue the case. " +
+                            "An exception nobody had to justify in writing is a disabled test.");
+
+                    exceptions.Add(new PillarException { Pillar = pillar, Reason = reason });
+                    i++;
+                }
+            }
+            def.PillarExceptions = exceptions;
+
             return def;
         }
 

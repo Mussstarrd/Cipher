@@ -534,10 +534,34 @@ namespace Cipher.Game.Tests
             string summary = string.Join(" | ", fronts.ConvertAll(f => $"({f.X},{f.Y}) {string.Join("+", f.Gates)}"));
             UnityEngine.Debug.Log($"[P2] {def.Id}: {def.SpawnCells.Count} gates -> {fronts.Count} fronts: {summary}");
 
+            // A position may break this pillar on purpose, in writing. See ScenarioDef.PillarExceptions.
+            string? excused = Excused(def, "P2");
+            if (excused != null)
+            {
+                Assert.That(fronts.Count, Is.GreaterThanOrEqualTo(1),
+                    $"{def.Id} excuses P2 but has no coverable front at all, which is not a design, it is a bug.");
+                UnityEngine.Debug.Log($"[P2] {def.Id}: EXCUSED -- {excused}");
+                return;
+            }
+
             Assert.That(fronts.Count, Is.GreaterThanOrEqualTo(2),
                 $"{def.Id}: {def.SpawnCells.Count} gates collapse to {fronts.Count} front — one place to " +
                 "stand covers everything, so the player is never asked to choose. " +
                 "See level-design-principles.md, pillar P2.");
+        }
+
+        /// <summary>
+        /// The written reason this position is allowed to break a pillar, or null if it is not.
+        ///
+        /// The reason is returned rather than a bool so the test can PRINT it. An exception that
+        /// only shows up as a skipped assertion is indistinguishable from a test somebody disabled.
+        /// </summary>
+        private static string? Excused(ScenarioDef def, string pillar)
+        {
+            foreach (var e in def.PillarExceptions)
+                if (string.Equals(e.Pillar, pillar, System.StringComparison.OrdinalIgnoreCase))
+                    return e.Reason;
+            return null;
         }
 
         /// <summary>
