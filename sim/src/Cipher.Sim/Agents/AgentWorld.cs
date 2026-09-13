@@ -37,6 +37,10 @@ namespace Cipher.Sim.Agents
         /// <summary>Per-agent sidearm flag. See AgentWorld.Pace.cs.</summary>
         private bool[] _armed;
         private int[] _target;
+        /// <summary>Seconds of chase a structure hunter has left before it gives up.</summary>
+        private float[] _pursuit;
+        /// <summary>Closest a hunter has ever been to its gun, squared. Resets the budget when beaten.</summary>
+        private float[] _pursuitBest;
 
         public int Count { get; private set; }
         public int AliveCount { get; private set; }
@@ -65,6 +69,8 @@ namespace Cipher.Sim.Agents
             _armed = new bool[capacity];
             _turned = new bool[capacity];
             _target = new int[capacity];
+            _pursuit = new float[capacity];
+            _pursuitBest = new float[capacity];
         }
 
         public Vec2 PositionOf(int id) => new Vec2(_posX[id], _posY[id]);
@@ -91,15 +97,19 @@ namespace Cipher.Sim.Agents
                 Array.Resize(ref _archetype, newSize);
                 Array.Resize(ref _intent, newSize);
                 Array.Resize(ref _state, newSize);
-            Array.Resize(ref _timer, newSize);
+                Array.Resize(ref _timer, newSize);
                 Array.Resize(ref _aggro, newSize);
                 Array.Resize(ref _pace, newSize);
                 Array.Resize(ref _armed, newSize);
                 Array.Resize(ref _turned, newSize);
                 Array.Resize(ref _target, newSize);
+                Array.Resize(ref _pursuit, newSize);
+                Array.Resize(ref _pursuitBest, newSize);
             }
 
             int id = Count++;
+            _pursuit[id] = _config.HunterPursuitSeconds;
+            _pursuitBest[id] = float.PositiveInfinity;
             _posX[id] = position.X;
             _posY[id] = position.Y;
             _health[id] = health;

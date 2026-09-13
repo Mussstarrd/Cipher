@@ -203,6 +203,19 @@ namespace Cipher.Sim.Agents
         public float HunterAttackInterval { get; set; } = 1f;
         public float HunterStructureDamage { get; set; } = 8f;
 
+        /// <summary>
+        /// How long a hunter chases a gun it is not reaching before giving up and going back to
+        /// the objective.
+        ///
+        /// Without this a hunter is a permanent body: StepStructureHunter steers and returns true
+        /// on EVERY tick it is out of contact, so a hunter with a barricade between it and the
+        /// turret slides along the wall forever -- never closing, never falling through to the
+        /// objective, never dying. One of them held a Crowbar wave open for six minutes with the
+        /// truck untouched at 30/30. Fourteen seconds is comfortably more than the time to cross
+        /// HunterAcquireRange at HunterSpeed, so a hunter that CAN reach its gun always does.
+        /// </summary>
+        public float HunterPursuitSeconds { get; set; } = 14f;
+
         /// <summary>Cells a wrecker will search outward for something to pull down.</summary>
         public int WreckerSearchCells { get; set; } = 10;
         public float WreckerAttackInterval { get; set; } = 0.8f;

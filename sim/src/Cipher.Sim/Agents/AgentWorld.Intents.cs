@@ -83,10 +83,39 @@ namespace Cipher.Sim.Agents
 
             if (dist > _config.HunterContactRange)
             {
+                // A CHASE HAS TO BE ABLE TO FAIL. Returning true here unconditionally -- which is
+                // what this did -- makes a hunter a permanent body: out of contact it steers and
+                // yields every tick, so one with a barricade between it and the gun slides along
+                // the wall forever, never closing, never falling through to the objective, never
+                // dying. Measured on Crowbar: one of these held wave one open for six minutes with
+                // the truck untouched at 30/30 and the field otherwise clear.
+                //
+                // The budget is spent only while FAILING to close. Getting nearer than this hunter
+                // has ever been refills it, so a long legitimate chase round a building is free and
+                // only a chase that has stopped making ground runs out.
+                if (bestDistSq < _pursuitBest[i])
+                {
+                    _pursuitBest[i] = bestDistSq;
+                    _pursuit[i] = _config.HunterPursuitSeconds;
+                }
+                _pursuit[i] -= dt;
+                if (_pursuit[i] <= 0f)
+                {
+                    // Back to the objective, permanently: the switch in Step only calls this for
+                    // Intent.HuntStructure, so clearing it is what stops the re-acquire next tick.
+                    _intent[i] = (byte)Intent.Vault;
+                    _target[i] = -1;
+                    return false;
+                }
+
                 SteerToward(i, pos, target, dt, _config.HunterSpeed, gates);
                 _target[i] = best;
                 return true;
             }
+
+            // In contact: the chase worked, so it costs nothing.
+            _pursuit[i] = _config.HunterPursuitSeconds;
+            _pursuitBest[i] = 0f;
 
             // In contact. Tearing at a turret is the game layer's business to resolve, because the
             // sim does not own emplacement health; it just reports that it is happening.
