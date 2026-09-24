@@ -49,6 +49,7 @@
       bpm: state.bpm,
       postHook: state.postHook,
       chordsInTags: state.chordsInTags,
+      instrumental: state.lyricsMode === "instrumental",
       extraBans: state.extraBans,
       profile: state.profile,
       seed: state.seed,
@@ -164,12 +165,20 @@
 
   // ------------------------------------------------------------ output
   function lyricsText() {
-    return state.lyricsMode === "tags" ? pkg.lyricsTagsOnly : E.renderSections(pkg.sections, state.lyrics);
+    return state.lyricsMode === "bars" ? E.renderSections(pkg.sections, state.lyrics) : pkg.lyricsTagsOnly;
   }
 
   function drawLyrics() {
     const tags = $("out-tags");
     const editor = $("lyrics-editor");
+    if (state.lyricsMode === "instrumental") {
+      $("lyrics-hint").textContent =
+        "Structured instrumental. Paste these tags into the lyrics box and turn Suno's Instrumental toggle on. Each tag says what the beat does; the style field drops the vocal words and the Exclude field adds vocals, rap and singing.";
+      tags.hidden = false;
+      editor.hidden = true;
+      tags.textContent = pkg.lyricsTagsOnly;
+      return;
+    }
     if (state.lyricsMode === "tags") {
       $("lyrics-hint").textContent =
         "Structure only. Suno writes the words around these tags and keeps the section order. Hooks are marked identical so they repeat exactly.";
@@ -239,6 +248,7 @@
       (m.blend ? ` + ${laneById(m.blend).label}` : "") +
       ` · ${E.EDGES[m.edge].label} · ${m.bpm} BPM · ${E.TEMPLATES[m.template].label} ${m.templateLength} · roll #${m.seed % 1000}`;
     $("out-exclude").textContent = pkg.excludeText;
+    $("vocal").disabled = !!m.instrumental;
     drawLyrics();
 
     const h = pkg.harmony;
@@ -359,7 +369,7 @@
       () => state.template,
       (v) => (state.template = v)
     );
-    seg("lyrics-mode", [{ id: "tags", label: "Tags only" }, { id: "bars", label: "Write bars" }], () => state.lyricsMode, (v) => (state.lyricsMode = v));
+    seg("lyrics-mode", [{ id: "tags", label: "Tags only" }, { id: "bars", label: "Write bars" }, { id: "instrumental", label: "Instrumental" }], () => state.lyricsMode, (v) => (state.lyricsMode = v));
     drawLaneSelects();
     fillSelect("key", [{ id: "", label: "Key: lane pick" }, ...E.keyOptions().map((k) => ({ id: k, label: k }))], "");
     fillSelect("hook", [{ id: "", label: "Hook: lane pick" }, ...Object.entries(E.HOOKS).map(([id, h]) => ({ id, label: h.name }))], "");

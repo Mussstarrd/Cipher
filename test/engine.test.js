@@ -97,3 +97,16 @@ test("targets the Suno v6 family and tunes sliders per model", () => {
   assert.strictEqual(v6.sliders.variety, "Off");
   assert.match(v6.styleText, /hard-stops after the last hook/);
 });
+
+test("instrumental mode has no vocal words anywhere and excludes vocals", () => {
+  const vocalWords = /\b(vocal|vocalist|vocals|rap\b|rapper|sing|sung|singing|chant|ad-lib|lyric|verse\s+flow|falsetto|harmonies)/i;
+  for (const input of everyCombo()) {
+    const out = E.generate({ ...input, instrumental: true });
+    assert.ok(!vocalWords.test(out.styleText), out.styleText);
+    assert.ok(!vocalWords.test(out.lyricsTagsOnly), out.lyricsTagsOnly);
+    assert.match(out.styleText, /purely instrumental beat/);
+    for (const b of ["vocals", "rap", "singing"]) assert.ok(out.excludeText.split(", ").includes(b));
+    assert.ok(out.sections.filter((s) => s.name === "Hook").length >= 3);
+    assert.deepStrictEqual([...E.lint(out.styleText, "style"), ...E.lint(out.lyricsTagsOnly, "tags")], []);
+  }
+});

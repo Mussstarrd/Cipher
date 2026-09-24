@@ -576,14 +576,18 @@ const CipherEngine = (() => {
     const moods = shuffle(lane.moods, r);
     add(moods[0], 1);
 
-    const vocal = pick(lane.vocals, r);
-    const gender = {
-      male: "male vocalist",
-      female: "female vocalist",
-      duet: lane.family === "rnb" ? "female lead with a male rap verse" : "male rap verses with a female sung hook",
-    }[vocalMode];
-    add(vocal, 0);
-    add(gender, 0);
+    if (ctx.instrumental) {
+      add("purely instrumental beat, lead melody carries the hook", 0);
+    } else {
+      const vocal = pick(lane.vocals, r);
+      const gender = {
+        male: "male vocalist",
+        female: "female vocalist",
+        duet: lane.family === "rnb" ? "female lead with a male rap verse" : "male rap verses with a female sung hook",
+      }[vocalMode];
+      add(vocal, 0);
+      add(gender, 0);
+    }
 
     const drums = shuffle(lane.drums, r);
     add(drums[0], 0);
@@ -594,7 +598,7 @@ const CipherEngine = (() => {
     const lead = pick(blend && r() < 0.5 ? blend.leads : lane.leads, r);
     add(`${lead} playing ${harmony.prog.color} in ${harmony.keyName}`, 0);
     const motif = pick(lane.motifs, r);
-    add(`infectious ${r() < 0.5 ? "two" : "one"}-bar ${motif} motif repeating every hook`, 1);
+    add(`infectious ${r() < 0.5 ? "two" : "one"}-bar ${motif} motif ${ctx.instrumental ? "carrying the hook as the lead line" : "repeating every hook"}`, 1);
 
     add(drums[1], 2);
     add(pick(LOCKED_GROOVE, r), 1);
@@ -695,6 +699,52 @@ const CipherEngine = (() => {
     return S;
   }
 
+  // Instrumental arrangement: the same skeleton, but every tag says what the
+  // beat does. Vocal words never appear, so Suno has nothing to sing.
+  function buildInstrumentalSections(ctx) {
+    const { lane, edge, template, harmony, plan, chordsInTags, postHook, r } = ctx;
+    const sh = sectionHarmony(harmony, plan);
+    const twitch = edge !== "syncopated";
+    const motif = pick(lane.motifs, r);
+    const lead = pick(lane.leads, r);
+    const drums = shuffle(lane.drums, r);
+    const chordText = (list) => (chordsInTags ? `, ${list.join(" – ")}` : "");
+    const S = [];
+    const push = (tag, desc, extra = {}) => S.push({ tag: `[${tag}: ${desc}]`, name: tag, slot: null, ...extra });
+
+    const hookSec = () => {
+      push("Hook", `full beat, ${motif} motif doubled an octave up, ${lane.bass[0]}, identical every time${chordText(sh.hook)}`, { harmony: sh.hook });
+      if (postHook) push("Post-Hook", `motif alone over drums, 4 bars${chordText(sh.hook)}`, { harmony: sh.hook });
+    };
+    const verse = (n) => {
+      const bits = [`stripped to ${drums[n % drums.length]}`, n === 1 ? `${lead} sparse` : twitch ? `${lead} stutter-chopped` : `${lead} denser variation`];
+      if (twitch && n > 1) bits.push("half-bar beat mutes");
+      push(`Verse ${n}`, `${bits.join(", ")}, 16 bars${chordText(sh.verse)}`, { harmony: sh.verse });
+    };
+    const pre = () => push("Pre-Chorus", `808 cuts out, ${lead} holds the tension chord, hi-hats tighten${chordsInTags ? ` on ${sh.pre[0]}` : ""}`, { harmony: sh.pre });
+
+    push("Intro", twitch ? `stuttered chop of the ${motif} motif, 2 bars, drums enter on bar 3${chordText(sh.intro)}` : `${motif} motif alone, 2 bars, drums enter on bar 3${chordText(sh.intro)}`, { harmony: sh.intro });
+    if (template === "pre-hook") {
+      verse(1); pre(); hookSec(); verse(2); pre(); hookSec();
+      push("Bridge", `half-time, chords and 808 only, lands on a deceptive chord${chordText(sh.bridge)}`, { harmony: sh.bridge });
+      hookSec();
+    } else if (template === "short") {
+      hookSec(); verse(1); hookSec();
+      push("Break", "808 and hi-hats only for 2 bars", { harmony: sh.verse });
+      hookSec();
+    } else {
+      hookSec(); verse(1); hookSec(); verse(2); hookSec();
+      if (template === "beat-switch") {
+        push("Beat Switch", `new drum pattern, darker 808, same tempo${chordsInTags ? `, ${harmony.chords[0]} pedal` : ""}`, { harmony: [harmony.chords[0]] });
+        verse(3);
+        hookSec();
+      }
+    }
+    push("Outro", `${motif} motif for 2 bars, then hard stop${chordText(sh.outro)}`, { harmony: sh.outro });
+    S.push({ tag: "[End]", name: "End", slot: null });
+    return S;
+  }
+
   function renderSections(sections, lyrics = {}) {
     // A repeated slot (the hook) reprints the same words: identical repetition
     // is what makes a hook stick.
@@ -745,6 +795,16 @@ const CipherEngine = (() => {
     return found;
   }
 
+  // Instrumental packages must not say "vocal" anywhere, or Suno may add some.
+  function devocalize(text) {
+    return text
+      .replace(/vocal-harmony pads/gi, "synth pads")
+      .replace(/vocal[- ]chop/gi, "synth chop")
+      .replace(/vocal pads?/gi, (m) => m.replace(/vocal/i, "synth"))
+      .replace(/chopped pitched vocal hiccups/gi, "chopped pitched synth hiccups")
+      .replace(/beatbox-style vocal percussion/gi, "clicky glitch percussion");
+  }
+
   function buildExclude(extraBans) {
     const list = [...HARD_BANS];
     for (const b of extraBans || []) {
@@ -789,17 +849,19 @@ const CipherEngine = (() => {
     const vocalMode = ["male", "female", "duet"].includes(input.vocal) ? input.vocal : "auto";
     const ctx = {
       lane, blend, edge, harmony, plan, template, bpm, r, hook, vocalMode,
-      chordsInTags: !!input.chordsInTags, postHook: !!input.postHook,
+      chordsInTags: !!input.chordsInTags, postHook: !!input.postHook, instrumental: !!input.instrumental,
     };
 
     let styleText = buildStyle(ctx);
+    if (ctx.instrumental) styleText = devocalize(styleText);
     if (styleText.length > profile.styleCharLimit) {
       styleText = styleText.slice(0, profile.styleCharLimit).replace(/,\s*[^,]*$/, "");
       warnings.push({ level: "warn", message: `Style text trimmed to the ${profile.styleCharLimit}-character limit.` });
     }
-    const sections = buildSections(ctx);
+    const sections = ctx.instrumental ? buildInstrumentalSections(ctx) : buildSections(ctx);
+    if (ctx.instrumental) for (const s of sections) s.tag = devocalize(s.tag);
     const tagsOnly = renderSections(sections);
-    const excludeText = buildExclude(input.extraBans);
+    const excludeText = buildExclude(ctx.instrumental ? ["vocals", "rap", "singing", ...(input.extraBans || [])] : input.extraBans);
     const blueprint = buildBlueprint(ctx);
 
     warnings.push(...lint(styleText, "style"), ...lint(tagsOnly, "tags"));
@@ -842,6 +904,7 @@ const CipherEngine = (() => {
       meta: {
         profile: profile.id, lane: lane.id, laneLabel: lane.label, blend: blend && blend.id,
         edge, bpm, seed, template, templateLength: TEMPLATES[template].length, plan, hook: hookId,
+        instrumental: ctx.instrumental,
         styleChars: styleText.length, styleLimit: profile.styleCharLimit,
         descriptors: styleText.split(", ").length,
       },
