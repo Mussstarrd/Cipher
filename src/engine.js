@@ -4,6 +4,10 @@
 "use strict";
 
 const CipherEngine = (() => {
+  const LIKENESS = typeof CipherLikeness !== "undefined" ? CipherLikeness : require("./likeness.js");
+  const LIKENESS_BY_ID = new Map(LIKENESS.map((l) => [l.id, l]));
+  // Suno rewrites or strips artist names, so a name in a package is a bug.
+  const ARTIST_NAMES = [...new Set(LIKENESS.flatMap((l) => [l.name, ...l.aliases]))].filter((n) => n.replace(/[^a-z0-9]/gi, "").length >= 3);
   // ---------------------------------------------------------------- profiles
   // Suno v6 family (9 Sep 2026). Every earlier model is retired for new songs.
   // Limits are unchanged from v5: style 1,000, lyrics 5,000 (research §2).
@@ -573,13 +577,15 @@ const CipherEngine = (() => {
     const add = (text, pri) => text && parts.push({ text, pri });
 
     add(blend ? `${lane.genres[0]} fused with ${blend.genres[0]}` : lane.genres[0], 0);
-    const moods = shuffle(lane.moods, r);
-    add(moods[0], 1);
+    const like = ctx.likeness;
+    const moods = shuffle(like ? [...like.moods, ...lane.moods] : lane.moods, r);
+    // A likeness adds two descriptors of its own, so the mood becomes trimmable.
+    add(moods[0], like ? 2 : 1);
 
     if (ctx.instrumental) {
-      add("purely instrumental beat, lead melody carries the hook", 0);
+      add("purely instrumental beat with the lead melody carrying the hook", 0);
     } else {
-      const vocal = pick(lane.vocals, r);
+      const vocal = pick(like ? like.vocals : lane.vocals, r);
       const gender = {
         male: "male vocalist",
         female: "female vocalist",
@@ -587,7 +593,9 @@ const CipherEngine = (() => {
       }[vocalMode];
       add(vocal, 0);
       add(gender, 0);
+      if (like) add(like.signature, 0);
     }
+    if (like) add(pick(like.tells, r), 1);
 
     const drums = shuffle(lane.drums, r);
     add(drums[0], 0);
@@ -637,12 +645,12 @@ const CipherEngine = (() => {
   function buildSections(ctx) {
     const { lane, edge, template, harmony, plan, chordsInTags, postHook, r, hook } = ctx;
     const sh = sectionHarmony(harmony, plan);
-    const flows = shuffle(lane.flows, r);
+    const flows = shuffle(ctx.likeness ? ctx.likeness.flows : lane.flows, r);
     const flowA = FLOWS[flows[0]];
     const flowB = FLOWS[flows[1] || flows[0]];
     const flowC = FLOWS[flows[2] || flows[0]];
     const twitch = edge !== "syncopated";
-    const adlib = pick(lane.adlibs, r);
+    const adlib = pick(ctx.likeness ? ctx.likeness.adlibs : lane.adlibs, r);
     const hookWord = lane.family === "rnb" ? "Chorus" : "Hook";
     const chordText = (list) => (chordsInTags ? `, ${list.join(" – ")}` : "");
 
@@ -773,6 +781,7 @@ const CipherEngine = (() => {
       rhythm: cell,
       contour,
       rules: [
+        ...(ctx.likeness ? [`Delivery: ${ctx.likeness.guide}`] : []),
         "The hook arrives within the first 15 seconds and appears at least 3 times.",
         "Title in the first and last line of the hook.",
         "Longer notes and small steps are easier to sing back; save leaps for the title word only.",
@@ -787,6 +796,13 @@ const CipherEngine = (() => {
   // ---------------------------------------------------------------- lint
   function lint(text, where) {
     const found = [];
+    const lower = text.toLowerCase();
+    for (const name of ARTIST_NAMES) {
+      const esc = name.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      if (new RegExp(`(^|[^a-z0-9])${esc}($|[^a-z0-9])`).test(lower)) {
+        found.push({ level: "block", message: `${where}: artist name "${name}" found — Suno strips or rewrites artist names. Remove it.` });
+      }
+    }
     for (const rule of LINT_RULES) {
       if (rule.styleOnly && where !== "style") continue;
       const m = text.match(rule.re);
@@ -831,17 +847,23 @@ const CipherEngine = (() => {
         message: `${harmony.prog.name} is a ${harmony.tonality}-key progression, so the ${input.key} request was swapped for ${harmony.keyName}.`,
       });
     }
+    const likeness = LIKENESS_BY_ID.get(input.likeness);
     const plan = HARMONIC_PLANS[input.plan] ? input.plan : lane.family === "rnb" ? "lift" : "loop";
-    const template = TEMPLATES[input.template] ? input.template : lane.family === "rnb" ? "pre-hook" : "hook-first";
+    const template = TEMPLATES[input.template]
+      ? input.template
+      : likeness && likeness.template ? likeness.template : lane.family === "rnb" ? "pre-hook" : "hook-first";
 
     let bpm = input.bpm;
-    const [lo, hi] = lane.bpm;
+    // A likeness narrows the lane's tempo to where that artist actually lives.
+    const [lo, hi] = likeness
+      ? [Math.max(lane.bpm[0], likeness.bpm[0]), Math.min(lane.bpm[1], likeness.bpm[1])].sort((a, b) => a - b)
+      : lane.bpm;
     if (!bpm) bpm = lo + Math.round((r() * (hi - lo)) / 2) * 2;
     else if (bpm < lo || bpm > hi) {
       warnings.push({ level: "warn", message: `${bpm} BPM is outside ${lane.label}'s ${lo}–${hi} range; using it anyway.` });
     }
 
-    let hookPool = [...lane.hooks];
+    let hookPool = likeness ? [...likeness.hooks] : [...lane.hooks];
     if (edge !== "syncopated" && !hookPool.includes("stutter")) hookPool.push("stutter");
     const hookId = input.hook && HOOKS[input.hook] ? input.hook : pick(hookPool, r);
     const hook = HOOKS[hookId];
@@ -850,6 +872,7 @@ const CipherEngine = (() => {
     const ctx = {
       lane, blend, edge, harmony, plan, template, bpm, r, hook, vocalMode,
       chordsInTags: !!input.chordsInTags, postHook: !!input.postHook, instrumental: !!input.instrumental,
+      likeness,
     };
 
     let styleText = buildStyle(ctx);
@@ -904,7 +927,7 @@ const CipherEngine = (() => {
       meta: {
         profile: profile.id, lane: lane.id, laneLabel: lane.label, blend: blend && blend.id,
         edge, bpm, seed, template, templateLength: TEMPLATES[template].length, plan, hook: hookId,
-        instrumental: ctx.instrumental,
+        instrumental: ctx.instrumental, likeness: likeness && likeness.id, likenessName: likeness && likeness.name,
         styleChars: styleText.length, styleLimit: profile.styleCharLimit,
         descriptors: styleText.split(", ").length,
       },
@@ -918,7 +941,7 @@ const CipherEngine = (() => {
   }
 
   return {
-    PROFILES, LANES, EDGES, HOOKS, PROGRESSIONS, CADENCES, TEMPLATES, HARMONIC_PLANS,
+    PROFILES, LANES, LIKENESS, EDGES, HOOKS, PROGRESSIONS, CADENCES, TEMPLATES, HARMONIC_PLANS,
     HARD_BANS, OPTIONAL_BANS, generate, renderSections, lint, keyOptions,
   };
 })();

@@ -256,6 +256,11 @@
   </section>
 
   <section>
+    <div class="label"><span>Likeness</span><span class="hint">sound, not name — names never reach the prompt</span></div>
+    <div class="chips" id="likeness"></div>
+  </section>
+
+  <section>
     <div class="label"><span>Edge</span><span class="hint">syncopation is always on</span></div>
     <div class="seg" id="edge" role="group" aria-label="Edge"></div>
   </section>
@@ -385,12 +390,229 @@
 </div>
 
 <script>
+/* CIPHER likeness profiles — an artist's sound described as delivery, flow
+ * and production tells. Suno rewrites or strips artist names, so the name
+ * lives only on the UI chip. Nothing below may appear in a package except
+ * the descriptive fields; `aliases` exist so the name lint can catch leaks.
+ * Every phrase respects the house bans (no jazz/funk/edm/pop/DJ/fill words). */
+"use strict";
+
+const CipherLikeness = [
+  // ------------------------------------------------------------- hip hop
+  {
+    id: "compton-theatrical", name: "Kendrick", aliases: ["kendrick", "lamar", "k dot", "kdot", "kung fu kenny"],
+    family: "hiphop", homeLane: "dark-trap", template: "beat-switch",
+    vocals: ["theatrical rap voice that shifts pitch and character mid-verse", "urgent nasal rap delivery cracking into a strained yell"],
+    signature: "sudden flow switches every 4 bars with dense internal rhyme",
+    tells: ["eerie pitched-down vocal sample loop", "hard cracking West Coast snare over deep sub", "sparse tense piano stabs"],
+    moods: ["paranoid intensity", "righteous fury", "cinematic tension"],
+    flows: ["staccato", "triplet", "double"], hooks: ["chant", "callresp"], adlibs: ["ya", "uh", "bitch don't"],
+    bpm: [88, 140], guide: "Change voice and flow every 4 bars; the beat switch is where the second character enters.",
+  },
+  {
+    id: "east-atlanta-elastic", name: "JID", aliases: ["jid", "j.i.d", "j.i.d.", "dreamville"],
+    family: "hiphop", homeLane: "grimy-boom",
+    vocals: ["agile elastic rap flow with pitch-bending yelps", "rapid-fire technical delivery with sudden falsetto breaks"],
+    signature: "machine-gun multisyllabic bursts that snap into sparse pockets",
+    tells: ["warm rubbery bassline", "punchy snappy dry drums", "moody minor keys"],
+    moods: ["playful menace", "hungry underdog energy", "wired focus"],
+    flows: ["double", "offbeat", "staccato"], hooks: ["callresp", "stair"], adlibs: ["woo", "ay", "uh"],
+    bpm: [88, 150], guide: "Pack 3+ syllables per beat in bursts, then drop to sparse pockets; internal rhyme on nearly every bar.",
+  },
+  {
+    id: "toronto-nocturnal", name: "Drake", aliases: ["drake", "drizzy", "ovo", "aubrey", "champagne papi", "6 god"],
+    family: "hiphop", homeLane: "hypnotic", template: "hook-first",
+    vocals: ["hushed doubled rap-sing with a conversational confident tone", "smooth melodic rap sliding into song at the end of each phrase"],
+    signature: "even conversational bars that melt into melody on the last two beats",
+    tells: ["muffled low-pass filtered beat that opens up on the hook", "airy ambient pads over deep sub swells", "distant echoing percussion"],
+    moods: ["late-night introspection", "icy detachment", "wounded pride"],
+    flows: ["melodic", "offbeat"], hooks: ["mantra", "callresp"], adlibs: ["yeah", "uh huh"],
+    bpm: [70, 100], guide: "Even conversational bars; sing the last few syllables of every phrase.",
+  },
+  {
+    id: "atlanta-king", name: "T.I.", aliases: ["t.i.", "tip", "clifford harris", "king of the south"],
+    family: "hiphop", homeLane: "dark-trap", template: "hook-first",
+    vocals: ["smooth commanding Southern drawl", "unhurried swagger delivery with crisp double-time bursts"],
+    signature: "even-keeled in-control cadence that never strains",
+    tells: ["grand string-section swells over 808 knock", "whistling synth lead melody", "marching-snare pattern under crisp hi-hats"],
+    moods: ["unshakable swagger", "king-of-the-city poise", "celebratory menace"],
+    flows: ["offbeat", "double", "staccato"], hooks: ["chant", "callresp"], adlibs: ["ay", "okay", "yeah"],
+    bpm: [120, 150], guide: "Never rushed; the punchline lands right on the snare.",
+  },
+  {
+    id: "houston-psychedelic", name: "Travis Scott", aliases: ["travis", "la flame", "cactus jack", "jacques webster"],
+    family: "hiphop", homeLane: "hypnotic", template: "beat-switch",
+    vocals: ["layered auto-tuned harmonies drenched in reverb", "hypnotic repeated phrases with ad-lib echoes after every line"],
+    signature: "short hypnotic phrases echoed by stacked ad-libs",
+    tells: ["cavernous reverb tails on everything", "detuned synth wails over booming 808 glides", "filtered pitched vocal chops"],
+    moods: ["dark euphoria", "narcotic haze", "festival-night adrenaline"],
+    flows: ["melodic", "stopstart"], hooks: ["chant", "callresp", "stutter"], adlibs: ["yeah", "straight up", "it's lit"],
+    bpm: [130, 155], guide: "Short phrases, heavy ad-lib echoes in parentheses after nearly every line.",
+  },
+  {
+    id: "atlanta-hedonist", name: "Future", aliases: ["future", "future hendrix", "pluto", "nayvadius"],
+    family: "hiphop", homeLane: "dark-trap",
+    vocals: ["slurred melodic auto-tuned mumble-rap", "raspy pained croon over hard drums"],
+    signature: "slurred triplet melodies that drag behind the beat",
+    tells: ["icy bell melodies", "gliding distorted 808s", "cold sparse synth pads"],
+    moods: ["numb hedonism", "toxic luxury", "midnight paranoia"],
+    flows: ["triplet", "melodic"], hooks: ["chant", "mantra"], adlibs: ["yeah", "huh", "freebandz"],
+    bpm: [130, 150], guide: "Melody first, diction second; let words blur into the triplets.",
+  },
+  {
+    id: "east-atlanta-deadpan", name: "21 Savage", aliases: ["21 savage", "21", "savage", "saint laurent don"],
+    family: "hiphop", homeLane: "dark-trap", template: "hook-first",
+    vocals: ["deadpan low-register monotone rap", "whispered menacing delivery with dead-eyed calm"],
+    signature: "flat unbothered cadence with long pauses that make every threat land",
+    tells: ["minimal eerie keys", "sparse hard 808 knock", "ghostly high-pitched synth line"],
+    moods: ["cold menace", "detached calm", "street paranoia"],
+    flows: ["stopstart", "staccato"], hooks: ["chant", "callresp"], adlibs: ["21", "straight up", "on god"],
+    bpm: [128, 145], guide: "Deadpan; leave a full beat of silence after the hardest bars.",
+  },
+  {
+    id: "baton-rouge-bellow", name: "Kevin Gates", aliases: ["kevin gates", "gates", "bwa"],
+    family: "hiphop", homeLane: "melodic-trap",
+    vocals: ["gravelly melodic sung-rap", "pained bellowing hook vocals with a relentless breathless verse flow"],
+    signature: "breathless bars running past the bar line until a melodic bellow releases the pressure",
+    tells: ["haunting minor piano melody", "dark rumbling 808s", "eerie bell tones"],
+    moods: ["wounded warrior intensity", "brooding loyalty", "triumphant pain"],
+    flows: ["double", "melodic", "offbeat"], hooks: ["mantra", "stair"], adlibs: ["yeah", "huh"],
+    bpm: [70, 145], guide: "Run the bars breathless past the bar line, then release into the sung hook.",
+  },
+  {
+    id: "atlanta-rolling", name: "Lil Baby", aliases: ["lil baby", "4pf", "dominique jones"],
+    family: "hiphop", homeLane: "melodic-trap", template: "hook-first",
+    vocals: ["rapid rolling melodic rap without pauses", "nasal pitched sing-rap tumbling over the beat"],
+    signature: "nonstop off-beat rolling flow that never takes a breath",
+    tells: ["plucked synth melody", "hard snapping snare", "rolling 808 pattern"],
+    moods: ["hungry momentum", "hustler focus", "restless motion"],
+    flows: ["offbeat", "triplet", "double"], hooks: ["mantra", "chant"], adlibs: ["yeah", "woah"],
+    bpm: [140, 160], guide: "Keep the flow rolling across bar lines; rhyme lands ahead of the snare.",
+  },
+  {
+    id: "vamp-minimal", name: "Playboi Carti", aliases: ["carti", "playboi carti", "king vamp", "opium"],
+    family: "hiphop", homeLane: "rage",
+    vocals: ["high-pitched baby-voice rap with whispered squeaky ad-libs", "mumbled minimal rap chants"],
+    signature: "repetitive minimal phrases where the ad-libs are the hook",
+    tells: ["buzzing rage synth lead", "minimal skeletal beat with huge 808", "distorted glitchy synth stabs"],
+    moods: ["chaotic euphoria", "vampiric menace", "mosh-pit energy"],
+    flows: ["staccato", "stopstart"], hooks: ["stutter", "chant"], adlibs: ["what", "slatt", "yeah"],
+    bpm: [150, 170], guide: "Say less; repeat one phrase until it hypnotizes, ad-libs on every gap.",
+  },
+  {
+    id: "atlanta-slippery", name: "Young Thug", aliases: ["young thug", "thug", "thugger", "jeffery", "ysl"],
+    family: "hiphop", homeLane: "melodic-trap",
+    vocals: ["elastic squeaky rap voice with unpredictable pitch jumps", "slippery melodic yelps and growls"],
+    signature: "unpredictable pitch leaps and squeaks mid-line",
+    tells: ["bouncy plucked synth melody", "bright bell arpeggio", "sliding 808s"],
+    moods: ["playful chaos", "flamboyant confidence", "weird euphoria"],
+    flows: ["melodic", "offbeat", "triplet"], hooks: ["callresp", "stutter"], adlibs: ["skrrt", "yeah", "slime"],
+    bpm: [135, 160], guide: "Treat the voice as an instrument: leaps, squeaks and growls between bars.",
+  },
+  {
+    id: "philly-hyper", name: "Lil Uzi Vert", aliases: ["lil uzi", "uzi", "lil uzi vert", "baby pluto"],
+    family: "hiphop", homeLane: "rage",
+    vocals: ["hyper high-energy melodic rap", "pitched-up sing-rap with punk energy"],
+    signature: "bouncy sugar-rush melodic flow that never sits still",
+    tells: ["bright arpeggiated synth lead", "fast triplet hi-hats", "hard-hitting 808s"],
+    moods: ["manic euphoria", "rockstar energy", "restless adrenaline"],
+    flows: ["melodic", "triplet", "staccato"], hooks: ["stair", "chant"], adlibs: ["yeah", "what", "ay"],
+    bpm: [145, 165], guide: "Bounce every syllable; the hook should sound shouted from a stage.",
+  },
+  {
+    id: "chicago-maximalist", name: "Kanye", aliases: ["kanye", "ye", "yeezy", "kanye west"],
+    family: "hiphop", homeLane: "grimy-boom", template: "beat-switch",
+    vocals: ["confident chant-like rap delivery", "half-sung bravado with shout-back hooks"],
+    signature: "big declarative lines built for crowd shout-back",
+    tells: ["pitched-up soul vocal chop loop", "dramatic orchestral stabs", "hard compressed drum breaks"],
+    moods: ["triumphant", "grandiose", "defiant celebration"],
+    flows: ["staccato", "offbeat"], hooks: ["chant", "callresp"], adlibs: ["uh", "hah", "yeah"],
+    bpm: [85, 110], guide: "Big declarative hook lines; the crowd should be able to shout them back.",
+  },
+  {
+    id: "brooklyn-drill", name: "Pop Smoke", aliases: ["pop smoke", "bashar"],
+    family: "hiphop", homeLane: "drill",
+    vocals: ["deep gravelly baritone drill rap", "menacing growled delivery with rumbling chest tone"],
+    signature: "baritone growls that sit under the beat like another 808",
+    tells: ["sliding drill 808s", "ominous string stabs", "off-beat skipping drill hi-hats"],
+    moods: ["cold menace", "gang-war tension", "swaggering intimidation"],
+    flows: ["offbeat", "stopstart"], hooks: ["chant", "callresp"], adlibs: ["woo", "grr", "yeah"],
+    bpm: [140, 146], guide: "Low and slow; the growl is the melody.",
+  },
+  // ----------------------------------------------------------------- R&B
+  {
+    id: "toronto-falsetto", name: "The Weeknd", aliases: ["weeknd", "the weeknd", "abel", "tesfaye", "xo"],
+    family: "rnb", homeLane: "dark-rnb", template: "pre-hook",
+    vocals: ["airy soaring male falsetto", "aching layered male R&B vocals with cinematic vibrato"],
+    signature: "soaring falsetto hooks over a dark cavernous beat",
+    tells: ["cavernous dark synth pads", "deep booming sub", "reverb-drenched atmosphere"],
+    moods: ["hedonistic melancholy", "toxic romance", "night-drive tension"],
+    flows: ["melodic", "offbeat"], hooks: ["stair", "mantra"], adlibs: ["ooh", "yeah", "oh"],
+    bpm: [62, 80], guide: "Verses low and breathy, hook lifts into full falsetto.",
+  },
+  {
+    id: "louisville-trapsoul", name: "Bryson Tiller", aliases: ["bryson tiller", "tiller", "pen griffey"],
+    family: "rnb", homeLane: "trap-soul", template: "pre-hook",
+    vocals: ["hushed smooth sung-rap hybrid", "understated melodic R&B vocals with rap phrasing"],
+    signature: "half-sung half-rapped phrasing that stays inside a few notes",
+    tells: ["pitched-down vocal sample loop", "sparse knocking 808 pattern", "warm dark keys"],
+    moods: ["late-night confessional", "wounded restraint", "quiet toxicity"],
+    flows: ["melodic", "offbeat", "stopstart"], hooks: ["mantra", "callresp"], adlibs: ["yeah", "ooh"],
+    bpm: [64, 80], guide: "Keep it conversational; the melody lives in 4 or 5 notes.",
+  },
+  {
+    id: "st-louis-conversational", name: "SZA", aliases: ["sza", "solana", "top dawg"],
+    family: "rnb", homeLane: "trap-soul", template: "pre-hook",
+    vocals: ["conversational airy female R&B vocals", "loosely phrased female melodies with stacked harmonies"],
+    signature: "loose behind-the-beat phrasing that sounds like talking until the hook",
+    tells: ["dreamy clean guitar loop", "soft muted 808", "hazy vocal-harmony layers"],
+    moods: ["messy heartbreak", "self-aware longing", "bittersweet honesty"],
+    flows: ["melodic", "offbeat"], hooks: ["mantra", "stair"], adlibs: ["ooh", "yeah", "mm"],
+    bpm: [66, 96], guide: "Let the phrasing drift behind the beat; tighten only on the hook.",
+  },
+  {
+    id: "dc-nonchalant", name: "Brent Faiyaz", aliases: ["brent faiyaz", "faiyaz", "sonder"],
+    family: "rnb", homeLane: "dark-rnb",
+    vocals: ["nonchalant hazy male R&B vocals", "lazy behind-the-beat croon with airy falsetto flips"],
+    signature: "unbothered off-kilter phrasing over a lo-fi drift",
+    tells: ["warped lo-fi sample loop", "sparse off-grid drums", "dusty tape haze"],
+    moods: ["cold nonchalance", "toxic charm", "3am drift"],
+    flows: ["melodic", "offbeat"], hooks: ["mantra", "callresp"], adlibs: ["yeah", "mm"],
+    bpm: [60, 90], guide: "Underplay everything; the coolness is in what you leave out.",
+  },
+  {
+    id: "atlanta-breathy", name: "Summer Walker", aliases: ["summer walker"],
+    family: "rnb", homeLane: "slow-jam", template: "pre-hook",
+    vocals: ["breathy intimate female R&B vocals", "soft close-mic female melodies with light runs"],
+    signature: "whisper-close intimacy that barely rises above the beat",
+    tells: ["soft plucked guitar loop", "minimal snapping drums", "warm sub bass"],
+    moods: ["tender vulnerability", "quiet heartbreak", "candlelit honesty"],
+    flows: ["melodic", "offbeat"], hooks: ["mantra", "stair"], adlibs: ["ooh", "mm", "yeah"],
+    bpm: [60, 76], guide: "Sing to one person; keep the dynamics small and the runs light.",
+  },
+  {
+    id: "toronto-hazy", name: "PARTYNEXTDOOR", aliases: ["partynextdoor", "party next door", "pnd", "jahron"],
+    family: "rnb", homeLane: "dark-rnb",
+    vocals: ["hazy auto-tuned male R&B vocals", "moody layered croon smeared with reverb"],
+    signature: "auto-tuned melodies that blur into the pads",
+    tells: ["underwater filtered synths", "deep slow 808 swells", "syncopated island-tinged drums"],
+    moods: ["nocturnal longing", "hazy regret", "after-hours desire"],
+    flows: ["melodic", "offbeat"], hooks: ["mantra", "callresp"], adlibs: ["yeah", "ooh"],
+    bpm: [62, 96], guide: "Smear the melody; the words matter less than the mood.",
+  },
+];
+
+
 /* CIPHER engine — hip hop & R&B banger builder for Suno v6.
  * Pure functions, no DOM. Same inputs + same seed = same package.
  * Research behind every table lives in docs/research.md. */
 "use strict";
 
 const CipherEngine = (() => {
+  const LIKENESS = typeof CipherLikeness !== "undefined" ? CipherLikeness : require("./likeness.js");
+  const LIKENESS_BY_ID = new Map(LIKENESS.map((l) => [l.id, l]));
+  // Suno rewrites or strips artist names, so a name in a package is a bug.
+  const ARTIST_NAMES = [...new Set(LIKENESS.flatMap((l) => [l.name, ...l.aliases]))].filter((n) => n.replace(/[^a-z0-9]/gi, "").length >= 3);
   // ---------------------------------------------------------------- profiles
   // Suno v6 family (9 Sep 2026). Every earlier model is retired for new songs.
   // Limits are unchanged from v5: style 1,000, lyrics 5,000 (research §2).
@@ -960,13 +1182,15 @@ const CipherEngine = (() => {
     const add = (text, pri) => text && parts.push({ text, pri });
 
     add(blend ? `${lane.genres[0]} fused with ${blend.genres[0]}` : lane.genres[0], 0);
-    const moods = shuffle(lane.moods, r);
-    add(moods[0], 1);
+    const like = ctx.likeness;
+    const moods = shuffle(like ? [...like.moods, ...lane.moods] : lane.moods, r);
+    // A likeness adds two descriptors of its own, so the mood becomes trimmable.
+    add(moods[0], like ? 2 : 1);
 
     if (ctx.instrumental) {
-      add("purely instrumental beat, lead melody carries the hook", 0);
+      add("purely instrumental beat with the lead melody carrying the hook", 0);
     } else {
-      const vocal = pick(lane.vocals, r);
+      const vocal = pick(like ? like.vocals : lane.vocals, r);
       const gender = {
         male: "male vocalist",
         female: "female vocalist",
@@ -974,7 +1198,9 @@ const CipherEngine = (() => {
       }[vocalMode];
       add(vocal, 0);
       add(gender, 0);
+      if (like) add(like.signature, 0);
     }
+    if (like) add(pick(like.tells, r), 1);
 
     const drums = shuffle(lane.drums, r);
     add(drums[0], 0);
@@ -1024,12 +1250,12 @@ const CipherEngine = (() => {
   function buildSections(ctx) {
     const { lane, edge, template, harmony, plan, chordsInTags, postHook, r, hook } = ctx;
     const sh = sectionHarmony(harmony, plan);
-    const flows = shuffle(lane.flows, r);
+    const flows = shuffle(ctx.likeness ? ctx.likeness.flows : lane.flows, r);
     const flowA = FLOWS[flows[0]];
     const flowB = FLOWS[flows[1] || flows[0]];
     const flowC = FLOWS[flows[2] || flows[0]];
     const twitch = edge !== "syncopated";
-    const adlib = pick(lane.adlibs, r);
+    const adlib = pick(ctx.likeness ? ctx.likeness.adlibs : lane.adlibs, r);
     const hookWord = lane.family === "rnb" ? "Chorus" : "Hook";
     const chordText = (list) => (chordsInTags ? `, ${list.join(" – ")}` : "");
 
@@ -1160,6 +1386,7 @@ const CipherEngine = (() => {
       rhythm: cell,
       contour,
       rules: [
+        ...(ctx.likeness ? [`Delivery: ${ctx.likeness.guide}`] : []),
         "The hook arrives within the first 15 seconds and appears at least 3 times.",
         "Title in the first and last line of the hook.",
         "Longer notes and small steps are easier to sing back; save leaps for the title word only.",
@@ -1174,6 +1401,13 @@ const CipherEngine = (() => {
   // ---------------------------------------------------------------- lint
   function lint(text, where) {
     const found = [];
+    const lower = text.toLowerCase();
+    for (const name of ARTIST_NAMES) {
+      const esc = name.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      if (new RegExp(`(^|[^a-z0-9])${esc}($|[^a-z0-9])`).test(lower)) {
+        found.push({ level: "block", message: `${where}: artist name "${name}" found — Suno strips or rewrites artist names. Remove it.` });
+      }
+    }
     for (const rule of LINT_RULES) {
       if (rule.styleOnly && where !== "style") continue;
       const m = text.match(rule.re);
@@ -1218,17 +1452,23 @@ const CipherEngine = (() => {
         message: `${harmony.prog.name} is a ${harmony.tonality}-key progression, so the ${input.key} request was swapped for ${harmony.keyName}.`,
       });
     }
+    const likeness = LIKENESS_BY_ID.get(input.likeness);
     const plan = HARMONIC_PLANS[input.plan] ? input.plan : lane.family === "rnb" ? "lift" : "loop";
-    const template = TEMPLATES[input.template] ? input.template : lane.family === "rnb" ? "pre-hook" : "hook-first";
+    const template = TEMPLATES[input.template]
+      ? input.template
+      : likeness && likeness.template ? likeness.template : lane.family === "rnb" ? "pre-hook" : "hook-first";
 
     let bpm = input.bpm;
-    const [lo, hi] = lane.bpm;
+    // A likeness narrows the lane's tempo to where that artist actually lives.
+    const [lo, hi] = likeness
+      ? [Math.max(lane.bpm[0], likeness.bpm[0]), Math.min(lane.bpm[1], likeness.bpm[1])].sort((a, b) => a - b)
+      : lane.bpm;
     if (!bpm) bpm = lo + Math.round((r() * (hi - lo)) / 2) * 2;
     else if (bpm < lo || bpm > hi) {
       warnings.push({ level: "warn", message: `${bpm} BPM is outside ${lane.label}'s ${lo}–${hi} range; using it anyway.` });
     }
 
-    let hookPool = [...lane.hooks];
+    let hookPool = likeness ? [...likeness.hooks] : [...lane.hooks];
     if (edge !== "syncopated" && !hookPool.includes("stutter")) hookPool.push("stutter");
     const hookId = input.hook && HOOKS[input.hook] ? input.hook : pick(hookPool, r);
     const hook = HOOKS[hookId];
@@ -1237,6 +1477,7 @@ const CipherEngine = (() => {
     const ctx = {
       lane, blend, edge, harmony, plan, template, bpm, r, hook, vocalMode,
       chordsInTags: !!input.chordsInTags, postHook: !!input.postHook, instrumental: !!input.instrumental,
+      likeness,
     };
 
     let styleText = buildStyle(ctx);
@@ -1291,7 +1532,7 @@ const CipherEngine = (() => {
       meta: {
         profile: profile.id, lane: lane.id, laneLabel: lane.label, blend: blend && blend.id,
         edge, bpm, seed, template, templateLength: TEMPLATES[template].length, plan, hook: hookId,
-        instrumental: ctx.instrumental,
+        instrumental: ctx.instrumental, likeness: likeness && likeness.id, likenessName: likeness && likeness.name,
         styleChars: styleText.length, styleLimit: profile.styleCharLimit,
         descriptors: styleText.split(", ").length,
       },
@@ -1305,7 +1546,7 @@ const CipherEngine = (() => {
   }
 
   return {
-    PROFILES, LANES, EDGES, HOOKS, PROGRESSIONS, CADENCES, TEMPLATES, HARMONIC_PLANS,
+    PROFILES, LANES, LIKENESS, EDGES, HOOKS, PROGRESSIONS, CADENCES, TEMPLATES, HARMONIC_PLANS,
     HARD_BANS, OPTIONAL_BANS, generate, renderSections, lint, keyOptions,
   };
 })();
@@ -1323,6 +1564,7 @@ const CipherEngine = (() => {
   const state = {
     family: "all",
     lane: "dark-trap",
+    likeness: "",
     edge: "twitch",
     blend: "",
     vocal: "auto",
@@ -1349,10 +1591,12 @@ const CipherEngine = (() => {
     { id: "rnb", label: "R&B" },
   ];
   const laneById = (id) => E.LANES.find((l) => l.id === id);
+  const TEMPLATE_OPTIONS = [{ id: "", label: "Auto" }, ...Object.entries(E.TEMPLATES).map(([id, t]) => ({ id, label: t.label }))];
 
   function generate() {
     pkg = E.generate({
       lane: state.lane,
+      likeness: state.likeness || undefined,
       edge: state.edge,
       blend: state.blend || undefined,
       vocal: state.vocal,
@@ -1422,6 +1666,46 @@ const CipherEngine = (() => {
         b.appendChild(f);
       }
       b.onclick = () => selectLane(lane.id);
+      el.appendChild(b);
+    }
+  }
+
+  function drawLikeness() {
+    const el = $("likeness");
+    el.textContent = "";
+    const none = document.createElement("button");
+    none.type = "button";
+    none.className = "chip" + (state.likeness ? "" : " on");
+    none.textContent = "None";
+    none.setAttribute("aria-pressed", String(!state.likeness));
+    none.onclick = () => {
+      state.likeness = "";
+      drawLikeness();
+      generate();
+    };
+    el.appendChild(none);
+    for (const like of E.LIKENESS) {
+      if (state.family !== "all" && like.family !== state.family) continue;
+      const on = state.likeness === like.id;
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "chip" + (on ? " on" : "");
+      b.setAttribute("aria-pressed", String(on));
+      b.append(like.name);
+      if (state.family === "all") {
+        const f = document.createElement("span");
+        f.className = "fam";
+        f.textContent = like.family === "rnb" ? "R&B" : "Hip hop";
+        b.appendChild(f);
+      }
+      b.onclick = () => {
+        state.likeness = like.id;
+        state.template = "";
+        seg("template", TEMPLATE_OPTIONS, () => state.template, (v) => (state.template = v));
+        drawLikeness();
+        // Jump to the artist's home lane; the user can move off it afterwards.
+        selectLane(like.homeLane);
+      };
       el.appendChild(b);
     }
   }
@@ -1561,6 +1845,7 @@ const CipherEngine = (() => {
     $("style-meta").textContent =
       `${m.styleChars} / ${m.styleLimit} chars · ${m.descriptors} descriptors · ${m.laneLabel}` +
       (m.blend ? ` + ${laneById(m.blend).label}` : "") +
+      (m.likenessName ? ` · ${m.likenessName} likeness` : "") +
       ` · ${E.EDGES[m.edge].label} · ${m.bpm} BPM · ${E.TEMPLATES[m.template].label} ${m.templateLength} · roll #${m.seed % 1000}`;
     $("out-exclude").textContent = pkg.excludeText;
     $("vocal").disabled = !!m.instrumental;
@@ -1669,8 +1954,10 @@ const CipherEngine = (() => {
         drawLaneSelects();
       }
       drawLanes();
+      drawLikeness();
     });
     drawLanes();
+    drawLikeness();
     seg("edge", Object.entries(E.EDGES).map(([id, e]) => ({ id, label: e.label })), () => state.edge, (v) => (state.edge = v));
     seg(
       "plan",
@@ -1678,12 +1965,7 @@ const CipherEngine = (() => {
       () => state.plan,
       (v) => (state.plan = v)
     );
-    seg(
-      "template",
-      [{ id: "", label: "Auto" }, ...Object.entries(E.TEMPLATES).map(([id, t]) => ({ id, label: t.label }))],
-      () => state.template,
-      (v) => (state.template = v)
-    );
+    seg("template", TEMPLATE_OPTIONS, () => state.template, (v) => (state.template = v));
     seg("lyrics-mode", [{ id: "tags", label: "Tags only" }, { id: "bars", label: "Write bars" }, { id: "instrumental", label: "Instrumental" }], () => state.lyricsMode, (v) => (state.lyricsMode = v));
     drawLaneSelects();
     fillSelect("key", [{ id: "", label: "Key: lane pick" }, ...E.keyOptions().map((k) => ({ id: k, label: k }))], "");
@@ -1736,6 +2018,8 @@ const CipherEngine = (() => {
       state.blend = Math.random() < 0.4 ? others[Math.floor(Math.random() * others.length)].id : "";
       state.key = "";
       state.hook = "";
+      state.likeness = Math.random() < 0.5 ? E.LIKENESS.filter((l) => l.family === lane.family)[Math.floor(Math.random() * 99) % E.LIKENESS.filter((l) => l.family === lane.family).length].id : "";
+      drawLikeness();
       $("key").value = "";
       $("hook").value = "";
       state.seed = newSeed();

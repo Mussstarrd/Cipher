@@ -98,7 +98,19 @@ On v6-wild, Weirdness drops 15 points and Style Influence rises 5, since the mod
 
 Hook formulas in the blueprint: Chant loop (A A A B), Call & response, Stair-step (A A′ A″ B, repetition with variation), Two-line mantra (A B A B), and Stutter hook (the twitch edit is the hook). Melody guidance names real pitches from the chosen key: tonic, third and fifth.
 
-## 7. Syncopation and twitch vocabulary
+## 7. Artist likeness without artist names
+
+Suno strips or rewrites artist names in prompts, on v6 as before. A likeness in CIPHER is therefore a bundle of describable traits, never a name:
+
+- **vocals**: two or three vocal-timbre descriptions (register, texture, auto-tune, breath).
+- **signature**: one line about the flow or phrasing habit, always front-loaded in the style field.
+- **tells**: two or three production choices the artist's records share; one is picked per roll.
+- **flows, hooks, ad-libs, tempo**: the section tags and hook blueprint draw from the profile instead of the lane, and the BPM is narrowed to where the artist's records sit inside the chosen lane.
+- **home lane and template**: picking a likeness jumps to its natural lane and, for some, its natural structure (for example a beat switch).
+
+Profiles avoid the jazz, funk and live-band sides of an artist's catalog so the house bans still hold. A test generates every likeness on every lane, edge and seed, and fails if any name or alias reaches the style, tags or blueprint.
+
+## 8. Syncopation and twitch vocabulary
 
 - Syncopation: off-beat kick placement, triplet hi-hat rolls switching between eighths and sixteenth-triplets, claps a sixteenth late, and flows that start on the "and" of 1.
 - Twitch: stutter-edited vocal chops, glitch micro-edits, 808 retriggers on the off-beats, and half-bar beat mutes. A mute is a gap, not a fill.

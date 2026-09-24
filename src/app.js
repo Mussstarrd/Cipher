@@ -8,6 +8,7 @@
   const state = {
     family: "all",
     lane: "dark-trap",
+    likeness: "",
     edge: "twitch",
     blend: "",
     vocal: "auto",
@@ -34,10 +35,12 @@
     { id: "rnb", label: "R&B" },
   ];
   const laneById = (id) => E.LANES.find((l) => l.id === id);
+  const TEMPLATE_OPTIONS = [{ id: "", label: "Auto" }, ...Object.entries(E.TEMPLATES).map(([id, t]) => ({ id, label: t.label }))];
 
   function generate() {
     pkg = E.generate({
       lane: state.lane,
+      likeness: state.likeness || undefined,
       edge: state.edge,
       blend: state.blend || undefined,
       vocal: state.vocal,
@@ -107,6 +110,46 @@
         b.appendChild(f);
       }
       b.onclick = () => selectLane(lane.id);
+      el.appendChild(b);
+    }
+  }
+
+  function drawLikeness() {
+    const el = $("likeness");
+    el.textContent = "";
+    const none = document.createElement("button");
+    none.type = "button";
+    none.className = "chip" + (state.likeness ? "" : " on");
+    none.textContent = "None";
+    none.setAttribute("aria-pressed", String(!state.likeness));
+    none.onclick = () => {
+      state.likeness = "";
+      drawLikeness();
+      generate();
+    };
+    el.appendChild(none);
+    for (const like of E.LIKENESS) {
+      if (state.family !== "all" && like.family !== state.family) continue;
+      const on = state.likeness === like.id;
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "chip" + (on ? " on" : "");
+      b.setAttribute("aria-pressed", String(on));
+      b.append(like.name);
+      if (state.family === "all") {
+        const f = document.createElement("span");
+        f.className = "fam";
+        f.textContent = like.family === "rnb" ? "R&B" : "Hip hop";
+        b.appendChild(f);
+      }
+      b.onclick = () => {
+        state.likeness = like.id;
+        state.template = "";
+        seg("template", TEMPLATE_OPTIONS, () => state.template, (v) => (state.template = v));
+        drawLikeness();
+        // Jump to the artist's home lane; the user can move off it afterwards.
+        selectLane(like.homeLane);
+      };
       el.appendChild(b);
     }
   }
@@ -246,6 +289,7 @@
     $("style-meta").textContent =
       `${m.styleChars} / ${m.styleLimit} chars · ${m.descriptors} descriptors · ${m.laneLabel}` +
       (m.blend ? ` + ${laneById(m.blend).label}` : "") +
+      (m.likenessName ? ` · ${m.likenessName} likeness` : "") +
       ` · ${E.EDGES[m.edge].label} · ${m.bpm} BPM · ${E.TEMPLATES[m.template].label} ${m.templateLength} · roll #${m.seed % 1000}`;
     $("out-exclude").textContent = pkg.excludeText;
     $("vocal").disabled = !!m.instrumental;
@@ -354,8 +398,10 @@
         drawLaneSelects();
       }
       drawLanes();
+      drawLikeness();
     });
     drawLanes();
+    drawLikeness();
     seg("edge", Object.entries(E.EDGES).map(([id, e]) => ({ id, label: e.label })), () => state.edge, (v) => (state.edge = v));
     seg(
       "plan",
@@ -363,12 +409,7 @@
       () => state.plan,
       (v) => (state.plan = v)
     );
-    seg(
-      "template",
-      [{ id: "", label: "Auto" }, ...Object.entries(E.TEMPLATES).map(([id, t]) => ({ id, label: t.label }))],
-      () => state.template,
-      (v) => (state.template = v)
-    );
+    seg("template", TEMPLATE_OPTIONS, () => state.template, (v) => (state.template = v));
     seg("lyrics-mode", [{ id: "tags", label: "Tags only" }, { id: "bars", label: "Write bars" }, { id: "instrumental", label: "Instrumental" }], () => state.lyricsMode, (v) => (state.lyricsMode = v));
     drawLaneSelects();
     fillSelect("key", [{ id: "", label: "Key: lane pick" }, ...E.keyOptions().map((k) => ({ id: k, label: k }))], "");
@@ -421,6 +462,8 @@
       state.blend = Math.random() < 0.4 ? others[Math.floor(Math.random() * others.length)].id : "";
       state.key = "";
       state.hook = "";
+      state.likeness = Math.random() < 0.5 ? E.LIKENESS.filter((l) => l.family === lane.family)[Math.floor(Math.random() * 99) % E.LIKENESS.filter((l) => l.family === lane.family).length].id : "";
+      drawLikeness();
       $("key").value = "";
       $("hook").value = "";
       state.seed = newSeed();

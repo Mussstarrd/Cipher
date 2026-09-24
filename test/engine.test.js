@@ -8,6 +8,11 @@ const TEMPLATES = Object.keys(E.TEMPLATES);
 
 function* everyCombo() {
   for (const lane of E.LANES) {
+    yield* laneCombos(lane);
+  }
+}
+function* laneCombos(lane) {
+  {
     for (const edge of EDGES) {
       for (const template of TEMPLATES) {
         for (let seed = 1; seed <= 12; seed++) {
@@ -109,4 +114,35 @@ test("instrumental mode has no vocal words anywhere and excludes vocals", () => 
     assert.ok(out.sections.filter((s) => s.name === "Hook").length >= 3);
     assert.deepStrictEqual([...E.lint(out.styleText, "style"), ...E.lint(out.lyricsTagsOnly, "tags")], []);
   }
+});
+
+test("every likeness works on every lane and never leaks a name", () => {
+  const names = E.LIKENESS.flatMap((l) => [l.name, ...l.aliases]).map((n) => n.toLowerCase());
+  for (const like of E.LIKENESS) {
+    assert.ok(E.LANES.some((l) => l.id === like.homeLane), `${like.id} home lane`);
+    for (const lane of E.LANES) {
+      for (const edge of Object.keys(E.EDGES)) {
+        for (let seed = 1; seed <= 4; seed++) {
+          for (const instrumental of [false, true]) {
+            const out = E.generate({ lane: lane.id, likeness: like.id, edge, seed, instrumental, postHook: seed === 2 });
+            const text = `${out.styleText}\n${out.lyricsTagsOnly}\n${JSON.stringify(out.blueprint)}`.toLowerCase();
+            for (const n of names) {
+              if (n.replace(/[^a-z0-9]/g, "").length < 3) continue;
+              assert.ok(!new RegExp(`(^|[^a-z0-9])${n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}($|[^a-z0-9])`).test(text), `${like.id}: "${n}" leaked\n${text}`);
+            }
+            assert.deepStrictEqual([...E.lint(out.styleText, "style"), ...E.lint(out.lyricsTagsOnly, "tags")], [], out.styleText);
+            assert.ok(out.meta.descriptors <= 12, `${out.meta.descriptors}: ${out.styleText}`);
+            assert.ok(out.styleText.length <= 1000);
+            assert.strictEqual(out.meta.likeness, like.id);
+            if (!instrumental) assert.ok(out.styleText.includes(like.signature), out.styleText);
+          }
+        }
+      }
+    }
+  }
+});
+
+test("the name lint catches an artist name in free text", () => {
+  assert.ok(E.lint("dark trap like Drake", "style").some((w) => w.level === "block"));
+  assert.ok(E.lint("dark trap, deep 808s", "style").every((w) => w.level !== "block"));
 });
