@@ -1,0 +1,9 @@
+{
+  "name": "cipher",
+  "private": true,
+  "description": "Hip hop and R&B banger prompt engine for Suno v5.5",
+  "scripts": {
+    "build": "node build.js",
+    "test": "node --test test/engine.test.js"
+  }
+}

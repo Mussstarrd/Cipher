@@ -1,0 +1,109 @@
+# CIPHER research notes
+
+This is what the engine in `src/engine.js` is built on. Section numbers match the comments in the code.
+
+## 1. House rules (the brief)
+
+Every package has to be a hip hop or R&B banger: syncopated, able to go experimental or twitchy, and infectious. Nothing below may leak in:
+
+| Banned | How the engine keeps it out |
+|---|---|
+| Fills, filler, tom fills | Excluded, and the style always carries a competing positive: "locked unbroken drum loop", "hard cuts between sections", "808 and hi-hats carry every transition". Section tags use hard cuts, mutes and 808-only breaks for transitions, never a fill. Verse guides call for no throwaway bars. |
+| Rimshot, cowbell | Excluded. No lane lists either one; percussion is limited to kicks, claps, snaps, snares and hi-hats. |
+| DJ effects | `dj scratch` is always excluded; `airhorn` and `dj tag` are one tap away. No scratches, rewinds, tape stops or DJ drops appear in the vocabulary. |
+| Jazz, funk | Excluded. The lanes avoid the instruments that drag a track that way (sax, trumpet, horns, Rhodes, clavinet, talkbox, wah, slap bass), and the progressions skip ii–V motion. The linter flags them if they ever show up. |
+| EDM | Excluded. No "drop", "build-up", "riser", "supersaw" or four-on-the-floor. The old `[Build]` / `[Drop]` tags are replaced with `[Beat Switch]`. |
+| Pop | Excluded. No I–V–vi–IV progression, and no "pop" or "catchy pop" descriptors. "Infectious" and chant language carry the hook instead. |
+
+A test (`test/engine.test.js`) generates every lane × edge × structure × 12 seeds and fails if any banned word reaches the style text or the section tags.
+
+## 2. Suno v5.5 facts the engine relies on
+
+- v5.5 shipped on 26 March 2026. It is a personalization release (Voices, Custom Models, My Taste) on the v5 audio engine. Prompt syntax, metatags, sliders, the 1,000-character style box and the 5,000-character lyrics box are unchanged from v5.
+- Style field: about 6–12 distinct descriptors land best. Under 5 is too vague; past 15–18 the prompt just repeats itself. The engine targets 8–12 and drops the lowest-priority descriptors first.
+- Suno gives more weight to terms near the start of the style field, so genre, vocal and core groove come first and texture comes last.
+- v5.5 follows vivid, written-out description better than v5 ("slightly detuned vintage keys, played a hair behind the beat"). The engine writes phrases like "a detuned synth playing a cold all-minor loop in G minor" instead of bare tags.
+- Keep tempo and key out of brackets in the style field. Brackets belong in the lyrics box.
+- Inline section descriptors work: `[Verse 1: triplet flow, beat locked in]`. Clear cues at section edges make clean cuts instead of blends.
+- For rap, two verses plus hooks is the sweet spot. Four or five verses wander.
+
+## 3. Negative prompting
+
+- "no X" inside the style field is unreliable, because naming the thing plants it. The official control is Exclude Styles (Custom Mode → Advanced Options).
+- Exclusion is probabilistic. It lowers the odds and won't beat a style prompt that strongly implies the excluded thing. So every ban is paired with a positive that competes with it.
+- Guides suggest 2–4 exclusions for the strongest effect. The brief requires nine, so the list is ordered by risk: genre bans first (jazz, funk, edm, pop), since a genre drift ruins a take, then the specific percussion and DJ elements. The style prompt carries most of the weight.
+
+## 4. Sliders
+
+- Weirdness raises unexpected choices. Style Influence controls how strictly Suno follows the style text.
+- When the genre drifts, change Style Influence before rewriting the prompt. When a take sounds generic, raise Weirdness 5–10 points and change nothing else.
+- The engine never recommends Style Influence below 65. The bans rely on the style text being followed.
+
+| Edge | Weirdness | Style influence |
+|---|---|---|
+| Syncopated | 35–45 | 75–90 |
+| Twitch | 45–60 | 70–85 |
+| Experimental | 60–75 | 65–80 |
+
+## 5. Harmony: keys, loops and cadences
+
+- Trap and drill are built mostly on minor keys: natural minor (Aeolian), harmonic minor for the tense major V, and Phrygian for the half-step ♭II dread. R&B adds 7ths and 9ths and borrowed chords.
+- The engine's progressions and the cadence each one ends on:
+
+| Progression | Roman | Cadence | Feel |
+|---|---|---|---|
+| Two-chord pendulum | i – ♭VI | open loop | hypnotic, never resolves |
+| Phrygian hover | i – ♭II | Phrygian | drill and dark-trap dread |
+| Harmonic-minor sting | i – ♭VI – V | half cadence | tension snaps back every bar |
+| Descending lament | i – ♭VII – ♭VI – V | Andalusian | inevitable falling bassline ("Mask Off", "SICKO MODE") |
+| Aeolian climb | i – ♭VI – ♭III – ♭VII | subtonic | cinematic |
+| Cold fifth | i – v – iv – ♭VII | subtonic | all-minor chill ("Lemonade") |
+| Minor plagal sway | i – iv | plagal | soulful sway |
+| Pedal drone | i | none | rage: all motion is in the 808 |
+| Drill climb | i – ♭VI – ♭III – V | half cadence | ominous |
+| Late-night climb | i9 – ♭VImaj7 – ♭IIImaj7 – ♭VII | subtonic | dark R&B |
+| Minor-ninth sway | i9 – iv9 | plagal | trap soul |
+| Aeolian resolve | ♭VImaj7 – ♭VII – i9 | Aeolian | the hook lands like a verdict |
+| Backdoor home | iv7 – ♭VII9 – Imaj7 | backdoor | the R&B/gospel road home |
+| Slow-jam cycle | vi9 – IVmaj7 – Imaj7 – Vsus4 | suspended | silky |
+| Plagal float | IVmaj7 – Imaj7 | plagal (major) | pluggnb weightlessness |
+| Plugg descent | IVmaj7 – iii7 – ii7 – Imaj7 | stepwise descent | dreamy |
+| Bittersweet iv | Imaj7 – iii7 – IVmaj7 – iv6 | borrowed minor plagal | late-night sigh |
+
+- Harmonic plans:
+  - **One loop** (hip hop default). The same progression runs under every section, and the hook lifts through layers and vocal stacks. Repetition is the hook.
+  - **Hook lift** (R&B default). Verses ride a two-chord vamp built on the tonic. The pre-chorus holds the chord that leads back into the tonic, the unresolved tension. The hook brings the full loop and its cadence. The bridge uses a deceptive chord (♭VI in minor, vi in major) so the last hook hits harder.
+- Keys are spelled the way DAW key pickers show them, with one accidental family per key. The tests check this.
+
+## 6. What makes a hook infectious
+
+- Earworms follow a common melodic contour, use longer notes and smaller intervals, and are easy to sing back. Listeners remember the shape more than the exact pitches.
+- The strongest hooks repeat with a small variation: the cell comes back, but the last note lands higher or the rhythm clips.
+- Repeated exposure builds the earworm. That's why the hook shows up at least three times, arrives within about 15 seconds, and is marked "identical every time".
+- In hip hop, an instrumental riff often carries the hook as much as the words do. The engine always adds a one- or two-bar motif "repeating every hook".
+- Shorter songs with tight hooks win, so templates run from about 2:00 to 3:00.
+
+Hook formulas in the blueprint: Chant loop (A A A B), Call & response, Stair-step (A A′ A″ B, repetition with variation), Two-line mantra (A B A B), and Stutter hook (the twitch edit is the hook). Melody guidance names real pitches from the chosen key: tonic, third and fifth.
+
+## 7. Syncopation and twitch vocabulary
+
+- Syncopation: off-beat kick placement, triplet hi-hat rolls switching between eighths and sixteenth-triplets, claps a sixteenth late, and flows that start on the "and" of 1.
+- Twitch: stutter-edited vocal chops, glitch micro-edits, 808 retriggers on the off-beats, and half-bar beat mutes. A mute is a gap, not a fill.
+- Flows in section tags: triplet, off-beat, stop-start, staccato, double-time bursts, melodic sing-rap. Verse 2 always switches flow to escalate.
+
+## Sources
+
+- [Suno AI Prompt Guide 2026: What Changed Since v5.5](https://aiunfiltered.beehiiv.com/p/suno-ai-prompt-guide-2026)
+- [Suno 5.5 Prompt Guide: The Technical Reference](https://roo.beehiiv.com/p/suno-5-5-prompt-guide-the-technical-reference-most-guides-skip)
+- [Latest Suno Prompting Tips (June 2026)](https://hookgenius.app/learn/suno-prompting-june-2026/)
+- [Suno Guide: Tags, Meta Tags & Prompts (V5.5)](https://blakecrosley.com/guides/suno)
+- [Suno Exclude Styles & Negative Prompts: 2026 Guide](https://jackrighteous.com/en-us/blogs/guides-using-suno-ai-music-creation/negative-prompting-suno-v5-guide)
+- [Suno Exclude Styles: Negative Prompts + 50 Examples](https://hookgenius.app/learn/suno-negative-prompting/)
+- [Suno v5.5 Slider Settings](https://jackrighteous.com/en-us/blogs/guides-using-suno-ai-music-creation/creative-control-sliders-suno-v5)
+- [Suno Hip-Hop Prompts: Beats, Rap Flows & R&B Hooks](https://jackrighteous.com/en-us/blogs/guides-using-suno-ai-music-creation/top-music-genres-2025-hip-hop-rnb-suno)
+- [Trap Chord Progressions (Unison)](https://unison.audio/trap-chord-progressions/)
+- [Trap Chord Progressions: A Complete Guide](https://gbswing.com/trap-chord-progressions-your-complete-guide/)
+- [5 common hip hop chord progressions (Native Instruments)](https://blog.native-instruments.com/hip-hop-chord-progressions/)
+- [The effect of repeated exposure on the development of an earworm (PMC)](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC10585939/)
+- [How To Write A Catchy Song: Anatomy Of An Earworm](https://www.udiscovermusic.com/in-depth-features/how-to-write-an-earworm/)
+- [Creating Melodic Hooks That Stick](https://www.pointblankmusicschool.com/blog/creating-melodic-hooks-that-stick/)
