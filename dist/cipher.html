@@ -200,6 +200,7 @@
   .slider-row .name { width: 118px; color: var(--muted); flex-shrink: 0; }
   .slider-row .track { flex: 1; height: 6px; border-radius: 3px; background: var(--panel-2); position: relative; overflow: hidden; }
   .slider-row .fill { position: absolute; top: 0; bottom: 0; background: var(--accent); border-radius: 3px; }
+  .slider-row .text-val { flex: 1; }
   .slider-row .val { font-variant-numeric: tabular-nums; width: 70px; text-align: right; }
 
   .lyrics-editor { display: flex; flex-direction: column; gap: 8px; }
@@ -243,7 +244,7 @@
   <header>
     <div>
       <h1 class="brand">CIPHER<span class="dot">.</span></h1>
-      <p>Hip hop and R&amp;B banger engine for Suno v5.5. Pick a lane and an edge, and get a paste-ready package with the key, the cadence plan and a hook blueprint.</p>
+      <p>Hip hop and R&amp;B banger engine for Suno v6. Pick a lane and an edge, and get a paste-ready package with the key, the cadence plan and a hook blueprint.</p>
     </div>
     <button class="copy primary" id="randomize" type="button">🎲 Randomize</button>
   </header>
@@ -366,7 +367,7 @@
   </div>
 
   <div class="card">
-    <div class="card-head"><div class="label"><span>Sliders</span></div></div>
+    <div class="card-head"><div class="label"><span>Settings</span></div></div>
     <div class="sliders" id="out-sliders"></div>
     <p class="prose" id="slider-note"></p>
   </div>
@@ -384,18 +385,34 @@
 </div>
 
 <script>
-/* CIPHER engine — hip hop & R&B banger builder for Suno v5 / v5.5.
+/* CIPHER engine — hip hop & R&B banger builder for Suno v6.
  * Pure functions, no DOM. Same inputs + same seed = same package.
  * Research behind every table lives in docs/research.md. */
 "use strict";
 
 const CipherEngine = (() => {
   // ---------------------------------------------------------------- profiles
+  // Suno v6 family (9 Sep 2026). Every earlier model is retired for new songs.
+  // Limits are unchanged from v5: style 1,000, lyrics 5,000 (research §2).
   const PROFILES = {
-    "v5.5": { id: "v5.5", styleCharLimit: 1000, lyricsCharLimit: 5000, hasSliders: true },
-    v5: { id: "v5", styleCharLimit: 1000, lyricsCharLimit: 5000, hasSliders: true },
+    v6: {
+      id: "v6", label: "v6", styleCharLimit: 1000, lyricsCharLimit: 5000,
+      weirdnessShift: 0, styleShift: 0,
+      note: "v6 is the precise flagship: it follows a detailed style prompt closely, so the bans hold best here.",
+    },
+    "v6-wild": {
+      id: "v6-wild", label: "v6-wild", styleCharLimit: 1000, lyricsCharLimit: 5000,
+      weirdnessShift: -15, styleShift: 5,
+      note: "v6-wild already pushes away from the prompt, so Weirdness comes down 15 and Style Influence goes up 5 to keep the lane and the bans.",
+    },
+    "v6-mini": {
+      id: "v6-mini", label: "v6-mini (all plans)", styleCharLimit: 1000, lyricsCharLimit: 5000,
+      weirdnessShift: 0, styleShift: 0,
+      note: "v6-mini is the fast, cheap tier: use it to test a package, then render the keeper on v6 with Max Mode.",
+    },
   };
-  const DEFAULT_PROFILE = "v5.5";
+  const DEFAULT_PROFILE = "v6";
+  const clamp = (v) => Math.max(0, Math.min(100, v));
 
   // Style-field sweet spot: 6–12 distinct descriptors lands best (research §2).
   const DESCRIPTOR_TARGET = { min: 8, max: 12 };
@@ -413,7 +430,7 @@ const CipherEngine = (() => {
     "cowbell",
     "dj scratch",
   ];
-  const OPTIONAL_BANS = ["airhorn", "dj tag", "risers", "disco", "live band", "saxophone", "brass", "choir"];
+  const OPTIONAL_BANS = ["humming", "airhorn", "dj tag", "risers", "disco", "live band", "saxophone", "brass", "choir"];
 
   // Words that must never appear in the style text or section tags: naming a
   // banned thing, even to negate it, pulls it into the mix (research §3).
@@ -808,7 +825,7 @@ const CipherEngine = (() => {
       ],
       extra: ["twitchy stutter-edited vocal chops", "glitchy micro-edits and stuttered hi-hat bursts"],
       sliders: { weirdness: [60, 75], styleInfluence: [65, 80] },
-      note: "Experimental: high Weirdness for left-field choices, Style Influence still 65+ so the genre anchor survives. Generate in batches and keep the strangest take that still bangs.",
+      note: "Experimental: high Weirdness for left-field choices, Style Influence still 65+ so the genre anchor survives. On v6-wild, the model supplies the chaos, so the Weirdness range drops. Generate in batches and keep the strangest take that still bangs.",
     },
   };
 
@@ -968,6 +985,8 @@ const CipherEngine = (() => {
 
     add(drums[1], 2);
     add(pick(LOCKED_GROOVE, r), 1);
+    // v6 runs long when the ending is unspecified: state both edges positively.
+    add(`opens straight on the ${motif} motif and hard-stops after the last hook`, 1);
     if (edgeDef.extra.length) add(pick(edgeDef.extra, r), 2);
     if (blend) add(pick(blend.drums, r), 3);
     add(moods[1], 4);
@@ -1058,7 +1077,7 @@ const CipherEngine = (() => {
         hookSec();
       }
     }
-    push("Outro", `hook motif repeats, hard stop${chordText(sh.outro)}`, "outro", { guide: "1–2 lines: the title one last time", harmony: sh.outro });
+    push("Outro", `hook motif for 2 bars, then hard stop${chordText(sh.outro)}`, "outro", { guide: "1–2 lines: the title one last time", harmony: sh.outro });
     S.push({ tag: "[End]", name: "End", slot: null });
     return S;
   }
@@ -1198,8 +1217,14 @@ const CipherEngine = (() => {
         ],
       },
       blueprint,
-      sliders: EDGES[edge].sliders,
-      sliderNote: EDGES[edge].note,
+      sliders: {
+        weirdness: EDGES[edge].sliders.weirdness.map((v) => clamp(v + profile.weirdnessShift)),
+        styleInfluence: EDGES[edge].sliders.styleInfluence.map((v) => clamp(v + profile.styleShift)),
+        // Above Off, Variety rewrites the style prompt and can undo the bans.
+        variety: "Off",
+        maxMode: profile.id === "v6-mini" ? "Not needed for test drafts" : "On for the keeper (2× credits; holds the whole song consistent)",
+      },
+      sliderNote: `${EDGES[edge].note} ${profile.note}`,
       warnings,
       meta: {
         profile: profile.id, lane: lane.id, laneLabel: lane.label, blend: blend && blend.id,
@@ -1246,8 +1271,9 @@ const CipherEngine = (() => {
     bpm: undefined,
     postHook: false,
     chordsInTags: false,
-    extraBans: [],
-    profile: "v5.5",
+    // v6 tends to add humming to intros and outros; pre-banned.
+    extraBans: ["humming"],
+    profile: "v6",
     lyricsMode: "tags",
     lyrics: {},
     seed: newSeed(),
@@ -1506,6 +1532,18 @@ const CipherEngine = (() => {
       row.querySelector(".name").textContent = name;
       sl.appendChild(row);
     }
+    for (const [name, value] of [["Variety", pkg.sliders.variety], ["Max Mode", pkg.sliders.maxMode]]) {
+      const row = document.createElement("div");
+      row.className = "slider-row";
+      const n = document.createElement("span");
+      n.className = "name";
+      n.textContent = name;
+      const v = document.createElement("span");
+      v.className = "text-val";
+      v.textContent = value;
+      row.append(n, v);
+      sl.appendChild(row);
+    }
     $("slider-note").textContent = pkg.sliderNote;
 
     const notes = $("out-notes");
@@ -1577,7 +1615,7 @@ const CipherEngine = (() => {
     drawLaneSelects();
     fillSelect("key", [{ id: "", label: "Key: lane pick" }, ...E.keyOptions().map((k) => ({ id: k, label: k }))], "");
     fillSelect("hook", [{ id: "", label: "Hook: lane pick" }, ...Object.entries(E.HOOKS).map(([id, h]) => ({ id, label: h.name }))], "");
-    fillSelect("profile", Object.keys(E.PROFILES).map((id) => ({ id, label: `Suno ${id}` })), state.profile);
+    fillSelect("profile", Object.values(E.PROFILES).map((p) => ({ id: p.id, label: `Suno ${p.label}` })), state.profile);
     drawBans();
 
     const onSelect = (id, key) => {

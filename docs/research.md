@@ -17,9 +17,20 @@ Every package has to be a hip hop or R&B banger: syncopated, able to go experime
 
 A test (`test/engine.test.js`) generates every lane × edge × structure × 12 seeds and fails if any banned word reaches the style text or the section tags.
 
-## 2. Suno v5.5 facts the engine relies on
+## 2. Suno v6 facts the engine relies on
 
-- v5.5 shipped on 26 March 2026. It is a personalization release (Voices, Custom Models, My Taste) on the v5 audio engine. Prompt syntax, metatags, sliders, the 1,000-character style box and the 5,000-character lyrics box are unchanged from v5.
+- The v6 family shipped on 9 September 2026, and every earlier model was retired for new songs the same day.
+  - **v6** (Pro/Premier) is the precise flagship. The engine uses it by default.
+  - **v6-wild** (Pro/Premier) is less predictable and pushes further from the prompt.
+  - **v6-mini** (all plans) is faster and cheaper, so the engine treats it as a test tier.
+- The style box (1,000 characters), Exclude Styles (1,000) and lyrics box (5,000) are unchanged, and so is the tag syntax. Songs can run up to 8 minutes.
+- **Variety** (new slider: Off, Normal, High, Extra, Max) rewrites the style prompt on every generation when it is above Off. It defaults to Normal on v6 and v6-mini and to Off on v6-wild. The engine always recommends **Off**, because a rewritten prompt can bring back what the bans keep out.
+- **Max Mode** (new toggle, 2× credits) spends more compute on keeping the whole song consistent. Suno recommends it for longer songs and anything you'll publish, so the engine recommends it for the keeper on v6 and v6-wild.
+- v6 tends to run long outros and hum through intros when the edges aren't specified. The fix is to state the start and end in positive terms in both the style field and a tag. The engine adds "opens straight on the … motif and hard-stops after the last hook" to the style and `[Outro: hook motif for 2 bars, then hard stop]` to the lyrics. `humming` is pre-selected in the Exclude field.
+- Give the style prompt a clear hierarchy: one lead genre, one rhythmic identity and a few defining sounds. A blend stays a single phrase ("X fused with Y") under one lead genre.
+- Artist names are still rewritten on v6.
+
+Carried over from v5/v5.5 and still valid:
 - Style field: about 6–12 distinct descriptors land best. Under 5 is too vague; past 15–18 the prompt just repeats itself. The engine targets 8–12 and drops the lowest-priority descriptors first.
 - Suno gives more weight to terms near the start of the style field, so genre, vocal and core groove come first and texture comes last.
 - v5.5 follows vivid, written-out description better than v5 ("slightly detuned vintage keys, played a hair behind the beat"). The engine writes phrases like "a detuned synth playing a cold all-minor loop in G minor" instead of bare tags.
@@ -44,6 +55,8 @@ A test (`test/engine.test.js`) generates every lane × edge × structure × 12 s
 | Syncopated | 35–45 | 75–90 |
 | Twitch | 45–60 | 70–85 |
 | Experimental | 60–75 | 65–80 |
+
+On v6-wild, Weirdness drops 15 points and Style Influence rises 5, since the model already supplies the unpredictability. Variety stays Off on every model.
 
 ## 5. Harmony: keys, loops and cadences
 
@@ -92,6 +105,15 @@ Hook formulas in the blueprint: Chant loop (A A A B), Call & response, Stair-ste
 - Flows in section tags: triplet, off-beat, stop-start, staccato, double-time bursts, melodic sing-rap. Verse 2 always switches flow to escalate.
 
 ## Sources
+
+- [Suno v6 FAQ](https://help.suno.com/en/articles/13924481) and [What's new in v6](https://help.suno.com/en/articles/13924801)
+- [Suno release notes](https://suno.com/release-notes)
+- [Update for Suno v6: Variety, Max Mode, retired models (bitwize-music-studio #562)](https://github.com/bitwize-music-studio/claude-ai-music-skills/issues/562)
+- [Suno v6 Guide: What Actually Changed](https://hookgenius.app/learn/suno-v6-guide/)
+- [Suno V6 Keeps Changing Your Prompt? Variety Explained](https://undetectr.com/blog/suno-v6-changing-your-prompt)
+- [Suno V6 Intro and Ending Prompts: Humming and Long Outros](https://undetectr.com/blog/suno-v6-intro-outro-prompts)
+- [Suno V6 Guide (Moe Lueker)](https://moelueker.com/blog/suno-v6-guide)
+- [Suno v6 review (eesel AI)](https://www.eesel.ai/blog/suno-v6-review)
 
 - [Suno AI Prompt Guide 2026: What Changed Since v5.5](https://aiunfiltered.beehiiv.com/p/suno-ai-prompt-guide-2026)
 - [Suno 5.5 Prompt Guide: The Technical Reference](https://roo.beehiiv.com/p/suno-5-5-prompt-guide-the-technical-reference-most-guides-skip)

@@ -85,3 +85,15 @@ test("written bars replace every repeat of their slot", () => {
   const text = E.renderSections(out.sections, { hook: "run it up\nrun it up" });
   assert.strictEqual(text.split("run it up\nrun it up").length - 1, 3);
 });
+
+test("targets the Suno v6 family and tunes sliders per model", () => {
+  assert.deepStrictEqual(Object.keys(E.PROFILES), ["v6", "v6-wild", "v6-mini"]);
+  const base = { lane: "rage", edge: "experimental", seed: 5 };
+  const v6 = E.generate(base);
+  const wild = E.generate({ ...base, profile: "v6-wild" });
+  assert.strictEqual(v6.meta.profile, "v6");
+  assert.deepStrictEqual(wild.sliders.weirdness, v6.sliders.weirdness.map((v) => v - 15));
+  assert.ok(wild.sliders.styleInfluence.every((v) => v <= 100));
+  assert.strictEqual(v6.sliders.variety, "Off");
+  assert.match(v6.styleText, /hard-stops after the last hook/);
+});

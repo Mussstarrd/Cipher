@@ -19,8 +19,9 @@
     bpm: undefined,
     postHook: false,
     chordsInTags: false,
-    extraBans: [],
-    profile: "v5.5",
+    // v6 tends to add humming to intros and outros; pre-banned.
+    extraBans: ["humming"],
+    profile: "v6",
     lyricsMode: "tags",
     lyrics: {},
     seed: newSeed(),
@@ -279,6 +280,18 @@
       row.querySelector(".name").textContent = name;
       sl.appendChild(row);
     }
+    for (const [name, value] of [["Variety", pkg.sliders.variety], ["Max Mode", pkg.sliders.maxMode]]) {
+      const row = document.createElement("div");
+      row.className = "slider-row";
+      const n = document.createElement("span");
+      n.className = "name";
+      n.textContent = name;
+      const v = document.createElement("span");
+      v.className = "text-val";
+      v.textContent = value;
+      row.append(n, v);
+      sl.appendChild(row);
+    }
     $("slider-note").textContent = pkg.sliderNote;
 
     const notes = $("out-notes");
@@ -350,7 +363,7 @@
     drawLaneSelects();
     fillSelect("key", [{ id: "", label: "Key: lane pick" }, ...E.keyOptions().map((k) => ({ id: k, label: k }))], "");
     fillSelect("hook", [{ id: "", label: "Hook: lane pick" }, ...Object.entries(E.HOOKS).map(([id, h]) => ({ id, label: h.name }))], "");
-    fillSelect("profile", Object.keys(E.PROFILES).map((id) => ({ id, label: `Suno ${id}` })), state.profile);
+    fillSelect("profile", Object.values(E.PROFILES).map((p) => ({ id: p.id, label: `Suno ${p.label}` })), state.profile);
     drawBans();
 
     const onSelect = (id, key) => {

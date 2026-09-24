@@ -200,6 +200,7 @@
   .slider-row .name { width: 118px; color: var(--muted); flex-shrink: 0; }
   .slider-row .track { flex: 1; height: 6px; border-radius: 3px; background: var(--panel-2); position: relative; overflow: hidden; }
   .slider-row .fill { position: absolute; top: 0; bottom: 0; background: var(--accent); border-radius: 3px; }
+  .slider-row .text-val { flex: 1; }
   .slider-row .val { font-variant-numeric: tabular-nums; width: 70px; text-align: right; }
 
   .lyrics-editor { display: flex; flex-direction: column; gap: 8px; }
@@ -243,7 +244,7 @@
   <header>
     <div>
       <h1 class="brand">CIPHER<span class="dot">.</span></h1>
-      <p>Hip hop and R&amp;B banger engine for Suno v5.5. Pick a lane and an edge, and get a paste-ready package with the key, the cadence plan and a hook blueprint.</p>
+      <p>Hip hop and R&amp;B banger engine for Suno v6. Pick a lane and an edge, and get a paste-ready package with the key, the cadence plan and a hook blueprint.</p>
     </div>
     <button class="copy primary" id="randomize" type="button">🎲 Randomize</button>
   </header>
@@ -366,7 +367,7 @@
   </div>
 
   <div class="card">
-    <div class="card-head"><div class="label"><span>Sliders</span></div></div>
+    <div class="card-head"><div class="label"><span>Settings</span></div></div>
     <div class="sliders" id="out-sliders"></div>
     <p class="prose" id="slider-note"></p>
   </div>
