@@ -32,7 +32,7 @@ const CipherEngine = (() => {
   const clamp = (v) => Math.max(0, Math.min(100, v));
 
   // Style-field sweet spot: 6–12 distinct descriptors lands best (research §2).
-  const DESCRIPTOR_TARGET = { min: 8, max: 12 };
+  const DESCRIPTOR_TARGET = { min: 8, max: 14 };
 
   // ------------------------------------------------------------ hard bans
   // Always sent to Exclude Styles. Order = most likely to leak in first.
@@ -40,7 +40,7 @@ const CipherEngine = (() => {
     "jazz",
     "funk",
     "edm",
-    "pop",
+    "bubblegum pop",
     "drum fills",
     "tom fills",
     "rimshot",
@@ -60,7 +60,7 @@ const CipherEngine = (() => {
     { re: /\bfunk\w*/i, level: "block", msg: "funk vocabulary" },
     { re: /\bedm\b|\bfour-on-the-floor\b|\bsupersaw\b|\bbuild-?ups?\b|\brisers?\b/i, level: "block", msg: "EDM vocabulary" },
     { re: /\bdrops?\b/i, level: "block", msg: "\"drop\" reads as an EDM drop" },
-    { re: /\bpop\b|\bpoppy\b/i, level: "block", msg: "pop vocabulary" },
+    { re: /\bbubblegum\b|\bpoppy\b/i, level: "block", msg: "sugary pop vocabulary" },
     { re: /\bdj\b|\bscratch\w*|\bairhorns?\b|\bdisco\b/i, level: "block", msg: "DJ effect vocabulary" },
     { re: /\b(sax\w*|trumpets?|horns?|rhodes|clavinet|talkbox|wah|slap bass)\b/i, level: "warn", msg: "instrument that drags toward jazz/funk" },
     { re: /\bno\s+\w+/i, level: "warn", msg: "\"no X\" inside the style text backfires — use Exclude Styles", styleOnly: true },
@@ -406,7 +406,102 @@ const CipherEngine = (() => {
       adlibs: ["ooh", "yeah", "mm"],
     },
   ];
+  LANES.push(
+    {
+      id: "pop-rap", label: "Pop Rap", family: "hiphop",
+      genres: ["bouncy pop rap", "playful punchline rap"], bpm: [96, 124], feel: "bouncy skip",
+      keys: { minor: ["A", "E", "D", "G", "B"], major: ["C", "G", "D", "F", "Bb"] },
+      progressions: ["pendulum", "sway", "float", "bittersweet", "backdoor"],
+      moods: ["cheeky confidence", "sunny mischief", "grinning bravado", "feel-good energy"],
+      drums: [
+        "punchy syncopated kick and snap pattern",
+        "bright crisp claps skipping off the beat",
+        "tight bouncy hi-hats with playful stutters",
+      ],
+      bass: ["round bouncy 808 bass", "elastic plucked synth bass"],
+      leads: ["a bright plucked synth", "a playful marimba", "a chiming music box", "a bouncy pitched vocal-chop riff"],
+      motifs: ["synth", "marimba", "vocal chop"],
+      vocals: ["clean rapid-fire rap with crisp playful diction", "bright sung hook over punchline verses"],
+      textures: ["glossy punchy master", "wide bright stereo mix"],
+      flows: ["double", "staccato", "offbeat"],
+      hooks: ["stair", "callresp", "chant"],
+      adlibs: ["yeah", "okay", "let's go"],
+    },
+    {
+      id: "phonk", label: "Phonk", family: "hiphop",
+      genres: ["Memphis phonk", "drift phonk"], bpm: [120, 150], feel: "menacing bounce",
+      keys: { minor: ["F", "G", "A", "C#", "D#", "B"], major: [] },
+      progressions: ["phrygian", "pendulum", "drone", "sting"],
+      moods: ["hazy underground menace", "dark cruising energy", "grainy nocturnal aggression"],
+      drums: [
+        "crunchy lo-fi drum machine hits skipping off the grid",
+        "syncopated distorted kicks against a tape-crushed snare",
+        "rattling hi-hats and off-beat claps",
+      ],
+      bass: ["blown-out distorted 808s", "growling saturated 808 slides"],
+      leads: ["pitched-down chopped vocal samples", "a haunted detuned synth lead", "a grainy sampled piano", "an eerie bell melody"],
+      motifs: ["vocal chop", "synth", "bell"],
+      vocals: ["pitched-down muffled rap chants", "gritty screwed-down vocal delivery"],
+      textures: ["tape-saturated lo-fi grit", "vinyl-crackle cassette haze"],
+      flows: ["triplet", "staccato", "stopstart"],
+      hooks: ["chant", "stutter", "callresp"],
+      adlibs: ["yeah", "uh", "huh"],
+    },
+    {
+      id: "acid-soul", label: "Acid Soul Rap", family: "hiphop",
+      genres: ["psychedelic Chicago soul rap", "woozy acid soul hip hop"], bpm: [80, 112], feel: "loose swung bounce",
+      keys: { minor: ["A", "D", "E", "G"], major: ["C", "F", "Eb", "Ab"] },
+      progressions: ["sway", "backdoor", "bittersweet", "pendulum", "resolve"],
+      moods: ["woozy euphoria", "nostalgic summer haze", "manic joy with a dark undertow", "wide-eyed wonder"],
+      drums: [
+        "punchy live-feel drums with skittering juke-style syncopation",
+        "loose swung kick pattern that pushes and drags",
+        "crisp snaps and off-beat shakers",
+      ],
+      bass: ["deep rolling bass", "warm round sub bass"],
+      leads: ["warped psychedelic soul-sample keys", "woozy detuned electric piano", "a hazy pitched vocal-chop riff", "warm gospel organ swells"],
+      motifs: ["vocal chop", "piano", "organ"],
+      vocals: ["elastic yelping raspy rap-sing", "half-sung nasal melodies with signature yelped ad-libs"],
+      textures: ["sun-warped analog haze", "gritty mixtape warmth"],
+      flows: ["offbeat", "melodic", "double"],
+      hooks: ["mantra", "callresp", "stair"],
+      adlibs: ["ayy", "woo", "igh"],
+    }
+  );
   const LANE_BY_ID = new Map(LANES.map((l) => [l.id, l]));
+
+  // Lead instruments shared by every lane, so the melody voice changes roll to
+  // roll instead of always being the lane's bell or piano.
+  const LEAD_POOL = [
+    "a plucked kalimba", "a glassy celesta", "a haunting music box", "a detuned toy piano",
+    "a plucked harp", "a nylon-string guitar", "a reverb-soaked steel-string guitar", "a mellotron flute pad",
+    "a pizzicato string section", "a low mournful cello", "a shivering violin line", "tubular bells",
+    "a pitched-up choir-like synth", "a sitar riff", "a koto pluck", "an erhu wail", "a duduk melody",
+    "a pan flute", "an ocarina melody", "a hollow marimba", "a glockenspiel", "a vibrating mbira",
+    "a church organ", "a pipe organ drone", "a harpsichord riff", "a bit-crushed 8-bit synth",
+    "a warbling tape-worn synth", "a whistled melody", "a theremin wail", "a plucked banjo run",
+    "an accordion drone", "a muted brassy synth lead", "a bowed glass harmonica", "a steel drum pluck",
+    "a rubbery FM synth pluck", "a chopped opera vocal sample", "a pitched-down choir stab",
+    "a bass clarinet line", "a hammered dulcimer", "a slowed harp arpeggio",
+  ];
+
+  // Adjective pools that push every roll toward phonk grit, syncopation and
+  // experimental edits. One from each lands in every style field.
+  const FLAVORS = {
+    phonk: [
+      "phonk-tinged", "Memphis-phonk-flavored", "tape-crushed phonk grit", "grainy phonk haze",
+      "screwed-down phonk menace", "cassette-warped phonk texture", "distorted phonk swagger",
+    ],
+    syncopation: [
+      "aggressively syncopated", "off-grid syncopated bounce", "rhythmically displaced", "polyrhythmic hi-hat syncopation",
+      "stumbling syncopated pocket", "cross-rhythm accents against the beat", "syncopated stop-start pulse",
+    ],
+    experimental: [
+      "experimental left-field sound design", "glitch-warped experimental edits", "unpredictable experimental structure",
+      "avant-garde stutter-chopped textures", "experimental pitch-bent atmosphere", "warped experimental tape manipulation",
+      "boundary-pushing experimental arrangement",
+    ],
+  };
 
   // ---------------------------------------------------------------- edge
   // How far past the grid the groove goes. Syncopation is always on.
@@ -603,13 +698,17 @@ const CipherEngine = (() => {
     add(pick(edgeDef.phrases, r), 0);
     add(pick(lane.bass, r), 1);
 
-    const lead = pick(blend && r() < 0.5 ? blend.leads : lane.leads, r);
+    const leadRoll = r();
+    const lead = leadRoll < 0.55 ? pick(LEAD_POOL, r) : pick(blend && leadRoll < 0.8 ? blend.leads : lane.leads, r);
     add(`${lead} playing ${harmony.prog.color} in ${harmony.keyName}`, 0);
     const motif = pick(lane.motifs, r);
     add(`infectious ${r() < 0.5 ? "two" : "one"}-bar ${motif} motif ${ctx.instrumental ? "carrying the hook as the lead line" : "repeating every hook"}`, 1);
 
-    add(drums[1], 2);
-    add(pick(LOCKED_GROOVE, r), 1);
+    add(pick(FLAVORS.phonk, r), 1);
+    add(pick(FLAVORS.syncopation, r), 1);
+    add(pick(FLAVORS.experimental, r), 1);
+    add(drums[1], 3);
+    add(pick(LOCKED_GROOVE, r), 2);
     // v6 runs long when the ending is unspecified: state both edges positively.
     add(`opens straight on the ${motif} motif and hard-stops after the last hook`, 1);
     if (edgeDef.extra.length) add(pick(edgeDef.extra, r), 2);
@@ -818,6 +917,9 @@ const CipherEngine = (() => {
       .replace(/vocal[- ]chop/gi, "synth chop")
       .replace(/vocal pads?/gi, (m) => m.replace(/vocal/i, "synth"))
       .replace(/chopped pitched vocal hiccups/gi, "chopped pitched synth hiccups")
+      .replace(/chopped opera vocal sample/gi, "chopped opera synth sample")
+      .replace(/chopped vocal samples/gi, "chopped synth samples")
+      .replace(/\brap\b/g, "beat")
       .replace(/beatbox-style vocal percussion/gi, "clicky glitch percussion");
   }
 
@@ -941,7 +1043,7 @@ const CipherEngine = (() => {
   }
 
   return {
-    PROFILES, LANES, LIKENESS, EDGES, HOOKS, PROGRESSIONS, CADENCES, TEMPLATES, HARMONIC_PLANS,
+    PROFILES, LANES, LIKENESS, LEAD_POOL, FLAVORS, EDGES, HOOKS, PROGRESSIONS, CADENCES, TEMPLATES, HARMONIC_PLANS,
     HARD_BANS, OPTIONAL_BANS, generate, renderSections, lint, keyOptions,
   };
 })();

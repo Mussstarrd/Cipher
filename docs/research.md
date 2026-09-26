@@ -110,7 +110,16 @@ Suno strips or rewrites artist names in prompts, on v6 as before. A likeness in 
 
 Profiles avoid the jazz, funk and live-band sides of an artist's catalog so the house bans still hold. A test generates every likeness on every lane, edge and seed, and fails if any name or alias reaches the style, tags or blueprint.
 
-## 8. Syncopation and twitch vocabulary
+## 8. Randomizer, flavors and the lead pool
+
+- The page is a single Roll button. Each roll picks lane, edge, likeness (55%), blend (30%), structure, hook, post-hook, vocal mode and a seed; the engine renders that recipe deterministically, so a roll number reproduces a keeper.
+- **Pop rap** is a lane now, so `pop` left the Exclude list; `bubblegum pop` stays out. Pop Rap uses bright plucked synths, marimba, music box and snap-heavy drums with clean rapid-fire rap and sung hooks.
+- **Phonk** is a lane built without cowbell (banned): pitched-down chopped vocal samples, blown-out 808s, crunchy off-grid drum-machine hits and cassette haze carry the Memphis identity.
+- **Acid Soul Rap** covers the psychedelic Chicago sound: warped soul-sample keys, gospel organ, juke-style syncopation, elastic yelped rap-sing.
+- **Flavors**: every style field carries one phonk adjective, one syncopation adjective and one experimental adjective, drawn from three pools, so Suno is told on every roll to go for grit, off-grid rhythm and left-field edits.
+- **Lead pool**: 55% of rolls take the lead instrument from a shared pool of 40 (kalimba, celesta, harp, cello, koto, erhu, duduk, harpsichord, glass harmonica, theremin, steel drum, mbira, and so on) instead of the lane's own list. The instruments were chosen to avoid the jazz/funk lean of horns and Rhodes.
+
+## 9. Syncopation and twitch vocabulary
 
 - Syncopation: off-beat kick placement, triplet hi-hat rolls switching between eighths and sixteenth-triplets, claps a sixteenth late, and flows that start on the "and" of 1.
 - Twitch: stutter-edited vocal chops, glitch micro-edits, 808 retriggers on the off-beats, and half-bar beat mutes. A mute is a gap, not a fill.

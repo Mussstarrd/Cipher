@@ -147,6 +147,26 @@ const CipherLikeness = [
     flows: ["offbeat", "stopstart"], hooks: ["chant", "callresp"], adlibs: ["woo", "grr", "yeah"],
     bpm: [140, 146], guide: "Low and slow; the growl is the melody.",
   },
+  {
+    id: "toronto-poprap", name: "Connor Price", aliases: ["connor price", "connor", "spinnin"],
+    family: "hiphop", homeLane: "pop-rap", template: "hook-first",
+    vocals: ["clean rapid-fire rap with crisp cheeky diction", "bright playful sung hook with a grin in the voice"],
+    signature: "tongue-twister double-time runs that resolve into a simple singalong hook",
+    tells: ["bright bouncy plucked synth lead", "punchy clean drums with snap-heavy backbeat", "playful vocal-chop stabs"],
+    moods: ["cheeky confidence", "feel-good mischief", "witty bravado"],
+    flows: ["double", "staccato", "offbeat"], hooks: ["stair", "callresp"], adlibs: ["okay", "let's go", "yeah"],
+    bpm: [96, 124], guide: "Verses are clean tongue-twisters with punchlines; the hook is simple enough for a crowd to sing on the first listen.",
+  },
+  {
+    id: "chicago-acid", name: "Chance", aliases: ["chance", "chance the rapper", "chano", "lil chano", "chancelor"],
+    family: "hiphop", homeLane: "acid-soul", template: "pre-hook",
+    vocals: ["elastic yelping raspy rap-sing", "nasal half-sung melodies with signature yelped ad-libs"],
+    signature: "elastic phrasing that speeds up and drags mid-bar with yelps between lines",
+    tells: ["warped psychedelic soul-sample keys", "punchy live-feel drums with juke syncopation", "warm gospel organ swells"],
+    moods: ["woozy euphoria", "nostalgic summer haze", "manic joy with a dark undertow"],
+    flows: ["offbeat", "melodic", "double"], hooks: ["mantra", "callresp"], adlibs: ["igh", "ayy", "woo"],
+    bpm: [80, 112], guide: "Let the phrasing speed and drag mid-bar; yelped ad-libs between lines; the hook is sung, warm and nostalgic.",
+  },
   // ----------------------------------------------------------------- R&B
   {
     id: "toronto-falsetto", name: "The Weeknd", aliases: ["weeknd", "the weeknd", "abel", "tesfaye", "xo"],

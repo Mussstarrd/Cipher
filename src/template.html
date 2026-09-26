@@ -19,32 +19,16 @@
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
       color-scheme: dark;
-      --bg: #131118;
-      --panel: #1c1923;
-      --panel-2: #221e2b;
-      --line: #2e2938;
-      --text: #eeeaf4;
-      --muted: #938da1;
-      --accent: #ff5a47;
-      --accent-ink: #200a06;
-      --ok: #5cc97e;
-      --warn: #e8b24c;
-      --block: #ff6b6b;
+      --bg: #131118; --panel: #1c1923; --panel-2: #221e2b; --line: #2e2938;
+      --text: #eeeaf4; --muted: #938da1; --accent: #ff5a47; --accent-ink: #200a06;
+      --ok: #5cc97e; --warn: #e8b24c; --block: #ff6b6b;
     }
   }
   :root[data-theme="dark"] {
     color-scheme: dark;
-    --bg: #131118;
-    --panel: #1c1923;
-    --panel-2: #221e2b;
-    --line: #2e2938;
-    --text: #eeeaf4;
-    --muted: #938da1;
-    --accent: #ff5a47;
-    --accent-ink: #200a06;
-    --ok: #5cc97e;
-    --warn: #e8b24c;
-    --block: #ff6b6b;
+    --bg: #131118; --panel: #1c1923; --panel-2: #221e2b; --line: #2e2938;
+    --text: #eeeaf4; --muted: #938da1; --accent: #ff5a47; --accent-ink: #200a06;
+    --ok: #5cc97e; --warn: #e8b24c; --block: #ff6b6b;
   }
 
   * { box-sizing: border-box; }
@@ -59,167 +43,83 @@
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
   }
-  /* The page scrolls itself: embedded viewers often clip the body. */
   .scroll { height: 100%; overflow-y: auto; -webkit-overflow-scrolling: touch; }
-  .wrap {
-    max-width: 700px;
-    margin: 0 auto;
-    padding: 20px 16px 64px;
-    display: flex;
-    flex-direction: column;
-    gap: 26px;
-  }
+  .wrap { max-width: 700px; margin: 0 auto; padding: 20px 16px 64px; display: flex; flex-direction: column; gap: 22px; }
 
-  header { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
   header .brand { font-size: 34px; font-weight: 900; letter-spacing: 0.22em; margin: 0; }
   header .brand .dot { color: var(--accent); }
   header p { margin: 4px 0 0; color: var(--muted); font-size: 14px; max-width: 52ch; }
 
-  section { display: flex; flex-direction: column; gap: 10px; }
-  .label {
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: var(--muted);
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    gap: 8px;
-  }
-  .label .hint { font-weight: 400; letter-spacing: 0; text-transform: none; }
-
-  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
-  .chip {
-    appearance: none;
-    border: 1px solid var(--line);
-    background: var(--panel);
-    color: var(--text);
-    border-radius: 999px;
-    padding: 8px 14px;
-    font-size: 14px;
-    font-family: inherit;
-    cursor: pointer;
-    transition: border-color 120ms, background 120ms;
-  }
-  .chip:hover { border-color: var(--muted); }
-  .chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-  .chip.on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
-  .chip.fixed { cursor: default; background: var(--panel-2); color: var(--muted); border-style: dashed; font-size: 13px; padding: 6px 12px; }
-  .chip .fam { font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.7; margin-left: 4px; }
-
-  .seg { display: flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
-  .seg button {
-    flex: 1;
+  .roll {
     appearance: none;
     border: 0;
-    background: var(--panel);
-    color: var(--muted);
+    background: var(--accent);
+    color: var(--accent-ink);
+    border-radius: 14px;
+    padding: 18px;
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
     font-family: inherit;
-    font-size: 13px;
-    padding: 9px 4px;
     cursor: pointer;
-    min-width: 0;
+    width: 100%;
+  }
+  .roll:focus-visible { outline: 3px solid var(--text); outline-offset: 2px; }
+  .roll:active { transform: translateY(1px); }
+
+  .controls { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; }
+  .seg { display: flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; flex: 1; min-width: 220px; }
+  .seg button {
+    flex: 1; appearance: none; border: 0; background: var(--panel); color: var(--muted);
+    font-family: inherit; font-size: 13px; padding: 9px 4px; cursor: pointer; min-width: 0;
   }
   .seg button + button { border-left: 1px solid var(--line); }
   .seg button.on { background: var(--panel-2); color: var(--text); font-weight: 600; }
   .seg button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
-
-  .row { display: flex; gap: 10px; flex-wrap: wrap; }
-  .row > * { flex: 1; min-width: 140px; display: flex; flex-direction: column; gap: 6px; }
-
-  input[type="text"], input[type="number"], select {
-    width: 100%;
-    background: var(--panel);
-    border: 1px solid var(--line);
-    color: var(--text);
-    border-radius: 10px;
-    padding: 9px 12px;
-    font-family: inherit;
-    font-size: 14px;
-  }
-  input:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
   .toggles { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 14px; }
   .toggles label { display: flex; align-items: center; gap: 8px; cursor: pointer; }
   .toggles input { accent-color: var(--accent); width: 16px; height: 16px; }
-
-  .card {
-    background: var(--panel);
-    border: 1px solid var(--line);
-    border-radius: 14px;
-    padding: 14px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+  select {
+    background: var(--panel); border: 1px solid var(--line); color: var(--text);
+    border-radius: 10px; padding: 8px 12px; font-family: inherit; font-size: 14px;
   }
+  select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+  .recipe { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tag {
+    font-size: 12px; font-weight: 600; letter-spacing: 0.04em;
+    background: var(--panel-2); border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px;
+  }
+  .tag.hot { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
   .card-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-  .card-head .label { flex: 1; }
+  .label {
+    flex: 1; font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted);
+  }
   .copy {
-    appearance: none;
-    border: 1px solid var(--line);
-    background: var(--panel-2);
-    color: var(--text);
-    border-radius: 8px;
-    padding: 6px 12px;
-    font-size: 12px;
-    font-weight: 600;
-    font-family: inherit;
-    cursor: pointer;
-    white-space: nowrap;
+    appearance: none; border: 1px solid var(--line); background: var(--panel-2); color: var(--text);
+    border-radius: 8px; padding: 6px 12px; font-size: 12px; font-weight: 600; font-family: inherit; cursor: pointer; white-space: nowrap;
   }
   .copy:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   .copy.done { border-color: var(--ok); color: var(--ok); }
-  .copy.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
-
-  .out {
-    font-family: var(--mono);
-    font-size: 13px;
-    line-height: 1.55;
-    white-space: pre-wrap;
-    overflow-wrap: break-word;
-    margin: 0;
-    overflow-x: auto;
-  }
+  .out { font-family: var(--mono); font-size: 13px; line-height: 1.55; white-space: pre-wrap; overflow-wrap: break-word; margin: 0; overflow-x: auto; }
   .meta { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; margin: 0; }
 
-  .harm-head { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: baseline; }
-  .harm-key { font-size: 22px; font-weight: 800; letter-spacing: 0.02em; }
-  .harm-roman { font-family: var(--mono); font-size: 13px; color: var(--muted); }
-  .harm-grid { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; font-size: 13px; align-items: baseline; }
-  .harm-grid dt { color: var(--muted); }
-  .harm-grid dd { margin: 0; font-family: var(--mono); font-variant-numeric: tabular-nums; }
-  .chord { display: inline-block; padding: 1px 7px; border-radius: 6px; background: var(--panel-2); margin: 0 4px 4px 0; }
+  .settings { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; font-size: 13px; align-items: baseline; }
+  .settings dt { color: var(--muted); }
+  .settings dd { margin: 0; font-variant-numeric: tabular-nums; }
   .prose { font-size: 13px; color: var(--muted); margin: 0; }
   .prose strong { color: var(--text); font-weight: 600; }
 
-  .bp-map { font-family: var(--mono); font-size: 18px; font-weight: 700; letter-spacing: 0.04em; }
+  details { border: 1px solid var(--line); border-radius: 14px; background: var(--panel); }
+  details summary { cursor: pointer; padding: 12px 14px; font-size: 13px; font-weight: 600; list-style: none; display: flex; justify-content: space-between; }
+  details summary::-webkit-details-marker { display: none; }
+  details summary::after { content: "+"; color: var(--muted); }
+  details[open] summary::after { content: "–"; }
+  details .body { padding: 0 14px 14px; display: flex; flex-direction: column; gap: 10px; }
+  .chord { display: inline-block; padding: 1px 7px; border-radius: 6px; background: var(--panel-2); margin: 0 4px 4px 0; font-family: var(--mono); }
   .bp-list { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); }
-
-  .sliders { display: flex; flex-direction: column; gap: 8px; }
-  .slider-row { display: flex; align-items: center; gap: 10px; font-size: 13px; }
-  .slider-row .name { width: 118px; color: var(--muted); flex-shrink: 0; }
-  .slider-row .track { flex: 1; height: 6px; border-radius: 3px; background: var(--panel-2); position: relative; overflow: hidden; }
-  .slider-row .fill { position: absolute; top: 0; bottom: 0; background: var(--accent); border-radius: 3px; }
-  .slider-row .text-val { flex: 1; }
-  .slider-row .val { font-variant-numeric: tabular-nums; width: 70px; text-align: right; }
-
-  .lyrics-editor { display: flex; flex-direction: column; gap: 8px; }
-  .tagline { font-family: var(--mono); font-size: 12px; color: var(--muted); overflow-wrap: anywhere; }
-  .tagline .repeat { font-style: italic; }
-  textarea.lyric-input {
-    width: 100%;
-    background: var(--panel-2);
-    border: 1px solid var(--line);
-    color: var(--text);
-    border-radius: 10px;
-    padding: 9px 12px;
-    font-family: var(--mono);
-    font-size: 13px;
-    line-height: 1.5;
-    resize: vertical;
-    min-height: 60px;
-  }
-  textarea.lyric-input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 
   .notes { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; list-style: none; }
   .notes li { display: flex; gap: 8px; font-size: 13px; color: var(--muted); align-items: baseline; }
@@ -230,101 +130,31 @@
 
   footer { font-size: 12px; color: var(--muted); }
   footer a { color: inherit; }
-
-  @media (max-width: 480px) {
-    .seg button { font-size: 12px; padding: 9px 2px; }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .chip, .copy { transition: none; }
-  }
+  @media (prefers-reduced-motion: reduce) { .roll:active { transform: none; } }
 </style>
 
 <div class="scroll">
 <div class="wrap">
   <header>
-    <div>
-      <h1 class="brand">CIPHER<span class="dot">.</span></h1>
-      <p>Hip hop and R&amp;B banger engine for Suno v6. Pick a lane and an edge, and get a paste-ready package with the key, the cadence plan and a hook blueprint.</p>
-    </div>
-    <button class="copy primary" id="randomize" type="button">🎲 Randomize</button>
+    <h1 class="brand">CIPHER<span class="dot">.</span></h1>
+    <p>One button. Every roll is a fresh hip hop, pop rap or R&amp;B package for Suno v6 with phonk grit, syncopation and experimental edits built in.</p>
   </header>
 
-  <section>
-    <div class="label"><span>Lane</span></div>
+  <button class="roll" id="roll" type="button">🎲 ROLL A BANGER</button>
+
+  <div class="controls">
     <div class="seg" id="family" role="group" aria-label="Family"></div>
-    <div class="chips" id="lanes"></div>
-  </section>
-
-  <section>
-    <div class="label"><span>Likeness</span><span class="hint">sound, not name — names never reach the prompt</span></div>
-    <div class="chips" id="likeness"></div>
-  </section>
-
-  <section>
-    <div class="label"><span>Edge</span><span class="hint">syncopation is always on</span></div>
-    <div class="seg" id="edge" role="group" aria-label="Edge"></div>
-  </section>
-
-  <section>
-    <div class="row">
-      <div>
-        <div class="label"><span>Blend in</span></div>
-        <select id="blend" aria-label="Blend a second lane"></select>
-      </div>
-      <div>
-        <div class="label"><span>Vocals</span></div>
-        <select id="vocal" aria-label="Vocals">
-          <option value="auto">Lane default</option>
-          <option value="male">Male</option>
-          <option value="female">Female</option>
-          <option value="duet">Duet</option>
-        </select>
-      </div>
-    </div>
-  </section>
-
-  <section>
-    <div class="label"><span>Harmony</span><span class="hint">key, loop and cadence</span></div>
-    <div class="row">
-      <div><select id="key" aria-label="Key"></select></div>
-      <div><select id="progression" aria-label="Progression"></select></div>
-    </div>
-    <div class="seg" id="plan" role="group" aria-label="Harmonic plan"></div>
-  </section>
-
-  <section>
-    <div class="label"><span>Structure &amp; hook</span></div>
-    <div class="seg" id="template" role="group" aria-label="Structure"></div>
-    <div class="row">
-      <div><select id="hook" aria-label="Hook formula"></select></div>
-      <div><input type="number" id="bpm" placeholder="BPM: auto" min="55" max="190" inputmode="numeric" aria-label="BPM override" /></div>
-    </div>
     <div class="toggles">
-      <label><input type="checkbox" id="postHook" /> Post-hook chant</label>
-      <label><input type="checkbox" id="chordsInTags" /> Chords in section tags</label>
+      <label><input type="checkbox" id="instrumental" /> Instrumental</label>
     </div>
-  </section>
+    <select id="profile" aria-label="Suno model"></select>
+  </div>
 
-  <section>
-    <div class="label"><span>Excluded</span><span class="hint">house bans are locked on; tap to add more</span></div>
-    <div class="chips" id="bans"></div>
-    <input type="text" id="ban-input" placeholder="Add another ban and press Enter" autocomplete="off" />
-  </section>
-
-  <section>
-    <div class="row">
-      <div>
-        <div class="label"><span>Model</span></div>
-        <select id="profile" aria-label="Suno model"></select>
-      </div>
-      <div></div>
-    </div>
-  </section>
+  <div class="recipe" id="recipe"></div>
 
   <div class="card">
     <div class="card-head">
-      <div class="label"><span>Style field</span></div>
-      <button class="copy" id="reroll" type="button">🎲 Reroll</button>
+      <div class="label">Style field</div>
       <button class="copy" data-copy="style" type="button">Copy</button>
     </div>
     <p class="out" id="out-style"></p>
@@ -333,7 +163,7 @@
 
   <div class="card">
     <div class="card-head">
-      <div class="label"><span>Exclude styles</span></div>
+      <div class="label">Exclude styles</div>
       <button class="copy" data-copy="exclude" type="button">Copy</button>
     </div>
     <p class="out" id="out-exclude"></p>
@@ -341,49 +171,39 @@
 
   <div class="card">
     <div class="card-head">
-      <div class="label"><span>Lyrics field</span></div>
+      <div class="label">Lyrics field</div>
       <button class="copy" data-copy="lyrics" type="button">Copy</button>
     </div>
-    <div class="seg" id="lyrics-mode" role="group" aria-label="Lyrics mode"></div>
     <p class="meta" id="lyrics-hint"></p>
     <pre class="out" id="out-tags"></pre>
-    <div class="lyrics-editor" id="lyrics-editor" hidden></div>
   </div>
 
   <div class="card">
-    <div class="card-head"><div class="label"><span>Harmony sheet</span></div></div>
-    <div class="harm-head">
-      <span class="harm-key" id="h-key"></span>
-      <span class="harm-roman" id="h-roman"></span>
-    </div>
-    <dl class="harm-grid" id="h-grid"></dl>
-    <p class="prose" id="h-cadence"></p>
-    <p class="prose" id="h-plan"></p>
-  </div>
-
-  <div class="card">
-    <div class="card-head"><div class="label"><span>Hook blueprint</span></div></div>
-    <div class="harm-head">
-      <span class="bp-map" id="bp-map"></span>
-      <span class="harm-roman" id="bp-name"></span>
-    </div>
-    <dl class="harm-grid" id="bp-grid"></dl>
-    <ul class="bp-list" id="bp-rules"></ul>
-  </div>
-
-  <div class="card">
-    <div class="card-head"><div class="label"><span>Settings</span></div></div>
-    <div class="sliders" id="out-sliders"></div>
+    <div class="card-head"><div class="label">Suno settings</div></div>
+    <dl class="settings" id="out-settings"></dl>
     <p class="prose" id="slider-note"></p>
   </div>
 
+  <details>
+    <summary>Harmony sheet &amp; hook blueprint</summary>
+    <div class="body">
+      <p class="prose" id="h-head"></p>
+      <dl class="settings" id="h-grid"></dl>
+      <p class="prose" id="h-cadence"></p>
+      <p class="prose" id="h-plan"></p>
+      <p class="prose" id="bp-head"></p>
+      <dl class="settings" id="bp-grid"></dl>
+      <ul class="bp-list" id="bp-rules"></ul>
+    </div>
+  </details>
+
   <div class="card" id="notes-card" hidden>
-    <div class="card-head"><div class="label"><span>Notes</span></div></div>
+    <div class="card-head"><div class="label">Notes</div></div>
     <ul class="notes" id="out-notes"></ul>
   </div>
 
   <footer>
-    Same settings and roll number give the same package. The research behind it is in
+    Roll number is shown in the recipe, so a keeper can be re-rolled by number. The research is in
     <a href="https://github.com/mussstarrd/cipher/blob/main/docs/research.md">docs/research.md</a>.
   </footer>
 </div>

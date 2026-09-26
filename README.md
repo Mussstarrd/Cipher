@@ -1,13 +1,13 @@
 # Cipher
 
-A hip hop and R&B banger prompt engine for Suno v6 (v6, v6-wild and v6-mini). Open `dist/cipher.html` in a browser; it has no dependencies.
+A one-button hip hop, pop rap and R&B banger randomizer for Suno v6 (v6, v6-wild and v6-mini). Open `dist/cipher.html` in a browser; it has no dependencies.
 
-Pick a **lane** (Dark Trap, Rage / Glitch, Drill, Melodic Trap, Hypnotic Minimal, Grimy Boom Bap, Dark Alt R&B, Trap Soul, Y2K Stutter R&B, Pluggnb, Slow-Jam R&B) and an **edge** (Syncopated, Twitch or Experimental). You get:
+Press **Roll**. Each roll picks a lane (Dark Trap, Rage / Glitch, Drill, Melodic Trap, Hypnotic Minimal, Grimy Boom Bap, Pop Rap, Phonk, Acid Soul Rap, Dark Alt R&B, Trap Soul, Y2K Stutter R&B, Pluggnb, Slow-Jam R&B), an edge (Syncopated, Twitch or Experimental), often a likeness and a blend, then a key, progression, structure and hook. You can narrow to hip hop or R&B, flip Instrumental, and pick the Suno model. You get:
 
-- **Likeness** (optional): the sound of a popular artist (Kendrick, JID, Drake, T.I., Travis Scott, Future, 21 Savage, Kevin Gates, Lil Baby, Playboi Carti, Young Thug, Lil Uzi Vert, Kanye, Pop Smoke; The Weeknd, Bryson Tiller, SZA, Brent Faiyaz, Summer Walker, PARTYNEXTDOOR) as delivery, flow signature and production tells. The name is only on the chip; a lint blocks any artist name from reaching the prompt.
-- **Style field**: 8–12 front-loaded descriptors with the key, BPM, syncopation and an infectious repeating motif.
-- **Exclude styles**: the locked house bans (`jazz, funk, edm, pop, drum fills, tom fills, rimshot, cowbell, dj scratch`), `humming` (pre-selected for v6), and any extras you add.
-- **Lyrics field**: section tags with flow and groove directions, or boxes to write your own bars. A repeated hook reprints the same words.
+- **Likeness** (rolled about half the time): the sound of a popular artist (Kendrick, JID, Drake, T.I., Travis Scott, Future, 21 Savage, Kevin Gates, Lil Baby, Playboi Carti, Young Thug, Lil Uzi Vert, Kanye, Pop Smoke, Connor Price, Chance; The Weeknd, Bryson Tiller, SZA, Brent Faiyaz, Summer Walker, PARTYNEXTDOOR) as delivery, flow signature and production tells. A lint blocks any artist name from reaching the prompt.
+- **Style field**: 8–14 front-loaded descriptors with the key, BPM, a lead instrument drawn from a 40-instrument pool, an infectious repeating motif, and one phonk, one syncopation and one experimental adjective on every roll.
+- **Exclude styles**: the locked house bans (`jazz, funk, edm, bubblegum pop, drum fills, tom fills, rimshot, cowbell, dj scratch`).
+- **Lyrics field**: section tags with flow and groove directions, or a structured instrumental arrangement.
 - **Harmony sheet**: key, progression, cadence and chords for each section.
 - **Hook blueprint**: repetition map, rhythm cell, syllable budget and a melody contour in real pitches.
 - **Settings** for each edge and model: Weirdness and Style Influence ranges, Variety Off, and when to use Max Mode.

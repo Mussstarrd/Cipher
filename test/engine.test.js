@@ -47,7 +47,7 @@ test("style stays inside limits and the descriptor sweet spot", () => {
   for (const input of everyCombo()) {
     const out = E.generate(input);
     assert.ok(out.styleText.length <= 1000, out.styleText);
-    assert.ok(out.meta.descriptors <= 12 && out.meta.descriptors >= 8, `${out.meta.descriptors}: ${out.styleText}`);
+    assert.ok(out.meta.descriptors <= 14 && out.meta.descriptors >= 8, `${out.meta.descriptors}: ${out.styleText}`);
     assert.match(out.styleText, /\d+ BPM/);
   }
 });
@@ -131,7 +131,7 @@ test("every likeness works on every lane and never leaks a name", () => {
               assert.ok(!new RegExp(`(^|[^a-z0-9])${n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}($|[^a-z0-9])`).test(text), `${like.id}: "${n}" leaked\n${text}`);
             }
             assert.deepStrictEqual([...E.lint(out.styleText, "style"), ...E.lint(out.lyricsTagsOnly, "tags")], [], out.styleText);
-            assert.ok(out.meta.descriptors <= 12, `${out.meta.descriptors}: ${out.styleText}`);
+            assert.ok(out.meta.descriptors <= 14, `${out.meta.descriptors}: ${out.styleText}`);
             assert.ok(out.styleText.length <= 1000);
             assert.strictEqual(out.meta.likeness, like.id);
             if (!instrumental) assert.ok(out.styleText.includes(like.signature), out.styleText);
@@ -145,4 +145,23 @@ test("every likeness works on every lane and never leaks a name", () => {
 test("the name lint catches an artist name in free text", () => {
   assert.ok(E.lint("dark trap like Drake", "style").some((w) => w.level === "block"));
   assert.ok(E.lint("dark trap, deep 808s", "style").every((w) => w.level !== "block"));
+});
+
+test("every roll carries a phonk, a syncopation and an experimental adjective", () => {
+  const has = (text, pool) => pool.some((p) => text.includes(p));
+  for (const input of everyCombo()) {
+    const out = E.generate(input);
+    assert.ok(has(out.styleText, E.FLAVORS.phonk), out.styleText);
+    assert.ok(has(out.styleText, E.FLAVORS.syncopation), out.styleText);
+    assert.ok(has(out.styleText, E.FLAVORS.experimental), out.styleText);
+  }
+});
+
+test("lead instruments vary across rolls", () => {
+  const leads = new Set();
+  for (let seed = 1; seed <= 60; seed++) {
+    const out = E.generate({ lane: "dark-trap", seed });
+    leads.add(out.styleText.match(/, ([^,]+) playing /)[1]);
+  }
+  assert.ok(leads.size >= 20, `${leads.size} distinct leads`);
 });
