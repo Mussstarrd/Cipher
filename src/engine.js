@@ -46,8 +46,13 @@ const CipherEngine = (() => {
     "rimshot",
     "cowbell",
     "dj scratch",
+    "background vocals",
+    "vocal chops",
+    "vocal samples",
+    "chanting",
+    "gang vocals",
   ];
-  const OPTIONAL_BANS = ["humming", "airhorn", "dj tag", "risers", "disco", "live band", "saxophone", "brass", "choir"];
+  const OPTIONAL_BANS = ["humming", "airhorn", "dj tag", "risers", "disco", "live band", "saxophone", "brass"];
 
   // Words that must never appear in the style text or section tags: naming a
   // banned thing, even to negate it, pulls it into the mix (research §3).
@@ -63,6 +68,7 @@ const CipherEngine = (() => {
     { re: /\bbubblegum\b|\bpoppy\b/i, level: "block", msg: "sugary pop vocabulary" },
     { re: /\bdj\b|\bscratch\w*|\bairhorns?\b|\bdisco\b/i, level: "block", msg: "DJ effect vocabulary" },
     { re: /\b(sax\w*|trumpets?|horns?|rhodes|clavinet|talkbox|wah|slap bass)\b/i, level: "warn", msg: "instrument that drags toward jazz/funk" },
+    { re: /vocal[- ]?(chop|sample|pad|stab|loop|hiccup|percussion)s?|\bchant\w*|\bchoirs?\b|\bbeatbox\w*|gang vocal|crowd vocal|background vocal|backing vocal|shout-?back|call-and-response/i, level: "block", msg: "background-vocal vocabulary invites gibberish vocal layers" },
     { re: /\bno\s+\w+/i, level: "warn", msg: "\"no X\" inside the style text backfires — use Exclude Styles", styleOnly: true },
     { re: /[\[\]]/, level: "warn", msg: "brackets belong in the lyrics box only", styleOnly: true },
   ];
@@ -199,7 +205,7 @@ const CipherEngine = (() => {
       bass: ["distorted gliding 808s", "long 808 slides landing on the downbeat"],
       leads: ["haunting piano", "eerie bells", "dark plucked strings", "a detuned synth"],
       motifs: ["bell", "piano", "string"],
-      vocals: ["aggressive melodic rap", "gritty chant-style delivery", "auto-tuned menacing rap"],
+      vocals: ["aggressive melodic rap", "gritty punchy rap delivery", "auto-tuned menacing rap"],
       textures: ["pitch-black low end", "crisp modern master", "wide cinematic mix"],
       flows: ["triplet", "stopstart", "staccato"],
       hooks: ["chant", "callresp", "stair"],
@@ -217,9 +223,9 @@ const CipherEngine = (() => {
         "distorted kicks firing in syncopated bursts",
       ],
       bass: ["clipping overdriven 808s", "808s that bend and snap back"],
-      leads: ["a buzzing detuned rage synth", "bit-crushed synth stabs", "a pitched vocal-chop riff"],
-      motifs: ["synth", "vocal chop"],
-      vocals: ["hyper ad-lib-heavy delivery", "pitched-up melodic yelps", "nasal chant flow"],
+      leads: ["a buzzing detuned rage synth", "bit-crushed synth stabs", "a pitched synth-chop riff"],
+      motifs: ["synth", "bell"],
+      vocals: ["hyper energetic delivery", "pitched-up melodic yelps", "nasal clipped flow"],
       textures: ["crushed distorted master", "lo-fi digital grit"],
       flows: ["staccato", "offbeat", "stopstart"],
       hooks: ["stutter", "chant", "callresp"],
@@ -237,7 +243,7 @@ const CipherEngine = (() => {
         "sparse kicks syncopated against the 808",
       ],
       bass: ["sliding glide 808s bending between notes"],
-      leads: ["ominous string stabs", "a cold minor piano", "a dark vocal pad"],
+      leads: ["ominous string stabs", "a cold minor piano", "a dark synth pad"],
       motifs: ["string", "piano"],
       vocals: ["cold low-register drill flow", "aggressive punchy delivery"],
       textures: ["dry gritty mix", "cold dark space"],
@@ -277,9 +283,9 @@ const CipherEngine = (() => {
         "echoing claps that land a sixteenth late",
       ],
       bass: ["cavernous sub 808s", "808s that swell and swallow the room"],
-      leads: ["a hazy reversed synth wash", "a filtered vocal-chop motif", "sparse icy keys"],
-      motifs: ["vocal chop", "synth"],
-      vocals: ["layered auto-tuned vocals with ad-lib echoes", "hypnotic repeated phrases"],
+      leads: ["a hazy reversed synth wash", "a filtered synth-chop motif", "sparse icy keys"],
+      motifs: ["synth", "bell"],
+      vocals: ["layered auto-tuned lead vocals", "hypnotic repeated phrases"],
       textures: ["psychedelic haze", "cavernous reverb tails", "pitch-black low end"],
       flows: ["melodic", "stopstart", "offbeat"],
       hooks: ["chant", "callresp", "stutter"],
@@ -297,8 +303,8 @@ const CipherEngine = (() => {
         "tight swung hi-hats",
       ],
       bass: ["deep round sub bass shadowing the kick"],
-      leads: ["a dark minor piano", "a chopped string sample", "an eerie soul vocal chop"],
-      motifs: ["piano", "string", "vocal chop"],
+      leads: ["a dark minor piano", "a chopped string sample", "an eerie sampled string swell"],
+      motifs: ["piano", "string"],
       vocals: ["raspy punchline-heavy rap", "precise commanding delivery"],
       textures: ["dusty tape grit", "concrete-hard drums"],
       flows: ["staccato", "offbeat", "double"],
@@ -317,8 +323,8 @@ const CipherEngine = (() => {
         "deep kicks hitting on the syncopated pickup",
       ],
       bass: ["heavy sub 808 swells"],
-      leads: ["dark filtered electric piano", "reverse-swelling vocal pads", "a lush detuned synth"],
-      motifs: ["vocal chop", "synth"],
+      leads: ["dark filtered electric piano", "reverse-swelling synth pads", "a lush detuned synth"],
+      motifs: ["synth", "bell"],
       vocals: ["breathy falsetto R&B vocals", "silky layered harmonies", "melismatic runs on the hook"],
       textures: ["velvet-dark reverb-heavy mix", "underwater low-pass warmth"],
       flows: ["melodic", "offbeat"],
@@ -353,12 +359,12 @@ const CipherEngine = (() => {
       moods: ["futuristic", "flirtatious confidence", "icy seduction"],
       drums: [
         "stuttering syncopated drum programming with skittering hi-hats",
-        "beatbox-style vocal percussion",
+        "clicky glitch percussion",
         "off-beat kicks and chopped snare stutters",
       ],
       bass: ["deep sliding sub bass"],
-      leads: ["an eerie exotic string riff", "chopped pitched vocal hiccups", "staccato synth plucks"],
-      motifs: ["string", "vocal chop", "synth"],
+      leads: ["an eerie exotic string riff", "chopped pitched synth hiccups", "staccato synth plucks"],
+      motifs: ["string", "synth"],
       vocals: ["layered R&B vocals with stacked harmonies", "crisp staccato sung phrasing"],
       textures: ["glossy 2000s R&B polish", "tight dry low end"],
       flows: ["staccato", "offbeat"],
@@ -377,9 +383,9 @@ const CipherEngine = (() => {
         "crisp snaps",
       ],
       bass: ["smooth sine 808s"],
-      leads: ["a dreamy bell synth", "glassy synth chords", "soft vocal-chop pads"],
+      leads: ["a dreamy bell synth", "glassy synth chords", "soft synth pads"],
       motifs: ["bell", "synth"],
-      vocals: ["auto-tuned melodic R&B vocals", "airy sing-rap with soft ad-libs"],
+      vocals: ["auto-tuned melodic R&B vocals", "airy sing-rap with soft doubled lines"],
       textures: ["soft glossy mix", "hazy stereo shimmer"],
       flows: ["melodic", "triplet"],
       hooks: ["mantra", "stair", "callresp"],
@@ -397,7 +403,7 @@ const CipherEngine = (() => {
         "soft snaps landing just behind the beat",
       ],
       bass: ["warm deep 808 bass"],
-      leads: ["silky electric piano", "lush vocal-harmony pads", "soft plucked guitar"],
+      leads: ["silky electric piano", "lush string pads", "soft plucked guitar"],
       motifs: ["piano", "guitar"],
       vocals: ["soulful R&B vocals with melismatic runs", "breathy intimate verses opening into belted hooks"],
       textures: ["warm polished mix", "close-mic intimacy"],
@@ -419,8 +425,8 @@ const CipherEngine = (() => {
         "tight bouncy hi-hats with playful stutters",
       ],
       bass: ["round bouncy 808 bass", "elastic plucked synth bass"],
-      leads: ["a bright plucked synth", "a playful marimba", "a chiming music box", "a bouncy pitched vocal-chop riff"],
-      motifs: ["synth", "marimba", "vocal chop"],
+      leads: ["a bright plucked synth", "a playful marimba", "a chiming music box", "a bouncy pitched synth riff"],
+      motifs: ["synth", "marimba"],
       vocals: ["clean rapid-fire rap with crisp playful diction", "bright sung hook over punchline verses"],
       textures: ["glossy punchy master", "wide bright stereo mix"],
       flows: ["double", "staccato", "offbeat"],
@@ -429,7 +435,7 @@ const CipherEngine = (() => {
     },
     {
       id: "phonk", label: "Phonk", family: "hiphop",
-      genres: ["Memphis phonk", "drift phonk"], bpm: [120, 150], feel: "menacing bounce",
+      genres: ["drift phonk", "dark phonk"], bpm: [120, 150], feel: "menacing bounce",
       keys: { minor: ["F", "G", "A", "C#", "D#", "B"], major: [] },
       progressions: ["phrygian", "pendulum", "drone", "sting"],
       moods: ["hazy underground menace", "dark cruising energy", "grainy nocturnal aggression"],
@@ -439,9 +445,9 @@ const CipherEngine = (() => {
         "rattling hi-hats and off-beat claps",
       ],
       bass: ["blown-out distorted 808s", "growling saturated 808 slides"],
-      leads: ["pitched-down chopped vocal samples", "a haunted detuned synth lead", "a grainy sampled piano", "an eerie bell melody"],
-      motifs: ["vocal chop", "synth", "bell"],
-      vocals: ["pitched-down muffled rap chants", "gritty screwed-down vocal delivery"],
+      leads: ["a pitched-down sampled synth line", "a haunted detuned synth lead", "a grainy sampled piano", "an eerie bell melody"],
+      motifs: ["synth", "bell"],
+      vocals: ["gritty distorted aggressive rap", "muffled low-register menacing rap"],
       textures: ["tape-saturated lo-fi grit", "vinyl-crackle cassette haze"],
       flows: ["triplet", "staccato", "stopstart"],
       hooks: ["chant", "stutter", "callresp"],
@@ -459,9 +465,9 @@ const CipherEngine = (() => {
         "crisp snaps and off-beat shakers",
       ],
       bass: ["deep rolling bass", "warm round sub bass"],
-      leads: ["warped psychedelic soul-sample keys", "woozy detuned electric piano", "a hazy pitched vocal-chop riff", "warm gospel organ swells"],
-      motifs: ["vocal chop", "piano", "organ"],
-      vocals: ["elastic yelping raspy rap-sing", "half-sung nasal melodies with signature yelped ad-libs"],
+      leads: ["warped psychedelic soul-sample keys", "woozy detuned electric piano", "a hazy pitched synth riff", "warm gospel organ swells"],
+      motifs: ["piano", "organ"],
+      vocals: ["elastic yelping raspy rap-sing", "half-sung nasal melodies with signature yelps"],
       textures: ["sun-warped analog haze", "gritty mixtape warmth"],
       flows: ["offbeat", "melodic", "double"],
       hooks: ["mantra", "callresp", "stair"],
@@ -476,12 +482,12 @@ const CipherEngine = (() => {
     "a plucked kalimba", "a glassy celesta", "a haunting music box", "a detuned toy piano",
     "a plucked harp", "a nylon-string guitar", "a reverb-soaked steel-string guitar", "a mellotron flute pad",
     "a pizzicato string section", "a low mournful cello", "a shivering violin line", "tubular bells",
-    "a pitched-up choir-like synth", "a sitar riff", "a koto pluck", "an erhu wail", "a duduk melody",
+    "a sitar riff", "a koto pluck", "an erhu wail", "a duduk melody",
     "a pan flute", "an ocarina melody", "a hollow marimba", "a glockenspiel", "a vibrating mbira",
     "a church organ", "a pipe organ drone", "a harpsichord riff", "a bit-crushed 8-bit synth",
     "a warbling tape-worn synth", "a whistled melody", "a theremin wail", "a plucked banjo run",
     "an accordion drone", "a muted brassy synth lead", "a bowed glass harmonica", "a steel drum pluck",
-    "a rubbery FM synth pluck", "a chopped opera vocal sample", "a pitched-down choir stab",
+    "a rubbery FM synth pluck", "a pitched-down synth stab",
     "a bass clarinet line", "a hammered dulcimer", "a slowed harp arpeggio",
   ];
 
@@ -489,8 +495,8 @@ const CipherEngine = (() => {
   // experimental edits. One from each lands in every style field.
   const FLAVORS = {
     phonk: [
-      "phonk-tinged", "Memphis-phonk-flavored", "tape-crushed phonk grit", "grainy phonk haze",
-      "screwed-down phonk menace", "cassette-warped phonk texture", "distorted phonk swagger",
+      "phonk-tinged", "drift-phonk 808 distortion", "tape-crushed phonk grit", "grainy phonk haze",
+      "lo-fi phonk drum crunch", "cassette-warped phonk texture", "distorted phonk swagger",
     ],
     syncopation: [
       "aggressively syncopated", "off-grid syncopated bounce", "rhythmically displaced", "polyrhythmic hi-hat syncopation",
@@ -520,7 +526,7 @@ const CipherEngine = (() => {
     twitch: {
       label: "Twitch",
       phrases: [
-        "twitchy stutter-edited vocal chops",
+        "twitchy stutter-edited synth chops",
         "glitchy micro-edits and stuttered hi-hat bursts",
         "808 retriggers twitching on the off-beats",
       ],
@@ -535,7 +541,7 @@ const CipherEngine = (() => {
         "unpredictable rhythmic displacement",
         "warped pitch-shifted textures",
       ],
-      extra: ["twitchy stutter-edited vocal chops", "glitchy micro-edits and stuttered hi-hat bursts"],
+      extra: ["twitchy stutter-edited synth chops", "glitchy micro-edits and stuttered hi-hat bursts"],
       sliders: { weirdness: [60, 75], styleInfluence: [65, 80] },
       note: "Experimental: high Weirdness for left-field choices, Style Influence still 65+ so the genre anchor survives. On v6-wild, the model supplies the chaos, so the Weirdness range drops. Generate in batches and keep the strangest take that still bangs.",
     },
@@ -562,13 +568,13 @@ const CipherEngine = (() => {
   // ---------------------------------------------------------------- hooks
   const HOOKS = {
     chant: {
-      name: "Chant loop", map: "A · A · A · B", syllables: "4–6 syllables per line",
+      name: "Title loop", map: "A · A · A · B", syllables: "4–6 syllables per line",
       rule: "Line A is the title. Say it three times, word for word; line B is the only new information.",
       contour: "narrow",
     },
     callresp: {
-      name: "Call & response", map: "A (x) · B (x) · A (x) · C (x)", syllables: "5–8 syllables + a 1–2 word answer",
-      rule: "Every lead line gets the same ad-lib answer in parentheses. The answer never changes; that's what people shout back.",
+      name: "Self-echo", map: "A · a · B · a", syllables: "5–8 syllables, echo = last 1–2 words",
+      rule: "The lead voice repeats the last word or two of its own line as a short echo, same voice, same pitch. The echo never changes.",
       contour: "narrow",
     },
     stair: {
@@ -682,15 +688,17 @@ const CipherEngine = (() => {
     } else {
       const vocal = pick(like ? like.vocals : lane.vocals, r);
       const gender = {
-        male: "male vocalist",
-        female: "female vocalist",
-        duet: lane.family === "rnb" ? "female lead with a male rap verse" : "male rap verses with a female sung hook",
-      }[vocalMode];
+        male: "one clean male lead vocal over a fully instrumental backing",
+        female: "one clean female lead vocal over a fully instrumental backing",
+        duet: lane.family === "rnb"
+          ? "one clean female lead vocal over a fully instrumental backing with a male rap verse"
+          : "one clean male lead vocal over a fully instrumental backing with a female sung hook",
+      }[vocalMode] || "one clean lead vocal over a fully instrumental backing";
       add(vocal, 0);
       add(gender, 0);
       if (like) add(like.signature, 0);
     }
-    if (like) add(pick(like.tells, r), 1);
+    if (like) add(pick(like.tells, r), 2);
 
     const drums = shuffle(lane.drums, r);
     add(drums[0], 0);
@@ -749,7 +757,6 @@ const CipherEngine = (() => {
     const flowB = FLOWS[flows[1] || flows[0]];
     const flowC = FLOWS[flows[2] || flows[0]];
     const twitch = edge !== "syncopated";
-    const adlib = pick(ctx.likeness ? ctx.likeness.adlibs : lane.adlibs, r);
     const hookWord = lane.family === "rnb" ? "Chorus" : "Hook";
     const chordText = (list) => (chordsInTags ? `, ${list.join(" – ")}` : "");
 
@@ -760,16 +767,16 @@ const CipherEngine = (() => {
       ? `stuttered chop of the hook motif, 2 bars${chordText(sh.intro)}`
       : `hook motif alone, 2 bars${chordText(sh.intro)}`;
     const hookDesc = () =>
-      `${hook.contour === "narrow" ? "chant-ready" : "sticky melody"}, identical every time, doubled vocals, "${adlib}" ad-lib answers${chordText(sh.hook)}`;
+      `${hook.contour === "narrow" ? "title-forward" : "sticky melody"}, identical every time, single lead voice doubled${chordText(sh.hook)}`;
     const verseDesc = (flow, n) => {
       const bits = [flow.tag];
-      if (twitch && n > 1) bits.push("stutter-chopped ad-libs between bars");
+      if (twitch && n > 1) bits.push("stutter-chopped lead vocal edits between bars");
       else bits.push(n === 1 ? "beat locked in" : "denser rhymes");
       return bits.join(", ") + chordText(sh.verse);
     };
     const hookSec = () => {
-      push(hookWord, hookDesc(), "hook", { guide: `${hook.name}: ${hook.map}`, adlib, harmony: sh.hook });
-      if (postHook) push("Post-Hook", `2-word chant x4, beat stays full${chordText(sh.hook)}`, "posthook", { guide: "2-word chant, repeated 4 times", harmony: sh.hook });
+      push(hookWord, hookDesc(), "hook", { guide: `${hook.name}: ${hook.map}`, harmony: sh.hook });
+      if (postHook) push("Post-Hook", `2-word title repeat x4, beat stays full${chordText(sh.hook)}`, "posthook", { guide: "2-word title, repeated 4 times", harmony: sh.hook });
     };
     const verse = (n, flow) =>
       push(`Verse ${n}`, verseDesc(flow, n), `verse${n}`, { guide: `12–16 bars · ${flow.guide}`, harmony: sh.verse });
@@ -916,11 +923,9 @@ const CipherEngine = (() => {
       .replace(/vocal-harmony pads/gi, "synth pads")
       .replace(/vocal[- ]chop/gi, "synth chop")
       .replace(/vocal pads?/gi, (m) => m.replace(/vocal/i, "synth"))
-      .replace(/chopped pitched vocal hiccups/gi, "chopped pitched synth hiccups")
-      .replace(/chopped opera vocal sample/gi, "chopped opera synth sample")
-      .replace(/chopped vocal samples/gi, "chopped synth samples")
+      .replace(/vocal[- ]?(sample|stab|loop)s?/gi, (m) => m.replace(/vocal/i, "synth"))
       .replace(/\brap\b/g, "beat")
-      .replace(/beatbox-style vocal percussion/gi, "clicky glitch percussion");
+      .replace(/clicky glitch percussion/gi, "clicky glitch percussion");
   }
 
   function buildExclude(extraBans) {

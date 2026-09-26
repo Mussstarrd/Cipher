@@ -119,7 +119,24 @@ Profiles avoid the jazz, funk and live-band sides of an artist's catalog so the 
 - **Flavors**: every style field carries one phonk adjective, one syncopation adjective and one experimental adjective, drawn from three pools, so Suno is told on every roll to go for grit, off-grid rhythm and left-field edits.
 - **Lead pool**: 55% of rolls take the lead instrument from a shared pool of 40 (kalimba, celesta, harp, cello, koto, erhu, duduk, harpsichord, glass harmonica, theremin, steel drum, mbira, and so on) instead of the lane's own list. The instruments were chosen to avoid the jazz/funk lean of horns and Rhodes.
 
-## 9. Syncopation and twitch vocabulary
+## 9. One lead voice, nothing vocal behind it
+
+Field reports showed gibberish vocal layers (Memphis-style chopped chants, mumbled backing voices) on nearly every take. Three things were inviting them:
+
+1. Instrument lists that literally asked for them: "pitched-down chopped vocal samples", "vocal-chop riff", "vocal pads", "opera vocal sample", "choir-like synth", "beatbox-style vocal percussion", plus likeness tells like "pitched-up soul vocal chop loop".
+2. "Chant" language everywhere: "chant-style delivery", "chant-ready" hooks, "2-word chant x4" post-hooks, and a "Chant loop" hook formula. Suno reads "chant" as a group.
+3. Call-and-response hooks with "(ad-lib) answers", which Suno fills with a second voice.
+
+The fix, enforced by test 15:
+
+- Every vocal-flavored instrument became a synth, string or sampled-keys equivalent. Phonk keeps its identity through 808 distortion, lo-fi drum-machine crunch and cassette haze instead of chopped vocal samples; "Memphis" and "screwed" left the vocabulary.
+- "Chant" is gone from lanes, likenesses, hook formulas and tags. The hook formula is now "Title loop", and the post-hook is a "2-word title repeat".
+- Call & response became "Self-echo": the lead repeats its own last words. Hook tags say "single lead voice doubled", never "ad-lib answers".
+- The style field always carries "one clean lead vocal over a fully instrumental backing" (with male/female/duet folded in).
+- The Exclude field always carries `background vocals, vocal chops, vocal samples, chanting, gang vocals`.
+- A lint blocks vocal-chop, vocal-sample, chant, choir, beatbox, gang/crowd/background/backing vocal, shout-back and call-and-response wording anywhere in a package.
+
+## 10. Syncopation and twitch vocabulary
 
 - Syncopation: off-beat kick placement, triplet hi-hat rolls switching between eighths and sixteenth-triplets, claps a sixteenth late, and flows that start on the "and" of 1.
 - Twitch: stutter-edited vocal chops, glitch micro-edits, 808 retriggers on the off-beats, and half-bar beat mutes. A mute is a gap, not a fill.

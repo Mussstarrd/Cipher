@@ -6,7 +6,7 @@ Press **Roll**. Each roll picks a lane (Dark Trap, Rage / Glitch, Drill, Melodic
 
 - **Likeness** (rolled about half the time): the sound of a popular artist (Kendrick, JID, Drake, T.I., Travis Scott, Future, 21 Savage, Kevin Gates, Lil Baby, Playboi Carti, Young Thug, Lil Uzi Vert, Kanye, Pop Smoke, Connor Price, Chance; The Weeknd, Bryson Tiller, SZA, Brent Faiyaz, Summer Walker, PARTYNEXTDOOR) as delivery, flow signature and production tells. A lint blocks any artist name from reaching the prompt.
 - **Style field**: 8–14 front-loaded descriptors with the key, BPM, a lead instrument drawn from a 40-instrument pool, an infectious repeating motif, and one phonk, one syncopation and one experimental adjective on every roll.
-- **Exclude styles**: the locked house bans (`jazz, funk, edm, bubblegum pop, drum fills, tom fills, rimshot, cowbell, dj scratch`).
+- **Exclude styles**: the locked house bans (`jazz, funk, edm, bubblegum pop, drum fills, tom fills, rimshot, cowbell, dj scratch, background vocals, vocal chops, vocal samples, chanting, gang vocals`). Only one lead voice is ever asked for; no lane, likeness or instrument pool names a vocal sample, chop, chant or choir, and a lint blocks that vocabulary.
 - **Lyrics field**: section tags with flow and groove directions, or a structured instrumental arrangement.
 - **Harmony sheet**: key, progression, cadence and chords for each section.
 - **Hook blueprint**: repetition map, rhythm cell, syllable budget and a melody contour in real pitches.

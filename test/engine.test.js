@@ -165,3 +165,21 @@ test("lead instruments vary across rolls", () => {
   }
   assert.ok(leads.size >= 20, `${leads.size} distinct leads`);
 });
+
+test("background vocals are always excluded and never invited", () => {
+  const bad = /vocal[- ]?(chop|sample|pad|stab|loop|hiccup|percussion)s?|\bchant\w*|\bchoirs?\b|beatbox|gang vocal|crowd vocal|background vocal|backing vocal|shout-?back|call-and-response|ad-lib|adlib|memphis|screwed/i;
+  const combos = [...everyCombo()];
+  for (const like of E.LIKENESS) combos.push({ lane: like.homeLane, likeness: like.id, seed: 7 }, { lane: "phonk", likeness: like.id, edge: "twitch", seed: 8 });
+  for (const input of combos) {
+    for (const instrumental of [false, true]) {
+      const out = E.generate({ ...input, instrumental });
+      const text = `${out.styleText}\n${out.lyricsTagsOnly}\n${JSON.stringify(out.blueprint)}`;
+      const m = text.match(bad);
+      assert.ok(!m, `"${m && m[0]}" in ${JSON.stringify(input)}\n${text}`);
+      for (const b of ["background vocals", "vocal chops", "vocal samples", "chanting", "gang vocals"]) {
+        assert.ok(out.excludeText.split(", ").includes(b), b);
+      }
+      if (!instrumental) assert.match(out.styleText, /one clean (male |female )?lead vocal over a fully instrumental backing/);
+    }
+  }
+});
