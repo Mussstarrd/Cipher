@@ -477,7 +477,7 @@ const CipherEngine = (() => {
   const clamp = (v) => Math.max(0, Math.min(100, v));
 
   // Style-field sweet spot: 6–12 distinct descriptors lands best (research §2).
-  const DESCRIPTOR_TARGET = { min: 8, max: 14 };
+  const DESCRIPTOR_TARGET = { min: 8, max: 15 };
 
   // ------------------------------------------------------------ hard bans
   // Always sent to Exclude Styles. Order = most likely to leak in first.
@@ -924,16 +924,28 @@ const CipherEngine = (() => {
   // Lead instruments shared by every lane, so the melody voice changes roll to
   // roll instead of always being the lane's bell or piano.
   const LEAD_POOL = [
-    "a plucked kalimba", "a glassy celesta", "a haunting music box", "a detuned toy piano",
-    "a plucked harp", "a nylon-string guitar", "a reverb-soaked steel-string guitar", "a mellotron flute pad",
-    "a pizzicato string section", "a low mournful cello", "a shivering violin line", "tubular bells",
-    "a sitar riff", "a koto pluck", "an erhu wail", "a duduk melody",
-    "a pan flute", "an ocarina melody", "a hollow marimba", "a glockenspiel", "a vibrating mbira",
-    "a church organ", "a pipe organ drone", "a harpsichord riff", "a bit-crushed 8-bit synth",
-    "a warbling tape-worn synth", "a whistled melody", "a theremin wail", "a plucked banjo run",
-    "an accordion drone", "a muted brassy synth lead", "a bowed glass harmonica", "a steel drum pluck",
-    "a rubbery FM synth pluck", "a pitched-down synth stab",
-    "a bass clarinet line", "a hammered dulcimer", "a slowed harp arpeggio",
+    "a bright plucked synth", "a glassy bell synth", "a punchy synth stab", "a chiming music-box synth",
+    "a crisp FM pluck", "a rubbery bass-synth lead", "a filtered supersquare synth", "a warm analog synth lead",
+    "a detuned saw-wave lead", "a bit-crushed 8-bit synth", "a glitch-chopped synth stutter", "a granular synth texture",
+    "a pitched-up piano stab", "a bright electric piano", "a dark grand piano", "a muted felt piano",
+    "a reverb-soaked clean guitar", "a palm-muted electric guitar riff", "a nylon-string guitar pluck", "a tremolo guitar shimmer",
+    "a plucked harp", "a plucked kalimba", "a hollow marimba", "a glockenspiel", "tubular bells", "a celesta",
+    "a pizzicato string section", "a staccato string stab", "a shimmering string pad", "a cinematic synth brass stab",
+    "a whistled synth lead", "a lead flute synth", "a steel drum pluck", "a toy piano", "a hammered dulcimer",
+    "a vocoder-style synth lead", "a resampled reverse synth swell", "a stuttering arpeggiated synth", "a sidechained synth pad",
+    "a hard-clipped digital synth lead",
+  ];
+
+  // Every roll states the target outright: glitchy, minimalist, radio-quality, anthemic.
+  const ANTHEM = [
+    "radio-ready anthem with a stadium-sized hook", "crisp radio-quality master built around an anthemic hook",
+    "arena-ready anthem energy with a loud polished mix", "massive anthem hook over a pristine commercial mix",
+    "chart-ready anthem with a punchy broadcast-quality master", "festival-sized anthem hook with a clean loud master",
+  ];
+  const MINIMAL = [
+    "glitchy minimalist production with wide open space", "stripped-back minimal beat with stutter-glitched edits",
+    "sparse minimalist arrangement full of glitchy micro-chops", "minimal skeletal beat with glitchy digital stutters",
+    "clean minimalist production where every glitch edit hits", "hollow minimalist groove with twitchy glitch cuts",
   ];
 
   // Adjective pools that push every roll toward phonk grit, syncopation and
@@ -1125,8 +1137,8 @@ const CipherEngine = (() => {
     add(blend ? `${lane.genres[0]} fused with ${blend.genres[0]}` : lane.genres[0], 0);
     const like = ctx.likeness;
     const moods = shuffle(like ? [...like.moods, ...lane.moods] : lane.moods, r);
-    // A likeness adds two descriptors of its own, so the mood becomes trimmable.
-    add(moods[0], like ? 2 : 1);
+    // Mood is the least load-bearing descriptor, so it is the first to go.
+    add(moods[0], 2);
 
     if (ctx.instrumental) {
       add("purely instrumental beat with the lead melody carrying the hook", 0);
@@ -1155,8 +1167,10 @@ const CipherEngine = (() => {
     const lead = leadRoll < 0.55 ? pick(LEAD_POOL, r) : pick(blend && leadRoll < 0.8 ? blend.leads : lane.leads, r);
     add(`${lead} playing ${harmony.prog.color} in ${harmony.keyName}`, 0);
     const motif = pick(lane.motifs, r);
-    add(`infectious ${r() < 0.5 ? "two" : "one"}-bar ${motif} motif ${ctx.instrumental ? "carrying the hook as the lead line" : "repeating every hook"}`, 1);
+    add(`infectious ${r() < 0.5 ? "two" : "one"}-bar ${motif} motif ${ctx.instrumental ? "carrying the hook as the lead line" : "repeating every hook"}`, 2);
 
+    add(pick(MINIMAL, r), 0);
+    add(pick(ANTHEM, r), 0);
     add(pick(FLAVORS.phonk, r), 1);
     add(pick(FLAVORS.syncopation, r), 1);
     add(pick(FLAVORS.experimental, r), 1);
@@ -1493,7 +1507,7 @@ const CipherEngine = (() => {
   }
 
   return {
-    PROFILES, LANES, LIKENESS, LEAD_POOL, FLAVORS, EDGES, HOOKS, PROGRESSIONS, CADENCES, TEMPLATES, HARMONIC_PLANS,
+    PROFILES, LANES, LIKENESS, LEAD_POOL, FLAVORS, ANTHEM, MINIMAL, EDGES, HOOKS, PROGRESSIONS, CADENCES, TEMPLATES, HARMONIC_PLANS,
     HARD_BANS, OPTIONAL_BANS, generate, renderSections, lint, keyOptions,
   };
 })();

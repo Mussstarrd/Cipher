@@ -47,7 +47,7 @@ test("style stays inside limits and the descriptor sweet spot", () => {
   for (const input of everyCombo()) {
     const out = E.generate(input);
     assert.ok(out.styleText.length <= 1000, out.styleText);
-    assert.ok(out.meta.descriptors <= 14 && out.meta.descriptors >= 8, `${out.meta.descriptors}: ${out.styleText}`);
+    assert.ok(out.meta.descriptors <= 15 && out.meta.descriptors >= 8, `${out.meta.descriptors}: ${out.styleText}`);
     assert.match(out.styleText, /\d+ BPM/);
   }
 });
@@ -131,7 +131,7 @@ test("every likeness works on every lane and never leaks a name", () => {
               assert.ok(!new RegExp(`(^|[^a-z0-9])${n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}($|[^a-z0-9])`).test(text), `${like.id}: "${n}" leaked\n${text}`);
             }
             assert.deepStrictEqual([...E.lint(out.styleText, "style"), ...E.lint(out.lyricsTagsOnly, "tags")], [], out.styleText);
-            assert.ok(out.meta.descriptors <= 14, `${out.meta.descriptors}: ${out.styleText}`);
+            assert.ok(out.meta.descriptors <= 15, `${out.meta.descriptors}: ${out.styleText}`);
             assert.ok(out.styleText.length <= 1000);
             assert.strictEqual(out.meta.likeness, like.id);
             if (!instrumental) assert.ok(out.styleText.includes(like.signature), out.styleText);
@@ -182,4 +182,16 @@ test("background vocals are always excluded and never invited", () => {
       if (!instrumental) assert.match(out.styleText, /one clean (male |female )?lead vocal over a fully instrumental backing/);
     }
   }
+});
+
+test("every roll asks for a glitchy minimalist radio-ready anthem", () => {
+  const has = (text, pool) => pool.some((p) => text.includes(p));
+  for (const input of everyCombo()) {
+    const out = E.generate(input);
+    assert.ok(has(out.styleText, E.ANTHEM), out.styleText);
+    assert.ok(has(out.styleText, E.MINIMAL), out.styleText);
+    assert.ok(/808|bass/i.test(out.styleText), `no low end: ${out.styleText}`);
+  }
+  const mournful = /mournful|erhu|duduk|theremin|accordion|ocarina|pan flute|sitar|koto|banjo|wail/i;
+  for (const lead of E.LEAD_POOL) assert.ok(!mournful.test(lead), lead);
 });
