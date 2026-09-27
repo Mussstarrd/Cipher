@@ -32,25 +32,26 @@ const CipherEngine = (() => {
   const clamp = (v) => Math.max(0, Math.min(100, v));
 
   // Style-field sweet spot: 6–12 distinct descriptors lands best (research §2).
-  const DESCRIPTOR_TARGET = { min: 8, max: 15 };
+  const DESCRIPTOR_TARGET = { min: 8, max: 13 };
 
   // ------------------------------------------------------------ hard bans
   // Always sent to Exclude Styles. Order = most likely to leak in first.
   const HARD_BANS = [
+    "dj effects",
+    "scratching",
+    "transition sweeps",
+    "risers",
+    "drum fills",
+    "tom fills",
+    "cowbell",
+    "rimshot",
+    "background vocals",
+    "vocal chops",
+    "chanting",
     "jazz",
     "funk",
     "edm",
     "bubblegum pop",
-    "drum fills",
-    "tom fills",
-    "rimshot",
-    "cowbell",
-    "dj scratch",
-    "background vocals",
-    "vocal chops",
-    "vocal samples",
-    "chanting",
-    "gang vocals",
   ];
   const OPTIONAL_BANS = ["humming", "airhorn", "dj tag", "risers", "disco", "live band", "saxophone", "brass"];
 
@@ -65,6 +66,8 @@ const CipherEngine = (() => {
     { re: /\bfunk\w*/i, level: "block", msg: "funk vocabulary" },
     { re: /\bedm\b|\bfour-on-the-floor\b|\bsupersaw\b|\bbuild-?ups?\b|\brisers?\b/i, level: "block", msg: "EDM vocabulary" },
     { re: /\bdrops?\b/i, level: "block", msg: "\"drop\" reads as an EDM drop" },
+    { re: /\b(glitch\w*|stutter\w*|retrigger\w*|micro-?edits?|beat mutes?|hard cuts?|transitions?|phaser|sweeps?|chop\w*)\b/i, level: "block", msg: "edit-effect vocabulary turns into phaser fills and DJ effects" },
+    { re: /\b(marimba|kalimba|music box|glockenspiel|celesta|steel drum|xylophone|toy piano|dulcimer)\b/i, level: "block", msg: "stock mallet instrument" },
     { re: /\bbubblegum\b|\bpoppy\b/i, level: "block", msg: "sugary pop vocabulary" },
     { re: /\bdj\b|\bscratch\w*|\bairhorns?\b|\bdisco\b/i, level: "block", msg: "DJ effect vocabulary" },
     { re: /\b(sax\w*|trumpets?|horns?|rhodes|clavinet|talkbox|wah|slap bass)\b/i, level: "warn", msg: "instrument that drags toward jazz/funk" },
@@ -189,11 +192,12 @@ const CipherEngine = (() => {
   // ---------------------------------------------------------------- lanes
   // Vocabulary is filtered for the house bans: nothing that reads as jazz,
   // funk, EDM, pop, DJ effects or percussion fills.
+  const ALL_MINOR = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
   const LANES = [
     {
       id: "dark-trap", label: "Dark Trap", family: "hiphop",
       genres: ["dark trap", "Atlanta trap"], bpm: [136, 150], feel: "half-time bounce",
-      keys: { minor: ["C#", "F#", "G", "A", "F", "D#", "B"], major: [] },
+      keys: { minor: ALL_MINOR, major: [] },
       progressions: ["pendulum", "phrygian", "sting", "lament", "coldFifth"],
       moods: ["menacing", "cold-blooded confidence", "midnight paranoia", "villain energy"],
       drums: [
@@ -213,28 +217,28 @@ const CipherEngine = (() => {
     },
     {
       id: "rage", label: "Rage / Glitch", family: "hiphop",
-      genres: ["rage trap", "experimental glitch rap"], bpm: [150, 170], feel: "frantic bounce",
-      keys: { minor: ["F", "F#", "G", "A", "C#"], major: [] },
+      genres: ["rage trap", "experimental rage rap"], bpm: [150, 170], feel: "frantic bounce",
+      keys: { minor: ALL_MINOR, major: [] },
       progressions: ["drone", "pendulum", "phrygian"],
       moods: ["chaotic adrenaline", "euphoric menace", "mosh-pit energy"],
       drums: [
-        "blown-out stuttering hi-hats",
-        "off-grid glitch-chopped drums",
+        "blown-out rapid hi-hats",
+        "off-grid distorted drums",
         "distorted kicks firing in syncopated bursts",
       ],
       bass: ["clipping overdriven 808s", "808s that bend and snap back"],
-      leads: ["a buzzing detuned rage synth", "bit-crushed synth stabs", "a pitched synth-chop riff"],
+      leads: ["a buzzing detuned rage synth", "bit-crushed synth stabs", "a pitched synth riff"],
       motifs: ["synth", "bell"],
       vocals: ["hyper energetic delivery", "pitched-up melodic yelps", "nasal clipped flow"],
       textures: ["crushed distorted master", "lo-fi digital grit"],
       flows: ["staccato", "offbeat", "stopstart"],
-      hooks: ["stutter", "chant", "callresp"],
+      hooks: ["loop", "chant", "callresp"],
       adlibs: ["what", "ay", "yeah"],
     },
     {
       id: "drill", label: "Drill", family: "hiphop",
       genres: ["drill", "dark drill rap"], bpm: [140, 146], feel: "sliding half-time",
-      keys: { minor: ["C#", "F#", "G", "A#", "D#", "F"], major: [] },
+      keys: { minor: ALL_MINOR, major: [] },
       progressions: ["sting", "phrygian", "drillClimb", "lament"],
       moods: ["cold menace", "tense and ominous", "street-war tension"],
       drums: [
@@ -248,13 +252,13 @@ const CipherEngine = (() => {
       vocals: ["cold low-register drill flow", "aggressive punchy delivery"],
       textures: ["dry gritty mix", "cold dark space"],
       flows: ["offbeat", "stopstart", "triplet"],
-      hooks: ["chant", "callresp", "stutter"],
+      hooks: ["chant", "callresp", "loop"],
       adlibs: ["grr", "yeah", "gang"],
     },
     {
       id: "melodic-trap", label: "Melodic Trap", family: "hiphop",
       genres: ["melodic trap", "emotional melodic rap"], bpm: [140, 160], feel: "half-time bounce",
-      keys: { minor: ["C#", "F#", "A", "B", "E", "D#"], major: [] },
+      keys: { minor: ALL_MINOR, major: [] },
       progressions: ["climb", "pendulum", "lament", "sway"],
       moods: ["heartbroken", "bittersweet late-night", "melancholic euphoria"],
       drums: [
@@ -274,7 +278,7 @@ const CipherEngine = (() => {
     {
       id: "hypnotic", label: "Hypnotic Minimal", family: "hiphop",
       genres: ["psychedelic trap", "hypnotic minimal rap"], bpm: [128, 150], feel: "cavernous half-time",
-      keys: { minor: ["F", "G", "A", "C", "D"], major: [] },
+      keys: { minor: ALL_MINOR, major: [] },
       progressions: ["drone", "sway", "phrygian", "pendulum"],
       moods: ["narcotic haze", "dark euphoria", "nocturnal hypnosis"],
       drums: [
@@ -283,18 +287,18 @@ const CipherEngine = (() => {
         "echoing claps that land a sixteenth late",
       ],
       bass: ["cavernous sub 808s", "808s that swell and swallow the room"],
-      leads: ["a hazy reversed synth wash", "a filtered synth-chop motif", "sparse icy keys"],
+      leads: ["a hazy reversed synth wash", "a filtered synth motif", "sparse icy keys"],
       motifs: ["synth", "bell"],
       vocals: ["layered auto-tuned lead vocals", "hypnotic repeated phrases"],
       textures: ["psychedelic haze", "cavernous reverb tails", "pitch-black low end"],
       flows: ["melodic", "stopstart", "offbeat"],
-      hooks: ["chant", "callresp", "stutter"],
+      hooks: ["chant", "callresp", "loop"],
       adlibs: ["yeah", "straight up", "alright"],
     },
     {
       id: "grimy-boom", label: "Grimy Boom Bap", family: "hiphop",
       genres: ["grimy boom bap", "hardcore East Coast hip hop"], bpm: [86, 96], feel: "head-nod pocket",
-      keys: { minor: ["A", "D", "E", "G", "C", "F"], major: [] },
+      keys: { minor: ALL_MINOR, major: [] },
       progressions: ["pendulum", "sway", "lament", "coldFifth"],
       moods: ["gritty", "cold street wisdom", "menacing calm"],
       drums: [
@@ -303,7 +307,7 @@ const CipherEngine = (() => {
         "tight swung hi-hats",
       ],
       bass: ["deep round sub bass shadowing the kick"],
-      leads: ["a dark minor piano", "a chopped string sample", "an eerie sampled string swell"],
+      leads: ["a dark minor piano", "a dusty sampled string loop", "an eerie sampled string swell"],
       motifs: ["piano", "string"],
       vocals: ["raspy punchline-heavy rap", "precise commanding delivery"],
       textures: ["dusty tape grit", "concrete-hard drums"],
@@ -314,7 +318,7 @@ const CipherEngine = (() => {
     {
       id: "dark-rnb", label: "Dark Alt R&B", family: "rnb",
       genres: ["dark alternative R&B", "moody trap soul"], bpm: [62, 76], feel: "slow sensual sway",
-      keys: { minor: ["D#", "A#", "F", "C", "G#", "F#"], major: [] },
+      keys: { minor: ALL_MINOR, major: [] },
       progressions: ["lateNight", "ninthSway", "resolve"],
       moods: ["seductive", "toxic late-night tension", "wounded desire"],
       drums: [
@@ -353,22 +357,22 @@ const CipherEngine = (() => {
     },
     {
       id: "y2k-rnb", label: "Y2K Stutter R&B", family: "rnb",
-      genres: ["2000s R&B", "futuristic syncopated R&B"], bpm: [92, 106], feel: "stutter-step groove",
-      keys: { minor: ["F", "G", "A#", "C", "D"], major: [] },
+      genres: ["2000s R&B", "futuristic syncopated R&B"], bpm: [92, 106], feel: "staccato skip groove",
+      keys: { minor: ALL_MINOR, major: [] },
       progressions: ["sway", "phrygian", "ninthSway", "sting"],
       moods: ["futuristic", "flirtatious confidence", "icy seduction"],
       drums: [
-        "stuttering syncopated drum programming with skittering hi-hats",
-        "clicky glitch percussion",
-        "off-beat kicks and chopped snare stutters",
+        "staccato syncopated drum programming with skittering hi-hats",
+        "clicky syncopated percussion",
+        "off-beat kicks and clipped staccato snares",
       ],
       bass: ["deep sliding sub bass"],
-      leads: ["an eerie exotic string riff", "chopped pitched synth hiccups", "staccato synth plucks"],
+      leads: ["an eerie exotic string riff", "pitched staccato synth hiccups", "staccato synth plucks"],
       motifs: ["string", "synth"],
       vocals: ["layered R&B vocals with stacked harmonies", "crisp staccato sung phrasing"],
       textures: ["glossy 2000s R&B polish", "tight dry low end"],
       flows: ["staccato", "offbeat"],
-      hooks: ["stutter", "callresp", "mantra"],
+      hooks: ["loop", "callresp", "mantra"],
       adlibs: ["uh", "yeah", "ooh"],
     },
     {
@@ -422,11 +426,11 @@ const CipherEngine = (() => {
       drums: [
         "punchy syncopated kick and snap pattern",
         "bright crisp claps skipping off the beat",
-        "tight bouncy hi-hats with playful stutters",
+        "tight bouncy hi-hats with playful skips",
       ],
       bass: ["round bouncy 808 bass", "elastic plucked synth bass"],
-      leads: ["a bright plucked synth", "a playful marimba", "a chiming music box", "a bouncy pitched synth riff"],
-      motifs: ["synth", "marimba"],
+      leads: ["a bright plucked synth", "a bouncy pitched synth riff", "a punchy piano stab"],
+      motifs: ["synth", "piano"],
       vocals: ["clean rapid-fire rap with crisp playful diction", "bright sung hook over punchline verses"],
       textures: ["glossy punchy master", "wide bright stereo mix"],
       flows: ["double", "staccato", "offbeat"],
@@ -436,7 +440,7 @@ const CipherEngine = (() => {
     {
       id: "phonk", label: "Phonk", family: "hiphop",
       genres: ["drift phonk", "dark phonk"], bpm: [120, 150], feel: "menacing bounce",
-      keys: { minor: ["F", "G", "A", "C#", "D#", "B"], major: [] },
+      keys: { minor: ALL_MINOR, major: [] },
       progressions: ["phrygian", "pendulum", "drone", "sting"],
       moods: ["hazy underground menace", "dark cruising energy", "grainy nocturnal aggression"],
       drums: [
@@ -450,7 +454,7 @@ const CipherEngine = (() => {
       vocals: ["gritty distorted aggressive rap", "muffled low-register menacing rap"],
       textures: ["tape-saturated lo-fi grit", "vinyl-crackle cassette haze"],
       flows: ["triplet", "staccato", "stopstart"],
-      hooks: ["chant", "stutter", "callresp"],
+      hooks: ["chant", "loop", "callresp"],
       adlibs: ["yeah", "uh", "huh"],
     },
     {
@@ -479,93 +483,57 @@ const CipherEngine = (() => {
   // Lead instruments shared by every lane, so the melody voice changes roll to
   // roll instead of always being the lane's bell or piano.
   const LEAD_POOL = [
-    "a bright plucked synth", "a glassy bell synth", "a punchy synth stab", "a chiming music-box synth",
-    "a crisp FM pluck", "a rubbery bass-synth lead", "a filtered supersquare synth", "a warm analog synth lead",
-    "a detuned saw-wave lead", "a bit-crushed 8-bit synth", "a glitch-chopped synth stutter", "a granular synth texture",
-    "a pitched-up piano stab", "a bright electric piano", "a dark grand piano", "a muted felt piano",
-    "a reverb-soaked clean guitar", "a palm-muted electric guitar riff", "a nylon-string guitar pluck", "a tremolo guitar shimmer",
-    "a plucked harp", "a plucked kalimba", "a hollow marimba", "a glockenspiel", "tubular bells", "a celesta",
-    "a pizzicato string section", "a staccato string stab", "a shimmering string pad", "a cinematic synth brass stab",
-    "a whistled synth lead", "a lead flute synth", "a steel drum pluck", "a toy piano", "a hammered dulcimer",
-    "a vocoder-style synth lead", "a resampled reverse synth swell", "a stuttering arpeggiated synth", "a sidechained synth pad",
-    "a hard-clipped digital synth lead",
+    "a dark plucked synth", "a detuned analog synth lead", "a glassy bell synth", "a deep piano stab",
+    "a distorted electric guitar riff", "a clean reverb-soaked guitar", "a warm analog pad lead", "a hard FM synth pluck",
+    "a filtered saw lead", "an icy digital synth", "a resampled reverse synth", "a muted felt piano",
+    "a bright square-wave lead", "a sub-heavy synth bass melody", "a pitched-down piano loop", "a sidechained synth chord stab",
+    "a grainy sampled string swell", "a staccato string stab", "a hollow sine lead", "a screaming distorted synth lead",
+    "a tape-warped synth pad", "a dark organ stab", "a bit-crushed synth lead", "a slow gliding portamento synth",
+    "a plucked harp", "a nylon-string guitar", "a tremolo guitar shimmer", "a cinematic synth brass stab",
+    "a whistled synth lead", "a pitched-up piano stab",
   ];
 
-  // Every roll states the target outright: glitchy, minimalist, radio-quality, anthemic.
-  const ANTHEM = [
-    "radio-ready anthem with a stadium-sized hook", "crisp radio-quality master built around an anthemic hook",
-    "arena-ready anthem energy with a loud polished mix", "massive anthem hook over a pristine commercial mix",
-    "chart-ready anthem with a punchy broadcast-quality master", "festival-sized anthem hook with a clean loud master",
+  // Every roll gets one line from each pool. Together they are the brief:
+  // non-quantized, syncopated, experimental, minimalist, addictive, sexy.
+  const LOOSE = [
+    "loose non-quantized drums with drunk human swing",
+    "unquantized kicks dragging lazily behind the snare",
+    "hand-played off-grid drum feel that never snaps to the grid",
+    "sloppy-tight non-quantized pocket with late hi-hats",
+    "drums pushed and pulled off the grid like a live drummer nodding out",
+  ];
+  const SYNC = [
+    "heavily syncopated kicks displaced against the snare",
+    "off-beat 808 hits that land where the kick should be",
+    "polyrhythmic off-beat hi-hat accents",
+    "syncopated stop-start pulse with gaps of silence",
+    "kick pattern that skips the downbeat and lands on the and",
+  ];
+  const EXPERIMENTAL = [
+    "experimental warped sound design",
+    "pitch-bent detuned textures and reversed swells",
+    "left-field experimental arrangement with sudden silence",
+    "strange resampled textures under a simple beat",
+    "experimental tape-warped atmosphere",
   ];
   const MINIMAL = [
-    "glitchy minimalist production with wide open space", "stripped-back minimal beat with stutter-glitched edits",
-    "sparse minimalist arrangement full of glitchy micro-chops", "minimal skeletal beat with glitchy digital stutters",
-    "clean minimalist production where every glitch edit hits", "hollow minimalist groove with twitchy glitch cuts",
+    "minimalist arrangement with wide empty space and two or three sounds at a time",
+    "stripped-back skeletal beat with lots of silence between hits",
+    "sparse minimalist production where every hit counts",
+    "hollow minimal groove with open space around the 808",
+    "bare-bones minimal beat that leaves room for the voice",
   ];
-
-  // Adjective pools that push every roll toward phonk grit, syncopation and
-  // experimental edits. One from each lands in every style field.
-  const FLAVORS = {
-    phonk: [
-      "phonk-tinged", "drift-phonk 808 distortion", "tape-crushed phonk grit", "grainy phonk haze",
-      "lo-fi phonk drum crunch", "cassette-warped phonk texture", "distorted phonk swagger",
-    ],
-    syncopation: [
-      "aggressively syncopated", "off-grid syncopated bounce", "rhythmically displaced", "polyrhythmic hi-hat syncopation",
-      "stumbling syncopated pocket", "cross-rhythm accents against the beat", "syncopated stop-start pulse",
-    ],
-    experimental: [
-      "experimental left-field sound design", "glitch-warped experimental edits", "unpredictable experimental structure",
-      "avant-garde stutter-chopped textures", "experimental pitch-bent atmosphere", "warped experimental tape manipulation",
-      "boundary-pushing experimental arrangement",
-    ],
-  };
-
-  // ---------------------------------------------------------------- edge
-  // How far past the grid the groove goes. Syncopation is always on.
-  const EDGES = {
-    syncopated: {
-      label: "Syncopated",
-      phrases: [
-        "heavily syncopated groove with accents off the beat",
-        "off-beat kick placement pushing against the snare",
-        "syncopated bounce that never lands where you expect",
-      ],
-      extra: [],
-      sliders: { weirdness: [35, 45], styleInfluence: [75, 90] },
-      note: "Syncopated: moderate Weirdness keeps the bounce inventive; high Style Influence holds the lane and keeps the banned genres out.",
-    },
-    twitch: {
-      label: "Twitch",
-      phrases: [
-        "twitchy stutter-edited synth chops",
-        "glitchy micro-edits and stuttered hi-hat bursts",
-        "808 retriggers twitching on the off-beats",
-      ],
-      extra: ["sudden half-bar beat mutes for impact", "heavily syncopated groove with accents off the beat"],
-      sliders: { weirdness: [45, 60], styleInfluence: [70, 85] },
-      note: "Twitch: push Weirdness into the mid range for the glitch edits, but keep Style Influence at 70+ — below that the stutters start dragging the track toward EDM.",
-    },
-    experimental: {
-      label: "Experimental",
-      phrases: [
-        "left-field experimental sound design",
-        "unpredictable rhythmic displacement",
-        "warped pitch-shifted textures",
-      ],
-      extra: ["twitchy stutter-edited synth chops", "glitchy micro-edits and stuttered hi-hat bursts"],
-      sliders: { weirdness: [60, 75], styleInfluence: [65, 80] },
-      note: "Experimental: high Weirdness for left-field choices, Style Influence still 65+ so the genre anchor survives. On v6-wild, the model supplies the chaos, so the Weirdness range drops. Generate in batches and keep the strangest take that still bangs.",
-    },
-  };
-
-  // Competing positives for the "no fillers / no fills" rule.
-  const LOCKED_GROOVE = [
-    "locked unbroken drum loop",
-    "hard cuts between sections",
-    "808 and hi-hats carry every transition",
-    "tight minimal arrangement where every sound hits",
+  const SEXY = [
+    "addictive strip-club anthem bounce that makes hips move",
+    "seductive late-night club anthem with a hypnotic ass-shaking groove",
+    "sultry slow-grind anthem energy built for the dance floor",
+    "irresistible twerk-ready bounce with an addictive hook loop",
+    "sweaty club anthem swagger with a hook you cannot shake",
+    "hypnotic body-rolling groove with anthem-sized confidence",
   ];
+  const SLIDERS = { weirdness: [45, 60], styleInfluence: [85, 95] };
+  const SLIDER_NOTE = "Weirdness in the mid range feeds the experimental side; Style Influence stays high so the bans and the one-voice rule hold.";
+  const EDGES = { banger: { label: "Banger" } };
 
   // ---------------------------------------------------------------- flows
   const FLOWS = {
@@ -599,9 +567,9 @@ const CipherEngine = (() => {
       rule: "Line B rhymes back into the title. The second pass is word-for-word identical to the first.",
       contour: "arch",
     },
-    stutter: {
-      name: "Stutter hook", map: "A · A · B · A", syllables: "3–5 syllables per line",
-      rule: "Stutter the first syllable of the title (ta-ta-title). The twitch is the hook; write it with hyphens so Suno chops it.",
+    loop: {
+      name: "Two-bar loop", map: "A · A · A · A", syllables: "3–5 syllables per line",
+      rule: "One two-bar phrase, four times, no changes. Boredom is the trap; the beat under it moves, the words never do.",
       contour: "narrow",
     },
   };
@@ -685,61 +653,34 @@ const CipherEngine = (() => {
 
   // ---------------------------------------------------------------- style
   function buildStyle(ctx) {
-    const { lane, blend, edge, harmony, vocalMode, bpm, r } = ctx;
+    const { lane, blend, harmony, vocalMode, bpm, r } = ctx;
+    const like = ctx.likeness;
     const parts = [];
     const add = (text, pri) => text && parts.push({ text, pri });
 
     add(blend ? `${lane.genres[0]} fused with ${blend.genres[0]}` : lane.genres[0], 0);
-    const like = ctx.likeness;
-    const moods = shuffle(like ? [...like.moods, ...lane.moods] : lane.moods, r);
-    // Mood is the least load-bearing descriptor, so it is the first to go.
-    add(moods[0], 2);
-
     if (ctx.instrumental) {
       add("purely instrumental beat with the lead melody carrying the hook", 0);
     } else {
+      const who = { male: "male ", female: "female ", duet: "" }[vocalMode] || "";
       const vocal = pick(like ? like.vocals : lane.vocals, r);
-      const gender = {
-        male: "one clean male lead vocal over a fully instrumental backing",
-        female: "one clean female lead vocal over a fully instrumental backing",
-        duet: lane.family === "rnb"
-          ? "one clean female lead vocal over a fully instrumental backing with a male rap verse"
-          : "one clean male lead vocal over a fully instrumental backing with a female sung hook",
-      }[vocalMode] || "one clean lead vocal over a fully instrumental backing";
-      add(vocal, 0);
-      add(gender, 0);
+      add(`${vocal} as one clean ${who}lead vocal over a fully instrumental backing`, 0);
       if (like) add(like.signature, 0);
     }
-    if (like) add(pick(like.tells, r), 2);
-
-    const drums = shuffle(lane.drums, r);
-    add(drums[0], 0);
-    const edgeDef = EDGES[edge];
-    add(pick(edgeDef.phrases, r), 0);
-    add(pick(lane.bass, r), 1);
-
+    add(pick(LOOSE, r), 0);
+    add(pick(SYNC, r), 0);
+    add(pick(lane.bass, r), 0);
     const leadRoll = r();
-    const lead = leadRoll < 0.55 ? pick(LEAD_POOL, r) : pick(blend && leadRoll < 0.8 ? blend.leads : lane.leads, r);
+    const lead = leadRoll < 0.6 ? pick(LEAD_POOL, r) : pick(blend && leadRoll < 0.8 ? blend.leads : lane.leads, r);
     add(`${lead} playing ${harmony.prog.color} in ${harmony.keyName}`, 0);
-    const motif = pick(lane.motifs, r);
-    add(`infectious ${r() < 0.5 ? "two" : "one"}-bar ${motif} motif ${ctx.instrumental ? "carrying the hook as the lead line" : "repeating every hook"}`, 2);
-
     add(pick(MINIMAL, r), 0);
-    add(pick(ANTHEM, r), 0);
-    add(pick(FLAVORS.phonk, r), 1);
-    add(pick(FLAVORS.syncopation, r), 1);
-    add(pick(FLAVORS.experimental, r), 1);
-    add(drums[1], 3);
-    add(pick(LOCKED_GROOVE, r), 2);
-    // v6 runs long when the ending is unspecified: state both edges positively.
-    add(`opens straight on the ${motif} motif and hard-stops after the last hook`, 1);
-    if (edgeDef.extra.length) add(pick(edgeDef.extra, r), 2);
-    if (blend) add(pick(blend.drums, r), 3);
-    add(moods[1], 4);
-    add(pick(lane.textures, r), 3);
+    add(pick(SEXY, r), 0);
+    add(pick(EXPERIMENTAL, r), 1);
+    if (like) add(pick(like.tells, r), 2);
+    add(pick(lane.drums, r), 1);
+    add("loud radio-quality master that hard-stops after the last hook", 0);
     add(`${bpm} BPM ${lane.feel}`, 0);
 
-    // Dedupe, then trim lowest priority until inside the descriptor target.
     const seen = new Set();
     let kept = parts.filter((p) => {
       const k = p.text.toLowerCase();
@@ -747,7 +688,7 @@ const CipherEngine = (() => {
       seen.add(k);
       return true;
     });
-    for (let pri = 4; pri >= 2 && kept.length > DESCRIPTOR_TARGET.max; pri--) {
+    for (let pri = 2; pri >= 1 && kept.length > DESCRIPTOR_TARGET.max; pri--) {
       for (let i = kept.length - 1; i >= 0 && kept.length > DESCRIPTOR_TARGET.max; i--) {
         if (kept[i].pri === pri) kept.splice(i, 1);
       }
@@ -761,6 +702,7 @@ const CipherEngine = (() => {
     "pre-hook": { label: "Pre-hook", length: "~3:00" },
     "beat-switch": { label: "Beat switch", length: "~3:00" },
     short: { label: "Short", length: "~2:00" },
+    loop: { label: "Short loop", length: "~1:30" },
   };
 
   function buildSections(ctx) {
@@ -770,22 +712,19 @@ const CipherEngine = (() => {
     const flowA = FLOWS[flows[0]];
     const flowB = FLOWS[flows[1] || flows[0]];
     const flowC = FLOWS[flows[2] || flows[0]];
-    const twitch = edge !== "syncopated";
+    void edge;
     const hookWord = lane.family === "rnb" ? "Chorus" : "Hook";
     const chordText = (list) => (chordsInTags ? `, ${list.join(" – ")}` : "");
 
     const S = [];
     const push = (tag, desc, slot, extra = {}) => S.push({ tag: `[${tag}${desc ? `: ${desc}` : ""}]`, name: tag, slot, ...extra });
 
-    const intro = twitch
-      ? `stuttered chop of the hook motif, 2 bars${chordText(sh.intro)}`
-      : `hook motif alone, 2 bars${chordText(sh.intro)}`;
+    const intro = `hook motif alone over the 808, 2 bars${chordText(sh.intro)}`;
     const hookDesc = () =>
       `${hook.contour === "narrow" ? "title-forward" : "sticky melody"}, identical every time, single lead voice doubled${chordText(sh.hook)}`;
     const verseDesc = (flow, n) => {
       const bits = [flow.tag];
-      if (twitch && n > 1) bits.push("stutter-chopped lead vocal edits between bars");
-      else bits.push(n === 1 ? "beat locked in" : "denser rhymes");
+      bits.push(n === 1 ? "beat locked in" : "denser rhymes, same beat");
       return bits.join(", ") + chordText(sh.verse);
     };
     const hookSec = () => {
@@ -812,8 +751,12 @@ const CipherEngine = (() => {
       hookSec();
     } else if (template === "short") {
       hookSec(); verse(1, flowA); hookSec();
-      push("Break", "beat cuts to 808 and voice for 2 bars", "break", { guide: "1–2 lines, the hardest bar in the song", harmony: sh.verse });
+      push("Break", "808 and voice only for 2 bars", "break", { guide: "1–2 lines, the hardest bar in the song", harmony: sh.verse });
       hookSec();
+    } else if (template === "loop") {
+      hookSec();
+      push("Verse 1", `${flowA.tag}, 8 bars, beat locked in${chordText(sh.verse)}`, "verse1", { guide: `8 bars · ${flowA.guide}`, harmony: sh.verse });
+      hookSec(); hookSec();
     } else {
       hookSec(); verse(1, flowA); hookSec(); verse(2, flowB); hookSec();
       if (template === "beat-switch") {
@@ -830,9 +773,8 @@ const CipherEngine = (() => {
   // Instrumental arrangement: the same skeleton, but every tag says what the
   // beat does. Vocal words never appear, so Suno has nothing to sing.
   function buildInstrumentalSections(ctx) {
-    const { lane, edge, template, harmony, plan, chordsInTags, postHook, r } = ctx;
+    const { lane, template, harmony, plan, chordsInTags, postHook, r } = ctx;
     const sh = sectionHarmony(harmony, plan);
-    const twitch = edge !== "syncopated";
     const motif = pick(lane.motifs, r);
     const lead = pick(lane.leads, r);
     const drums = shuffle(lane.drums, r);
@@ -845,13 +787,12 @@ const CipherEngine = (() => {
       if (postHook) push("Post-Hook", `motif alone over drums, 4 bars${chordText(sh.hook)}`, { harmony: sh.hook });
     };
     const verse = (n) => {
-      const bits = [`stripped to ${drums[n % drums.length]}`, n === 1 ? `${lead} sparse` : twitch ? `${lead} stutter-chopped` : `${lead} denser variation`];
-      if (twitch && n > 1) bits.push("half-bar beat mutes");
+      const bits = [`stripped to ${drums[n % drums.length]}`, n === 1 ? `${lead} sparse` : `${lead} denser variation`];
       push(`Verse ${n}`, `${bits.join(", ")}, 16 bars${chordText(sh.verse)}`, { harmony: sh.verse });
     };
     const pre = () => push("Pre-Chorus", `808 cuts out, ${lead} holds the tension chord, hi-hats tighten${chordsInTags ? ` on ${sh.pre[0]}` : ""}`, { harmony: sh.pre });
 
-    push("Intro", twitch ? `stuttered chop of the ${motif} motif, 2 bars, drums enter on bar 3${chordText(sh.intro)}` : `${motif} motif alone, 2 bars, drums enter on bar 3${chordText(sh.intro)}`, { harmony: sh.intro });
+    push("Intro", `${motif} motif alone, 2 bars, drums enter on bar 3${chordText(sh.intro)}`, { harmony: sh.intro });
     if (template === "pre-hook") {
       verse(1); pre(); hookSec(); verse(2); pre(); hookSec();
       push("Bridge", `half-time, chords and 808 only, lands on a deceptive chord${chordText(sh.bridge)}`, { harmony: sh.bridge });
@@ -860,6 +801,8 @@ const CipherEngine = (() => {
       hookSec(); verse(1); hookSec();
       push("Break", "808 and hi-hats only for 2 bars", { harmony: sh.verse });
       hookSec();
+    } else if (template === "loop") {
+      hookSec(); verse(1); hookSec(); hookSec();
     } else {
       hookSec(); verse(1); hookSec(); verse(2); hookSec();
       if (template === "beat-switch") {
@@ -905,9 +848,7 @@ const CipherEngine = (() => {
         "The hook arrives within the first 15 seconds and appears at least 3 times.",
         "Title in the first and last line of the hook.",
         "Longer notes and small steps are easier to sing back; save leaps for the title word only.",
-        edge === "syncopated"
-          ? "Start the hook on an off-beat (the 'and' of 1) so it snags against the kick."
-          : "Chop the title into stuttered syllables once per hook (ti-ti-title); the edit becomes the earworm.",
+        "Start the hook on an off-beat (the 'and' of 1) so it snags against the kick.",
         "Every verse bar should earn its place: an image, a punchline or a flow switch. No throwaway bars.",
       ],
     };
@@ -939,7 +880,7 @@ const CipherEngine = (() => {
       .replace(/vocal pads?/gi, (m) => m.replace(/vocal/i, "synth"))
       .replace(/vocal[- ]?(sample|stab|loop)s?/gi, (m) => m.replace(/vocal/i, "synth"))
       .replace(/\brap\b/g, "beat")
-      .replace(/clicky glitch percussion/gi, "clicky glitch percussion");
+      .replace(/clicky glitch percussion/gi, "clicky syncopated percussion");
   }
 
   function buildExclude(extraBans) {
@@ -956,7 +897,7 @@ const CipherEngine = (() => {
     const profile = PROFILES[input.profile] || PROFILES[DEFAULT_PROFILE];
     const lane = LANE_BY_ID.get(input.lane) || LANES[0];
     const blend = input.blend && input.blend !== lane.id ? LANE_BY_ID.get(input.blend) : undefined;
-    const edge = EDGES[input.edge] ? input.edge : "twitch";
+    const edge = "banger";
     const seed = input.seed >>> 0;
     const r = rng(seed);
     const warnings = [];
@@ -984,8 +925,8 @@ const CipherEngine = (() => {
       warnings.push({ level: "warn", message: `${bpm} BPM is outside ${lane.label}'s ${lo}–${hi} range; using it anyway.` });
     }
 
-    let hookPool = likeness ? [...likeness.hooks] : [...lane.hooks];
-    if (edge !== "syncopated" && !hookPool.includes("stutter")) hookPool.push("stutter");
+    let hookPool = (likeness ? [...likeness.hooks] : [...lane.hooks]).map((h) => (h === "loop" ? "loop" : h));
+    if (template === "loop" && !hookPool.includes("loop")) hookPool.push("loop");
     const hookId = input.hook && HOOKS[input.hook] ? input.hook : pick(hookPool, r);
     const hook = HOOKS[hookId];
 
@@ -1037,13 +978,13 @@ const CipherEngine = (() => {
       },
       blueprint,
       sliders: {
-        weirdness: EDGES[edge].sliders.weirdness.map((v) => clamp(v + profile.weirdnessShift)),
-        styleInfluence: EDGES[edge].sliders.styleInfluence.map((v) => clamp(v + profile.styleShift)),
+        weirdness: SLIDERS.weirdness.map((v) => clamp(v + profile.weirdnessShift)),
+        styleInfluence: SLIDERS.styleInfluence.map((v) => clamp(v + profile.styleShift)),
         // Above Off, Variety rewrites the style prompt and can undo the bans.
         variety: "Off",
         maxMode: profile.id === "v6-mini" ? "Not needed for test drafts" : "On for the keeper (2× credits; holds the whole song consistent)",
       },
-      sliderNote: `${EDGES[edge].note} ${profile.note}`,
+      sliderNote: `${SLIDER_NOTE} ${profile.note}`,
       warnings,
       meta: {
         profile: profile.id, lane: lane.id, laneLabel: lane.label, blend: blend && blend.id,
@@ -1062,7 +1003,7 @@ const CipherEngine = (() => {
   }
 
   return {
-    PROFILES, LANES, LIKENESS, LEAD_POOL, FLAVORS, ANTHEM, MINIMAL, EDGES, HOOKS, PROGRESSIONS, CADENCES, TEMPLATES, HARMONIC_PLANS,
+    PROFILES, LANES, LIKENESS, LEAD_POOL, LOOSE, SYNC, EXPERIMENTAL, MINIMAL, SEXY, EDGES, HOOKS, PROGRESSIONS, CADENCES, TEMPLATES, HARMONIC_PLANS,
     HARD_BANS, OPTIONAL_BANS, generate, renderSections, lint, keyOptions,
   };
 })();

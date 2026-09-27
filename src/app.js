@@ -21,13 +21,13 @@
     const likes = E.LIKENESS.filter((l) => l.family === lane.family);
     const likeness = chance(0.55) ? rand(likes) : null;
     const others = E.LANES.filter((l) => l.id !== lane.id && l.family === lane.family);
-    const edges = Object.keys(E.EDGES);
+    // Short loops about a third of the time; otherwise the lane's own structure.
+    const template = chance(0.35) ? "loop" : chance(0.2) ? rand(Object.keys(E.TEMPLATES)) : undefined;
     return {
       lane: lane.id,
       likeness: likeness ? likeness.id : undefined,
-      edge: rand(edges),
       blend: chance(0.3) ? rand(others).id : undefined,
-      template: chance(0.25) ? rand(Object.keys(E.TEMPLATES)) : undefined,
+      template,
       postHook: chance(0.3),
       chordsInTags: chance(0.2),
       vocal: chance(0.7) ? "auto" : rand(["male", "female", "duet"]),
@@ -35,9 +35,17 @@
     };
   }
 
+  const recentKeys = [];
   function generate() {
     if (!state.roll) state.roll = rollRecipe();
     pkg = E.generate({ ...state.roll, instrumental: state.instrumental, profile: state.profile });
+    // Keep the key moving: reroll the seed while it repeats one of the last four.
+    for (let tries = 0; tries < 12 && recentKeys.includes(pkg.harmony.key); tries++) {
+      state.roll.seed = Math.floor(Math.random() * 1e9);
+      pkg = E.generate({ ...state.roll, instrumental: state.instrumental, profile: state.profile });
+    }
+    if (recentKeys[recentKeys.length - 1] !== pkg.harmony.key) recentKeys.push(pkg.harmony.key);
+    if (recentKeys.length > 4) recentKeys.shift();
     render();
   }
 
@@ -99,7 +107,6 @@
     if (m.blend) recipe.append(tag(`+ ${laneById(m.blend).label}`));
     if (m.likenessName) recipe.append(tag(`${m.likenessName} likeness`, true));
     recipe.append(
-      tag(E.EDGES[m.edge].label),
       tag(`${m.bpm} BPM`),
       tag(pkg.harmony.key),
       tag(`${E.TEMPLATES[m.template].label} ${m.templateLength}`),

@@ -147,16 +147,6 @@ test("the name lint catches an artist name in free text", () => {
   assert.ok(E.lint("dark trap, deep 808s", "style").every((w) => w.level !== "block"));
 });
 
-test("every roll carries a phonk, a syncopation and an experimental adjective", () => {
-  const has = (text, pool) => pool.some((p) => text.includes(p));
-  for (const input of everyCombo()) {
-    const out = E.generate(input);
-    assert.ok(has(out.styleText, E.FLAVORS.phonk), out.styleText);
-    assert.ok(has(out.styleText, E.FLAVORS.syncopation), out.styleText);
-    assert.ok(has(out.styleText, E.FLAVORS.experimental), out.styleText);
-  }
-});
-
 test("lead instruments vary across rolls", () => {
   const leads = new Set();
   for (let seed = 1; seed <= 60; seed++) {
@@ -176,7 +166,7 @@ test("background vocals are always excluded and never invited", () => {
       const text = `${out.styleText}\n${out.lyricsTagsOnly}\n${JSON.stringify(out.blueprint)}`;
       const m = text.match(bad);
       assert.ok(!m, `"${m && m[0]}" in ${JSON.stringify(input)}\n${text}`);
-      for (const b of ["background vocals", "vocal chops", "vocal samples", "chanting", "gang vocals"]) {
+      for (const b of ["background vocals", "vocal chops", "chanting", "dj effects", "scratching", "transition sweeps", "drum fills"]) {
         assert.ok(out.excludeText.split(", ").includes(b), b);
       }
       if (!instrumental) assert.match(out.styleText, /one clean (male |female )?lead vocal over a fully instrumental backing/);
@@ -184,14 +174,26 @@ test("background vocals are always excluded and never invited", () => {
   }
 });
 
-test("every roll asks for a glitchy minimalist radio-ready anthem", () => {
+test("every roll is non-quantized, syncopated, experimental, minimalist and sexy", () => {
   const has = (text, pool) => pool.some((p) => text.includes(p));
   for (const input of everyCombo()) {
     const out = E.generate(input);
-    assert.ok(has(out.styleText, E.ANTHEM), out.styleText);
-    assert.ok(has(out.styleText, E.MINIMAL), out.styleText);
+    for (const pool of [E.LOOSE, E.SYNC, E.EXPERIMENTAL, E.MINIMAL, E.SEXY]) assert.ok(has(out.styleText, pool), out.styleText);
     assert.ok(/808|bass/i.test(out.styleText), `no low end: ${out.styleText}`);
+    assert.match(out.styleText, /hard-stops after the last hook/);
   }
-  const mournful = /mournful|erhu|duduk|theremin|accordion|ocarina|pan flute|sitar|koto|banjo|wail/i;
-  for (const lead of E.LEAD_POOL) assert.ok(!mournful.test(lead), lead);
+  const stock = /mournful|erhu|duduk|theremin|accordion|ocarina|pan flute|sitar|koto|banjo|wail|marimba|kalimba|music box|glockenspiel|celesta|steel drum|toy piano|dulcimer/i;
+  for (const lead of E.LEAD_POOL) assert.ok(!stock.test(lead), lead);
+});
+
+test("the short loop template is a 90-second hook machine", () => {
+  const out = E.generate({ lane: "dark-trap", template: "loop", seed: 5 });
+  assert.strictEqual(out.sections.filter((s) => s.slot === "hook").length, 3);
+  assert.strictEqual(out.sections.filter((s) => s.slot && s.slot.startsWith("verse")).length, 1);
+});
+
+test("keys spread across the circle", () => {
+  const keys = new Set();
+  for (let seed = 1; seed <= 80; seed++) keys.add(E.generate({ lane: "drill", seed }).harmony.key);
+  assert.ok(keys.size >= 10, `${keys.size} keys`);
 });

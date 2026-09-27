@@ -136,7 +136,22 @@ The fix, enforced by test 15:
 - The Exclude field always carries `background vocals, vocal chops, vocal samples, chanting, gang vocals`.
 - A lint blocks vocal-chop, vocal-sample, chant, choir, beatbox, gang/crowd/background/backing vocal, shout-back and call-and-response wording anywhere in a package.
 
-## 10. Syncopation and twitch vocabulary
+## 10. Why "glitch" and "stutter" turned into phaser fills and DJ scratches
+
+Field reports: filler effects every fourth bar, DJ scratches, stock mallet instruments. The prompts were asking for it. "Glitchy micro-edits", "stutter", "808 retriggers", "half-bar beat mutes", "hard cuts between sections" and "808 and hi-hats carry every transition" are all read by Suno as transition effects, and transition effects in its training data are phaser sweeps, risers and scratches. "Marimba", "kalimba", "music box" and "celesta" are stock preset sounds.
+
+The fix:
+
+- All edit-effect words are gone from lanes, likenesses, pools and section tags, and a lint blocks glitch, stutter, retrigger, micro-edit, beat mute, hard cut, transition, phaser, sweep and chop. "Rage / Glitch" is now Rage; "Y2K Stutter R&B" is Y2K R&B with staccato drum language.
+- Mallet and world instruments are gone from the lead pool and lanes, and a lint blocks them. The 30-instrument pool is synths, pianos, guitars, strings, organ and harp.
+- The Exclude field now leads with `dj effects, scratching, transition sweeps, risers`.
+- The style field is one brief, in this order: genre; one clean lead vocal (the timbre folded into the same phrase); a non-quantized feel line; a syncopation line; the 808; the lead playing the progression in its key; a minimalist line; a club-anthem line ("addictive strip-club anthem bounce that makes hips move"); an experimental line; one lane drum line; a loud radio-quality master with a hard stop; BPM. 12–13 descriptors, no adjectives that don't do work.
+- The edges (Syncopated / Twitch / Experimental) are gone. Every roll is all of them.
+- Every minor lane can land in any of the 12 minor keys, and the page refuses to repeat any of the last four keys.
+- A "Short loop" structure (~1:30: intro, hook, one 8-bar verse, hook, hook, outro) rolls about a third of the time, with a "Two-bar loop" hook formula: one phrase, four times, no changes.
+- Phonk stays as a lane, but the phonk adjective no longer goes on every roll; that vocabulary drags in cowbell and DJ effects.
+
+## 11. Syncopation vocabulary
 
 - Syncopation: off-beat kick placement, triplet hi-hat rolls switching between eighths and sixteenth-triplets, claps a sixteenth late, and flows that start on the "and" of 1.
 - Twitch: stutter-edited vocal chops, glitch micro-edits, 808 retriggers on the off-beats, and half-bar beat mutes. A mute is a gap, not a fill.
