@@ -19,7 +19,7 @@ test("same seed, same package", () => {
 });
 
 test("every package is clean: no vocals, no FX words, no artist names, inside limits", () => {
-  const vocal = /\b(vocal|vocals|vocalist|rap\b|rapper|sing\w*|sung|chant\w*|choir|hum|humming|lyric\w*|ad-?lib\w*|falsetto|harmonies)\b/i;
+  const vocal = /\b(vocal|vocals|vocalist|rap\b|rapper|sing|sings|singing|singer|sung|chant\w*|choir|hum|humming|lyric\w*|ad-?lib\w*|falsetto|harmonies)\b/i;
   for (const input of rolls()) {
     const out = E.generate(input);
     const all = `${out.styleText}\n${out.lyricsText}`;
