@@ -61,13 +61,16 @@ const AnomalyEngine = (() => {
 
   function buildStyle(ctx) {
     const { world, harmony, bpm, r, used } = ctx;
-    const lines = [];
+    // Higher priority number = dropped first when the field runs long.
+    const parts = [];
+    const add = (text, pri) => parts.push({ text, pri });
 
-    lines.push(world.genre);
-    lines.push(pick(D.INSTRUMENTAL_LOCK, r));
-    lines.push(`${pick(D.SYNCOPATION, r)}, ${pick(D.HUMAN_FEEL, r)}`);
-    lines.push(pick(world.drums, r));
-    lines.push(pick(world.lowEnd, r));
+    add(world.genre, 0);
+    add(pick(D.INSTRUMENTAL_LOCK, r), 0);
+    add(pick(D.SYNCOPATION, r), 0);
+    add(pick(D.HUMAN_FEEL, r), 0);
+    add(pick(world.drums, r), 2);
+    add(pick(world.lowEnd, r), 0);
 
     // Lead + counter-voice: diverse timbres, one keys instrument at most.
     let leadPool = world.leads;
@@ -77,36 +80,35 @@ const AnomalyEngine = (() => {
     let counterPool = D.COUNTER_VOICES;
     if (isKeys(lead)) counterPool = counterPool.filter((c) => !isKeys(c));
     const counter = makeVoice(counterPool, D.ADJECTIVES, r, used);
-    lines.push(`${lead} playing ${harmony.prog.color} in ${harmony.key}`);
-    lines.push(`${counter} answering in the gaps`);
+    add(`${lead} playing ${harmony.prog.color} in ${harmony.key}`, 0);
+    // The arrangement names the same instrument the style field leads with.
+    ctx.motif = `the ${lead.split(",")[0].split(" ").slice(1, 5).join(" ")} motif`;
+    add(`${counter} answering in the gaps`, 3);
 
-    lines.push(ctx.glitch);
-    lines.push(`signature: ${ctx.signature}`);
-    lines.push(`technical flex: ${ctx.flex}`);
-    lines.push(`beat switch at the midpoint: ${ctx.beatSwitch}`);
-    lines.push(`${pick(world.texture, r)}, ${pick(world.moods, r)}`);
-    lines.push(pick(D.MIX, r));
-    lines.push(`${bpm} BPM ${world.feel}, hard stop ending`);
+    add(ctx.glitch, 0);
+    add(`signature: ${ctx.signature}`, 0);
+    add(`technical flex: ${ctx.flex}`, 1);
+    add(`beat switch at the midpoint: ${ctx.beatSwitch}`, 0);
+    add(`${pick(world.texture, r)}, ${pick(world.moods, r)}`, 4);
+    add(pick(D.MIX, r), 1);
+    const tail = `${bpm} BPM ${world.feel}, hard stop ending`;
 
-    let text = lines.join(", ");
-    if (text.length > D.STYLE_LIMIT) {
-      // Drop the texture line first, then the counter voice, until it fits.
-      const drop = [lines.indexOf(lines[11]), 6];
-      for (const i of drop) {
-        if (text.length <= D.STYLE_LIMIT) break;
-        lines.splice(i, 1);
-        text = lines.join(", ");
-      }
-      if (text.length > D.STYLE_LIMIT) text = text.slice(0, D.STYLE_LIMIT).replace(/,\s*[^,]*$/, "");
+    const budget = D.STYLE_LIMIT - tail.length - 2;
+    const len = (list) => list.map((p) => p.text).join(", ").length;
+    let kept = [...parts];
+    for (let pri = 4; pri >= 1 && len(kept) > budget; pri--) kept = kept.filter((p) => p.pri !== pri);
+    if (len(kept) > budget) {
+      // Last resort: shorten the mix line rather than lose the signature.
+      kept = kept.filter((p) => !D.MIX.includes(p.text));
     }
-    return text;
+    return `${kept.map((p) => p.text).join(", ")}, ${tail}`;
   }
 
   // Lyrics field as a proper instrumental arrangement. Every tag says what
   // the beat does; nothing for a voice to sing.
   function buildArrangement(ctx) {
     const { world, harmony, r, structure } = ctx;
-    const motif = pick(world.motifs, r);
+    const motif = ctx.motif || pick(world.motifs, r);
     const chords = harmony.chords.join(" – ");
     const S = [];
     const push = (name, desc) => S.push({ tag: `[${name}: ${desc}]`, name });
@@ -128,7 +130,7 @@ const AnomalyEngine = (() => {
           push("Verse", `stripped to drums and 808, ${motif} sparse and low, wide open space, 16 bars`);
           break;
         case "verse2":
-          push("Verse", `drums and 808 with ${ctx.glitch}, ${motif} answering every 4th bar, 16 bars`);
+          push("Verse", `drums and 808 only, ${ctx.glitch}, ${motif} answering every 4th bar, 16 bars`);
           break;
         case "verseShort":
           push("Verse", `stripped to drums and 808, ${motif} sparse, 8 bars`);
@@ -146,7 +148,7 @@ const AnomalyEngine = (() => {
           push("Break", `everything drops to the 808 alone for 2 bars, then a half-beat of total silence`);
           break;
         case "bridge":
-          push("Bridge", `half-time drums, ${motif} reharmonized, ${sig} returns, 8 bars`);
+          push("Bridge", `half-time drums, ${motif} reharmonized, the signature returns: ${sig}, 8 bars`);
           break;
         case "outro":
           push("Outro", `${motif} for 2 bars over the 808, then hard stop`);

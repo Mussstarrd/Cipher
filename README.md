@@ -1,6 +1,22 @@
 # Cipher
 
-A one-button hip hop, pop rap and R&B banger randomizer for Suno v6 (v6, v6-wild and v6-mini). Open `dist/cipher.html` in a browser; it has no dependencies.
+Two Suno v6 prompt engines, each a single self-contained page in `dist/`.
+
+## ANOMALY (`dist/anomaly.html`)
+
+An instrumental prompt generator aimed at today's hip hop and R&B radio, built from an executive-producer sonic brief ([`docs/producer-brief.md`](docs/producer-brief.md)). One button. Each roll gives you:
+
+- **Style field**: genre, an instrumental lock, a syncopation line, a non-quantized feel line, the world's drums and 808, an adjective-tagged lead (from 12 sound worlds and a shared pool; piano in under 12% of rolls) playing a named progression in a real key, a counter-voice, a twitchy glitch written as rhythm, a **signature anomaly**, a **technical flex** (polymeter, odd bars, tuplets, micro-timing), a beat switch, texture and mood, a mix/master line, BPM and a hard stop.
+- **Lyrics field**: a proper instrumental arrangement in section tags (intro, verses, hooks, pre-hook, break, beat switch, bridge, outro) with bar counts, where the signature hits, and where the switch lands. Six structures from 1:30 to 3:10.
+- **Exclude styles**: 16 terms, vocals first.
+- **Suno settings**: model, Instrumental on, Weirdness, Style Influence, Variety, Max Mode, for Radio and Experimental modes.
+- Harmony sheet with the cadence explained.
+
+Sound worlds: Melodic Trap, Hard Trap, NY Drill, Sexy Drill, Detroit / Flint, Jersey Club Rap, Plugg / PluggnB, West Coast Bounce, Dark R&B, Trap-Soul, Afro R&B, Y2K R&B.
+
+## CIPHER (`dist/cipher.html`)
+
+A one-button hip hop, pop rap and R&B banger randomizer for Suno v6 (v6, v6-wild and v6-mini) with vocals. Open `dist/cipher.html` in a browser; it has no dependencies.
 
 Press **Roll**. Each roll picks a lane (Dark Trap, Rage, Drill, Melodic Trap, Hypnotic Minimal, Grimy Boom Bap, Pop Rap, Phonk, Acid Soul Rap, Dark Alt R&B, Trap Soul, Y2K R&B, Pluggnb, Slow-Jam R&B), often a likeness and a blend, then a key (never one of the last four), a progression, a structure (a 90-second short loop about a third of the time) and a hook. You can narrow to hip hop or R&B, flip Instrumental, and pick the Suno model. You get:
 
@@ -18,5 +34,5 @@ The same settings and roll number always give the same package. The research beh
 
 ```sh
 npm test        # every lane × edge × structure × seed: bans, limits, spelling, hook count
-npm run build   # inlines src/likeness.js + src/engine.js + src/app.js into dist/cipher.html
+npm run build   # builds dist/cipher.html and dist/anomaly.html from src/
 ```
