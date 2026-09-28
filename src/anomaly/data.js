@@ -69,7 +69,7 @@ const AnomalyData = (() => {
       moods: ["serrated-bright", "furnace-pressed", "chrome-hostile"],
     },
     {
-      id: "ny-drill", label: "NY Drill", family: "hiphop", genre: "New York drill, drill rap",
+      id: "ny-drill", label: "NY Drill", family: "hiphop", genre: "New York drill, drill beat",
       bpm: [138, 146], feel: "sliding menacing skip", tonalities: ["minor"],
       drums: [
         "drill kick pattern with the kick on the and-of-1 and 3-and, snare on 3, rolling 16th hats",
@@ -80,7 +80,7 @@ const AnomalyData = (() => {
         "sliding 808 that glides between the root, minor third and fifth in 8th-note figures",
         "808 with a short fade-in on every slide so the bass swells into each note",
       ],
-      leads: ["haunting sustained string ensemble playing a 2-bar descending line", "muted electric guitar single-note melody with slapback delay", "dark bell-like synth tone, slightly detuned, two notes per bar", "eerie reed-organ pad holding a low drone"],
+      leads: ["haunting sustained string ensemble on a 2-bar descending line", "muted electric guitar single-note melody with slapback delay", "dark bell-like synth tone, slightly detuned, two notes per bar", "eerie reed-organ pad holding a low drone"],
       motifs: ["the string-ensemble motif", "the muted-guitar motif", "the detuned-bell motif"],
       texture: ["cold wide reverb on the strings only, drums and bass bone-dry", "low-passed room noise that swells under the drum dropouts"],
       moods: ["wraith-cold", "iron-lit", "prowling-elegant"],
@@ -103,7 +103,7 @@ const AnomalyData = (() => {
       moods: ["satin-sly", "neon-warm", "candlelit-cocky"],
     },
     {
-      id: "detroit-flint", label: "Detroit / Flint", family: "hiphop", genre: "Detroit rap, Flint bounce",
+      id: "detroit-flint", label: "Detroit / Flint", family: "hiphop", genre: "Detroit bounce, Flint bounce",
       bpm: [90, 105], feel: "stumbling off-grid straight time", tonalities: ["minor"],
       drums: [
         "straight-time kick that lands on 1 and the and-of-3, dry cracking snare on 2 and 4, thin and papery",
@@ -114,13 +114,13 @@ const AnomalyData = (() => {
         "melodic pitched 808 bassline playing 8th-note runs up and down a minor scale, the bass is the hook",
         "bouncing 808 melody that jumps an octave on every fourth bar and slides back down",
       ],
-      leads: ["cheap-sounding bright synth pluck playing a nervous 1-bar loop", "tense two-note string stab on beats 1 and 3", "grainy organ drone one octave under the bass melody", "sharp plucked harp figure that answers the bass every 2 bars"],
+      leads: ["cheap-sounding bright synth pluck on a nervous 1-bar loop", "tense two-note string stab on beats 1 and 3", "grainy organ drone one octave under the bass melody", "sharp plucked harp figure that answers the bass every 2 bars"],
       motifs: ["the nervous synth-pluck motif", "the two-note string stab", "the 808 bass melody"],
       texture: ["cramped dry mono-leaning mix with a loud bass and tucked melody", "a faint tape-hiss layer that cuts to silence for half a beat before each bass run"],
       moods: ["jittery-brash", "streetlight-orange", "sneering-loose"],
     },
     {
-      id: "jersey-club-rap", label: "Jersey Club Rap", family: "hiphop", genre: "Jersey club rap, club rap",
+      id: "jersey-club-rap", label: "Jersey Club Rap", family: "hiphop", genre: "Jersey club beat, club bounce",
       bpm: [130, 140], feel: "breathless kinetic bounce", tonalities: ["minor", "major"],
       drums: [
         "Jersey club kick pattern: kick on 1, 2-and, 3, 4-and with a triple-kick flourish every second bar",
@@ -131,7 +131,7 @@ const AnomalyData = (() => {
         "short punchy 808 tuned to the kick pattern, hitting only on the kick accents",
         "808 that stutters in a 1/8-note repeat on beat 4 of every fourth bar",
       ],
-      leads: ["bright plucked synth lead playing a 2-bar staccato hook", "retriggered electric-keys chord stab hitting on the kick pattern", "airy string pad with a fast filter wobble", "dark synth-brass hit on the 1 of every 4 bars"],
+      leads: ["bright plucked synth lead with a 2-bar staccato hook", "retriggered electric-keys chord stab hitting on the kick pattern", "airy string pad with a fast filter wobble", "dark synth-brass hit on the 1 of every 4 bars"],
       motifs: ["the staccato pluck motif", "the keys-stab motif", "the synth-brass hit"],
       texture: ["dry club drums in the center, wide pluck lead, sub in mono", "short room reverb on the clap only, everything else dry"],
       moods: ["breathless-metallic", "strobe-stung", "sweat-bright"],
@@ -199,7 +199,7 @@ const AnomalyData = (() => {
         "log-drum style bass hits on the syncopated kick accents, pitched to the chords",
         "warm 808 that slides between root and sixth in a bouncing 2-bar phrase",
       ],
-      leads: ["clean nylon-string guitar plucks playing a bright 2-bar riff", "warm chorused electric keys with major-seventh voicings and a swung comping rhythm", "soft synth flute lead with slides and breath", "wide airy pad with gentle filter movement"],
+      leads: ["clean nylon-string guitar plucks on a bright 2-bar riff", "warm chorused electric keys with major-seventh voicings and a swung comping rhythm", "soft synth flute lead with slides and breath", "wide airy pad with gentle filter movement"],
       motifs: ["the nylon-guitar riff", "the comping-keys motif", "the synth-flute motif"],
       texture: ["wide guitar and keys, shaker panned left, drums dry and warm, sub in mono", "short spring reverb on the guitar only, keeping the drums dry"],
       moods: ["sun-lacquered", "copper-swaying", "dusk-sweet"],
@@ -222,7 +222,7 @@ const AnomalyData = (() => {
       moods: ["gloss-drunk", "chrome-tender", "rollerskate-slick"],
     },
     {
-      id: "west-coast", label: "West Coast Bounce", family: "hiphop", genre: "West Coast hip hop, hyphy rap",
+      id: "west-coast", label: "West Coast Bounce", family: "hiphop", genre: "West Coast hip hop, hyphy bounce",
       bpm: [96, 104], feel: "slapping cocky bounce", tonalities: ["minor"],
       drums: [
         "west-coast bounce drums: punchy kick on 1 and the and-of-2, big clap on 2 and 4, hats in loose 8ths",
@@ -233,7 +233,7 @@ const AnomalyData = (() => {
         "thick synth bass doubling a slapping 808, playing a 2-bar syncopated figure",
         "808 that drops out on beat 3 of every fourth bar and slams back on 4",
       ],
-      leads: ["high sine-wave synth lead with pitch bends playing a 2-bar whistling hook", "sharp synth-brass stab on the offbeats, dry and short", "dark synth string stab on the 1 of every bar", "buzzy square-wave pluck counterline"],
+      leads: ["high sine-wave synth lead with pitch bends on a 2-bar whistling hook", "sharp synth-brass stab on the offbeats, dry and short", "dark synth string stab on the 1 of every bar", "buzzy square-wave pluck counterline"],
       motifs: ["the whistling sine motif", "the synth-brass stab", "the square-wave counterline"],
       texture: ["dry loud center-heavy mix with the lead panned slightly right", "tight room on the clap only, bass and kick bone-dry"],
       moods: ["asphalt-hot", "lowrider-slow", "swagger-glossy"],
