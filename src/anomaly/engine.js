@@ -57,7 +57,6 @@ const AnomalyEngine = (() => {
 
   // Keyboard budget: at most one keys instrument, and piano only sometimes.
   const isPiano = (s) => /piano/i.test(s);
-  const isKeys = (s) => /piano|keys|organ|rhodes|wurlitzer|clav/i.test(s);
 
   function buildStyle(ctx) {
     const { world, harmony, bpm, r, used } = ctx;
@@ -67,88 +66,80 @@ const AnomalyEngine = (() => {
 
     add(world.genre, 0);
     add(pick(D.INSTRUMENTAL_LOCK, r), 0);
-    add(pick(D.SYNCOPATION, r), 0);
-    add(pick(D.HUMAN_FEEL, r), 0);
+    add(`${pick(D.SWING, r)} drums, ${pick(D.SYNC, r)}`, 0);
     add(pick(world.drums, r), 2);
     add(pick(world.lowEnd, r), 0);
 
-    // Lead + counter-voice: diverse timbres, one keys instrument at most.
-    let leadPool = world.leads;
+    // Lead: low or mid register, physical, looping obsessively. Piano rarely.
+    let leadPool = r() < 0.5 ? world.leads : D.GLOBAL_LEADS;
     if (r() > D.PIANO_SHARE) leadPool = leadPool.filter((l) => !isPiano(l));
-    if (!leadPool.length) leadPool = D.GLOBAL_LEADS;
-    const lead = makeVoice(r() < 0.5 ? leadPool : D.GLOBAL_LEADS.filter((l) => !isPiano(l)), D.ADJECTIVES, r, used);
-    let counterPool = D.COUNTER_VOICES;
-    if (isKeys(lead)) counterPool = counterPool.filter((c) => !isKeys(c));
-    const counter = makeVoice(counterPool, D.ADJECTIVES, r, used);
-    add(`${lead} playing ${harmony.prog.color} in ${harmony.key}`, 0);
-    // The arrangement names the same instrument the style field leads with.
-    ctx.motif = `the ${lead.split(",")[0].split(" ").slice(1, 5).join(" ")} motif`;
-    add(`${counter} answering in the gaps`, 3);
+    const lead = makeVoice(leadPool, D.ADJECTIVES, r, used);
+    add(`${lead} playing ${harmony.prog.color} in ${harmony.key}, a 2-bar hook riff looping obsessively`, 0);
+    ctx.motif = `the ${lead.split(",")[0].split(" ").slice(1, 5).join(" ")}`;
+    // The clash: one element from outside the lane, so no two rolls sound alike.
+    ctx.clash = pick(D.CLASH, r);
+    add(`${ctx.clash} cutting in every 4 bars`, 0);
 
     add(ctx.glitch, 0);
     add(`signature: ${ctx.signature}`, 0);
     add(`technical flex: ${ctx.flex}`, 1);
     add(`beat switch at the midpoint: ${ctx.beatSwitch}`, 0);
-    add(`${pick(world.texture, r)}, ${pick(world.moods, r)}`, 4);
+    add(`${pick(world.moods, r)} and ${pick(D.ADJECTIVES.filter((x) => !used.has(x)), r)}`, 1);
+    add(pick(world.texture, r), 3);
     add(pick(D.MIX, r), 1);
     const tail = `${bpm} BPM ${world.feel}, hard stop ending`;
 
     const budget = D.STYLE_LIMIT - tail.length - 2;
     const len = (list) => list.map((p) => p.text).join(", ").length;
     let kept = [...parts];
-    for (let pri = 4; pri >= 1 && len(kept) > budget; pri--) kept = kept.filter((p) => p.pri !== pri);
-    if (len(kept) > budget) {
-      // Last resort: shorten the mix line rather than lose the signature.
-      kept = kept.filter((p) => !D.MIX.includes(p.text));
-    }
+    for (let pri = 3; pri >= 1 && len(kept) > budget; pri--) kept = kept.filter((p) => p.pri !== pri);
     return `${kept.map((p) => p.text).join(", ")}, ${tail}`;
   }
 
   // Lyrics field as a proper instrumental arrangement. Every tag says what
   // the beat does; nothing for a voice to sing.
   function buildArrangement(ctx) {
-    const { world, harmony, r, structure } = ctx;
-    const motif = ctx.motif || pick(world.motifs, r);
+    const { harmony, structure } = ctx;
+    const motif = ctx.motif || "the lead riff";
     const chords = harmony.chords.join(" – ");
     const S = [];
     const push = (name, desc) => S.push({ tag: `[${name}: ${desc}]`, name });
     const sig = ctx.signature;
-    const half = `${chords}`;
 
     for (const step of structure.steps) {
       switch (step) {
         case "intro":
-          push("Intro", `${motif} alone for 2 bars, ${chords}, drums enter on bar 3 with the 808 sliding in late`);
+          push("Intro", `${motif} alone, 2 bars, ${chords}, drums and 808 fall in on bar 3`);
           break;
         case "hook":
-          push("Hook", `full beat, ${motif} doubled an octave up, 808 and drums locked, identical every time, 8 bars`);
+          push("Hook", `full beat, ${motif} loops obsessively, ${ctx.clash} answers every 4 bars, 8 bars`);
           break;
         case "hookSig":
-          push("Hook", `full beat, ${motif} doubled an octave up, 808 and drums locked, 8 bars, ${sig}`);
+          push("Hook", `full beat, ${motif} loops obsessively, ${ctx.clash} answers, ${sig}, 8 bars`);
           break;
         case "verse":
-          push("Verse", `stripped to drums and 808, ${motif} sparse and low, wide open space, 16 bars`);
+          push("Verse", `drums and 808 only, ${motif} low and sparse, open space, 16 bars`);
           break;
         case "verse2":
-          push("Verse", `drums and 808 only, ${ctx.glitch}, ${motif} answering every 4th bar, 16 bars`);
+          push("Verse", `drums and 808, ${ctx.glitch}, ${motif} every 4th bar, 16 bars`);
           break;
         case "verseShort":
-          push("Verse", `stripped to drums and 808, ${motif} sparse, 8 bars`);
+          push("Verse", `drums and 808 only, ${motif} sparse, 8 bars`);
           break;
         case "pre":
-          push("Pre-Hook", `808 drops out, ${motif} holds the tension chord, hi-hats tighten, ${ctx.flex}, 4 bars`);
+          push("Pre-Hook", `808 out, ${motif} holds the tension chord, ${ctx.flex}, 4 bars`);
           break;
         case "switch":
-          push("Beat Switch", `${ctx.beatSwitch}, ${half} reharmonized darker, 8 bars`);
+          push("Beat Switch", `${ctx.beatSwitch}, ${chords} darker, 8 bars`);
           break;
         case "switchHook":
-          push("Hook", `on the switched beat, ${motif} returns twice as heavy, ${sig}, 8 bars`);
+          push("Hook", `on the switched beat, ${motif} twice as heavy, ${ctx.clash} doubled, ${sig}, 8 bars`);
           break;
         case "break":
-          push("Break", `everything drops to the 808 alone for 2 bars, then a half-beat of total silence`);
+          push("Break", `808 alone for 2 bars, then a half-beat of total silence`);
           break;
         case "bridge":
-          push("Bridge", `half-time drums, ${motif} reharmonized, the signature returns: ${sig}, 8 bars`);
+          push("Bridge", `half-time drums, ${motif} reharmonized, ${sig}, 8 bars`);
           break;
         case "outro":
           push("Outro", `${motif} for 2 bars over the 808, then hard stop`);
@@ -205,6 +196,7 @@ const AnomalyEngine = (() => {
       settings,
       harmony: { key: harmony.key, progression: harmony.prog.name, roman: harmony.prog.roman, chords: harmony.chords, cadence: harmony.prog.cadence },
       signature: ctx.signature,
+      clash: ctx.clash,
       flex: ctx.flex,
       beatSwitch: ctx.beatSwitch,
       glitch: ctx.glitch,

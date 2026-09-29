@@ -90,6 +90,7 @@
     $("out-exclude").textContent = pkg.excludeText;
     dl($("sig-grid"), [
       ["Anomaly", pkg.signature],
+      ["Clash", pkg.clash],
       ["Technical flex", pkg.flex],
       ["Twitch", pkg.glitch],
       ["Beat switch", pkg.beatSwitch],
