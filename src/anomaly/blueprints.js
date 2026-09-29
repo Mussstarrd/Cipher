@@ -25,7 +25,7 @@ const AnomalyBlueprints = [
     family: "hiphop", genre: "hard Texas trap instrumental", bpm: [138, 150], feel: "slow heavy trunk knock", tonalities: ["minor"],
     openers: [
       "a slow, heavy Texas trap beat built for a trunk: cavernous 808 slides that take a whole beat to land, one cold minor-key riff, and a snare that cracks like a gunshot in an empty parking lot",
-      "menacing Dallas trap with the drums pulled back and the 808 pushed forward, sparse eerie keys-free riff on strings, everything screwed-down and unhurried",
+      "menacing Dallas trap with the drums pulled back and the 808 pushed forward, sparse eerie keys-free riff on strings, everything slowed down and unhurried",
       "big-bodied southern trap: enormous sliding 808, hard clap-snare, hats that rattle then vanish, a dark orchestral string stab as the only melody",
     ],
     drums: ["hard cracking clap-snare on 3, kick sparse, hats that rattle in bursts then vanish", "slow half-time drums with a gunshot snare and almost no hats", "sparse drums where the 808 does the work, snare on 3 only"],
@@ -66,7 +66,7 @@ const AnomalyBlueprints = [
     id: "toronto-nocturnal", label: "Toronto nocturnal", spirit: "Drake / 40", aliases: ["drake", "drizzy", "ovo", "noah 40", "40 shebib"],
     family: "hiphop", genre: "nocturnal ambient trap instrumental", bpm: [66, 96], feel: "submerged half-time drift", tonalities: ["minor"],
     openers: [
-      "a nocturnal Toronto beat heard through a wall: the whole track low-pass filtered and muffled for the verse, then opening up wide on the hook, deep sub swells under airy pads and almost no drums",
+      "a nocturnal Toronto beat heard through a wall: the whole track low-pass filtered and muffled for the verse, then opening up wide on the hook, deep sub swells under airy pads with the drums barely there",
       "underwater ambient trap: distant muffled drums, a sub that moves in slow whole notes, a hazy pad riff, and a filter that opens for 8 bars then closes again",
       "late-night minimal beat with the drums pulled way back, a warm detuned pad riff, deep sub-bass swells, and one filtered sample-like keys phrase drifting behind the beat",
     ],
@@ -164,7 +164,7 @@ const AnomalyBlueprints = [
     id: "detroit-flint", label: "Detroit / Flint", spirit: "Babyface Ray / Rio da Yung OG", aliases: ["babyface ray", "rio da yung og"],
     family: "hiphop", genre: "Detroit bounce instrumental", bpm: [90, 105], feel: "stumbling off-grid straight time", tonalities: ["minor"],
     openers: [
-      "a Detroit beat where the bass is the melody: a pitched 808 running up and down a minor scale in 8ths, drums that stumble off the grid, a cheap nervous synth riff, and no attempt at polish",
+      "a Detroit beat where the bass is the melody: a pitched 808 running up and down a minor scale in 8ths, drums that stumble off the grid, a cheap nervous synth riff, and zero polish",
       "off-grid Flint bounce: unquantized drums that lurch, a walking 808 bassline as the hook, tense two-note string stabs, everything cramped and loud",
       "stumbling Detroit beat: the 808 plays the tune, the kick lands wherever it wants, the snare cracks dry, and a nervous mid-register synth loops one bar forever",
     ],
