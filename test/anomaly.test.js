@@ -31,26 +31,35 @@ test("every package is clean: no vocals, no FX words, no artist names, inside li
   }
 });
 
-test("every roll has syncopation, human feel, a glitch, a signature, a flex, a beat switch, a mix line and a BPM", () => {
+test("every roll keeps its identity and the extras survive most of the time", () => {
+  let n = 0;
+  const miss = { swing: 0, sync: 0, glitch: 0, move: 0, flex: 0, mix: 0 };
   for (const input of rolls()) {
     const out = E.generate(input);
     const s = out.styleText;
-    assert.ok(D.SYNCOPATION.some((p) => s.includes(p)), s);
-    assert.ok(D.HUMAN_FEEL.some((p) => s.includes(p)), s);
-    assert.ok(D.GLITCH.some((p) => s.includes(p)), s);
+    n++;
+    const world = D.WORLDS.find((w) => w.id === out.meta.world);
+    assert.ok(world.openers.some((o) => s.startsWith(o)), `opener not first: ${s}`);
     assert.ok(s.includes(`signature: ${out.signature}`), s);
-    assert.ok(s.includes(`technical flex: ${out.flex}`), s);
     assert.ok(s.includes(`beat switch at the midpoint: ${out.beatSwitch}`), s);
-    assert.ok(D.MIX.some((p) => s.includes(p)), s);
-    assert.ok(D.CLASH.some((p) => s.includes(p)), s);
+    assert.ok(D.CLASH.includes(out.clash) || world.clash.includes(out.clash), s);
+    assert.ok(s.includes(`${out.clash} cutting in every 4 bars`), s);
     assert.match(s, /looping obsessively/);
     assert.ok(!/\b(bright|twinkling|high-pitched|sine lead|synth lead)\b/i.test(s.match(/, ([^,]+) playing /)[1].split(" ").slice(1).join(" ")), `high lead: ${s}`);
     assert.match(s, /\d+ BPM/);
+    if (!D.SWING.some((p) => s.includes(p))) miss.swing++;
+    if (!D.SYNC.some((p) => s.includes(p))) miss.sync++;
+    if (!D.GLITCH.some((p) => s.includes(p))) miss.glitch++;
+    if (!s.includes(`trademark move: ${out.move}`)) miss.move++;
+    if (!s.includes(`technical flex: ${out.flex}`)) miss.flex++;
+    if (!D.MIX.some((p) => s.includes(p))) miss.mix++;
     assert.ok(out.sections.some((x) => x.name === "Beat Switch"), out.lyricsText);
     assert.ok(out.sections.filter((x) => x.name === "Hook").length >= 2, out.lyricsText);
     assert.strictEqual(out.sections.at(-1).tag, "[End]");
     assert.match(out.lyricsText, /hard stop/);
   }
+  for (const k of ["swing", "sync", "glitch", "flex"]) assert.ok(miss[k] / n < 0.1, `${k} missing in ${miss[k]}/${n}`);
+  assert.ok(miss.move / n < 0.5, `move missing in ${miss.move}/${n}`);
 });
 
 test("piano is rare", () => {
@@ -88,4 +97,18 @@ test("chords are spelled with one accidental family", () => {
 test("exclude list leads with vocals and effects", () => {
   assert.ok(D.EXCLUDE.length >= 10 && D.EXCLUDE.length <= 16);
   assert.match(D.EXCLUDE.slice(0, 3).join(","), /vocal/);
+});
+
+test("every blueprint opens differently and no artist name leaks", () => {
+  const openers = new Set();
+  for (const w of D.WORLDS) for (const o of w.openers) openers.add(o.slice(0, 40));
+  assert.strictEqual(openers.size, D.WORLDS.reduce((n, w) => n + w.openers.length, 0));
+  const names = D.WORLDS.flatMap((w) => w.aliases).filter((n) => n.replace(/[^a-z0-9]/gi, "").length >= 3);
+  for (const w of D.WORLDS) {
+    for (let seed = 1; seed <= 10; seed++) {
+      const out = E.generate({ world: w.id, seed });
+      const text = `${out.styleText}\n${out.lyricsText}`.toLowerCase();
+      for (const n of names) assert.ok(!new RegExp(`(^|[^a-z0-9])${n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}($|[^a-z0-9])`).test(text), `${n} leaked in ${w.id}`);
+    }
+  }
 });

@@ -79,6 +79,7 @@
     recipe.textContent = "";
     recipe.append(
       tag(m.worldLabel, true),
+      tag(`in the spirit of ${m.spirit}`),
       tag(`${m.bpm} BPM`),
       tag(pkg.harmony.key),
       tag(`${m.structureLabel} ${m.length}`),
@@ -90,6 +91,7 @@
     $("out-exclude").textContent = pkg.excludeText;
     dl($("sig-grid"), [
       ["Anomaly", pkg.signature],
+      ["Trademark move", pkg.move],
       ["Clash", pkg.clash],
       ["Technical flex", pkg.flex],
       ["Twitch", pkg.glitch],

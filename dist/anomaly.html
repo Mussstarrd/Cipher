@@ -94,7 +94,7 @@
 <div class="wrap">
   <header>
     <h1 class="brand">ANOMALY<span class="dot">.</span></h1>
-    <p>Instrumental prompt engine for Suno v6, aimed at today's hip hop and R&amp;B radio. Every roll is syncopated, human-timed, twitchy, has a beat switch, and carries one signature anomaly.</p>
+    <p>Instrumental prompt engine for Suno v6. Every roll is a different producer identity: its own opener, drums, 808, lead, clash element and house move, plus swing, a twitchy glitch, a beat switch and one signature anomaly.</p>
   </header>
 
   <button class="roll" id="roll" type="button">⚡ ROLL AN INSTRUMENTAL</button>
@@ -159,6 +159,284 @@
 </div>
 
 <script>
+/* ANOMALY producer blueprints. Each one is a record identity, not a genre
+ * bucket: the opener is the first thing Suno reads and it is different for
+ * every blueprint. `spirit` names the reference for the UI only; a lint keeps
+ * every name out of the prompt. No vocal words, no FX words, no mallets. */
+"use strict";
+
+const AnomalyBlueprints = [
+  // ---------------------------------------------------------------- hip hop
+  {
+    id: "broward-lofi", label: "Broward emo lo-fi", spirit: "XXXTentacion", aliases: ["xxxtentacion", "xxx", "jahseh"],
+    family: "hiphop", genre: "distorted lo-fi trap instrumental", bpm: [128, 160], feel: "raw half-time knock", tonalities: ["minor"],
+    openers: [
+      "a bedroom-recorded lo-fi trap beat that sounds like it was bounced to a dying cassette, a lonely detuned clean-guitar loop over a blown-out 808 that clips the whole mix every time it hits",
+      "raw tape-crushed emo trap: one sad guitar figure, one distorted 808, drums that slap like a hand on a table, and long holes of silence where the beat just stops",
+      "grainy distorted bedroom trap built on a two-note guitar loop and an 808 so hot it distorts the snare, sudden drop-outs to nothing then back in at full force",
+    ],
+    drums: ["hard dry snare that slaps, kick buried under the 808, hats barely there", "sparse lo-fi drums with a clipped snare on 3 and long gaps", "bedroom drum hits with tape wobble, snare late and loud"],
+    lowEnd: ["blown-out distorted 808 that clips the mix on every hit", "808 that swallows the kick and rings into the next bar"],
+    leads: ["lonely detuned clean-guitar loop, two notes", "sad palm-muted guitar figure through a cassette", "low tremolo guitar loop drowned in tape hiss"],
+    clash: ["a single reversed guitar swell", "a bit-crushed low bell tone struck once", "a distorted 808 slide that becomes the melody", "a tape-stop into silence"],
+    moves: ["the whole beat cuts to silence for a full bar every 8 bars, then slams back", "the 808 distorts harder every hook until it is pure fuzz", "the guitar loop drops an octave for the last 4 bars"],
+  },
+  {
+    id: "texas-trunk", label: "Texas trunk menace", spirit: "BigXthaPlug", aliases: ["bigxthaplug", "big x the plug", "big x"],
+    family: "hiphop", genre: "hard Texas trap instrumental", bpm: [138, 150], feel: "slow heavy trunk knock", tonalities: ["minor"],
+    openers: [
+      "a slow, heavy Texas trap beat built for a trunk: cavernous 808 slides that take a whole beat to land, one cold minor-key riff, and a snare that cracks like a gunshot in an empty parking lot",
+      "menacing Dallas trap with the drums pulled back and the 808 pushed forward, sparse eerie keys-free riff on strings, everything screwed-down and unhurried",
+      "big-bodied southern trap: enormous sliding 808, hard clap-snare, hats that rattle then vanish, a dark orchestral string stab as the only melody",
+    ],
+    drums: ["hard cracking clap-snare on 3, kick sparse, hats that rattle in bursts then vanish", "slow half-time drums with a gunshot snare and almost no hats", "sparse drums where the 808 does the work, snare on 3 only"],
+    lowEnd: ["cavernous 808 slides that take a whole beat to arrive on the note", "tuned 808 so long each note runs into the next, slid down a fifth at phrase ends"],
+    leads: ["cold low string-stab riff, two notes", "dark low brass riff, slow and unhurried", "ominous low bowed-string line"],
+    clash: ["a single orchestral timpani hit on the 1 of every 8 bars", "a low brass swell rising under the last bar of each phrase", "a pitched-down cello stab", "a screwed-down guitar chord"],
+    moves: ["everything but the 808 drops for the last 2 bars of every 8", "the 808 slides up an octave on the final beat of every hook", "the snare disappears for one bar every 16 while the 808 keeps knocking"],
+  },
+  {
+    id: "king-orchestral", label: "King of the South orchestral", spirit: "T.I.", aliases: ["t.i.", "tip", "king of the south"],
+    family: "hiphop", genre: "orchestral Atlanta trap instrumental", bpm: [120, 150], feel: "regal marching bounce", tonalities: ["minor"],
+    openers: [
+      "regal minimalist Atlanta trap: punchy orchestral horn hits on the downbeats, a marching snare pattern, string-section swells, and an 808 knock, with nothing else filling the space",
+      "a king's-entrance trap beat built on staccato brass stabs, snare rolls that march instead of tumble, and grand cinematic strings over an 808 that hits once per bar",
+      "orchestral minimalism with trap drums: three-note horn fanfare, low string pedal, marching snare, and wide silence between every hit",
+    ],
+    drums: ["marching snare pattern in tight 16ths, kick on 1 and the and-of-3, crisp hat rolls", "crisp trap hats with a marching snare cadence and a big clap on 3", "military snare roll into the downbeat of every 4 bars"],
+    lowEnd: ["808 knock on the 1 and the and-of-3, tuned to the root, short and proud", "808 that hits once per bar and lets the horns breathe"],
+    leads: ["punchy staccato horn-section hits, three notes", "low brass fanfare riff, short and regal", "cinematic string-stab riff with a low brass answer"],
+    clash: ["a timpani roll under the last bar of every hook", "a single French-horn-style swell", "a pizzicato string figure answering the horns", "a snare-drum rudiment on the and-of-4"],
+    moves: ["the horns drop out for the verse and return on the hook doubled an octave down", "the strings hold one note through the whole beat switch", "the marching snare doubles speed for the last 4 bars"],
+  },
+  {
+    id: "cash-money-bounce", label: "Cash Money bounce", spirit: "Lil Wayne / Mannie Fresh", aliases: ["lil wayne", "weezy", "wayne", "mannie fresh", "cash money", "hot boys"],
+    family: "hiphop", genre: "New Orleans bounce instrumental", bpm: [92, 108], feel: "bouncing call-and-answer skip", tonalities: ["minor"],
+    openers: [
+      "a New Orleans bounce beat: cheap bright-but-mid-register synth stabs answering each other, a syncopated triggerman kick pattern, skittering hats, a big clap on 2 and 4 and an 808 that talks back to the kick",
+      "early-2000s southern bounce with stabby synth-brass hits in a question-and-answer pattern, drums that skip and stutter across the bar, and a bass that jumps octaves",
+      "bouncy New Orleans bounce beat built on a two-chord synth stab riff, rapid clap and hat interplay, and a kick that never lands where you expect",
+    ],
+    drums: ["triggerman kick pattern skipping across the bar, big clap on 2 and 4, skittering hats", "bouncy syncopated kicks with a clap that doubles on the and-of-4", "rapid hat and clap interplay with a kick that stutters before beat 3"],
+    lowEnd: ["808 that answers the kick pattern and jumps an octave every 4 bars", "short bouncy 808 tuned to the stabs, hitting between the kicks"],
+    leads: ["cheap mid-register synth-brass stab riff in question-and-answer", "stabby two-chord synth riff, dry and short", "mid-register square-wave stab riff with a bouncing rhythm"],
+    clash: ["a whistle-like synth answer on the and-of-4", "a low tuba-like blurt on the 1", "a harpsichord-style stab riff", "an orchestral hit on the downbeat of every 8 bars"],
+    moves: ["the stabs and drums trade bars: one bar stabs only, one bar drums only", "the clap doubles into a rapid roll on the last beat of every 4 bars", "the 808 walks up the scale for one bar every 8"],
+  },
+  {
+    id: "toronto-nocturnal", label: "Toronto nocturnal", spirit: "Drake / 40", aliases: ["drake", "drizzy", "ovo", "noah 40", "40 shebib"],
+    family: "hiphop", genre: "nocturnal ambient trap instrumental", bpm: [66, 96], feel: "submerged half-time drift", tonalities: ["minor"],
+    openers: [
+      "a nocturnal Toronto beat heard through a wall: the whole track low-pass filtered and muffled for the verse, then opening up wide on the hook, deep sub swells under airy pads and almost no drums",
+      "underwater ambient trap: distant muffled drums, a sub that moves in slow whole notes, a hazy pad riff, and a filter that opens for 8 bars then closes again",
+      "late-night minimal beat with the drums pulled way back, a warm detuned pad riff, deep sub-bass swells, and one filtered sample-like keys phrase drifting behind the beat",
+    ],
+    drums: ["distant muffled drums with a soft snap on 3 and hats far in the back", "sparse half-time drums low-passed until the hook", "slow kick and snap with hats that barely register"],
+    lowEnd: ["deep sub-bass swells moving in slow whole notes", "sub that dips a whole step under the fourth chord and holds"],
+    leads: ["hazy detuned pad riff drifting behind the beat", "filtered low electric-keys phrase, two chords", "warm low pad riff with a slow filter opening"],
+    clash: ["a distant reversed pad swell", "a single low bell tone once per 8 bars", "a muted guitar note answering the pad", "an echoing clap on the and-of-2"],
+    moves: ["the low-pass filter opens on every hook and slams shut on the verse", "the drums drop to nothing for the last 4 bars of every 16", "the sub slides up an octave for one beat at every phrase end"],
+  },
+  {
+    id: "east-atlanta-elastic", label: "East Atlanta elastic", spirit: "JID", aliases: ["jid", "j.i.d", "dreamville"],
+    family: "hiphop", genre: "bouncy technical southern hip hop instrumental", bpm: [88, 150], feel: "rubbery double-time twitch", tonalities: ["minor"],
+    openers: [
+      "a rubbery, twitchy Atlanta beat made for fast technical flows: warm elastic bassline bouncing off dry punchy drums, off-kilter hats, and a dusty sampled-keys riff that gets flipped every 8 bars",
+      "dry, punchy, hyperactive hip hop beat: rubber-band bass, snappy snare, hats that skip and double, a beat switch that halves the tempo without warning, and a dusty sampled string loop as the hook",
+      "an elastic technical beat with drums that feel hand-hit, bass that bends between notes, a chopped-free dusty sample riff, and stop-start gaps where the whole thing drops out for a beat",
+    ],
+    drums: ["dry punchy snappy drums, hats that skip and double, kick stumbling early", "hand-hit-feeling drums with a cracking snare and off-kilter hats", "tight dry kit with hats in a 3-3-2 pattern and a snare that lands early"],
+    lowEnd: ["warm rubbery elastic bassline bending between notes", "rubber-band synth bass bouncing off the kick, sliding into every root"],
+    leads: ["dusty sampled-keys riff flipped every 8 bars", "dusty sampled string loop as the hook", "warm mid-register sampled organ riff with a stutter-free bounce"],
+    clash: ["a muted trumpet-style synth stab", "a low bowed double bass answering the bassline", "a harp run into every 8th bar", "a distorted guitar stab on the and-of-4"],
+    moves: ["the tempo halves for 4 bars then snaps back at full speed", "the whole beat drops out for exactly one beat every 4 bars", "the sample riff plays backwards for one bar every 16"],
+  },
+  {
+    id: "houston-psych", label: "Houston psychedelic", spirit: "Travis Scott", aliases: ["travis scott", "la flame", "cactus jack"],
+    family: "hiphop", genre: "psychedelic cavernous trap instrumental", bpm: [130, 155], feel: "cavernous half-time haze", tonalities: ["minor"],
+    openers: [
+      "a cavernous psychedelic trap beat: everything drenched in a stadium-sized reverb, a detuned synth wail as the only melody, booming 808 glides, and a beat switch at the midpoint into something darker and slower",
+      "hazy, huge, half-time trap with reverb tails longer than the bars, a low warped synth riff, 808s that glide between notes, and a mid-song switch to a stripped darker beat",
+      "psychedelic haze trap: reversed pad swells, a detuned low synth riff, booming 808 slides, and a hard beat switch that drops the tempo and the key",
+    ],
+    drums: ["half-time drums with a booming snare and hats in rolling triplets", "sparse hats with sudden triplet bursts, snare drenched in reverb", "kicks placed off the grid, clap a 16th late"],
+    lowEnd: ["booming 808 glides between notes, tuned and saturated", "cavernous sub 808 that swells and swallows the room"],
+    leads: ["detuned low synth wail riff", "warped low synth riff with pitch bends", "reversed-swell pad riff, two notes"],
+    clash: ["a reversed cymbal swell into every hook", "a distorted guitar stab drowned in reverb", "a low brass stab once every 8 bars", "a pitched-down bell hit"],
+    moves: ["the beat switches to a darker slower beat in a new key at the midpoint", "the reverb cuts to bone-dry for one bar every 8", "the 808 glides a full octave for one beat at the end of each hook"],
+  },
+  {
+    id: "chicago-icy", label: "Chicago icy drill", spirit: "Chief Keef / Young Chop", aliases: ["chief keef", "young chop", "sosa"],
+    family: "hiphop", genre: "icy Chicago drill instrumental", bpm: [138, 148], feel: "cold rattling half-time", tonalities: ["minor"],
+    openers: [
+      "an icy Chicago drill beat: cold low bell riff in a minor key, hard-hitting 808 on the downbeats, hi-hat rolls that rattle like chains, and snare on 3 like a door slamming",
+      "cold hard drill with a low detuned bell riff, rolling hats, an 808 that punches instead of slides, and a silence before every hook",
+      "minimal icy drill built on a three-note low bell riff, hard 808 hits, and hats that roll then cut dead",
+    ],
+    drums: ["hard snare on 3 like a slammed door, kick on 1 and the and-of-2, rattling hat rolls", "rolling 16th hats that cut dead before the snare", "hard clap-snare with hats in triplet bursts"],
+    lowEnd: ["hard punching 808 on the downbeats, no slides", "808 that hits with the kick and rings exactly one beat"],
+    leads: ["cold low detuned bell riff, three notes", "low icy synth riff in a minor key", "dark low pitched-down bell riff"],
+    clash: ["a low string stab under the bells", "a single orchestral hit on the 1 of every 8 bars", "a distorted low guitar stab", "a reversed bell swell"],
+    moves: ["a full beat of silence before every hook downbeat", "the bells drop an octave for the second half of every hook", "the hats cut dead for the last bar of every 8"],
+  },
+  {
+    id: "compton-theatrical", label: "Compton theatrical", spirit: "Kendrick / Sounwave", aliases: ["kendrick", "lamar", "sounwave", "k dot"],
+    family: "hiphop", genre: "West Coast theatrical hip hop instrumental", bpm: [88, 140], feel: "dramatic hard-snare bounce", tonalities: ["minor"],
+    openers: [
+      "a theatrical West Coast beat that changes character every 8 bars: a hard cracking snare, deep sub, a tense low string riff, then a sudden tempo switch into a slower darker section with a reversed element",
+      "dramatic Compton hip hop: sparse hard drums, one tense minor riff on low strings, a bass that drops out for whole bars, and a mid-song switch that flips the drums and the key",
+      "cinematic West Coast minimalism with a snare that cracks, a low pitched-down keys-free string riff, and the beat rebuilding itself twice",
+    ],
+    drums: ["hard cracking West Coast snare on 2 and 4, kick sparse, hats loose", "dry hard drums with a snare that lands early and a kick that lands late", "sparse drums with a single cracking snare and hats in 3-3-2"],
+    lowEnd: ["deep sub that drops out for whole bars then returns on the 1", "808 tuned low, hitting on the and-of-3 only"],
+    leads: ["tense low string riff, two notes", "low pitched-down sampled string riff", "dark low bowed-string line"],
+    clash: ["a reversed snare on beat 4 every 8th bar", "a low brass stab that lands a 16th early", "a single harp run", "a distorted guitar hit"],
+    moves: ["the beat switches tempo and key at the midpoint", "the drums rebuild from nothing over 8 bars", "the string riff plays a tritone off the key for one bar every 16"],
+  },
+  {
+    id: "memphis-crunk", label: "Memphis crunk", spirit: "Three 6 Mafia (instrumental)", aliases: ["three 6 mafia", "three six mafia", "juicy j", "dj paul"],
+    family: "hiphop", genre: "dark Memphis crunk instrumental", bpm: [136, 150], feel: "dark bouncing crunk stomp", tonalities: ["minor"],
+    openers: [
+      "a dark Memphis crunk beat: eerie low organ riff, an 808 and heavy clap on every other beat, a low brass stab, and a bounce that makes the whole room stomp",
+      "grimy Memphis crunk built on an ominous low synth riff, thick claps, an 808 knock, and a brass hit on the 1 of every 4 bars",
+      "dark bouncy crunk: low eerie organ, big claps, hard 808, and a whistle-like synth answer that gets under your skin",
+    ],
+    drums: ["heavy claps on 2 and 4 with a kick that bounces across the bar", "thick clap-snare with rolling hats and a stomping kick", "crunk drums with a clap that doubles on the and-of-4"],
+    lowEnd: ["808 knock on every kick, short and heavy", "808 that drops an octave on beat 3 of every fourth bar"],
+    leads: ["eerie low organ riff, two chords", "ominous low synth riff with a bounce", "low haunted string riff"],
+    clash: ["a low brass hit on the 1 of every 4 bars", "a whistle-like synth answer on the and-of-4", "a low tuba-like blurt", "a marching snare rudiment"],
+    moves: ["the claps drop out for one bar every 8 while the 808 keeps stomping", "the organ riff drops an octave on every hook", "the brass hit moves to the and-of-1 for the beat switch"],
+  },
+  {
+    id: "baton-rouge-pain", label: "Baton Rouge pain", spirit: "Kevin Gates / Boosie", aliases: ["kevin gates", "boosie"],
+    family: "hiphop", genre: "Louisiana pain-trap instrumental", bpm: [72, 145], feel: "rolling Louisiana bounce", tonalities: ["minor"],
+    openers: [
+      "a Louisiana pain beat: haunting low minor riff on strings, rolling bounce drums, rumbling 808, and a low bell tone that rings once per bar like a church",
+      "rolling Baton Rouge bounce with a dark low string riff, aggressive hat rolls, a rumbling 808, and gaps where only the riff plays",
+      "brooding southern bounce built on a low haunting riff, rolling drums and a deep 808 that never stops moving",
+    ],
+    drums: ["rolling bounce drums with aggressive hat rolls and a hard clap on 3", "rolling kicks with a clap that lands late and hats in bursts", "bouncing drums with a snare roll into every 4th bar"],
+    lowEnd: ["dark rumbling 808 that never stops moving, sliding between roots", "deep pulsing 808 in 8ths under the riff"],
+    leads: ["haunting low string riff in minor", "low dark bowed-string riff", "low pitched-down organ riff"],
+    clash: ["a low bell tone once per bar", "a distorted guitar stab on the and-of-2", "a low brass swell", "a harp figure"],
+    moves: ["the drums drop and only the riff plays for 2 bars every 8", "the 808 slides up a fifth on the and-of-3 every 4 bars", "the riff doubles an octave up for every hook"],
+  },
+  {
+    id: "detroit-flint", label: "Detroit / Flint", spirit: "Babyface Ray / Rio da Yung OG", aliases: ["babyface ray", "rio da yung og"],
+    family: "hiphop", genre: "Detroit bounce instrumental", bpm: [90, 105], feel: "stumbling off-grid straight time", tonalities: ["minor"],
+    openers: [
+      "a Detroit beat where the bass is the melody: a pitched 808 running up and down a minor scale in 8ths, drums that stumble off the grid, a cheap nervous synth riff, and no attempt at polish",
+      "off-grid Flint bounce: unquantized drums that lurch, a walking 808 bassline as the hook, tense two-note string stabs, everything cramped and loud",
+      "stumbling Detroit beat: the 808 plays the tune, the kick lands wherever it wants, the snare cracks dry, and a nervous mid-register synth loops one bar forever",
+    ],
+    drums: ["straight-time kick on 1 and the and-of-3, dry cracking snare on 2 and 4", "loose 8th hats lurching behind the grid with a stumbling kick", "drums alone for 2 bars before the bass, deliberately unquantized"],
+    lowEnd: ["melodic pitched 808 bassline running up and down the minor scale, the bass is the hook", "bouncing 808 melody jumping an octave every fourth bar"],
+    leads: ["cheap nervous mid-register synth riff, one bar", "tense two-note low string stab", "grainy organ drone riff under the bass"],
+    clash: ["a sharp harp figure answering the bass", "a low brass blurt on the 1", "a pizzicato string stab", "a distorted guitar hit on the and-of-4"],
+    moves: ["tape hiss cuts to silence for half a beat before each bass run", "the 808 walks up an octave on every fourth bar", "the drums stop for one bar every 8 while the bass keeps walking"],
+  },
+  {
+    id: "ny-sample-drill", label: "NY sample drill", spirit: "Cash Cobain / 808Melo", aliases: ["cash cobain", "808melo", "pop smoke"],
+    family: "hiphop", genre: "New York drill instrumental", bpm: [138, 146], feel: "sliding menacing skip", tonalities: ["minor"],
+    openers: [
+      "a New York drill beat with a flipped dusty sample as the hook, sliding 808s that glide between root and fifth, drill hats that skip in triplets, and a snare on 3 that drags late",
+      "dark sample drill: a warm dusty sampled keys riff, UK-style sliding 808 pattern, skipping hats, and a clap under the snare that lands behind",
+      "sexy-drill flip: a chorused Y2K-style keys riff over a drill kick grid, sliding 808, and a triple kick every 2 bars",
+    ],
+    drums: ["drill kick on the and-of-1 and 3-and, snare on 3 dragging late, rolling hats", "triplet hat skips alternating every bar with a late clap under the snare", "drill grid softened with a clap on 3 and a triple kick every 2 bars"],
+    lowEnd: ["sliding 808 gliding root, minor third, fifth in 8ths", "808 swelling into every slide, dropping out on beat 4 of every fourth bar"],
+    leads: ["warm dusty sampled-keys riff, flipped", "chorused Y2K-style electric-keys riff", "haunting low string-ensemble line"],
+    clash: ["a muted low guitar riff with slapback", "a low bell tone", "a reversed cymbal into the hook", "a low brass stab"],
+    moves: ["the sample riff plays backwards for the last bar of every 8", "the 808 slides a full octave on the final beat of every hook", "the hats cut dead for a bar every 16"],
+  },
+  {
+    id: "west-coast", label: "West Coast bounce", spirit: "Mustard / Hit-Boy", aliases: ["mustard", "dj mustard", "hit-boy", "hit boy"],
+    family: "hiphop", genre: "West Coast hyphy-leaning instrumental", bpm: [96, 104], feel: "slapping cocky bounce", tonalities: ["minor"],
+    openers: [
+      "a West Coast slapper: punchy kick on 1 and the and-of-2, a huge clap on 2 and 4, a thick synth bass doubling the 808, and a mid-register whistling sine riff that everybody hums back",
+      "ratchet bounce: dry loud drums, a two-note bass figure, sharp synth-brass stabs on the offbeats, and one riff that loops until it is impossible to forget",
+      "cocky West Coast minimalism: big clap, slapping 808, a mid-register square-wave riff, and a beat that leaves whole beats empty",
+    ],
+    drums: ["punchy kick on 1 and the and-of-2, big clap on 2 and 4, loose 8th hats", "dry snare with a late doubled clap and an open hat on the and-of-3", "kick that hits an extra 16th before beat 3 for the bounce"],
+    lowEnd: ["thick synth bass doubling a slapping 808 on a 2-bar syncopated figure", "808 that drops out on beat 3 of every fourth bar and slams back on 4"],
+    leads: ["mid-register whistling sine riff with pitch bends", "mid-register square-wave riff, two notes", "sharp low synth-brass stab riff"],
+    clash: ["a dark low string stab on the 1 of every bar", "a cheap 80s synth-brass hit", "a steel-pan pluck answer", "a low tuba-like bass blurt"],
+    moves: ["beat 4 is left completely empty every bar", "the clap doubles into a roll on the last beat of every 8", "the riff drops out for the verse and returns doubled on the hook"],
+  },
+  {
+    id: "cinematic-trap", label: "Cinematic trap", spirit: "Metro Boomin / Southside", aliases: ["metro boomin", "metro", "southside", "808 mafia"],
+    family: "hiphop", genre: "cinematic dark trap instrumental", bpm: [130, 150], feel: "widescreen half-time", tonalities: ["minor"],
+    openers: [
+      "a widescreen cinematic trap beat: low orchestral strings holding a minor pedal, a distorted 808 that hits like a door, hats in machine-gun rolls, and a single low bell riff over the top",
+      "dark blockbuster trap: string swells, an 808 with a clipped attack and a long tail, a low brass hit on the 1 of every 8 bars, and drums that leave silence before every hook",
+      "cinematic minimal trap with one low string riff, a distorted 808, and a brass stab that only appears once every 16 bars",
+    ],
+    drums: ["hard snare on 3, kick on 1 and the and-of-2, hats in machine-gun rolls every 2 bars", "half-time drums with a hard clap-snare and hat rolls that accelerate", "sparse kicks with a snare that lands a 16th late and hats in 64th bursts"],
+    lowEnd: ["distorted 808 with a clipped attack and a long mono tail", "808 that slides a fifth at the end of every 4 bars"],
+    leads: ["low orchestral string riff on a minor pedal", "low bell riff over held strings", "dark low brass riff"],
+    clash: ["a low brass hit on the 1 of every 8 bars", "a timpani roll into the hook", "a reversed string swell", "a single harp glissando"],
+    moves: ["a full beat of silence before every hook", "the strings drop out and the 808 carries the melody for 4 bars", "the hats cut to nothing for the beat switch"],
+  },
+  // ---------------------------------------------------------------- R&B
+  {
+    id: "dark-synth-rnb", label: "Dark synth R&B", spirit: "The Weeknd / Illangelo", aliases: ["weeknd", "the weeknd", "illangelo", "xo"],
+    family: "rnb", genre: "dark cinematic R&B instrumental", bpm: [62, 100], feel: "night-drive pulse", tonalities: ["minor"],
+    openers: [
+      "a dark cinematic R&B beat for a night drive: cold detuned synth pads, a deep booming sub, drums that snap far away, and a low synth riff that repeats like headlights on a wet road",
+      "nocturnal synth R&B: cavernous reverb, a slow pulse, a warm analog pad riff, and an 808 that only moves when the chords do",
+      "dark glossy R&B with a low detuned synth riff, deep sub swells, dry tight snaps, and a mid-song switch into a faster half-time pulse",
+    ],
+    drums: ["slow drums with a distant snap on 3 and hats in swung 16ths", "soft thudding kick, layered snap-clap on 3, hats that drop for the last 2 bars of 8", "dry tight snaps with a kick only on 1 and the and-of-2"],
+    lowEnd: ["deep booming sub, one note per chord, felt not heard", "808 that dips a whole step on the fourth chord"],
+    leads: ["cold detuned low synth riff", "warm analog low pad riff in minor ninths", "low pulsing synth riff, two notes"],
+    clash: ["a tremolo guitar note answering the pad", "a low bowed cello stab", "a reversed pad swell into every hook", "a single low bell"],
+    moves: ["the mix drops to mono for the first beat of every hook", "the sub slides an octave down on the final beat of every phrase", "the pad cuts hard to silence for the last 8th of every 4 bars"],
+  },
+  {
+    id: "trap-soul", label: "Trap-soul", spirit: "Bryson Tiller", aliases: ["bryson tiller", "tiller", "pen griffey"],
+    family: "rnb", genre: "trap soul instrumental", bpm: [60, 72], feel: "smooth weighty half-time", tonalities: ["minor", "major"],
+    openers: [
+      "a trap-soul beat: lush low chorused electric-keys riff in minor ninths, a warm long 808 gliding under the chords, snappy snare on 3, double-time hats with lazy rolls, and a warm tape haze over everything",
+      "late-night trap-soul built on a slow plucked-guitar riff, a deep 808 that pushes an 8th early, and hats that swing late and drop out for beat 4",
+      "smooth weighty R&B trap with a silky low string riff, a warm 808 on the chord roots, and reverb tails cut short before every snare",
+    ],
+    drums: ["soft kick on 1 and the and-of-3, snappy snare on 3, double-time hats with lazy rolls", "hats swinging late and dropping for beat 4 every second bar", "layered clap-snare with a dark plate, rushed hats"],
+    lowEnd: ["warm long 808 on the chord roots, gliding down an octave at phrase ends", "808 hitting an 8th before the downbeat, pushing the loop forward"],
+    leads: ["lush low chorused electric-keys riff in minor ninths", "slow mid-register plucked-guitar riff", "silky low string riff"],
+    clash: ["a low pitched-down bell, two notes, only in the hook", "an accordion-like stab", "a muted guitar harmonic", "a low brass swell"],
+    moves: ["the 808 dips a whole step on the fourth chord", "the drums drop for the last 2 bars of every 8", "the keys riff drops an octave on the beat switch"],
+  },
+  {
+    id: "afro-rnb", label: "Afro R&B", spirit: "Tems / Rema", aliases: ["tems", "rema", "burna"],
+    family: "rnb", genre: "Afro R&B instrumental", bpm: [95, 110], feel: "rolling swung warmth", tonalities: ["minor", "major"],
+    openers: [
+      "an Afro R&B groove: log-drum bass hitting on the syncopated kick accents, a shaker in swung 16ths, a sunny mid-register nylon-guitar riff, and a kick that pushes the and-of-4 into the next bar",
+      "warm rolling Afro-fusion R&B with a bouncing 808 sliding root to sixth, wood-tick percussion on the offbeats, and a chorused electric-keys comping riff",
+      "swinging Afro R&B built on a nylon-guitar riff, a log-drum bass, and drums that roll instead of hit",
+    ],
+    drums: ["soft kick on 1 and the and-of-2, snappy snare on 3, shaker in swung 16ths", "wood-tick percussion on the offbeats with rolling swung hats", "kick pushing the and-of-4 into the next bar"],
+    lowEnd: ["log-drum bass hits on the kick accents, pitched to the chords", "warm 808 sliding root to sixth in a bouncing 2-bar phrase"],
+    leads: ["sunny mid-register nylon-guitar riff", "warm chorused electric-keys comping riff", "low flute-style synth riff with slides"],
+    clash: ["a tabla roll", "a low brass swell", "a steel-pan pluck", "a harp glissando"],
+    moves: ["the log drum drops out for one bar every 8", "the guitar riff plays a beat late for the beat switch", "the shaker doubles speed for the last 4 bars"],
+  },
+  {
+    id: "y2k-rnb", label: "Y2K R&B", spirit: "Timbaland / Darkchild era", aliases: ["timbaland", "darkchild", "rodney jerkins"],
+    family: "rnb", genre: "Y2K R&B instrumental", bpm: [88, 100], feel: "swung glossy bounce", tonalities: ["minor", "major"],
+    openers: [
+      "an early-2000s R&B beat: snappy layered snare on 2 and 4, swung 16th hats, a kick that skips the 3, glossy chorused electric-keys chords with suspended fourths, and a punchy short synth bass on a syncopated figure",
+      "Y2K R&B built on a beatbox-free clicking drum machine pattern, a mid-register filtered clean-guitar riff, a harp glissando every 4 bars, and a bass that skips",
+      "glossy 2000s R&B with a stuttering-free staccato drum pattern, a shimmering mid-register string riff with an octave lift in the hook, and a punchy sub following the bass",
+    ],
+    drums: ["snappy layered snare on 2 and 4, swung 16th hats, kick skipping the 3", "crisp drum-machine hats with a shaker, ghost snares on the and-of-4", "tight dry kick doubling on the and-of-1 every second bar"],
+    lowEnd: ["punchy short synth bass on a syncopated 2-bar figure", "warm sub 808 following the bass an octave down"],
+    leads: ["glossy chorused electric-keys riff with suspended fourths", "mid-register filtered clean-guitar riff", "shimmering mid-register string riff"],
+    clash: ["a harp glissando every 4 bars", "a sitar riff", "a koto pluck", "a cheap 80s synth-brass hit"],
+    moves: ["the keys widen in the hook and narrow in the verse", "the bass figure skips its first note every second bar", "the strings lift an octave on the last hook"],
+  },
+];
+
+
 /* ANOMALY vocabulary — built from docs/producer-brief.md (executive-producer
  * sonic brief for 2025–2026 hip hop and R&B radio instrumentals). Every phrase
  * is written to be pasted verbatim into a Suno v6 style field. */
@@ -193,130 +471,10 @@ const AnomalyData = (() => {
     { id: "susCycle", name: "Suspended cycle", tonality: "major", roman: "vi9 – IVmaj7 – Imaj7 – Vsus4", chords: [[9, "m9"], [5, "maj7"], [0, "maj7"], [7, "sus4"]], color: "silky suspended major-seventh changes", cadence: "Hangs on the sus chord so the return feels like relief." },
   ];
 
-  // ------------------------------------------------------------ sound worlds
-  const WORLDS = [
-    {
-      id: "melodic-trap-radio", label: "Melodic Trap", family: "hiphop", genre: "melodic trap, hip hop",
-      bpm: [130, 150], feel: "heavy sliding half-time", tonalities: ["minor"],
-      drums: ["sparse kick on the and-of-3, late layered clap", "triplet hat rolls every fourth bar, open hat offbeat", "half-time grid with rushed hats and a late snare"],
-      lowEnd: ["long tuned 808 answering the kick, not doubling it", "808 sliding up a fifth at every phrase end"],
-      leads: ["warm low nylon-guitar riff", "low detuned analog lead with slow vibrato", "dark mid-register brass-style riff", "low woodwind-style synth riff"],
-      motifs: ["the saw-lead motif", "the palm-muted guitar motif", "the synth-flute motif"],
-      texture: ["wide pad, dry center drums, mono sub", "faint vinyl crackle under the melody"],
-      moods: ["glacial-tender", "pewter-lit", "sedated-luxe"],
-    },
-    {
-      id: "hard-trap", label: "Hard Trap", family: "hiphop", genre: "hard trap, aggressive hip hop",
-      bpm: [140, 160], feel: "abrasive pressurized bounce", tonalities: ["minor"],
-      drums: ["clipped kick on 1 and the and-of-2, bone-dry snare on 3", "machine-gun hat rolls every 2 bars", "kick drops out for a half beat before every snare"],
-      lowEnd: ["distorted 808 with a clipped attack and a long mono tail", "808 stuttering in 16ths on the last beat of every 8th bar"],
-      leads: ["growling low synth-brass riff", "overdriven low brass stab riff", "screaming mid-register detuned lead through tape", "distorted low guitar riff"],
-      motifs: ["the square-wave motif", "the synth-brass stab motif", "the supersaw motif"],
-      texture: ["dry in-your-face mix, close and airless", "white-noise hiss that opens only on the hat rolls"],
-      moods: ["serrated-bright", "furnace-pressed", "chrome-hostile"],
-    },
-    {
-      id: "ny-drill", label: "NY Drill", family: "hiphop", genre: "New York drill, drill beat",
-      bpm: [138, 146], feel: "sliding menacing skip", tonalities: ["minor"],
-      drums: ["drill kick on the and-of-1 and 3-and, snare on 3, rolling hats", "triplet hat skips alternating every bar", "clap under the snare, both dragging late"],
-      lowEnd: ["sliding 808 gliding root, minor third, fifth in 8ths", "808 swelling into every slide"],
-      leads: ["haunting low string-ensemble line", "muted low electric-guitar riff with slapback", "low pitched-down bell riff", "eerie reed-organ drone riff"],
-      motifs: ["the string-ensemble motif", "the muted-guitar motif", "the detuned-bell motif"],
-      texture: ["cold wide reverb on strings only, drums bone-dry", "low-passed room noise swelling under drum dropouts"],
-      moods: ["wraith-cold", "iron-lit", "prowling-elegant"],
-    },
-    {
-      id: "sexy-drill", label: "Sexy Drill", family: "hiphop", genre: "sexy drill, melodic drill",
-      bpm: [138, 146], feel: "flirty syncopated bounce", tonalities: ["minor"],
-      drums: ["drill grid softened with a clap on 3 and a triple kick every 2 bars", "shuffled swung hats with 32nd skips", "snappy layered clap with a short plate tail instead of a snare"],
-      lowEnd: ["smooth sliding 808 gliding root to fourth every 2 bars", "808 dropping out on beat 4 of every fourth bar, back with a slide"],
-      leads: ["warm chorused electric-keys riff in a Y2K voicing", "mid-register clean tremolo-guitar riff", "breathy low flute-style synth riff", "silky mid-register string riff"],
-      motifs: ["the chorused-keys motif", "the clean-guitar motif", "the synth-flute motif"],
-      texture: ["glossy wide keys, tight center drums, mono sub", "soft vinyl warmth on the keys only"],
-      moods: ["satin-sly", "neon-warm", "candlelit-cocky"],
-    },
-    {
-      id: "detroit-flint", label: "Detroit / Flint", family: "hiphop", genre: "Detroit bounce, Flint bounce",
-      bpm: [90, 105], feel: "stumbling off-grid straight time", tonalities: ["minor"],
-      drums: ["straight-time kick on 1 and the and-of-3, dry cracking snare on 2 and 4", "loose 8th hats lurching behind the grid", "drums alone for 2 bars before the bass, deliberately unquantized"],
-      lowEnd: ["melodic pitched 808 bassline running up and down the minor scale, the bass is the hook", "bouncing 808 melody jumping an octave every fourth bar"],
-      leads: ["cheap nervous mid-register synth riff", "tense two-note low string stab", "grainy organ drone riff under the bass", "sharp mid-register harp figure answering the bass"],
-      motifs: ["the nervous synth-pluck motif", "the two-note string stab", "the 808 bass melody"],
-      texture: ["cramped dry mono-leaning mix, loud bass, tucked melody", "tape hiss cutting to silence before each bass run"],
-      moods: ["jittery-brash", "streetlight-orange", "sneering-loose"],
-    },
-    {
-      id: "jersey-club-rap", label: "Jersey Club Rap", family: "hiphop", genre: "Jersey club beat, club bounce",
-      bpm: [130, 140], feel: "breathless kinetic bounce", tonalities: ["minor", "major"],
-      drums: ["Jersey club kick on 1, 2-and, 3, 4-and with a triple-kick every second bar", "five-kick squeak pattern replacing the snare every fourth bar", "clap on 2 and 4, rolling hats, breathy open hat"],
-      lowEnd: ["short punchy 808 hitting only on the kick accents", "808 stuttering in 8ths on beat 4 of every fourth bar"],
-      leads: ["staccato mid-register horn-stab riff", "retriggered electric-keys stab riff on the kick pattern", "dark low synth-brass hit riff", "mid-register string-stab riff with a fast filter wobble"],
-      motifs: ["the staccato pluck motif", "the keys-stab motif", "the synth-brass hit"],
-      texture: ["dry club drums center, wide melody, mono sub", "short room on the clap only"],
-      moods: ["breathless-metallic", "strobe-stung", "sweat-bright"],
-    },
-    {
-      id: "plugg", label: "Plugg / PluggnB", family: "hiphop", genre: "plugg, pluggnb",
-      bpm: [140, 160], feel: "airy sparse float", tonalities: ["minor", "major"],
-      drums: ["soft rounded kick, thin snap on 3, relaxed 8th hats", "drums held back 4 bars then a bare kick-and-snap", "loose swung hats that drop for a whole beat"],
-      lowEnd: ["smooth sine 808 with a long tail, one note per chord", "808 droning under the chords, sliding up into the hook"],
-      leads: ["mellow low electric-keys riff full of ninths", "dreamy mid-register flute-style synth riff with portamento", "low pitched-down bell riff", "warm low pad riff"],
-      motifs: ["the detuned-bell motif", "the mellow-keys motif", "the synth-flute motif"],
-      texture: ["dreamy wide reverb on keys, drums dry and small", "stereo shimmer collapsing to mono on every downbeat"],
-      moods: ["powder-soft", "dawn-hazed", "pastel-numb"],
-    },
-    {
-      id: "dark-rnb", label: "Dark R&B", family: "rnb", genre: "dark R&B, alternative R&B",
-      bpm: [60, 75], feel: "slow submerged pocket", tonalities: ["minor"],
-      drums: ["soft thudding kick, layered snap-clap on 3, swung 16th hats", "kick only on 1 and the and-of-2, beat 4 empty", "drums dropping out for the last 2 bars of every 8"],
-      lowEnd: ["short round sub 808, one note per chord", "808 dipping a whole step on the fourth chord"],
-      leads: ["detuned low analog pad riff in minor ninths", "slow low tremolo-guitar riff", "low breathy flute-style synth riff", "warm low tremolo electric-keys riff"],
-      motifs: ["the tremolo-guitar motif", "the synth-flute motif", "the detuned-pad motif"],
-      texture: ["deep dark reverb on pad and guitar, dry tight drums", "low-passed drone under everything opening on the hook"],
-      moods: ["velvet-scorched", "ink-warm", "bruised-silk"],
-    },
-    {
-      id: "trap-soul", label: "Trap-Soul", family: "rnb", genre: "trap soul, R&B trap",
-      bpm: [60, 72], feel: "smooth weighty half-time", tonalities: ["minor", "major"],
-      drums: ["soft kick on 1 and the and-of-3, snappy snare on 3, double-time hats with lazy rolls", "hats swinging late and dropping for beat 4 every second bar", "layered clap-snare with a dark plate, rushed hats"],
-      lowEnd: ["warm long 808 on the chord roots, gliding down an octave at phrase ends", "808 hitting an 8th before the downbeat, pushing the loop forward"],
-      leads: ["lush low chorused electric-keys riff", "slow mid-register plucked-guitar riff", "silky low string riff", "low pitched-down bell riff, two notes"],
-      motifs: ["the chorused-keys motif", "the plucked-guitar motif", "the two-note bell motif"],
-      texture: ["wide keys, deep sub, tight drums, warm tape haze", "reverb tails cut short before each snare"],
-      moods: ["amber-heavy", "midnight-plush", "lacquer-slow"],
-    },
-    {
-      id: "afro-rnb", label: "Afro R&B", family: "rnb", genre: "Afro R&B, afrobeats R&B",
-      bpm: [95, 110], feel: "rolling swung warmth", tonalities: ["minor", "major"],
-      drums: ["soft kick on 1 and the and-of-2, snappy snare on 3, shaker in swung 16ths", "wood-tick percussion on the offbeats, rolling swung hats", "kick pushing the and-of-4 into the next bar"],
-      lowEnd: ["log-drum bass hits on the kick accents, pitched to the chords", "warm 808 sliding root to sixth in a bouncing 2-bar phrase"],
-      leads: ["sunny mid-register nylon-guitar riff", "warm chorused electric-keys comping riff", "low flute-style synth riff with slides", "low airy pad riff"],
-      motifs: ["the nylon-guitar riff", "the comping-keys motif", "the synth-flute motif"],
-      texture: ["wide guitar and keys, shaker left, drums dry and warm", "spring reverb on the guitar only"],
-      moods: ["sun-lacquered", "copper-swaying", "dusk-sweet"],
-    },
-    {
-      id: "y2k-rnb", label: "Y2K R&B", family: "rnb", genre: "Y2K R&B, 2000s R&B",
-      bpm: [88, 100], feel: "swung glossy bounce", tonalities: ["minor", "major"],
-      drums: ["snappy layered snare on 2 and 4, swung 16th hats, kick skipping the 3", "crisp drum-machine hats with a shaker, ghost snares on the and-of-4", "tight dry kick doubling on the and-of-1 every second bar"],
-      lowEnd: ["punchy short synth bass on a syncopated 2-bar figure", "warm sub 808 following the bass an octave down"],
-      leads: ["glossy chorused electric-keys riff with suspended fourths", "mid-register filtered clean-guitar riff", "mid-register harp glissando riff", "shimmering mid-register string riff"],
-      motifs: ["the suspended-keys motif", "the filtered-guitar riff", "the harp answer"],
-      texture: ["wide glossy keys, dry tight drums, bass center", "chorus wash widening in the hook"],
-      moods: ["gloss-drunk", "chrome-tender", "rollerskate-slick"],
-    },
-    {
-      id: "west-coast", label: "West Coast Bounce", family: "hiphop", genre: "West Coast hip hop, hyphy bounce",
-      bpm: [96, 104], feel: "slapping cocky bounce", tonalities: ["minor"],
-      drums: ["punchy kick on 1 and the and-of-2, big clap on 2 and 4, loose 8th hats", "dry snare with a late doubled clap, swung hats", "kick hitting an extra 16th before beat 3"],
-      lowEnd: ["thick synth bass doubling a slapping 808 on a 2-bar syncopated figure", "808 dropping on beat 3 of every fourth bar and slamming back on 4"],
-      leads: ["mid-register whistling sine riff with pitch bends", "sharp low synth-brass stab riff", "dark low string-stab riff", "buzzy mid-register square-wave riff"],
-      motifs: ["the whistling sine motif", "the synth-brass stab", "the square-wave counterline"],
-      texture: ["dry loud center-heavy mix, lead slightly right", "tight room on the clap only"],
-      moods: ["asphalt-hot", "lowrider-slow", "swagger-glossy"],
-    },
-  ];
-
+  // Producer blueprints are the worlds now (see blueprints.js).
+  const BLUEPRINTS = typeof AnomalyBlueprints !== "undefined" ? AnomalyBlueprints : require("./blueprints.js");
+  const WORLDS = BLUEPRINTS;
+  const ARTIST_NAMES = [...new Set(BLUEPRINTS.flatMap((b) => b.aliases))].filter((n) => n.replace(/[^a-z0-9]/gi, "").length >= 3);
 
   // Groove, in the words producers use. Meter play is part of it: Suno reacts
   // to "6/8" and "waltz" far more than to milliseconds.
@@ -468,10 +626,11 @@ const AnomalyData = (() => {
     { re: /\b(marimba|kalimba|music box|glockenspiel|celesta|xylophone|toy piano|dulcimer)\b/i, level: "block", msg: "stock mallet preset" },
     { re: /\b(edm|dubstep|jazz\w*|funk\w*|disco|house\b)\b/i, level: "block", msg: "off-format genre word" },
     { re: /\bno\s+\w+/i, level: "warn", msg: "\"no X\" inside a prompt plants X" },
+    ...ARTIST_NAMES.map((n) => ({ re: new RegExp(`(^|[^a-z0-9])${n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}($|[^a-z0-9])`, "i"), level: "block", msg: `artist name "${n}"` })),
   ];
 
   return {
-    STYLE_LIMIT, LYRICS_LIMIT, PIANO_SHARE, MINOR_KEYS, MAJOR_KEYS, PROGRESSIONS, WORLDS, GLOBAL_LEADS,
+    STYLE_LIMIT, LYRICS_LIMIT, PIANO_SHARE, MINOR_KEYS, MAJOR_KEYS, PROGRESSIONS, WORLDS, BLUEPRINTS, GLOBAL_LEADS,
     ADJECTIVES, INSTRUMENTAL_LOCK, SWING, SYNC, CLASH, GLITCH, BEAT_SWITCH, SIGNATURES, TECH_FLEX, MIX, STRUCTURES,
     SYNCOPATION: SYNC, HUMAN_FEEL: SWING,
     EXCLUDE, SETTINGS, LINT,
@@ -547,35 +706,37 @@ const AnomalyEngine = (() => {
     const parts = [];
     const add = (text, pri) => parts.push({ text, pri });
 
+    // The opener is the identity. It goes first because Suno weights the front.
+    add(pick(world.openers, r), 0);
     add(world.genre, 0);
-    add(pick(D.INSTRUMENTAL_LOCK, r), 0);
-    add(`${pick(D.SWING, r)} drums, ${pick(D.SYNC, r)}`, 0);
-    add(pick(world.drums, r), 2);
-    add(pick(world.lowEnd, r), 0);
+    add(`${pick(D.SWING, r)} drums, ${pick(D.SYNC, r)}`, 1);
+    add(pick(world.lowEnd, r), 2);
 
-    // Lead: low or mid register, physical, looping obsessively. Piano rarely.
-    let leadPool = r() < 0.5 ? world.leads : D.GLOBAL_LEADS;
+    let leadPool = r() < 0.7 ? world.leads : D.GLOBAL_LEADS;
     if (r() > D.PIANO_SHARE) leadPool = leadPool.filter((l) => !isPiano(l));
     const lead = makeVoice(leadPool, D.ADJECTIVES, r, used);
-    add(`${lead} playing ${harmony.prog.color} in ${harmony.key}, a 2-bar hook riff looping obsessively`, 0);
+    add(`${lead} playing ${harmony.prog.color} in ${harmony.key}, looping obsessively`, 0);
     ctx.motif = `the ${lead.split(",")[0].split(" ").slice(1, 5).join(" ")}`;
-    // The clash: one element from outside the lane, so no two rolls sound alike.
-    ctx.clash = pick(D.CLASH, r);
+    ctx.clash = r() < 0.7 ? pick(world.clash, r) : pick(D.CLASH, r);
     add(`${ctx.clash} cutting in every 4 bars`, 0);
 
-    add(ctx.glitch, 0);
+    add(ctx.glitch, 1);
     add(`signature: ${ctx.signature}`, 0);
     add(`technical flex: ${ctx.flex}`, 1);
+    add(`trademark move: ${ctx.move}`, 2);
     add(`beat switch at the midpoint: ${ctx.beatSwitch}`, 0);
-    add(`${pick(world.moods, r)} and ${pick(D.ADJECTIVES.filter((x) => !used.has(x)), r)}`, 1);
-    add(pick(world.texture, r), 3);
-    add(pick(D.MIX, r), 1);
+    add(pick(world.drums, r), 3);
+    add(pick(D.MIX, r), 3);
+    add(`${pick(D.ADJECTIVES.filter((x) => !used.has(x)), r)} and ${pick(D.ADJECTIVES.filter((x) => !used.has(x)), r)}`, 4);
     const tail = `${bpm} BPM ${world.feel}, hard stop ending`;
 
+    // Trim one line at a time, least important first, latest first within a tier.
     const budget = D.STYLE_LIMIT - tail.length - 2;
     const len = (list) => list.map((p) => p.text).join(", ").length;
-    let kept = [...parts];
-    for (let pri = 3; pri >= 1 && len(kept) > budget; pri--) kept = kept.filter((p) => p.pri !== pri);
+    const kept = [...parts];
+    for (let pri = 4; pri >= 1 && len(kept) > budget; pri--) {
+      for (let i = kept.length - 1; i >= 0 && len(kept) > budget; i--) if (kept[i].pri === pri) kept.splice(i, 1);
+    }
     return `${kept.map((p) => p.text).join(", ")}, ${tail}`;
   }
 
@@ -660,6 +821,7 @@ const AnomalyEngine = (() => {
       world, harmony, bpm, r, used, structure,
       glitch: pick(D.GLITCH, r),
       signature: pick(D.SIGNATURES, r),
+      move: pick(world.moves, r),
       flex: pick(D.TECH_FLEX, r),
       beatSwitch: pick(D.BEAT_SWITCH, r),
     };
@@ -679,13 +841,14 @@ const AnomalyEngine = (() => {
       settings,
       harmony: { key: harmony.key, progression: harmony.prog.name, roman: harmony.prog.roman, chords: harmony.chords, cadence: harmony.prog.cadence },
       signature: ctx.signature,
+      move: ctx.move,
       clash: ctx.clash,
       flex: ctx.flex,
       beatSwitch: ctx.beatSwitch,
       glitch: ctx.glitch,
       warnings,
       meta: {
-        seed, world: world.id, worldLabel: world.label, family: world.family, bpm,
+        seed, world: world.id, worldLabel: world.label, spirit: world.spirit, family: world.family, bpm,
         structure: structure.id, structureLabel: structure.label, length: structure.length,
         styleChars: styleText.length, descriptors: styleText.split(", ").length,
       },
@@ -779,6 +942,7 @@ const AnomalyEngine = (() => {
     recipe.textContent = "";
     recipe.append(
       tag(m.worldLabel, true),
+      tag(`in the spirit of ${m.spirit}`),
       tag(`${m.bpm} BPM`),
       tag(pkg.harmony.key),
       tag(`${m.structureLabel} ${m.length}`),
@@ -790,6 +954,7 @@ const AnomalyEngine = (() => {
     $("out-exclude").textContent = pkg.excludeText;
     dl($("sig-grid"), [
       ["Anomaly", pkg.signature],
+      ["Trademark move", pkg.move],
       ["Clash", pkg.clash],
       ["Technical flex", pkg.flex],
       ["Twitch", pkg.glitch],

@@ -11,7 +11,7 @@ const pages = {
     .replace("/*ENGINE*/", () => [read("likeness.js"), read("engine.js")].map(strip).join("\n"))
     .replace("/*APP*/", () => read("app.js")),
   "anomaly.html": read("anomaly/template.html")
-    .replace("/*DATA*/", () => strip(read("anomaly/data.js")))
+    .replace("/*DATA*/", () => [read("anomaly/blueprints.js"), read("anomaly/data.js")].map(strip).join("\n"))
     .replace("/*ENGINE*/", () => strip(read("anomaly/engine.js")))
     .replace("/*APP*/", () => read("anomaly/app.js")),
 };

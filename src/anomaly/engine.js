@@ -64,35 +64,37 @@ const AnomalyEngine = (() => {
     const parts = [];
     const add = (text, pri) => parts.push({ text, pri });
 
+    // The opener is the identity. It goes first because Suno weights the front.
+    add(pick(world.openers, r), 0);
     add(world.genre, 0);
-    add(pick(D.INSTRUMENTAL_LOCK, r), 0);
-    add(`${pick(D.SWING, r)} drums, ${pick(D.SYNC, r)}`, 0);
-    add(pick(world.drums, r), 2);
-    add(pick(world.lowEnd, r), 0);
+    add(`${pick(D.SWING, r)} drums, ${pick(D.SYNC, r)}`, 1);
+    add(pick(world.lowEnd, r), 2);
 
-    // Lead: low or mid register, physical, looping obsessively. Piano rarely.
-    let leadPool = r() < 0.5 ? world.leads : D.GLOBAL_LEADS;
+    let leadPool = r() < 0.7 ? world.leads : D.GLOBAL_LEADS;
     if (r() > D.PIANO_SHARE) leadPool = leadPool.filter((l) => !isPiano(l));
     const lead = makeVoice(leadPool, D.ADJECTIVES, r, used);
-    add(`${lead} playing ${harmony.prog.color} in ${harmony.key}, a 2-bar hook riff looping obsessively`, 0);
+    add(`${lead} playing ${harmony.prog.color} in ${harmony.key}, looping obsessively`, 0);
     ctx.motif = `the ${lead.split(",")[0].split(" ").slice(1, 5).join(" ")}`;
-    // The clash: one element from outside the lane, so no two rolls sound alike.
-    ctx.clash = pick(D.CLASH, r);
+    ctx.clash = r() < 0.7 ? pick(world.clash, r) : pick(D.CLASH, r);
     add(`${ctx.clash} cutting in every 4 bars`, 0);
 
-    add(ctx.glitch, 0);
+    add(ctx.glitch, 1);
     add(`signature: ${ctx.signature}`, 0);
     add(`technical flex: ${ctx.flex}`, 1);
+    add(`trademark move: ${ctx.move}`, 2);
     add(`beat switch at the midpoint: ${ctx.beatSwitch}`, 0);
-    add(`${pick(world.moods, r)} and ${pick(D.ADJECTIVES.filter((x) => !used.has(x)), r)}`, 1);
-    add(pick(world.texture, r), 3);
-    add(pick(D.MIX, r), 1);
+    add(pick(world.drums, r), 3);
+    add(pick(D.MIX, r), 3);
+    add(`${pick(D.ADJECTIVES.filter((x) => !used.has(x)), r)} and ${pick(D.ADJECTIVES.filter((x) => !used.has(x)), r)}`, 4);
     const tail = `${bpm} BPM ${world.feel}, hard stop ending`;
 
+    // Trim one line at a time, least important first, latest first within a tier.
     const budget = D.STYLE_LIMIT - tail.length - 2;
     const len = (list) => list.map((p) => p.text).join(", ").length;
-    let kept = [...parts];
-    for (let pri = 3; pri >= 1 && len(kept) > budget; pri--) kept = kept.filter((p) => p.pri !== pri);
+    const kept = [...parts];
+    for (let pri = 4; pri >= 1 && len(kept) > budget; pri--) {
+      for (let i = kept.length - 1; i >= 0 && len(kept) > budget; i--) if (kept[i].pri === pri) kept.splice(i, 1);
+    }
     return `${kept.map((p) => p.text).join(", ")}, ${tail}`;
   }
 
@@ -177,6 +179,7 @@ const AnomalyEngine = (() => {
       world, harmony, bpm, r, used, structure,
       glitch: pick(D.GLITCH, r),
       signature: pick(D.SIGNATURES, r),
+      move: pick(world.moves, r),
       flex: pick(D.TECH_FLEX, r),
       beatSwitch: pick(D.BEAT_SWITCH, r),
     };
@@ -196,13 +199,14 @@ const AnomalyEngine = (() => {
       settings,
       harmony: { key: harmony.key, progression: harmony.prog.name, roman: harmony.prog.roman, chords: harmony.chords, cadence: harmony.prog.cadence },
       signature: ctx.signature,
+      move: ctx.move,
       clash: ctx.clash,
       flex: ctx.flex,
       beatSwitch: ctx.beatSwitch,
       glitch: ctx.glitch,
       warnings,
       meta: {
-        seed, world: world.id, worldLabel: world.label, family: world.family, bpm,
+        seed, world: world.id, worldLabel: world.label, spirit: world.spirit, family: world.family, bpm,
         structure: structure.id, structureLabel: structure.label, length: structure.length,
         styleChars: styleText.length, descriptors: styleText.split(", ").length,
       },
