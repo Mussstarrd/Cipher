@@ -84,7 +84,6 @@ const AnomalyEngine = (() => {
     add(`technical flex: ${ctx.flex}`, 1);
     add(`signature: ${ctx.signature}`, 0);
     add(ctx.glitch, 2);
-    add(`trademark move: ${ctx.move}`, 2);
     add(`beat switch at the midpoint: ${ctx.beatSwitch}`, 0);
     add(pick(world.drums, r), 3);
     add(pick(D.MIX, r), 3);
@@ -120,7 +119,7 @@ const AnomalyEngine = (() => {
           push("Hook", `full beat, ${motif} loops obsessively, ${ctx.playing}, ${ctx.clash} answers every 4 bars, 8 bars`);
           break;
         case "hookSig":
-          push("Hook", `full beat, ${motif} loops obsessively, ${ctx.clash} answers, ${sig}, 8 bars`);
+          push("Hook", `full beat, ${motif} loops obsessively, ${ctx.clash} answers, ${sig}, ${ctx.move}, 8 bars`);
           break;
         case "verse":
           push("Verse", `drums and 808 only, ${motif} low and sparse, open space, 16 bars`);
@@ -138,7 +137,7 @@ const AnomalyEngine = (() => {
           push("Beat Switch", `${ctx.beatSwitch}, ${ctx.glitch}, ${chords} darker, 8 bars`);
           break;
         case "switchHook":
-          push("Hook", `on the switched beat, ${motif} twice as heavy, ${ctx.clash} doubled, ${sig}, 8 bars`);
+          push("Hook", `on the switched beat, ${motif} twice as heavy, ${ctx.clash} doubled, ${sig}, ${ctx.move}, 8 bars`);
           break;
         case "break":
           push("Break", `808 alone for 2 bars, then a half-beat of total silence`);
