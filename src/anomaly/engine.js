@@ -135,7 +135,7 @@ const AnomalyEngine = (() => {
           push("Pre-Hook", `808 out, ${motif} holds the tension chord, ${ctx.flex}, 4 bars`);
           break;
         case "switch":
-          push("Beat Switch", `${ctx.beatSwitch}, ${chords} darker, 8 bars`);
+          push("Beat Switch", `${ctx.beatSwitch}, ${ctx.glitch}, ${chords} darker, 8 bars`);
           break;
         case "switchHook":
           push("Hook", `on the switched beat, ${motif} twice as heavy, ${ctx.clash} doubled, ${sig}, 8 bars`);
