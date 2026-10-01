@@ -89,7 +89,7 @@ const AnomalyData = (() => {
     "played through a broken spring reverb", "low-passed and lightly distorted, all the sheen gone",
     "warbling with tape flutter", "overdriven until the attack clips", "muffled like it is coming through a wall",
     "chorused and detuned, wide and seasick", "crushed to mono and gritty", "dusty, dull and warm, like an old sample",
-    "scratchy and thin like a transistor radio", "buzzing with amp noise and hiss underneath",
+    "thin and crackly like a transistor radio", "buzzing with amp noise and hiss underneath",
   ];
   const SPACE = [
     "in a long dark plate reverb", "bone-dry and close to the ear", "with a short slapback echo", "in a cavernous hall that swallows the tail",

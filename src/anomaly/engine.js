@@ -81,9 +81,9 @@ const AnomalyEngine = (() => {
     ctx.clash = r() < 0.7 ? pick(world.clash, r) : pick(D.CLASH, r);
     add(`${ctx.clash} cutting in every 4 bars, ${ctx.space}`, 0);
 
-    add(ctx.glitch, 1);
-    add(`signature: ${ctx.signature}`, 0);
     add(`technical flex: ${ctx.flex}`, 1);
+    add(`signature: ${ctx.signature}`, 0);
+    add(ctx.glitch, 2);
     add(`trademark move: ${ctx.move}`, 2);
     add(`beat switch at the midpoint: ${ctx.beatSwitch}`, 0);
     add(pick(world.drums, r), 3);
