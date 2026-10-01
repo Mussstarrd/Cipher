@@ -93,6 +93,7 @@
       ["Anomaly", pkg.signature],
       ["Trademark move", pkg.move],
       ["Clash", pkg.clash],
+      ["Lead character", `${pkg.timbre}; ${pkg.playing}; ${pkg.space}`],
       ["Technical flex", pkg.flex],
       ["Twitch", pkg.glitch],
       ["Beat switch", pkg.beatSwitch],

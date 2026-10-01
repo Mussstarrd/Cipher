@@ -44,6 +44,7 @@ test("every roll keeps its identity and the extras survive most of the time", ()
     assert.ok(s.includes(`beat switch at the midpoint: ${out.beatSwitch}`), s);
     assert.ok(D.CLASH.includes(out.clash) || world.clash.includes(out.clash), s);
     assert.ok(s.includes(`${out.clash} cutting in every 4 bars`), s);
+    assert.ok(D.TIMBRE.some((p) => s.includes(p)) && D.PLAYING.some((p) => s.includes(p)) && D.SPACE.some((p) => s.includes(p)), `lead character missing: ${s}`);
     assert.match(s, /looping obsessively/);
     assert.ok(!/\b(bright|twinkling|high-pitched|sine lead|synth lead)\b/i.test(s.match(/, ([^,]+) playing /)[1].split(" ").slice(1).join(" ")), `high lead: ${s}`);
     assert.match(s, /\d+ BPM/);

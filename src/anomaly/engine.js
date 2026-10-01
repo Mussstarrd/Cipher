@@ -73,10 +73,13 @@ const AnomalyEngine = (() => {
     let leadPool = r() < 0.7 ? world.leads : D.GLOBAL_LEADS;
     if (r() > D.PIANO_SHARE) leadPool = leadPool.filter((l) => !isPiano(l));
     const lead = makeVoice(leadPool, D.ADJECTIVES, r, used);
-    add(`${lead} playing ${harmony.prog.color} in ${harmony.key}, looping obsessively`, 0);
+    ctx.timbre = pick(D.TIMBRE, r);
+    ctx.playing = pick(D.PLAYING, r);
+    ctx.space = pick(D.SPACE, r);
+    add(`${lead} playing ${harmony.prog.color} in ${harmony.key}, ${ctx.timbre}, ${ctx.playing}, looping obsessively`, 0);
     ctx.motif = `the ${lead.split(",")[0].split(" ").slice(1, 5).join(" ")}`;
     ctx.clash = r() < 0.7 ? pick(world.clash, r) : pick(D.CLASH, r);
-    add(`${ctx.clash} cutting in every 4 bars`, 0);
+    add(`${ctx.clash} cutting in every 4 bars, ${ctx.space}`, 0);
 
     add(ctx.glitch, 1);
     add(`signature: ${ctx.signature}`, 0);
@@ -114,7 +117,7 @@ const AnomalyEngine = (() => {
           push("Intro", `${motif} alone, 2 bars, ${chords}, drums and 808 fall in on bar 3`);
           break;
         case "hook":
-          push("Hook", `full beat, ${motif} loops obsessively, ${ctx.clash} answers every 4 bars, 8 bars`);
+          push("Hook", `full beat, ${motif} loops obsessively, ${ctx.playing}, ${ctx.clash} answers every 4 bars, 8 bars`);
           break;
         case "hookSig":
           push("Hook", `full beat, ${motif} loops obsessively, ${ctx.clash} answers, ${sig}, 8 bars`);
@@ -201,6 +204,9 @@ const AnomalyEngine = (() => {
       signature: ctx.signature,
       move: ctx.move,
       clash: ctx.clash,
+      timbre: ctx.timbre,
+      playing: ctx.playing,
+      space: ctx.space,
       flex: ctx.flex,
       beatSwitch: ctx.beatSwitch,
       glitch: ctx.glitch,

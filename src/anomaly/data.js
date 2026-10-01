@@ -79,10 +79,34 @@ const AnomalyData = (() => {
     "distorted low guitar riff", "low pitched-down bell riff", "mid-register flute-style synth riff", "warm electric-keys riff",
     "low fuzz-bass riff", "grainy tape-worn lead riff", "muted felt piano riff",
   ];
+  // How the lead sounds, where it sits, and how a human plays it. These are
+  // what keep the instrument from rendering as a stock preset on the grid.
+  const TIMBRE = [
+    "run through a worn cassette so it wobbles and hisses", "bit-crushed and grainy like a 12-bit sampler",
+    "saturated through overdriven tape until the edges fur", "sampled off dusty vinyl with crackle in the gaps",
+    "detuned a few cents so it beats against itself", "recorded through a cheap amp in a small room",
+    "pitched down a step so it drags and darkens", "resampled until it smears and loses its attack",
+    "played through a broken spring reverb", "low-passed and lightly distorted, all the sheen gone",
+    "warbling with tape flutter", "overdriven until the attack clips", "muffled like it is coming through a wall",
+    "chorused and detuned, wide and seasick", "crushed to mono and gritty", "dusty, dull and warm, like an old sample",
+    "scratchy and thin like a transistor radio", "buzzing with amp noise and hiss underneath",
+  ];
+  const SPACE = [
+    "in a long dark plate reverb", "bone-dry and close to the ear", "with a short slapback echo", "in a cavernous hall that swallows the tail",
+    "with a dub-style echo that repeats off the beat", "in a tiny tiled room", "far back in the mix like it is next door",
+    "with the reverb gated so it cuts dead", "with a tape delay that wobbles on every repeat", "in a damp basement room sound",
+  ];
+  const PLAYING = [
+    "played a hair behind the beat", "played by hand with uneven touch", "rushing slightly ahead on every repeat",
+    "slightly out of tune on the top note", "with fret noise and finger squeaks left in", "with notes that slide into pitch late",
+    "fumbling the same note every fourth bar", "with velocity that breathes between loud and soft",
+    "stumbling off the grid on the and-of-3", "played drunk and loose, never quantized", "with a lazy wobble in the timing",
+    "with the last note of every phrase held too long", "pushed and pulled against the drums", "hesitating before every downbeat",
+  ];
   const MIX = [
-    "loud clean radio master with a heavy mono sub", "dry punchy drums, wide melody, mono 808",
-    "polished mid-forward mix, dark top end", "tight low end, 808 that reads on a phone",
-    "glued and competitive, never pumping", "crisp hats, snappy snare, sub felt not heard",
+    "loud radio master with a heavy mono sub and rough textures left rough", "dry punchy drums, wide melody, mono 808, instruments kept dusty",
+    "polished low end, dark top end, grain left on everything above it", "tight low end, 808 that reads on a phone, the rest warm and worn",
+    "glued and competitive, never pumping, never sterile", "snappy snare, sub felt not heard, every instrument a little dirty",
   ];
 
   const ADJECTIVES = [
@@ -167,7 +191,7 @@ const AnomalyData = (() => {
 
   const EXCLUDE = [
     "vocals", "singing", "humming", "spoken word", "rap vocals", "wordless vocals", "choir", "vocal samples",
-    "DJ scratching", "drum fills", "EDM", "big room", "lo-fi hip hop", "jazz", "funk", "dubstep",
+    "DJ scratching", "drum fills", "EDM", "stock synth presets", "clean digital synths", "lo-fi hip hop", "jazz", "funk",
   ];
 
   const SETTINGS = {
@@ -182,6 +206,7 @@ const AnomalyData = (() => {
   };
 
   const LINT = [
+    { re: /\b(crisp|pristine|polished synth|clean synth|sterile|robotic|quantized to the grid)\b/i, level: "block", msg: "stock-preset vocabulary" },
     { re: /\b(vocal|vocals|vocalist|rap\b|rapper|sing|sings|singing|singer|sung|chant\w*|choir|hum|humming|hummed|lyric\w*|ad-?lib\w*)\b/i, level: "block", msg: "vocal vocabulary invites a voice" },
     { re: /\b(transition\w*|sweeps?|risers?|phaser|dj\b|scratch\w*|fills?|cowbell|rimshot|airhorn)\b/i, level: "block", msg: "effect vocabulary turns into DJ tricks and fills" },
     { re: /\b(marimba|kalimba|music box|glockenspiel|celesta|xylophone|toy piano|dulcimer)\b/i, level: "block", msg: "stock mallet preset" },
@@ -192,7 +217,7 @@ const AnomalyData = (() => {
 
   return {
     STYLE_LIMIT, LYRICS_LIMIT, PIANO_SHARE, MINOR_KEYS, MAJOR_KEYS, PROGRESSIONS, WORLDS, BLUEPRINTS, GLOBAL_LEADS,
-    ADJECTIVES, INSTRUMENTAL_LOCK, SWING, SYNC, CLASH, GLITCH, BEAT_SWITCH, SIGNATURES, TECH_FLEX, MIX, STRUCTURES,
+    ADJECTIVES, INSTRUMENTAL_LOCK, SWING, SYNC, CLASH, TIMBRE, SPACE, PLAYING, GLITCH, BEAT_SWITCH, SIGNATURES, TECH_FLEX, MIX, STRUCTURES,
     SYNCOPATION: SYNC, HUMAN_FEEL: SWING,
     EXCLUDE, SETTINGS, LINT,
   };
