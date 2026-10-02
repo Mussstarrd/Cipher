@@ -14,6 +14,10 @@ const pages = {
     .replace("/*DATA*/", () => [read("anomaly/blueprints.js"), read("anomaly/data.js")].map(strip).join("\n"))
     .replace("/*ENGINE*/", () => strip(read("anomaly/engine.js")))
     .replace("/*APP*/", () => read("anomaly/app.js")),
+  "manhole.html": read("manhole/template.html")
+    .replace("/*DATA*/", () => strip(read("manhole/data.js")))
+    .replace("/*ENGINE*/", () => strip(read("manhole/engine.js")))
+    .replace("/*APP*/", () => read("manhole/app.js")),
 };
 
 fs.mkdirSync(path.join(__dirname, "dist"), { recursive: true });

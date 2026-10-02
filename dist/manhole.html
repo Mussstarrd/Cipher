@@ -1,0 +1,801 @@
+<meta charset="utf-8" />
+<title>MANHOLE Beat Engine</title>
+<style>
+  :root {
+    --bg: #ecebe7;
+    --panel: #f8f7f4;
+    --panel-2: #e2e0da;
+    --line: #cfccc4;
+    --text: #1b1a17;
+    --muted: #6b675e;
+    --accent: #d4610f;
+    --accent-ink: #fff7ef;
+    --warn: #9c6b06;
+    --block: #b3261e;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --bg: #121211; --panel: #1b1b19; --panel-2: #24241f; --line: #34332d;
+      --text: #ecebe4; --muted: #9a978b; --accent: #ff8a2a; --accent-ink: #1d0d00;
+      --warn: #e2b04a; --block: #ff6a5f;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #121211; --panel: #1b1b19; --panel-2: #24241f; --line: #34332d;
+    --text: #ecebe4; --muted: #9a978b; --accent: #ff8a2a; --accent-ink: #1d0d00;
+    --warn: #e2b04a; --block: #ff6a5f;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { height: 100%; }
+  body { margin: 0; overflow: hidden; background: var(--bg); color: var(--text); font-family: var(--sans); line-height: 1.5; -webkit-font-smoothing: antialiased; }
+  .scroll { height: 100%; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 20px 16px 64px; display: flex; flex-direction: column; gap: 20px; }
+
+  header .brand { font-size: 34px; font-weight: 900; letter-spacing: 0.2em; margin: 0; font-family: var(--mono); }
+  header .brand .dot { color: var(--accent); }
+  header p { margin: 4px 0 0; color: var(--muted); font-size: 14px; max-width: 58ch; }
+
+  .roll {
+    appearance: none; border: 0; background: var(--accent); color: var(--accent-ink); border-radius: 12px;
+    padding: 18px; font-size: 19px; font-weight: 800; letter-spacing: 0.1em; font-family: var(--mono); cursor: pointer; width: 100%;
+  }
+  .roll:focus-visible { outline: 3px solid var(--text); outline-offset: 2px; }
+  .roll:active { transform: translateY(1px); }
+
+  .label { font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    appearance: none; border: 1px solid var(--line); background: var(--panel); color: var(--text);
+    border-radius: 10px; padding: 7px 12px; font-family: inherit; font-size: 13px; cursor: pointer; text-align: left;
+    display: flex; flex-direction: column; gap: 1px;
+  }
+  .chip small { color: var(--muted); font-size: 11px; }
+  .chip.on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
+  .chip.on small { color: var(--accent-ink); opacity: 0.85; }
+  .chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .seg { display: flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .seg button { flex: 1; appearance: none; border: 0; background: var(--panel); color: var(--muted); font-family: inherit; font-size: 13px; padding: 9px 4px; cursor: pointer; }
+  .seg button + button { border-left: 1px solid var(--line); }
+  .seg button.on { background: var(--panel-2); color: var(--text); font-weight: 600; }
+  .seg button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+  .recipe { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tag { font-size: 12px; font-weight: 600; background: var(--panel-2); border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; }
+  .tag.hot { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+  .card.print { border-color: var(--accent); }
+  .card-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .card-head .label { flex: 1; }
+  .copy { appearance: none; border: 1px solid var(--line); background: var(--panel-2); color: var(--text); border-radius: 8px; padding: 6px 12px; font-size: 12px; font-weight: 600; font-family: inherit; cursor: pointer; white-space: nowrap; }
+  .copy:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .copy.done { border-color: var(--accent); color: var(--accent); }
+  .out { font-family: var(--mono); font-size: 13px; line-height: 1.55; white-space: pre-wrap; overflow-wrap: break-word; margin: 0; }
+  .meta { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; margin: 0; }
+  .grid { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; font-size: 13px; align-items: baseline; margin: 0; }
+  .grid dt { color: var(--muted); }
+  .grid dd { margin: 0; }
+  .chord { display: inline-block; padding: 1px 7px; border-radius: 6px; background: var(--panel-2); margin: 0 4px 4px 0; font-family: var(--mono); }
+  .prose { font-size: 13px; color: var(--muted); margin: 0; }
+  .notes { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; list-style: none; font-size: 13px; color: var(--muted); }
+  footer { font-size: 12px; color: var(--muted); }
+  @media (max-width: 420px) { .grid { grid-template-columns: 1fr; gap: 2px 0; } .grid dd { margin-bottom: 6px; } }
+  @media (prefers-reduced-motion: reduce) { .roll:active { transform: none; } }
+</style>
+
+<div class="scroll">
+<div class="wrap">
+  <header>
+    <h1 class="brand">MANHOLE<span class="dot">.</span></h1>
+    <p>One-of-a-kind minimalist instrumentals for Suno v6. Every roll crosses two reference DNAs and adds a waltz cadence, an on-and-off-the-beat pocket, a garage-sewer room, a found-object sound and one house rule. This page never gives you the same fingerprint twice.</p>
+  </header>
+
+  <button class="roll" id="roll" type="button">⬤ ROLL A ONE-OF-ONE</button>
+
+  <section style="display:flex;flex-direction:column;gap:8px">
+    <div class="label">Lead DNA</div>
+    <div class="chips" id="dna"></div>
+  </section>
+  <div class="seg" id="mode" role="group" aria-label="Mode"></div>
+
+  <div class="recipe" id="recipe"></div>
+
+  <div class="card">
+    <div class="card-head"><div class="label">Style field</div><button class="copy" data-copy="style" type="button">Copy</button></div>
+    <p class="out" id="out-style"></p>
+    <p class="meta" id="style-meta"></p>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><div class="label">Lyrics field · instrumental arrangement</div><button class="copy" data-copy="lyrics" type="button">Copy</button></div>
+    <p class="meta">Paste as-is and turn Suno's Instrumental toggle on.</p>
+    <pre class="out" id="out-lyrics"></pre>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><div class="label">Exclude styles</div><button class="copy" data-copy="exclude" type="button">Copy</button></div>
+    <p class="out" id="out-exclude"></p>
+  </div>
+
+  <div class="card print">
+    <div class="card-head"><div class="label">Fingerprint</div></div>
+    <dl class="grid" id="print-grid"></dl>
+    <p class="meta" id="print-meta"></p>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><div class="label">Suno settings</div></div>
+    <dl class="grid" id="out-settings"></dl>
+    <p class="prose" id="settings-note"></p>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><div class="label">Harmony</div></div>
+    <dl class="grid" id="h-grid"></dl>
+    <p class="prose" id="h-cadence"></p>
+  </div>
+
+  <div class="card" id="notes-card" hidden>
+    <div class="card-head"><div class="label">Notes</div></div>
+    <ul class="notes" id="out-notes"></ul>
+  </div>
+
+  <footer>References shape the sound; no artist or song name ever enters the prompt.</footer>
+</div>
+</div>
+
+<script>
+/* MANHOLE vocabulary. Garage-sewer minimalism with a waltz cadence riding
+ * trap drums. Reference names live in `refs` and `aliases` for the UI and
+ * the lint only; nothing named ever reaches the prompt. Every phrase is
+ * instrumental: no voices, no FX words, no fills. */
+"use strict";
+
+const ManholeData = (() => {
+  const STYLE_LIMIT = 1000;
+  const LYRICS_LIMIT = 5000;
+
+  const MINOR_KEYS = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+  const MAJOR_KEYS = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"];
+
+  // [semitones above tonic, chord suffix]
+  const PROGRESSIONS = [
+    { id: "pendulum", tonality: "minor", roman: "i – ♭VI", chords: [[0, "m"], [8, ""]], color: "a two-chord minor see-saw", cadence: "Never resolves; the ear keeps leaning in." },
+    { id: "phrygian", tonality: "minor", roman: "i – ♭II", chords: [[0, "m"], [1, ""]], color: "a half-step Phrygian creep", cadence: "♭II drops a half step into the tonic: pure menace." },
+    { id: "drone", tonality: "minor", roman: "i (pedal)", chords: [[0, "m"]], color: "a one-chord minor drone", cadence: "No cadence at all; the rhythm does the moving." },
+    { id: "sting", tonality: "minor", roman: "i – ♭VI – V", chords: [[0, "m"], [8, ""], [7, ""]], color: "a harmonic-minor loop with a tense major V", cadence: "The leading tone snaps the loop back to i every time." },
+    { id: "lament", tonality: "minor", roman: "i – ♭VII – ♭VI – V", chords: [[0, "m"], [10, ""], [8, ""], [7, ""]], color: "a falling four-chord minor bassline", cadence: "The bass walks down and parks on V." },
+    { id: "sway", tonality: "minor", roman: "i – iv", chords: [[0, "m"], [5, "m"]], color: "a slow minor i–iv sway", cadence: "iv to i: soulful release without sweetness." },
+    { id: "blues", tonality: "minor", roman: "i7 – iv7 – v7", chords: [[0, "m7"], [5, "m7"], [7, "m7"]], color: "a greasy minor-blues turnaround", cadence: "Minor v7 back to i7: a barroom shrug, never a bow." },
+    { id: "dorian", tonality: "minor", roman: "i7 – IV7", chords: [[0, "m7"], [5, "7"]], color: "a Dorian two-chord vamp", cadence: "The major IV inside a minor key: warm and sly." },
+    { id: "soul", tonality: "major", roman: "IVmaj7 – iii7 – vi9", chords: [[5, "maj7"], [4, "m7"], [9, "m9"]], color: "dusty soul chords sliding down to the relative minor", cadence: "Lands on vi: the bittersweet story-time resolution." },
+    { id: "backdoor", tonality: "major", roman: "iv7 – ♭VII9 – Imaj7", chords: [[5, "m7"], [10, "9"], [0, "maj7"]], color: "warm borrowed-chord changes", cadence: "The backdoor home: warm, never bright." },
+    { id: "bounce", tonality: "major", roman: "I – ♭VII", chords: [[0, ""], [10, ""]], color: "a cocky two-chord major bounce", cadence: "♭VII to I: grinning, unbothered." },
+  ];
+
+  // ------------------------------------------------------------ reference DNA
+  // Each roll takes one DNA as the lead identity and borrows one trait from a
+  // second. `refs` is what the UI shows; `aliases` is what the lint blocks.
+  const DNA = [
+    {
+      id: "horror-minimal", label: "Horror minimal", refs: "Big Sean · Blessings",
+      aliases: ["big sean", "sean don", "blessings", "vinylz", "allen ritter"],
+      bpm: [128, 148], feel: "slow menacing half-time", tonalities: ["minor"],
+      openers: [
+        "a menacing horror-film minimal beat: one eerie low organ riff, a huge sub that waits a whole bar to drop, and dead silence before every hook",
+        "spacious sinister minimalism: a dark pad holding two notes, sparse hard drums, and stop-start gaps that leave room for the punchline",
+      ],
+      trait: "stop-start gaps that leave a full beat of silence for the punchline",
+      drums: ["sparse hard drums, kick on 1 only, snare cracking on 3", "half-time drums that stop dead for a beat every 2 bars"],
+      low: ["huge sub that waits a whole bar to drop", "808 that rings long and dark under the riff"],
+      leads: ["eerie low organ riff", "dark pad riff, two notes", "low detuned bell riff"],
+    },
+    {
+      id: "one-loop", label: "One-loop hypnosis", refs: "Lil Wayne · A Milli",
+      aliases: ["lil wayne", "weezy", "wayne", "a milli", "bangladesh"],
+      bpm: [140, 154], feel: "bare hypnotic bounce", tonalities: ["minor"],
+      openers: [
+        "a brutally minimal hypnotic beat: one stubborn two-note loop repeating forever, a trunk-slapping 808, a snap and a kick, and nothing else",
+        "a one-idea beat: the same two-note figure for the entire track over bare hard drums and a booming 808 that rattles the windows",
+      ],
+      trait: "one stubborn two-note loop that never changes",
+      drums: ["bare kick and snap only, nothing else in the kit", "hard kick on the downbeats, a dry snap on 2 and 4, hats almost absent"],
+      low: ["trunk-slapping 808 that rattles the windows", "booming 808 hitting with every kick"],
+      leads: ["stubborn two-note synth-brass loop", "two-note pitched-down guitar loop", "two-note low organ stab loop"],
+    },
+    {
+      id: "devil-bounce", label: "Devil-on-the-shoulder bounce", refs: "JID · McAfee",
+      aliases: ["jid", "j.i.d", "j.i.d.", "mcafee", "boi-1da", "boi1da", "cubeatz", "dreamville"],
+      bpm: [150, 166], feel: "dark rubbery uptempo bounce", tonalities: ["minor"],
+      openers: [
+        "a bouncy dark uptempo beat like a devil whispering over your shoulder: rubbery bass, dry snappy drums, staccato stabs that jump in and out of the pocket",
+        "dark twitchy uptempo bounce made for staccato rapid-fire flows: elastic bass, off-kilter hats, a sinister plucked riff, sudden drop-outs",
+      ],
+      trait: "staccato stabs that jump in and out of the pocket",
+      drums: ["dry snappy drums with hats that skip and double", "tight dry kit, snare landing a hair early, kick stumbling"],
+      low: ["rubbery elastic bass bending between notes", "bouncing 808 sliding into every root"],
+      leads: ["sinister plucked riff", "staccato low synth-brass stab riff", "dark muted guitar riff"],
+    },
+    {
+      id: "cathedral", label: "Cathedral thunder", refs: "JID · Glory",
+      aliases: ["jid", "lex luger", "luger", "beatnick dee"],
+      bpm: [138, 150], feel: "grand booming half-time", tonalities: ["minor"],
+      openers: [
+        "a triumphant pipe-organ and string swell over hard booming Atlanta drums, grand and wounded at once, with the low end shaking the pews",
+        "heavy cathedral trap: a pipe-organ chord loop, big string stabs, rattling hats and an 808 that rumbles like thunder in a stone hall",
+      ],
+      trait: "a grand pipe-organ swell under the hook",
+      drums: ["rattling hat rolls, a booming clap-snare, kick that hits like a door", "huge half-time drums with machine-gun hats"],
+      low: ["808 rumbling like thunder in a stone hall", "long distorted 808 tail under the organ"],
+      leads: ["pipe-organ chord riff", "big string-stab riff", "low brass and organ riff"],
+    },
+    {
+      id: "porch-soul", label: "Porch-light soul", refs: "J. Cole",
+      aliases: ["j. cole", "j cole", "jcole", "cole", "j coke"],
+      bpm: [84, 96], feel: "lazy head-nod swing", tonalities: ["minor", "major"],
+      openers: [
+        "a warm dusty soul loop of sampled strings and electric guitar, head-nod drums played loose like a live drummer, a round bass walking underneath, humble and heavy",
+        "a porch-light beat at midnight: crackly sampled soul chords, a lazy boom-bap swing, a deep round bass, and the space to tell a story",
+      ],
+      trait: "a lazy head-nod boom-bap swing",
+      drums: ["loose boom-bap drums, snare dragging behind, kick with a soft thud", "dusty swung drums like a live drummer leaning back"],
+      low: ["round warm bass walking under the loop", "deep upright-style bass following the chords"],
+      leads: ["dusty sampled soul-string loop", "warm sampled electric-guitar loop", "crackly sampled soul-chord loop"],
+    },
+    {
+      id: "bar-fight", label: "Bar-fight blues stomp", refs: "Prof",
+      aliases: ["prof", "gampo", "stophouse"],
+      bpm: [86, 104], feel: "lurching stomp", tonalities: ["minor"],
+      openers: [
+        "a rowdy Minneapolis bar-fight stomp: a greasy distorted blues guitar lick, a stomping kick and clap, a growling synth bass, sweaty and unhinged",
+        "a drunk midwest stomp: dirty slide-guitar riff through a busted amp, hard slapping drums, a whiskey-soaked low organ, a beat that lurches like it has had too many",
+      ],
+      trait: "a greasy distorted blues guitar lick",
+      drums: ["stomping kick and big clap, hats loose and drunk", "hard slapping drums that lurch on the and-of-4"],
+      low: ["growling synth bass under the stomp", "dirty overdriven bass doubling the kick"],
+      leads: ["greasy distorted blues guitar lick", "slide-guitar riff through a busted amp", "whiskey-soaked low organ riff"],
+    },
+    {
+      id: "crisp-quirk", label: "Crisp quirk bounce", refs: "Connor Price",
+      aliases: ["connor price", "connor"],
+      bpm: [96, 124], feel: "punchy playful bounce", tonalities: ["minor", "major"],
+      openers: [
+        "a crisp punchy playful beat built around one quirky instrument riff, snap-heavy clean drums, a bouncy 808, and big empty gaps that make every hit pop",
+        "clean witty bounce: a goofy plucked riff on an unexpected instrument, tight crisp drums, a confident 808, the hook instrument front and center",
+      ],
+      trait: "one quirky instrument riff front and center over crisp snap-heavy drums",
+      drums: ["crisp snap-heavy drums, tight and dry", "punchy clean kick and snap with big gaps between hits"],
+      low: ["bouncy confident 808", "short punchy 808 locked to the kick"],
+      leads: ["staccato tuba riff", "plucked pizzicato violin riff", "whistled melody riff", "plucked banjo riff"],
+    },
+    {
+      id: "stop-start", label: "Detroit stop-start", refs: "Big Sean",
+      aliases: ["big sean", "sean don", "detroit 2"],
+      bpm: [130, 150], feel: "cold stop-start half-time", tonalities: ["minor"],
+      openers: [
+        "a cold Detroit stop-start beat: the drums slam to a halt every two bars for a punchline pause then crash back in, dark detuned bells, a deep sub, confident swagger",
+        "stop-and-go Detroit trap: one dark riff, a sub that drops out with the drums, hard silence, then everything slams back on the one",
+      ],
+      trait: "the drums slam to a halt every two bars and crash back in",
+      drums: ["hard drums that stop dead every 2 bars and slam back on the one", "crisp half-time drums with a full-bar halt before each hook"],
+      low: ["deep sub that drops out with the drums and slams back", "808 punching on the downbeat after every stop"],
+      leads: ["dark detuned bell riff", "cold low synth riff", "low muted-guitar riff"],
+    },
+  ];
+
+  // ------------------------------------------------------------ cadence
+  const WALTZ = [
+    "waltz-time 3/4 accents riding over the 4/4 kick",
+    "the melody counts in threes while the drums count in fours",
+    "a 6/8 lilt in the hats over a straight kick",
+    "a limping waltz swing that lands back on the one every three bars",
+    "dotted-quarter accents so every third beat feels like the downbeat",
+    "12/8 shuffle on the hats, straight 808",
+    "a lopsided three-step bounce across a four-beat bar",
+    "a slow waltz figure in the riff over half-time trap drums",
+  ];
+  const ON_OFF = [
+    "two bars locked on the beat, two bars sliding off it",
+    "kick dead on the grid, everything else drifting off it",
+    "the snare lands on the beat in the hook and a 16th late in the verse",
+    "the riff starts on the beat then slips behind it a little more each bar",
+    "on the beat, off the beat, on again, the pocket breathing",
+    "the 808 hits the offbeats while the kick holds the downbeats",
+    "every fourth bar the whole groove shifts one 8th late, then snaps back",
+    "drums unquantized and drunk, landing on the beat only when it counts",
+  ];
+  const ROOMS = [
+    "recorded in a concrete storm drain with a long metallic echo",
+    "sewer-tunnel reverb dripping off every hit",
+    "parking-garage acoustics with a slap off the far wall",
+    "a damp basement room, low ceiling, sweating walls",
+    "under a highway overpass with traffic rumbling far off",
+    "an empty boiler room with the pipes ringing",
+    "a cinderblock garage with the door half open",
+    "an abandoned subway platform, cold and cavernous",
+  ];
+  // Found-object percussion: the garage-sewer signature.
+  const FOUND = [
+    "a dripping pipe as an extra hi-hat",
+    "a slammed car door layered under the snare",
+    "a manhole cover clank on the and-of-4",
+    "a shaken spray can as the shaker",
+    "a basketball bounce ghosting the kick",
+    "a lighter flick on the offbeats",
+    "a chain dragged across concrete before every hook",
+    "a garage door rattle on the last beat of every 8 bars",
+    "keys jangling as the tambourine",
+    "a steel pipe struck like a bell on beat 4",
+    "a dumpster lid slam as the downbeat accent",
+    "knuckles on a car hood as ghost snares",
+  ];
+  // The rule of the track: one constraint that makes the roll its own thing.
+  const RULES = [
+    "the kick never lands on beat 1",
+    "only three sounds play at once, ever",
+    "the riff is five beats long, so it rotates against the bar",
+    "the snare only hits on beat 4",
+    "every fourth bar is one beat short",
+    "the hook is the 808 alone with everything else gone",
+    "the melody uses only two notes",
+    "the hats play only triplets, never straight 8ths",
+    "the lead is reversed for the whole track",
+    "the loop is 7 bars long, not 8",
+    "every 8th bar is total silence",
+    "the 808 never plays the root note",
+    "the drums are pitched down a full octave",
+    "the clap lands a beat early every second bar",
+    "the riff loses one note every hook",
+    "the drums play in 3 for one bar in every 4",
+    "nothing plays on beat 3",
+    "the tempo halves for exactly 2 bars before each hook",
+    "the riff and the 808 never play at the same time",
+    "the beat starts on the and-of-4 and never resets",
+  ];
+  const SWITCH = [
+    "tempo halves and the riff drops an octave",
+    "the drums flip to a waltz pattern and the 808 starts sliding",
+    "everything drops for 2 bars, then a harder faster beat in a new minor key",
+    "the riff is replaced by the found-object percussion alone for 4 bars",
+    "the key drops a whole step and the drums go bone-dry",
+    "the 808 becomes the melody and the riff disappears",
+    "the drums double time while the riff stays half time",
+    "the whole beat moves into the room's echo, far away, then slams back close",
+  ];
+
+  // Lead character: what it is, how it sounds, how it is played.
+  const LEADS = [
+    "low synth-brass riff", "fuzz-bass riff", "muted electric-guitar riff", "low cello riff",
+    "detuned organ riff", "sampled string riff", "slide-guitar riff", "pitched-down bell riff",
+    "plucked upright-bass riff", "harmonica-like reed riff", "low woodwind riff", "bowed saw drone riff",
+    "bit-crushed synth riff", "tremolo-guitar riff", "detuned analog synth riff", "muted horn-section riff",
+  ];
+  const ADJECTIVES = [
+    "rusted", "sodium-lit", "rain-slicked", "basement-damp", "concrete-cold", "oil-slick", "nicotine-yellow", "tar-thick",
+    "chrome-chipped", "cinderblock", "streetlight-orange", "sweat-soaked", "smoke-grained", "gutter-dark", "iron-cold", "humid",
+    "half-broken", "warped", "cracked-vinyl", "burnt-out", "graffiti-bright", "storm-drain", "subway-cold", "dented",
+  ];
+  const GRIT = [
+    "run through a worn cassette so it wobbles and hisses", "bit-crushed like a 12-bit sampler", "saturated until the edges fur",
+    "sampled off dusty vinyl with crackle in the gaps", "detuned a few cents so it beats against itself",
+    "through a cheap amp in a small room", "pitched down a step so it drags", "thin and crackly like a transistor radio",
+    "warbling with tape flutter", "overdriven until the attack clips", "dull and warm like an old sample",
+  ];
+  const PLAYING = [
+    "played a hair behind the beat", "played by hand with uneven touch", "rushing ahead on every repeat",
+    "slightly out of tune on the top note", "with fret noise left in", "sliding into pitch late",
+    "with the last note held too long", "hesitating before every downbeat", "loose and drunk, never quantized",
+  ];
+  const MINIMAL = [
+    "minimal: kick, snare, 808, one riff, one found sound, nothing else",
+    "skeletal arrangement with wide empty space between hits",
+    "three elements at a time at most, every hit counts",
+    "bare-bones minimalism, silence used as an instrument",
+  ];
+  const MIX = [
+    "crisp hard-hitting drums and a clean booming 808 up front, grime on everything else",
+    "drums sharp enough to cut, instruments dirty and worn",
+    "loud radio master, crisp punch on top, sewer grime underneath",
+    "clean heavy low end, crunchy dusty mids, snappy top",
+  ];
+
+  const INSTRUMENTAL = "instrumental only";
+
+  const STRUCTURES = [
+    { id: "radio", label: "Radio", length: "~2:30", steps: ["intro", "hook", "verseOn", "hook", "verseOff", "switch", "switchHook", "outro"] },
+    { id: "short", label: "Short loop", length: "~1:30", steps: ["intro", "hook", "verseOn", "hook", "switch", "switchHook", "outro"] },
+    { id: "story", label: "Story", length: "~2:45", steps: ["intro", "verseOn", "hook", "verseOff", "break", "switch", "switchHook", "outro"] },
+    { id: "stopstart", label: "Stop-start", length: "~2:15", steps: ["intro", "hook", "verseStop", "hook", "switch", "switchHook", "outro"] },
+  ];
+
+  const EXCLUDE = [
+    "vocals", "singing", "humming", "choir", "vocal chops", "vocal samples", "spoken word",
+    "DJ scratching", "drum fills", "risers", "EDM", "stock synth presets", "lo-fi hip hop", "jazz",
+  ];
+
+  const SETTINGS = {
+    radio: {
+      model: "Suno v6", weirdness: "50–60%", styleInfluence: "75–85%", variety: "Off (0)", maxMode: "On",
+      note: "Weirdness in the 50s so the waltz cadence and the house rule actually happen; Style Influence high so the room, the grit and the bans hold. Variety Off so these phrases are not rewritten. Turn Suno's Instrumental toggle on.",
+    },
+    wild: {
+      model: "Suno v6-wild, keeper re-run on v6", weirdness: "60–75%", styleInfluence: "65–75%", variety: "Off (0)", maxMode: "On for the v6 re-run",
+      note: "Wild leans into the found sounds and the rule; take the keeper's seed to v6 with Max Mode for a crisp finish. Turn Suno's Instrumental toggle on.",
+    },
+  };
+
+  const NAMES = [...new Set(DNA.flatMap((d) => d.aliases))].filter((n) => n.replace(/[^a-z0-9]/gi, "").length >= 3);
+  const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const LINT = [
+    { re: /\b(vocal|vocals|vocalist|rap\b|rapper|sing|sings|singing|singer|sung|chant\w*|choir|hum|humming|lyric\w*|ad-?lib\w*)\b/i, level: "block", msg: "vocal vocabulary invites a voice" },
+    { re: /\b(transition\w*|sweeps?|risers?|phaser|dj\b|scratch\w*|fills?|cowbell|rimshot|airhorn)\b/i, level: "block", msg: "effect vocabulary turns into DJ tricks and fills" },
+    { re: /\b(marimba|kalimba|music box|glockenspiel|celesta|xylophone)\b/i, level: "block", msg: "stock mallet preset" },
+    { re: /\b(edm|dubstep|jazz\w*|funk\w*|disco)\b/i, level: "block", msg: "off-format genre word" },
+    { re: /\bno\s+\w+/i, level: "warn", msg: "\"no X\" inside a prompt plants X" },
+    ...NAMES.map((n) => ({ re: new RegExp(`(^|[^a-z0-9])${esc(n)}($|[^a-z0-9])`, "i"), level: "block", msg: `reference name "${n}"` })),
+  ];
+
+  return {
+    STYLE_LIMIT, LYRICS_LIMIT, MINOR_KEYS, MAJOR_KEYS, PROGRESSIONS, DNA, WALTZ, ON_OFF, ROOMS, FOUND, RULES, SWITCH,
+    LEADS, ADJECTIVES, GRIT, PLAYING, MINIMAL, MIX, INSTRUMENTAL, STRUCTURES, EXCLUDE, SETTINGS, NAMES, LINT,
+  };
+})();
+
+
+</script>
+<script>
+/* MANHOLE engine — one-of-a-kind minimalist instrumental prompts for Suno v6.
+ * Every roll is a cross of two reference DNAs plus a waltz cadence, an
+ * on/off-the-beat pocket, a garage-sewer room, a found-object sound and one
+ * house rule. The fingerprint names that combination so the page can refuse
+ * to repeat it. */
+"use strict";
+
+const ManholeEngine = (() => {
+  const D = typeof ManholeData !== "undefined" ? ManholeData : require("./data.js");
+
+  function rng(seed) {
+    let t = (seed >>> 0) || 0x9e3779b9;
+    return () => {
+      t = (t + 0x6d2b79f5) | 0;
+      let r = Math.imul(t ^ (t >>> 15), 1 | t);
+      r = (r + Math.imul(r ^ (r >>> 7), 61 | r)) ^ r;
+      return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  const pick = (arr, r) => arr[Math.floor(r() * arr.length)];
+
+  // ---------------------------------------------------------------- harmony
+  const SHARP = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+  const FLAT = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"];
+  const PC = { C: 0, "C#": 1, Db: 1, D: 2, "D#": 3, Eb: 3, E: 4, F: 5, "F#": 6, Gb: 6, G: 7, "G#": 8, Ab: 8, A: 9, "A#": 10, Bb: 10, B: 11 };
+  const SHARP_KEYS = { minor: new Set(["E", "B", "F#", "C#", "G#", "D#", "A#"]), major: new Set(["G", "D", "A", "E", "B", "F#"]) };
+  const noteName = (pc, tonic, tonality) => (SHARP_KEYS[tonality].has(tonic) ? SHARP : FLAT)[((pc % 12) + 12) % 12];
+
+  function chooseHarmony(dna, r) {
+    const prog = pick(D.PROGRESSIONS.filter((p) => dna.tonalities.includes(p.tonality)), r);
+    const tonic = pick(prog.tonality === "minor" ? D.MINOR_KEYS : D.MAJOR_KEYS, r);
+    const chords = prog.chords.map(([o, q]) => noteName(PC[tonic] + o, tonic, prog.tonality) + q);
+    return { prog, tonic, key: `${tonic} ${prog.tonality}`, chords };
+  }
+
+  // ---------------------------------------------------------------- style
+  function buildStyle(c) {
+    const parts = [];
+    const add = (text, pri) => parts.push({ text, pri });
+    add(c.opener, 0);
+    add(`crossed with ${c.trait}`, 0);
+    add(D.INSTRUMENTAL, 0);
+    add(c.waltz, 0);
+    add(c.onOff, 0);
+    add(c.room, 0);
+    add(`${c.lead} playing ${c.harmony.prog.color} in ${c.harmony.key}, ${c.grit}, ${c.playing}, looping obsessively`, 0);
+    add(`house rule: ${c.rule}`, 0);
+    add(`beat switch at the midpoint: ${c.beatSwitch}`, 0);
+    add(c.found, 1);
+    add(c.low, 2);
+    add(c.mix, 2);
+    add(c.minimal, 3);
+    const tail = `${c.bpm} BPM ${c.dna.feel}, hard stop ending`;
+
+    const budget = D.STYLE_LIMIT - tail.length - 2;
+    const len = (list) => list.map((p) => p.text).join(", ").length;
+    const kept = [...parts];
+    for (let pri = 3; pri >= 1 && len(kept) > budget; pri--) {
+      for (let i = kept.length - 1; i >= 0 && len(kept) > budget; i--) if (kept[i].pri === pri) kept.splice(i, 1);
+    }
+    return `${kept.map((p) => p.text).join(", ")}, ${tail}`;
+  }
+
+  // ---------------------------------------------------------------- arrangement
+  function buildArrangement(c) {
+    const m = `the ${c.leadName}`;
+    const chords = c.harmony.chords.join(" – ");
+    const S = [];
+    const push = (name, desc) => S.push({ tag: `[${name}: ${desc}]`, name });
+    for (const step of c.structure.steps) {
+      if (step === "intro") push("Intro", `${m} alone in the room, 2 bars, ${chords}, ${c.found}`);
+      else if (step === "hook") push("Hook", `full beat on the beat, ${m} looping obsessively, ${c.waltz}, 8 bars`);
+      else if (step === "verseOn") push("Verse", `drums and 808 locked on the grid, ${m} sparse, house rule: ${c.rule}, 16 bars`);
+      else if (step === "verseOff") push("Verse", `drums slide off the beat, ${c.onOff}, ${m} answering every 4th bar, 16 bars`);
+      else if (step === "verseStop") push("Verse", `drums stop dead every 2 bars and slam back on the one, ${m} in the gaps, 16 bars`);
+      else if (step === "break") push("Break", `808 alone with ${c.found}, 2 bars, then a half-beat of silence`);
+      else if (step === "switch") push("Beat Switch", `${c.beatSwitch}, ${chords} darker, 8 bars`);
+      else if (step === "switchHook") push("Hook", `on the switched beat, ${m} twice as heavy, ${c.waltz}, house rule: ${c.rule}, 8 bars`);
+      else if (step === "outro") push("Outro", `${m} for 2 bars over the 808, then hard stop`);
+    }
+    S.push({ tag: "[End]", name: "End" });
+    return S;
+  }
+
+  function lint(text) {
+    const found = [];
+    for (const rule of D.LINT) {
+      const m = text.match(rule.re);
+      if (m) found.push({ level: rule.level, message: `"${m[0].trim()}" — ${rule.msg}` });
+    }
+    return found;
+  }
+
+  // ---------------------------------------------------------------- main
+  function generate(input = {}) {
+    const seed = input.seed >>> 0;
+    const r = rng(seed);
+    const dna = D.DNA.find((d) => d.id === input.dna) || pick(D.DNA, r);
+    let second = pick(D.DNA.filter((d) => d.id !== dna.id && d.refs !== dna.refs), r);
+    const harmony = chooseHarmony(dna, r);
+    const [lo, hi] = dna.bpm;
+    const bpm = lo + Math.round((r() * (hi - lo)) / 2) * 2;
+    const structure = D.STRUCTURES.find((s) => s.id === input.structure) || pick(D.STRUCTURES, r);
+
+    // Lead: the DNA's own riff half the time, the shared pool otherwise.
+    const leadName = r() < 0.5 ? pick(dna.leads, r) : pick(D.LEADS, r);
+    const c = {
+      dna, second, harmony, bpm, structure, leadName,
+      opener: pick(dna.openers, r),
+      trait: second.trait,
+      lead: `${pick(D.ADJECTIVES, r)} ${leadName}`,
+      grit: pick(D.GRIT, r),
+      playing: pick(D.PLAYING, r),
+      waltz: pick(D.WALTZ, r),
+      onOff: pick(D.ON_OFF, r),
+      room: pick(D.ROOMS, r),
+      found: pick(D.FOUND, r),
+      rule: pick(D.RULES, r),
+      beatSwitch: pick(D.SWITCH, r),
+      low: pick(dna.low, r),
+      mix: pick(D.MIX, r),
+      minimal: pick(D.MINIMAL, r),
+    };
+    const styleText = buildStyle(c);
+    const sections = buildArrangement(c);
+    const lyricsText = sections.map((s) => s.tag).join("\n\n");
+    const warnings = [
+      ...lint(styleText).map((w) => ({ ...w, message: `style: ${w.message}` })),
+      ...lint(lyricsText).map((w) => ({ ...w, message: `arrangement: ${w.message}` })),
+    ];
+    if (styleText.length > D.STYLE_LIMIT) warnings.push({ level: "warn", message: "style exceeds 1,000 characters" });
+    if (lyricsText.length > D.LYRICS_LIMIT) warnings.push({ level: "warn", message: "arrangement exceeds 5,000 characters" });
+
+    // The parts that make a roll audibly itself. Two rolls with the same
+    // fingerprint would sound like cousins, so the page never repeats one.
+    const fingerprint = [dna.id, second.id, D.RULES.indexOf(c.rule), D.FOUND.indexOf(c.found), leadName, harmony.key].join("|");
+
+    return {
+      styleText, lyricsText, sections, fingerprint,
+      excludeText: D.EXCLUDE.join(", "),
+      settings: input.wild ? D.SETTINGS.wild : D.SETTINGS.radio,
+      harmony: { key: harmony.key, roman: harmony.prog.roman, chords: harmony.chords, cadence: harmony.prog.cadence },
+      parts: {
+        rule: c.rule, found: c.found, room: c.room, waltz: c.waltz, onOff: c.onOff, beatSwitch: c.beatSwitch,
+        lead: `${c.lead}, ${c.grit}, ${c.playing}`, trait: c.trait,
+      },
+      warnings,
+      meta: {
+        seed, bpm, dna: dna.id, dnaLabel: dna.label, dnaRefs: dna.refs, second: second.id, secondLabel: second.label, secondRefs: second.refs,
+        structure: structure.id, structureLabel: structure.label, length: structure.length, styleChars: styleText.length,
+      },
+    };
+  }
+
+  return { generate, lint, D };
+})();
+
+
+</script>
+<script>
+/* MANHOLE UI — one button, optional lead DNA, and a fingerprint memory. */
+"use strict";
+(() => {
+  const E = ManholeEngine;
+  const D = E.D;
+  const $ = (id) => document.getElementById(id);
+  const STORE = "manhole.fingerprints.v1";
+  const state = { dna: "", mode: "radio", seed: null };
+  let pkg;
+
+  // Fingerprints rolled on this device. Browser storage may be unavailable;
+  // the page still works, it just forgets between visits.
+  let seen = new Set();
+  try {
+    seen = new Set(JSON.parse(localStorage.getItem(STORE) || "[]"));
+  } catch {
+    seen = new Set();
+  }
+  function remember(fp) {
+    seen.add(fp);
+    try {
+      localStorage.setItem(STORE, JSON.stringify([...seen].slice(-5000)));
+    } catch {
+      /* storage blocked: keep the in-memory set */
+    }
+  }
+
+  const newSeed = () => Math.floor(Math.random() * 4294967295);
+  function generate() {
+    const opts = () => ({ seed: state.seed, dna: state.dna || undefined, wild: state.mode === "wild" });
+    pkg = E.generate(opts());
+    render();
+  }
+  function roll() {
+    for (let i = 0; i < 40; i++) {
+      state.seed = newSeed();
+      pkg = E.generate({ seed: state.seed, dna: state.dna || undefined, wild: state.mode === "wild" });
+      if (!seen.has(pkg.fingerprint)) break;
+    }
+    remember(pkg.fingerprint);
+    render();
+  }
+
+  function seg(id, options, get, set) {
+    const el = $(id);
+    el.textContent = "";
+    for (const o of options) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.textContent = o.label;
+      const on = get() === o.id;
+      b.className = on ? "on" : "";
+      b.setAttribute("aria-pressed", String(on));
+      b.onclick = () => {
+        set(o.id);
+        seg(id, options, get, set);
+        generate();
+      };
+      el.appendChild(b);
+    }
+  }
+
+  function drawDna() {
+    const el = $("dna");
+    el.textContent = "";
+    const all = [{ id: "", label: "Any", refs: "random cross" }, ...D.DNA];
+    for (const d of all) {
+      const b = document.createElement("button");
+      b.type = "button";
+      const on = state.dna === d.id;
+      b.className = "chip" + (on ? " on" : "");
+      b.setAttribute("aria-pressed", String(on));
+      const t = document.createElement("span");
+      t.textContent = d.label;
+      const s = document.createElement("small");
+      s.textContent = d.refs;
+      b.append(t, s);
+      b.onclick = () => {
+        state.dna = d.id;
+        drawDna();
+        roll();
+      };
+      el.appendChild(b);
+    }
+  }
+
+  function dl(el, rows) {
+    el.textContent = "";
+    for (const [k, v] of rows) {
+      const dt = document.createElement("dt");
+      dt.textContent = k;
+      const dd = document.createElement("dd");
+      if (Array.isArray(v)) {
+        for (const c of v) {
+          const s = document.createElement("span");
+          s.className = "chord";
+          s.textContent = c;
+          dd.appendChild(s);
+        }
+      } else dd.textContent = v;
+      el.append(dt, dd);
+    }
+  }
+  function tag(text, hot) {
+    const s = document.createElement("span");
+    s.className = "tag" + (hot ? " hot" : "");
+    s.textContent = text;
+    return s;
+  }
+
+  function render() {
+    const m = pkg.meta;
+    const recipe = $("recipe");
+    recipe.textContent = "";
+    recipe.append(
+      tag(`${m.dnaLabel} · ${m.dnaRefs}`, true),
+      tag(`× ${m.secondLabel} · ${m.secondRefs}`),
+      tag(`${m.bpm} BPM`),
+      tag(pkg.harmony.key),
+      tag(`${m.structureLabel} ${m.length}`)
+    );
+    $("out-style").textContent = pkg.styleText;
+    $("style-meta").textContent = `${m.styleChars} / 1000 characters`;
+    $("out-lyrics").textContent = pkg.lyricsText;
+    $("out-exclude").textContent = pkg.excludeText;
+    const p = pkg.parts;
+    dl($("print-grid"), [
+      ["House rule", p.rule],
+      ["Found sound", p.found],
+      ["Room", p.room],
+      ["Waltz cadence", p.waltz],
+      ["On / off the beat", p.onOff],
+      ["Beat switch", p.beatSwitch],
+      ["Lead", p.lead],
+      ["Borrowed trait", p.trait],
+    ]);
+    $("print-meta").textContent = `roll #${m.seed} · ${seen.size} one-of-ones rolled on this device`;
+    const s = pkg.settings;
+    dl($("out-settings"), [
+      ["Model", s.model],
+      ["Instrumental", "On"],
+      ["Weirdness", s.weirdness],
+      ["Style influence", s.styleInfluence],
+      ["Variety", s.variety],
+      ["Max Mode", s.maxMode],
+    ]);
+    $("settings-note").textContent = s.note;
+    dl($("h-grid"), [["Key", pkg.harmony.key], ["Loop", `${pkg.harmony.roman}`], ["Chords", pkg.harmony.chords]]);
+    $("h-cadence").textContent = pkg.harmony.cadence;
+    const notes = $("out-notes");
+    notes.textContent = "";
+    $("notes-card").hidden = pkg.warnings.length === 0;
+    for (const w of pkg.warnings) {
+      const li = document.createElement("li");
+      li.textContent = `${w.level}: ${w.message}`;
+      notes.appendChild(li);
+    }
+  }
+
+  for (const btn of document.querySelectorAll(".copy[data-copy]")) {
+    btn.onclick = async () => {
+      const kind = btn.dataset.copy;
+      const text = kind === "style" ? pkg.styleText : kind === "exclude" ? pkg.excludeText : pkg.lyricsText;
+      try {
+        await navigator.clipboard.writeText(text);
+      } catch {
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        ta.remove();
+      }
+      const label = btn.textContent;
+      btn.textContent = "Copied";
+      btn.classList.add("done");
+      setTimeout(() => {
+        btn.textContent = label;
+        btn.classList.remove("done");
+      }, 1200);
+    };
+  }
+
+  drawDna();
+  seg("mode", [{ id: "radio", label: "Radio" }, { id: "wild", label: "Wild" }], () => state.mode, (v) => (state.mode = v));
+  $("roll").onclick = roll;
+  roll();
+})();
+
+</script>

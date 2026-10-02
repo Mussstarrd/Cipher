@@ -1,0 +1,160 @@
+<meta charset="utf-8" />
+<title>MANHOLE Beat Engine</title>
+<style>
+  :root {
+    --bg: #ecebe7;
+    --panel: #f8f7f4;
+    --panel-2: #e2e0da;
+    --line: #cfccc4;
+    --text: #1b1a17;
+    --muted: #6b675e;
+    --accent: #d4610f;
+    --accent-ink: #fff7ef;
+    --warn: #9c6b06;
+    --block: #b3261e;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --bg: #121211; --panel: #1b1b19; --panel-2: #24241f; --line: #34332d;
+      --text: #ecebe4; --muted: #9a978b; --accent: #ff8a2a; --accent-ink: #1d0d00;
+      --warn: #e2b04a; --block: #ff6a5f;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #121211; --panel: #1b1b19; --panel-2: #24241f; --line: #34332d;
+    --text: #ecebe4; --muted: #9a978b; --accent: #ff8a2a; --accent-ink: #1d0d00;
+    --warn: #e2b04a; --block: #ff6a5f;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { height: 100%; }
+  body { margin: 0; overflow: hidden; background: var(--bg); color: var(--text); font-family: var(--sans); line-height: 1.5; -webkit-font-smoothing: antialiased; }
+  .scroll { height: 100%; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 20px 16px 64px; display: flex; flex-direction: column; gap: 20px; }
+
+  header .brand { font-size: 34px; font-weight: 900; letter-spacing: 0.2em; margin: 0; font-family: var(--mono); }
+  header .brand .dot { color: var(--accent); }
+  header p { margin: 4px 0 0; color: var(--muted); font-size: 14px; max-width: 58ch; }
+
+  .roll {
+    appearance: none; border: 0; background: var(--accent); color: var(--accent-ink); border-radius: 12px;
+    padding: 18px; font-size: 19px; font-weight: 800; letter-spacing: 0.1em; font-family: var(--mono); cursor: pointer; width: 100%;
+  }
+  .roll:focus-visible { outline: 3px solid var(--text); outline-offset: 2px; }
+  .roll:active { transform: translateY(1px); }
+
+  .label { font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    appearance: none; border: 1px solid var(--line); background: var(--panel); color: var(--text);
+    border-radius: 10px; padding: 7px 12px; font-family: inherit; font-size: 13px; cursor: pointer; text-align: left;
+    display: flex; flex-direction: column; gap: 1px;
+  }
+  .chip small { color: var(--muted); font-size: 11px; }
+  .chip.on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
+  .chip.on small { color: var(--accent-ink); opacity: 0.85; }
+  .chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .seg { display: flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .seg button { flex: 1; appearance: none; border: 0; background: var(--panel); color: var(--muted); font-family: inherit; font-size: 13px; padding: 9px 4px; cursor: pointer; }
+  .seg button + button { border-left: 1px solid var(--line); }
+  .seg button.on { background: var(--panel-2); color: var(--text); font-weight: 600; }
+  .seg button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+  .recipe { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tag { font-size: 12px; font-weight: 600; background: var(--panel-2); border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; }
+  .tag.hot { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+  .card.print { border-color: var(--accent); }
+  .card-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .card-head .label { flex: 1; }
+  .copy { appearance: none; border: 1px solid var(--line); background: var(--panel-2); color: var(--text); border-radius: 8px; padding: 6px 12px; font-size: 12px; font-weight: 600; font-family: inherit; cursor: pointer; white-space: nowrap; }
+  .copy:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .copy.done { border-color: var(--accent); color: var(--accent); }
+  .out { font-family: var(--mono); font-size: 13px; line-height: 1.55; white-space: pre-wrap; overflow-wrap: break-word; margin: 0; }
+  .meta { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; margin: 0; }
+  .grid { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; font-size: 13px; align-items: baseline; margin: 0; }
+  .grid dt { color: var(--muted); }
+  .grid dd { margin: 0; }
+  .chord { display: inline-block; padding: 1px 7px; border-radius: 6px; background: var(--panel-2); margin: 0 4px 4px 0; font-family: var(--mono); }
+  .prose { font-size: 13px; color: var(--muted); margin: 0; }
+  .notes { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; list-style: none; font-size: 13px; color: var(--muted); }
+  footer { font-size: 12px; color: var(--muted); }
+  @media (max-width: 420px) { .grid { grid-template-columns: 1fr; gap: 2px 0; } .grid dd { margin-bottom: 6px; } }
+  @media (prefers-reduced-motion: reduce) { .roll:active { transform: none; } }
+</style>
+
+<div class="scroll">
+<div class="wrap">
+  <header>
+    <h1 class="brand">MANHOLE<span class="dot">.</span></h1>
+    <p>One-of-a-kind minimalist instrumentals for Suno v6. Every roll crosses two reference DNAs and adds a waltz cadence, an on-and-off-the-beat pocket, a garage-sewer room, a found-object sound and one house rule. This page never gives you the same fingerprint twice.</p>
+  </header>
+
+  <button class="roll" id="roll" type="button">⬤ ROLL A ONE-OF-ONE</button>
+
+  <section style="display:flex;flex-direction:column;gap:8px">
+    <div class="label">Lead DNA</div>
+    <div class="chips" id="dna"></div>
+  </section>
+  <div class="seg" id="mode" role="group" aria-label="Mode"></div>
+
+  <div class="recipe" id="recipe"></div>
+
+  <div class="card">
+    <div class="card-head"><div class="label">Style field</div><button class="copy" data-copy="style" type="button">Copy</button></div>
+    <p class="out" id="out-style"></p>
+    <p class="meta" id="style-meta"></p>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><div class="label">Lyrics field · instrumental arrangement</div><button class="copy" data-copy="lyrics" type="button">Copy</button></div>
+    <p class="meta">Paste as-is and turn Suno's Instrumental toggle on.</p>
+    <pre class="out" id="out-lyrics"></pre>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><div class="label">Exclude styles</div><button class="copy" data-copy="exclude" type="button">Copy</button></div>
+    <p class="out" id="out-exclude"></p>
+  </div>
+
+  <div class="card print">
+    <div class="card-head"><div class="label">Fingerprint</div></div>
+    <dl class="grid" id="print-grid"></dl>
+    <p class="meta" id="print-meta"></p>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><div class="label">Suno settings</div></div>
+    <dl class="grid" id="out-settings"></dl>
+    <p class="prose" id="settings-note"></p>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><div class="label">Harmony</div></div>
+    <dl class="grid" id="h-grid"></dl>
+    <p class="prose" id="h-cadence"></p>
+  </div>
+
+  <div class="card" id="notes-card" hidden>
+    <div class="card-head"><div class="label">Notes</div></div>
+    <ul class="notes" id="out-notes"></ul>
+  </div>
+
+  <footer>References shape the sound; no artist or song name ever enters the prompt.</footer>
+</div>
+</div>
+
+<script>
+/*DATA*/
+</script>
+<script>
+/*ENGINE*/
+</script>
+<script>
+/*APP*/
+</script>
