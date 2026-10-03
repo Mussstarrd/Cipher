@@ -35,6 +35,11 @@ const OneGuard = (() => {
       re: /\b(drops?|build-?ups?|sidechain\w*|wobble|growl|reese|tape|tape-\w+|chop\w*|stutter edit|beat repeat|dusty|lo-?fi|chill|retro|vintage|soulful|ambient|atmospheric|ethereal|epic|anthem\w*|festival|gospel|arena|crowd|singalong|memphis|phonk|voices?|bells?|strings|string section|pads?|glitch)\b/i,
     },
     {
+      name: "genre drift",
+      why: "pulls Suno toward jazz, blues, EDM, techno or elevator music",
+      re: /\b(sax\w*|clarinet|flugelhorn|harmon mute|rips?|fall-offs?|rhodes|wurlitzer|electric piano|hammond|leslie|saloon|ragtime|dixieland|big band|marching band|brass band|swing\w*|swung|bebop|blues\w*|wail\w*|twang\w*|spring reverb|pentatonic|phrygian|flat-five|ninths?|bossa|latin|reggae|ska|dub|guiro|frame drum|acid|squelch\w*|supersaw|laser|chiptune|8-bit|game-console|theremin|ping-pong|ramp\w*|builds?|building|techno|trance|rave|electro|synthwave|retrowave|smooth|lounge|elevator|new age|meditat\w*|relax\w*|mellow|lush|ghost notes|breakbeat|groovy|swamp\w*|easy listening)\b/i,
+    },
+    {
       name: "negation",
       why: "\"no X\" plants X",
       re: /\bno\s+\w+/i,

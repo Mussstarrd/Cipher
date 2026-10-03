@@ -52,6 +52,7 @@ test("the lyrics field is section tags only, with a real beat switch", () => {
 test("vocals are always excluded; sliders follow the v6 research", () => {
   const out = E.generate({ seed: 7 });
   assert.ok(out.exclude.startsWith("vocals, singing, rap, choir"));
+  for (const g of ["jazz", "blues", "EDM", "techno", "elevator music"]) assert.ok(out.exclude.includes(g), g);
   for (const seed of seeds.slice(0, 300)) {
     const { sliders, settings } = E.generate({ seed });
     assert.ok(sliders.weirdness >= 55 && sliders.weirdness <= 65);

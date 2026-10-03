@@ -33,7 +33,9 @@ const OneEngine = (() => {
 
   const EXCLUDE = [
     "vocals", "singing", "rap", "choir", "humming", "background vocals", "vocal chops", "chanting",
-    "DJ scratching", "riser", "EDM drop", "drum fills", "film score", "cinematic", "orchestral strings", "lo-fi",
+    "DJ scratching", "riser", "drum fills",
+    "jazz", "smooth jazz", "blues", "big band", "EDM", "techno", "house", "elevator music", "lounge",
+    "new age", "film score", "cinematic", "orchestral strings", "marching band", "lo-fi",
   ].join(", ");
 
   const weighted = (entries, r) => {
@@ -54,7 +56,10 @@ const OneEngine = (() => {
     const low = /low register|doubling the 808|under the snare/.test(register);
     const motif = pick(L.motif, r);
     const long = /five|six|seven|run/.test(motif);
-    const articulation = pickWhere(L.articulation, r, (a) => !(long && /one held|one anticipated|a push note|two stabs|three-note pickup/.test(a)));
+    const short = /two-note|one repeated|stubborn root/.test(motif);
+    const articulation = pickWhere(L.articulation, r, (a) =>
+      !(long && /one held|one anticipated|a push note|two stabs|three-note pickup/.test(a)) &&
+      !(short && /three-note pickup/.test(a)));
     const legato = /legato|long tones|held note/.test(articulation);
     const placement = pick(L.placement, r);
     const dry = /dry|narrow|mono/.test(placement);
@@ -161,6 +166,7 @@ const OneEngine = (() => {
       [head, leadLine, counterLine, bassLine, drumLine, twitchLine, tail],
       [head, leadLine, counterLine, bassLine, drumLine, tail], // twitch then rides in the lyrics tags
       [head, leadLine, `counter: ${p.counter.source}, ${p.counter.role}`, bassLine, drumLine, tail],
+      [head, leadLine, `counter: ${p.counter.source}, ${p.counter.role}`, `bass: ${bass.source}, ${bass.human}`, drumLine, tail],
     ];
     let s;
     for (const t of tries) if ((s = t.join(". ") + ".").length <= 1000) break;
