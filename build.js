@@ -11,11 +11,11 @@ const pages = {
     .replace("/*ENGINE*/", () => [read("likeness.js"), read("engine.js")].map(strip).join("\n"))
     .replace("/*APP*/", () => read("app.js")),
   "anomaly.html": read("anomaly/template.html")
-    .replace("/*DATA*/", () => [read("anomaly/blueprints.js"), read("anomaly/data.js")].map(strip).join("\n"))
+    .replace("/*DATA*/", () => [read("shared/vibe.js"), read("anomaly/blueprints.js"), read("anomaly/data.js")].map(strip).join("\n"))
     .replace("/*ENGINE*/", () => strip(read("anomaly/engine.js")))
     .replace("/*APP*/", () => read("anomaly/app.js")),
   "manhole.html": read("manhole/template.html")
-    .replace("/*DATA*/", () => strip(read("manhole/data.js")))
+    .replace("/*DATA*/", () => [read("shared/vibe.js"), read("manhole/data.js")].map(strip).join("\n"))
     .replace("/*ENGINE*/", () => strip(read("manhole/engine.js")))
     .replace("/*APP*/", () => read("manhole/app.js")),
 };

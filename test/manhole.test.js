@@ -26,21 +26,22 @@ test("every package is clean and inside Suno's limits", () => {
   }
 });
 
-test("every roll carries the whole brief", () => {
+test("every roll leads with rhythm tags and vivid sounds", () => {
+  const V = require("../src/shared/vibe.js");
   for (const input of rolls()) {
     const out = E.generate(input);
     const s = out.styleText;
-    const dna = D.DNA.find((d) => d.id === out.meta.dna);
-    assert.ok(dna.openers.some((o) => s.startsWith(o)), `opener not first: ${s}`);
-    assert.ok(s.includes(`crossed with ${out.parts.trait}`), s);
-    for (const pool of [D.TRIPLET, D.ON_OFF, D.MIX]) assert.ok(pool.some((p) => s.includes(p)), s);
+    assert.ok(s.startsWith("experimental minimalist hip hop, "), s);
+    const head = s.slice(0, 200);
+    for (const pool of [V.GLITCH_TAGS, V.HAT_TAGS, V.SYNC_TAGS]) assert.ok(pool.some((p) => head.includes(p)), `rhythm tag missing from the front: ${s}`);
+    assert.ok(head.includes("hard beat switch"), s);
+    assert.ok(s.includes(out.parts.bass) && s.includes(out.parts.lead) && s.includes(out.parts.perc), s);
     const hit = `${s}\n${out.lyricsText}`.match(D.SOUNDTRACK);
     assert.ok(!hit, `soundtrack word: ${hit && hit[0]}`);
-    assert.ok(s.includes(`house rule: ${out.parts.rule}`), s);
-    assert.ok(s.includes(`beat switch at the midpoint: ${out.parts.beatSwitch}`), s);
-    assert.match(s, / looping/);
-    assert.match(s, /\d+ BPM .*hard stop ending$/);
+    assert.match(s, /\d+ BPM/);
     assert.notStrictEqual(out.meta.dna, out.meta.second);
+    for (const part of [out.parts.rule, out.parts.beatSwitch, out.parts.triplet]) assert.ok(out.lyricsText.includes(part), `missing from the arrangement: ${part}`);
+    assert.match(out.lyricsText, /twitchy/);
     assert.ok(out.sections.some((x) => x.name === "Beat Switch"));
     assert.ok(out.sections.filter((x) => x.name === "Hook").length >= 2);
     assert.strictEqual(out.sections.at(-1).tag, "[End]");

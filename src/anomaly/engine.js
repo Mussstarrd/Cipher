@@ -5,6 +5,7 @@
 
 const AnomalyEngine = (() => {
   const D = typeof AnomalyData !== "undefined" ? AnomalyData : require("./data.js");
+  const V = typeof SharedVibe !== "undefined" ? SharedVibe : require("../shared/vibe.js");
 
   // ---------------------------------------------------------------- random
   function rng(seed) {
@@ -58,44 +59,47 @@ const AnomalyEngine = (() => {
   // Keyboard budget: at most one keys instrument, and piano only sometimes.
   const isPiano = (s) => /piano/i.test(s);
 
+  // Pick a percussion phrase that does not echo the glitch tag's first word.
+  function pickPerc(glitchTag, r) {
+    const head = glitchTag.split(" ")[0];
+    const pool = V.PERC.filter((p) => !p.startsWith(head));
+    return pick(pool.length ? pool : V.PERC, r);
+  }
+
   function buildStyle(ctx) {
-    const { world, harmony, bpm, r, used } = ctx;
+    const { world, harmony, bpm, r } = ctx;
     // Higher priority number = dropped first when the field runs long.
     const parts = [];
     const add = (text, pri) => parts.push({ text, pri });
 
-    // The opener is the identity. It goes first because Suno weights the front.
-    add(pick(world.openers, r), 0);
-    add(world.genre, 0);
-    add(`${pick(D.SWING, r)} drums, ${pick(D.SYNC, r)}`, 1);
-    add(pick(world.lowEnd, r), 2);
+    // Suno weights the front and reads the field as tags, so the rhythm
+    // identity goes first as short tags: genre, glitch, hats, syncopation,
+    // beat switch. Bar-by-bar detail lives in the arrangement instead.
+    add(`${world.genre}, experimental hip hop`, 0);
+    const glitchTag = pick(V.GLITCH_TAGS, r);
+    add(glitchTag, 0);
+    add(pick(V.HAT_TAGS, r), 0);
+    add(pick(V.SYNC_TAGS, r), 0);
+    add("hard beat switch", 0);
+    add(pick(world.openers, r), 1);
 
-    let leadPool = r() < 0.7 ? world.leads : D.GLOBAL_LEADS;
-    if (r() > D.PIANO_SHARE) leadPool = leadPool.filter((l) => !isPiano(l));
-    const lead = makeVoice(leadPool, D.ADJECTIVES, r, used);
-    ctx.timbre = pick(D.TIMBRE, r);
-    ctx.playing = pick(D.PLAYING, r);
-    ctx.space = pick(D.SPACE, r);
-    add(`${lead} playing ${harmony.prog.color} in ${harmony.key}, ${ctx.timbre}, ${ctx.playing}, looping obsessively`, 0);
-    ctx.motif = `the ${lead.split(",")[0].split(" ").slice(1, 5).join(" ")}`;
+    // Every sound is one vivid phrase, never a bare instrument name.
+    ctx.bass = pick(V.BASS, r);
+    ctx.lead = pick(V.LEADS, r);
+    ctx.perc = pickPerc(glitchTag, r);
     ctx.clash = r() < 0.7 ? pick(world.clash, r) : pick(D.CLASH, r);
-    add(`${ctx.clash} cutting in every 4 bars, ${ctx.space}`, 0);
+    add(ctx.bass, 0);
+    add(`${ctx.lead} looping ${harmony.prog.color} in ${harmony.key}`, 0);
+    add(ctx.perc, 0);
+    add(ctx.clash, 2);
+    ctx.motif = `the ${ctx.lead}`;
+    add(pick(D.MIX, r), 1);
+    const tail = `${bpm} BPM ${world.feel}`;
 
-    add(`technical flex: ${ctx.flex}`, 0);
-    add(`signature: ${ctx.signature}`, 0);
-    add(ctx.glitch, 2);
-    add(`beat switch at the midpoint: ${ctx.beatSwitch}`, 0);
-    add(pick(world.drums, r), 3);
-    add(pick(D.MIX, r), 3);
-    add(`${pick(D.ADJECTIVES.filter((x) => !used.has(x)), r)} and ${pick(D.ADJECTIVES.filter((x) => !used.has(x)), r)}`, 4);
-    const tail = `${bpm} BPM ${world.feel}, hard stop ending`;
-
-    // Trim one line at a time, least important first, latest first within a tier.
-    // Shorter prompts stay crisper: aim under Suno's 1,000-character cap.
-    const budget = Math.min(D.STYLE_LIMIT, 950) - tail.length - 2;
+    const budget = Math.min(D.STYLE_LIMIT, 850) - tail.length - 2;
     const len = (list) => list.map((p) => p.text).join(", ").length;
     const kept = [...parts];
-    for (let pri = 4; pri >= 1 && len(kept) > budget; pri--) {
+    for (let pri = 3; pri >= 1 && len(kept) > budget; pri--) {
       for (let i = kept.length - 1; i >= 0 && len(kept) > budget; i--) if (kept[i].pri === pri) kept.splice(i, 1);
     }
     return `${kept.map((p) => p.text).join(", ")}, ${tail}`;
@@ -114,37 +118,37 @@ const AnomalyEngine = (() => {
     for (const step of structure.steps) {
       switch (step) {
         case "intro":
-          push("Intro", `${motif} alone, 2 bars, ${chords}, drums and 808 fall in on bar 3`);
+          push("Intro", `${motif} alone, 2 bars, ${chords}, drums slam in on bar 3`);
           break;
         case "hook":
-          push("Hook", `full beat, ${motif} loops obsessively, ${ctx.playing}, ${ctx.clash} answers every 4 bars, 8 bars`);
+          push("Hook", `full beat, twitchy stuttering hats, ${ctx.perc}, ${motif} looping, ${ctx.clash} answers, 8 bars`);
           break;
         case "hookSig":
-          push("Hook", `full beat, ${motif} loops obsessively, ${ctx.clash} answers, ${sig}, ${ctx.move}, 8 bars`);
+          push("Hook", `full beat, twitchy stuttering hats, ${motif} looping, ${sig}, ${ctx.move}, 8 bars`);
           break;
         case "verse":
-          push("Verse", `drums and 808 only, ${motif} low and sparse, open space, 16 bars`);
+          push("Verse", `stripped drums and 808, syncopated kicks, ${motif} sparse, ${ctx.flex}, 16 bars`);
           break;
         case "verse2":
-          push("Verse", `drums and 808, ${ctx.glitch}, ${motif} every 4th bar, 16 bars`);
+          push("Verse", `glitchy chopped drums, ${ctx.glitch}, ${motif} every 4th bar, 16 bars`);
           break;
         case "verseShort":
-          push("Verse", `drums and 808 only, ${motif} sparse, 8 bars`);
+          push("Verse", `stripped drums and 808, syncopated kicks, ${motif} sparse, ${ctx.flex}, 8 bars`);
           break;
         case "pre":
-          push("Pre-Hook", `808 out, ${motif} holds the tension chord, ${ctx.flex}, 4 bars`);
+          push("Pre-Hook", `808 drops out, hats tighten into a stutter, ${motif} holds the tension chord, 4 bars`);
           break;
         case "switch":
-          push("Beat Switch", `${ctx.beatSwitch}, ${ctx.glitch}, ${chords} darker, 8 bars`);
+          push("Beat Switch", `${ctx.beatSwitch}, ${ctx.glitch}, 8 bars`);
           break;
         case "switchHook":
-          push("Hook", `on the switched beat, ${motif} twice as heavy, ${ctx.clash} doubled, ${sig}, ${ctx.move}, 8 bars`);
+          push("Hook", `on the switched beat, heavier, glitchy percussion, ${motif}, ${sig}, ${ctx.move}, 8 bars`);
           break;
         case "break":
-          push("Break", `808 alone for 2 bars, then a half-beat of total silence`);
+          push("Break", `drums stutter and cut out, 808 alone for 2 bars, then a half-beat of total silence`);
           break;
         case "bridge":
-          push("Bridge", `half-time drums, ${motif} reharmonized, ${sig}, 8 bars`);
+          push("Bridge", `half-time glitchy drums, ${motif} reharmonized, ${sig}, 8 bars`);
           break;
         case "outro":
           push("Outro", `${motif} for 2 bars over the 808, then hard stop`);
@@ -204,9 +208,9 @@ const AnomalyEngine = (() => {
       signature: ctx.signature,
       move: ctx.move,
       clash: ctx.clash,
-      timbre: ctx.timbre,
-      playing: ctx.playing,
-      space: ctx.space,
+      bass: ctx.bass,
+      lead: ctx.lead,
+      perc: ctx.perc,
       flex: ctx.flex,
       beatSwitch: ctx.beatSwitch,
       glitch: ctx.glitch,

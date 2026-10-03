@@ -40,9 +40,20 @@ Only modern hip hop and R&B production words. Field tests showed that world and 
 
 The same goes for meter words: "waltz", "lilt", "limping", and any time signature like 3/4, 6/8 or 12/8 make Suno play oom-pah carnival music. The triplet feel is written as hip hop language instead ("triplet-bounce hats grouping in threes over a straight kick", "dotted-8th accents in the riff"), and a lint blocks the meter words.
 
+## How the instrumental style field is built (ANOMALY, MANHOLE)
+
+Listening tests showed Suno reads the style field mostly as tags and weights the front. Bar-by-bar instructions ("a half-beat of silence before every hook downbeat") buried mid-field were mostly ignored, and bare instrument names ("dark keys", "warm bassline") rendered as stock presets. So the field is now:
+
+1. Genre tags, then three rhythm tags (one glitch, one hi-hat, one syncopation) and "hard beat switch", all in the first ~200 characters.
+2. The identity sentence (blueprint opener or DNA opener).
+3. Sounds from the shared bank `src/shared/vibe.js`, each one vivid phrase: bass ("gooey slime-thick 808 slides"), lead ("buzzsaw distorted 808 melody looping a brooding two-chord minor loop in C minor"), side percussion ("chopped stuttering clap edits").
+4. Mix line and BPM. About 600–850 characters.
+
+The bar-by-bar detail (signature, technical flex, glitch moves, house rule, beat-switch content) moves into the lyrics-field arrangement tags, where Suno uses structure.
+
 ## Develop
 
 ```sh
 npm test        # every lane × edge × structure × seed: bans, limits, spelling, hook count
-npm run build   # builds dist/cipher.html and dist/anomaly.html from src/
+npm run build   # builds dist/cipher.html, dist/anomaly.html and dist/manhole.html from src/
 ```

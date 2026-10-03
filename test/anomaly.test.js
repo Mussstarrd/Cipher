@@ -31,40 +31,25 @@ test("every package is clean: no vocals, no FX words, no artist names, inside li
   }
 });
 
-test("every roll keeps its identity and the extras survive most of the time", () => {
-  let n = 0;
-  const miss = { swing: 0, sync: 0, glitch: 0, move: 0, flex: 0, mix: 0 };
+test("every roll leads with rhythm tags and vivid sounds", () => {
+  const V = require("../src/shared/vibe.js");
   for (const input of rolls()) {
     const out = E.generate(input);
     const s = out.styleText;
-    n++;
     const world = D.WORLDS.find((w) => w.id === out.meta.world);
-    assert.ok(world.openers.some((o) => s.startsWith(o)), `opener not first: ${s}`);
-    assert.ok(s.includes(`signature: ${out.signature}`), s);
-    assert.ok(s.includes(`beat switch at the midpoint: ${out.beatSwitch}`), s);
-    assert.ok(D.CLASH.includes(out.clash) || world.clash.includes(out.clash), s);
-    assert.ok(s.includes(`${out.clash} cutting in every 4 bars`), s);
-    assert.ok(D.TIMBRE.some((p) => s.includes(p)) && D.PLAYING.some((p) => s.includes(p)) && D.SPACE.some((p) => s.includes(p)), `lead character missing: ${s}`);
-    assert.match(s, /looping obsessively/);
-    assert.ok(!/\b(bright|twinkling|high-pitched|sine lead|synth lead)\b/i.test(s.match(/, ([^,]+) playing /)[1].split(" ").slice(1).join(" ")), `high lead: ${s}`);
+    assert.ok(s.startsWith(`${world.genre}, experimental hip hop, `), `genre tags not first: ${s}`);
+    const head = s.slice(0, 220);
+    for (const pool of [V.GLITCH_TAGS, V.HAT_TAGS, V.SYNC_TAGS]) assert.ok(pool.some((p) => head.includes(p)), `rhythm tag missing from the front: ${s}`);
+    assert.ok(head.includes("hard beat switch"), s);
+    assert.ok(s.includes(out.bass) && s.includes(out.lead) && s.includes(out.perc), s);
     assert.match(s, /\d+ BPM/);
-    if (!D.SWING.some((p) => s.includes(p))) miss.swing++;
-    if (!D.SYNC.some((p) => s.includes(p))) miss.sync++;
-    if (!D.GLITCH.some((p) => s.includes(p))) miss.glitch++;
-    if (!s.includes(`trademark move: ${out.move}`)) miss.move++;
-    if (!s.includes(`technical flex: ${out.flex}`)) miss.flex++;
-    if (!D.MIX.some((p) => s.includes(p))) miss.mix++;
     assert.ok(out.sections.some((x) => x.name === "Beat Switch"), out.lyricsText);
     assert.ok(out.sections.filter((x) => x.name === "Hook").length >= 2, out.lyricsText);
     assert.strictEqual(out.sections.at(-1).tag, "[End]");
     assert.match(out.lyricsText, /hard stop/);
-    assert.ok(out.lyricsText.includes(out.glitch), `glitch missing from the arrangement: ${out.lyricsText}`);
-    assert.ok(out.lyricsText.includes(out.move), `trademark move missing from the arrangement: ${out.lyricsText}`);
+    for (const part of [out.glitch, out.flex, out.signature]) assert.ok(out.lyricsText.includes(part), `missing from the arrangement: ${part}`);
+    assert.match(out.lyricsText, /twitchy stuttering hats/);
   }
-  for (const k of ["swing", "sync", "flex"]) assert.ok(miss[k] / n < 0.1, `${k} missing in ${miss[k]}/${n}`);
-  // The glitch and the trademark move also live in the arrangement tags, so the style field may drop them when long.
-  assert.ok(miss.glitch / n < 0.9, `glitch missing in ${miss.glitch}/${n}`);
-
 });
 
 test("piano is rare", () => {
@@ -82,12 +67,12 @@ test("adjectives and leads vary; keys spread", () => {
   const leads = new Set(), keys = new Set(), adjs = new Set();
   for (let seed = 1; seed <= 120; seed++) {
     const out = E.generate({ seed, world: D.WORLDS[0].id });
-    leads.add(out.styleText.match(/, ([^,]+) playing /)[1].split(" ").slice(1).join(" "));
-    adjs.add(out.styleText.match(/, ([^,]+) playing /)[1].split(" ")[0]);
+    leads.add(out.lead);
+    adjs.add(out.bass);
     keys.add(out.harmony.key);
   }
   assert.ok(leads.size >= 10, `${leads.size} leads`);
-  assert.ok(adjs.size >= 25, `${adjs.size} adjectives`);
+  assert.ok(adjs.size >= 10, `${adjs.size} basses`);
   assert.ok(keys.size >= 8, `${keys.size} keys`);
 });
 

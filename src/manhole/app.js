@@ -129,7 +129,7 @@
       ["Triplet pocket", p.triplet],
       ["On / off the beat", p.onOff],
       ["Beat switch", p.beatSwitch],
-      ["Lead", p.lead],
+      ["Sounds", `${p.lead} · ${p.bass} · ${p.perc}`],
       ["Borrowed trait", p.trait],
     ]);
     $("print-meta").textContent = `roll #${m.seed} · ${seen.size} one-of-ones rolled on this device`;
