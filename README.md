@@ -1,6 +1,29 @@
 # Cipher
 
-Three Suno v6 prompt engines, each a single self-contained page in `dist/`.
+Suno v6 prompt engines, each a single self-contained page in `dist/`. **ONE OF ONE is the current one**; the other three are kept for reference.
+
+## ONE OF ONE (`dist/one.html`)
+
+One button. It fills Suno's create screen in Suno's order: **Lyrics → Styles → Exclude styles → Sliders**, each with a Copy button.
+
+Every sound is built from slots in a sound-design grammar (`src/one/grammar.js`), never picked whole from a short list. A one-phrase label like "dark synth chord loop" points Suno at the average of thousands of tracks, which is the preset. Each lead gets seven slots:
+
+| slot | example |
+| --- | --- |
+| source | a Wurlitzer with a broken tremolo |
+| character | saturated with a slight pitch warble |
+| register | low-mid, darker than the drums |
+| motif | a three-note cell: root, flat second, root |
+| articulation | off-beat stabs on the and of 2 and 4 |
+| human feel | the second note always a hair late |
+| placement | bone-dry, center, tucked right above the 808 |
+
+The 808 gets its own human-feel slot ("slides played by hand, each one a different length"). Drums, twitch percussion (sound + rhythm + where), groove and the beat switch (when + what + how it lands) are slot-built too. The lead's evolution, the bass pattern and the switch go in the lyrics-field section tags, where v6 reads structure.
+
+- **Clash rules** keep combinations sane. A dry lead never gets chorus. An 808 melody forces a sine sub. A long motif is never played as "one held note per bar". A sparse switch never lands on "new drums".
+- **Guard** (`src/one/guard.js`): every roll is checked against all the bans learned from listening tests, plus the v6 research's trigger words (drop, riser, tape, chopped, dusty, anthem, horns, strings, pads, glitch...).
+- **Settings**: Variety Off (any other setting rewrites the style field), Weirdness 55–65, Style Influence 65–75, Max Mode on, v6 or v6-wild.
+- **Memory**: the page remembers every roll on your device and never repeats one.
 
 ## MANHOLE (`dist/manhole.html`)
 
@@ -55,5 +78,5 @@ The bar-by-bar detail (signature, technical flex, glitch moves, house rule, beat
 
 ```sh
 npm test        # every lane × edge × structure × seed: bans, limits, spelling, hook count
-npm run build   # builds dist/cipher.html, dist/anomaly.html and dist/manhole.html from src/
+npm run build   # builds dist/one.html, dist/cipher.html, dist/anomaly.html and dist/manhole.html from src/
 ```

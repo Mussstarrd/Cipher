@@ -30,6 +30,11 @@ const OneGuard = (() => {
       re: /\b(edm|dubstep|jazz\w*|funk\w*|disco|house\b|polka|country|bluegrass)\b/i,
     },
     {
+      name: "EDM / voice / lo-fi trigger",
+      why: "research: these words pull in EDM drops, crowd voices or lo-fi hiss",
+      re: /\b(drops?|build-?ups?|sidechain\w*|wobble|growl|reese|tape|tape-\w+|chop\w*|stutter edit|beat repeat|dusty|lo-?fi|chill|retro|vintage|soulful|ambient|atmospheric|ethereal|epic|anthem\w*|festival|gospel|arena|crowd|singalong|memphis|phonk|voices?|horns?|brass|bells?|strings?|pads?|glitch)\b/i,
+    },
+    {
       name: "negation",
       why: "\"no X\" plants X",
       re: /\bno\s+\w+/i,

@@ -18,6 +18,10 @@ const pages = {
     .replace("/*DATA*/", () => [read("shared/vibe.js"), read("manhole/data.js")].map(strip).join("\n"))
     .replace("/*ENGINE*/", () => strip(read("manhole/engine.js")))
     .replace("/*APP*/", () => read("manhole/app.js")),
+  "one.html": read("one/template.html")
+    .replace("/*DATA*/", () => [read("one/guard.js"), read("one/theory.js"), read("one/grammar.js")].map(strip).join("\n"))
+    .replace("/*ENGINE*/", () => strip(read("one/engine.js")))
+    .replace("/*APP*/", () => read("one/app.js")),
 };
 
 fs.mkdirSync(path.join(__dirname, "dist"), { recursive: true });

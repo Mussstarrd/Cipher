@@ -1,0 +1,951 @@
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>One of One</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #0b0b0d;
+    --panel: #141417;
+    --field: #1b1b1f;
+    --line: #2a2a30;
+    --text: #f1efe9;
+    --muted: #8d8a83;
+    --accent: #c8ff3d;
+    --accent-ink: #0b0b0d;
+    --mono: "Space Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    --sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { height: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--sans); -webkit-font-smoothing: antialiased; overflow: hidden; }
+  .scroll { height: 100%; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  .wrap { max-width: 640px; margin: 0 auto; padding: 28px 16px 72px; display: flex; flex-direction: column; gap: 18px; }
+
+  header { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+  h1 { margin: 0; font-family: var(--mono); font-size: 22px; letter-spacing: 0.06em; font-weight: 700; }
+  h1 span { color: var(--accent); }
+  .roll-id { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+
+  .roll {
+    appearance: none; border: 0; border-radius: 14px; background: var(--accent); color: var(--accent-ink);
+    font-family: var(--mono); font-weight: 700; font-size: 18px; letter-spacing: 0.08em; padding: 18px; cursor: pointer; width: 100%;
+  }
+  .roll:focus-visible { outline: 3px solid var(--text); outline-offset: 3px; }
+  .roll:active { transform: scale(0.99); }
+
+  .vibe { font-size: 15px; line-height: 1.45; color: var(--text); margin: 0; }
+  .vibe em { font-style: normal; color: var(--accent); }
+
+  .field { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+  .field-head { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px 0; }
+  .field-name { font-size: 13px; font-weight: 600; letter-spacing: 0.02em; }
+  .count { font-family: var(--mono); font-size: 11px; color: var(--muted); margin-left: 8px; font-weight: 400; }
+  .copy {
+    appearance: none; border: 1px solid var(--line); background: var(--field); color: var(--text); border-radius: 999px;
+    padding: 6px 14px; font-family: var(--sans); font-size: 12px; font-weight: 600; cursor: pointer;
+  }
+  .copy:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .copy.done { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .box {
+    margin: 10px; background: var(--field); border-radius: 10px; padding: 12px 14px;
+    font-family: var(--mono); font-size: 12.5px; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere;
+  }
+
+  .sliders { padding: 6px 14px 14px; display: flex; flex-direction: column; gap: 12px; }
+  .slider { display: grid; grid-template-columns: 120px 1fr 44px; align-items: center; gap: 12px; font-size: 13px; }
+  .track { height: 6px; border-radius: 3px; background: var(--field); position: relative; }
+  .fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 3px; background: var(--accent); }
+  .knob { position: absolute; top: 50%; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; background: var(--text); }
+  .val { font-family: var(--mono); font-size: 12px; text-align: right; color: var(--muted); }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 14px 14px; }
+  .chip { font-size: 12px; border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; color: var(--muted); }
+  .chip b { color: var(--text); font-weight: 600; }
+
+  footer { font-size: 12px; color: var(--muted); text-align: center; line-height: 1.5; }
+  @media (prefers-reduced-motion: reduce) { .roll:active { transform: none; } }
+</style>
+
+<div class="scroll">
+<div class="wrap">
+  <header>
+    <h1>ONE<span>/</span>ONE</h1>
+    <span class="roll-id" id="roll-id"></span>
+  </header>
+
+  <button class="roll" id="roll" type="button">ROLL A ONE-OF-ONE</button>
+
+  <p class="vibe" id="vibe"></p>
+
+  <section class="field">
+    <div class="field-head"><span class="field-name">Lyrics<span class="count" id="lyrics-count"></span></span><button class="copy" data-copy="lyrics" type="button">Copy</button></div>
+    <div class="box" id="lyrics"></div>
+  </section>
+
+  <section class="field">
+    <div class="field-head"><span class="field-name">Styles<span class="count" id="style-count"></span></span><button class="copy" data-copy="style" type="button">Copy</button></div>
+    <div class="box" id="style"></div>
+  </section>
+
+  <section class="field">
+    <div class="field-head"><span class="field-name">Exclude styles</span><button class="copy" data-copy="exclude" type="button">Copy</button></div>
+    <div class="box" id="exclude"></div>
+  </section>
+
+  <section class="field">
+    <div class="field-head"><span class="field-name">Sliders</span></div>
+    <div class="sliders" id="sliders"></div>
+    <div class="chips" id="chips"></div>
+  </section>
+
+  <footer>Turn Instrumental on in Suno. This page remembers what it has rolled on this device and never hands you the same beat twice.</footer>
+</div>
+</div>
+
+<script>
+/* ONE OF ONE — guard rails learned from listening tests. Every word here
+ * sent a real Suno take somewhere the artist did not want it to go. */
+"use strict";
+
+const OneGuard = (() => {
+  const RULES = [
+    {
+      name: "film score / world / folk / lo-fi",
+      why: "turned beats into film-score background music or low-fidelity sound design",
+      re: /\b(erhu|koto|sitar|tabla|bagpipe\w*|accordion|harpsichord|flamenco|steel[- ]?(pan|drum)|banjo|tuba\w*|whistl\w*|pan flute|ocarina|duduk|cello\w*|viola|violin|pizzicato|harps?|bowed|harmonica\w*|timpani|cathedral|church|pipe[- ]organ|organs?|orchestral|cinematic|film|horror|haunt\w*|eerie|ghostly|spaghetti|western|mellotron|flutes?|woodwind|reed|cassette|vinyl|crackl\w*|transistor|sewer|storm drain|basement|boiler|tunnel|subway|overpass|dripping|manhole|dumpster|nylon|slide[- ]guitar|upright|double bass|fanfare|marching|military|marimba|kalimba|music box|glockenspiel|celesta|xylophone)\b/i,
+    },
+    {
+      name: "meter",
+      why: "made Suno play oom-pah carnival music",
+      re: /\b(waltz\w*|lilt\w*|limp\w*|oompah|oom-pah|carnival|circus|polka|calliope)\b|\b(3|5|6|7|9|12)\/(4|8)\b/i,
+    },
+    {
+      name: "voice",
+      why: "invites gibberish background voices into an instrumental",
+      re: /\b(vocal|vocals|vocalist|rap\b|rapper|sing|sings|singing|singer|sung|chant\w*|choir|hum|humming|hummed|lyric\w*|ad-?lib\w*|falsetto|harmonies)\b/i,
+    },
+    {
+      name: "DJ / transition effects",
+      why: "produced phaser sweeps, risers and scratches every few bars",
+      re: /\b(transition\w*|sweeps?|risers?|phaser|dj\b|scratch\w*|fills?|cowbell|rim ?shots?|airhorn)\b/i,
+    },
+    {
+      name: "off-format genre",
+      why: "pulls the beat out of hip hop",
+      re: /\b(edm|dubstep|jazz\w*|funk\w*|disco|house\b|polka|country|bluegrass)\b/i,
+    },
+    {
+      name: "EDM / voice / lo-fi trigger",
+      why: "research: these words pull in EDM drops, crowd voices or lo-fi hiss",
+      re: /\b(drops?|build-?ups?|sidechain\w*|wobble|growl|reese|tape|tape-\w+|chop\w*|stutter edit|beat repeat|dusty|lo-?fi|chill|retro|vintage|soulful|ambient|atmospheric|ethereal|epic|anthem\w*|festival|gospel|arena|crowd|singalong|memphis|phonk|voices?|horns?|brass|bells?|strings?|pads?|glitch)\b/i,
+    },
+    {
+      name: "negation",
+      why: "\"no X\" plants X",
+      re: /\bno\s+\w+/i,
+    },
+  ];
+
+  // Reference names live in the UI only. Suno strips or rewrites them, and
+  // a wrong name in a prompt can drag in the wrong artist's sound.
+  const NAMES = [
+    "jid", "j.i.d", "big sean", "sean don", "lil wayne", "weezy", "wayne", "j. cole", "j cole", "jcole", "cole",
+    "prof", "gampo", "connor price", "drake", "drizzy", "kendrick", "travis scott", "future", "metro boomin",
+    "a milli", "blessings", "mcafee", "bruddanem", "glory", "lil durk", "durk", "bangladesh", "vinylz",
+    "boi-1da", "lex luger", "dj khalil", "timbaland", "pi'erre bourne", "kenny beats", "tay keith", "mannie fresh",
+    "three 6 mafia", "dj paul", "cardo", "dreamville",
+  ];
+  const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const NAME_RE = new RegExp(`(^|[^a-z0-9])(${NAMES.map(esc).join("|")})($|[^a-z0-9])`, "i");
+
+  function check(text) {
+    const hits = [];
+    for (const r of RULES) {
+      const m = text.match(r.re);
+      if (m) hits.push({ rule: r.name, word: m[0].trim(), why: r.why });
+    }
+    const n = text.match(NAME_RE);
+    if (n) hits.push({ rule: "reference name", word: n[2], why: "names never go in the prompt" });
+    return hits;
+  }
+
+  return { RULES, NAMES, check };
+})();
+
+
+/* ONE OF ONE — keys and chord loops. Minor-heavy, hip hop canon only. */
+"use strict";
+
+const OneTheory = (() => {
+  const SHARP = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+  const FLAT = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"];
+  const PC = { C: 0, "C#": 1, Db: 1, D: 2, "D#": 3, Eb: 3, E: 4, F: 5, "F#": 6, Gb: 6, G: 7, "G#": 8, Ab: 8, A: 9, "A#": 10, Bb: 10, B: 11 };
+  const SHARP_KEYS = { minor: new Set(["E", "B", "F#", "C#", "G#", "D#", "A#"]), major: new Set(["G", "D", "A", "E", "B", "F#"]) };
+  const MINOR_KEYS = SHARP.slice();
+  const MAJOR_KEYS = FLAT.slice();
+
+  // [semitones above tonic, suffix]. Short loops; the riff does the talking.
+  const LOOPS = [
+    { tonality: "minor", roman: "i – ♭VI", chords: [[0, "m"], [8, ""]] },
+    { tonality: "minor", roman: "i – ♭II", chords: [[0, "m"], [1, ""]] },
+    { tonality: "minor", roman: "i (pedal)", chords: [[0, "m"]] },
+    { tonality: "minor", roman: "i – ♭VI – V", chords: [[0, "m"], [8, ""], [7, ""]] },
+    { tonality: "minor", roman: "i – ♭VII – ♭VI – V", chords: [[0, "m"], [10, ""], [8, ""], [7, ""]] },
+    { tonality: "minor", roman: "i – iv", chords: [[0, "m"], [5, "m"]] },
+    { tonality: "minor", roman: "i7 – IV7", chords: [[0, "m7"], [5, "7"]] },
+    { tonality: "minor", roman: "i9 – ♭VImaj7", chords: [[0, "m9"], [8, "maj7"]] },
+    { tonality: "minor", roman: "i – v – ♭VI", chords: [[0, "m"], [7, "m"], [8, ""]] },
+    { tonality: "major", roman: "IVmaj7 – iii7 – vi9", chords: [[5, "maj7"], [4, "m7"], [9, "m9"]] },
+    { tonality: "major", roman: "I – ♭VII", chords: [[0, ""], [10, ""]] },
+  ];
+
+  const name = (pc, tonic, tonality) => (SHARP_KEYS[tonality].has(tonic) ? SHARP : FLAT)[((pc % 12) + 12) % 12];
+
+  function harmony(r, pick, avoidKeys = []) {
+    // Minor about 85% of the time.
+    const pool = LOOPS.filter((l) => (r() < 0.85 ? l.tonality === "minor" : l.tonality === "major"));
+    const loop = pick(pool.length ? pool : LOOPS, r);
+    const keys = loop.tonality === "minor" ? MINOR_KEYS : MAJOR_KEYS;
+    let tonic = pick(keys, r);
+    for (let i = 0; i < 8 && avoidKeys.includes(`${tonic} ${loop.tonality}`); i++) tonic = pick(keys, r);
+    const chords = loop.chords.map(([o, q]) => name(PC[tonic] + o, tonic, loop.tonality) + q);
+    return { key: `${tonic} ${loop.tonality}`, roman: loop.roman, chords };
+  }
+
+  return { harmony };
+})();
+
+
+/* ONE OF ONE — the sound-design grammar. Every sound is built from slots
+ * (what it is, how it is processed, where it sits, how a human plays it),
+ * never picked whole from a short list. A one-phrase label like "dark synth
+ * chord loop" points Suno at the average of thousands of tracks: the preset.
+ * Specific physical detail pushes it off the average. */
+"use strict";
+
+const OneGrammar = {
+  // First words Suno reads. One specific lane, never bare "hip hop".
+  ANCHORS: [
+    "experimental trap",
+    "minimal experimental trap",
+    "left-field trap",
+    "experimental hip hop, minimal",
+    "Atlanta experimental trap",
+    "Detroit minimal hip hop",
+    "experimental drill",
+    "minimal left-field hip hop",
+  ],
+
+  IDENTITY: [
+    "a wound-up, nervous Atlanta record that sounds like it is sprinting and looking over its shoulder at the same time",
+    "a gratitude record with clenched teeth, Detroit late night, winning but still counting what it cost",
+    "a New Orleans swagger record built on almost nothing, one pitched loop, a kick and a lot of confidence in the empty space",
+    "a brotherhood record from the East Atlanta side streets, loose and rowdy in the drums, deadly serious in the melody",
+    "a North Carolina front-porch reflection record, unhurried, drums knocking like someone tapping a car door",
+    "a morning-show freestyle record built so the host stops talking and nods for sixteen bars",
+    "a Minneapolis eccentric record, smirking and off-center, every sound slightly wrong on purpose",
+    "a twitchy internet-era record, clever and fast, every bar a new trick but the pocket never breaks",
+    "a victory-lap record that never gets loud, letting the restraint do the flexing",
+    "a paranoid two-in-the-morning record where the beat keeps changing its mind",
+    "an East Atlanta elastic record, rubber-band bounce, every sound stretched and snapped back",
+    "a strip-club-at-noon record, half asleep and still dangerous, built to make a room move slow",
+  ],
+
+  LEAD: {
+    source: [
+      "a detuned square-wave synth lead",
+      "a pitched-up soul guitar sample cut to one bar",
+      "a muted electric guitar through a fuzz pedal",
+      "a Rhodes chord sample sliced into single stabs",
+      "a Wurlitzer with a broken tremolo",
+      "an 808 tuned and played as the melody",
+      "a sine-wave lead with fast glide",
+      "a resampled analog synth pluck",
+      "a clean single-coil guitar lick, sampled and sliced",
+      "a reversed piano chord resampled into a one-shot",
+      "a hard-sync saw mono synth",
+      "a pulse-width mono synth lead",
+      "a polysynth chord stab, played mono",
+      "a hollow FM electric piano",
+      "a distorted bass guitar played up high as the lead",
+      "a pitch-bent electric guitar harmonic, sampled and looped",
+      "a squelchy filtered square bass played an octave up as the lead",
+      "a woody synth pluck with a short decay",
+    ],
+    character: [
+      "pushed through a cranked tube preamp",
+      "bitcrushed just enough to grit the attacks",
+      "doubled and detuned a few cents apart",
+      "saturated with a slight pitch warble",
+      "low-passed hard so only the body speaks",
+      "band-passed thin like a phone speaker",
+      "hard-clipped on every transient",
+      "chorus-widened with a slow drift in the pitch",
+      "resampled down an octave so the grain shows",
+      "sample-rate reduced to a grainy edge",
+      "parallel-distorted with the clean signal on top",
+      "overdriven through a small guitar amp",
+      "gated tight so every note cuts off clean",
+      "faintly ring-modulated with a metallic edge",
+      "heavily compressed so the tails come up loud",
+      "soft-clipped and glued with slow compression",
+    ],
+    register: [
+      "sitting low-mid, just above the 808",
+      "in the low register under the snare",
+      "dead mid register",
+      "low-mid, darker than the drums",
+      "one octave above the 808 root",
+      "mid register, one higher note per cycle",
+      "low, doubling the 808 an octave up",
+      "low-mid with the top rolled off",
+      "mid register, narrow range",
+      "parked in the low mids around the kick's knock",
+      "mid register, never above the snare's crack",
+      "low-mid, stepping into the mids only on the last note",
+    ],
+    articulation: [
+      "clipped staccato 16ths that skip the downbeat",
+      "two long notes then a triplet stab",
+      "off-beat stabs on the and of 2 and 4",
+      "one held note per bar, cut before the snare",
+      "three-against-two stabs that fight the hats",
+      "dotted-8th repeats drifting across the bar line",
+      "16th stutters that cut out every other bar",
+      "a push note one 16th before each downbeat",
+      "legato runs that slur into each other",
+      "ghosted notes with one hard accent per bar",
+      "stabs that only answer the snare",
+      "a three-note pickup that lands on beat 1 and stops",
+      "quarter-note triplets over straight drums",
+      "32nd-note retriggers on the last beat of each bar",
+      "long tones that start a 16th late",
+      "two stabs, then two bars of silence",
+      "staggered 8ths with every third note muted",
+      "one anticipated stab on the last 16th of the bar",
+    ],
+    motif: [
+      "a five-note figure that climbs a minor third and falls an octave",
+      "a two-note motif bouncing a tritone",
+      "a three-note cell: root, flat second, root",
+      "a four-note minor descent, last note bent flat",
+      "one repeated note with a single octave leap",
+      "a six-note phrase circling the fifth, never resolving",
+      "a half-step trill turned into a riff",
+      "a three-note minor pentatonic hook with a flat-five passing tone",
+      "a call that rises a fourth and an answer that falls a fifth",
+      "a seven-note run skipping every other scale step",
+      "a stubborn root note leaning on the flat sixth",
+      "a four-note Phrygian figure ending on the flat second",
+      "an octave-jumping two-note riff",
+      "a four-note riff that starts one 16th later each bar",
+      "a minor-ninth stab that slides down a whole step",
+      "a three-note chromatic climb resolving to the root",
+    ],
+    // How a person plays it. The anti-quantize slot.
+    human: [
+      "played by hand, never snapped to the grid",
+      "every note a slightly different velocity, never even twice",
+      "the second note always a hair late",
+      "rushed into the bar, then laid back",
+      "one take with the small mistakes left in",
+      "notes overlapping a little, like a player who holds too long",
+      "the accent moving to a new note each pass",
+      "pressure swelling and fading unevenly under the fingers",
+      "timing pulled behind the snare",
+      "loose and slightly ahead on the pickups",
+      "a little drunk on the timing but always landing the one",
+      "released early on the off-beats, so the gaps breathe",
+      "bent into pitch by hand, never landing in tune twice",
+      "played like someone tapping it out on a car dashboard",
+    ],
+    motion: [
+      "the low-pass opens slowly across 8 bars",
+      "it bends down a half step at the end of every phrase",
+      "it jumps up an octave every 4th bar",
+      "it cuts out every 8th bar, leaving the drums bare",
+      "the delay feedback climbs until the switch",
+      "the detune widens as the loop goes on",
+      "the notes get shorter every 4 bars",
+      "a second copy enters an octave down at bar 9",
+      "a pitch dip on the last beat of every 8 bars",
+      "the last note of each phrase plays reversed",
+      "the bitcrush gets heavier toward the hook",
+      "one note changes each pass, so it never repeats exactly",
+      "it thins to half its notes, then comes back whole",
+      "it drifts up a few cents over 16 bars, then snaps back",
+      "velocity swells, then snaps back hard",
+      "it stays frozen and identical while the drums move",
+    ],
+    placement: [
+      "bone-dry, center, tucked right above the 808",
+      "panned left with a short slapback on the right",
+      "mono center, ducked by every kick",
+      "wide stereo with the lows summed to mono",
+      "dry up front with a small dark plate behind it",
+      "ducking hard under every 808 hit so it breathes",
+      "set back in a short room, drums in front",
+      "an eighth-note ping-pong delay, low in the mix",
+      "dry on the left, delayed on the right",
+      "one copy dead center, a quiet copy far right",
+      "mid-scooped so the 808 owns the low end",
+      "narrow and loud, mono-compatible",
+      "dry and close, delay only on the last note",
+      "sitting behind the snare, louder than the hats",
+    ],
+  },
+
+  BASS: {
+    source: [
+      "a long-decay 808",
+      "a short punchy 808",
+      "a distorted 808",
+      "a clean sine sub",
+      "two detuned saw basses beating against each other",
+      "a mono synth bass",
+      "an 808 with a hard knock on top",
+      "a sub that only sustains on the root",
+      "a pitched-down kick used as bass",
+      "a muted fingered electric bass",
+      "a square-wave sub",
+      "a layered 808 and sine sub",
+    ],
+    tone: [
+      "tube saturation so it shows up on phone speakers",
+      "a clean round body",
+      "hard-clipped grit",
+      "glide between every note",
+      "glide only into the downbeat",
+      "a tight decay that dies before the next kick",
+      "long tails that ring into the snare",
+      "a click on the attack",
+      "a low-pass that closes on each note",
+      "a slight pitch fall at the end of every note",
+      "upper harmonics brought up with distortion",
+      "a short gated tail",
+    ],
+    pattern: [
+      "following the kick exactly",
+      "playing off the kick, landing in its gaps",
+      "one note per bar",
+      "syncopated 16ths with long rests",
+      "octave jumps on the pickup",
+      "a slide up a fifth into each new bar",
+      "silent for 2 bars, then hits",
+      "three notes then nothing",
+      "root and flat second only",
+      "32nd stutters on the last beat",
+      "holding under the lead and moving when it rests",
+      "playing the lead's motif two octaves down",
+      "a triplet bounce against straight hats",
+      "entering a 16th late",
+    ],
+    human: [
+      "slides played by hand, each one a different length",
+      "note lengths changing every bar like a player feeling it out",
+      "landing a hair behind the kick",
+      "the last note of each bar played late on purpose",
+      "slides that land slightly flat, then settle",
+      "pushed ahead of the beat on the pickups only",
+      "hit harder on the second pass, softer on the first",
+      "held one beat too long now and then, like a human",
+    ],
+  },
+
+  DRUMS: {
+    kick: [
+      "a dry knocking kick",
+      "a short punchy kick with a click on top",
+      "a deep thud kick with the low end cut so the 808 carries the sub",
+      "a hard-clipped kick",
+      "a muffled sampled kick with room on it",
+      "a tight kick that ducks everything",
+      "a layered kick, sub plus knock",
+      "a kick that only hits twice per bar",
+      "a kick on beat 1 and the and of 3",
+      "a syncopated double kick before the snare",
+      "a sparse kick that skips bar 4",
+      "a kick placed slightly ahead of the grid",
+    ],
+    snare: [
+      "a crisp dry snare with a short tail",
+      "a tight layered clap and snare",
+      "a pitched-up snappy snare",
+      "a sampled break snare, compressed hard",
+      "a finger snap stacked on a clap",
+      "a gated room snare",
+      "a clap that lands a hair late",
+      "a side-stick click",
+      "a half-time snare on 3 only",
+      "a clap with a short reverse lead-in",
+      "a snare with a heavy transient snap",
+      "a loose hand clap stacked three times, slightly out of sync",
+    ],
+    hats: [
+      "tight closed hats in uneven 16ths",
+      "hats rolling in threes",
+      "sparse 8th hats with one open hat per bar",
+      "hats that twitch into 32nds then stop dead",
+      "a shaker in place of hats",
+      "ticking hats panned slightly right",
+      "hand-played hats, every hit a different velocity",
+      "half-open hats on the off-beats",
+      "hats that cut out every 4th bar",
+      "pitched hat rolls ramping up",
+      "one hat pattern that never changes",
+      "crunchy bitcrushed hats",
+    ],
+  },
+
+  // Twitch percussion: a sound, a rhythm, a place in time.
+  TWITCH: {
+    sound: [
+      "a tight metallic tick",
+      "a clipped hat burst",
+      "a dry knock tuned to the key",
+      "a bitcrushed clap fragment",
+      "stuttered kick retriggers",
+      "a short noise burst",
+      "a pitched-up knock blip",
+      "a granular click",
+      "a shaker ruffle",
+      "a gated snare tail cut short",
+      "a tiny pitched perc ping",
+      "a reversed hat one-shot",
+    ],
+    rhythm: [
+      "in 5-hit bursts that skip the grid",
+      "stuttering 32nds for half a beat",
+      "repeating every 3 16ths against the bar",
+      "in uneven pairs, long-short",
+      "ramping faster into the snare",
+      "in a broken 7-hit pattern that loops every 2 bars",
+      "in single hits that land in random 16th slots",
+      "retriggering at triple speed for one beat",
+      "flamming against the hats",
+      "stop-start, 3 on, 2 off",
+      "rolling in threes then cutting dead",
+      "in a burst that slows down as it decays",
+    ],
+    where: [
+      "on the last beat of every 2nd bar",
+      "between the kick and snare",
+      "right before each downbeat",
+      "only in the gaps the lead leaves",
+      "answering the snare",
+      "on bar 4 and bar 8 only",
+      "quietly through the verse",
+      "only after the switch",
+      "on beat 3, never the same way twice",
+      "around the 808 slides",
+    ],
+  },
+
+  GROOVE: {
+    sync: [
+      "kicks pushed off the beat, snare dead on",
+      "everything leans on the and",
+      "the kick avoids beat 1 every other bar",
+      "accents on the last 16th of each beat",
+      "the 808 and kick anticipate the downbeat",
+      "half-time snare under double-time hats",
+      "the snare comes early once every 4 bars",
+      "a broken kick pattern that never repeats twice",
+      "kick syncopation that tracks the lead's rhythm",
+      "a gap on beat 1 so the downbeat hits harder",
+      "off-beat everything except the snare",
+      "a full stop on beat 4 every 8 bars",
+    ],
+    human: [
+      "unquantized, snare a hair late",
+      "hats rushing slightly ahead",
+      "kick drifting behind the grid",
+      "16ths swung about 57 percent",
+      "a loose pocket, played in, never snapped",
+      "clap layers a few milliseconds apart",
+      "quiet uneven ghost notes on the snare",
+      "percussion played live over the loop",
+      "the whole loop sitting back on the beat",
+      "tight kick, loose everything else",
+      "a slight push into each snare",
+    ],
+    triplet: [
+      "hats rolling in threes against straight kicks",
+      "triplet hat runs every other bar",
+      "quarter-note triplets in the snare pickups",
+      "triplet 808 bounce on the turnaround",
+      "a heavy bounce, triplets felt but not played",
+      "triplet stutters only on the last beat",
+      "straight hats, triplet kicks",
+      "twitch percussion in threes over a straight pocket",
+      "triplet bounce in the verse, straight in the hook",
+    ],
+  },
+
+  SWITCH: {
+    when: [
+      "at the 1:30 mark",
+      "halfway through",
+      "after the second hook",
+      "at bar 33",
+      "for the last 40 seconds",
+      "right after a full-stop bar",
+      "when the lead cuts out",
+      "after two beats of silence",
+      "on the second verse",
+      "for the final third",
+    ],
+    what: [
+      "the tempo halves, same key",
+      "the drums flip to a half-time pocket",
+      "the lead is replaced by itself pitched down an octave",
+      "the 808 goes from sparse to fast rolling 16ths",
+      "the key falls a minor third",
+      "the drums go dry and the lead goes huge and wet",
+      "everything strips to 808 and one snare",
+      "the same motif moves to a different instrument",
+      "the hats go from straight to rolling in threes",
+      "the kick pattern flips to the off-beats",
+      "the lead stutters and slices itself up",
+      "new drums, harder, distorted, louder",
+      "the bass swaps from 808 to two detuned saw basses",
+      "the tempo jumps up and the hats double",
+      "only the twitch percussion and the 808 keep going",
+    ],
+    land: [
+      "on a hard cut, straight in",
+      "after one bar of silence",
+      "the old lead keeps going for one bar under the new drums",
+      "slowing down into it like the power got cut",
+      "the 808 comes in first, drums join on bar 2",
+      "a single reversed hit into the downbeat",
+      "the drums cut, the lead rings alone, then everything slams back",
+      "the new section starts on beat 2, not 1",
+      "a pitch dive into the new key",
+      "the snare stops, then restarts half-time",
+    ],
+  },
+
+  TITLE: {
+    a: ["Glass", "Rubber", "Copper", "Static", "Velvet", "Crooked", "Paper", "Neon", "Iron", "Loose", "Hollow", "Quiet", "Gold", "Bent", "Midnight", "Chrome"],
+    b: ["Jaw", "Halo", "Receipt", "Pulse", "Lantern", "Alibi", "Engine", "Teeth", "Mirror", "Ledger", "Fuse", "Orbit", "Hinge", "Tab", "Signal", "Crown"],
+  },
+
+  MIX: "crisp modern mix, punchy and loud, clean low end",
+};
+
+
+</script>
+<script>
+/* ONE OF ONE — one engine. Builds every sound from grammar slots, resolves
+ * clashes, and lays the result out in Suno's own field order. */
+"use strict";
+
+const OneEngine = (() => {
+  const G = typeof OneGrammar !== "undefined" ? OneGrammar : require("./grammar.js");
+  const T = typeof OneTheory !== "undefined" ? OneTheory : require("./theory.js");
+  const Guard = typeof OneGuard !== "undefined" ? OneGuard : require("./guard.js");
+
+  function mulberry32(a) {
+    return () => {
+      a |= 0;
+      a = (a + 0x6d2b79f5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  const pick = (arr, r) => arr[Math.floor(r() * arr.length)];
+  // Pick from the entries that pass every rule; fall back to the whole list.
+  const pickWhere = (arr, r, ok) => {
+    const pool = arr.filter(ok);
+    return pick(pool.length ? pool : arr, r);
+  };
+  const int = (lo, hi, r) => lo + Math.floor(r() * (hi - lo + 1));
+
+  const TEMPO = [
+    [72, 82],
+    [86, 98],
+    [132, 148],
+    [150, 162],
+  ];
+
+  const EXCLUDE = [
+    "vocals", "singing", "rap", "choir", "humming", "background vocals", "vocal chops", "chanting",
+    "DJ scratching", "riser", "EDM drop", "drum fills", "horn stabs", "orchestral", "cinematic", "lo-fi",
+  ].join(", ");
+
+  // "the Wurlitzer", "the hard-sync saw mono synth": a short handle for the arrangement tags.
+  const handle = (source) =>
+    "the " + source.replace(/^an? /, "").split(/,| with | through | sliced| cut | played| tuned| sampled| resampled/)[0].trim();
+
+  function buildLead(r) {
+    const L = G.LEAD;
+    const source = pick(L.source, r);
+    const register = pickWhere(L.register, r, () => true);
+    const low = /low register|doubling the 808|under the snare/.test(register);
+    const motif = pick(L.motif, r);
+    const long = /five|six|seven|run/.test(motif);
+    const articulation = pickWhere(L.articulation, r, (a) => !(long && /one held|one anticipated|a push note|two stabs|three-note pickup/.test(a)));
+    const legato = /legato|long tones|held note/.test(articulation);
+    const placement = pick(L.placement, r);
+    const dry = /dry|narrow|mono/.test(placement);
+    const character = pickWhere(L.character, r, (c) =>
+      !(dry && /chorus|detuned/.test(c)) &&
+      !(legato && /gated/.test(c)) &&
+      !(low && /band-passed/.test(c)) &&
+      !(/detuned/.test(source) && /detuned|chorus|ring-mod/.test(c)));
+    const motion = pickWhere(L.motion, r, (m) =>
+      !(dry && /delay feedback|detune widens/.test(m)) &&
+      !(legato && /shorter/.test(m)) &&
+      !(/bitcrush/.test(m) && /low-passed/.test(character)));
+    return {
+      source, character, register, articulation, placement, motion,
+      motif,
+      human: pick(L.human, r),
+      low, dry,
+      triplet: /triplet|three-against/.test(articulation),
+      is808: /^an 808/.test(source),
+    };
+  }
+
+  function buildBass(r, lead) {
+    const B = G.BASS;
+    const source = lead.is808
+      ? pick(["a clean sine sub", "a sub that only sustains on the root"], r)
+      : pickWhere(B.source, r, (s) => !(lead.low && /fingered|saw basses/.test(s)));
+    const pattern = pickWhere(B.pattern, r, (p) =>
+      !(lead.low && /motif|moving when/.test(p)) &&
+      !(lead.triplet && /triplet/.test(p)) &&
+      !(lead.is808 && !/one note|silent|three notes|root/.test(p)));
+    return { source, tone: pick(B.tone, r), pattern, human: pick(B.human, r) };
+  }
+
+  function buildDrums(r, lead) {
+    const D = G.DRUMS;
+    const hats = pickWhere(D.hats, r, (h) => !(lead.triplet && /threes/.test(h)));
+    const twitch = {
+      sound: pick(G.TWITCH.sound, r),
+      rhythm: pickWhere(G.TWITCH.rhythm, r, (x) => !(lead.triplet && /threes|triple/.test(x))),
+      where: pick(G.TWITCH.where, r),
+    };
+    const triplet = lead.triplet
+      ? "a heavy bounce, triplets felt but not played"
+      : pickWhere(G.GROOVE.triplet, r, (t) => !(/threes/.test(hats) && /hats/.test(t)));
+    return {
+      kick: pick(D.kick, r),
+      snare: pick(D.snare, r),
+      hats,
+      twitch,
+      sync: pick(G.GROOVE.sync, r),
+      feel: pick(G.GROOVE.human, r),
+      triplet,
+    };
+  }
+
+  function buildSwitch(r, lead, bass, drums) {
+    const S = G.SWITCH;
+    const when = pick(S.when, r);
+    const what = pickWhere(S.what, r, (w) =>
+      !(/only the twitch/.test(w) && /after the switch/.test(drums.twitch.where)) &&
+      !(/go dry and the lead goes huge/.test(w) && !lead.dry) &&
+      !(/swaps from 808/.test(w) && !/808/.test(bass.source)) &&
+      !(/rolling in threes/.test(w) && /threes/.test(drums.hats)) &&
+      !(/half-time/.test(w) && /half-time/.test(drums.snare)));
+    const sparse = /only the twitch|strips to 808/.test(what);
+    const land = pickWhere(S.land, r, (l) =>
+      !(/new key/.test(l) && !/key/.test(what)) &&
+      !(sparse && /new drums|drums join|everything slams/.test(l)) &&
+      !(/silence/.test(l) && /silence|full-stop/.test(when)));
+    return { when, what, land };
+  }
+
+  function style(p) {
+    const { lead, bass, drums } = p;
+    const head = `${p.anchor}, ${p.bpm} BPM, ${p.key}`;
+    const leadLine = `lead: ${lead.source}, ${lead.character}, ${lead.register}, playing ${lead.motif} as ${lead.articulation}, ${lead.human}, ${lead.placement}`;
+    const bassLine = `bass: ${bass.source}, ${bass.tone}, ${bass.human}`;
+    const drumLine = `drums: ${drums.kick}, ${drums.snare}, ${drums.hats}`;
+    const twitchLine = `twitch percussion: ${drums.twitch.sound} ${drums.twitch.rhythm}`;
+    const grooveLine = `${drums.sync}, ${drums.feel}`;
+    const tail = `${G.MIX}, instrumental`;
+    // The lead gets every slot. The identity sentence goes if the field runs long.
+    let s = [head, p.identity, leadLine, bassLine, drumLine, twitchLine, grooveLine, tail].join(". ") + ".";
+    if (s.length > 1000) s = [head, leadLine, bassLine, drumLine, twitchLine, tail].join(". ") + ".";
+    return s;
+  }
+
+  function lyrics(p, r) {
+    const { lead, drums, sw } = p;
+    const h = handle(lead.source);
+    const late = /after the switch/.test(drums.twitch.where);
+    const twitch = `twitch percussion ${drums.twitch.where}`;
+    const sections = [
+      `[Intro | ${h} alone, ${lead.placement.split(",")[0]}]`,
+      `[Verse | ${drums.kick.replace(/^an? /, "")}, ${drums.hats.replace(/^an? /, "")}, 808 ${p.bass.pattern}, ${late ? "drums only" : twitch}]`,
+      `[Hook | full beat, ${h} up front, ${lead.motion}]`,
+    ];
+    const shape = int(0, 2, r);
+    if (shape >= 1) sections.push(`[Verse 2 | ${drums.triplet}, ${h} thinner]`);
+    if (shape === 2) sections.push(`[Break | drums cut, ${h} and 808 only]`);
+    sections.push(`[Beat Switch | ${sw.when}, ${sw.what}, ${sw.land}]`);
+    sections.push(`[Hook | after the switch, ${h} returns, ${late ? "twitch percussion enters" : drums.sync}]`);
+    sections.push(`[Outro | ${h} alone, ends dry on beat 1]`);
+    sections.push("[End]");
+    return sections.join("\n\n");
+  }
+
+  function generate({ seed = 1, avoidKeys = [] } = {}) {
+    const r = mulberry32(seed >>> 0);
+    const harmony = T.harmony(r, pick, avoidKeys);
+    const [lo, hi] = pick(TEMPO, r);
+    const lead = buildLead(r);
+    const bass = buildBass(r, lead);
+    const drums = buildDrums(r, lead);
+    const sw = buildSwitch(r, lead, bass, drums);
+    const p = {
+      anchor: pick(G.ANCHORS, r),
+      identity: pick(G.IDENTITY, r),
+      bpm: int(lo, hi, r),
+      key: `in ${harmony.key}`,
+      lead, bass, drums, sw,
+    };
+    const styleText = style(p);
+    const lyricsText = lyrics(p, r);
+    const warnings = Guard.check(`${styleText}\n${lyricsText}`).map((h) => ({ ...h, message: `${h.rule}: "${h.word}" ${h.why}` }));
+    const weirdness = int(55, 65, r);
+    const styleInfluence = int(65, 75, r);
+    const model = r() < 0.5 ? "v6-wild" : "v6";
+    return {
+      style: styleText,
+      lyrics: lyricsText,
+      exclude: EXCLUDE,
+      sliders: { weirdness, styleInfluence },
+      settings: { model, variety: "Off", maxMode: "On" },
+      meta: { seed: seed >>> 0, title: `${pick(G.TITLE.a, r)} ${pick(G.TITLE.b, r)}`, bpm: p.bpm, key: harmony.key },
+      fingerprint: [lead.source, lead.character, lead.motif, lead.articulation, lead.human, sw.what, harmony.key].join("|"),
+      parts: { lead, bass, drums, switch: sw },
+      warnings,
+    };
+  }
+
+  return { generate, EXCLUDE, handle };
+})();
+
+
+</script>
+<script>
+/* ONE OF ONE — the page. One button; the four Suno fields in Suno's order. */
+"use strict";
+(() => {
+  const E = OneEngine;
+  const $ = (id) => document.getElementById(id);
+  const STORE = "oneofone.seen.v1";
+  let pkg;
+
+  let seen = new Set();
+  try {
+    seen = new Set(JSON.parse(localStorage.getItem(STORE) || "[]"));
+  } catch {
+    seen = new Set();
+  }
+  const remember = (fp) => {
+    seen.add(fp);
+    try {
+      localStorage.setItem(STORE, JSON.stringify([...seen].slice(-5000)));
+    } catch {
+      /* storage blocked: the in-memory set still prevents repeats this visit */
+    }
+  };
+  const recentKeys = [];
+
+  function roll() {
+    for (let i = 0; i < 40; i++) {
+      pkg = E.generate({ seed: Math.floor(Math.random() * 4294967295), avoidKeys: recentKeys });
+      if (!seen.has(pkg.fingerprint)) break;
+    }
+    remember(pkg.fingerprint);
+    recentKeys.push(pkg.meta.key);
+    if (recentKeys.length > 4) recentKeys.shift();
+    render();
+  }
+
+  function slider(name, value) {
+    const row = document.createElement("div");
+    row.className = "slider";
+    const label = document.createElement("span");
+    label.textContent = name;
+    const track = document.createElement("span");
+    track.className = "track";
+    const fill = document.createElement("span");
+    fill.className = "fill";
+    fill.style.width = `${value}%`;
+    const knob = document.createElement("span");
+    knob.className = "knob";
+    knob.style.left = `${value}%`;
+    track.append(fill, knob);
+    const val = document.createElement("span");
+    val.className = "val";
+    val.textContent = `${value}%`;
+    row.append(label, track, val);
+    return row;
+  }
+  function chip(label, value) {
+    const c = document.createElement("span");
+    c.className = "chip";
+    const b = document.createElement("b");
+    b.textContent = value;
+    c.append(`${label} `, b);
+    return c;
+  }
+
+  function render() {
+    $("roll-id").textContent = `#${pkg.meta.seed.toString(36).toUpperCase()}`;
+    const vibe = $("vibe");
+    vibe.textContent = "";
+    const em = document.createElement("em");
+    em.textContent = pkg.meta.title;
+    vibe.append(em, ` · ${pkg.meta.bpm} BPM · ${pkg.meta.key}`);
+    $("lyrics").textContent = pkg.lyrics;
+    $("lyrics-count").textContent = `${pkg.lyrics.length}/5000`;
+    $("style").textContent = pkg.style;
+    $("style-count").textContent = `${pkg.style.length}/1000`;
+    $("exclude").textContent = pkg.exclude;
+    const sl = $("sliders");
+    sl.textContent = "";
+    for (const [name, v] of [["Weirdness", pkg.sliders.weirdness], ["Style Influence", pkg.sliders.styleInfluence]]) sl.appendChild(slider(name, v));
+    const chips = $("chips");
+    chips.textContent = "";
+    chips.append(chip("Model", pkg.settings.model), chip("Variety", pkg.settings.variety), chip("Max Mode", pkg.settings.maxMode), chip("Instrumental", "On"));
+  }
+
+  for (const btn of document.querySelectorAll(".copy[data-copy]")) {
+    btn.onclick = async () => {
+      const text = pkg[btn.dataset.copy];
+      try {
+        await navigator.clipboard.writeText(text);
+      } catch {
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        ta.remove();
+      }
+      btn.textContent = "Copied";
+      btn.classList.add("done");
+      setTimeout(() => {
+        btn.textContent = "Copy";
+        btn.classList.remove("done");
+      }, 1200);
+    };
+  }
+
+  $("roll").onclick = roll;
+  roll();
+})();
+
+</script>
