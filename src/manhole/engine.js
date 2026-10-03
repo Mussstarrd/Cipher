@@ -1,7 +1,7 @@
 /* MANHOLE engine — one-of-a-kind minimalist instrumental prompts for Suno v6.
  * Every roll is a cross of two reference DNAs plus a waltz cadence, an
- * on/off-the-beat pocket, a garage-sewer room, a found-object sound and one
- * house rule. The fingerprint names that combination so the page can refuse
+ * on/off-the-beat pocket, one house rule and a beat switch, written in plain
+ * modern hip hop production language. The fingerprint names that combination so the page can refuse
  * to repeat it. */
 "use strict";
 
@@ -42,17 +42,16 @@ const ManholeEngine = (() => {
     add(D.INSTRUMENTAL, 0);
     add(c.waltz, 0);
     add(c.onOff, 0);
-    add(c.room, 0);
-    add(`${c.lead} playing ${c.harmony.prog.color} in ${c.harmony.key}, ${c.grit}, ${c.playing}, looping obsessively`, 0);
+    add(c.low, 0);
+    add(`${c.lead} playing ${c.harmony.prog.color} in ${c.harmony.key}, ${c.quality}, ${c.playing}, looping`, 0);
     add(`house rule: ${c.rule}`, 0);
     add(`beat switch at the midpoint: ${c.beatSwitch}`, 0);
-    add(c.found, 1);
-    add(c.low, 2);
-    add(c.mix, 2);
-    add(c.minimal, 3);
+    add(c.minimal, 1);
+    add(c.mix, 0);
     const tail = `${c.bpm} BPM ${c.dna.feel}, hard stop ending`;
 
-    const budget = D.STYLE_LIMIT - tail.length - 2;
+    // Shorter prompts stay crisper: aim well under Suno's 1,000-character cap.
+    const budget = Math.min(D.STYLE_LIMIT, 800) - tail.length - 2;
     const len = (list) => list.map((p) => p.text).join(", ").length;
     const kept = [...parts];
     for (let pri = 3; pri >= 1 && len(kept) > budget; pri--) {
@@ -68,12 +67,12 @@ const ManholeEngine = (() => {
     const S = [];
     const push = (name, desc) => S.push({ tag: `[${name}: ${desc}]`, name });
     for (const step of c.structure.steps) {
-      if (step === "intro") push("Intro", `${m} alone in the room, 2 bars, ${chords}, ${c.found}`);
-      else if (step === "hook") push("Hook", `full beat on the beat, ${m} looping obsessively, ${c.waltz}, 8 bars`);
+      if (step === "intro") push("Intro", `${m} alone, 2 bars, ${chords}, drums and 808 enter on bar 3`);
+      else if (step === "hook") push("Hook", `full beat on the beat, ${m} looping, ${c.waltz}, 8 bars`);
       else if (step === "verseOn") push("Verse", `drums and 808 locked on the grid, ${m} sparse, house rule: ${c.rule}, 16 bars`);
       else if (step === "verseOff") push("Verse", `drums slide off the beat, ${c.onOff}, ${m} answering every 4th bar, 16 bars`);
       else if (step === "verseStop") push("Verse", `drums stop dead every 2 bars and slam back on the one, ${m} in the gaps, 16 bars`);
-      else if (step === "break") push("Break", `808 alone with ${c.found}, 2 bars, then a half-beat of silence`);
+      else if (step === "break") push("Break", `808 alone, 2 bars, then a half-beat of silence`);
       else if (step === "switch") push("Beat Switch", `${c.beatSwitch}, ${chords} darker, 8 bars`);
       else if (step === "switchHook") push("Hook", `on the switched beat, ${m} twice as heavy, ${c.waltz}, house rule: ${c.rule}, 8 bars`);
       else if (step === "outro") push("Outro", `${m} for 2 bars over the 808, then hard stop`);
@@ -108,13 +107,11 @@ const ManholeEngine = (() => {
       dna, second, harmony, bpm, structure, leadName,
       opener: pick(dna.openers, r),
       trait: second.trait,
-      lead: `${pick(D.ADJECTIVES, r)} ${leadName}`,
-      grit: pick(D.GRIT, r),
+      lead: leadName,
+      quality: pick(D.QUALITY, r),
       playing: pick(D.PLAYING, r),
       waltz: pick(D.WALTZ, r),
       onOff: pick(D.ON_OFF, r),
-      room: pick(D.ROOMS, r),
-      found: pick(D.FOUND, r),
       rule: pick(D.RULES, r),
       beatSwitch: pick(D.SWITCH, r),
       low: pick(dna.low, r),
@@ -133,7 +130,7 @@ const ManholeEngine = (() => {
 
     // The parts that make a roll audibly itself. Two rolls with the same
     // fingerprint would sound like cousins, so the page never repeats one.
-    const fingerprint = [dna.id, second.id, D.RULES.indexOf(c.rule), D.FOUND.indexOf(c.found), leadName, harmony.key].join("|");
+    const fingerprint = [dna.id, second.id, D.RULES.indexOf(c.rule), D.SWITCH.indexOf(c.beatSwitch), leadName, harmony.key].join("|");
 
     return {
       styleText, lyricsText, sections, fingerprint,
@@ -141,8 +138,8 @@ const ManholeEngine = (() => {
       settings: input.wild ? D.SETTINGS.wild : D.SETTINGS.radio,
       harmony: { key: harmony.key, roman: harmony.prog.roman, chords: harmony.chords, cadence: harmony.prog.cadence },
       parts: {
-        rule: c.rule, found: c.found, room: c.room, waltz: c.waltz, onOff: c.onOff, beatSwitch: c.beatSwitch,
-        lead: `${c.lead}, ${c.grit}, ${c.playing}`, trait: c.trait,
+        rule: c.rule, waltz: c.waltz, onOff: c.onOff, beatSwitch: c.beatSwitch,
+        lead: `${c.lead}, ${c.quality}, ${c.playing}`, trait: c.trait,
       },
       warnings,
       meta: {

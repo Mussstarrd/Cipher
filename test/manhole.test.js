@@ -33,17 +33,24 @@ test("every roll carries the whole brief", () => {
     const dna = D.DNA.find((d) => d.id === out.meta.dna);
     assert.ok(dna.openers.some((o) => s.startsWith(o)), `opener not first: ${s}`);
     assert.ok(s.includes(`crossed with ${out.parts.trait}`), s);
-    for (const pool of [D.WALTZ, D.ON_OFF, D.ROOMS]) assert.ok(pool.some((p) => s.includes(p)), s);
+    for (const pool of [D.WALTZ, D.ON_OFF, D.MIX]) assert.ok(pool.some((p) => s.includes(p)), s);
+    const hit = `${s}\n${out.lyricsText}`.match(D.SOUNDTRACK);
+    assert.ok(!hit, `soundtrack word: ${hit && hit[0]}`);
     assert.ok(s.includes(`house rule: ${out.parts.rule}`), s);
     assert.ok(s.includes(`beat switch at the midpoint: ${out.parts.beatSwitch}`), s);
-    assert.match(s, /looping obsessively/);
+    assert.match(s, / looping/);
     assert.match(s, /\d+ BPM .*hard stop ending$/);
     assert.notStrictEqual(out.meta.dna, out.meta.second);
-    assert.ok(out.lyricsText.includes(out.parts.found), "found sound missing from the arrangement");
     assert.ok(out.sections.some((x) => x.name === "Beat Switch"));
     assert.ok(out.sections.filter((x) => x.name === "Hook").length >= 2);
     assert.strictEqual(out.sections.at(-1).tag, "[End]");
   }
+});
+
+test("the style field stays short", () => {
+  let total = 0;
+  for (let i = 0; i < 500; i++) total += E.generate({ seed: i * 48271 }).styleText.length;
+  assert.ok(total / 500 < 800, `average ${Math.round(total / 500)} chars`);
 });
 
 test("fingerprints almost never collide", () => {

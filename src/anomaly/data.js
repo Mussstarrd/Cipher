@@ -18,7 +18,7 @@ const AnomalyData = (() => {
     { id: "phrygian", name: "Phrygian hover", tonality: "minor", roman: "i – ♭II", chords: [[0, "m"], [1, ""]], color: "a half-step Phrygian loop", cadence: "♭II falls a half step into the tonic: drill and hard-trap dread." },
     { id: "sting", name: "Harmonic-minor sting", tonality: "minor", roman: "i – ♭VI – V", chords: [[0, "m"], [8, ""], [7, ""]], color: "a harmonic-minor loop with a tense major V", cadence: "Half cadence on V; the leading tone snaps the loop back to i every time." },
     { id: "lament", name: "Descending lament", tonality: "minor", roman: "i – ♭VII – ♭VI – V", chords: [[0, "m"], [10, ""], [8, ""], [7, ""]], color: "a falling four-chord minor bassline", cadence: "Andalusian descent; the bass walks down and parks on V." },
-    { id: "climb", name: "Aeolian climb", tonality: "minor", roman: "i – ♭VI – ♭III – ♭VII", chords: [[0, "m"], [8, ""], [3, ""], [10, ""]], color: "a cinematic four-chord minor loop", cadence: "♭VII climbs a whole step home; sturdy and dark." },
+    { id: "climb", name: "Aeolian climb", tonality: "minor", roman: "i – ♭VI – ♭III – ♭VII", chords: [[0, "m"], [8, ""], [3, ""], [10, ""]], color: "a dark four-chord minor loop", cadence: "♭VII climbs a whole step home; sturdy and dark." },
     { id: "coldFifth", name: "Cold fifth", tonality: "minor", roman: "i – v – iv – ♭VII", chords: [[0, "m"], [7, "m"], [5, "m"], [10, ""]], color: "a cold all-minor loop", cadence: "All minor chords; no leading tone, no relief." },
     { id: "sway", name: "Minor plagal sway", tonality: "minor", roman: "i – iv", chords: [[0, "m"], [5, "m"]], color: "a hypnotic minor i–iv sway", cadence: "iv to i: the soft release, soulful without getting sweet." },
     { id: "drone", name: "Pedal drone", tonality: "minor", roman: "i (pedal)", chords: [[0, "m"]], color: "a one-chord minor drone", cadence: "No cadence; all motion lives in the 808 and the hats." },
@@ -64,49 +64,38 @@ const AnomalyData = (() => {
   ];
   // One unexpected element per roll. This is where the mixtures come from.
   const CLASH = [
-    "punchy horn-section stabs", "low brass stabs", "a muted-trumpet-style synth stab", "a tuba-like bass blurt",
-    "a flamenco guitar run", "a harpsichord riff", "a church organ swell", "a steel-pan pluck",
-    "pizzicato strings", "a bowed double bass", "a tabla roll", "a mellotron flute",
-    "a distorted electric guitar stab", "a detuned toy organ", "a marching-band snare rudiment", "an accordion stab",
-    "a sitar riff", "a koto pluck", "a bagpipe-like drone", "an orchestral timpani hit",
-    "a slap-back dub echo on the snare", "a reversed cymbal swell", "a pitched-down cello stab", "a cheap 80s synth-brass hit",
+    "punchy horn-section stabs", "low brass stabs", "a synth-brass stab", "a distorted electric-guitar stab",
+    "a short string stab", "a pitched-down synth stab", "a distorted 808 slide", "a reversed snare",
+    "a hard clap roll", "a filtered synth stab", "a cheap 80s synth-brass hit", "a muted guitar chord",
+    "a reversed cymbal swell", "a sub drop on the downbeat", "a detuned bell hit", "a chorused electric-keys stab",
   ];
   // Lead voices: low and mid register, physical and textured. Never a bright pluck.
   const GLOBAL_LEADS = [
-    "low-register horn-section riff", "growling baritone synth-brass riff", "dark muted-guitar riff", "low cello line",
-    "gritty organ riff", "warm mid-register nylon-guitar riff", "detuned mid-register analog lead", "low tremolo-guitar riff",
-    "hollow woodwind-style synth riff", "dusty sampled string riff", "mid-register harp figure", "bowed string riff",
-    "distorted low guitar riff", "low pitched-down bell riff", "mid-register flute-style synth riff", "warm electric-keys riff",
-    "low fuzz-bass riff", "grainy tape-worn lead riff", "muted felt piano riff",
+    "low-register horn-section riff", "growling synth-brass riff", "dark muted electric-guitar riff", "detuned analog synth riff",
+    "distorted electric-guitar riff", "dark synth-bell riff", "warm electric-keys riff", "dusty sampled string riff",
+    "low fuzz-bass riff", "dark synth-pad riff", "staccato string-stab riff", "distorted 808 melody",
+    "plucked synth riff", "chorused clean-guitar riff", "pitched-down sample riff", "detuned piano riff",
   ];
   // How the lead sounds, where it sits, and how a human plays it. These are
   // what keep the instrument from rendering as a stock preset on the grid.
   const TIMBRE = [
-    "run through a worn cassette so it wobbles and hisses", "bit-crushed and grainy like a 12-bit sampler",
-    "saturated through overdriven tape until the edges fur", "sampled off dusty vinyl with crackle in the gaps",
-    "detuned a few cents so it beats against itself", "recorded through a cheap amp in a small room",
-    "pitched down a step so it drags and darkens", "resampled until it smears and loses its attack",
-    "played through a broken spring reverb", "low-passed and lightly distorted, all the sheen gone",
-    "warbling with tape flutter", "overdriven until the attack clips", "muffled like it is coming through a wall",
-    "chorused and detuned, wide and seasick", "crushed to mono and gritty", "dusty, dull and warm, like an old sample",
-    "thin and crackly like a transistor radio", "buzzing with amp noise and hiss underneath",
+    "with warm analog saturation", "slightly detuned so it beats against itself", "dark and filtered", "dry and punchy",
+    "wide and glossy", "gritty but clean", "saturated and heavy", "pitched down a step so it darkens",
   ];
   const SPACE = [
-    "in a long dark plate reverb", "bone-dry and close to the ear", "with a short slapback echo", "in a cavernous hall that swallows the tail",
-    "with a dub-style echo that repeats off the beat", "in a tiny tiled room", "far back in the mix like it is next door",
-    "with the reverb gated so it cuts dead", "with a tape delay that wobbles on every repeat", "in a damp basement room sound",
+    "bone-dry and close", "with a short slapback", "with a short dark plate reverb", "in a tight room",
+    "with a dub-style echo off the beat", "with the reverb gated so it cuts dead",
   ];
   const PLAYING = [
     "played a hair behind the beat", "played by hand with uneven touch", "rushing slightly ahead on every repeat",
-    "slightly out of tune on the top note", "with fret noise and finger squeaks left in", "with notes that slide into pitch late",
-    "fumbling the same note every fourth bar", "with velocity that breathes between loud and soft",
-    "stumbling off the grid on the and-of-3", "played drunk and loose, never quantized", "with a lazy wobble in the timing",
-    "with the last note of every phrase held too long", "pushed and pulled against the drums", "hesitating before every downbeat",
+    "with notes that slide into pitch late", "with velocity that breathes between loud and soft", "stumbling off the grid on the and-of-3",
+    "loose and human, never quantized", "pushed and pulled against the drums", "hesitating before every downbeat",
   ];
   const MIX = [
-    "loud radio master with a heavy mono sub and rough textures left rough", "dry punchy drums, wide melody, mono 808, instruments kept dusty",
-    "polished low end, dark top end, grain left on everything above it", "tight low end, 808 that reads on a phone, the rest warm and worn",
-    "glued and competitive, never pumping, never sterile", "snappy snare, sub felt not heard, every instrument a little dirty",
+    "crisp punchy drums, hard-hitting 808, polished modern hip hop mix, loud and clean",
+    "radio-ready mix, crisp drums up front, deep clean 808, warm midrange",
+    "crisp, loud and wide with a mono sub, every hit sharp",
+    "polished major-label master, crisp top, heavy clean low end",
   ];
 
   const ADJECTIVES = [
@@ -115,7 +104,7 @@ const AnomalyData = (() => {
     "rollerskate-slick", "asphalt-hot", "lowrider-slow", "swagger-glossy", "wraith-cold", "iron-lit", "prowling-elegant", "serrated-bright",
     "streetlight-orange", "jittery-brash", "sneering-loose", "breathless-metallic", "strobe-stung", "sweat-bright", "powder-soft", "dawn-hazed",
     "pastel-numb", "neon-warm", "candlelit-cocky", "sedated-luxe", "marble-quiet", "tar-thick", "frost-bitten-smooth", "oil-slick-dark",
-    "smoke-grained", "nickel-dry", "rain-slicked", "sodium-lit", "basement-damp", "humid-plush", "cathedral-cold", "concrete-warm",
+    "smoke-grained", "nickel-dry", "rain-slicked", "sodium-lit", "humid-plush", "concrete-warm",
     "mirror-flat", "sandpaper-soft", "molten-lazy", "bone-dry", "bronze-dull", "granite-heavy", "syrup-slow", "static-prickled",
     "glass-thin", "leather-worn", "ember-dim", "blood-warm",
   ];
@@ -150,7 +139,7 @@ const AnomalyData = (() => {
     "a low string stab that lands a 16th early on the 1 of every 8th bar",
     "the kick disappears for one whole bar every 16 bars while the 808 keeps going",
     "a pitched-down snare that answers the normal snare on the and-of-3 every fourth bar",
-    "a synth flute note that bends a quarter-tone flat on the last note of every loop",
+    "a synth note that bends a quarter-tone flat on the last note of every loop",
     "the entire mix drops to mono for the first beat of every hook",
     "an 808 that retriggers in a fast triplet on the and-of-2 every 8 bars",
     "a single muted guitar harmonic that pings on beat 3 of every second bar",
@@ -190,8 +179,8 @@ const AnomalyData = (() => {
   ];
 
   const EXCLUDE = [
-    "vocals", "singing", "humming", "spoken word", "rap vocals", "wordless vocals", "choir", "vocal samples",
-    "DJ scratching", "drum fills", "EDM", "stock synth presets", "clean digital synths", "lo-fi hip hop", "jazz", "funk",
+    "vocals", "singing", "humming", "choir", "cinematic", "orchestral", "film score", "world music",
+    "ambient", "lo-fi", "DJ scratching", "drum fills", "EDM", "stock synth presets",
   ];
 
   const SETTINGS = {
@@ -205,8 +194,11 @@ const AnomalyData = (() => {
     },
   };
 
+  // Words that pull Suno toward film score, world music or lo-fi sound design.
+  const SOUNDTRACK = /\b(erhu|koto|sitar|tabla|bagpipe\w*|accordion|harpsichord|flamenco|steel[- ]?(pan|drum)|banjo|tuba\w*|whistl\w*|pan flute|ocarina|duduk|cello\w*|viola|violin|pizzicato|harps?|bowed|harmonica\w*|timpani|cathedral|church|pipe[- ]organ|organs?|orchestral|cinematic|film|horror|haunt\w*|eerie|ghostly|spaghetti|mellotron|flutes?|woodwind|reed|cassette|vinyl|crackl\w*|transistor|sewer|storm drain|basement|boiler|tunnel|subway|overpass|dripping|manhole|dumpster|nylon|slide[- ]guitar|upright|double bass|fanfare|marching|military)\b/i;
   const LINT = [
-    { re: /\b(crisp|pristine|polished synth|clean synth|sterile|robotic|quantized to the grid)\b/i, level: "block", msg: "stock-preset vocabulary" },
+    { re: SOUNDTRACK, level: "block", msg: "soundtrack, world or lo-fi word turns the beat into film music" },
+    { re: /\b(pristine|sterile|robotic|quantized to the grid)\b/i, level: "block", msg: "stock-preset vocabulary" },
     { re: /\b(vocal|vocals|vocalist|rap\b|rapper|sing|sings|singing|singer|sung|chant\w*|choir|hum|humming|hummed|lyric\w*|ad-?lib\w*)\b/i, level: "block", msg: "vocal vocabulary invites a voice" },
     { re: /\b(transition\w*|sweeps?|risers?|phaser|dj\b|scratch\w*|fills?|cowbell|rimshot|airhorn)\b/i, level: "block", msg: "effect vocabulary turns into DJ tricks and fills" },
     { re: /\b(marimba|kalimba|music box|glockenspiel|celesta|xylophone|toy piano|dulcimer)\b/i, level: "block", msg: "stock mallet preset" },
@@ -216,7 +208,7 @@ const AnomalyData = (() => {
   ];
 
   return {
-    STYLE_LIMIT, LYRICS_LIMIT, PIANO_SHARE, MINOR_KEYS, MAJOR_KEYS, PROGRESSIONS, WORLDS, BLUEPRINTS, GLOBAL_LEADS,
+    STYLE_LIMIT, LYRICS_LIMIT, PIANO_SHARE, SOUNDTRACK, MINOR_KEYS, MAJOR_KEYS, PROGRESSIONS, WORLDS, BLUEPRINTS, GLOBAL_LEADS,
     ADJECTIVES, INSTRUMENTAL_LOCK, SWING, SYNC, CLASH, TIMBRE, SPACE, PLAYING, GLITCH, BEAT_SWITCH, SIGNATURES, TECH_FLEX, MIX, STRUCTURES,
     SYNCOPATION: SYNC, HUMAN_FEEL: SWING,
     EXCLUDE, SETTINGS, LINT,

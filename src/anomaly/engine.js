@@ -81,7 +81,7 @@ const AnomalyEngine = (() => {
     ctx.clash = r() < 0.7 ? pick(world.clash, r) : pick(D.CLASH, r);
     add(`${ctx.clash} cutting in every 4 bars, ${ctx.space}`, 0);
 
-    add(`technical flex: ${ctx.flex}`, 1);
+    add(`technical flex: ${ctx.flex}`, 0);
     add(`signature: ${ctx.signature}`, 0);
     add(ctx.glitch, 2);
     add(`beat switch at the midpoint: ${ctx.beatSwitch}`, 0);
@@ -91,7 +91,8 @@ const AnomalyEngine = (() => {
     const tail = `${bpm} BPM ${world.feel}, hard stop ending`;
 
     // Trim one line at a time, least important first, latest first within a tier.
-    const budget = D.STYLE_LIMIT - tail.length - 2;
+    // Shorter prompts stay crisper: aim under Suno's 1,000-character cap.
+    const budget = Math.min(D.STYLE_LIMIT, 950) - tail.length - 2;
     const len = (list) => list.map((p) => p.text).join(", ").length;
     const kept = [...parts];
     for (let pri = 4; pri >= 1 && len(kept) > budget; pri--) {

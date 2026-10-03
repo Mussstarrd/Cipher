@@ -126,8 +126,6 @@
     const p = pkg.parts;
     dl($("print-grid"), [
       ["House rule", p.rule],
-      ["Found sound", p.found],
-      ["Room", p.room],
       ["Waltz cadence", p.waltz],
       ["On / off the beat", p.onOff],
       ["Beat switch", p.beatSwitch],
