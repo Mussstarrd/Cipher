@@ -68,7 +68,7 @@
     vibe.textContent = "";
     const em = document.createElement("em");
     em.textContent = pkg.meta.title;
-    vibe.append(em, ` · ${pkg.meta.bpm} BPM · ${pkg.meta.key}`);
+    vibe.append(em, ` · ${pkg.meta.lane} · ${pkg.meta.bpm} BPM · ${pkg.meta.key}`);
     $("lyrics").textContent = pkg.lyrics;
     $("lyrics-count").textContent = `${pkg.lyrics.length}/5000`;
     $("style").textContent = pkg.style;

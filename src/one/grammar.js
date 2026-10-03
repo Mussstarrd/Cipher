@@ -6,72 +6,7 @@
 "use strict";
 
 const OneGrammar = {
-  // First words Suno reads. One specific lane, never bare "hip hop".
-  ANCHORS: [
-    "experimental trap",
-    "minimal experimental trap",
-    "left-field trap",
-    "experimental hip hop, minimal",
-    "Atlanta experimental trap",
-    "Detroit minimal hip hop",
-    "experimental drill",
-    "minimal left-field hip hop",
-  ],
-
-  IDENTITY: [
-    "a wound-up, nervous Atlanta record that sounds like it is sprinting and looking over its shoulder at the same time",
-    "a gratitude record with clenched teeth, Detroit late night, winning but still counting what it cost",
-    "a New Orleans swagger record built on almost nothing, one pitched loop, a kick and a lot of confidence in the empty space",
-    "a brotherhood record from the East Atlanta side streets, loose and rowdy in the drums, deadly serious in the melody",
-    "a North Carolina front-porch reflection record, unhurried, drums knocking like someone tapping a car door",
-    "a morning-show freestyle record built so the host stops talking and nods for sixteen bars",
-    "a Minneapolis eccentric record, smirking and off-center, every sound slightly wrong on purpose",
-    "a twitchy internet-era record, clever and fast, every bar a new trick but the pocket never breaks",
-    "a victory-lap record that never gets loud, letting the restraint do the flexing",
-    "a paranoid two-in-the-morning record where the beat keeps changing its mind",
-    "an East Atlanta elastic record, rubber-band bounce, every sound stretched and snapped back",
-    "a strip-club-at-noon record, half asleep and still dangerous, built to make a room move slow",
-  ],
-
   LEAD: {
-    source: [
-      "a detuned square-wave synth lead",
-      "a pitched-up soul guitar sample cut to one bar",
-      "a muted electric guitar through a fuzz pedal",
-      "a Rhodes chord sample sliced into single stabs",
-      "a Wurlitzer with a broken tremolo",
-      "an 808 tuned and played as the melody",
-      "a sine-wave lead with fast glide",
-      "a resampled analog synth pluck",
-      "a clean single-coil guitar lick, sampled and sliced",
-      "a reversed piano chord resampled into a one-shot",
-      "a hard-sync saw mono synth",
-      "a pulse-width mono synth lead",
-      "a polysynth chord stab, played mono",
-      "a hollow FM electric piano",
-      "a distorted bass guitar played up high as the lead",
-      "a pitch-bent electric guitar harmonic, sampled and looped",
-      "a squelchy filtered square bass played an octave up as the lead",
-      "a woody synth pluck with a short decay",
-    ],
-    character: [
-      "pushed through a cranked tube preamp",
-      "bitcrushed just enough to grit the attacks",
-      "doubled and detuned a few cents apart",
-      "saturated with a slight pitch warble",
-      "low-passed hard so only the body speaks",
-      "band-passed thin like a phone speaker",
-      "hard-clipped on every transient",
-      "chorus-widened with a slow drift in the pitch",
-      "resampled down an octave so the grain shows",
-      "sample-rate reduced to a grainy edge",
-      "parallel-distorted with the clean signal on top",
-      "overdriven through a small guitar amp",
-      "gated tight so every note cuts off clean",
-      "faintly ring-modulated with a metallic edge",
-      "heavily compressed so the tails come up loud",
-      "soft-clipped and glued with slow compression",
-    ],
     register: [
       "sitting low-mid, just above the 808",
       "in the low register under the snare",
@@ -415,5 +350,202 @@ const OneGrammar = {
 
   MIX: "crisp modern mix, punchy and loud, clean low end",
 };
+
+// Instrument families. Each source is "full description|short handle"; each
+// family has its own processing words, so a tuba never gets a synth's
+// "ring-modulated" and a synth never gets "breath noise".
+OneGrammar.FAMILIES = {
+  brass: {
+    frame: "recorded hot over hard trap drums",
+    sources: [
+      "a full trumpet section in tight unison|the trumpets",
+      "a muted trumpet with a Harmon mute, buzzing and nasal|the muted trumpet",
+      "a stacked French horn and trombone section, heavy and regal|the horn section",
+      "a sliding tuba line that smears between notes|the tuba",
+      "a bass trombone with long greasy smears|the bass trombone",
+      "a baritone sax honking low and gritty|the baritone sax",
+      "a flugelhorn doubled by a trumpet an octave up|the flugelhorn",
+      "a big brass section pitched down a whole step so it sounds enormous|the brass",
+      "a sousaphone pumping the low notes|the sousaphone",
+      "a lone trumpet with a cracked, breathy tone|the lone trumpet",
+      "a trombone section playing short punchy swells|the trombones",
+    ],
+    character: [
+      "blown so hard the brass rasps and buzzes",
+      "fat and brassy, compressed into one wall of sound",
+      "pitched down off an old record so it sounds heavy",
+      "with a rip up into every phrase",
+      "with fall-offs at the end of each phrase",
+      "tight and dry, the room tail cut off",
+      "doubled by a distorted 808 underneath",
+      "flutter-tongued and snarling on the long notes",
+      "swelling in, then cut off dead",
+      "spread wide across the stereo field like a section on the field",
+      "a little out of tune between players, so it sounds real",
+    ],
+  },
+  organ: {
+    frame: "over hard hip hop drums",
+    sources: [
+      "a drunken Hammond organ with the Leslie spinning out of time|the drunken organ",
+      "a wheezing pump organ running out of air|the pump organ",
+      "a cheap combo organ with a wavering vibrato|the combo organ",
+      "a detuned saloon piano with sticky keys|the saloon piano",
+      "a Wurlitzer with a broken tremolo|the Wurlitzer",
+      "a Rhodes with one cracked tine that rattles|the Rhodes",
+      "a toy piano with plastic, clanky hammers|the toy piano",
+      "a hollow FM electric piano|the FM electric piano",
+      "a reversed piano chord resampled into a one-shot|the reversed piano chord",
+    ],
+    character: [
+      "slurring in and out of tune like it had a few drinks",
+      "the Leslie speaker speeding up and slowing down unevenly",
+      "keys clacking audibly under the notes",
+      "pushed through a cranked tube preamp",
+      "with pedal creaks and key noise left in",
+      "the pitch sagging on every held chord",
+      "low-passed so it sounds like it is behind a wall",
+      "chorus-thickened and slightly seasick",
+      "overdriven until the low notes snarl",
+      "sample-rate reduced to a grainy edge",
+    ],
+  },
+  wind: {
+    frame: "sampled and flipped over hard trap drums like a crate find",
+    sources: [
+      "an erhu sample bending and sliding between notes|the erhu",
+      "a harmonica wailing in short bent bursts|the harmonica",
+      "a breathy wooden flute with the air noise left in|the flute",
+      "a bamboo flute, overblown so it squeaks|the bamboo flute",
+      "a melodica with a reedy honk|the melodica",
+      "an alto sax playing short smeared phrases|the alto sax",
+      "a tenor sax snarling in the low register|the tenor sax",
+      "a clarinet sample pitched down an octave, dark and woody|the clarinet",
+    ],
+    character: [
+      "pitched up and sped up like an old record",
+      "breath and finger noise left in",
+      "bent hard between notes",
+      "doubled by a distorted 808 on the root",
+      "run through a guitar amp until it barks",
+      "time-stretched so the grain smears",
+      "cut into one-bar pieces and rearranged",
+      "low-passed and saturated so it sits like a sample",
+      "a slight pitch warble, never steady",
+    ],
+  },
+  guitar: {
+    frame: "over hard trap drums",
+    sources: [
+      "a muted electric guitar through a fuzz pedal|the fuzz guitar",
+      "a pitched-up soul guitar sample cut to one bar|the soul guitar sample",
+      "a baritone guitar with heavy tremolo|the baritone guitar",
+      "a distorted bass guitar played up high as the lead|the distorted bass guitar",
+      "a clean single-coil guitar lick, sampled and sliced|the guitar lick",
+      "a pitch-bent electric guitar harmonic, sampled and looped|the guitar harmonic",
+      "a 12-string electric guitar picked hard and close|the 12-string guitar",
+    ],
+    character: [
+      "palm-muted and gated tight",
+      "a spring reverb shaking on every hit",
+      "overdriven through a small amp",
+      "string squeaks and pick noise left in",
+      "bent slightly flat on the long notes",
+      "doubled and panned hard left and right",
+      "band-passed thin like a phone speaker",
+      "parallel-distorted with the clean signal on top",
+    ],
+  },
+  synth: {
+    frame: "over hard trap drums",
+    sources: [
+      "a rubber-band mono synth that boings on every glide|the rubber-band synth",
+      "a gurgling, squelchy resonant mono synth like water down a drain|the squelchy synth",
+      "a buzzing hornet-swarm saw lead|the hornet saw lead",
+      "a glassy, brittle digital lead that sounds about to shatter|the glassy lead",
+      "a woozy, seasick detuned synth that slides into every note|the woozy synth",
+      "a cartoon laser-zap synth with fast pitch dives|the laser synth",
+      "a busted game-console square lead with a cheap edge|the game-console lead",
+      "a syrupy slowed-down synth lead with a pitch sag|the syrupy synth",
+      "a grinding, bit-mangled digital lead|the grinding lead",
+      "a thick, chewy analog brass patch|the analog brass patch",
+      "a squealing pitch-bent mono lead like a car alarm|the car-alarm lead",
+      "a hollow sine lead that glides like a theremin|the theremin-like sine",
+      "a fizzy overdriven saw thinned down to a single oscillator|the fizzy saw",
+      "an 808 tuned and played as the melody|the 808",
+    ],
+    character: [
+      "bitcrushed just enough to grit the attacks",
+      "hard-clipped on every transient",
+      "faintly ring-modulated with a metallic edge",
+      "resampled down an octave so the grain shows",
+      "the filter snapping open on every accent",
+      "glide time drifting slower and faster by hand",
+      "gated tight so every note cuts off clean",
+      "soft-clipped and glued with slow compression",
+      "detuned a few cents against itself",
+      "the pitch envelope zapping down on every note",
+    ],
+  },
+};
+
+// Lanes set the opening tags and which instrument families a roll can use.
+OneGrammar.LANES = [
+  {
+    id: "southside", label: "South Side brass", weight: 2,
+    anchors: ["southern trap, orchestral brass", "Atlanta trap, big brass section", "southern hip hop, regal brass trap"],
+    families: { brass: 10, organ: 1, wind: 1 },
+    bass: ["a sliding tuba doubling the 808", "a sousaphone pumping the root under the 808"],
+  },
+  {
+    id: "electronic", label: "Electronic mutant", weight: 2,
+    anchors: ["experimental trap", "left-field trap", "experimental drill", "minimal experimental trap"],
+    families: { synth: 6, guitar: 1 },
+    bass: [],
+  },
+  {
+    id: "crate", label: "Crate flip", weight: 2,
+    anchors: ["sample-flip hip hop, hard trap drums", "experimental hip hop, flipped sample", "Detroit hip hop, flipped sample"],
+    families: { wind: 4, organ: 2, guitar: 2, brass: 1 },
+    bass: [],
+  },
+  {
+    id: "swamp", label: "Drunk swamp", weight: 1,
+    anchors: ["southern hip hop, slow and swampy", "Houston slowed trap, woozy"],
+    families: { organ: 3, wind: 2, brass: 2 },
+    bass: ["a sliding tuba doubling the 808"],
+  },
+  {
+    id: "minimal", label: "Minimal left-field", weight: 1,
+    anchors: ["minimal left-field hip hop", "experimental hip hop, minimal", "Atlanta experimental trap"],
+    families: { organ: 2, guitar: 2, synth: 2, wind: 1 },
+    bass: [],
+  },
+];
+
+// One extra percussion color per roll, played by a person.
+OneGrammar.COLOR = [
+  "maracas shaken by hand, a little behind the beat",
+  "a military snare playing tight rudiments under the hats",
+  "a marching bass drum thumping the downbeats",
+  "a tambourine smacked on 2 and 4, never quite even",
+  "finger snaps landing a hair late",
+  "a woodblock knocking the off-beats",
+  "a metal pipe struck once per bar, ringing in the key",
+  "a shaker played live, the accents wandering",
+  "a struck glass bottle tuned to the key",
+  "a guiro scrape on the and of 4",
+  "a frame drum slapped with the fingers, off the grid",
+];
+
+// The counter part: a second instrument from another family, used sparingly.
+OneGrammar.COUNTER_ROLE = [
+  "answering the lead once every 4 bars",
+  "one long held note under the hook only",
+  "two notes on the turnaround, then gone",
+  "doubling the last note of each lead phrase",
+  "entering only after the switch",
+  "a three-note reply in the gaps the lead leaves",
+];
 
 if (typeof module !== "undefined") module.exports = OneGrammar;

@@ -6,6 +6,8 @@ Suno v6 prompt engines, each a single self-contained page in `dist/`. **ONE OF O
 
 One button. It fills Suno's create screen in Suno's order: **Lyrics → Styles → Exclude styles → Sliders**, each with a Copy button.
 
+Each roll picks a **lane** that sets the opening tags and the instrument families: South Side brass (trumpet sections, sliding tuba, bass trombone smears, sousaphone; a tuba or sousaphone bass about half the time), Electronic mutant (rubber-band mono synth, hornet-swarm saw, car-alarm lead, theremin-like sine...), Crate flip (erhu, harmonica, bamboo flute, melodica, sax, framed as a flipped sample over trap drums so it never turns into film score), Drunk swamp (drunken Hammond, wheezing pump organ, saloon piano) and Minimal left-field. Each family has its own processing words, so a tuba gets "blown so hard the brass rasps" and a synth gets "the filter snapping open on every accent". Every roll also has a **counter** instrument from a second family and a hand-played **percussion color** (maracas, military snare rudiments, marching bass drum, tambourine, woodblock, struck bottle...).
+
 Every sound is built from slots in a sound-design grammar (`src/one/grammar.js`), never picked whole from a short list. A one-phrase label like "dark synth chord loop" points Suno at the average of thousands of tracks, which is the preset. Each lead gets seven slots:
 
 | slot | example |
@@ -21,7 +23,7 @@ Every sound is built from slots in a sound-design grammar (`src/one/grammar.js`)
 The 808 gets its own human-feel slot ("slides played by hand, each one a different length"). Drums, twitch percussion (sound + rhythm + where), groove and the beat switch (when + what + how it lands) are slot-built too. The lead's evolution, the bass pattern and the switch go in the lyrics-field section tags, where v6 reads structure.
 
 - **Clash rules** keep combinations sane. A dry lead never gets chorus. An 808 melody forces a sine sub. A long motif is never played as "one held note per bar". A sparse switch never lands on "new drums".
-- **Guard** (`src/one/guard.js`): every roll is checked against all the bans learned from listening tests, plus the v6 research's trigger words (drop, riser, tape, chopped, dusty, anthem, horns, strings, pads, glitch...).
+- **Guard** (`src/one/guard.js`): every roll is checked against all the bans learned from listening tests, plus the v6 research's trigger words (drop, riser, tape, chopped, dusty, anthem, strings, pads, glitch...). Brass, tuba, organ, erhu, harmonica, flute and military snare are allowed here by request; "cinematic", "film score" and "orchestral strings" stay excluded.
 - **Settings**: Variety Off (any other setting rewrites the style field), Weirdness 55–65, Style Influence 65–75, Max Mode on, v6 or v6-wild.
 - **Memory**: the page remembers every roll on your device and never repeats one.
 

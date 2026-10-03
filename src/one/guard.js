@@ -7,7 +7,7 @@ const OneGuard = (() => {
     {
       name: "film score / world / folk / lo-fi",
       why: "turned beats into film-score background music or low-fidelity sound design",
-      re: /\b(erhu|koto|sitar|tabla|bagpipe\w*|accordion|harpsichord|flamenco|steel[- ]?(pan|drum)|banjo|tuba\w*|whistl\w*|pan flute|ocarina|duduk|cello\w*|viola|violin|pizzicato|harps?|bowed|harmonica\w*|timpani|cathedral|church|pipe[- ]organ|organs?|orchestral|cinematic|film|horror|haunt\w*|eerie|ghostly|spaghetti|western|mellotron|flutes?|woodwind|reed|cassette|vinyl|crackl\w*|transistor|sewer|storm drain|basement|boiler|tunnel|subway|overpass|dripping|manhole|dumpster|nylon|slide[- ]guitar|upright|double bass|fanfare|marching|military|marimba|kalimba|music box|glockenspiel|celesta|xylophone)\b/i,
+      re: /\b(koto|sitar|tabla|bagpipe\w*|accordion|harpsichord|flamenco|steel[- ]?(pan|drum)|banjo|whistl\w*|pan flute|ocarina|duduk|cello\w*|viola|violin|pizzicato|harps?|bowed|timpani|cathedral|church|pipe[- ]organ|orchestral(?! brass)|cinematic|film|horror|haunt\w*|eerie|ghostly|spaghetti|western|mellotron|woodwind|cassette|vinyl|crackl\w*|transistor|sewer|storm drain|basement|boiler|tunnel|subway|overpass|dripping|manhole|dumpster|nylon|slide[- ]guitar|upright|double bass|fanfare|marimba|kalimba|music box|glockenspiel|celesta|xylophone)\b/i,
     },
     {
       name: "meter",
@@ -32,7 +32,7 @@ const OneGuard = (() => {
     {
       name: "EDM / voice / lo-fi trigger",
       why: "research: these words pull in EDM drops, crowd voices or lo-fi hiss",
-      re: /\b(drops?|build-?ups?|sidechain\w*|wobble|growl|reese|tape|tape-\w+|chop\w*|stutter edit|beat repeat|dusty|lo-?fi|chill|retro|vintage|soulful|ambient|atmospheric|ethereal|epic|anthem\w*|festival|gospel|arena|crowd|singalong|memphis|phonk|voices?|horns?|brass|bells?|strings?|pads?|glitch)\b/i,
+      re: /\b(drops?|build-?ups?|sidechain\w*|wobble|growl|reese|tape|tape-\w+|chop\w*|stutter edit|beat repeat|dusty|lo-?fi|chill|retro|vintage|soulful|ambient|atmospheric|ethereal|epic|anthem\w*|festival|gospel|arena|crowd|singalong|memphis|phonk|voices?|bells?|strings|string section|pads?|glitch)\b/i,
     },
     {
       name: "negation",

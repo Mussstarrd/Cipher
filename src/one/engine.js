@@ -33,16 +33,23 @@ const OneEngine = (() => {
 
   const EXCLUDE = [
     "vocals", "singing", "rap", "choir", "humming", "background vocals", "vocal chops", "chanting",
-    "DJ scratching", "riser", "EDM drop", "drum fills", "horn stabs", "orchestral", "cinematic", "lo-fi",
+    "DJ scratching", "riser", "EDM drop", "drum fills", "film score", "cinematic", "orchestral strings", "lo-fi",
   ].join(", ");
 
-  // "the Wurlitzer", "the hard-sync saw mono synth": a short handle for the arrangement tags.
-  const handle = (source) =>
-    "the " + source.replace(/^an? /, "").split(/,| with | through | sliced| cut | played| tuned| sampled| resampled/)[0].trim();
+  const weighted = (entries, r) => {
+    const total = entries.reduce((n, [, w]) => n + w, 0);
+    let x = r() * total;
+    for (const [v, w] of entries) if ((x -= w) < 0) return v;
+    return entries[entries.length - 1][0];
+  };
+  // "a drunken Hammond organ ...|the drunken organ" -> [full, handle]
+  const split = (entry) => entry.split("|");
 
-  function buildLead(r) {
+  function buildLead(r, lane) {
     const L = G.LEAD;
-    const source = pick(L.source, r);
+    const family = weighted(Object.entries(lane.families), r);
+    const F = G.FAMILIES[family];
+    const [source, handle] = split(pick(F.sources, r));
     const register = pickWhere(L.register, r, () => true);
     const low = /low register|doubling the 808|under the snare/.test(register);
     const motif = pick(L.motif, r);
@@ -51,7 +58,7 @@ const OneEngine = (() => {
     const legato = /legato|long tones|held note/.test(articulation);
     const placement = pick(L.placement, r);
     const dry = /dry|narrow|mono/.test(placement);
-    const character = pickWhere(L.character, r, (c) =>
+    const character = pickWhere(F.character, r, (c) =>
       !(dry && /chorus|detuned/.test(c)) &&
       !(legato && /gated/.test(c)) &&
       !(low && /band-passed/.test(c)) &&
@@ -61,7 +68,7 @@ const OneEngine = (() => {
       !(legato && /shorter/.test(m)) &&
       !(/bitcrush/.test(m) && /low-passed/.test(character)));
     return {
-      source, character, register, articulation, placement, motion,
+      family, handle, frame: F.frame, source, character, register, articulation, placement, motion,
       motif,
       human: pick(L.human, r),
       low, dry,
@@ -70,16 +77,29 @@ const OneEngine = (() => {
     };
   }
 
-  function buildBass(r, lead) {
+  function buildBass(r, lead, lane) {
     const B = G.BASS;
+    // A lane's own basses (the South Side tuba) come up about half the time.
+    const pool = lane.bass.length && r() < 0.5 ? lane.bass : B.source;
     const source = lead.is808
       ? pick(["a clean sine sub", "a sub that only sustains on the root"], r)
-      : pickWhere(B.source, r, (s) => !(lead.low && /fingered|saw basses/.test(s)));
+      : pickWhere(pool, r, (s) => !(lead.low && /fingered|saw basses|tuba|sousaphone/.test(s)) && !(/tuba|sousaphone/.test(s) && /tuba|sousaphone/.test(lead.source)));
     const pattern = pickWhere(B.pattern, r, (p) =>
       !(lead.low && /motif|moving when/.test(p)) &&
       !(lead.triplet && /triplet/.test(p)) &&
       !(lead.is808 && !/one note|silent|three notes|root/.test(p)));
     return { source, tone: pick(B.tone, r), pattern, human: pick(B.human, r) };
+  }
+
+  function buildCounter(r, lead, lane) {
+    // South Side keeps brass in the record: a non-brass lead gets a brass counter.
+    const others = lane.id === "southside" && lead.family !== "brass"
+      ? [["brass", 1]]
+      : Object.entries(lane.families).filter(([f]) => f !== lead.family);
+    const family = others.length ? weighted(others, r) : pick(Object.keys(G.FAMILIES).filter((f) => f !== lead.family), r);
+    const F = G.FAMILIES[family];
+    const [source, handle] = split(pickWhere(F.sources, r, (x) => !/808/.test(x)));
+    return { family, source, handle, character: pick(F.character, r), role: pick(G.COUNTER_ROLE, r) };
   }
 
   function buildDrums(r, lead) {
@@ -94,6 +114,7 @@ const OneEngine = (() => {
       ? "a heavy bounce, triplets felt but not played"
       : pickWhere(G.GROOVE.triplet, r, (t) => !(/threes/.test(hats) && /hats/.test(t)));
     return {
+      color: pick(G.COLOR, r),
       kick: pick(D.kick, r),
       snare: pick(D.snare, r),
       hats,
@@ -124,33 +145,48 @@ const OneEngine = (() => {
   function style(p) {
     const { lead, bass, drums } = p;
     const head = `${p.anchor}, ${p.bpm} BPM, ${p.key}`;
-    const leadLine = `lead: ${lead.source}, ${lead.character}, ${lead.register}, playing ${lead.motif} as ${lead.articulation}, ${lead.human}, ${lead.placement}`;
+    const leadLine = `lead: ${lead.source}, ${lead.frame}, ${lead.character}, ${lead.register}, playing ${lead.motif} as ${lead.articulation}, ${lead.human}, ${lead.placement}`;
+    const counterLine = `counter: ${p.counter.source}, ${p.counter.character}, ${p.counter.role}`;
     const bassLine = `bass: ${bass.source}, ${bass.tone}, ${bass.human}`;
-    const drumLine = `drums: ${drums.kick}, ${drums.snare}, ${drums.hats}`;
+    const drumLine = `drums: ${drums.kick}, ${drums.snare}, ${drums.hats}, ${drums.color}`;
     const twitchLine = `twitch percussion: ${drums.twitch.sound} ${drums.twitch.rhythm}`;
     const grooveLine = `${drums.sync}, ${drums.feel}`;
     const tail = `${G.MIX}, instrumental`;
-    // The lead gets every slot. The identity sentence goes if the field runs long.
-    let s = [head, p.identity, leadLine, bassLine, drumLine, twitchLine, grooveLine, tail].join(". ") + ".";
-    if (s.length > 1000) s = [head, leadLine, bassLine, drumLine, twitchLine, tail].join(". ") + ".";
+    // The lead gets every slot, up front; the extras go first when the field runs long.
+    // The groove line also lives in the lyrics tags, so it is the first thing cut.
+    const tries = [
+      [head, leadLine, counterLine, bassLine, drumLine, twitchLine, grooveLine, tail],
+      [head, leadLine, counterLine, bassLine, drumLine, twitchLine, tail],
+      [head, leadLine, counterLine, bassLine, drumLine, tail], // twitch then rides in the lyrics tags
+      [head, leadLine, `counter: ${p.counter.source}, ${p.counter.role}`, bassLine, drumLine, tail],
+    ];
+    let s;
+    for (const t of tries) if ((s = t.join(". ") + ".").length <= 1000) break;
     return s;
   }
 
   function lyrics(p, r) {
     const { lead, drums, sw } = p;
-    const h = handle(lead.source);
+    const h = lead.handle;
+    const c = p.counter;
     const late = /after the switch/.test(drums.twitch.where);
-    const twitch = `twitch percussion ${drums.twitch.where}`;
+    const twitch = p.styleHasTwitch
+      ? `twitch percussion ${drums.twitch.where}`
+      : `twitch percussion: ${drums.twitch.sound} ${drums.twitch.rhythm}, ${drums.twitch.where}`;
     const sections = [
       `[Intro | ${h} alone, ${lead.placement.split(",")[0]}]`,
-      `[Verse | ${drums.kick.replace(/^an? /, "")}, ${drums.hats.replace(/^an? /, "")}, 808 ${p.bass.pattern}, ${late ? "drums only" : twitch}]`,
-      `[Hook | full beat, ${h} up front, ${lead.motion}]`,
+      `[Verse | ${drums.kick.replace(/^an? /, "")}, ${drums.hats.replace(/^an? /, "")}, ${/808/.test(p.bass.source) ? "808" : "bass"} ${p.bass.pattern}, ${drums.sync}, ${late ? "drums only" : twitch}]`,
+      `[Hook | full beat, ${h} up front, ${lead.motion}${/after the switch/.test(c.role) ? "" : `, ${c.handle} ${c.role}`}]`,
     ];
     const shape = int(0, 2, r);
     if (shape >= 1) sections.push(`[Verse 2 | ${drums.triplet}, ${h} thinner]`);
     if (shape === 2) sections.push(`[Break | drums cut, ${h} and 808 only]`);
     sections.push(`[Beat Switch | ${sw.when}, ${sw.what}, ${sw.land}]`);
-    sections.push(`[Hook | after the switch, ${h} returns, ${late ? "twitch percussion enters" : drums.sync}]`);
+    const after = [];
+    if (/after the switch/.test(c.role)) after.push(`${c.handle} enters`);
+    if (late) after.push(p.styleHasTwitch ? "twitch percussion enters" : `twitch percussion enters: ${drums.twitch.sound} ${drums.twitch.rhythm}`);
+    if (!after.length) after.push(drums.sync);
+    sections.push(`[Hook | after the switch, ${h} returns, ${after.join(", ")}]`);
     sections.push(`[Outro | ${h} alone, ends dry on beat 1]`);
     sections.push("[End]");
     return sections.join("\n\n");
@@ -160,18 +196,21 @@ const OneEngine = (() => {
     const r = mulberry32(seed >>> 0);
     const harmony = T.harmony(r, pick, avoidKeys);
     const [lo, hi] = pick(TEMPO, r);
-    const lead = buildLead(r);
-    const bass = buildBass(r, lead);
+    const lane = weighted(G.LANES.map((l) => [l, l.weight]), r);
+    const lead = buildLead(r, lane);
+    const counter = buildCounter(r, lead, lane);
+    const bass = buildBass(r, lead, lane);
     const drums = buildDrums(r, lead);
     const sw = buildSwitch(r, lead, bass, drums);
     const p = {
-      anchor: pick(G.ANCHORS, r),
-      identity: pick(G.IDENTITY, r),
+      anchor: pick(lane.anchors, r),
+      counter,
       bpm: int(lo, hi, r),
       key: `in ${harmony.key}`,
       lead, bass, drums, sw,
     };
     const styleText = style(p);
+    p.styleHasTwitch = styleText.includes("twitch percussion:");
     const lyricsText = lyrics(p, r);
     const warnings = Guard.check(`${styleText}\n${lyricsText}`).map((h) => ({ ...h, message: `${h.rule}: "${h.word}" ${h.why}` }));
     const weirdness = int(55, 65, r);
@@ -183,14 +222,14 @@ const OneEngine = (() => {
       exclude: EXCLUDE,
       sliders: { weirdness, styleInfluence },
       settings: { model, variety: "Off", maxMode: "On" },
-      meta: { seed: seed >>> 0, title: `${pick(G.TITLE.a, r)} ${pick(G.TITLE.b, r)}`, bpm: p.bpm, key: harmony.key },
-      fingerprint: [lead.source, lead.character, lead.motif, lead.articulation, lead.human, sw.what, harmony.key].join("|"),
-      parts: { lead, bass, drums, switch: sw },
+      meta: { lane: lane.label, seed: seed >>> 0, title: `${pick(G.TITLE.a, r)} ${pick(G.TITLE.b, r)}`, bpm: p.bpm, key: harmony.key },
+      fingerprint: [counter.source, lead.source, lead.character, lead.motif, lead.articulation, lead.human, sw.what, harmony.key].join("|"),
+      parts: { lead, counter, bass, drums, switch: sw },
       warnings,
     };
   }
 
-  return { generate, EXCLUDE, handle };
+  return { generate, EXCLUDE };
 })();
 
 if (typeof module !== "undefined") module.exports = OneEngine;

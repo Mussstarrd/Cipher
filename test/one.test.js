@@ -75,3 +75,20 @@ test("clash rules hold", () => {
     if (/go dry and the lead goes huge/.test(sw.what)) assert.ok(lead.dry);
   }
 });
+
+test("every roll has a counter instrument, a hand-played percussion color and twitch percussion", () => {
+  for (const seed of seeds) {
+    const { style, lyrics, parts } = E.generate({ seed });
+    assert.notStrictEqual(parts.counter.family, parts.lead.family);
+    assert.ok(style.includes(`counter: ${parts.counter.source}`), style);
+    assert.ok(style.includes(parts.drums.color), style);
+    assert.ok(`${style}\n${lyrics}`.includes(parts.drums.twitch.sound));
+  }
+});
+
+test("South Side brass always carries brass", () => {
+  for (const seed of seeds) {
+    const { meta, parts } = E.generate({ seed });
+    if (meta.lane === "South Side brass") assert.ok(parts.lead.family === "brass" || parts.counter.family === "brass");
+  }
+});
