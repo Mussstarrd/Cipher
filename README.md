@@ -4,7 +4,7 @@ Three Suno v6 prompt engines, each a single self-contained page in `dist/`.
 
 ## MANHOLE (`dist/manhole.html`)
 
-One-of-a-kind minimalist instrumentals. Every roll crosses two reference DNAs (horror minimal / Big Sean "Blessings", one-loop hypnosis / Lil Wayne "A Milli", devil-on-the-shoulder bounce / JID "McAfee", cathedral thunder / JID "Glory", loyalty heavy / JID "Bruddanem", porch-light soul / J. Cole, bar-fight blues stomp / Prof, crisp quirk bounce / Connor Price, Detroit stop-start / Big Sean) and adds a waltz cadence over trap drums, an on-and-off-the-beat pocket, one house rule and a beat switch, in plain modern hip hop production language. The page remembers every fingerprint (DNA pair, rule, switch, lead, key) it has rolled on your device and never repeats one. Reference names appear in the UI only; a lint and tests keep them out of the prompt.
+One-of-a-kind minimalist instrumentals. Every roll crosses two reference DNAs (horror minimal / Big Sean "Blessings", one-loop hypnosis / Lil Wayne "A Milli", devil-on-the-shoulder bounce / JID "McAfee", cathedral thunder / JID "Glory", loyalty heavy / JID "Bruddanem", porch-light soul / J. Cole, bar-fight blues stomp / Prof, crisp quirk bounce / Connor Price, Detroit stop-start / Big Sean) and adds a triplet bounce over straight trap drums, an on-and-off-the-beat pocket, one house rule and a beat switch, in plain modern hip hop production language. The page remembers every fingerprint (DNA pair, rule, switch, lead, key) it has rolled on your device and never repeats one. Reference names appear in the UI only; a lint and tests keep them out of the prompt.
 
 ## ANOMALY (`dist/anomaly.html`)
 
@@ -37,6 +37,8 @@ The same settings and roll number always give the same package. The research beh
 ## Vocabulary rule (all three engines)
 
 Only modern hip hop and R&B production words. Field tests showed that world and folk instruments (erhu, koto, sitar, banjo, tuba, whistle, pizzicato, cello, harp, pipe organ), film words (cinematic, orchestral, eerie, haunting) and lo-fi sound design (cassette, vinyl crackle, sewer and basement rooms, found-object percussion) turn Suno's output into film-score background music. A `SOUNDTRACK` lint blocks all of them, and the Exclude field carries `cinematic, orchestral, film score, world music, ambient, lo-fi`.
+
+The same goes for meter words: "waltz", "lilt", "limping", and any time signature like 3/4, 6/8 or 12/8 make Suno play oom-pah carnival music. The triplet feel is written as hip hop language instead ("triplet-bounce hats grouping in threes over a straight kick", "dotted-8th accents in the riff"), and a lint blocks the meter words.
 
 ## Develop
 

@@ -1,5 +1,5 @@
-/* MANHOLE vocabulary. Crisp minimalist hip hop with a waltz cadence riding
- * trap drums. Reference names live in `refs` and `aliases` for the UI and
+/* MANHOLE vocabulary. Crisp minimalist hip hop with a triplet pocket riding
+ * straight trap drums. Reference names live in `refs` and `aliases` for the UI and
  * the lint only; nothing named ever reaches the prompt. Every phrase is
  * instrumental and modern: no voices, no FX words, no film-score words. */
 "use strict";
@@ -143,15 +143,18 @@ const ManholeData = (() => {
   ];
 
   // ------------------------------------------------------------ cadence
-  const WALTZ = [
-    "waltz-time 3/4 accents riding over the 4/4 kick",
-    "the melody counts in threes while the drums count in fours",
-    "a 6/8 lilt in the hats over a straight kick",
-    "a limping waltz swing that lands back on the one every three bars",
-    "dotted-quarter accents so every third beat feels like the downbeat",
-    "12/8 shuffle on the hats, straight 808",
-    "a lopsided three-step bounce across a four-beat bar",
-    "a slow waltz figure in the riff over half-time trap drums",
+  // The triplet pocket: things grouping in threes over a straight trap kick.
+  // Said in hip hop words only. "Waltz", "3/4" and "6/8" make Suno play
+  // oom-pah carnival music, so they are banned by the lint.
+  const TRIPLET = [
+    "triplet-bounce hi-hats grouping in threes over a straight kick",
+    "the riff accents every third 8th note so it rolls across the bar",
+    "triplet flow pocket in the hats, kick and 808 dead straight",
+    "dotted-8th accents in the riff pulling against a straight kick",
+    "a rolling triplet groove in the hats and percussion, hard straight drums underneath",
+    "the riff phrased in groups of three that land back on the one every three bars",
+    "skippy triplet hats with the snare dead straight on 3",
+    "a bouncing three-against-four pocket between the riff and the drums",
   ];
   const ON_OFF = [
     "two bars locked on the beat, two bars sliding off it",
@@ -188,7 +191,7 @@ const ManholeData = (() => {
   ];
   const SWITCH = [
     "tempo halves and the riff drops an octave",
-    "the drums flip to a waltz pattern and the 808 starts sliding",
+    "the drums flip to a triplet bounce and the 808 starts sliding",
     "everything drops for 2 bars, then a harder faster beat in a new minor key",
     "the riff disappears and the 808 plays the melody",
     "the key drops a whole step and the drums go bone-dry",
@@ -241,7 +244,7 @@ const ManholeData = (() => {
   const SETTINGS = {
     radio: {
       model: "Suno v6", weirdness: "40–50%", styleInfluence: "80–90%", variety: "Off (0)", maxMode: "On",
-      note: "Weirdness in the 40s: enough for the waltz cadence and the house rule, not enough to wander into soundtrack territory. Style Influence high so it stays a crisp hip hop record. Variety Off so these phrases are not rewritten. Turn Suno's Instrumental toggle on.",
+      note: "Weirdness in the 40s: enough for the triplet pocket and the house rule, not enough to wander into soundtrack territory. Style Influence high so it stays a crisp hip hop record. Variety Off so these phrases are not rewritten. Turn Suno's Instrumental toggle on.",
     },
     wild: {
       model: "Suno v6-wild, keeper re-run on v6", weirdness: "60–75%", styleInfluence: "65–75%", variety: "Off (0)", maxMode: "On for the v6 re-run",
@@ -254,6 +257,7 @@ const ManholeData = (() => {
   const NAMES = [...new Set(DNA.flatMap((d) => d.aliases))].filter((n) => n.replace(/[^a-z0-9]/gi, "").length >= 3);
   const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const LINT = [
+    { re: /\b(waltz\w*|lilt\w*|limp\w*|oompah|oom-pah|carnival|circus|polka|calliope)\b|\b(3|5|6|7|9|12)\/(4|8)\b/i, level: "block", msg: "meter word that Suno hears as waltz or carnival music" },
     { re: /\b(vocal|vocals|vocalist|rap\b|rapper|sing|sings|singing|singer|sung|chant\w*|choir|hum|humming|lyric\w*|ad-?lib\w*)\b/i, level: "block", msg: "vocal vocabulary invites a voice" },
     { re: /\b(transition\w*|sweeps?|risers?|phaser|dj\b|scratch\w*|fills?|cowbell|rimshot|airhorn)\b/i, level: "block", msg: "effect vocabulary turns into DJ tricks and fills" },
     { re: /\b(marimba|kalimba|music box|glockenspiel|celesta|xylophone)\b/i, level: "block", msg: "stock mallet preset" },
@@ -264,7 +268,7 @@ const ManholeData = (() => {
   ];
 
   return {
-    STYLE_LIMIT, LYRICS_LIMIT, MINOR_KEYS, MAJOR_KEYS, PROGRESSIONS, DNA, WALTZ, ON_OFF, RULES, SWITCH,
+    STYLE_LIMIT, LYRICS_LIMIT, MINOR_KEYS, MAJOR_KEYS, PROGRESSIONS, DNA, TRIPLET, WALTZ: TRIPLET, ON_OFF, RULES, SWITCH,
     LEADS, QUALITY, PLAYING, MINIMAL, MIX, INSTRUMENTAL, SOUNDTRACK, STRUCTURES, EXCLUDE, SETTINGS, NAMES, LINT,
   };
 })();

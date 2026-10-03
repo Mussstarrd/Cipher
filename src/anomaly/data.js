@@ -37,13 +37,13 @@ const AnomalyData = (() => {
   const WORLDS = BLUEPRINTS;
   const ARTIST_NAMES = [...new Set(BLUEPRINTS.flatMap((b) => b.aliases))].filter((n) => n.replace(/[^a-z0-9]/gi, "").length >= 3);
 
-  // Groove, in the words producers use. Meter play is part of it: Suno reacts
-  // to "6/8" and "waltz" far more than to milliseconds.
+  // Groove, in the words producers use. Never name a time signature or
+  // "waltz": Suno hears those as oom-pah carnival music.
   const SWING = [
-    "drunk off-kilter swing", "lurching humanized MPC swing", "lopsided shuffle that drags then rushes",
-    "waltz-feel 3/4 swing layered over the 4/4 kick", "6/8 triplet stumble", "broken stop-start pocket",
+    "drunk off-kilter swing", "lurching humanized MPC swing", "lopsided swing that drags then rushes",
+    "triplet-bounce hats over a straight kick", "skippy triplet stumble in the hats", "broken stop-start pocket",
     "lazy behind-the-beat swing", "loose hand-played timing that never sits on the grid",
-    "12/8 shuffle with a limp", "sloppy-tight swing with rushed hats and a late snare",
+    "rolling triplet pocket with a straight snare", "sloppy-tight swing with rushed hats and a late snare",
     "stumbling half-time swing", "off-grid drums that fall on and off the beat",
   ];
   const SYNC = [
@@ -155,17 +155,17 @@ const AnomalyData = (() => {
   // only a producer who counts would put in a radio record.
   const TECH_FLEX = [
     "hi-hats phrased in 7 against the 4/4 kick so the accents rotate every 7 beats",
-    "one bar of 7/8 inserted before every hook, the loop resolves a beat early",
+    "the bar before every hook is one 8th note short, so the hook lands early",
     "808 phrased in 5-beat groups over the 4/4 drums, realigning every 20 beats",
     "quintuplet hi-hat rolls instead of triplets on every fourth bar",
     "the snare alternates between dead-on and 1/32 late in a strict A-B pattern",
-    "melody in 3/4 over drums in 4/4, meeting on the downbeat every 12 beats",
+    "the riff phrased in groups of three over straight drums, meeting on the one every 12 beats",
     "kick pattern built on a 3-3-3-3-2-2 subdivision across 2 bars",
     "the 808 slides exactly a perfect fifth on the and-of-3 of every 4th bar",
     "a 9-beat melody phrase that drifts one beat later through every 8-bar cycle",
     "hi-hat rolls that accelerate from 16ths to 32nds to 64ths across a single beat",
-    "clap pattern in 6/8 feel laid over the straight 4/4 kick",
-    "every 8th bar is a bar of 5/4, the extra beat is 808 alone",
+    "claps in a triplet pattern over the straight kick",
+    "every 8th bar gets one extra beat of 808 alone",
     "septuplet 808 stutter on the last beat of every 16-bar section",
     "the melody's rhythm is the drum pattern played backwards",
   ];
@@ -197,6 +197,7 @@ const AnomalyData = (() => {
   // Words that pull Suno toward film score, world music or lo-fi sound design.
   const SOUNDTRACK = /\b(erhu|koto|sitar|tabla|bagpipe\w*|accordion|harpsichord|flamenco|steel[- ]?(pan|drum)|banjo|tuba\w*|whistl\w*|pan flute|ocarina|duduk|cello\w*|viola|violin|pizzicato|harps?|bowed|harmonica\w*|timpani|cathedral|church|pipe[- ]organ|organs?|orchestral|cinematic|film|horror|haunt\w*|eerie|ghostly|spaghetti|mellotron|flutes?|woodwind|reed|cassette|vinyl|crackl\w*|transistor|sewer|storm drain|basement|boiler|tunnel|subway|overpass|dripping|manhole|dumpster|nylon|slide[- ]guitar|upright|double bass|fanfare|marching|military)\b/i;
   const LINT = [
+    { re: /\b(waltz\w*|lilt\w*|limp\w*|oompah|oom-pah|carnival|circus|polka|calliope)\b|\b(3|5|6|7|9|12)\/(4|8)\b/i, level: "block", msg: "meter word that Suno hears as waltz or carnival music" },
     { re: SOUNDTRACK, level: "block", msg: "soundtrack, world or lo-fi word turns the beat into film music" },
     { re: /\b(pristine|sterile|robotic|quantized to the grid)\b/i, level: "block", msg: "stock-preset vocabulary" },
     { re: /\b(vocal|vocals|vocalist|rap\b|rapper|sing|sings|singing|singer|sung|chant\w*|choir|hum|humming|hummed|lyric\w*|ad-?lib\w*)\b/i, level: "block", msg: "vocal vocabulary invites a voice" },

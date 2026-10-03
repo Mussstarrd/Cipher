@@ -33,7 +33,7 @@ test("every roll carries the whole brief", () => {
     const dna = D.DNA.find((d) => d.id === out.meta.dna);
     assert.ok(dna.openers.some((o) => s.startsWith(o)), `opener not first: ${s}`);
     assert.ok(s.includes(`crossed with ${out.parts.trait}`), s);
-    for (const pool of [D.WALTZ, D.ON_OFF, D.MIX]) assert.ok(pool.some((p) => s.includes(p)), s);
+    for (const pool of [D.TRIPLET, D.ON_OFF, D.MIX]) assert.ok(pool.some((p) => s.includes(p)), s);
     const hit = `${s}\n${out.lyricsText}`.match(D.SOUNDTRACK);
     assert.ok(!hit, `soundtrack word: ${hit && hit[0]}`);
     assert.ok(s.includes(`house rule: ${out.parts.rule}`), s);

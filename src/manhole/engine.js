@@ -1,5 +1,5 @@
 /* MANHOLE engine — one-of-a-kind minimalist instrumental prompts for Suno v6.
- * Every roll is a cross of two reference DNAs plus a waltz cadence, an
+ * Every roll is a cross of two reference DNAs plus a triplet pocket, an
  * on/off-the-beat pocket, one house rule and a beat switch, written in plain
  * modern hip hop production language. The fingerprint names that combination so the page can refuse
  * to repeat it. */
@@ -40,7 +40,7 @@ const ManholeEngine = (() => {
     add(c.opener, 0);
     add(`crossed with ${c.trait}`, 0);
     add(D.INSTRUMENTAL, 0);
-    add(c.waltz, 0);
+    add(c.triplet, 0);
     add(c.onOff, 0);
     add(c.low, 0);
     add(`${c.lead} playing ${c.harmony.prog.color} in ${c.harmony.key}, ${c.quality}, ${c.playing}, looping`, 0);
@@ -68,13 +68,13 @@ const ManholeEngine = (() => {
     const push = (name, desc) => S.push({ tag: `[${name}: ${desc}]`, name });
     for (const step of c.structure.steps) {
       if (step === "intro") push("Intro", `${m} alone, 2 bars, ${chords}, drums and 808 enter on bar 3`);
-      else if (step === "hook") push("Hook", `full beat on the beat, ${m} looping, ${c.waltz}, 8 bars`);
+      else if (step === "hook") push("Hook", `full beat on the beat, ${m} looping, ${c.triplet}, 8 bars`);
       else if (step === "verseOn") push("Verse", `drums and 808 locked on the grid, ${m} sparse, house rule: ${c.rule}, 16 bars`);
       else if (step === "verseOff") push("Verse", `drums slide off the beat, ${c.onOff}, ${m} answering every 4th bar, 16 bars`);
       else if (step === "verseStop") push("Verse", `drums stop dead every 2 bars and slam back on the one, ${m} in the gaps, 16 bars`);
       else if (step === "break") push("Break", `808 alone, 2 bars, then a half-beat of silence`);
       else if (step === "switch") push("Beat Switch", `${c.beatSwitch}, ${chords} darker, 8 bars`);
-      else if (step === "switchHook") push("Hook", `on the switched beat, ${m} twice as heavy, ${c.waltz}, house rule: ${c.rule}, 8 bars`);
+      else if (step === "switchHook") push("Hook", `on the switched beat, ${m} twice as heavy, ${c.triplet}, house rule: ${c.rule}, 8 bars`);
       else if (step === "outro") push("Outro", `${m} for 2 bars over the 808, then hard stop`);
     }
     S.push({ tag: "[End]", name: "End" });
@@ -110,7 +110,7 @@ const ManholeEngine = (() => {
       lead: leadName,
       quality: pick(D.QUALITY, r),
       playing: pick(D.PLAYING, r),
-      waltz: pick(D.WALTZ, r),
+      triplet: pick(D.TRIPLET, r),
       onOff: pick(D.ON_OFF, r),
       rule: pick(D.RULES, r),
       beatSwitch: pick(D.SWITCH, r),
@@ -138,7 +138,7 @@ const ManholeEngine = (() => {
       settings: input.wild ? D.SETTINGS.wild : D.SETTINGS.radio,
       harmony: { key: harmony.key, roman: harmony.prog.roman, chords: harmony.chords, cadence: harmony.prog.cadence },
       parts: {
-        rule: c.rule, waltz: c.waltz, onOff: c.onOff, beatSwitch: c.beatSwitch,
+        rule: c.rule, triplet: c.triplet, onOff: c.onOff, beatSwitch: c.beatSwitch,
         lead: `${c.lead}, ${c.quality}, ${c.playing}`, trait: c.trait,
       },
       warnings,

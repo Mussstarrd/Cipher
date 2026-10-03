@@ -92,7 +92,7 @@
 <div class="wrap">
   <header>
     <h1 class="brand">MANHOLE<span class="dot">.</span></h1>
-    <p>One-of-a-kind minimalist hip hop instrumentals for Suno v6. Every roll crosses two reference DNAs and adds a waltz cadence, an on-and-off-the-beat pocket, one house rule and a beat switch. Crisp modern production only. This page never gives you the same fingerprint twice.</p>
+    <p>One-of-a-kind minimalist hip hop instrumentals for Suno v6. Every roll crosses two reference DNAs and adds a triplet bounce over straight drums, an on-and-off-the-beat pocket, one house rule and a beat switch. Crisp modern production only. This page never gives you the same fingerprint twice.</p>
   </header>
 
   <button class="roll" id="roll" type="button">⬤ ROLL A ONE-OF-ONE</button>
@@ -150,8 +150,8 @@
 </div>
 
 <script>
-/* MANHOLE vocabulary. Crisp minimalist hip hop with a waltz cadence riding
- * trap drums. Reference names live in `refs` and `aliases` for the UI and
+/* MANHOLE vocabulary. Crisp minimalist hip hop with a triplet pocket riding
+ * straight trap drums. Reference names live in `refs` and `aliases` for the UI and
  * the lint only; nothing named ever reaches the prompt. Every phrase is
  * instrumental and modern: no voices, no FX words, no film-score words. */
 "use strict";
@@ -295,15 +295,18 @@ const ManholeData = (() => {
   ];
 
   // ------------------------------------------------------------ cadence
-  const WALTZ = [
-    "waltz-time 3/4 accents riding over the 4/4 kick",
-    "the melody counts in threes while the drums count in fours",
-    "a 6/8 lilt in the hats over a straight kick",
-    "a limping waltz swing that lands back on the one every three bars",
-    "dotted-quarter accents so every third beat feels like the downbeat",
-    "12/8 shuffle on the hats, straight 808",
-    "a lopsided three-step bounce across a four-beat bar",
-    "a slow waltz figure in the riff over half-time trap drums",
+  // The triplet pocket: things grouping in threes over a straight trap kick.
+  // Said in hip hop words only. "Waltz", "3/4" and "6/8" make Suno play
+  // oom-pah carnival music, so they are banned by the lint.
+  const TRIPLET = [
+    "triplet-bounce hi-hats grouping in threes over a straight kick",
+    "the riff accents every third 8th note so it rolls across the bar",
+    "triplet flow pocket in the hats, kick and 808 dead straight",
+    "dotted-8th accents in the riff pulling against a straight kick",
+    "a rolling triplet groove in the hats and percussion, hard straight drums underneath",
+    "the riff phrased in groups of three that land back on the one every three bars",
+    "skippy triplet hats with the snare dead straight on 3",
+    "a bouncing three-against-four pocket between the riff and the drums",
   ];
   const ON_OFF = [
     "two bars locked on the beat, two bars sliding off it",
@@ -340,7 +343,7 @@ const ManholeData = (() => {
   ];
   const SWITCH = [
     "tempo halves and the riff drops an octave",
-    "the drums flip to a waltz pattern and the 808 starts sliding",
+    "the drums flip to a triplet bounce and the 808 starts sliding",
     "everything drops for 2 bars, then a harder faster beat in a new minor key",
     "the riff disappears and the 808 plays the melody",
     "the key drops a whole step and the drums go bone-dry",
@@ -393,7 +396,7 @@ const ManholeData = (() => {
   const SETTINGS = {
     radio: {
       model: "Suno v6", weirdness: "40–50%", styleInfluence: "80–90%", variety: "Off (0)", maxMode: "On",
-      note: "Weirdness in the 40s: enough for the waltz cadence and the house rule, not enough to wander into soundtrack territory. Style Influence high so it stays a crisp hip hop record. Variety Off so these phrases are not rewritten. Turn Suno's Instrumental toggle on.",
+      note: "Weirdness in the 40s: enough for the triplet pocket and the house rule, not enough to wander into soundtrack territory. Style Influence high so it stays a crisp hip hop record. Variety Off so these phrases are not rewritten. Turn Suno's Instrumental toggle on.",
     },
     wild: {
       model: "Suno v6-wild, keeper re-run on v6", weirdness: "60–75%", styleInfluence: "65–75%", variety: "Off (0)", maxMode: "On for the v6 re-run",
@@ -406,6 +409,7 @@ const ManholeData = (() => {
   const NAMES = [...new Set(DNA.flatMap((d) => d.aliases))].filter((n) => n.replace(/[^a-z0-9]/gi, "").length >= 3);
   const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const LINT = [
+    { re: /\b(waltz\w*|lilt\w*|limp\w*|oompah|oom-pah|carnival|circus|polka|calliope)\b|\b(3|5|6|7|9|12)\/(4|8)\b/i, level: "block", msg: "meter word that Suno hears as waltz or carnival music" },
     { re: /\b(vocal|vocals|vocalist|rap\b|rapper|sing|sings|singing|singer|sung|chant\w*|choir|hum|humming|lyric\w*|ad-?lib\w*)\b/i, level: "block", msg: "vocal vocabulary invites a voice" },
     { re: /\b(transition\w*|sweeps?|risers?|phaser|dj\b|scratch\w*|fills?|cowbell|rimshot|airhorn)\b/i, level: "block", msg: "effect vocabulary turns into DJ tricks and fills" },
     { re: /\b(marimba|kalimba|music box|glockenspiel|celesta|xylophone)\b/i, level: "block", msg: "stock mallet preset" },
@@ -416,7 +420,7 @@ const ManholeData = (() => {
   ];
 
   return {
-    STYLE_LIMIT, LYRICS_LIMIT, MINOR_KEYS, MAJOR_KEYS, PROGRESSIONS, DNA, WALTZ, ON_OFF, RULES, SWITCH,
+    STYLE_LIMIT, LYRICS_LIMIT, MINOR_KEYS, MAJOR_KEYS, PROGRESSIONS, DNA, TRIPLET, WALTZ: TRIPLET, ON_OFF, RULES, SWITCH,
     LEADS, QUALITY, PLAYING, MINIMAL, MIX, INSTRUMENTAL, SOUNDTRACK, STRUCTURES, EXCLUDE, SETTINGS, NAMES, LINT,
   };
 })();
@@ -425,7 +429,7 @@ const ManholeData = (() => {
 </script>
 <script>
 /* MANHOLE engine — one-of-a-kind minimalist instrumental prompts for Suno v6.
- * Every roll is a cross of two reference DNAs plus a waltz cadence, an
+ * Every roll is a cross of two reference DNAs plus a triplet pocket, an
  * on/off-the-beat pocket, one house rule and a beat switch, written in plain
  * modern hip hop production language. The fingerprint names that combination so the page can refuse
  * to repeat it. */
@@ -466,7 +470,7 @@ const ManholeEngine = (() => {
     add(c.opener, 0);
     add(`crossed with ${c.trait}`, 0);
     add(D.INSTRUMENTAL, 0);
-    add(c.waltz, 0);
+    add(c.triplet, 0);
     add(c.onOff, 0);
     add(c.low, 0);
     add(`${c.lead} playing ${c.harmony.prog.color} in ${c.harmony.key}, ${c.quality}, ${c.playing}, looping`, 0);
@@ -494,13 +498,13 @@ const ManholeEngine = (() => {
     const push = (name, desc) => S.push({ tag: `[${name}: ${desc}]`, name });
     for (const step of c.structure.steps) {
       if (step === "intro") push("Intro", `${m} alone, 2 bars, ${chords}, drums and 808 enter on bar 3`);
-      else if (step === "hook") push("Hook", `full beat on the beat, ${m} looping, ${c.waltz}, 8 bars`);
+      else if (step === "hook") push("Hook", `full beat on the beat, ${m} looping, ${c.triplet}, 8 bars`);
       else if (step === "verseOn") push("Verse", `drums and 808 locked on the grid, ${m} sparse, house rule: ${c.rule}, 16 bars`);
       else if (step === "verseOff") push("Verse", `drums slide off the beat, ${c.onOff}, ${m} answering every 4th bar, 16 bars`);
       else if (step === "verseStop") push("Verse", `drums stop dead every 2 bars and slam back on the one, ${m} in the gaps, 16 bars`);
       else if (step === "break") push("Break", `808 alone, 2 bars, then a half-beat of silence`);
       else if (step === "switch") push("Beat Switch", `${c.beatSwitch}, ${chords} darker, 8 bars`);
-      else if (step === "switchHook") push("Hook", `on the switched beat, ${m} twice as heavy, ${c.waltz}, house rule: ${c.rule}, 8 bars`);
+      else if (step === "switchHook") push("Hook", `on the switched beat, ${m} twice as heavy, ${c.triplet}, house rule: ${c.rule}, 8 bars`);
       else if (step === "outro") push("Outro", `${m} for 2 bars over the 808, then hard stop`);
     }
     S.push({ tag: "[End]", name: "End" });
@@ -536,7 +540,7 @@ const ManholeEngine = (() => {
       lead: leadName,
       quality: pick(D.QUALITY, r),
       playing: pick(D.PLAYING, r),
-      waltz: pick(D.WALTZ, r),
+      triplet: pick(D.TRIPLET, r),
       onOff: pick(D.ON_OFF, r),
       rule: pick(D.RULES, r),
       beatSwitch: pick(D.SWITCH, r),
@@ -564,7 +568,7 @@ const ManholeEngine = (() => {
       settings: input.wild ? D.SETTINGS.wild : D.SETTINGS.radio,
       harmony: { key: harmony.key, roman: harmony.prog.roman, chords: harmony.chords, cadence: harmony.prog.cadence },
       parts: {
-        rule: c.rule, waltz: c.waltz, onOff: c.onOff, beatSwitch: c.beatSwitch,
+        rule: c.rule, triplet: c.triplet, onOff: c.onOff, beatSwitch: c.beatSwitch,
         lead: `${c.lead}, ${c.quality}, ${c.playing}`, trait: c.trait,
       },
       warnings,
@@ -709,7 +713,7 @@ const ManholeEngine = (() => {
     const p = pkg.parts;
     dl($("print-grid"), [
       ["House rule", p.rule],
-      ["Waltz cadence", p.waltz],
+      ["Triplet pocket", p.triplet],
       ["On / off the beat", p.onOff],
       ["Beat switch", p.beatSwitch],
       ["Lead", p.lead],
