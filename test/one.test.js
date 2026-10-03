@@ -92,3 +92,11 @@ test("South Side brass always carries brass", () => {
     if (meta.lane === "South Side brass") assert.ok(parts.lead.family === "brass" || parts.counter.family === "brass");
   }
 });
+
+test("never two tubas, never a low lead over a horn bass", () => {
+  for (const seed of seeds) {
+    const { lead, bass } = E.generate({ seed }).parts;
+    if (/tuba|sousaphone/.test(lead.source)) assert.ok(!/tuba|sousaphone/.test(bass.source), `${lead.source} / ${bass.source}`);
+    if (lead.low) assert.ok(!/tuba|sousaphone/.test(bass.source), `${lead.register} / ${bass.source}`);
+  }
+});

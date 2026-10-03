@@ -854,10 +854,12 @@ const OneEngine = (() => {
   function buildBass(r, lead, lane) {
     const B = G.BASS;
     // A lane's own basses (the South Side tuba) come up about half the time.
-    const pool = lane.bass.length && r() < 0.5 ? lane.bass : B.source;
+    const fits = (s) => !(lead.low && /fingered|saw basses|tuba|sousaphone/.test(s)) && !(/tuba|sousaphone/.test(s) && /tuba|sousaphone/.test(lead.source));
+    const laneFits = lane.bass.filter(fits);
+    const pool = laneFits.length && r() < 0.5 ? laneFits : B.source;
     const source = lead.is808
       ? pick(["a clean sine sub", "a sub that only sustains on the root"], r)
-      : pickWhere(pool, r, (s) => !(lead.low && /fingered|saw basses|tuba|sousaphone/.test(s)) && !(/tuba|sousaphone/.test(s) && /tuba|sousaphone/.test(lead.source)));
+      : pickWhere(pool, r, fits);
     const pattern = pickWhere(B.pattern, r, (p) =>
       !(lead.low && /motif|moving when/.test(p)) &&
       !(lead.triplet && /triplet/.test(p)) &&
