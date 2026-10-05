@@ -8,8 +8,13 @@ The agent places orders ONLY in this account and ONLY inside these rules. The ma
 - Starting equity under $2,250: max $800 per position.
 - Starting equity $2,250 or more: max $1,100 per position.
 - Always keep at least $400 uninvested. Max 2 positions at once.
-- Whole shares only, so a stop order can be placed. Shares = floor(cap / ask). If one share costs
-  more than the cap, skip that name.
+- Hybrid sizing (approved 2026-10-05): buy floor(cap / ask) whole shares with a limit at the ask,
+  then buy the remainder of the cap as a fractional market order (dollar_amount), regular hours.
+  If one whole share costs more than the cap, buy the full cap as fractional.
+- The stop_market GTC order covers the whole shares only (Robinhood does not allow stops on
+  fractional shares). At every check (9:50, 10:25, 3:45), if the price is at or below the stop
+  level, sell the fractional piece with a market order. When selling a position, sell the whole
+  shares (limit at bid, after cancelling the stop) and the fractional piece (market) together.
 - Buy only with settled cash: use get_portfolio buying_power (cash account excludes unsettled).
   Never buy with unsettled proceeds and sell before they settle (good-faith violation).
 
