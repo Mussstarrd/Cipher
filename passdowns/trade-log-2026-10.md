@@ -38,3 +38,21 @@ Account: $11,117 open → $11,171 close (+$54 incl. shares). Cash $2,891.
 Note for Sunday: the day's intraday result (+$136 on 10 scalps) is inside the zero-expectancy band the
 5-minute study predicted; it is not evidence of an edge either way. The sizing breach on the SPCX calls is
 the item to grade.
+
+## Mon Oct 5, afternoon (from Robinhood fills, 3:08–3:59 pm)
+
+| Contract | Buy | Sell | P&L |
+|---|---|---|---|
+| NVDA Oct 16 $242.5C ×6 | 3.64 | 3.60 | −$24 |
+| SPCX Oct 16 $177.5C ×2 | 2.80 | 2.83 / 2.85 | +$8 |
+| PLTR Oct 30 $195C ×2 | 6.40 | 6.40 / 6.25 | −$15 |
+| INTC Nov 13 $117C ×1 | 9.78 | 9.75 | −$3 |
+| NVDA Oct 16 $237.5P ×1 | 3.65 | 3.90 | +$25 |
+| SPCX Nov 20 $200C ×3 | 4.01 | 4.16 | +$45 |
+
+Afternoon realized: +$36 on 6 round trips, all off-system, after the morning's −$550.
+Held overnight: 3× SPCX Oct 16 $167.5P at $4.04 ($1,212), bought 3:59 with SPCX at $171, no stop.
+Pre-market Tue 6:27 am: SPCX $173.25 (+1.3%), put marked lower.
+
+Agentic account: the 3:45 routine fired but its prompt never reached a turn, so no check ran. $2,500 cash, no
+position. Not a rules decision, a delivery miss.
