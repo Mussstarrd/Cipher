@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__Robinson_Trading__get_accounts",
+      "mcp__Robinson_Trading__get_portfolio",
+      "mcp__Robinson_Trading__get_equity_quotes",
+      "mcp__Robinson_Trading__get_equity_historicals",
+      "mcp__Robinson_Trading__get_equity_positions",
+      "mcp__Robinson_Trading__get_equity_orders",
+      "mcp__Robinson_Trading__get_equity_technical_indicators",
+      "mcp__Robinson_Trading__get_equity_analyst_ratings",
+      "mcp__Robinson_Trading__get_option_positions",
+      "mcp__Robinson_Trading__get_option_orders",
+      "mcp__Robinson_Trading__get_option_instruments",
+      "mcp__Robinson_Trading__get_option_quotes",
+      "mcp__Robinson_Trading__get_option_chains",
+      "mcp__Robinson_Trading__get_earnings_calendar",
+      "mcp__Robinson_Trading__get_sec_filing_index",
+      "mcp__Robinson_Trading__get_realized_pnl",
+      "mcp__Robinson_Trading__run_scan",
+      "mcp__Robinson_Trading__review_equity_order",
+      "mcp__Robinson_Trading__place_equity_order",
+      "mcp__Robinson_Trading__cancel_equity_order",
+      "mcp__Claude_Code_Remote__get_trigger",
+      "mcp__Claude_Code_Remote__list_triggers",
+      "WebSearch",
+      "PushNotification"
+    ]
+  }
+}
