@@ -56,3 +56,28 @@ Pre-market Tue 6:27 am: SPCX $173.25 (+1.3%), put marked lower.
 
 Agentic account: the 3:45 routine fired but its prompt never reached a turn, so no check ran. $2,500 cash, no
 position. Not a rules decision, a delivery miss.
+
+## Tue Oct 6 (from Robinhood fills)
+
+| Contract | Buy | Sell | P&L |
+|---|---|---|---|
+| SPCX Oct 16 $167.5P ×3 (held from Mon) | 4.04 | 2.85 | −$357 |
+| SPCX Oct 30 $200C ×7 | 2.30 | 2.15 | −$105 |
+| INTC Oct 16 $114C ×2 | 4.60 | 4.55 / 4.46 | −$19 |
+| TSM Oct 16 $480C ×1 | 13.75 | 13.70 | −$5 |
+| SPCX Oct 16 $175C ×3 | 4.92 | 4.85 | −$21 |
+| SPCX Oct 16 $165C ×2 | 9.25 | 9.45 | +$40 |
+| NVDA Oct 16 $242.5C ×4 | 3.50 | 3.32 | −$72 |
+
+Realized: −$539, 7 round trips, all off-system. Monday + Tuesday: about −$1,050.
+
+## Wed Oct 7
+
+Two trades, both bought 3:19–3:21 pm and held overnight. No stops seen.
+
+| Contract | Buy | Cost | Close mark | Note |
+|---|---|---|---|---|
+| SPCX Oct 19 $172.5C ×5 | 3.20 | $1,600 | 3.15 | 1.6× the $1,000 cap; crosses the Fri Oct 9 unlock; spread 2.85/3.45 |
+| NVDA Oct 16 $245C ×3 | 1.49 | $447 | 1.53 | delta 0.25, theta −$0.20/day (13% a day) |
+
+Correction: the 120-day SPCX unlock is **Friday Oct 9** (some sources say Mon Oct 12), not Thursday.
