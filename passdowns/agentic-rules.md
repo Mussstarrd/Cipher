@@ -1,60 +1,61 @@
-# Agentic account rules v3 (account 406267872, cash, ••••7872)
+# Agentic account rules v4 (account 406267872, cash, ••••7872)
 
-v1 approved by Jeffery 2026-10-03. v3 written 2026-10-07 at Jeffery's request ("figure out the recipe and
-start actively trading"), from `study-2026-10-07-agentic-rules.md` (122 sessions, after 0.10% round-trip cost).
-The agent places orders ONLY in this account and ONLY inside these rules. The main account (731123444) is never
-traded.
+Jeffery handed the whole account to the agent on 2026-10-08 ("You manage it ... make that money grow as quickly and
+efficiently as possible. Keep me updated on major changes and I'll pull in the reins if I need to").
+v4 written 2026-10-08 from `study-2026-10-07-agentic-rules.md` and `study-2026-10-08-growth.md`.
+The agent places orders ONLY in this account. The main account (731123444) is never traded. No options in this account.
 
-## What changed from v2
-- Added Rule G (gap-up momentum). It was the only rule with a clear edge in the study.
-- Entry A is now Rule O: the overnight hold runs every day in SMH and is sold at the 9:30 open, not at 9:50/10:25.
-- Dropped Entry B (flush buy). The study showed −0.41% per signal day; NVDA lost on 5 of 6 trades.
+## Changes from v3 (tell Jeffery about any future change of this size before it takes effect)
+- One rule only: gap-up momentum. The overnight hold (Rule O) is retired: it tied up cash across settlement and
+  lowered final equity in every sizing test.
+- Size grows with equity instead of a fixed $800 cap.
+- Wider universe in two tiers. SOXL (3x) was tested and rejected (−69% drawdown, volatility decay).
 
-## Sizing
-- Max $800 per position, max 2 positions. Keep at least $400 of total cash uninvested.
-- Buy only with settled cash: use get_portfolio buying_power (cash accounts exclude unsettled funds). Never buy with
-  unsettled proceeds and then sell before they settle (good-faith violation). If buying_power is under $300, skip
-  the entry.
-- Hybrid sizing: buy floor(size / ask) whole shares with a limit at the ask, then the rest of the size as a
-  fractional market order (dollar_amount), regular hours. If one share costs more than the size, buy it all as
-  fractional.
-- Stops cover the whole shares only (Robinhood does not allow stops on fractional shares).
+## Universe
+- Tier A: NVDA, AMD, MU, INTC, SMH.
+- Tier B (half size, only on days with no Tier A signal): AVGO, MRVL, PLTR, TSLA, META, AMZN, MSFT, GOOGL, AAPL, QQQ.
+- Skip any name reporting earnings today or the prior evening (get_earnings_calendar). Skip any name whose own
+  company news explains the gap if it is an acquisition/halt-type event.
 
-## Rule G: gap-up momentum (9:45 am check), the main rule
-- Candidates: NVDA, AMD, MU, INTC, SMH. Skip any name with its own earnings within 2 sessions (INTC Oct 22,
-  AMD Nov 3, NVDA Nov 17).
-- Signal: the 9:30 open is at least +2.0% above the prior close, AND the 9:45 price is above the 9:30 open.
-- Several qualify: take the largest gap. One Rule G position per day.
-- Size: min($800, buying_power − $100).
-- Stop: stop_market GTC at entry × 0.96 for the whole shares. This is a disaster stop only; a −1.5% stop made the
-  backtest worse.
-- Exit: the 3:45 pm check sells it no matter what. Cancel the stop first, whole shares limit at bid, fractional
+## Signal (9:45 am check)
+- 9:30 open at least +2.0% above prior close, AND the 9:45 price above the 9:30 open.
+- Several qualify: Tier A first; within a tier, take the largest gap. One position per day.
+
+## Size
+- Base fraction of equity: 50% for the first 10 trades; 75% for trades 11–20 if the live mean P&L per trade is
+  positive; then 100% for SMH and 85% for a single stock. Tier B is half the base fraction.
+- Size = min(fraction × equity, settled buying_power − $25). Skip if under $300.
+- Hybrid fill: floor(size / ask) whole shares as a limit at the ask, the remainder as a fractional market order.
+- Buy only with settled cash; never sell a position bought with unsettled funds before those funds settle.
+
+## Exits
+- Disaster stop: stop_market GTC at entry × 0.95 on the whole shares, placed right after the fill.
+- 12:30 pm check: if the position is below entry × 0.97, sell it all.
+- 3:45 pm check: sell whatever is open, win or lose. Cancel the stop first; whole shares limit at bid, fractional
   piece market.
-- Study: 80 trades / 36 days, 64% wins, +1.13% per trade, portfolio +1.02% per signal day, t = 3.1, worst trade
-  −3.0%. Held up in both halves of the window and with the top 3 trades removed. Fires on about 30% of days.
+- Nothing is held overnight.
 
-## Rule O: overnight hold (3:45 pm buy, 9:31 am sell), the secondary rule
-- Every trading day at 3:45, buy SMH. Size: min($800, buying_power − $100). Skip if buying_power is under $300
-  (this happens on some Rule G days because of settlement).
-- Stop: stop_market GTC at entry × 0.97 for the whole shares. It only triggers in regular hours, so it is a backstop
-  in case the 9:31 sell fails.
-- Exit: the 9:31 am check sells it at the open, win or lose. Cancel the stop, whole shares limit at bid, fractional
-  piece market.
-- Study: semis overnight +0.33% per night, t = 1.5, max drawdown −12%. This is mostly market exposure in a semis
-  bull run. The edge faded from +0.47% (Apr–Jul) to +0.13% (Aug–Oct). Kill it if it loses money over 15 trades.
-- None of the filters (red day, late dump, skip late ramp) helped, so there are none.
-
-## Loss limits
-- Daily: realized + open loss of $50 (2% of $2,500): no new entries for the rest of the day.
-- Weekly: $125 (5%): no new entries until Jeffery reviews on Sunday.
-- Rule G five losses in a row, or Rule O down over its first 15 trades: stop that rule and report.
+## Risk limits
+- Daily: a loss over 3% of the day's starting equity: no new entries that day.
+- Weekly: −6% from the week's starting equity: no entries until Monday.
+- Losing streak: 4 losses in a row: halve the fraction for the next 5 trades. 6 in a row: stop and report.
+- Drawdown: −10% from the equity high: fraction drops to 50%. −15% from the high: stop trading and check in
+  with Jeffery.
+- After 20 trades, if the live mean P&L per trade is ≤ 0: stop and report.
+- Track the equity high, trade count, streak and live mean in agentic-log.md.
 
 ## Reporting
-- Every check posts one short message and a one-line push notification: what, shares, price, stop, why.
-- Every fill is appended to `passdowns/agentic-log.md` (date, time, symbol, side, qty, price, rule, P&L).
-- Checks that do nothing post one line.
+- Every check that trades: one push notification plus a short message (symbol, gap %, shares, price, stop, P&L).
+- Checks that do nothing: one line.
+- Every fill appended to `passdowns/agentic-log.md`. Sunday: weekly P&L review.
 
 ## Schedule (CRON_TZ=America/New_York, Mon–Fri)
-- 9:31 am: Rule O exit (sell the overnight SMH).
-- 9:45 am: Rule G entry.
-- 3:45 pm: Rule G exit, then Rule O entry, then the daily summary.
+- 9:31 am: sell any leftover position (should be none under v4; kept as a safety net).
+- 9:45 am: signal and entry.
+- 12:30 pm: −3% check.
+- 3:45 pm: exit everything, daily summary.
+
+## Honest expectations
+- The backtest (35 qualifying days, Tier A without earnings days) shows +1.4% per signal day, 71% wins, worst trade
+  −3%, on a six-month semis bull run, with more than 100 variants tested. Expect live results between flat and half
+  the backtest. It trades on roughly 25–45% of days; most days it does nothing.

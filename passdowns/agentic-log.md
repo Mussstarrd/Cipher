@@ -13,3 +13,6 @@ Notes:
 | 2026-10-08 | 3:48 | SPCX | sell | 5.957877 | 161.4023 | 167.85 | none | −$38.41 | unlock tomorrow, outside universe |
 | 2026-10-08 | 3:48 | TSM | sell | 1.059344 | 455.3901 | 471.99 | none | −$17.59 | outside universe |
 | 2026-10-08 | 3:48 | NVDA | hold | 4.218875 | — | 237.03 | stop_market GTC 4 sh @ 223.45 | — | treated as Rule O, sell 9:31 Fri |
+
+## v4 tracking (from 2026-10-09)
+- Equity high: $2,416 (2026-10-08 close basis). Trades under v4: 0. Streak: 0. Live mean per trade: n/a. Week start equity (Oct 5): $2,500.
