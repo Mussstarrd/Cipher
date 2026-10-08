@@ -81,3 +81,26 @@ Two trades, both bought 3:19–3:21 pm and held overnight. No stops seen.
 | NVDA Oct 16 $245C ×3 | 1.49 | $447 | 1.53 | delta 0.25, theta −$0.20/day (13% a day) |
 
 Correction: the 120-day SPCX unlock is **Friday Oct 9** (some sources say Mon Oct 12), not Thursday.
+
+## Thu Oct 8 (fills through 3:15 pm)
+
+Tape: White House reportedly asked for Iran strike options, oil +4%, 30Y yield 5.67%. Chips flushed all day:
+SMH −3.5%, NVDA −3.1%, AMD −4.9%, MU −5.1%, INTC −6.2%, SPCX −3.6%. TLT +0.9% (fear signal).
+
+| Contract | Buy | Sell | P&L |
+|---|---|---|---|
+| NVDA Oct 16 $245C ×3 (from Wed) | 1.49 | 0.92 (11:53) | −$171 |
+| SPCX Oct 19 $172.5C ×5 (from Wed) | 3.20 | 1.40 (12:05) | −$900 |
+
+Realized: −$1,071.
+
+Opened 12:07–12:52, right after those sells, against the "not touching anything until 3:50" plan:
+
+| Contract | Buy | 3:16 mark | Open P&L |
+|---|---|---|---|
+| SPCX Oct 23 $157.5C ×1 | 8.95 | 8.18 | −$78 |
+| NVDA Nov 6 $270C ×3 | 0.45 | 0.32 | −$40 |
+| NVDA Oct 12 $235C ×1 | 1.78 | 0.90 | −$89 |
+| SPCX Oct 12 $167.5C ×1 | 0.77 | 0.69 | −$8 |
+
+Day so far: about −$1,286. Week (Mon–Thu): about −$2,350.
