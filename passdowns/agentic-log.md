@@ -16,3 +16,5 @@ Notes:
 
 ## v4 tracking (from 2026-10-09)
 - Equity high: $2,416 (2026-10-08 close basis). Trades under v4: 0. Streak: 0. Live mean per trade: n/a. Week start equity (Oct 5): $2,500.
+| 2026-10-09 | 9:32 | NVDA | sell | 4 + 0.218875 | 232.135 / 231.9695 | 237.03 | cancelled | −$20.71 (overnight from 230.36 mark: +$7.6) | leftover exit |
+- After 9:32 Oct 9: equity ≈ $2,423 (settled ≈ $1,444, unsettled $979 until Oct 12). Week P&L vs $2,500 start: −$77. Equity high for v4: $2,423.
