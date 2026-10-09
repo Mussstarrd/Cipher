@@ -19,3 +19,4 @@ Notes:
 | 2026-10-09 | 9:32 | NVDA | sell | 4 + 0.218875 | 232.135 / 231.9695 | 237.03 | cancelled | −$20.71 (overnight from 230.36 mark: +$7.6) | leftover exit |
 - After 9:32 Oct 9: equity ≈ $2,423 (settled ≈ $1,444, unsettled $979 until Oct 12). Week P&L vs $2,500 start: −$77. Equity high for v4: $2,423.
 - 2026-10-09 9:45: no gap entry. Top gaps: TSLA +1.97%, MRVL +1.70%, MU +1.61% (Tier A best MU +1.61%). Equity $2,423, settled $1,444.
+- 2026-10-09 3:45: flat, nothing to sell. Week (Oct 5–9) close: equity $2,423.29 vs $2,500 start = −$76.71 (−3.1%), all from Jeffery's Oct 7 manual buys and their exit. v4 trades so far: 0.
