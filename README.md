@@ -29,6 +29,10 @@ The 808 gets its own human-feel slot ("slides played by hand, each one a differe
 - **Settings**: Variety Off (any other setting rewrites the style field), Weirdness 55–65, Style Influence 65–75, Max Mode on, v6 or v6-wild.
 - **Memory**: the page remembers every roll on your device and never repeats one.
 
+### On Android (PWA + split-screen)
+
+`dist/one.html` is an installable PWA (`one.webmanifest`, `one-sw.js`, icons are built next to it). Serve `dist/` over HTTPS (the included GitHub Pages workflow does this on push to `main`), open it in Chrome on the phone, **Add to Home screen**, then open it in split-screen beside the Suno app. The pinned bar at the bottom copies the next Suno field with one tap (Lyrics, Styles, Exclude styles, then shows the slider values), and **Copy all as one block** / **Share** hand the whole prompt to any app. Full research, decision and the native fallback (a floating-bubble + accessibility-service filler in `android/`) are in [`docs/android-plan.md`](docs/android-plan.md).
+
 ## MANHOLE (`dist/manhole.html`)
 
 One-of-a-kind minimalist instrumentals. Every roll crosses two reference DNAs (horror minimal / Big Sean "Blessings", one-loop hypnosis / Lil Wayne "A Milli", devil-on-the-shoulder bounce / JID "McAfee", cathedral thunder / JID "Glory", loyalty heavy / JID "Bruddanem", porch-light soul / J. Cole, bar-fight blues stomp / Prof, crisp quirk bounce / Connor Price, Detroit stop-start / Big Sean) and adds a triplet bounce over straight trap drums, an on-and-off-the-beat pocket, one house rule and a beat switch, in plain modern hip hop production language. The page remembers every fingerprint (DNA pair, rule, switch, lead, key) it has rolled on your device and never repeats one. Reference names appear in the UI only; a lint and tests keep them out of the prompt.

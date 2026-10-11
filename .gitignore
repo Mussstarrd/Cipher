@@ -1,0 +1,11 @@
+# Android build output (android/ is a source-only scaffold; build it with Android Studio)
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/.idea/
+android/*.iml
+android/app/*.iml
+android/gradle/
+android/gradlew
+android/gradlew.bat

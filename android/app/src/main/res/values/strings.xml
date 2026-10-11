@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">ONE/ONE Filler</string>
+    <string name="service_label">ONE/ONE Suno filler</string>
+    <string name="service_description">Fills the Lyrics, Styles and Exclude styles boxes in the Suno app with the prompt you shared from ONE/ONE. It only reads the Suno app\'s screen, only while you tap a bubble button, and sends nothing anywhere.</string>
+    <string name="channel_name">Prompt bubble</string>
+    <string name="notification_text">ONE/ONE bubble is showing over Suno. Tap to hide.</string>
+</resources>
