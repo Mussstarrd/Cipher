@@ -2,16 +2,17 @@
  * clashes, and lays the result out in Suno's own field order.
  *
  * Style field order (Suno weights the front and reads it as tags):
- *   1. anchor, BPM, key
- *   2. rhythm tags: register, syncopation, twitch, triplet slur, loop or switch, human feel
- *   3. lead (every slot), bass, drums, counter, twitch detail
- *   4. mix, instrumental
- * When the field runs long the tail is trimmed from the middle out; the
- * front tags are never cut.
+ *   head: anchor, BPM, key, SYNC, TWITCH, SLUR, SWITCH or LOOP, LOW LEAD,
+ *         lead handle, mix tag, instrumental            (~220 chars, never cut)
+ *   prose: lead (every slot), bass, drums, counter       (trimmed from the end)
+ *
+ * Modes: switch (one axis, its words repeated in the head, the cue and every
+ * later section), loop (identical [Loop] cues, nothing arranged), straight.
+ * "Every N bars" phrases are capped at one per roll and zero in loop mode,
+ * because they teach Suno to change something every four bars.
  *
  * A genre pack (src/one/genres.js) overrides whole sections of the base
- * grammar: FAMILIES, LANES, BASS, DRUMS, TWITCH, GROOVE, SWITCH, COLOR,
- * RHYTHM, TEMPO, MIX, EXCLUDE, SLIDERS, LOOP_SHARE, and a STRUCTURE hook. */
+ * grammar and may supply its own STRUCTURE(p, r, h) for the lyrics field. */
 "use strict";
 
 const OneEngine = (() => {
@@ -45,23 +46,41 @@ const OneEngine = (() => {
   // "a drunken detuned organ ...|the drunken organ" -> [full, handle]
   const split = (entry) => entry.split("|");
   const bare = (s) => s.replace(/^an? /, "");
+  // Phrases that teach Suno to change something every four bars.
+  const EVERY = /every (\d+\w*|other|third) (bar|pass|4|8)|\bbar \d+( and bar \d+)?|every \d+ bars|partway/i;
 
   const grammarFor = (genreId) => {
     const pack = Genres[genreId] || Genres.hiphop;
     return { ...Base, ...pack.grammar, id: pack.id, label: pack.label };
   };
 
-  function buildLead(r, G, lane) {
+  // One "every N bars" phrase per roll, none in loop mode.
+  function makeAllow(mode) {
+    let left = mode === "loop" ? 0 : 1;
+    const fn = (phrase) => {
+      if (EVERY.test(phrase)) left--;
+    };
+    fn.peek = () => left > 0;
+    return fn;
+  }
+  const pickBudget = (arr, r, allow, ok = () => true) => {
+    const chosen = pickWhere(arr, r, (x) => ok(x) && (!EVERY.test(x) || allow.peek()));
+    allow(chosen);
+    return chosen;
+  };
+
+  function buildLead(r, G, lane, allow) {
     const L = G.LEAD;
     const family = weighted(Object.entries(lane.families), r);
     const F = G.FAMILIES[family];
     const [source, handle] = split(pick(F.sources, r));
-    const register = pick(L.register, r);
-    const low = /low register|doubling the 808|under the snare/.test(register);
-    const motif = pick(L.motif, r);
+    const lowFirst = r() < G.LOW_SHARE;
+    const register = pickWhere(L.register, r, (x) => (lowFirst ? !/^mid register/.test(x) : true));
+    const low = !/^mid register|low-mid, stepping/.test(register);
+    const motif = pickBudget(L.motif, r, allow);
     const long = /five|six|seven|run/.test(motif);
     const short = /two-note|one repeated|stubborn root/.test(motif);
-    const articulation = pickWhere(L.articulation, r, (a) =>
+    const articulation = pickBudget(L.articulation, r, allow, (a) =>
       !(long && /one held|one anticipated|a push note|two stabs|three-note pickup/.test(a)) &&
       !(short && /three-note pickup/.test(a)));
     const legato = /legato|long tones|held note/.test(articulation);
@@ -72,7 +91,7 @@ const OneEngine = (() => {
       !(legato && /gated/.test(c)) &&
       !(low && /band-passed/.test(c)) &&
       !(/detuned/.test(source) && /detuned|chorus|ring-mod/.test(c)));
-    const motion = pickWhere(L.motion, r, (m) =>
+    const motion = pickBudget(L.motion, r, allow, (m) =>
       !(dry && /delay feedback|detune widens/.test(m)) &&
       !(legato && /shorter/.test(m)) &&
       !(/bitcrush|grittier/.test(m) && /low-passed/.test(character)));
@@ -85,7 +104,7 @@ const OneEngine = (() => {
     };
   }
 
-  function buildBass(r, G, lead, lane) {
+  function buildBass(r, G, lead, lane, allow) {
     const B = G.BASS;
     const fits = (s) => !(lead.low && /fingered|saw basses|tuba|sousaphone/.test(s)) && !(/tuba|sousaphone/.test(s) && /tuba|sousaphone/.test(lead.source));
     const laneBass = lane.bass || [];
@@ -95,71 +114,66 @@ const OneEngine = (() => {
     const source = lead.is808
       ? pick(["a clean sine sub", "a sub that only sustains on the root"], r)
       : pickWhere(pool, r, fits);
-    const pattern = pickWhere(B.pattern, r, (p) =>
+    const pattern = pickBudget(B.pattern, r, allow, (p) =>
       !(lead.low && /motif|moving when/.test(p)) &&
       !(lead.triplet && /triplet/.test(p)) &&
       !(lead.is808 && !/one note|silent|three notes|root/.test(p)));
     return { source, tone: pick(B.tone, r), pattern, human: pick(B.human, r) };
   }
 
-  function buildCounter(r, G, lead, lane) {
-    const must = lane.counterFamily && lead.family !== lane.counterFamily ? [[lane.counterFamily, 1]] : null;
-    const others = must || Object.entries(lane.families).filter(([f]) => f !== lead.family);
+  function buildCounter(r, G, lead, lane, allow, mode) {
+    const forced = lane.counterFamily && lead.family !== lane.counterFamily && r() < 0.5;
+    const others = forced ? [[lane.counterFamily, 1]] : Object.entries(lane.families).filter(([f]) => f !== lead.family);
     const family = others.length ? weighted(others, r) : pick(Object.keys(G.FAMILIES).filter((f) => f !== lead.family), r);
     const F = G.FAMILIES[family];
     const [source, handle] = split(pickWhere(F.sources, r, (x) => !/808/.test(x)));
-    return { family, source, handle, character: pick(F.character, r), role: pick(G.COUNTER_ROLE, r) };
+    const role = pickBudget(G.COUNTER_ROLE, r, allow, (x) => !(mode !== "switch" && /after the switch/.test(x)));
+    return { family, source, handle, character: pick(F.character, r), role };
   }
 
-  function buildDrums(r, G, lead) {
+  function buildDrums(r, G, lead, allow, mode) {
     const D = G.DRUMS;
-    const hats = pickWhere(D.hats, r, (h) => !(lead.triplet && /threes/.test(h)));
+    const hats = pickBudget(D.hats, r, allow, (h) => !(lead.triplet && /threes/.test(h)));
     const twitch = {
       sound: pick(G.TWITCH.sound, r),
-      rhythm: pickWhere(G.TWITCH.rhythm, r, (x) => !(lead.triplet && /threes|triple/.test(x))),
-      where: pick(G.TWITCH.where, r),
+      rhythm: pickBudget(G.TWITCH.rhythm, r, allow, (x) => !(lead.triplet && /threes|triple/.test(x))),
+      where: pickBudget(G.TWITCH.where, r, allow, (w) => !(mode !== "switch" && /after the switch/.test(w))),
     };
-    const triplet = lead.triplet
-      ? "a heavy bounce, triplets felt but not played"
-      : pickWhere(G.GROOVE.triplet, r, (t) => !(/threes/.test(hats) && /hats/.test(t)));
+    // One stumbling element only: when the hats roll in threes the slur goes elsewhere.
+    const slur = pickWhere(G.GROOVE.triplet, r, (t) => !(/threes/.test(hats) && /hats/.test(t)));
     return {
-      color: pick(G.COLOR, r),
-      kick: pick(D.kick, r),
-      snare: pick(D.snare, r),
+      color: pickBudget(G.COLOR, r, allow),
+      kick: pickBudget(D.kick, r, allow),
+      snare: pickBudget(D.snare, r, allow),
       hats,
       twitch,
-      sync: pick(G.GROOVE.sync, r),
+      sync: pickBudget(G.GROOVE.sync, r, allow),
       feel: pick(G.GROOVE.human, r),
-      triplet,
+      slur,
     };
   }
 
   function buildSwitch(r, G, lead, bass, drums) {
     const S = G.SWITCH;
-    const when = pick(S.when, r);
-    const what = pickWhere(S.what, r, (w) =>
-      !(/only the twitch/.test(w) && /after the switch/.test(drums.twitch.where)) &&
-      !(/go dry and the lead goes huge/.test(w) && !lead.dry) &&
-      !(/swaps? (from|to)/.test(w) && !/808/.test(bass.source)) &&
-      !(/rolling in threes/.test(w) && /threes/.test(drums.hats)) &&
-      !(/half-time/.test(w) && /half-time/.test(drums.snare)));
-    const sparse = /only the twitch|strips to 808/.test(what);
+    const axis = pickWhere(S.axes, r, (a) =>
+      !(/half-time/.test(a.tag) && /half-time/.test(drums.snare)) &&
+      !(/strips/.test(a.cue) && /after the switch/.test(drums.twitch.where)));
+    const sparse = /strips/.test(axis.cue);
     const land = pickWhere(S.land, r, (l) =>
-      !(/new key/.test(l) && !/key/.test(what)) &&
-      !(sparse && /new drums|drums join|everything slams/.test(l)) &&
-      !(/silence/.test(l) && /silence|full-stop/.test(when)));
-    return { when, what, land };
+      !(sparse && /drums join|everything slams/.test(l)) &&
+      !(/half-time/.test(axis.tag) && /two bars later/.test(l)));
+    return { ...axis, land };
   }
 
-  function buildRhythm(r, G, mode) {
+  function buildRhythm(r, G, mode, lead, sw, allow) {
     const R = G.RHYTHM;
+    const modeTag = mode === "switch" ? sw.tag : mode === "loop" ? pick(R.loop, r) : pick(R.straight, r);
     return {
-      register: pick(R.register, r),
-      sync: pick(R.sync, r),
-      twitch: pick(R.twitch, r),
-      cadence: pick(R.cadence, r),
-      mode: mode === "loop" ? pick(R.loopTag, r) : pick(R.switchTag, r),
-      human: pick(R.human, r),
+      sync: pickBudget(R.sync, r, allow),
+      twitch: pickBudget(R.twitch, r, allow),
+      slur: r() < G.SLUR_SHARE ? pick(R.slur, r) : null,
+      mode: modeTag,
+      low: lead.low ? pick(R.low, r) : null,
     };
   }
 
@@ -167,83 +181,88 @@ const OneEngine = (() => {
     const { lead, bass, drums, rhythm } = p;
     const head = [
       `${p.anchor}, ${p.bpm} BPM, ${p.key}`,
-      rhythm.register, rhythm.sync, rhythm.twitch, rhythm.cadence, rhythm.mode, rhythm.human,
-    ].join(", ");
-    const leadLine = `lead: ${lead.source}, ${lead.frame}, ${lead.character}, ${lead.register}, playing ${lead.motif} as ${lead.articulation}, ${lead.human}, ${lead.placement}`;
-    const leadShort = `lead: ${lead.source}, ${lead.character}, ${lead.register}, playing ${lead.motif} as ${lead.articulation}, ${lead.human}`;
-    const counterLine = `counter: ${p.counter.source}, ${p.counter.character}, ${p.counter.role}`;
-    const counterShort = `counter: ${p.counter.source}, ${p.counter.role}`;
-    const bassLine = `bass: ${bass.source}, ${bass.tone}, ${bass.human}`;
-    const bassShort = `bass: ${bass.source}, ${bass.human}`;
-    const drumLine = `drums: ${drums.kick}, ${drums.snare}, ${drums.hats}, ${drums.color}`;
-    const drumShort = `drums: ${drums.kick}, ${drums.snare}, ${drums.hats}`;
-    const twitchLine = `twitch percussion: ${drums.twitch.sound} ${drums.twitch.rhythm}`;
-    const tail = `${G.MIX}, instrumental`;
-    // The front tags and the lead always stay. Everything else gives way in this
-    // order: the lead's frame (the anchor already says it), the twitch detail
-    // (it lives in the lyrics tags too), then the counter's processing, the bass
-    // tone, the percussion color, and last the lead's placement.
-    const leadNoFrame = `lead: ${lead.source}, ${lead.character}, ${lead.register}, playing ${lead.motif} as ${lead.articulation}, ${lead.human}, ${lead.placement}`;
+      rhythm.sync, rhythm.twitch, rhythm.slur, p.mode === "loop" ? "minimal" : null, rhythm.mode, rhythm.low,
+      lead.handle, G.MIX_TAG, "instrumental",
+    ].filter(Boolean).join(", ") + ".";
+    const leadLine = `lead: ${lead.source}, ${lead.character}, ${lead.register}, playing ${lead.motif} as ${lead.articulation}, ${lead.human}, ${lead.placement}.`;
+    const leadNoPlace = `lead: ${lead.source}, ${lead.character}, ${lead.register}, playing ${lead.motif} as ${lead.articulation}, ${lead.human}.`;
+    const leadShort = `lead: ${lead.source}, ${lead.character}, ${lead.register}, playing ${lead.motif} as ${lead.articulation}.`;
+    const bassLine = `bass: ${bass.source}, ${bass.tone}, ${bass.human}.`;
+    const bassShort = `bass: ${bass.source}, ${bass.human}.`;
+    const slur = rhythm.slur ? `, ${drums.slur}` : "";
+    const drumLine = `drums: ${drums.kick}, ${drums.snare}, ${drums.hats}, ${drums.color}${slur}.`;
+    const drumShort = `drums: ${drums.kick}, ${drums.snare}, ${drums.hats}${slur}.`;
+    const counterLine = p.mode === "loop" ? null : `counter: ${p.counter.source}, ${p.counter.character}, ${p.counter.role}.`;
+    const counterShort = p.mode === "loop" ? null : `counter: ${p.counter.source}, ${p.counter.role}.`;
+    // The head and the lead always stay. Cut order: counter, bass tone,
+    // percussion color, lead placement, lead human.
     const tries = [
-      [head, leadLine, bassLine, drumLine, counterLine, twitchLine, tail],
-      [head, leadNoFrame, bassLine, drumLine, counterLine, twitchLine, tail],
-      [head, leadNoFrame, bassLine, drumLine, counterLine, tail],
-      [head, leadNoFrame, bassLine, drumLine, counterShort, tail],
-      [head, leadNoFrame, bassShort, drumLine, counterShort, tail],
-      [head, leadNoFrame, bassShort, drumShort, counterShort, tail],
-      [head, leadShort, bassShort, drumShort, counterShort, tail],
-      [head, leadShort, bassShort, drumShort, tail],
+      [head, leadLine, bassLine, drumLine, counterLine],
+      [head, leadLine, bassLine, drumLine, counterShort],
+      [head, leadLine, bassLine, drumLine],
+      [head, leadLine, bassShort, drumLine],
+      [head, leadLine, bassShort, drumShort],
+      [head, leadNoPlace, bassShort, drumShort],
+      [head, leadShort, bassShort, drumShort],
     ];
     let s;
-    for (const t of tries) if ((s = t.join(". ") + ".").length <= 1000) break;
+    for (const t of tries) if ((s = t.filter(Boolean).join(" ")).length <= 1000) break;
     return s;
   }
 
   function lyrics(p, G, r) {
-    if (G.STRUCTURE) return G.STRUCTURE(p, r, { bare, int, pick });
-    const { lead, drums, sw, bass } = p;
-    const h = lead.handle;
-    const c = p.counter;
+    const h = { bare, int, pick };
+    if (G.STRUCTURE) {
+      const custom = G.STRUCTURE(p, r, h);
+      if (custom) return custom;
+    }
+    const { lead, drums, sw, bass, counter, rhythm } = p;
+    const L = lead.handle;
     const bassWord = /808/.test(bass.source) ? "808" : "bass";
-    const late = /after the switch/.test(drums.twitch.where);
-    const twitch = p.styleHasTwitch
-      ? `twitch percussion ${drums.twitch.where}`
-      : `twitch percussion: ${drums.twitch.sound} ${drums.twitch.rhythm}, ${drums.twitch.where}`;
-    const counterIn = /after the switch/.test(c.role) ? "" : `, ${c.handle} ${c.role}`;
+    const twitchCue = `twitch percussion: ${drums.twitch.sound} ${drums.twitch.rhythm}, ${drums.twitch.where}`;
+    const slurCue = rhythm.slur ? drums.slur : null;
+    const counterLate = /after the switch/.test(counter.role);
 
     if (p.mode === "loop") {
-      // One loop the whole way. Sections are the same loop with one thing added or taken away.
-      const loop = `${h} playing ${bare(lead.articulation)}, ${bare(drums.kick)}, ${bare(drums.hats)}, ${bassWord} ${bass.pattern}`;
-      const sections = [
-        `[Intro | ${h} alone, ${lead.placement.split(",")[0]}, 2 bars]`,
-        `[Loop | ${loop}, ${drums.sync}]`,
-        `[Loop | same loop, ${/after the switch/.test(drums.twitch.where) ? `twitch percussion enters: ${drums.twitch.sound} ${drums.twitch.rhythm}` : twitch}${counterIn}]`,
-        `[Loop | same loop, drums cut out for 2 bars, then slam back, ${drums.triplet}]`,
-        `[Loop | same loop, ${lead.motion}]`,
-        `[Loop | same loop, ${drums.feel}, 808 only for the last bar]`,
-        `[Outro | ${h} alone, cuts dead on beat 1]`,
+      const loop = `${L} playing ${bare(lead.articulation)}, ${bare(drums.kick)}, ${bare(drums.hats)}, ${bassWord} ${bass.pattern}`;
+      return [
+        `[Intro | the loop alone, ${bassWord} and kick only, 2 bars]`,
+        `[Loop | same two-bar loop, ${loop}, everything else identical]`,
+        `[Loop | same loop, identical, ${twitchCue}${slurCue ? `, ${slurCue}` : ""}]`,
+        "[Loop | same loop, identical, hats cut for two bars then back]",
+        `[Loop | same loop, ${lead.motion}, drums identical]`,
+        `[Loop | same loop, identical, ${drums.feel}]`,
+        "[Outro | the loop runs until it stops dead on beat 1]",
         "[End]",
-      ];
-      return sections.join("\n\n");
+      ].join("\n\n");
     }
 
-    const sections = [
-      `[Intro | ${h} alone, ${lead.placement.split(",")[0]}]`,
-      `[Verse | ${bare(drums.kick)}, ${bare(drums.hats)}, ${bassWord} ${bass.pattern}, ${drums.sync}, ${late ? "drums only" : twitch}]`,
-      `[Hook | full beat, ${h} up front, ${lead.motion}${counterIn}]`,
-    ];
-    const shape = int(0, 2, r);
-    if (shape >= 1) sections.push(`[Verse 2 | ${drums.triplet}, ${h} thinner]`);
-    if (shape === 2) sections.push(`[Break | drums cut, ${h} and ${bassWord} only]`);
-    sections.push(`[Beat Switch | ${sw.when}, ${sw.what}, ${sw.land}]`);
-    const after = [];
-    if (/after the switch/.test(c.role)) after.push(`${c.handle} enters`);
-    if (late) after.push(p.styleHasTwitch ? "twitch percussion enters" : `twitch percussion enters: ${drums.twitch.sound} ${drums.twitch.rhythm}`);
-    if (!after.length) after.push(drums.sync);
-    sections.push(`[Hook | after the switch, ${h} returns, ${after.join(", ")}]`);
-    sections.push(`[Outro | ${h} alone, ends dry on beat 1]`);
-    sections.push("[End]");
-    return sections.join("\n\n");
+    const verse = `[Verse | full drums, ${rhythm.sync}, ${bassWord} ${bass.pattern}${slurCue ? `, ${slurCue}` : ""}, ${twitchCue}]`;
+    if (p.mode === "straight") {
+      const hook = `[Hook | full beat, ${L} up front, ${lead.motion}, ${counter.handle} ${counter.role}]`;
+      return [
+        `[Intro | ${L} alone, ${lead.placement.split(",")[0]}]`,
+        verse,
+        hook,
+        `[Verse | same drums, ${L} thinner, ${drums.feel}]`,
+        hook,
+        `[Outro | drums cut, ${L} alone, ends dry on beat 1]`,
+        "[End]",
+      ].join("\n\n");
+    }
+
+    // Switch mode: one axis, repeated in every section after the switch.
+    return [
+      `[Intro | ${L} alone, ${lead.placement.split(",")[0]}]`,
+      verse,
+      `[Hook | full beat, ${L} up front${counterLate ? "" : `, ${counter.handle} ${counter.role}`}]`,
+      `[Break | drums stop, ${sw.land}]`,
+      `[Beat Switch | ${sw.cue}]`,
+      `[Verse | ${sw.after}, ${L} stays low, ${counterLate ? `${counter.handle} enters, ` : ""}${/after the switch/.test(drums.twitch.where) ? "twitch percussion enters" : "twitch percussion in the gaps"}]`,
+      `[Hook | ${sw.after}, heavier, ${L} up front, ${lead.motion}]`,
+      `[Outro | ${sw.after}, drums cut, ends dry on beat 1]`,
+      "[End]",
+    ].join("\n\n");
   }
 
   function generate({ seed = 1, genre = "hiphop", mode, avoidKeys = [] } = {}) {
@@ -252,13 +271,14 @@ const OneEngine = (() => {
     const harmony = T.harmony(r, pick, avoidKeys, G.MAJOR_SHARE);
     const [lo, hi] = pick(G.TEMPO, r);
     const lane = weighted(G.LANES.map((l) => [l, l.weight]), r);
-    const chosenMode = mode || (r() < G.LOOP_SHARE ? "loop" : "switch");
-    const lead = buildLead(r, G, lane);
-    const counter = buildCounter(r, G, lead, lane);
-    const bass = buildBass(r, G, lead, lane);
-    const drums = buildDrums(r, G, lead);
+    const chosenMode = mode || weighted(G.MODES, r);
+    const allow = makeAllow(chosenMode);
+    const lead = buildLead(r, G, lane, allow);
+    const counter = buildCounter(r, G, lead, lane, allow, chosenMode);
+    const bass = buildBass(r, G, lead, lane, allow);
+    const drums = buildDrums(r, G, lead, allow, chosenMode);
     const sw = buildSwitch(r, G, lead, bass, drums);
-    const rhythm = buildRhythm(r, G, chosenMode);
+    const rhythm = buildRhythm(r, G, chosenMode, lead, sw, allow);
     const p = {
       anchor: pick(lane.anchors, r),
       bpm: int(lo, hi, r),
@@ -267,12 +287,12 @@ const OneEngine = (() => {
       lead, counter, bass, drums, sw, rhythm,
     };
     const styleText = style(p, G);
-    p.styleHasTwitch = styleText.includes("twitch percussion:");
     const lyricsText = lyrics(p, G, r);
     const warnings = Guard.check(`${styleText}\n${lyricsText}`).map((h) => ({ ...h, message: `${h.rule}: "${h.word}" ${h.why}` }));
-    const weirdness = int(G.SLIDERS.weirdness[0], G.SLIDERS.weirdness[1], r);
-    const styleInfluence = int(G.SLIDERS.styleInfluence[0], G.SLIDERS.styleInfluence[1], r);
-    const model = r() < 0.5 ? "v6-wild" : "v6";
+    const S = G.SLIDERS[chosenMode] || G.SLIDERS.switch;
+    const weirdness = int(S.weirdness[0], S.weirdness[1], r);
+    const styleInfluence = int(S.styleInfluence[0], S.styleInfluence[1], r);
+    const model = chosenMode === "switch" && r() < 0.5 ? "v6-wild" : "v6";
     return {
       style: styleText,
       lyrics: lyricsText,
@@ -283,7 +303,7 @@ const OneEngine = (() => {
         genre: G.id, genreLabel: G.label, lane: lane.label, mode: chosenMode, seed: seed >>> 0,
         title: `${pick(G.TITLE.a, r)} ${pick(G.TITLE.b, r)}`, bpm: p.bpm, key: harmony.key,
       },
-      fingerprint: [G.id, counter.source, lead.source, lead.character, lead.motif, lead.articulation, lead.human, chosenMode === "loop" ? "loop" : sw.what, harmony.key].join("|"),
+      fingerprint: [G.id, chosenMode === "loop" ? "loop" : counter.source, lead.source, lead.character, lead.motif, lead.articulation, lead.human, chosenMode === "switch" ? sw.tag : chosenMode, harmony.key].join("|"),
       parts: { lead, counter, bass, drums, switch: sw, rhythm },
       warnings,
     };
@@ -291,7 +311,7 @@ const OneEngine = (() => {
 
   const genres = () => Object.values(Genres).map((g) => ({ id: g.id, label: g.label, blurb: g.blurb }));
 
-  return { generate, genres };
+  return { generate, genres, EVERY };
 })();
 
 if (typeof module !== "undefined") module.exports = OneEngine;

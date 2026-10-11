@@ -40,6 +40,11 @@ const OneGuard = (() => {
       re: /\b(sax\w*|clarinet|flugelhorn|harmon mute|rips?|fall-offs?|rhodes|wurlitzer|electric piano|hammond|leslie|saloon|ragtime|dixieland|big band|marching band|brass band|swing\w*|swung|bebop|blues\w*|wail\w*|twang\w*|spring reverb|pentatonic|phrygian|flat-five|ninths?|bossa|latin|reggae|ska|dub|guiro|frame drum|acid|squelch\w*|supersaw|laser|chiptune|8-bit|game-console|theremin|ping-pong|ramp\w*|builds?|building|techno|trance|rave|electro|synthwave|retrowave|smooth|lounge|elevator|new age|meditat\w*|relax\w*|mellow|lush|ghost notes|breakbeat|groovy|swamp\w*|easy listening)\b/i,
     },
     {
+      name: "genre drift (spin-offs)",
+      why: "pulls the spin-off genres toward tropical house, worship music, indie rock or old-school pastiche",
+      re: /\b(tropical house|moombahton|reggaeton|afrobeats?|dancehall|dembow|ballad|dream pop|synth-?pop|bedroom pop|future bass|steel drums?|marimba|ukulele|summer|beach|island|worship|praise|hymn|sermon|preach\w*|testimony|amen|spiritual|clap-along|indie|singer-songwriter|shoegaze|grunge|pop punk|screamo|soundcloud|nostalgic|wholesome|uplifting|turntabl\w*|boogie|g-funk|talk ?box|wah(-wah)?|clavinet|slap bass|walking bass|golden era|90s|nineties|old[- ]school|east coast|trip hop|beat tape|jazz-hop|gospel|church)\b/i,
+    },
+    {
       name: "negation",
       why: "\"no X\" plants X",
       re: /\bno\s+\w+/i,
@@ -57,6 +62,12 @@ const OneGuard = (() => {
     "bieber", "justin bieber", "xxxtentacion", "xxx", "jahseh", "chance the rapper", "chancelor", "cocoa butter kisses",
     "acid rap", "bigxthaplug", "big x tha plug", "big x", "poo bear", "skrillex", "benny blanco", "mmhmm", "the largest",
     "t.i.", "bigx", "nico segal", "donnie trumpet", "social experiment",
+    "bloodpop", "finneas", "andrew watt", "jon bellion", "the kid laroi", "daniel caesar", "giveon", "quavo", "peaches",
+    "xxx tentacion", "tentacion", "onfroy", "potsu", "shiloh dynasty", "john cunningham", "nick mira", "taz taylor",
+    "internet money", "ski mask", "juice wrld", "lil peep", "jocelyn flores", "chano", "lil chano", "peter cottontale",
+    "cottontale", "nate fox", "cam o'bi", "vic mensa", "twista", "coloring book", "noname", "smino",
+    "tha plug", "bandplay", "tony coles", "finesse2tymes", "the whispers", "and the beat goes on", "9th wonder",
+    "pete rock", "dj premier", "alchemist", "madlib", "dilla", "j dilla", "just blaze", "kanye",
   ];
   const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const NAME_RE = new RegExp(`(^|[^a-z0-9])(${NAMES.map(esc).join("|")})($|[^a-z0-9])`, "i");
