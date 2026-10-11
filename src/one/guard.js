@@ -54,6 +54,9 @@ const OneGuard = (() => {
     "a milli", "blessings", "mcafee", "bruddanem", "glory", "lil durk", "durk", "bangladesh", "vinylz",
     "boi-1da", "lex luger", "dj khalil", "timbaland", "pi'erre bourne", "kenny beats", "tay keith", "mannie fresh",
     "three 6 mafia", "dj paul", "cardo", "dreamville",
+    "bieber", "justin bieber", "xxxtentacion", "xxx", "jahseh", "chance the rapper", "chancelor", "cocoa butter kisses",
+    "acid rap", "bigxthaplug", "big x tha plug", "big x", "poo bear", "skrillex", "benny blanco", "mmhmm", "the largest",
+    "t.i.", "bigx", "nico segal", "donnie trumpet", "social experiment",
   ];
   const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const NAME_RE = new RegExp(`(^|[^a-z0-9])(${NAMES.map(esc).join("|")})($|[^a-z0-9])`, "i");
