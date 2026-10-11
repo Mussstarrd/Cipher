@@ -4,7 +4,22 @@ Suno v6 prompt engines, each a single self-contained page in `dist/`. **ONE OF O
 
 ## ONE OF ONE (`dist/one.html`)
 
-One button. It fills Suno's create screen in Suno's order: **Lyrics → Styles → Exclude styles → Sliders**, each with a Copy button.
+One button and a genre row. It fills Suno's create screen in Suno's order: **Lyrics → Styles → Exclude styles → Sliders**, each with a Copy button, plus a pinned paste bar that copies the next field in that order.
+
+**Style field order.** Suno weights the front and reads it as tags, so the rhythm identity opens the field and is never cut: `anchor, BPM, key, syncopation tag, twitch tag, triplet-slur-on-beat-3 tag (60%), switch-or-loop tag, low-register tag (70%), lead handle, mix tag, instrumental.` Then the prose: lead (every slot), bass, drums, counter; trimmed from the end when it runs past 1,000 characters.
+
+**Three modes.** Switch (40%): one axis (half-time, double-time, key falls, new drums, strip, flip) whose words appear in the head tag, the `[Beat Switch]` cue and every section after it, so nothing "returns". Loop (35%): "minimal" plus a loop tag up front, no counter instrument, and five identical `[Loop | same loop, ...]` cues; the words Verse, Hook and Break never appear. Straight (25%): one locked pocket. "Every N bars" phrases are capped at one per roll and zero in loop mode, because they teach Suno to change something every four bars.
+
+**Genres** (`src/one/genres.js`, each a pack that overrides whole grammar sections):
+
+| genre | identity | structure |
+| --- | --- | --- |
+| Syncopated hip hop | the base engine: found sounds, mutant synths, guitar, organ, low brass, flipped wind | switch / loop / straight |
+| R&B radio pop | glossy keys, tropical plucks, trap-soul guitar; major keys 60%; Weirdness 30–45 | verse, pre-hook, hook, **[Feature Verse]** slot for a guest |
+| Soul / emo hip hop | drawbar organ, tine keys, bright piano, sad guitar, sped-up soul sample; buzzing 808 | switch 60 / loop 20 / straight 20 |
+| Boom bap soul mashup | sped-up soul record sliced into stabs, 12-bit snare, boom kick, modern 808 | switch 55 / loop 25 / straight 20 |
+
+All four are instrumental.
 
 Each roll picks a **lane** that sets the opening tags and the instrument families: South Side brass (trumpet sections, French horns with trombones, sliding tuba, bass trombone, sousaphone; a tuba or sousaphone bass about half the time), Electronic mutant (rubber-band mono synth, woozy seasick synth, car-alarm lead, pager lead, underwater synth...), Crate flip (trap flute, erhu, harmonica, bamboo flute, all framed as a pitched, flipped sample over trap drums and 808s so they never turn into film score), Drunk syrup (drunken detuned organ, wheezing broken organ, sticky out-of-tune piano) and Minimal left-field. Each family has its own processing words, so a tuba gets "blown so hard the brass rasps" and a synth gets "glide time drifting slower and faster by hand". Every roll also has a **counter** instrument from a second family and a hand-played **percussion color** (trap maracas, military snare rudiments, tambourine, woodblock, finger snaps...).
 
@@ -65,7 +80,7 @@ Press **Roll**. Each roll picks a lane (Dark Trap, Rage, Drill, Melodic Trap, Hy
 
 The same settings and roll number always give the same package. The research behind the engine is in [`docs/research.md`](docs/research.md).
 
-## Vocabulary rule (all three engines)
+## Vocabulary rule (all engines)
 
 Only modern hip hop and R&B production words. Field tests showed that world and folk instruments (erhu, koto, sitar, banjo, tuba, whistle, pizzicato, cello, harp, pipe organ), film words (cinematic, orchestral, eerie, haunting) and lo-fi sound design (cassette, vinyl crackle, sewer and basement rooms, found-object percussion) turn Suno's output into film-score background music. A `SOUNDTRACK` lint blocks all of them, and the Exclude field carries `cinematic, orchestral, film score, world music, ambient, lo-fi`.
 
