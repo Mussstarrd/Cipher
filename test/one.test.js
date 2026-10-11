@@ -14,14 +14,14 @@ test("same seed, same package", () => {
 test("every grammar entry passes the guard", () => {
   const walk = (o, path) => {
     if (typeof o === "string") assert.deepStrictEqual(Guard.check(o), [], `${path}: ${o}`);
-    else for (const k of Object.keys(o)) walk(o[k], `${path}.${k}`);
+    else if (o && typeof o === "object") for (const k of Object.keys(o)) if (k !== "EXCLUDE") walk(o[k], `${path}.${k}`);
   };
   walk(G, "G");
 });
 
 test("every roll is clean and inside Suno's limits", () => {
-  for (const seed of seeds) {
-    const out = E.generate({ seed });
+  for (const g of E.genres()) for (const seed of seeds) {
+    const out = E.generate({ seed, genre: g.id });
     assert.deepStrictEqual(out.warnings, [], `${seed}\n${out.style}\n${out.lyrics}`);
     assert.ok(out.style.length <= 1000, out.style);
     assert.ok(out.lyrics.length <= 5000);
@@ -31,27 +31,38 @@ test("every roll is clean and inside Suno's limits", () => {
 
 test("the lead gets every slot, up front", () => {
   for (const seed of seeds) {
-    const { style, parts } = E.generate({ seed });
+    const { style, lyrics, parts } = E.generate({ seed });
     const L = parts.lead;
-    for (const slot of ["source", "character", "register", "motif", "articulation", "human", "placement"]) {
+    for (const slot of ["source", "character", "register", "motif", "articulation", "human"]) {
       assert.ok(style.includes(L[slot]), `${slot} missing: ${style}`);
     }
+    // Placement always reaches Suno: in the style field or the intro tag.
+    assert.ok(style.includes(L.placement) || lyrics.includes(L.placement.split(",")[0]), style);
     assert.ok(style.indexOf("lead:") < style.indexOf("bass:") && style.indexOf("bass:") < style.indexOf("drums:"), style);
+    const head = style.slice(0, 260);
+    for (const slot of ["register", "sync", "twitch", "cadence", "mode"]) assert.ok(head.includes(parts.rhythm[slot]), `${slot} not in the front tags: ${style}`);
   }
 });
 
-test("the lyrics field is section tags only, with a real beat switch", () => {
+test("the lyrics field is section tags only: a real beat switch, or one hypnotic loop", () => {
+  let loops = 0;
   for (const seed of seeds) {
-    const { lyrics } = E.generate({ seed });
+    const { lyrics, meta } = E.generate({ seed });
     for (const line of lyrics.split("\n").filter(Boolean)) assert.match(line, /^\[[^\]]+\]$/, line);
-    assert.match(lyrics, /\[Beat Switch \| /);
+    if (meta.mode === "loop") {
+      loops++;
+      assert.ok(!/Beat Switch/.test(lyrics));
+      assert.ok((lyrics.match(/\[Loop \| /g) || []).length >= 4, lyrics);
+    } else assert.match(lyrics, /\[Beat Switch \| /);
     assert.ok(lyrics.trimEnd().endsWith("[End]"));
   }
+  assert.ok(loops > seeds.length * 0.3 && loops < seeds.length * 0.5, `${loops} loops`);
 });
 
 test("vocals are always excluded; sliders follow the v6 research", () => {
   const out = E.generate({ seed: 7 });
   assert.ok(out.exclude.startsWith("vocals, singing, rap, choir"));
+  assert.ok(out.exclude.length <= 1000);
   for (const g of ["jazz", "blues", "EDM", "techno", "elevator music"]) assert.ok(out.exclude.includes(g), g);
   for (const seed of seeds.slice(0, 300)) {
     const { sliders, settings } = E.generate({ seed });
@@ -77,14 +88,16 @@ test("clash rules hold", () => {
   }
 });
 
-test("every roll has a counter instrument, a hand-played percussion color and twitch percussion", () => {
+test("every roll has a counter instrument and twitch percussion; most keep the percussion color", () => {
+  let colors = 0;
   for (const seed of seeds) {
     const { style, lyrics, parts } = E.generate({ seed });
     assert.notStrictEqual(parts.counter.family, parts.lead.family);
     assert.ok(style.includes(`counter: ${parts.counter.source}`), style);
-    assert.ok(style.includes(parts.drums.color), style);
+    if (style.includes(parts.drums.color)) colors++;
     assert.ok(`${style}\n${lyrics}`.includes(parts.drums.twitch.sound));
   }
+  assert.ok(colors > seeds.length * 0.8, `${colors} of ${seeds.length} keep the percussion color`);
 });
 
 test("South Side brass always carries brass", () => {

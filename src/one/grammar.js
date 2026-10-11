@@ -10,10 +10,8 @@ const OneGrammar = {
     register: [
       "sitting low-mid, just above the 808",
       "in the low register under the snare",
-      "dead mid register",
       "low-mid, darker than the drums",
       "one octave above the 808 root",
-      "mid register, one higher note per cycle",
       "low, doubling the 808 an octave up",
       "low-mid with the top rolled off",
       "mid register, narrow range",
@@ -349,6 +347,60 @@ const OneGrammar = {
   },
 
   MIX: "crisp modern hip hop mix, punchy, hard 808s",
+
+  // Front tags. Suno weights the first ~200 characters and reads them as
+  // tags, so the rhythm identity lives here and is never cut for length.
+  RHYTHM: {
+    register: [
+      "deep low-register melody",
+      "melody played down low",
+      "sub-low lead melody",
+      "low lead under the hats",
+      "melody an octave below the snare",
+      "low mid-register lead",
+    ],
+    sync: [
+      "off-grid syncopated kicks",
+      "kicks dodging the downbeat",
+      "snare dead on, everything else off-beat",
+      "stop-start syncopated drums",
+      "syncopated 808 pattern",
+      "kicks landing between the beats",
+    ],
+    twitch: [
+      "twitchy stuttering hi-hats",
+      "jittery hat stutters",
+      "hats that twitch and stall",
+      "micro-stutter percussion",
+      "stuttering twitch percussion",
+      "hi-hats that trip over themselves",
+    ],
+    cadence: [
+      "drunk triplet slur on beat 3",
+      "melody slurs into triplets every third beat",
+      "three-note stumble on beat 3",
+      "slurred 808 triplets on the 3",
+      "a drunken triplet bounce",
+      "triplet slurs against straight kicks",
+    ],
+    human: [
+      "unquantized hand-played feel",
+      "loose off-grid timing",
+      "human timing, never snapped to the grid",
+      "played by hand, slightly behind",
+    ],
+    switchTag: ["hard beat switch halfway", "full beat switch at the midpoint", "beat switch into half-time", "hard beat switch, new drums"],
+    loopTag: ["one hypnotic two-bar loop", "minimal one-loop beat", "the same loop the whole way, hypnotic", "minimal hypnotic loop, few elements"],
+  },
+  LOOP_SHARE: 0.4,
+  TEMPO: [[72, 82], [86, 98], [132, 148], [150, 162]],
+  SLIDERS: { weirdness: [55, 65], styleInfluence: [65, 75] },
+  EXCLUDE: [
+    "vocals", "singing", "rap", "choir", "humming", "background vocals", "vocal chops", "chanting",
+    "DJ scratching", "riser", "drum fills",
+    "jazz", "smooth jazz", "blues", "big band", "EDM", "techno", "house", "elevator music", "lounge",
+    "new age", "film score", "cinematic", "orchestral strings", "marching band", "lo-fi",
+  ],
 };
 
 // Instrument families. Each source is "full description|short handle"; each
@@ -480,33 +532,34 @@ OneGrammar.FAMILIES = {
 // Lanes set the opening tags and which instrument families a roll can use.
 OneGrammar.LANES = [
   {
-    id: "southside", label: "South Side brass", weight: 2,
+    id: "southside", label: "South Side brass", weight: 1,
     anchors: ["southern trap, orchestral brass", "Atlanta trap, heavy brass", "southern hip hop, regal brass trap"],
     families: { brass: 10, organ: 1, wind: 1 },
+    counterFamily: "brass",
     bass: ["a sliding tuba doubling the 808", "a sousaphone pumping the root under the 808"],
   },
   {
-    id: "electronic", label: "Electronic mutant", weight: 2,
+    id: "electronic", label: "Electronic mutant", weight: 3,
     anchors: ["experimental trap", "left-field trap", "experimental drill", "minimal experimental trap"],
     families: { synth: 6, guitar: 1 },
     bass: [],
   },
   {
-    id: "crate", label: "Crate flip", weight: 2,
+    id: "crate", label: "Crate flip", weight: 1,
     anchors: ["sample-flip hip hop, hard trap drums", "experimental hip hop, flipped sample", "Detroit hip hop, flipped sample"],
-    families: { wind: 4, organ: 2, guitar: 2, brass: 1 },
+    families: { wind: 2, organ: 2, guitar: 3 },
     bass: [],
   },
   {
     id: "syrup", label: "Drunk syrup", weight: 1,
     anchors: ["Houston slowed trap, woozy", "southern trap, slowed and syrupy"],
-    families: { organ: 3, wind: 2, brass: 2 },
+    families: { organ: 3, wind: 1, brass: 1, synth: 1 },
     bass: ["a sliding tuba doubling the 808"],
   },
   {
-    id: "minimal", label: "Minimal left-field", weight: 1,
+    id: "minimal", label: "Minimal left-field", weight: 2,
     anchors: ["minimal left-field hip hop", "experimental hip hop, minimal", "Atlanta experimental trap"],
-    families: { organ: 2, guitar: 2, synth: 2, wind: 1 },
+    families: { organ: 2, guitar: 2, synth: 3 },
     bass: [],
   },
 ];

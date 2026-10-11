@@ -26,9 +26,9 @@ const OneTheory = (() => {
 
   const name = (pc, tonic, tonality) => (SHARP_KEYS[tonality].has(tonic) ? SHARP : FLAT)[((pc % 12) + 12) % 12];
 
-  function harmony(r, pick, avoidKeys = []) {
-    // Minor about 85% of the time.
-    const pool = LOOPS.filter((l) => (r() < 0.85 ? l.tonality === "minor" : l.tonality === "major"));
+  function harmony(r, pick, avoidKeys = [], majorShare = 0.15) {
+    // Minor most of the time; a genre pack can raise the major share.
+    const pool = LOOPS.filter((l) => (r() < 1 - majorShare ? l.tonality === "minor" : l.tonality === "major"));
     const loop = pick(pool.length ? pool : LOOPS, r);
     const keys = loop.tonality === "minor" ? MINOR_KEYS : MAJOR_KEYS;
     let tonic = pick(keys, r);

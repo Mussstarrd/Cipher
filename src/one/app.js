@@ -21,10 +21,43 @@
     }
   };
   const recentKeys = [];
+  const GENRE_KEY = "oneofone.genre.v1";
+  let genre = "hiphop";
+  try {
+    const saved = localStorage.getItem(GENRE_KEY);
+    if (saved && E.genres().some((g) => g.id === saved)) genre = saved;
+  } catch {
+    /* default genre */
+  }
+
+  function renderGenres() {
+    const row = $("genres");
+    row.textContent = "";
+    for (const g of E.genres()) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "genre";
+      b.setAttribute("role", "radio");
+      b.setAttribute("aria-checked", String(g.id === genre));
+      b.textContent = g.label;
+      b.onclick = () => {
+        genre = g.id;
+        try {
+          localStorage.setItem(GENRE_KEY, genre);
+        } catch {
+          /* fine */
+        }
+        renderGenres();
+        roll();
+      };
+      row.appendChild(b);
+    }
+    $("blurb").textContent = E.genres().find((g) => g.id === genre).blurb;
+  }
 
   function roll() {
     for (let i = 0; i < 40; i++) {
-      pkg = E.generate({ seed: Math.floor(Math.random() * 4294967295), avoidKeys: recentKeys });
+      pkg = E.generate({ seed: Math.floor(Math.random() * 4294967295), genre, avoidKeys: recentKeys });
       if (!seen.has(pkg.fingerprint)) break;
     }
     remember(pkg.fingerprint);
@@ -68,7 +101,7 @@
     vibe.textContent = "";
     const em = document.createElement("em");
     em.textContent = pkg.meta.title;
-    vibe.append(em, ` · ${pkg.meta.lane} · ${pkg.meta.bpm} BPM · ${pkg.meta.key}`);
+    vibe.append(em, ` · ${pkg.meta.lane} · ${pkg.meta.mode === "loop" ? "hypnotic loop" : "beat switch"} · ${pkg.meta.bpm} BPM · ${pkg.meta.key}`);
     $("lyrics").textContent = pkg.lyrics;
     $("lyrics-count").textContent = `${pkg.lyrics.length}/5000`;
     $("style").textContent = pkg.style;
@@ -105,5 +138,6 @@
   }
 
   $("roll").onclick = roll;
+  renderGenres();
   roll();
 })();

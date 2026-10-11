@@ -37,6 +37,14 @@
   .roll:focus-visible { outline: 3px solid var(--text); outline-offset: 3px; }
   .roll:active { transform: scale(0.99); }
 
+  .genres { display: flex; flex-wrap: wrap; gap: 8px; }
+  .genre {
+    appearance: none; border: 1px solid var(--line); background: var(--panel); color: var(--muted); border-radius: 999px;
+    padding: 8px 14px; font-family: var(--sans); font-size: 13px; font-weight: 600; cursor: pointer;
+  }
+  .genre[aria-checked="true"] { background: var(--text); color: var(--bg); border-color: var(--text); }
+  .genre:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .blurb { font-size: 13px; color: var(--muted); margin: -8px 0 0; line-height: 1.45; }
   .vibe { font-size: 15px; line-height: 1.45; color: var(--text); margin: 0; }
   .vibe em { font-style: normal; color: var(--accent); }
 
@@ -76,8 +84,11 @@
     <span class="roll-id" id="roll-id"></span>
   </header>
 
+  <div class="genres" id="genres" role="radiogroup" aria-label="Genre"></div>
+
   <button class="roll" id="roll" type="button">ROLL A ONE-OF-ONE</button>
 
+  <p class="blurb" id="blurb"></p>
   <p class="vibe" id="vibe"></p>
 
   <section class="field">
