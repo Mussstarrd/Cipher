@@ -18,6 +18,8 @@ One button and a genre row. It fills Suno's create screen in Suno's order: **Lyr
 | R&B radio pop | glossy keys, tropical plucks, trap-soul guitar; major keys 60%; Weirdness 30–45 | verse, pre-hook, hook, **[Feature Verse]** slot for a guest |
 | Soul / emo hip hop | drawbar organ, tine keys, bright piano, sad guitar, sped-up soul sample; buzzing 808 | switch 60 / loop 20 / straight 20 |
 | Boom bap soul mashup | sped-up soul record sliced into stabs, 12-bit snare, boom kick, modern 808 | switch 55 / loop 25 / straight 20 |
+| Country × hip hop | Nashville acoustic instruments (dobro, banjo, pedal steel, baritone guitar, harmonica) close and dry on a Dallas 808 and trap hats; two lanes: **Stomp and clap radio** (122–150) and **Lonely trap-country** (70–86); unlocks the words country, banjo, slide guitar, twang for this genre only | straight 45 / switch 40 / loop 15, with a **[Feature Verse]** slot |
+| Prof | two lanes after the 2026 record: **Low tide crawl** (68–92: sour drunk piano, dark wheezing organ, 808 that wades through mud, slurred triplets) and **Good time boy** (94–142: boot stomps and gang claps, huge saw bass, high chirping sine and siren hooks, trombone and tuba stabs); its own ban list (circus, pirate, novelty, saloon...) because that's how critics describe the catalog and Suno plays words literally | per lane |
 
 All four are instrumental.
 

@@ -45,6 +45,16 @@ const OneGuard = (() => {
       re: /\b(tropical house|moombahton|reggaeton|afrobeats?|dancehall|dembow|ballad|dream pop|synth-?pop|bedroom pop|future bass|steel drums?|marimba|ukulele|summer|beach|island|worship|praise|hymn|sermon|preach\w*|testimony|amen|spiritual|clap-along|indie|singer-songwriter|shoegaze|grunge|pop punk|screamo|soundcloud|nostalgic|wholesome|uplifting|turntabl\w*|boogie|g-funk|talk ?box|wah(-wah)?|clavinet|slap bass|walking bass|golden era|90s|nineties|old[- ]school|east coast|trip hop|beat tape|jazz-hop|gospel|church)\b/i,
     },
     {
+      name: "genre drift (country)",
+      why: "pulls country trap toward bluegrass, honky-tonk, novelty or bro-country cliches",
+      re: /\b(chicken pickin\w*|nashville sound|southern rock|boot-scoot\w*|square dance|bro-country|honky-tonk|line dance|honky tonk|rockabilly|barn dance|honkytonk|americana|bluegrass|dirt road|hillbilly|moonshine|red dirt|mariachi|two-step|tailgate|campfire|jamboree|yodel\w*|hayride|tex-mex|yee haw|yee-haw|folk\w*|cowgirl|stadium|whiskey|hoedown|zydeco|cowboy|yeehaw|outlaw|rodeo|truck|cajun|beer)\b/i,
+    },
+    {
+      name: "genre drift (Prof)",
+      why: "critics describe this catalog as circus, pirate or novelty music, and Suno plays those words literally",
+      re: /\b(clown\w*|saloon|pirate\w*|sea shanty|shanty|nautical|sailor\w*|surf|kazoo|novelty|comedy|comedic|goofy|bar band|pub rock)\b/i,
+    },
+    {
       name: "negation",
       why: "\"no X\" plants X",
       re: /\bno\s+\w+/i,
@@ -68,6 +78,8 @@ const OneGuard = (() => {
     "cottontale", "nate fox", "cam o'bi", "vic mensa", "twista", "coloring book", "noname", "smino",
     "tha plug", "bandplay", "tony coles", "finesse2tymes", "the whispers", "and the beat goes on", "9th wonder",
     "pete rock", "dj premier", "alchemist", "madlib", "dilla", "j dilla", "just blaze", "kanye",
+    "2 chainz", "84 caprice", "a crawl through a low tide", "aesop rock", "ahoy", "animal patrol", "apeshit", "atmosphere", "bar breaker", "beatchefs", "big chocolate", "borderline", "bow legged", "bow-legged", "brian eisner", "brother ali", "cashinova", "charley cooks", "chickenbone", "chris karns", "cory grindberg", "cozz", "creek boy", "curtiss king", "devils gate", "dillon parker", "dj absolute", "dj fundo", "dj two stacks", "dj vajra", "e-40", "fifth element", "fighter or action: they match ordinary words.", "flower boy", "frankie teardrop", "fundo", "garden of eden", "ghosttown", "good time boy", "high priced shoes", "jacob anderson", "jake anderson", "jewelry duty", "jonray", "jordy bangs", "kaiser von powderhorn", "kevin gates", "kia boy", "king gampo", "kyle c-e", "liability", "mac irv", "markmadethis", "method man", "mike campbell", "muja messiah", "mux mool", "noearth", "pack a lunch", "pete & bas", "pookie baby", "powderhorn", "powderhorn suites", "project gampo", "rahzwell", "reaching for fire", "recession music", "redman", "rhymesayers", "sauce walka", "say no", "scoop", "send me up", "squad goals", "stophouse", "t-pain", "taylor j. never add bare ant", "that mexican ot", "time bomb", "tough boy", "vanguard pow", "waka flocka", "willie clayton", "willie wonka",
+    "a bar song", "amen (already in the guard) or roll: they match ordinary words.", "austin nivarel", "austin post", "bailey zimmerman", "beautifully broken", "big x", "big x tha plug", "breland", "charley cooks", "charlie handsome", "collins chibueze", "crowell", "danny majic", "f-1 trillion", "gabe simon", "good news", "high road", "i had some help", "jason deford", "jelly roll", "jessie murph", "koe wetzel", "louis bell", "morgan wallen", "need a favor", "nevin sastry", "nivarel", "post malone", "sastry", "save me", "sean cook", "shaboozey", "tony coles", "wallen", "where i've been. never add bare liar", "whitsitt chapel", "zach crowell",
   ];
   const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const NAME_RE = new RegExp(`(^|[^a-z0-9])(${NAMES.map(esc).join("|")})($|[^a-z0-9])`, "i");

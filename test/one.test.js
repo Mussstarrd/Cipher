@@ -17,7 +17,14 @@ test("every grammar and genre entry passes the guard", () => {
     else if (o && typeof o === "object") for (const k of Object.keys(o)) if (k !== "EXCLUDE" && typeof o[k] !== "function") walk(o[k], `${path}.${k}`);
   };
   walk(G, "G");
-  walk(require("../src/one/genres.js"), "genres");
+  for (const pack of Object.values(require("../src/one/genres.js"))) {
+    const allow = pack.grammar.ALLOW;
+    const walkAllow = (o, path) => {
+      if (typeof o === "string") assert.deepStrictEqual(Guard.check(o, allow), [], `${path}: ${o}`);
+      else if (o && typeof o === "object" && !(o instanceof RegExp)) for (const k of Object.keys(o)) if (k !== "EXCLUDE" && k !== "label" && typeof o[k] !== "function") walkAllow(o[k], `${path}.${k}`);
+    };
+    walkAllow(pack.grammar, `genres.${pack.id}`);
+  }
 });
 
 test("every N bars phrases are capped: one per roll, none in loop mode", () => {
@@ -41,10 +48,12 @@ test("switch mode repeats its axis words after the switch, and never says return
   }
 });
 
-test("pop always leaves a feature-verse slot; every genre stays instrumental", () => {
+test("pop and country always leave a feature-verse slot; every genre stays instrumental", () => {
   for (const seed of seeds.slice(0, 300)) {
     const pop = E.generate({ seed, genre: "pop" });
     assert.match(pop.lyrics, /\[Feature Verse \| /);
+    const country = E.generate({ seed, genre: "country" });
+    if (country.meta.mode !== "loop") assert.match(country.lyrics, /\[Feature Verse \| /);
     for (const g of E.genres()) {
       const o = E.generate({ seed, genre: g.id });
       assert.ok(o.style.endsWith("instrumental.") || o.style.includes("instrumental."), o.style);
@@ -156,4 +165,18 @@ test("never two tubas, never a low lead over a horn bass", () => {
     if (/tuba|sousaphone/.test(lead.source)) assert.ok(!/tuba|sousaphone/.test(bass.source), `${lead.source} / ${bass.source}`);
     if (lead.low) assert.ok(!/tuba|sousaphone/.test(bass.source), `${lead.register} / ${bass.source}`);
   }
+});
+
+test("Prof holds two moods with their own tempo and words", () => {
+  const seen = { lowtide: 0, goodtime: 0 };
+  for (const seed of seeds.slice(0, 600)) {
+    const { meta, parts, style } = E.generate({ seed, genre: "prof" });
+    const lane = meta.lane === "Low tide crawl" ? "lowtide" : "goodtime";
+    seen[lane]++;
+    if (lane === "lowtide") assert.ok(meta.bpm <= 92, `${meta.bpm}`);
+    else assert.ok(meta.bpm >= 94, `${meta.bpm}`);
+    assert.ok(!/whistle|circus|pirate|novelty/i.test(style), style);
+    assert.ok(parts.lead.family !== "siren_synth" || lane === "goodtime");
+  }
+  assert.ok(seen.lowtide > 150 && seen.goodtime > 150, JSON.stringify(seen));
 });

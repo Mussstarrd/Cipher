@@ -285,6 +285,7 @@ const OneEngine = (() => {
       bpm: int(lo, hi, r),
       key: `in ${harmony.key}`,
       mode: chosenMode,
+      lane: lane.id,
       lead, counter, bass, drums, sw, rhythm,
     };
     const styleText = style(p, G);

@@ -340,7 +340,7 @@ const OneGrammar = {
     slur: ["drunk 808 bounce", "slurred triplet bounce", "a stumble on beat 3", "808 slurring into beat 3", "three-note stumble on beat 3", "triplet stumble on beat 3", "drunken bounce pocket", "hats dragging on beat 3", "lazy triplet 808 slide", "stumbling triplet kicks"],
     low: ["low register lead", "deep low-mid lead", "lead under the snare", "lead an octave above the 808", "low dark lead melody", "low-mid lead, top rolled off", "lead parked in the low mids", "deep baritone melody", "lead below the hats", "lead tucked above the 808"],
     loop: ["one hypnotic loop", "minimal one-loop beat", "hypnotic repeating loop", "single loop, never changes", "one-bar loop, locked", "minimal, one riff only", "hypnotic minimal trap", "same two bars all song", "two-bar loop, hypnotic", "stripped minimal loop"],
-    straight: ["steady pocket all the way", "one groove, locked in", "the beat never lets up"],
+    straight: ["steady pocket start to finish", "one groove, locked in", "the beat never lets up"],
   },
   SLUR_SHARE: 0.6,
   LOW_SHARE: 0.7,
