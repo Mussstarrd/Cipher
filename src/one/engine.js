@@ -204,6 +204,8 @@ const OneEngine = (() => {
       [head, leadLine, bassShort, drumShort],
       [head, leadNoPlace, bassShort, drumShort],
       [head, leadShort, bassShort, drumShort],
+      [head, leadShort, bassShort, `drums: ${drums.kick}, ${drums.snare}, ${drums.hats}.`],
+      [head, leadShort, bassShort],
     ];
     let s;
     for (const t of tries) if ((s = t.filter(Boolean).join(" ")).length <= 1000) break;

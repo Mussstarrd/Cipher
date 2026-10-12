@@ -155,7 +155,7 @@ const OneGenres = (() => {
     grammar: {
       TEMPO: [[70,86],[96,110],[122,150]],
       MAJOR_SHARE: 0.55,
-      MIX_TAG: "radio-ready country trap mix, 808 heavy, acoustic bright",
+      MIX_TAG: "radio country trap mix, 808 heavy",
       MODES: [["straight",45],["switch",40],["loop",15]],
       SLUR_SHARE: 0.4,
       LOW_SHARE: 0.5,

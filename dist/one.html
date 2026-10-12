@@ -1048,7 +1048,7 @@ const OneGenres = (() => {
     grammar: {
       TEMPO: [[70,86],[96,110],[122,150]],
       MAJOR_SHARE: 0.55,
-      MIX_TAG: "radio-ready country trap mix, 808 heavy, acoustic bright",
+      MIX_TAG: "radio country trap mix, 808 heavy",
       MODES: [["straight",45],["switch",40],["loop",15]],
       SLUR_SHARE: 0.4,
       LOW_SHARE: 0.5,
@@ -1350,6 +1350,8 @@ const OneEngine = (() => {
       [head, leadLine, bassShort, drumShort],
       [head, leadNoPlace, bassShort, drumShort],
       [head, leadShort, bassShort, drumShort],
+      [head, leadShort, bassShort, `drums: ${drums.kick}, ${drums.snare}, ${drums.hats}.`],
+      [head, leadShort, bassShort],
     ];
     let s;
     for (const t of tries) if ((s = t.filter(Boolean).join(" ")).length <= 1000) break;
