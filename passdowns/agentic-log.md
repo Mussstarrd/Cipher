@@ -20,3 +20,4 @@ Notes:
 - After 9:32 Oct 9: equity ≈ $2,423 (settled ≈ $1,444, unsettled $979 until Oct 12). Week P&L vs $2,500 start: −$77. Equity high for v4: $2,423.
 - 2026-10-09 9:45: no gap entry. Top gaps: TSLA +1.97%, MRVL +1.70%, MU +1.61% (Tier A best MU +1.61%). Equity $2,423, settled $1,444.
 - 2026-10-09 3:45: flat, nothing to sell. Week (Oct 5–9) close: equity $2,423.29 vs $2,500 start = −$76.71 (−3.1%), all from Jeffery's Oct 7 manual buys and their exit. v4 trades so far: 0.
+- 2026-10-12 9:45: no gap entry. Top gaps: META +1.30% (Tier B), MSFT +0.49%, AAPL +0.45%. All Tier A gapped down (MU −2.6%, AMD −1.3%, SMH −0.8%). Equity $2,423, settled $2,423.
