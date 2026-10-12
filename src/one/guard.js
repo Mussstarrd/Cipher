@@ -72,7 +72,11 @@ const OneGuard = (() => {
   const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const NAME_RE = new RegExp(`(^|[^a-z0-9])(${NAMES.map(esc).join("|")})($|[^a-z0-9])`, "i");
 
-  function check(text) {
+  // `allow` is a genre's own unlock: a RegExp of banned words that genre needs
+  // (country needs "twang", "banjo", "pedal steel"). They are blanked before
+  // the rules run, so everything else in the text is still checked.
+  function check(text, allow) {
+    if (allow) text = text.replace(new RegExp(allow.source, "gi"), " ");
     const hits = [];
     for (const r of RULES) {
       const m = text.match(r.re);

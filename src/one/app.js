@@ -102,7 +102,7 @@
     vibe.textContent = "";
     const em = document.createElement("em");
     em.textContent = pkg.meta.title;
-    vibe.append(em, ` · ${pkg.meta.lane} · ${pkg.meta.mode === "loop" ? "hypnotic loop" : "beat switch"} · ${pkg.meta.bpm} BPM · ${pkg.meta.key}`);
+    vibe.append(em, ` · ${pkg.meta.lane} · ${{ loop: "hypnotic loop", switch: "beat switch", straight: "locked pocket" }[pkg.meta.mode]} · ${pkg.meta.bpm} BPM · ${pkg.meta.key}`);
     $("lyrics").textContent = pkg.lyrics;
     $("lyrics-count").textContent = `${pkg.lyrics.length}/5000`;
     $("style").textContent = pkg.style;

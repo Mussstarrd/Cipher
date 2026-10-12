@@ -269,9 +269,10 @@ const OneEngine = (() => {
     const G = grammarFor(genre);
     const r = mulberry32(seed >>> 0);
     const harmony = T.harmony(r, pick, avoidKeys, G.MAJOR_SHARE);
-    const [lo, hi] = pick(G.TEMPO, r);
     const lane = weighted(G.LANES.map((l) => [l, l.weight]), r);
-    const chosenMode = mode || weighted(G.MODES, r);
+    // A lane may carry its own tempo and mode mix (the Prof moods do).
+    const [lo, hi] = pick(lane.tempo || G.TEMPO, r);
+    const chosenMode = mode || weighted(lane.modes || G.MODES, r);
     const allow = makeAllow(chosenMode);
     const lead = buildLead(r, G, lane, allow);
     const counter = buildCounter(r, G, lead, lane, allow, chosenMode);
@@ -288,7 +289,7 @@ const OneEngine = (() => {
     };
     const styleText = style(p, G);
     const lyricsText = lyrics(p, G, r);
-    const warnings = Guard.check(`${styleText}\n${lyricsText}`).map((h) => ({ ...h, message: `${h.rule}: "${h.word}" ${h.why}` }));
+    const warnings = Guard.check(`${styleText}\n${lyricsText}`, G.ALLOW).map((h) => ({ ...h, message: `${h.rule}: "${h.word}" ${h.why}` }));
     const S = G.SLIDERS[chosenMode] || G.SLIDERS.switch;
     const weirdness = int(S.weirdness[0], S.weirdness[1], r);
     const styleInfluence = int(S.styleInfluence[0], S.styleInfluence[1], r);
