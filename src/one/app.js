@@ -113,7 +113,7 @@
     for (const [name, v] of [["Weirdness", pkg.sliders.weirdness], ["Style Influence", pkg.sliders.styleInfluence]]) sl.appendChild(slider(name, v));
     const chips = $("chips");
     chips.textContent = "";
-    chips.append(chip("Model", pkg.settings.model), chip("Variety", pkg.settings.variety), chip("Max Mode", pkg.settings.maxMode), chip("Instrumental", "On"));
+    chips.append(chip("Model", pkg.settings.model), chip("Variety", pkg.settings.variety), chip("Max Mode", pkg.settings.maxMode), chip("Instrumental", pkg.settings.instrumental));
   }
 
   async function copyText(text) {
@@ -160,7 +160,7 @@
   let pasted = new Set();
 
   const sliderLine = () => `Weirdness ${pkg.sliders.weirdness}% · Style Influence ${pkg.sliders.styleInfluence}%`;
-  const settingsLine = () => `Model ${pkg.settings.model} · Variety ${pkg.settings.variety} · Max Mode ${pkg.settings.maxMode} · Instrumental On`;
+  const settingsLine = () => `Model ${pkg.settings.model} · Variety ${pkg.settings.variety} · Max Mode ${pkg.settings.maxMode} · Instrumental ${pkg.settings.instrumental}`;
 
   function block() {
     return [

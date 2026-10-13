@@ -17,8 +17,11 @@ test("every grammar and genre entry passes the guard", () => {
     else if (o && typeof o === "object") for (const k of Object.keys(o)) if (k !== "EXCLUDE" && typeof o[k] !== "function") walk(o[k], `${path}.${k}`);
   };
   walk(G, "G");
+  const VOICE = /\b(vocal\w*|sing\w*|sung|chant\w*|hum\w*|lyric\w*|ad-?lib\w*|falsetto|harmonies|rap\w*|rapper|choir|voices?|spoken|whisper\w*|belt\w*|autotune\w*|hook)\b/i;
   for (const pack of Object.values(require("../src/one/genres.js"))) {
-    const allow = pack.grammar.ALLOW;
+    const allow = pack.grammar.VOCAL
+      ? new RegExp([pack.grammar.ALLOW && pack.grammar.ALLOW.source, VOICE.source].filter(Boolean).join("|"), "i")
+      : pack.grammar.ALLOW;
     const walkAllow = (o, path) => {
       if (typeof o === "string") assert.deepStrictEqual(Guard.check(o, allow), [], `${path}: ${o}`);
       else if (o && typeof o === "object" && !(o instanceof RegExp)) for (const k of Object.keys(o)) if (k !== "EXCLUDE" && k !== "label" && typeof o[k] !== "function") walkAllow(o[k], `${path}.${k}`);
@@ -56,6 +59,11 @@ test("pop and country always leave a feature-verse slot; every genre stays instr
     if (country.meta.mode !== "loop") assert.match(country.lyrics, /\[Feature Verse \| /);
     for (const g of E.genres()) {
       const o = E.generate({ seed, genre: g.id });
+      if (o.settings.instrumental === "Off") {
+        assert.ok(!/instrumental/.test(o.style), o.style);
+        assert.ok(!/vocals|singing|\brap\b/.test(o.exclude), o.exclude);
+        continue;
+      }
       assert.ok(o.style.endsWith("instrumental.") || o.style.includes("instrumental."), o.style);
       assert.ok(o.exclude.startsWith("vocals"));
     }
@@ -184,7 +192,7 @@ test("Prof holds two moods with their own tempo and words", () => {
 test("spin-offs borrow experimental leads about a third of the time, with an in-genre counter", () => {
   const own = require("../src/one/genres.js");
   for (const g of E.genres()) {
-    if (g.id === "hiphop" || g.id === "cross") continue;
+    if (g.id === "hiphop" || g.id === "cross" || g.id === "radio") continue;
     let guests = 0, n = 0;
     for (const seed of seeds.slice(0, 500)) {
       const { parts } = E.generate({ seed, genre: g.id });

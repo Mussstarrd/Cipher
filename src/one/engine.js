@@ -20,6 +20,11 @@ const OneEngine = (() => {
   const Genres = typeof OneGenres !== "undefined" ? OneGenres : require("./genres.js");
   const T = typeof OneTheory !== "undefined" ? OneTheory : require("./theory.js");
   const Guard = typeof OneGuard !== "undefined" ? OneGuard : require("./guard.js");
+  // The lyric writer is only needed by vocal packs; the instrumental page can run without it.
+  const Lyrics = typeof OneLyrics !== "undefined" ? OneLyrics : (() => { try { return require("./lyrics.js"); } catch { return null; } })();
+  // Vocal packs unlock the voice words the instrumental guard bans, and drop the vocal exclusions.
+  const VOICE_WORDS = /\b(vocal\w*|sing\w*|sung|chant\w*|hum\w*|lyric\w*|ad-?lib\w*|falsetto|harmonies|rap\w*|rapper|choir|voices?|spoken|whisper\w*|belt\w*|autotune\w*|hook)\b/i;
+  const VOCAL_EXCLUDE_DROP = /vocal|singing|rap|choir|humming|chant/i;
 
   function mulberry32(a) {
     return () => {
@@ -215,7 +220,7 @@ const OneEngine = (() => {
     const head = [
       `${p.anchor}, ${p.bpm} BPM, ${p.key}`,
       rhythm.sync, rhythm.twitch, rhythm.slur, p.mode === "loop" ? "minimal" : null, rhythm.mode, rhythm.low,
-      lead.handle, G.MIX_TAG, "instrumental",
+      lead.handle, G.MIX_TAG, p.vocal ? p.vocal.tag : G.VOCAL ? "vocals up front" : "instrumental",
     ].filter(Boolean).join(", ") + ".";
     const leadLine = `lead: ${lead.source}, ${lead.character}, ${lead.register}, playing ${lead.motif} as ${lead.articulation}, ${lead.human}, ${lead.placement}.`;
     const leadNoPlace = `lead: ${lead.source}, ${lead.character}, ${lead.register}, playing ${lead.motif} as ${lead.articulation}, ${lead.human}.`;
@@ -327,9 +332,14 @@ const OneEngine = (() => {
       noCounter: !!(G.NO_COUNTER || lane.noCounter),
       lead, counter, bass, drums, sw, rhythm,
     };
+    if (G.VOCAL && Lyrics) {
+      const song = Lyrics.write({ r, pick, lane: lane.id, key: harmony.key, bpm: p.bpm });
+      p.vocal = { tag: song.persona.tag, lyrics: song.lyrics, hook: song.hook, title: song.title, persona: song.persona, theme: song.theme };
+    }
     const styleText = style(p, G);
-    const lyricsText = lyrics(p, G, r);
-    const warnings = Guard.check(`${styleText}\n${lyricsText}`, G.ALLOW).map((h) => ({ ...h, message: `${h.rule}: "${h.word}" ${h.why}` }));
+    const lyricsText = p.vocal ? p.vocal.lyrics : lyrics(p, G, r);
+    const allowRe = G.VOCAL ? new RegExp([G.ALLOW && G.ALLOW.source, VOICE_WORDS.source].filter(Boolean).join("|"), "i") : G.ALLOW;
+    const warnings = Guard.check(`${styleText}\n${lyricsText}`, allowRe).map((h) => ({ ...h, message: `${h.rule}: "${h.word}" ${h.why}` }));
     const S = G.SLIDERS[chosenMode] || G.SLIDERS.switch;
     const weirdness = int(S.weirdness[0], S.weirdness[1], r);
     const styleInfluence = int(S.styleInfluence[0], S.styleInfluence[1], r);
@@ -337,12 +347,13 @@ const OneEngine = (() => {
     return {
       style: styleText,
       lyrics: lyricsText,
-      exclude: G.EXCLUDE.join(", "),
+      exclude: (G.VOCAL ? G.EXCLUDE.filter((x) => !VOCAL_EXCLUDE_DROP.test(x)) : G.EXCLUDE).join(", "),
       sliders: { weirdness, styleInfluence },
-      settings: { model, variety: "Off", maxMode: "On" },
+      settings: { model, variety: "Off", maxMode: "On", instrumental: G.VOCAL ? "Off" : "On" },
       meta: {
         genre: G.id, genreLabel: G.label, lane: G.cross ? `${G.cross.lead} lead × ${G.cross.drums} drums` : lane.label, mode: chosenMode, seed: seed >>> 0,
-        title: `${pick(G.TITLE.a, r)} ${pick(G.TITLE.b, r)}`, bpm: p.bpm, key: harmony.key,
+        title: p.vocal ? p.vocal.title : `${pick(G.TITLE.a, r)} ${pick(G.TITLE.b, r)}`, bpm: p.bpm, key: harmony.key,
+        hook: p.vocal ? p.vocal.hook : undefined, vocal: p.vocal ? p.vocal.persona.tag : undefined,
       },
       fingerprint: [G.id, chosenMode === "loop" ? "loop" : counter.source, lead.source, lead.character, lead.motif, lead.articulation, lead.human, chosenMode === "switch" ? sw.tag : chosenMode, harmony.key].join("|"),
       parts: { lead, counter, bass, drums, switch: sw, rhythm },
