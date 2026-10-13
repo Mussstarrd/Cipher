@@ -184,7 +184,7 @@ test("Prof holds two moods with their own tempo and words", () => {
 test("spin-offs borrow experimental leads about a third of the time, with an in-genre counter", () => {
   const own = require("../src/one/genres.js");
   for (const g of E.genres()) {
-    if (g.id === "hiphop") continue;
+    if (g.id === "hiphop" || g.id === "cross") continue;
     let guests = 0, n = 0;
     for (const seed of seeds.slice(0, 500)) {
       const { parts } = E.generate({ seed, genre: g.id });
@@ -206,4 +206,16 @@ test("Bare minimum: one voice, a kick trick, nothing else", () => {
     assert.ok(meta.mode !== "switch");
     assert.ok(/kick trick:|stutter|double kick|trips|double hit/.test(lyrics), lyrics);
   }
+});
+
+test("Crossbreed stitches two genres and stays clean", () => {
+  const pairs = new Set();
+  for (const seed of seeds.slice(0, 600)) {
+    const out = E.generate({ seed, genre: "cross" });
+    assert.deepStrictEqual(out.warnings, [], `${seed}\n${out.style}\n${out.lyrics}`);
+    assert.ok(out.style.length <= 1000);
+    assert.match(out.style, /crossed with/);
+    pairs.add(out.meta.lane);
+  }
+  assert.ok(pairs.size >= 20, `${pairs.size} pairs`);
 });

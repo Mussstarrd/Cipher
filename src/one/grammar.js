@@ -346,6 +346,7 @@ const OneGrammar = {
   LOW_SHARE: 0.7,
   MODES: [["switch", 40], ["loop", 35], ["straight", 25]],
   MIX_TAG: "crisp punchy radio mix",
+  DRUMS_TAG: "twitchy syncopated trap drums",
   TEMPO: [[72, 82], [86, 98], [132, 148], [150, 162]],
   SLIDERS: { switch: { weirdness: [55, 65], styleInfluence: [65, 75] }, loop: { weirdness: [45, 55], styleInfluence: [75, 75] }, straight: { weirdness: [50, 60], styleInfluence: [70, 75] } },
   EXCLUDE: [

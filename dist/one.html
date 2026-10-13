@@ -678,6 +678,7 @@ const OneGrammar = {
   LOW_SHARE: 0.7,
   MODES: [["switch", 40], ["loop", 35], ["straight", 25]],
   MIX_TAG: "crisp punchy radio mix",
+  DRUMS_TAG: "twitchy syncopated trap drums",
   TEMPO: [[72, 82], [86, 98], [132, 148], [150, 162]],
   SLIDERS: { switch: { weirdness: [55, 65], styleInfluence: [65, 75] }, loop: { weirdness: [45, 55], styleInfluence: [75, 75] }, straight: { weirdness: [50, 60], styleInfluence: [70, 75] } },
   EXCLUDE: [
@@ -920,6 +921,7 @@ const OneGenres = (() => {
       GUEST_SHARE: 0.2,
       GUEST_FRAME: "over a glossy pop R&B beat",
       MIX_TAG: "glossy radio-ready mix, wide and clean",
+      DRUMS_TAG: "glossy pop drums, soft snap, 3-3-2 kick",
       MODES: [["straight",100]],
       SLUR_SHARE: 0,
       LOW_SHARE: 0.4,
@@ -961,6 +963,7 @@ const OneGenres = (() => {
       GUEST_SHARE: 0.3,
       GUEST_FRAME: "over a loose played-in hip hop pocket",
       MIX_TAG: "warm punchy mix, drums up front",
+      DRUMS_TAG: "loose live-feeling soul drums and a buzzing 808",
       MODES: [["switch",60],["loop",20],["straight",20]],
       SLUR_SHARE: 0.4,
       LOW_SHARE: 0.5,
@@ -1009,6 +1012,7 @@ const OneGenres = (() => {
       GUEST_SHARE: 0.3,
       GUEST_FRAME: "over knocking boom bap drums and a modern 808",
       MIX_TAG: "knocking drums, sample bright, 808 heavy, clean mix",
+      DRUMS_TAG: "knocking boom bap drums, 12-bit snare, modern 808",
       MODES: [["switch",55],["loop",25],["straight",20]],
       SLUR_SHARE: 0.5,
       LOW_SHARE: 0.5,
@@ -1057,6 +1061,7 @@ const OneGenres = (() => {
       GUEST_SHARE: 0.2,
       GUEST_FRAME: "over stomping country trap drums and a Dallas 808",
       MIX_TAG: "radio country trap mix, 808 heavy",
+      DRUMS_TAG: "boot stomps and gang claps over a Dallas 808",
       MODES: [["straight",45],["switch",40],["loop",15]],
       SLUR_SHARE: 0.4,
       LOW_SHARE: 0.5,
@@ -1109,6 +1114,7 @@ const OneGenres = (() => {
       GUEST_SHARE: 0.3,
       GUEST_FRAME: "over heavy Midwest hip hop drums and a huge bass",
       MIX_TAG: "loud bar-jukebox mix, bass huge, drums cracking",
+      DRUMS_TAG: "bar-fight stomp drums and a huge bass",
       MODES: [["switch",35],["loop",25],["straight",40]],
       SLUR_SHARE: 0.6,
       LOW_SHARE: 0.6,
@@ -1158,6 +1164,7 @@ const OneGenres = (() => {
       GUEST_SHARE: 0.25,
       GUEST_FRAME: "over bare kick and snare",
       MIX_TAG: "bare, dry, loud, nothing extra",
+      DRUMS_TAG: "bare kick and snare with one kick trick",
       MODES: [["loop",50],["straight",50]],
       SLUR_SHARE: 0.15,
       LOW_SHARE: 0,
@@ -1190,6 +1197,12 @@ const OneGenres = (() => {
         ]);
       },
     },
+  },
+  cross: {
+    id: "cross",
+    label: "Crossbreed",
+    blurb: "The lead and melody from one genre, the drums, bass and groove from another, picked fresh every roll.",
+    grammar: {},
   },
   };
 })();
@@ -1252,6 +1265,30 @@ const OneEngine = (() => {
     const pack = Genres[genreId] || Genres.hiphop;
     return { ...Base, ...pack.grammar, id: pack.id, label: pack.label };
   };
+
+  // Crossbreed: the lead, melody and structure from one genre, the drums, bass
+  // and groove from another, picked fresh each roll. Nothing in a pack can
+  // express it, so the engine stitches two grammars together.
+  function crossbreed(r) {
+    const ids = Object.keys(Genres).filter((id) => id !== "cross");
+    const a = pick(ids, r);
+    const b = pick(ids.filter((id) => id !== a), r);
+    const A = grammarFor(a), B = grammarFor(b);
+    const allow = [A.ALLOW, B.ALLOW].filter(Boolean);
+    return {
+      ...A,
+      id: "cross", label: Genres.cross.label,
+      cross: { lead: A.label, drums: B.label, drumsTag: B.DRUMS_TAG },
+      DRUMS: B.DRUMS, BASS: B.BASS, GROOVE: B.GROOVE, COLOR: B.COLOR, TWITCH: B.TWITCH,
+      TWITCH_LABEL: B.TWITCH_LABEL, TWITCH_FROM_KICK: B.TWITCH_FROM_KICK,
+      RHYTHM: { ...A.RHYTHM, sync: B.RHYTHM.sync, twitch: B.RHYTHM.twitch, slur: B.RHYTHM.slur },
+      SLUR_SHARE: B.SLUR_SHARE,
+      MIX_TAG: A.MIX_TAG.split(",")[0],
+      EXCLUDE: [...new Set([...A.EXCLUDE, ...B.EXCLUDE])],
+      ALLOW: allow.length ? new RegExp(allow.map((x) => x.source).join("|"), "i") : undefined,
+      GUEST_SHARE: 0,
+    };
+  }
 
   // One "every N bars" phrase per roll, none in loop mode.
   function makeAllow(mode) {
@@ -1478,8 +1515,8 @@ const OneEngine = (() => {
   }
 
   function generate({ seed = 1, genre = "hiphop", mode, avoidKeys = [] } = {}) {
-    const G = grammarFor(genre);
     const r = mulberry32(seed >>> 0);
+    const G = genre === "cross" ? crossbreed(r) : grammarFor(genre);
     const harmony = T.harmony(r, pick, avoidKeys, G.MAJOR_SHARE);
     const lane = weighted(G.LANES.map((l) => [l, l.weight]), r);
     // A lane may carry its own tempo and mode mix (the Prof moods do).
@@ -1493,7 +1530,7 @@ const OneEngine = (() => {
     const sw = buildSwitch(r, G, lead, bass, drums);
     const rhythm = buildRhythm(r, G, chosenMode, lead, sw, allow);
     const p = {
-      anchor: pick(lane.anchors, r),
+      anchor: G.cross ? `${pick(lane.anchors, r)}, crossed with ${G.cross.drumsTag}` : pick(lane.anchors, r),
       bpm: int(lo, hi, r),
       key: `in ${harmony.key}`,
       mode: chosenMode,
@@ -1514,7 +1551,7 @@ const OneEngine = (() => {
       sliders: { weirdness, styleInfluence },
       settings: { model, variety: "Off", maxMode: "On" },
       meta: {
-        genre: G.id, genreLabel: G.label, lane: lane.label, mode: chosenMode, seed: seed >>> 0,
+        genre: G.id, genreLabel: G.label, lane: G.cross ? `${G.cross.lead} lead × ${G.cross.drums} drums` : lane.label, mode: chosenMode, seed: seed >>> 0,
         title: `${pick(G.TITLE.a, r)} ${pick(G.TITLE.b, r)}`, bpm: p.bpm, key: harmony.key,
       },
       fingerprint: [G.id, chosenMode === "loop" ? "loop" : counter.source, lead.source, lead.character, lead.motif, lead.articulation, lead.human, chosenMode === "switch" ? sw.tag : chosenMode, harmony.key].join("|"),

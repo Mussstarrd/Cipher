@@ -54,6 +54,30 @@ const OneEngine = (() => {
     return { ...Base, ...pack.grammar, id: pack.id, label: pack.label };
   };
 
+  // Crossbreed: the lead, melody and structure from one genre, the drums, bass
+  // and groove from another, picked fresh each roll. Nothing in a pack can
+  // express it, so the engine stitches two grammars together.
+  function crossbreed(r) {
+    const ids = Object.keys(Genres).filter((id) => id !== "cross");
+    const a = pick(ids, r);
+    const b = pick(ids.filter((id) => id !== a), r);
+    const A = grammarFor(a), B = grammarFor(b);
+    const allow = [A.ALLOW, B.ALLOW].filter(Boolean);
+    return {
+      ...A,
+      id: "cross", label: Genres.cross.label,
+      cross: { lead: A.label, drums: B.label, drumsTag: B.DRUMS_TAG },
+      DRUMS: B.DRUMS, BASS: B.BASS, GROOVE: B.GROOVE, COLOR: B.COLOR, TWITCH: B.TWITCH,
+      TWITCH_LABEL: B.TWITCH_LABEL, TWITCH_FROM_KICK: B.TWITCH_FROM_KICK,
+      RHYTHM: { ...A.RHYTHM, sync: B.RHYTHM.sync, twitch: B.RHYTHM.twitch, slur: B.RHYTHM.slur },
+      SLUR_SHARE: B.SLUR_SHARE,
+      MIX_TAG: A.MIX_TAG.split(",")[0],
+      EXCLUDE: [...new Set([...A.EXCLUDE, ...B.EXCLUDE])],
+      ALLOW: allow.length ? new RegExp(allow.map((x) => x.source).join("|"), "i") : undefined,
+      GUEST_SHARE: 0,
+    };
+  }
+
   // One "every N bars" phrase per roll, none in loop mode.
   function makeAllow(mode) {
     let left = mode === "loop" ? 0 : 1;
@@ -279,8 +303,8 @@ const OneEngine = (() => {
   }
 
   function generate({ seed = 1, genre = "hiphop", mode, avoidKeys = [] } = {}) {
-    const G = grammarFor(genre);
     const r = mulberry32(seed >>> 0);
+    const G = genre === "cross" ? crossbreed(r) : grammarFor(genre);
     const harmony = T.harmony(r, pick, avoidKeys, G.MAJOR_SHARE);
     const lane = weighted(G.LANES.map((l) => [l, l.weight]), r);
     // A lane may carry its own tempo and mode mix (the Prof moods do).
@@ -294,7 +318,7 @@ const OneEngine = (() => {
     const sw = buildSwitch(r, G, lead, bass, drums);
     const rhythm = buildRhythm(r, G, chosenMode, lead, sw, allow);
     const p = {
-      anchor: pick(lane.anchors, r),
+      anchor: G.cross ? `${pick(lane.anchors, r)}, crossed with ${G.cross.drumsTag}` : pick(lane.anchors, r),
       bpm: int(lo, hi, r),
       key: `in ${harmony.key}`,
       mode: chosenMode,
@@ -315,7 +339,7 @@ const OneEngine = (() => {
       sliders: { weirdness, styleInfluence },
       settings: { model, variety: "Off", maxMode: "On" },
       meta: {
-        genre: G.id, genreLabel: G.label, lane: lane.label, mode: chosenMode, seed: seed >>> 0,
+        genre: G.id, genreLabel: G.label, lane: G.cross ? `${G.cross.lead} lead × ${G.cross.drums} drums` : lane.label, mode: chosenMode, seed: seed >>> 0,
         title: `${pick(G.TITLE.a, r)} ${pick(G.TITLE.b, r)}`, bpm: p.bpm, key: harmony.key,
       },
       fingerprint: [G.id, chosenMode === "loop" ? "loop" : counter.source, lead.source, lead.character, lead.motif, lead.articulation, lead.human, chosenMode === "switch" ? sw.tag : chosenMode, harmony.key].join("|"),
