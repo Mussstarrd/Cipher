@@ -42,9 +42,14 @@ test("every N bars phrases are capped: one per roll, none in loop mode", () => {
 
 test("switch mode repeats its axis words after the switch, and never says returns", () => {
   for (const g of E.genres()) for (const seed of seeds.slice(0, 1000)) {
-    const { lyrics, style, parts, meta } = E.generate({ seed, genre: g.id });
+    const { lyrics, style, parts, meta, settings } = E.generate({ seed, genre: g.id });
     assert.ok(!/returns/.test(lyrics), lyrics);
     if (meta.mode !== "switch") continue;
+    if (settings.instrumental === "Off") {
+      // A vocal song owns its own structure; the head tag must still match it.
+      assert.ok(style.includes(parts.switch.tag) && /\[Beat Switch/.test(lyrics), style);
+      continue;
+    }
     assert.ok(style.includes(parts.switch.tag), style);
     const after = lyrics.split("[Beat Switch")[1];
     assert.ok(after && after.includes(parts.switch.after), lyrics);

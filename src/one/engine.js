@@ -336,6 +336,9 @@ const OneEngine = (() => {
     if (G.VOCAL && Lyrics) {
       const song = Lyrics.write({ r, pick, lane: lane.id, key: harmony.key, bpm: p.bpm });
       p.vocal = { tag: song.persona.tag, lyrics: song.lyrics, hook: song.hook, title: song.title, persona: song.persona, theme: song.theme };
+      // The song owns its structure: the head tag follows whether it wrote a beat switch.
+      p.mode = /\[Beat Switch/.test(song.lyrics) ? "switch" : "straight";
+      p.rhythm.mode = p.mode === "switch" ? sw.tag : pick(G.RHYTHM.straight, r);
     }
     const styleText = style(p, G);
     const lyricsText = p.vocal ? p.vocal.lyrics : lyrics(p, G, r);
@@ -352,7 +355,7 @@ const OneEngine = (() => {
       sliders: { weirdness, styleInfluence },
       settings: { model, variety: "Off", maxMode: "On", instrumental: G.VOCAL ? "Off" : "On" },
       meta: {
-        genre: G.id, genreLabel: G.label, lane: G.cross ? `${G.cross.lead} lead × ${G.cross.drums} drums` : lane.label, mode: chosenMode, seed: seed >>> 0,
+        genre: G.id, genreLabel: G.label, lane: G.cross ? `${G.cross.lead} lead × ${G.cross.drums} drums` : lane.label, mode: p.mode, seed: seed >>> 0,
         title: p.vocal ? p.vocal.title : `${pick(G.TITLE.a, r)} ${pick(G.TITLE.b, r)}`, bpm: p.bpm, key: harmony.key,
         hook: p.vocal ? p.vocal.hook : undefined, vocal: p.vocal ? p.vocal.persona.tag : undefined,
       },
