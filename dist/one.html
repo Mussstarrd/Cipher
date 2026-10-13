@@ -1426,7 +1426,7 @@ const OneEngine = (() => {
     const pool = laneFits.length && r() < 0.5 ? laneFits : B.source;
     const source = lead.is808
       ? pick(["a clean sine sub", "a sub that only sustains on the root"], r)
-      : pickWhere(pool, r, fits);
+      : pickBudget(pool, r, allow, fits);
     const patterns = lane.bassPattern || B.pattern;
     const pattern = pickBudget(patterns, r, allow, (p) =>
       !(lead.low && /motif|moving when/.test(p)) &&
