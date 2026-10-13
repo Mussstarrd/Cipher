@@ -23,8 +23,9 @@ const OneEngine = (() => {
   // The lyric writer is only needed by vocal packs; the instrumental page can run without it.
   const Lyrics = typeof OneLyrics !== "undefined" ? OneLyrics : (() => { try { return require("./lyrics.js"); } catch { return null; } })();
   // Vocal packs unlock the voice words the instrumental guard bans, and drop the vocal exclusions.
-  const VOICE_WORDS = /\b(vocal\w*|sing\w*|sung|chant\w*|hum\w*|lyric\w*|ad-?lib\w*|falsetto|harmonies|rap\w*|rapper|choir|voices?|spoken|whisper\w*|belt\w*|autotune\w*|hook)\b/i;
-  const VOCAL_EXCLUDE_DROP = /vocal|singing|rap|choir|humming|chant/i;
+  // chant, choir, crowd, gospel and anthem stay banned even here: they summon group voices.
+  const VOICE_WORDS = /\b(vocal\w*|vocalist|sing\w*|sung|hum|humming|hummed|lyric\w*|ad-?lib\w*|falsetto|harmonies|rap|rapper|rapped|rapping|voices?|doubles|spoken|whisper\w*|belt\w*|auto-?tune\w*|melismatic|hook)\b/i;
+  const VOCAL_EXCLUDE_DROP = /^(vocals|singing|rap|humming|background vocals|chanting)$/i;
 
   function mulberry32(a) {
     return () => {

@@ -17,7 +17,7 @@ test("every grammar and genre entry passes the guard", () => {
     else if (o && typeof o === "object") for (const k of Object.keys(o)) if (k !== "EXCLUDE" && typeof o[k] !== "function") walk(o[k], `${path}.${k}`);
   };
   walk(G, "G");
-  const VOICE = /\b(vocal\w*|sing\w*|sung|chant\w*|hum\w*|lyric\w*|ad-?lib\w*|falsetto|harmonies|rap\w*|rapper|choir|voices?|spoken|whisper\w*|belt\w*|autotune\w*|hook)\b/i;
+  const VOICE = /\b(vocal\w*|vocalist|sing\w*|sung|hum|humming|hummed|lyric\w*|ad-?lib\w*|falsetto|harmonies|rap|rapper|rapped|rapping|voices?|doubles|spoken|whisper\w*|belt\w*|auto-?tune\w*|melismatic|hook)\b/i;
   for (const pack of Object.values(require("../src/one/genres.js"))) {
     const allow = pack.grammar.VOCAL
       ? new RegExp([pack.grammar.ALLOW && pack.grammar.ALLOW.source, VOICE.source].filter(Boolean).join("|"), "i")
@@ -61,7 +61,9 @@ test("pop and country always leave a feature-verse slot; every genre stays instr
       const o = E.generate({ seed, genre: g.id });
       if (o.settings.instrumental === "Off") {
         assert.ok(!/instrumental/.test(o.style), o.style);
-        assert.ok(!/vocals|singing|\brap\b/.test(o.exclude), o.exclude);
+        const items = o.exclude.split(", ");
+        for (const w of ["vocals", "singing", "rap", "humming", "background vocals", "chanting"]) assert.ok(!items.includes(w), o.exclude);
+        for (const w of ["choir", "crowd vocals", "gospel"]) assert.ok(items.includes(w), o.exclude);
         continue;
       }
       assert.ok(o.style.endsWith("instrumental.") || o.style.includes("instrumental."), o.style);
