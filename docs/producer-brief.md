@@ -388,3 +388,9 @@ Context: v6 is the only model family available since 9 September 2026 (v6, v6-wi
 - HookGenius, "Suno Instrumental Prompts That Actually Stay Vocal-Free" — https://hookgenius.app/learn/suno-instrumental-prompts/
 - Jack Righteous, "Suno Exclude Guide 2026" — https://jackrighteous.com/en-us/blogs/guides-using-suno-ai-music-creation/negative-prompting-suno-v5-guide
 - GitHub issue, "Update the plugin for Suno v6 (v6 / v6-wild / v6-mini): Variety, Max Mode" — https://github.com/bitwize-music-studio/claude-ai-music-skills/issues/562
+
+## Reference roll (2026-10-13): the one that gave goosebumps
+
+Boom bap soul mashup, straight mode, 94 BPM, F# minor. Lead: "a soul sample with a soaring top line, cut to four stabs, pitched up and sped up like an old record ... playing a four-stab sample hook that climbs a fourth as the sample cut before each snare so the crack is bare". Drums: hard-clipped kick with a wooden knock, snare with the wires rattling, crunchy 12-bit hats in uneven 8ths, a clap on the and of 4 only. 808 tuned to the sample's root with the top rolled off. Head tags: kick on the ands, snare on the beat, stuttering 32nd perc hits, the beat never lets up, low dark lead melody.
+
+Why it worked: the sample was named physically and rhythmically (four stabs, pitched up, cut before each snare), the pocket was bare and locked, and the arrangement never moved (straight mode, intro, two verse-hook pairs, outro). Suno slipped a sung fragment into the sample despite the vocal exclusions; the artist liked it. Exclusions stay as they are; the sample family gained non-vocal lifts (harmonica, organ swell, guitar lick, flute, high soaring lift, break stab) with static and the loop seam left in.
