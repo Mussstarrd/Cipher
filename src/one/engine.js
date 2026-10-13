@@ -145,10 +145,11 @@ const OneEngine = (() => {
     const source = lead.is808
       ? pick(["a clean sine sub", "a sub that only sustains on the root"], r)
       : pickWhere(pool, r, fits);
-    const pattern = pickBudget(B.pattern, r, allow, (p) =>
+    const patterns = lane.bassPattern || B.pattern;
+    const pattern = pickBudget(patterns, r, allow, (p) =>
       !(lead.low && /motif|moving when/.test(p)) &&
       !(lead.triplet && /triplet/.test(p)) &&
-      !(lead.is808 && !/one note|silent|three notes|root/.test(p)));
+      !(lead.is808 && !lane.bassPattern && !/one note|silent|three notes|root/.test(p)));
     return { source, tone: pick(B.tone, r), pattern, human: pick(B.human, r) };
   }
 
@@ -163,8 +164,8 @@ const OneEngine = (() => {
     return { family, source, handle, character: pick(F.character, r), role };
   }
 
-  function buildDrums(r, G, lead, allow, mode) {
-    const D = G.DRUMS;
+  function buildDrums(r, G, lead, allow, mode, lane = {}) {
+    const D = { ...G.DRUMS, ...(lane.drums || {}) };
     const hats = pickBudget(D.hats, r, allow, (h) => !(lead.triplet && /threes/.test(h)));
     const twitch = {
       sound: pick(G.TWITCH.sound, r),
@@ -185,9 +186,9 @@ const OneEngine = (() => {
     };
   }
 
-  function buildSwitch(r, G, lead, bass, drums) {
+  function buildSwitch(r, G, lead, bass, drums, lane = {}) {
     const S = G.SWITCH;
-    const axis = pickWhere(S.axes, r, (a) =>
+    const axis = pickWhere(lane.switchAxes || S.axes, r, (a) =>
       !(/half-time/.test(a.tag) && /half-time/.test(drums.snare)) &&
       !(/strips/.test(a.cue) && /after the switch/.test(drums.twitch.where)));
     const sparse = /strips/.test(axis.cue);
@@ -224,7 +225,7 @@ const OneEngine = (() => {
     const slur = rhythm.slur ? `, ${drums.slur}` : "";
     const drumLine = `drums: ${drums.kick}, ${drums.snare}, ${drums.hats}, ${drums.color}${slur}.`;
     const drumShort = `drums: ${drums.kick}, ${drums.snare}, ${drums.hats}${slur}.`;
-    const noCounter = p.mode === "loop" || G.NO_COUNTER;
+    const noCounter = p.mode === "loop" || G.NO_COUNTER || p.noCounter;
     const counterLine = noCounter ? null : `counter: ${p.counter.source}, ${p.counter.character}, ${p.counter.role}.`;
     const counterShort = noCounter ? null : `counter: ${p.counter.source}, ${p.counter.role}.`;
     // The head and the lead always stay. Cut order: counter, bass tone,
@@ -276,7 +277,7 @@ const OneEngine = (() => {
 
     const verse = `[Verse | full drums, ${rhythm.sync}, ${bassWord} ${bass.pattern}${slurCue ? `, ${slurCue}` : ""}, ${twitchCue}]`;
     if (p.mode === "straight") {
-      const hook = `[Hook | full beat, ${L} up front, ${lead.motion}, ${counter.handle} ${counter.role}]`;
+      const hook = `[Hook | full beat, ${L} up front, ${lead.motion}${p.noCounter ? "" : `, ${counter.handle} ${counter.role}`}]`;
       return [
         `[Intro | ${L} alone, ${lead.placement.split(",")[0]}]`,
         verse,
@@ -314,8 +315,8 @@ const OneEngine = (() => {
     const lead = buildLead(r, G, lane, allow);
     const counter = buildCounter(r, G, lead, lane, allow, chosenMode);
     const bass = buildBass(r, G, lead, lane, allow);
-    const drums = buildDrums(r, G, lead, allow, chosenMode);
-    const sw = buildSwitch(r, G, lead, bass, drums);
+    const drums = buildDrums(r, G, lead, allow, chosenMode, lane);
+    const sw = buildSwitch(r, G, lead, bass, drums, lane);
     const rhythm = buildRhythm(r, G, chosenMode, lead, sw, allow);
     const p = {
       anchor: G.cross ? `${pick(lane.anchors, r)}, crossed with ${G.cross.drumsTag}` : pick(lane.anchors, r),
@@ -323,6 +324,7 @@ const OneEngine = (() => {
       key: `in ${harmony.key}`,
       mode: chosenMode,
       lane: lane.id,
+      noCounter: !!(G.NO_COUNTER || lane.noCounter),
       lead, counter, bass, drums, sw, rhythm,
     };
     const styleText = style(p, G);
@@ -331,7 +333,7 @@ const OneEngine = (() => {
     const S = G.SLIDERS[chosenMode] || G.SLIDERS.switch;
     const weirdness = int(S.weirdness[0], S.weirdness[1], r);
     const styleInfluence = int(S.styleInfluence[0], S.styleInfluence[1], r);
-    const model = chosenMode === "switch" && r() < 0.5 ? "v6-wild" : "v6";
+    const model = G.MODEL || (chosenMode === "switch" && r() < 0.5 ? "v6-wild" : "v6");
     return {
       style: styleText,
       lyrics: lyricsText,
