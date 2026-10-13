@@ -69,10 +69,17 @@ const OneEngine = (() => {
     return chosen;
   };
 
+  // Guest leads: a spin-off genre borrows the experimental hip hop palette
+  // (found sounds, mutant synths, fuzz guitar, drunk organ, flipped wind, low
+  // brass) for the lead some of the time. The counter then stays in-genre so
+  // the record keeps its identity.
+  const GUEST_FAMILIES = [["found", 3], ["synth", 3], ["guitar", 2], ["organ", 2], ["wind", 1], ["brass", 1]];
+
   function buildLead(r, G, lane, allow) {
     const L = G.LEAD;
-    const family = weighted(Object.entries(lane.families), r);
-    const F = G.FAMILIES[family];
+    const guest = (G.GUEST_SHARE || 0) > 0 && r() < G.GUEST_SHARE;
+    const family = guest ? weighted(GUEST_FAMILIES, r) : weighted(Object.entries(lane.families), r);
+    const F = guest ? { ...Base.FAMILIES[family], frame: G.GUEST_FRAME || Base.FAMILIES[family].frame } : G.FAMILIES[family];
     const [source, handle] = split(pick(F.sources, r));
     const lowFirst = r() < G.LOW_SHARE;
     const register = pickWhere(L.register, r, (x) => (lowFirst ? !/^mid register/.test(x) : true));
@@ -96,7 +103,7 @@ const OneEngine = (() => {
       !(legato && /shorter/.test(m)) &&
       !(/bitcrush|grittier/.test(m) && /low-passed/.test(character)));
     return {
-      family, handle, frame: F.frame, source, character, register, articulation, placement, motion, motif,
+      family, guest, handle, frame: F.frame, source, character, register, articulation, placement, motion, motif,
       human: pick(L.human, r),
       low, dry,
       triplet: /triplet|three-against/.test(articulation),
@@ -123,7 +130,8 @@ const OneEngine = (() => {
 
   function buildCounter(r, G, lead, lane, allow, mode) {
     const forced = lane.counterFamily && lead.family !== lane.counterFamily && r() < 0.5;
-    const others = forced ? [[lane.counterFamily, 1]] : Object.entries(lane.families).filter(([f]) => f !== lead.family);
+    // A guest lead gets an in-genre counter, so the genre's own sound is always in the record.
+    const others = forced ? [[lane.counterFamily, 1]] : Object.entries(lane.families).filter(([f]) => lead.guest || f !== lead.family);
     const family = others.length ? weighted(others, r) : pick(Object.keys(G.FAMILIES).filter((f) => f !== lead.family), r);
     const F = G.FAMILIES[family];
     const [source, handle] = split(pickWhere(F.sources, r, (x) => !/808/.test(x)));

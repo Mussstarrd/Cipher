@@ -24,6 +24,8 @@ const OneGenres = (() => {
     grammar: {
       TEMPO: [[88,100],[118,128],[136,150]],
       MAJOR_SHARE: 0.6,
+      GUEST_SHARE: 0.2,
+      GUEST_FRAME: "over a glossy pop R&B beat",
       MIX_TAG: "glossy radio-ready mix, wide and clean",
       MODES: [["straight",100]],
       SLUR_SHARE: 0,
@@ -63,6 +65,8 @@ const OneGenres = (() => {
     grammar: {
       TEMPO: [[66,78],[84,96],[100,112]],
       MAJOR_SHARE: 0.4,
+      GUEST_SHARE: 0.3,
+      GUEST_FRAME: "over a loose played-in hip hop pocket",
       MIX_TAG: "warm punchy mix, drums up front",
       MODES: [["switch",60],["loop",20],["straight",20]],
       SLUR_SHARE: 0.4,
@@ -109,6 +113,8 @@ const OneGenres = (() => {
     grammar: {
       TEMPO: [[84,94],[96,104],[140,152]],
       MAJOR_SHARE: 0.3,
+      GUEST_SHARE: 0.3,
+      GUEST_FRAME: "over knocking boom bap drums and a modern 808",
       MIX_TAG: "knocking drums, sample bright, 808 heavy, clean mix",
       MODES: [["switch",55],["loop",25],["straight",20]],
       SLUR_SHARE: 0.5,
@@ -155,6 +161,8 @@ const OneGenres = (() => {
     grammar: {
       TEMPO: [[70,86],[96,110],[122,150]],
       MAJOR_SHARE: 0.55,
+      GUEST_SHARE: 0.2,
+      GUEST_FRAME: "over stomping country trap drums and a Dallas 808",
       MIX_TAG: "radio country trap mix, 808 heavy",
       MODES: [["straight",45],["switch",40],["loop",15]],
       SLUR_SHARE: 0.4,
@@ -205,6 +213,8 @@ const OneGenres = (() => {
     grammar: {
       TEMPO: [[68,80],[84,96],[126,142]],
       MAJOR_SHARE: 0.25,
+      GUEST_SHARE: 0.3,
+      GUEST_FRAME: "over heavy Midwest hip hop drums and a huge bass",
       MIX_TAG: "loud bar-jukebox mix, bass huge, drums cracking",
       MODES: [["switch",35],["loop",25],["straight",40]],
       SLUR_SHARE: 0.6,

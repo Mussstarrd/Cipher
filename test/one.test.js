@@ -180,3 +180,20 @@ test("Prof holds two moods with their own tempo and words", () => {
   }
   assert.ok(seen.lowtide > 150 && seen.goodtime > 150, JSON.stringify(seen));
 });
+
+test("spin-offs borrow experimental leads about a third of the time, with an in-genre counter", () => {
+  const own = require("../src/one/genres.js");
+  for (const g of E.genres()) {
+    if (g.id === "hiphop") continue;
+    let guests = 0, n = 0;
+    for (const seed of seeds.slice(0, 500)) {
+      const { parts } = E.generate({ seed, genre: g.id });
+      n++;
+      if (parts.lead.guest) {
+        guests++;
+        assert.ok(own[g.id].grammar.FAMILIES[parts.counter.family], `${g.id}: guest lead needs an in-genre counter, got ${parts.counter.family}`);
+      }
+    }
+    assert.ok(guests > n * 0.1 && guests < n * 0.45, `${g.id}: ${guests} of ${n} guest leads`);
+  }
+});
