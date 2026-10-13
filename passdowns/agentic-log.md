@@ -22,3 +22,4 @@ Notes:
 - 2026-10-09 3:45: flat, nothing to sell. Week (Oct 5–9) close: equity $2,423.29 vs $2,500 start = −$76.71 (−3.1%), all from Jeffery's Oct 7 manual buys and their exit. v4 trades so far: 0.
 - 2026-10-12 9:45: no gap entry. Top gaps: META +1.30% (Tier B), MSFT +0.49%, AAPL +0.45%. All Tier A gapped down (MU −2.6%, AMD −1.3%, SMH −0.8%). Equity $2,423, settled $2,423.
 - 2026-10-13 9:45: no gap entry. Top gaps: AAPL +1.09%, GOOGL +0.95%, MSFT +0.64% (Tier B). All Tier A gapped down (MU −5%, AMD −2.5%, SMH −2%). Equity $2,423, settled $2,423.
+- 2026-10-13 3:45: flat, nothing to sell. Equity $2,423. Week (from Oct 12 start $2,423): $0. v4 trades: 0.
