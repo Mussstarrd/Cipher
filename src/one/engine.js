@@ -200,8 +200,9 @@ const OneEngine = (() => {
     const slur = rhythm.slur ? `, ${drums.slur}` : "";
     const drumLine = `drums: ${drums.kick}, ${drums.snare}, ${drums.hats}, ${drums.color}${slur}.`;
     const drumShort = `drums: ${drums.kick}, ${drums.snare}, ${drums.hats}${slur}.`;
-    const counterLine = p.mode === "loop" ? null : `counter: ${p.counter.source}, ${p.counter.character}, ${p.counter.role}.`;
-    const counterShort = p.mode === "loop" ? null : `counter: ${p.counter.source}, ${p.counter.role}.`;
+    const noCounter = p.mode === "loop" || G.NO_COUNTER;
+    const counterLine = noCounter ? null : `counter: ${p.counter.source}, ${p.counter.character}, ${p.counter.role}.`;
+    const counterShort = noCounter ? null : `counter: ${p.counter.source}, ${p.counter.role}.`;
     // The head and the lead always stay. Cut order: counter, bass tone,
     // percussion color, lead placement, lead human.
     const tries = [
@@ -229,7 +230,9 @@ const OneEngine = (() => {
     const { lead, drums, sw, bass, counter, rhythm } = p;
     const L = lead.handle;
     const bassWord = /808/.test(bass.source) ? "808" : "bass";
-    const twitchCue = `twitch percussion: ${drums.twitch.sound} ${drums.twitch.rhythm}, ${drums.twitch.where}`;
+    const twitchCue = G.TWITCH_FROM_KICK
+      ? `${G.TWITCH_LABEL || "kick trick"}: ${bare(drums.kick)}, ${drums.twitch.where}`
+      : `${G.TWITCH_LABEL || "twitch percussion"}: ${drums.twitch.sound} ${drums.twitch.rhythm}, ${drums.twitch.where}`;
     const slurCue = rhythm.slur ? drums.slur : null;
     const counterLate = /after the switch/.test(counter.role);
 

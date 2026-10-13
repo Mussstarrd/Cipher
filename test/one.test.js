@@ -197,3 +197,13 @@ test("spin-offs borrow experimental leads about a third of the time, with an in-
     assert.ok(guests > n * 0.1 && guests < n * 0.45, `${g.id}: ${guests} of ${n} guest leads`);
   }
 });
+
+test("Bare minimum: one voice, a kick trick, nothing else", () => {
+  for (const seed of seeds.slice(0, 500)) {
+    const { style, lyrics, meta } = E.generate({ seed, genre: "bare" });
+    assert.ok(!/counter:/.test(style), style);
+    assert.ok(/stutter|double kick|trips|double hit/.test(style), style);
+    assert.ok(meta.mode !== "switch");
+    assert.ok(/kick trick:|stutter|double kick|trips|double hit/.test(lyrics), lyrics);
+  }
+});
