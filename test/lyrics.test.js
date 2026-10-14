@@ -43,10 +43,17 @@ for (const [theme, b] of Object.entries(L.BANK)) {
 }
 const I_LINES = new Set();
 for (const b of Object.values(L.BANK)) for (const c of b.rap) if (c.i) I_LINES.add(c.a);
-const coupletOk = (a, b) => share(a, b) || AUTHORED_PAIRS.has(`${a}\n${b}`) || /^(Said it|Say it|Hook said)/.test(b);
+const coupletOk = (a, b) => share(P(a), P(b)) || AUTHORED_PAIRS.has(`${P(a)}\n${P(b)}`) || /^(Said it|Say it|Hook said)/.test(P(b));
 
 const ALLOW = /\b(vocal\w*|sing\w*|sung|chant\w*|hum\w*|lyric\w*|ad-?lib\w*|falsetto|harmonies|rap\w*|choir)\b/i;
-const PROFANITY = /\b(fuck\w*|f\*+k\w*|shit\w*|bitch\w*|nigg\w*|pussy|dick|cunt|whore|slut|hoes?|cock)\b/i;
+// Explicit radio records: ordinary cursing is allowed. The hard lines Suno
+// blocks stay out: slurs, graphic sex, and the f-word stays under five a song.
+const PROFANITY = /\b(nigg\w*|fag\w*|dyke\w*|trann\w*|retard\w*|chink\w*|spic\w*|kike\w*|wetback\w*|cunt|pussy|dick|cock|cum|blowjob|titt\w*|whore\w*|slut\w*|hoes?)\b/i;
+const CURSE = /\b(shit\w*|damn|hell|ass|bitch\w*|fuck\w*)\b/i;
+const EXPLICIT_THEMES = ["trap", "nightmoves", "gone"];
+const MARKER = /\b(shit\w*|damn|hell|ass|bitch\w*|fuck\w*|plug|re-up|pack|bricks?|birds|scale|stove|trap|bando|lean|pills?|smoke|fog|faded|numb|flipped|cooking|whip|tints?|come through|unlocked|say my name|wyd|bag|say less|late text|pull up at two|your place|hoodie's mine|fix the sink|back room|count it|took (one|two)|still gone|gone all day|pour|two cups|nothing but you|rubber bands|tip|like the ride|mama think)\b/i;
+const METER = /\b(waltz\w*|lilt\w*|shuffl\w*|swing\w*|swung)\b/i;
+const P = L.plain;
 const GROUP_VOICE = /\b(chant\w*|choir|crowd|gospel|anthem\w*)\b/i;
 const BRANDS = /\b(nike|jordans?|gucci|prada|rolex|amex|venmo|cashapp|uber|lyft|tesla|benz|bentley|iphone|android|instagram|tiktok|snapchat|twitter|facebook|spotify|netflix|hennessy|patron|casamigos|louis|chanel|dior|balenciaga|off-white|supreme|starbucks|mcdonald'?s|wendy'?s)\b/i;
 const TAG = /^\[[^\]]+\]$/;
@@ -79,13 +86,13 @@ test("every hook rhymes, drops the title on line 1 and calls it back on line 4",
     if (out.hook.curated) {
       const bank = HOOKS.find((x) => x.a === h[0]);
       assert.ok(bank, `seed ${seed}: curated hook not in the bank: ${h[0]}`);
-      assert.strictEqual(h[1], bank.b, `seed ${seed}: line 2 is not the bank's rhyme line`);
-      assert.ok(bank.alt.includes(h[2]), `seed ${seed}: line 3 is not one of the bank's third lines: ${h[2]}`);
+      assert.strictEqual(P(h[1]), bank.b, `seed ${seed}: line 2 is not the bank's rhyme line: ${h[1]}`);
+      assert.ok(bank.alt.includes(P(h[2])), `seed ${seed}: line 3 is not one of the bank's third lines: ${h[2]}`);
       assert.strictEqual(out.title, bank.title);
       assert.strictEqual(out.hook.obj, bank.obj);
     } else {
-      assert.ok(share(h[0], h[1]), `seed ${seed}: lines 1-2 do not rhyme: ${h[0]} / ${h[1]}`);
-      assert.ok(share(h[2], h[3]), `seed ${seed}: lines 3-4 do not rhyme: ${h[2]} / ${h[3]}`);
+      assert.ok(share(P(h[0]), P(h[1])), `seed ${seed}: lines 1-2 do not rhyme: ${h[0]} / ${h[1]}`);
+      assert.ok(share(P(h[2]), P(h[3])), `seed ${seed}: lines 3-4 do not rhyme: ${h[2]} / ${h[3]}`);
     }
     assert.ok(clean(h[0]).includes(clean(out.title)), `seed ${seed}: title "${out.title}" not in "${h[0]}"`);
     const n = out.title.split(" ").length;
@@ -106,12 +113,14 @@ test("at least 90% of seeds use a curated hook, and the bank gets wide use", () 
   assert.ok(titles.size >= 120, `${titles.size} distinct titles`);
 });
 
-test("no banned names or guard words, no profanity, no brands, no group-voice words, under 5000 chars", () => {
+test("no banned names or guard words, no slurs or graphic sex, under five f-words, no brands, no group-voice or meter words, under 5000 chars", () => {
   for (const { seed, out } of SONGS) {
     const all = `${out.style}\n${out.lyrics}`;
     const hits = Guard.check(all, ALLOW);
     assert.deepStrictEqual(hits, [], `seed ${seed}: ${hits.map((h) => `${h.rule}: ${h.word}`).join("; ")}`);
-    assert.ok(!PROFANITY.test(all), `seed ${seed}: profanity in ${all.match(PROFANITY)}`);
+    assert.ok(!PROFANITY.test(all), `seed ${seed}: slur or graphic word ${all.match(PROFANITY)}`);
+    assert.ok((all.match(/\bfuck\w*/gi) || []).length <= 4, `seed ${seed}: too many f-words`);
+    assert.ok(!METER.test(all), `seed ${seed}: meter word ${all.match(METER)}`);
     assert.ok(!GROUP_VOICE.test(all), `seed ${seed}: group-voice word ${all.match(GROUP_VOICE)}`);
     assert.ok(!BRANDS.test(all), `seed ${seed}: brand ${all.match(BRANDS)}`);
     assert.ok(out.lyrics.length < 5000, `seed ${seed}: ${out.lyrics.length} chars`);
@@ -158,7 +167,7 @@ test("radio shape: a vocal line in the first section, 3-4 hook statements, verse
     const v1 = secs.find((s) => s.name === "Verse 1"), v2 = secs.find((s) => s.name === "Verse 2");
     assert.ok(v1 && v2, `seed ${seed}: missing a verse`);
     assert.notStrictEqual(v1.lines[0], v2.lines[0], `seed ${seed}: both verses open the same way`);
-    assert.ok(out.hook.obj && v2.lines.join("\n").toLowerCase().includes(out.hook.obj.toLowerCase()), `seed ${seed}: verse 2 never mentions the hook's anchor "${out.hook.obj}"`);
+    assert.ok(out.hook.obj && v2.lines.map(P).join("\n").toLowerCase().includes(out.hook.obj.toLowerCase()), `seed ${seed}: verse 2 never mentions the hook's anchor "${out.hook.obj}"`);
     assert.ok(secs.some((s) => s.name === "Pre-Hook"), `seed ${seed}: missing the pre-hook`);
     assert.ok(secs.some((s) => s.name === "Bridge" || s.name === "Beat Switch"), `seed ${seed}: missing the bridge or switch`);
     const outro = secs.find((s) => s.name === "Outro");
@@ -186,12 +195,12 @@ test("couplets rhyme, no couplet repeats in a song, and every rap verse carries 
       const lyr = s.lines.filter((l) => !ADLIB.test(l));
       for (let i = 0; i + 1 < lyr.length; i += 2) {
         assert.ok(coupletOk(lyr[i], lyr[i + 1]), `seed ${seed}: couplet does not rhyme: ${lyr[i]} / ${lyr[i + 1]}`);
-        const key = `${lyr[i]}\n${lyr[i + 1]}`;
+        const key = `${P(lyr[i])}\n${P(lyr[i + 1])}`;
         assert.ok(!seen.has(key), `seed ${seed}: couplet repeated: ${lyr[i]}`);
         seen.add(key);
       }
       const rapped = s.cues.includes("rapped") || s.cues.includes("feature");
-      if (rapped) assert.ok(lyr.some((l) => I_LINES.has(l) || famsIn(l)), `seed ${seed}: [${s.name}] has no internal rhyme:\n${lyr.join("\n")}`);
+      if (rapped) assert.ok(lyr.some((l) => I_LINES.has(P(l)) || famsIn(P(l))), `seed ${seed}: [${s.name}] has no internal rhyme:\n${lyr.join("\n")}`);
     }
   }
 });
@@ -207,7 +216,16 @@ test("no two identical consecutive lines outside the outro", () => {
 
 test("the authored bank: sizes, syllables, rhymes, guard words, names, brands, no duplicate couplets", () => {
   const themes = Object.keys(L.BANK);
-  assert.ok(themes.length >= 12, `${themes.length} themes`);
+  assert.ok(themes.length >= 15, `${themes.length} themes`);
+  for (const t of EXPLICIT_THEMES) assert.ok(L.BANK[t], `missing the ${t} theme`);
+  let units = 0, explicit = 0;
+  for (const t of themes) for (const k of ["hooks", "rap", "rnb", "pre", "bridge"]) for (const u of L.BANK[t][k]) {
+    units++;
+    const text = k === "hooks" ? [u.a, u.b, ...u.alt].join(" ") : k === "rap" ? `${u.a} ${u.b}` : u.l.join(" ");
+    if (u.x) { explicit++; assert.ok(MARKER.test(text), `${t}.${k}: flagged explicit without a curse, innuendo or dealing word: ${text}`); }
+    if (k !== "rap") assert.ok(!/\bfuck/i.test(text), `${t}.${k}: the f-word only goes in rap couplets: ${text}`);
+  }
+  assert.ok(explicit / units >= 1 / 3, `${explicit} of ${units} units carry the explicit register`);
   const pairs = new Set();
   const lineOk = (where, line, lo, hi) => {
     const s = L.syllables(line);
@@ -266,6 +284,44 @@ test("banks meet the brief: 2 lanes x 8+ personas, 10+ themes, 40+ hook template
   assert.ok(L.HOOK_T.length >= 40);
   assert.ok(L.RHYMES.length >= 20);
   for (const f of L.RHYMES) assert.ok(f.entries.length >= 8 && f.entries.length <= 15, `${f.id}: ${f.entries.length}`);
+});
+
+test("explicit register: at least 30% of songs carry a curse or an explicit theme", () => {
+  const n = SONGS.filter(({ out }) => CURSE.test(out.lyrics) || EXPLICIT_THEMES.includes(out.theme.id)).length;
+  assert.ok(n / SONGS.length >= 0.3, `${n} of ${SONGS.length}`);
+});
+
+test("human feel: one feel clause on the style, a timing cue on 70%+ of tags that never repeats back to back, 4-8 spelling devices a song", () => {
+  assert.ok(L.FEEL.length >= 12 && L.TIMING_ALL.length >= 14);
+  for (const f of [...L.FEEL.map((x) => x.t), ...L.TIMING_ALL]) {
+    assert.ok(!METER.test(f), `meter word in: ${f}`);
+    assert.deepStrictEqual(Guard.check(f, L.ALLOW), [], `guard word in: ${f}`);
+  }
+  for (const { seed, out } of SONGS) {
+    const clauses = L.FEEL.filter((f) => out.style.endsWith(`, ${f.t}`));
+    assert.strictEqual(clauses.length, 1, `seed ${seed}: style needs exactly one feel clause: ${out.style}`);
+    assert.strictEqual(out.style, `${out.persona.tag}, ${clauses[0].t}`);
+    const secs = sections(out.lyrics).filter((s) => s.name !== "End");
+    const cues = secs.map((s) => s.cues.find((c) => L.TIMING_ALL.includes(c)) || null);
+    const withCue = cues.filter(Boolean).length;
+    assert.ok(withCue / secs.length >= 0.7, `seed ${seed}: ${withCue} of ${secs.length} tags carry a timing cue`);
+    for (let i = 1; i < cues.length; i++) if (cues[i] && cues[i - 1]) assert.notStrictEqual(cues[i], cues[i - 1], `seed ${seed}: [${secs[i].name}] repeats the timing cue "${cues[i]}"`);
+    for (const s of secs) assert.ok(s.cues.length >= 1 && s.cues.length <= 3, `seed ${seed}: [${s.name}] has ${s.cues.length} cues`);
+    // Devices: count distinct lyric lines that carry one; ad-libs and tags never do.
+    const lyr = [...new Set(lines(out.lyrics).filter((l) => !TAG.test(l)))];
+    let touches = 0;
+    for (const l of lyr) {
+      if (ADLIB.test(l)) { assert.ok(!/\.\.\.| - |([aeiou])\1\1/i.test(l), `seed ${seed}: device inside an ad-lib: ${l}`); continue; }
+      const stretched = /([aeiou])\1\1/i.test(l), dots = /^\.\.\./.test(l), breath = / - /.test(l), stutter = /^([A-Za-z]{1,2})-\1/i.test(l);
+      assert.ok((l.match(/([aeiou])\1\1/gi) || []).length <= 1, `seed ${seed}: two stretched words on one line: ${l}`);
+      touches += stretched + dots + breath + stutter;
+    }
+    assert.ok(touches >= 4 && touches <= 8, `seed ${seed}: ${touches} devices`);
+    assert.strictEqual(touches, out.touches, `seed ${seed}: the writer counted ${out.touches}`);
+    const h = out.hook.lines;
+    assert.ok(!/([aeiou])\1\1/i.test(h[0]), `seed ${seed}: the title line is never stretched`);
+    assert.ok(h.filter((l) => /([aeiou])\1\1/i.test(l)).length <= 2);
+  }
 });
 
 test("lanes, themes and personas can be forced, and a feature verse shows up in the rnb lane", () => {
