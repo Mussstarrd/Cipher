@@ -335,7 +335,7 @@ const OneEngine = (() => {
     };
     if (G.VOCAL && Lyrics) {
       const song = Lyrics.write({ r, pick, lane: lane.id, key: harmony.key, bpm: p.bpm });
-      p.vocal = { tag: song.persona.tag, lyrics: song.lyrics, hook: song.hook, title: song.title, persona: song.persona, theme: song.theme };
+      p.vocal = { tag: song.style || song.persona.tag, lyrics: song.lyrics, hook: song.hook, title: song.title, persona: song.persona, theme: song.theme };
       // The song owns its structure: the head tag follows whether it wrote a beat switch.
       p.mode = /\[Beat Switch/.test(song.lyrics) ? "switch" : "straight";
       p.rhythm.mode = p.mode === "switch" ? sw.tag : pick(G.RHYTHM.straight, r);
