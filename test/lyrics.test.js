@@ -16,8 +16,11 @@ function mulberry32(a) {
 }
 const pick = (arr, r) => arr[Math.floor(r() * arr.length)];
 const SEEDS = Array.from({ length: 500 }, (_, i) => i + 1);
-const roll = (seed) => L.write({ r: mulberry32(seed), pick, lane: seed % 2 ? "rap" : "rnb" });
-const SONGS = SEEDS.map((seed) => ({ seed, out: roll(seed) }));
+const roll = (seed, lane) => L.write({ r: mulberry32(seed), pick, lane: lane || (seed % 2 ? "rap" : "rnb") });
+const RADIO = SEEDS.map((seed) => ({ seed, out: roll(seed) }));
+const GRITTY = L.LANES.flatMap((lane) => Array.from({ length: 150 }, (_, i) => ({ seed: i + 1, lane, out: roll(i + 1, lane) })));
+const SONGS = [...RADIO, ...GRITTY];
+const gritty = (out) => L.LANES.includes(out.lane);
 
 // Rhyme families, read back from the module's bank by last word.
 const FAM = {};
@@ -43,6 +46,18 @@ for (const [theme, b] of Object.entries(L.BANK)) {
 }
 const I_LINES = new Set();
 for (const b of Object.values(L.BANK)) for (const c of b.rap) if (c.i) I_LINES.add(c.a);
+const STORY = [];
+for (const [lane, themes] of Object.entries(L.LANE_BANK)) for (const [theme, units] of Object.entries(themes)) for (const u of units) {
+  if (lane === "story") {
+    STORY.push({ theme, ...u });
+    for (const v of [u.v1, u.v2, u.bridge, u.hook]) for (let i = 0; i + 1 < v.length; i += 2) AUTHORED_PAIRS.add(`${v[i]}\n${v[i + 1]}`);
+    [...u.v1, ...u.v2, ...u.bridge, ...u.hook].forEach((x) => AUTHORED_LINES.add(x));
+  } else {
+    AUTHORED_PAIRS.add(`${u.a}\n${u.b}`);
+    AUTHORED_LINES.add(u.a); AUTHORED_LINES.add(u.b);
+    if (u.i) I_LINES.add(u.a);
+  }
+}
 const coupletOk = (a, b) => share(P(a), P(b)) || AUTHORED_PAIRS.has(`${P(a)}\n${P(b)}`) || /^(Said it|Say it|Hook said)/.test(P(b));
 
 const ALLOW = /\b(vocal\w*|sing\w*|sung|chant\w*|hum\w*|lyric\w*|ad-?lib\w*|falsetto|harmonies|rap\w*|choir)\b/i;
@@ -82,6 +97,18 @@ test("every hook rhymes, drops the title on line 1 and calls it back on line 4",
   for (const { seed, out } of SONGS) {
     const h = out.hook.lines;
     assert.strictEqual(h.length, 4, `seed ${seed}: ${h.join(" / ")}`);
+    if (out.lane === "grit") {
+      // A refrain: two lines said twice.
+      assert.ok(h[2] === h[0] && h[3] === h[1], `seed ${seed}: grit refrain is not [a, b, a, b]`);
+      const bank = HOOKS.find((x) => x.a === h[0]);
+      assert.ok(bank && P(h[1]) === bank.b, `seed ${seed}: grit refrain not in the bank: ${h.join(" / ")}`);
+      assert.strictEqual(out.title, bank.title);
+    } else if (out.lane === "story") {
+      const scene = STORY.find((x) => x.hook[0] === h[0]);
+      assert.ok(scene, `seed ${seed}: story hook not in the bank: ${h[0]}`);
+      assert.deepStrictEqual(h.map(P), scene.hook, `seed ${seed}: story hook lines differ from the scene`);
+      assert.strictEqual(out.title, scene.title);
+    } else {
     assert.strictEqual(h[3], h[0], `seed ${seed}: line 4 is not the title line`);
     if (out.hook.curated) {
       const bank = HOOKS.find((x) => x.a === h[0]);
@@ -94,10 +121,11 @@ test("every hook rhymes, drops the title on line 1 and calls it back on line 4",
       assert.ok(share(P(h[0]), P(h[1])), `seed ${seed}: lines 1-2 do not rhyme: ${h[0]} / ${h[1]}`);
       assert.ok(share(P(h[2]), P(h[3])), `seed ${seed}: lines 3-4 do not rhyme: ${h[2]} / ${h[3]}`);
     }
+    }
     assert.ok(clean(h[0]).includes(clean(out.title)), `seed ${seed}: title "${out.title}" not in "${h[0]}"`);
     const n = out.title.split(" ").length;
     assert.ok(n >= 2 && n <= 4, `seed ${seed}: title "${out.title}" is ${n} words`);
-    h.forEach((l, i) => {
+    if (!gritty(out)) h.forEach((l, i) => {
       const s = L.syllables(l);
       assert.ok(s >= 3 && s <= (i === 2 ? 10 : 9), `seed ${seed}: hook line is ${s} syllables: ${l}`);
     });
@@ -107,9 +135,9 @@ test("every hook rhymes, drops the title on line 1 and calls it back on line 4",
 test("at least 90% of seeds use a curated hook, and the bank gets wide use", () => {
   const curated = SONGS.filter(({ out }) => out.hook.curated).length;
   assert.ok(curated / SONGS.length >= 0.9, `${curated} curated of ${SONGS.length}`);
-  const distinct = new Set(SONGS.map(({ out }) => out.hook.lines.join("|")));
+  const distinct = new Set(RADIO.map(({ out }) => out.hook.lines.join("|")));
   assert.ok(distinct.size >= 200, `${distinct.size} distinct hooks`);
-  const titles = new Set(SONGS.map(({ out }) => out.title));
+  const titles = new Set(RADIO.map(({ out }) => out.title));
   assert.ok(titles.size >= 120, `${titles.size} distinct titles`);
 });
 
@@ -146,7 +174,8 @@ test("every line is a section tag, an ad-lib or a lyric line; tags carry 1-3 cue
         const lyr = s.lines.filter((l) => !ADLIB.test(l));
         const ads = s.lines.filter((l) => ADLIB.test(l));
         assert.ok(ads.length * 2 <= lyr.length, `seed ${seed}: too many ad-libs in [${s.name}]`);
-        for (const l of lyr) assert.ok(L.syllables(l) <= 12, `seed ${seed}: verse line over 12 syllables: ${l}`);
+        const limit = out.lane === "technical" ? 16 : out.lane === "grit" ? 14 : 12;
+        for (const l of lyr) assert.ok(L.syllables(l) <= limit, `seed ${seed}: verse line over ${limit} syllables: ${l}`);
       }
     }
   }
@@ -163,16 +192,17 @@ test("radio shape: a vocal line in the first section, 3-4 hook statements, verse
     const idx = secs.findIndex((s) => s.name === "Hook" && s.lines.filter((l) => !ADLIB.test(l)).length === 4);
     const before = secs.slice(0, idx).reduce((n, s) => n + s.lines.filter((l) => !ADLIB.test(l)).length, 0);
     // A tease (2) + a short verse (8) + a pre-hook (3) at most: the first full hook by bar 20.
-    assert.ok(before <= 14, `seed ${seed}: ${before} lines before the first full hook`);
+    if (!gritty(out)) assert.ok(before <= 14, `seed ${seed}: ${before} lines before the first full hook`);
     const v1 = secs.find((s) => s.name === "Verse 1"), v2 = secs.find((s) => s.name === "Verse 2");
     assert.ok(v1 && v2, `seed ${seed}: missing a verse`);
     assert.notStrictEqual(v1.lines[0], v2.lines[0], `seed ${seed}: both verses open the same way`);
     assert.ok(out.hook.obj && v2.lines.map(P).join("\n").toLowerCase().includes(out.hook.obj.toLowerCase()), `seed ${seed}: verse 2 never mentions the hook's anchor "${out.hook.obj}"`);
-    assert.ok(secs.some((s) => s.name === "Pre-Hook"), `seed ${seed}: missing the pre-hook`);
-    assert.ok(secs.some((s) => s.name === "Bridge" || s.name === "Beat Switch"), `seed ${seed}: missing the bridge or switch`);
+    if (!gritty(out)) assert.ok(secs.some((s) => s.name === "Pre-Hook"), `seed ${seed}: missing the pre-hook`);
+    if (!gritty(out)) assert.ok(secs.some((s) => s.name === "Bridge" || s.name === "Beat Switch"), `seed ${seed}: missing the bridge or switch`);
     const outro = secs.find((s) => s.name === "Outro");
     assert.deepStrictEqual(outro.lines.slice(0, 2), [out.hook.lines[0], out.hook.lines[0]], `seed ${seed}: outro is not the title line twice`);
-    if (out.lane === "rap") for (const v of [v1, v2]) assert.ok(v.cues.includes("rapped"), `seed ${seed}: rap verse without the rapped cue`);
+    if (out.lane === "rap" || gritty(out)) for (const v of [v1, v2]) assert.ok(v.cues.includes("rapped"), `seed ${seed}: rap verse without the rapped cue`);
+    if (gritty(out)) continue;
     // Rap verses: 16 / 12 / 8 bars; sung verses: one or two stanzas, plus the callback couplet.
     for (const v of [v1, v2]) {
       const n = v.lines.filter((l) => !ADLIB.test(l)).length;
@@ -200,7 +230,7 @@ test("couplets rhyme, no couplet repeats in a song, and every rap verse carries 
         seen.add(key);
       }
       const rapped = s.cues.includes("rapped") || s.cues.includes("feature");
-      if (rapped) assert.ok(lyr.some((l) => I_LINES.has(P(l)) || famsIn(P(l))), `seed ${seed}: [${s.name}] has no internal rhyme:\n${lyr.join("\n")}`);
+      if (rapped && out.lane !== "story") assert.ok(lyr.some((l) => I_LINES.has(P(l)) || famsIn(P(l))), `seed ${seed}: [${s.name}] has no internal rhyme:\n${lyr.join("\n")}`);
     }
   }
 });
@@ -336,5 +366,63 @@ test("lanes, themes and personas can be forced, and a feature verse shows up in 
     assert.ok(v2.cues.includes("feature") && /rapper/.test(v2.cues[1]), `seed ${seed}: feature tag ${v2.cues}`);
     assert.notStrictEqual(out.persona.feature.gender, out.persona.gender);
   }
-  assert.ok(SONGS.every(({ out }) => out.lane === "rap" || sections(out.lyrics).find((s) => s.name === "Verse 2").cues[0] !== "rapped"));
+  assert.ok(RADIO.every(({ out }) => out.lane === "rap" || sections(out.lyrics).find((s) => s.name === "Verse 2").cues[0] !== "rapped"));
+});
+
+test("gritty lanes: personas, bars-first shape, punchline rhymes, dense runs, story turns", () => {
+  assert.deepStrictEqual(L.LANES, ["grit", "technical", "story"]);
+  for (const lane of L.LANES) {
+    assert.ok(L.LANE_PERSONAS[lane].length >= 3 && L.LANE_PERSONAS[lane].some((p) => p.gender === "female"), lane);
+    for (const p of L.LANE_PERSONAS[lane]) assert.deepStrictEqual(Guard.check(p.tag, L.ALLOW), [], p.tag);
+    assert.ok(Object.keys(L.LANE_BANK[lane]).length >= 3, `${lane}: themes`);
+  }
+  const endsWith = (line, end) => P(line).toLowerCase().replace(/[^a-z0-9' ]/g, "").endsWith(end.toLowerCase().replace(/[^a-z0-9' ]/g, ""));
+  for (const [theme, units] of Object.entries(L.LANE_BANK.grit)) {
+    assert.ok(units.length >= 12, `grit.${theme}`);
+    for (const c of units) {
+      assert.ok(c.rhyme && c.rhyme.length === 2 && endsWith(c.a, c.rhyme[0]) && endsWith(c.b, c.rhyme[1]), `grit.${theme}: rhyme ends not at the line ends: ${c.a}`);
+      assert.ok(L.syllables(c.rhyme[0]) >= 2 && L.syllables(c.rhyme[1]) >= 2, `grit.${theme}: not a multi-syllable rhyme: ${c.rhyme}`);
+      assert.ok(c.fam, `grit.${theme}: fam`);
+    }
+    assert.ok(units.filter((c) => c.i).length >= 9, `grit.${theme}: internal rhyme on most couplets`);
+  }
+  for (const [theme, units] of Object.entries(L.LANE_BANK.technical)) {
+    assert.ok(units.length >= 12, `technical.${theme}`);
+    for (const c of units) {
+      assert.ok(c.inner && c.inner.length >= 2, `technical.${theme}: fewer than two internal rhymes: ${c.a}`);
+      const text = `${c.a} ${c.b}`.toLowerCase();
+      for (const pair of c.inner) { assert.ok(pair.length >= 2); for (const w of pair) assert.ok(text.includes(w.toLowerCase()), `technical.${theme}: "${w}" not in the couplet`); }
+      assert.ok(L.syllables(c.a) <= (c.run && c.run.includes("a") ? 16 : 12) && L.syllables(c.b) <= (c.run && c.run.includes("b") ? 16 : 12), `technical.${theme}: line too long: ${c.a} / ${c.b}`);
+    }
+  }
+  for (const sc of STORY) {
+    assert.ok(sc.v1.length === 16 && sc.v2.length === 20 && sc.bridge.length === 4 && sc.hook.length === 4, `story.${sc.theme}: sizes`);
+    for (const l of [...sc.v1, ...sc.v2, ...sc.bridge]) assert.ok(L.syllables(l) <= 12, `story.${sc.theme}: over 12: ${l}`);
+    assert.ok(Number.isInteger(sc.turn) && sc.turn >= 4 && sc.turn < 20, `story.${sc.theme}: turn`);
+    assert.ok(clean(sc.hook[0]).includes(clean(sc.title)));
+  }
+  for (const { seed, lane, out } of GRITTY) {
+    assert.ok(out.lane === lane && L.LANE_PERSONAS[lane].some((p) => p.tag === out.persona.tag), `${lane} ${seed}: persona`);
+    const secs = sections(out.lyrics);
+    const names = secs.map((s) => s.name);
+    const third = lane === "story" ? "Bridge" : "Verse 3";
+    assert.deepStrictEqual(names, ["Intro", "Verse 1", "Hook", "Verse 2", "Hook", third, "Hook", "Outro", "End"], `${lane} ${seed}: ${names}`);
+    const count = (name) => secs.find((s) => s.name === name).lines.filter((l) => !ADLIB.test(l)).length;
+    assert.strictEqual(count("Verse 1"), 16, `${lane} ${seed}: verse 1`);
+    assert.strictEqual(count("Verse 2"), lane === "story" ? 20 : 16, `${lane} ${seed}: verse 2`);
+    if (lane !== "story") assert.ok([8, 12].includes(count("Verse 3")), `${lane} ${seed}: verse 3`);
+    if (lane === "technical") for (const v of secs.filter((s) => /^Verse/.test(s.name))) assert.ok(v.cues.some((c) => L.FLOW.includes(c)), `${lane} ${seed}: flow switch cue missing on [${v.name}]`);
+    if (lane === "grit") {
+      const hook = secs.find((s) => s.name === "Hook");
+      assert.ok(hook.lines.filter((l) => ADLIB.test(l)).length >= 1, `${lane} ${seed}: refrain needs its signature ad-lib`);
+      assert.ok(hook.cues.includes("rapped refrain"));
+    }
+    if (lane === "story") {
+      const scene = STORY.find((x) => x.title === out.title);
+      const v2 = secs.find((s) => s.name === "Verse 2").lines.filter((l) => !ADLIB.test(l)).map(P);
+      assert.ok(v2.includes(scene.v2[scene.turn]), `${lane} ${seed}: the turn line is missing from verse 2`);
+      const ads = secs.filter((s) => /^Verse/.test(s.name)).flatMap((s) => s.lines.filter((l) => ADLIB.test(l))).length;
+      assert.ok(ads <= 4, `${lane} ${seed}: too many ad-libs for a story`);
+    }
+  }
 });

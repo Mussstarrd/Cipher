@@ -1196,6 +1196,180 @@ const OneLyrics = (() => {
     for (const k of ["hooks", "rap", "rnb", "pre", "bridge"]) for (const u of add[k] || []) { u.x = true; b[k].push(u); }
   }
 
+  // ------------------------------------------------------ gritty lanes
+  // Three bars-first registers. grit: NY punchline couplets, setup then a
+  // payoff with a flip, 2-3 syllable end rhymes (`rhyme` holds both ends)
+  // and internal rhyme (`i`). technical: dense-flow couplets with the
+  // internal pairs tagged in `inner`; a `run` line may reach 16 syllables.
+  // story: whole scenes in order (a place, a person, a decision, a
+  // consequence); verse 2 carries a `turn` that re-reads verse 1.
+  const LANE_PERSONAS = {
+    grit: [
+      { id: "gravel", gender: "male", voice: "male rapper, raspy gravel voice, behind the beat", tag: "male vocals, raspy gravel-voiced rapped delivery, laid-back behind the beat, sparse ad-libs", adlibs: ["uh-huh", "yeah", "ha"], palette: ["laid-back behind the beat", "dry and close", "doubled"] },
+      { id: "hoarse", gender: "male", voice: "male rapper, hoarse and low, punchline pauses", tag: "male vocals, hoarse low rapped delivery, punchline pauses, grunted ad-libs", adlibs: ["uh", "hm", "ha"], palette: ["laid-back behind the beat", "punchline pauses", "dry and close"] },
+      { id: "rasp-f", gender: "female", voice: "female rapper, raspy and hard, behind the beat", tag: "female vocals, raspy hard rapped delivery, behind the beat, sparse ad-libs", adlibs: ["uh-huh", "ha", "yeah"], palette: ["laid-back behind the beat", "dry and close", "single take"] },
+    ],
+    technical: [
+      { id: "rapid", gender: "male", voice: "male rapper, rapid technical, pitch jumping between lines", tag: "male vocals, rapid technical rapped delivery, pitch jumping between lines, hype ad-libs", adlibs: ["ayy", "woo", "yeah"], palette: ["double-time burst", "pushed ahead of the beat", "stacked"] },
+      { id: "elastic", gender: "male", voice: "male rapper, nasal and elastic, double-time runs", tag: "male vocals, nasal elastic rapped delivery, double-time runs, start-stop", adlibs: ["uh", "what", "ha"], palette: ["start-stop flow", "double-time burst", "doubled"] },
+      { id: "precise", gender: "female", voice: "female rapper, rapid and precise, flow switches", tag: "female vocals, rapid precise rapped delivery, flow switches, ad-libs", adlibs: ["okay", "ayy", "uh-huh"], palette: ["pushed ahead of the beat", "start-stop flow", "dry and close"] },
+    ],
+    story: [
+      { id: "warm", gender: "male", voice: "male rapper, conversational, warm and close", tag: "male vocals, conversational laid-back rapped delivery, warm and close, behind the beat", adlibs: ["yeah", "mm"], palette: ["conversational", "laid-back behind the beat", "dry and close"] },
+      { id: "soft", gender: "male", voice: "male rapper, soft-spoken storyteller, half-sung tails", tag: "male vocals, soft-spoken storytelling rapped delivery, half-sung tails", adlibs: ["mm", "yeah"], palette: ["half-sung", "conversational", "single take"] },
+      { id: "warm-f", gender: "female", voice: "female rapper, conversational storyteller, warm", tag: "female vocals, conversational storytelling rapped delivery, warm, behind the beat", adlibs: ["mm", "right"], palette: ["conversational", "laid-back behind the beat", "doubled"] },
+    ],
+  };
+  const FLOW = ["double-time for four bars then back", "triplet run into a half-time landing", "stop-start flow with a breath on the bar line", "pitch jumping between lines", "double-time runs into a half-time landing"];
+
+  const LANE_BANK = {
+    grit: {
+      trap: [
+        { a: "Stove on, I'm the chef, my kitchen got a rep", b: "Plug on mute, lawyer on the speed dial, that's a step", rhyme: ["got a rep", "that's a step"], fam: "ep", i: true },
+        { a: "Scale don't lie, numbers on a spreadsheet", b: "Count so quiet in the back you hear the bread speak", rhyme: ["a spreadsheet", "the bread speak"], fam: "eet", i: true },
+        { a: "Re-up Tuesday, by Friday it's a memory", b: "Block eat off one pan, call that the recipe", rhyme: ["a memory", "the recipe"], fam: "ee", i: true },
+        { a: "Pack came in, pack went out, that's the sentence", b: "Court date Monday, same word, different sentence", rhyme: ["the sentence", "different sentence"], fam: "ence", i: true },
+        { a: "Mama think I work nights, she ain't wrong, I'm clocked in", b: "Trap phone ring at four, I pick up, she's locked in", rhyme: ["I'm clocked in", "she's locked in"], fam: "ocked in", i: true },
+        { a: "Birds in the kitchen, not the kind that go south", b: "Bricks in the wall, not the kind you talk about", rhyme: ["go south", "talk about"], fam: "out", i: true },
+        { a: "Rubber bands around the money like it's injured", b: "Whole block eating off the stove, dinner's finished", rhyme: ["it's injured", "dinner's finished"], fam: "ished", i: false },
+        { a: "Shit's cooking, don't call, phone face down", b: "Whip it till it's right, then I whip it out of town", rhyme: ["phone face down", "out of town"], fam: "own2", i: true },
+        { a: "They say money talk, mine whisper, it's discreet", b: "Count it in the back room slow, that's a feat", rhyme: ["it's discreet", "that's a feat"], fam: "eat", i: true },
+        { a: "Plug said bet, I said when, he said tonight", b: "Trunk full, tints dark, lawyer on the line, I'm alright", rhyme: ["said tonight", "I'm alright"], fam: "ight", i: true },
+        { a: "Mama's kitchen got a pot, mine got a scale", b: "Both of us cooking, only one of us got mail", rhyme: ["got a scale", "got mail"], fam: "ale", i: true },
+        { a: "I don't sell dreams, I sell what dreams cost", b: "Count it twice, the second time is for the boss", rhyme: ["dreams cost", "the boss"], fam: "oss", i: true },
+      ],
+      loyalty: [
+        { a: "Same five since fourteen, that's a long contract", b: "Nobody new, I don't take a wrong contact", rhyme: ["long contract", "wrong contact"], fam: "ontract", i: true },
+        { a: "I don't add seats, I add plates, that's the menu", b: "Day ones up front, the rest, I'll send you", rhyme: ["the menu", "send you"], fam: "enu", i: true },
+        { a: "Count who stayed on one hand, got a thumb left", b: "The rest was weather, they come when it's sunset", rhyme: ["a thumb left", "it's sunset"], fam: "et", i: true },
+        { a: "Spare key under the mat, twenty years, same mat", b: "If you ain't call at four, don't call me for the payback", rhyme: ["same mat", "the payback"], fam: "ack", i: true },
+        { a: "Day ones got keys, not invites, that's a difference", b: "Guest list got a line, my porch got a witness", rhyme: ["a difference", "a witness"], fam: "itness", i: true },
+        { a: "They knew me broke, that's the whole list, it's laminated", b: "Everybody after that is just nominated", rhyme: ["it's laminated", "just nominated"], fam: "ated", i: true },
+        { a: "Rather be broke with the same five, that's a ratio", b: "Than rich in a room where nobody know your face though", rhyme: ["a ratio", "your face though"], fam: "atio", i: true },
+        { a: "I pay the table so nobody has to ask, shit", b: "Then I lie that I'm fine, same five see past it", rhyme: ["to ask, shit", "see past it"], fam: "ast it", i: true },
+        { a: "Same number since the flip phone, same tone", b: "If you call at four, I'm up, that's the same phone", rhyme: ["same tone", "same phone"], fam: "own", i: true },
+        { a: "Loyalty's a two-way street, I been paying", b: "Twenty years in, nobody playing", rhyme: ["been paying", "nobody playing"], fam: "aying", i: false },
+        { a: "Day one in the front seat, that's the policy", b: "The rest in the back, that's the economy", rhyme: ["the policy", "the economy"], fam: "omy", i: true },
+        { a: "Shit got real, they stayed, that's the audit", b: "Rich friends got quiet, same five got loud, that's the profit", rhyme: ["the audit", "the profit"], fam: "odit", i: true },
+      ],
+      comeup: [
+        { a: "Bus pass to valet, that's a commute", b: "Same shoes, different carpet, that's the new route", rhyme: ["a commute", "the new route"], fam: "oot", i: true },
+        { a: "Rent was late, now I'm early, that's a habit", b: "Card got approved, I flinched, then I grabbed it", rhyme: ["a habit", "I grabbed it"], fam: "abit", i: true },
+        { a: "Broke at nine, booked by eleven, that's a window", b: "Mama's rent off a verse, that's the intro", rhyme: ["a window", "the intro"], fam: "indo", i: true },
+        { a: "They held the door, I held the pen, that's the difference", b: "Laughed in the lobby, now they laugh at my expenses", rhyme: ["the difference", "my expenses"], fam: "ences", i: true },
+        { a: "Two phones, one charger, zero sleep, that's the math", b: "Count it twice then count the week, that's the path", rhyme: ["the math", "the path"], fam: "ath", i: true },
+        { a: "Hood up, name on the list, that's a promotion", b: "Last year they said I don't exist, that's the motion", rhyme: ["a promotion", "the motion"], fam: "otion", i: true },
+        { a: "I keep receipts in my hoodie like a wallet", b: "Ask the lobby who's the rookie, they'll call it", rhyme: ["a wallet", "call it"], fam: "allit", i: true },
+        { a: "Spare key to a place I pay for, that's a sentence", b: "First time nobody at the door, that's the attendance", rhyme: ["a sentence", "the attendance"], fam: "ence", i: true },
+        { a: "Nine to five, now it's five to nine, that's the flip", b: "Rent paid twice, that's a good sign, that's the tip", rhyme: ["the flip", "the tip"], fam: "ip", i: true },
+        { a: "Handed nothing but the bill, paid it with interest", b: "Now the lobby holds the door and I don't even witness", rhyme: ["with interest", "even witness"], fam: "itness", i: true },
+        { a: "Card got approved and I flinched, old reflex", b: "Two zeros more and I winced, that's the next step", rhyme: ["old reflex", "the next step"], fam: "ex", i: true },
+        { a: "Took the bus here, leaving in a two-door, that's the exit", b: "Same stop, same corner, different checklist", rhyme: ["the exit", "different checklist"], fam: "ist", i: true },
+      ],
+    },
+    technical: {
+      comeup: [
+        { a: "Bus pass, fast cash, last laugh in the lobby", b: "Rent paid, same day, mama proud of me, probably", inner: [["pass", "cash"], ["last", "laugh"], ["paid", "day"]], fam: "obby", i: true },
+        { a: "Broke at nine, booked by eleven, heaven sent, seven cents", b: "Lobby knows my name, same sound, different tenant", inner: [["eleven", "heaven", "seven"], ["name", "same"]], fam: "ent", i: true, run: "a" },
+        { a: "Hood up, name on the list, wrist got a pulse", b: "Last year they said I don't exist, now they insist I'm the source", inner: [["list", "wrist"], ["exist", "insist"]], fam: "ource", i: true, run: "b" },
+        { a: "Two phones, one charger, zero sleep, deep breath", b: "Count it twice, count the week, cheap seats, keep left", inner: [["sleep", "deep"], ["cheap", "keep"]], fam: "eft", i: true },
+        { a: "Receipts in the hoodie, rookie, look who's cooking", b: "Lobby took a look and now they're booking, who's looking", inner: [["hoodie", "rookie"], ["look", "cooking"], ["took", "booking"]], fam: "ooking", i: true, run: "b" },
+        { a: "Spare key, place I pay for, stay more, say less", b: "First time nobody at the door, I'm the whole address", inner: [["pay", "stay", "say"], ["door", "more"]], fam: "ess", i: true, run: "b" },
+        { a: "Nine to five flipped it, five to nine, lift it", b: "Rent paid twice, nice, that's a sign, I gift it", inner: [["five", "nine"], ["flipped", "lift"], ["twice", "nice"]], fam: "ift it", i: true },
+        { a: "Card got approved, I moved, flinched, then I grinned", b: "Two zeros more, score, winced, then I'm in", inner: [["approved", "moved"], ["more", "score"], ["flinched", "winced"]], fam: "in", i: true },
+        { a: "Bus stop to valet, okay, same shoes, new lane", b: "Walk straight, don't wait, same name, new frame", inner: [["valet", "okay"], ["straight", "wait"], ["name", "frame"]], fam: "ame", i: true },
+        { a: "They held the door, I held the pen, ten toes, then", b: "Laughed in the lobby back when, now they clap, and then", inner: [["pen", "ten", "then"], ["when", "then"]], fam: "en", i: true },
+        { a: "Mama's rent off one verse, worse to first, rehearsed", b: "Hood up in the lobby, probably the first to burst", inner: [["verse", "worse", "first"], ["lobby", "probably"]], fam: "urst", i: true, run: "b" },
+        { a: "Zero sleep, deep in it, keep spinning, we winning", b: "Lobby got a list, I'm in it, every minute, beginning", inner: [["sleep", "deep", "keep"], ["spinning", "winning"], ["minute", "beginning"]], fam: "inning", i: true, run: "b" },
+      ],
+      city3am: [
+        { a: "3am, green light, clean night, I own it", b: "City asleep, I creep, keep the streets, I loan it", inner: [["green", "clean"], ["asleep", "creep", "keep", "streets"]], fam: "own it", i: true },
+        { a: "Diner knows my order, border, not my name, same", b: "Same booth, same truth, same rain, same lane", inner: [["order", "border"], ["booth", "truth"], ["rain", "lane"]], fam: "ame", i: true },
+        { a: "Last train left, I'm walking, talking to the streetlight", b: "Pavement wet, sirens set, I'm good, sleep tight", inner: [["walking", "talking"], ["wet", "set"]], fam: "ight", i: true },
+        { a: "One taxi light for miles, smiles, blinks for me", b: "Night bus, back seat, sweet, that's VIP", inner: [["miles", "smiles"], ["seat", "sweet"]], fam: "ee", i: true },
+        { a: "Steam off the grate, late, hood up, one cup", b: "Corner store, what's up, shut up, run it up", inner: [["grate", "late"], ["up", "cup"], ["what's up", "shut up"]], fam: "up", i: true },
+        { a: "Wet pavement, same route, scout, sirens pass", b: "Walk it out, about to shout, then it's glass", inner: [["route", "scout"], ["out", "about", "shout"]], fam: "ass", i: true },
+        { a: "Corner store's my living room, noon at three", b: "Night shift, streetlights clock in, lock in with me", inner: [["room", "noon"], ["clock", "lock"]], fam: "ee", i: true },
+        { a: "I walk the city like a landlord, every floor is mine", b: "Every door, corridor, every sign", inner: [["landlord", "floor"], ["door", "corridor"]], fam: "ine", i: true, run: "a" },
+        { a: "3am's the only honest hour, power, I'm up", b: "Streetlight hum, drum, come get your cup", inner: [["hour", "power"], ["hum", "drum", "come"]], fam: "up", i: true },
+        { a: "Rooftop, one bar, far, ritual", b: "City lights, bright nights, habitual", inner: [["bar", "far"], ["lights", "nights"]], fam: "itual", i: true },
+        { a: "Night bus window, slow, city lights glow", b: "Everybody somewhere, I don't go, I know, so", inner: [["window", "slow", "glow"], ["go", "know"]], fam: "o", i: true, run: "b" },
+        { a: "Last train, same lane, rain on the glass", b: "Thoughts tired, wired, I walk until they pass", inner: [["train", "lane", "rain"], ["tired", "wired"]], fam: "ass", i: true },
+      ],
+      newmoney: [
+        { a: "Accountant texts like an ex, next, where's the checks", b: "Two cars, one spot, that's a lot, what's next", inner: [["texts", "ex", "next", "checks"], ["spot", "lot"]], fam: "ext", i: true },
+        { a: "Wire cleared, I felt nothing, something's off", b: "Zeros moved, I didn't, hidden cost", inner: [["nothing", "something"], ["didn't", "hidden"]], fam: "ost", i: true },
+        { a: "Bought the spot next door for the quiet, riot in my head", b: "Still can't sleep, counting sheep in a bigger bed", inner: [["quiet", "riot"], ["sleep", "sheep"]], fam: "ed", i: true, run: "a" },
+        { a: "Tax man knows my first name, same, shame", b: "Mom still thinks it's a game, phase, lane change", inner: [["name", "same", "shame"], ["game", "lane", "change"]], fam: "ange", i: true },
+        { a: "I pay people to say I'm fine, nine on the line", b: "Three on payroll, one on mute, cute, by design", inner: [["fine", "nine", "line"], ["mute", "cute"]], fam: "ine", i: true },
+        { a: "Still check the price, think twice, then say yes", b: "Old habits, new address, less stress, more mess", inner: [["price", "twice"], ["less", "stress", "mess"]], fam: "ess", i: true },
+        { a: "Got the bag, lost the appetite, bite, chew", b: "Menu long, song wrong, nothing's right, who knew", inner: [["appetite", "bite"], ["long", "song", "wrong"]], fam: "oo", i: true },
+        { a: "Safe in the wall, nothing in it yet, bet", b: "That's the plan, not a threat, sweat, debt", inner: [["yet", "bet"], ["threat", "sweat", "debt"]], fam: "et", i: true },
+        { a: "New money, same sleep schedule, settle", b: "Zeros up, I'm up, can't level, pedal to the metal", inner: [["schedule", "settle"], ["level", "pedal", "metal"]], fam: "etal", i: true, run: "b" },
+        { a: "Decimal moved, I didn't, kitchen, same hoodie", b: "Comma moved, I stood still, bills, same movie", inner: [["didn't", "kitchen"], ["still", "bills"]], fam: "oodie", i: true },
+        { a: "Receipt longer than the menu, then you tip the venue", b: "Then I called my mama, drama, she said who, then who", inner: [["menu", "then you", "venue"], ["mama", "drama"]], fam: "oo", i: true, run: "ab" },
+        { a: "The more it clears, the less I feel it, deal it, heal it", b: "Got the bag, can't feel it, conceal it, real shit", inner: [["feel", "deal", "heal"], ["conceal", "real"]], fam: "eal it", i: true, run: "a" },
+      ],
+    },
+    story: {
+      city3am: [
+        {
+          title: "Closes At Four", obj: "four",
+          hook: ["The diner closes at four", "I'm still sitting by the door", "She said go home, I said sure", "Then I ordered one coffee more"],
+          v1: ["Corner booth, Tuesday, quarter to three", "Same waitress, same coffee, she don't ask me", "My phone's face down, it's been that way since ten", "I flip it over, then flip it again", "There's a kid in the back booth with a backpack", "Eighteen, maybe, looks like me way back", "He's counting change twice, I know the math", "Two dollars short of the bus, I did that", "I slide a five on his table, say it fell", "He says thanks like he knows, I can tell", "The cook calls my number, order's up", "Eggs I won't eat and a refilled cup", "Streetlights outside doing their job", "One taxi passes slow like it's lost", "I tell myself I'm up because I'm working", "But my laptop's closed, and it's been closed since Thursday"],
+          v2: ["Four o'clock, lights up, she's wiping it down", "Says you want it boxed, I say I'm still around", "Kid with the backpack's gone, the bus came at three", "Left the five on the table, folded, for me", "I pick it up, there's pen on the back", "Four words in pen: go home, go back", "I laugh, I'm thirty-four, he's eighteen", "But he saw it from the back booth, the whole scene", "Laptop closed since Thursday, phone face down", "Eggs I don't eat, the same cup going around", "She leans on the counter, says two years now", "Two years I watched you not work, somehow", "I say I'm up because the apartment's quiet", "She says it's quiet here too, you just hide it", "I put the five in my pocket with the pen", "Walk out at four like I'm a kid again", "The bus is gone, so I walk the long way", "Call my mother at five, she picks up, says hey", "I say I'm fine, she says you sound awake", "I say yeah, I'm up, I got somewhere today"],
+          turn: 11,
+          bridge: ["The diner closes at four", "Same booth, same door", "I thought I was the one keeping watch", "Turns out everybody saw"],
+        },
+        {
+          title: "Last Train Left", obj: "train",
+          hook: ["The last train left without me", "I watched it go, that's how it should be", "I had the fare, I had the time", "I just didn't want to be home by nine"],
+          v1: ["Platform six, 11:52, I'm early", "Hood up, headphones in, nothing playing, really", "A man in a suit with a ring on a chain", "Not his finger, his neck, like a weight or a name", "He's reading the same text, I can see the glow", "Scrolls up, reads it again, scrolls down slow", "The train pulls in, doors open, he don't move", "I don't move either, call it a truce", "Doors close, it leaves, he laughs, I laugh", "Two grown men on a bench doing the math", "He says my wife's at my brother's, that's the text", "I say my place is just quiet, nothing less", "He says that's worse, I say I know", "Next train's 12:20, neither of us go", "He takes the ring off the chain, then puts it back", "I take my phone out, look at it, same act"],
+          v2: ["12:20 comes, he gets on, I don't", "He waves through the glass like he knows that I won't", "Platform's empty now, just me and the board", "Next train 1:05, the last one, all aboard", "I call my brother, he picks up, says what", "I say nothing, he says nothing, that's a lot", "He says still at the station, I say how'd you know", "He says you call from that bench every year, though", "Same night, same platform, same last train", "I say it's just a bench, he says it's got your name", "Eight years tonight, I didn't do the math", "He says I did, stay there, I'm on my way back", "1:05 pulls in, doors open, I stand", "Then I sit back down, phone still in my hand", "Headlights at the top of the stairs, 1:15", "My brother's car, same dent, you know what I mean", "He says the train's gone, I say I know", "He says good, get in, we got nowhere to go", "I get in, the heat's on, the radio's low", "He says same time next year, I say I hope not, though"],
+          turn: 9,
+          bridge: ["The last train left without me", "Platform six, same bench, same me", "I had the fare, I had the time", "My brother had the car, that's fine"],
+        },
+      ],
+      gone: [
+        {
+          title: "I Was Fine", obj: "fine",
+          hook: ["I said I was fine at nine", "Two cups by ten, lost the time", "Woke up at noon on the kitchen floor", "Said I was fine once more"],
+          v1: ["Friday, the check cleared, the fog came in", "Not the weather, the kind I pour and swim in", "Two cups on the counter, one's for me", "The other's for the me I don't let see", "My girl texts where you at, I type: the car", "I'm on the couch, the car's not even that far", "Pills in the console, the car's in the kitchen", "Moved it in from the car last winter, don't mention", "The TV's on, the game, I don't know who's playing", "I know the score, it's me losing, I'm just saying", "My phone buzzes, it's her, it says I'm outside", "I turn the lamp off, like the dark can hide", "She's got a key, I forgot I gave it", "Door opens, two cups, one hand, I can't fake it", "She don't say a word, she turns the lamp on", "Sits on the counter, says so this is where you've gone"],
+          v2: ["Saturday, noon, the floor is cold tile", "She's on the counter, she's been there a while", "Two cups in the sink, rinsed, and the pills in her hand", "She says I counted them, I say I understand", "She says you said you were fine at nine", "I say I was, she says that's the line", "Every Friday, the check, the fog, the cups", "Each Saturday I'm the one picking you up", "I say you don't have to, she says I know", "Then she says the thing, I'm not coming next week, though", "Not mad, she says, tired, there's a difference", "Been your Saturday, not your Friday, finished", "She leaves the key on the counter by the cups", "Doesn't slam the door, that's what hurts, it just shuts", "Sunday I pour the lean down the sink, slow", "Monday I find the bag, the pills, I don't throw", "I put them in a drawer, honest, that's the most", "Friday the check clears and I sit on the porch", "Phone face up, lamp on, one cup, water", "Not fine, but it's Friday, and I'm still the author"],
+          turn: 9,
+          bridge: ["I said I was fine at nine", "She said that's the line", "Two cups, one of me", "Now it's one cup, and I can see"],
+        },
+        {
+          title: "Nobody Home", obj: "nobody home",
+          hook: ["Woke up rich and nobody home", "Lights on, couch, the phone", "Twelve missed calls, all from me", "Checking if the place was empty"],
+          v1: ["Wednesday, I think, the blinds are down", "Money came Monday, haven't been downtown", "The plug's on mute, the lawyer's on read", "My cousin's on the couch, hasn't moved his head", "He came to help me count it, now we're both gone", "Smoke so thick the smoke alarm sings along", "There's a pizza box with a scale on top", "And a jeweler's receipt, paid, that's the plot", "My mother calls, I watch it ring, four times", "The fifth time I pick up and say I'm fine", "She says come Sunday, bring him, I say we might", "She says you've said that for three Sundays, right", "I look at my cousin, he's watching the ceiling", "He says tell her I'm good, goes back to the ceiling", "Smoke, money, the fog on the floor", "Wednesday, I think, I'm not sure anymore"],
+          v2: ["Sunday I wake up, couch, nobody home", "My cousin's gone, left a note on the phone", "Went to your mom's, I said you were sick", "She said she knows what kind, come anyway, quick", "I count what's left on the table, it's less", "Not stolen, spent, by me, I confess", "I shower for the first time since the money came", "The water feels like somebody saying my name", "I drive to my mother's, the plug calls twice", "I let it ring, that's the first time, that's nice", "She opens the door, she don't say sick, she says son", "She says your cousin told me, I say which one", "The one where the money came and you went", "Same as your father, same couch, same scent", "I didn't know that, I say, she says now you do", "She brings two plates, one for him, one for you", "Fog's gone, my hands shake holding the fork", "She says that's the first Sunday, that's the work", "I call the plug back, say I'm out for a while", "He says you'll be back, I say maybe, and smile"],
+          turn: 10,
+          bridge: ["Woke up rich and nobody home", "Then I woke up broke and the lights were on", "Mom's porch, two plates, the fork", "That's the first Sunday, that's the work"],
+        },
+      ],
+      betteroff: [
+        {
+          title: "Left The Plant", obj: "plant",
+          hook: ["You left the plant and the chair", "I kept them both, that's fair", "I water one, I sit in the other", "Some days I can't tell which is harder"],
+          v1: ["Monday after you left, the apartment's loud", "Not noise, the opposite, the quiet's a cloud", "Your plant's on the sill, it's leaning toward the glass", "I didn't water it for a week, I let it ask", "Your chair's by the window, the one you sulked in", "I sat in it Tuesday, it still smells like your skin", "The playlist came on, your six songs, I skipped", "Then I went back, played them, that's how I slipped", "Wednesday I bought groceries for two, mistake", "Two of everything, half of it I won't take", "Thursday your friend texted, how are you doing", "I typed fine, deleted it, typed look, kept moving", "Friday the mug, your chipped one, I used it", "Coffee tastes the same, don't know why I did it", "Saturday I watered the plant, it stood up", "So did I, a little, that's enough"],
+          v2: ["A month in, the plant's got a new leaf", "The chair's got a blanket, mine, that's a relief", "I sleep in the middle now, both pillows", "Bed made all the way, who it's for, who knows", "Your friend asked again, I said look", "Sent a picture of the plant, she said good", "Then she sent something I didn't expect", "A screenshot, you asking her to check", "Not on me, on the plant, your words", "Is it alive, that's all, that's what hurts", "I read verse one again, the week you left", "The plant at the glass like it was out of breath", "It wasn't asking me, it was asking the window", "Waiting for you to come back through it, slow", "I water it anyway, the most I'll admit", "I don't send you the picture, I keep it", "Your friend says she won't tell you, I say tell her", "Tell her it's alive, there's a blanket, tell her", "I sleep in the middle, both pillows, mine", "The plant's alive, so am I, this time it's fine"],
+          turn: 7,
+          bridge: ["You left the plant and the chair", "I kept them both, that's fair", "You asked about one, not the other", "I'm the other, and I'm getting better"],
+        },
+        {
+          title: "Kept The Mug", obj: "mug",
+          hook: ["I kept the mug, not the number", "Coffee at eight, I don't wonder", "Changed the locks, not the key", "That one's not for you, it's for me"],
+          v1: ["The locksmith came Tuesday, nine in the morning", "Asked who had the old one, I said long story", "He changed it in ten minutes, that's all it took", "Two years of you, ten minutes, one look", "I kept the old key on the ring though", "Not for the door, for the weight, so I'd know", "The mug's in the sink, the chipped one, yours", "I wash it every morning, that's the chore", "Coffee at eight, same chair, same light", "Your side of the table's where I put the mail, right", "Your friend calls Thursday, says you asked", "I say asked what, she says if I'm okay, I laughed", "I said tell her the locks are changed", "She said she knows, she said it's strange", "Strange how, I said, she said never mind", "I hung up and washed the mug a second time"],
+          v2: ["Three weeks in, the mail's still on your side", "I move it Tuesday, it's the first time I tried", "The key's still on the ring, heavier now", "I take it off Wednesday, don't ask me how", "Thursday your friend calls again, says sit down", "Says you changed your locks too, same Tuesday, same town", "Nine in the morning, I said, she said yes", "Same locksmith, I said, she said I guess", "I read verse one back, the ten minutes, the look", "You were doing it too, same hour, same book", "I kept your mug, she says you kept my shirt", "The grey one, I thought I lost it, that hurt", "I laugh, she says it's not funny, I say it is", "Two people changing locks at nine, what is this", "I wash the mug Friday, same as always", "Coffee at eight, your side clear these days", "I don't call, I don't have the number", "I have the mug, and I don't wonder", "You have the shirt, and the new key", "Same Tuesday, same nine, that's the whole story"],
+          turn: 5,
+          bridge: ["I kept the mug, not the number", "You kept the shirt, I don't wonder", "Same Tuesday, same locksmith, same nine", "Two new keys, and I'm fine"],
+        },
+      ],
+    },
+  };
+  const LANES = Object.keys(LANE_BANK);
+
   const NUM = ["two", "four", "seven", "nine", "twelve", "twenty", "forty", "ninety-nine", "two hundred", "a thousand"];
   const TIME = ["3am", "4am", "2:47", "half past two", "midnight", "a quarter to four", "Sunday", "last Tuesday", "noon", "6am"];
   const SOUND = ["ring ring", "beep beep", "tick tock", "knock knock", "vroom vroom", "cha-ching", "click clack", "ding ding"];
@@ -1734,7 +1908,7 @@ const OneLyrics = (() => {
   }
   const stutterLine = (line) => {
     const m = line.match(/^([A-Za-z]{4,})(.*)$/);
-    if (!m || /^[aeiouy]/i.test(m[1])) return null;
+    if (!m || /^[aeiouy]/i.test(m[1]) || /day$/i.test(m[1])) return null;
     const n = /^[^aeiou]{2}/i.test(m[1]) ? 2 : 1;
     return `${m[1].slice(0, n)}-${m[1][0].toLowerCase()}${m[1].slice(1)}${m[2]}`;
   };
@@ -1751,10 +1925,14 @@ const OneLyrics = (() => {
   function humanize(r, hook, verses) {
     let touches = 0;
     const stretchAt = (arr, i) => { if (/([aeiou])\1\1/i.test(arr[i])) return false; const s = stretchLine(arr[i]); if (s) { arr[i] = s; touches++; return true; } return false; };
-    if (!stretchAt(hook.lines, 1)) stretchAt(hook.lines, 2);
+    // A refrain repeats its lines ([a, b, a, b]): a stretch on line 2 is
+    // mirrored on line 4, and line 3 is never stretched when it is the title.
+    const mirror = (i) => { const orig = hook.lines[i]; const ok = stretchAt(hook.lines, i); if (ok) for (let j = i + 1; j < hook.lines.length; j++) if (hook.lines[j] === orig) hook.lines[j] = hook.lines[i]; return ok; };
+    const thirdOk = () => hook.lines[2] !== hook.lines[0];
+    if (!mirror(1) && thirdOk()) mirror(2);
     const extraHook = r() < 0.4, verseEnd = r() < 0.6, stutter = r() < 0.5;
     const dots = 1 + (r() < 0.5 ? 1 : 0), breaths = 1 + (r() < 0.5 ? 1 : 0);
-    if (extraHook && touches < 2) stretchAt(hook.lines, 2);
+    if (extraHook && touches < 2 && thirdOk()) mirror(2);
     const all = verses.flatMap((v) => v.lines.map((_, i) => [v.lines, i]));
     const pickLines = (n, ok) => {
       const pool = all.filter(([arr, i]) => ok(arr[i], i));
@@ -1782,6 +1960,7 @@ const OneLyrics = (() => {
   // --------------------------------------------------------------- write
   function write({ r, pick, lane, theme, persona, key, bpm } = {}) {
     if (typeof r !== "function") throw new Error("OneLyrics.write needs a seeded r()");
+    if (LANES.includes(lane)) return writeLane({ r, pick, lane, theme, persona, key, bpm });
     const _pick = pick || ((arr) => arr[Math.floor(r() * arr.length)]);
     lane = lane === "rnb" || lane === "rap" ? lane : _pick(["rap", "rnb"], r);
     const T = typeof theme === "string" ? THEMES.find((t) => t.id === theme) : theme;
@@ -1905,10 +2084,98 @@ const OneLyrics = (() => {
     };
   }
 
+  // -------------------------------------------------------- gritty lanes
+  // A verse of lane couplets: a quotable hook couplet in bars 3-4 and the
+  // hook callback closing it, like the radio builder, but every other
+  // couplet is a punchline (grit) or a dense run (technical).
+  function coupletVerse(ctx, r, units, couplets) {
+    const want = couplets - 2;
+    const chosen = [];
+    while (chosen.length < want) {
+      const c = take(ctx, "lane", units, r) || take(ctx, "lane", units, r, undefined, true) || callbackCouplet(ctx, r);
+      chosen.push(c);
+    }
+    const h = take(ctx, "hooks", BANK[ctx.theme.id].hooks, r);
+    const seq = [chosen[0], h ? { k: "oneliner", a: h.a, b: h.b } : callbackCouplet(ctx, r), ...chosen.slice(1), callbackCouplet(ctx, r)];
+    const lines = [];
+    for (const c of seq) lines.push(c.a, c.b);
+    return { lines, couplets: seq, internal: seq.some((c) => c.i) };
+  }
+
+  // Bars first, hook second: Intro / Verse 1 (16) / Hook / Verse 2 (16, 20
+  // for a story) / Hook / Verse 3 (8-12) or Bridge (story) / Hook / Outro.
+  function writeLane({ r, pick, lane, theme, persona, key, bpm }) {
+    const _pick = pick || ((arr) => arr[Math.floor(r() * arr.length)]);
+    const banks = LANE_BANK[lane];
+    const wanted = typeof theme === "string" ? theme : theme && theme.id;
+    const themeId = wanted && banks[wanted] ? wanted : _pick(Object.keys(banks), r);
+    const themeObj = THEMES.find((t) => t.id === themeId);
+    const personaObj = (typeof persona === "string" ? LANE_PERSONAS[lane].find((p) => p.id === persona) : persona) || _pick(LANE_PERSONAS[lane], r);
+    const ctx = { lane, theme: themeObj, persona: personaObj, used: {} };
+    const feel = choose(FEEL.filter((f) => feelKinds(personaObj).includes(f.k)), r);
+    let lastTiming = null;
+    const timing = (role) => { const c = choose(TIMING[role], r, [lastTiming]); lastTiming = c; return c; };
+
+    let hook, v1, v2, v3 = null, bridge = null, scene = null;
+    if (lane === "story") {
+      scene = take(ctx, "scene", banks[themeId], r);
+      ctx.hookObj = scene.obj;
+      ctx.title = scene.title;
+      hook = { lines: [...scene.hook], title: scene.title, family: "story", obj: scene.obj, curated: true };
+      v1 = { lines: [...scene.v1] };
+      v2 = { lines: [...scene.v2], turn: scene.turn };
+      bridge = [...scene.bridge];
+    } else {
+      const h = take(ctx, "hooks", BANK[themeId].hooks, r);
+      ctx.hookObj = h.obj;
+      ctx.title = h.title;
+      // grit: a two-line refrain said twice; technical: short and rhythmic.
+      hook = { lines: lane === "grit" ? [h.a, h.b, h.a, h.b] : [h.a, h.b, choose(h.alt, r), h.a], title: h.title, family: h.fam, obj: h.obj, curated: true };
+      v1 = coupletVerse(ctx, r, banks[themeId], 8);
+      v2 = coupletVerse(ctx, r, banks[themeId], 8);
+      v3 = curatedRapVerse(ctx, r, choose([8, 12], r), { callback: true });
+    }
+    const touches = humanize(r, hook, [v1, v2, ...(v3 ? [v3] : [])]);
+
+    // The signature ad-lib: one grunt or laugh for the whole record.
+    const sig = choose(personaObj.adlibs, r);
+    const hookBlock = (variant) => {
+      const cues = lane === "grit" ? ["rapped refrain", timing("hook"), variant === "biggest" ? "doubled" : "full beat"]
+        : lane === "technical" ? ["half-sung", timing("hook"), variant === "biggest" ? "stacked" : "full beat"]
+        : [variant === "biggest" ? "sung" : "half-sung", timing("hook"), variant === "biggest" ? "stacked harmonies" : "sparse"];
+      const lines = lane === "grit"
+        ? [hook.lines[0], hook.lines[1], `(${sig})`, hook.lines[2], hook.lines[3], `(${sig})`]
+        : withAdlibs(hook.lines, personaObj, r, 2, lane === "story" ? 0.2 : 0.45);
+      return section("Hook", cues, lines);
+    };
+    const verseCues = () => (lane === "technical" ? ["rapped", choose(FLOW, r), timing("verse")] : ["rapped", timing("verse"), choose(BEAT, r, ["drums cut"])]);
+    const adEvery = lane === "story" ? 8 : 4, adP = lane === "story" ? 0.4 : lane === "grit" ? 0.5 : 0.7;
+    const verseBlock = (name, v) => section(name, verseCues(), withAdlibs(v.lines, personaObj, r, adEvery, adP));
+    const intro = () => (r() < 0.5
+      ? section("Intro", ["spoken", "dry", `${2 + 2 * Math.floor(r() * 2)} bars`], [cap(choose(INTRO_SPOKEN, r).replace("{time}", choose(TIME, r)).replace("{title}", hook.title))])
+      : section("Intro", ["beat alone then one line", "808 only", "2 bars"], [hook.lines[0]]));
+    const bridgeBlock = () => section("Bridge", ["sparse", timing("bridge"), "drums cut"], bridge);
+    const outroBlock = () => section("Outro", [choose(["spoken", "whispered", "half-sung"], r), timing("outro"), r() < 0.5 ? "fade" : "hard stop"], [hook.lines[0], hook.lines[0], `(${sig})`]);
+
+    const parts = [intro(), verseBlock("Verse 1", v1), hookBlock(), verseBlock("Verse 2", v2), hookBlock(), v3 ? verseBlock("Verse 3", v3) : bridgeBlock(), hookBlock("biggest"), outroBlock(), "[End]"];
+    return {
+      lyrics: parts.join("\n\n"),
+      hook: { lines: hook.lines, title: hook.title, family: hook.family, obj: hook.obj, curated: true },
+      title: hook.title,
+      persona: { ...personaObj, feature: null },
+      theme: { id: themeObj.id, label: themeObj.label },
+      lane, structure: "bars-first", scene: scene ? scene.title : null,
+      style: `${personaObj.tag}, ${feel.t}`,
+      feel: feel.t,
+      touches,
+      key, bpm,
+    };
+  }
+
   const EXCLUDE = ["choir", "crowd vocals", "gang vocals", "vocal chops", "gospel"];
   const ALLOW = /\b(vocal|vocals|vocalist|rap|rapper|rapped|sing|sings|singing|singer|sung|hum|humming|hummed|lyric\w*|ad-?lib\w*|falsetto|harmonies|doubles|belt\w*|whisper\w*|spoken)\b/i;
 
-  return { write, rhymes, lastWord, syllables, plain, BANK, FEEL, TIMING, TIMING_ALL, RHYMES, PERSONAS, THEMES, HOOK_T, VERSE_T, DELIVERY, TEXTURE, BEAT, EXCLUDE, ALLOW };
+  return { write, rhymes, lastWord, syllables, plain, BANK, LANE_BANK, LANE_PERSONAS, LANES, FLOW, FEEL, TIMING, TIMING_ALL, RHYMES, PERSONAS, THEMES, HOOK_T, VERSE_T, DELIVERY, TEXTURE, BEAT, EXCLUDE, ALLOW };
 })();
 
 if (typeof module !== "undefined") module.exports = OneLyrics;
