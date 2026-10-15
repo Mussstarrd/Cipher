@@ -25,3 +25,4 @@ Notes:
 - 2026-10-13 3:45: flat, nothing to sell. Equity $2,423. Week (from Oct 12 start $2,423): $0. v4 trades: 0.
 - 2026-10-14 9:45: no gap entry. Top gaps: AAPL +0.98%, GOOGL +0.57%, AMZN −0.2% (Tier B). Tier A gapped down after hot CPI (INTC −3%, AMD −2.5%, SMH −1.9%). Equity $2,423, settled $2,423.
 - 2026-10-14 3:45: flat, nothing to sell. Equity $2,423. Week: $0. v4 trades: 0.
+- 2026-10-15 9:45: no gap entry. Top gaps: AAPL +1.16%, MSFT +0.06%, GOOGL −0.9% (Tier B). Tier A gapped down hard (INTC −5.9%, AMD −5.6%, MU −4.4%, SMH −3.5%) on AI unwind after TSM. Equity $2,423, settled $2,423.
