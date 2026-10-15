@@ -199,7 +199,7 @@ test("Prof holds two moods with their own tempo and words", () => {
 test("spin-offs borrow experimental leads about a third of the time, with an in-genre counter", () => {
   const own = require("../src/one/genres.js");
   for (const g of E.genres()) {
-    if (g.id === "hiphop" || g.id === "cross" || g.id === "radio") continue;
+    if (g.id === "hiphop" || g.id === "cross" || own[g.id].grammar.VOCAL) continue;
     let guests = 0, n = 0;
     for (const seed of seeds.slice(0, 500)) {
       const { parts } = E.generate({ seed, genre: g.id });
