@@ -1376,13 +1376,18 @@ const OneLyrics = (() => {
   // the salt, the frost in the beard, the oath, the ones who wait at home).
   // Every tag names its voice so the roles never swap. No god names, no
   // Marvel register. Shouts in parentheses are the male answers.
+  const VOCALIZE_CLAUSE = "oh-oh vocalizing in the gaps";
   const VIKING_PERSONAS = [
-    { id: "frost", female: "airy female vocals, haunting joik-like melody", male: "gravel male rap, half-shouted battle cadence, low unison chant", adlibs: ["hey", "hold", "row"], palette: ["pushed ahead of the beat", "shouted", "doubled"] },
-    { id: "ember", female: "breathy female vocals, soft folk melody", male: "deep hoarse male rap, slow war cadence, grunted shouts", adlibs: ["hey", "hold", "uh"], palette: ["laid-back behind the beat", "dry and close", "doubled"] },
-    { id: "tide", female: "clear female vocals, bold folk melody", male: "raspy male rap, driving battle cadence, low unison chant", adlibs: ["row", "hey", "hold"], palette: ["pushed ahead of the beat", "start-stop flow", "stacked"] },
+    { id: "frost", female: "high airy female vocals, haunting joik melody", male: "deep burly male rap, booming chest register, half-shouted", adlibs: ["hey", "hold", "row"], palette: ["pushed ahead of the beat", "shouted", "doubled"] },
+    { id: "ember", female: "soaring high female folk melody, breathy", male: "thunderous baritone male rap, gravel-edged, slow war cadence", adlibs: ["hey", "hold", "uh"], palette: ["laid-back behind the beat", "dry and close", "doubled"] },
+    { id: "tide", female: "high clear female vocals, bold folk melody", male: "huge low male rap, raspy chest register, driving battle cadence", adlibs: ["row", "hey", "hold"], palette: ["pushed ahead of the beat", "start-stop flow", "stacked"] },
   // The style head is never trimmed, so the pair stays short: the female
-  // phrase carries her timing (long held notes behind the beat, breathy).
-  ].map((p) => ({ ...p, gender: "duet", tag: `${p.female}, long notes behind the beat, breathy, ${p.male}` }));
+  // phrase carries her timing, then the vocalizing both voices do.
+  ].map((p) => ({ ...p, gender: "duet", tag: `${p.female}, long notes behind the beat, ${p.male}, ${VOCALIZE_CLAUSE}` }));
+  // Non-lexical fills Suno sings: female high (a line of lyric), male deep
+  // (a parenthesised drone). Four to six syllables, a long vowel at the end.
+  const OH_FEMALE = ["Oh, oh-oh, ohhh", "Ah, ah-ah, ahhh", "Oh-oh, oh-oh, ohhh", "Oh, ohhh, oh-oh, ohhh", "Ah-ah, oh-oh, ohhh"];
+  const OH_MALE = ["(ohh, oh-oh)", "(hoo, hoo-hoo)", "(mmm, hmm)", "(ohh, ohh)"];
   const VIKING_CALLBACK = [
     { a: "Back to the {hobj}, back to the oar", b: "Said it at the fire, say it once more" },
     { a: "Still on the {hobj}, still the same hand", b: "Said it on the water, say it on land" },
@@ -1422,6 +1427,7 @@ const OneLyrics = (() => {
         { a: "Hold the line on the water, hold it on land", b: "Same oath, different cold, same hand", rhyme: ["on land", "same hand"] },
       ],
       pre: [["Row, row, the sea is wide", "Row, the north wind's on our side"], ["The hall is far", "Follow the star"], ["Over the water, oh", "Over the ice and snow"], ["Ravens, show the way", "Row until the day"]],
+      answer: ["The sea remembers", "Row, my love, row", "Over the water, oh", "I'll keep the fire", "Ravens, carry him", "The north wind knows", "Home across the sea", "Hold the oar, hold on", "The hall will wait", "Salt on the shore, oh", "Row till the water glows", "Carry him, sea"],
       chant: ["We row, we row", "Pull, pull, pull", "North, north", "Hold the oar"],
       outro: ["Row till the sea turns gold", "The north wind carries me home", "Fire on the water, low", "Over the sea, oh"],
     },
@@ -1457,6 +1463,7 @@ const OneLyrics = (() => {
         { a: "Say my name when I'm gone, say it loud", b: "Say it at the fire, say it to the cloud", rhyme: ["it loud", "the cloud"] },
       ],
       pre: [["Say the names, say them slow", "Say them so they know"], ["Raise the cup, raise it high", "Under the long sky"], ["Hold the line, hold it", "Hold the oath, hold it"], ["We owe, we owe", "We row, we row"]],
+      answer: ["Say their names, oh", "We owe, we owe", "The fire still burns", "Hold the line, hold on", "They wait in the hall", "I'll sing them home", "Ash on the water, oh", "Cold iron, warm oath", "Carry it on, oh", "The oath is the bridge", "Say my name, oh", "We stand, we stand"],
       chant: ["Hold the line", "We owe, we owe", "Say the name", "Shield wall, shield wall"],
       outro: ["We carry them home", "Say my name when I'm gone", "The fire still burns", "Ash on the water, sleep"],
     },
@@ -1492,6 +1499,7 @@ const OneLyrics = (() => {
         { a: "Fire on the hill, that's her, that's the sign", b: "I'm late by a winter, but I'm home by nine", rhyme: ["the sign", "by nine"] },
       ],
       pre: [["Light the fire, keep it low", "I'm coming through the snow"], ["Wait by the shore", "One winter more"], ["The ice will break", "Stay awake"], ["Over the hill, I'll show", "Home through the snow"]],
+      answer: ["I'll keep the fire", "Wait, I'll show, oh", "Light in the window", "Home through the snow", "The ice will break, oh", "Row, my love, row", "One winter more", "Keep the door, oh", "I'm waiting, oh", "Home before the snow", "The long night ends", "Salt on the door, oh"],
       chant: ["Home, home", "Keep the fire", "Row home, row home", "Hold the door"],
       outro: ["Wait for me, I'll show", "Light in the window, oh", "Home before the snow", "The long night ends"],
     },
@@ -2311,7 +2319,9 @@ const OneLyrics = (() => {
     const bank = VIKING[themeId];
     const personaObj = (typeof persona === "string" ? VIKING_PERSONAS.find((p) => p.id === persona) : persona) || _pick(VIKING_PERSONAS, r);
     const ctx = { lane: "viking", theme: { id: themeId, obj: [] }, persona: personaObj, used: {} };
-    const feel = choose(FEEL.filter((f) => feelKinds(personaObj).includes(f.k)), r);
+    // The duet tag is long and the style head is never trimmed: the male
+    // voice takes one of the shorter feel clauses.
+    const feel = choose(FEEL.filter((f) => feelKinds(personaObj).includes(f.k) && f.t.length <= 42), r);
     let lastTiming = null;
     const timing = (role) => { const c = choose(TIMING[role], r, [lastTiming]); lastTiming = c; return c; };
 
@@ -2338,27 +2348,56 @@ const OneLyrics = (() => {
 
     // The chant words sit in parentheses under the hook and the breakdown
     // (2-6 syllables, a low male unison line); the final hook answers with
-    // the male shouts instead.
+    // male oh-oh drones under lines 2 and 4. Line 3 of every hook is the
+    // male in his low chest register. Role lines keep Suno from swapping.
     const chantLine = `(${chant.toLowerCase()})`;
     const shouts = personaObj.adlibs;
     const shout = (i) => `(${shouts[i % shouts.length]})`;
-    const hookBlock = (final) => section("Hook", [
-      final ? "final female lead octave up with male rap ad-libs" : "female lead with low male unison chant under",
-      timing("hook"),
-      final ? "war-drum driven" : "full drums",
-    ], hook.lines.flatMap((l, i) => [l, final ? shout(i) : (i % 2 ? shout(i) : chantLine)]));
-    const verseBlock = (name, v) => section(name, ["male rap", timing("verse"), choose(["sparse 808", "sparse 808 and drone", "sparse 808 under war drums"], r)], withAdlibs(v.lines, personaObj, r, 4, 0.5));
+    const ohF = () => take(ctx, "ohF", OH_FEMALE, r) || choose(OH_FEMALE, r);
+    const ohM = () => take(ctx, "ohM", OH_MALE, r) || choose(OH_MALE, r);
+    const answer = () => take(ctx, "answer", bank.answer, r) || choose(bank.answer, r);
+    const hookBlock = (final) => {
+      const [f1, f2, m3, f4] = hook.lines;
+      const under = (i) => (final ? (i % 2 ? ohM() : shout(i)) : i % 2 ? shout(i) : chantLine);
+      return section("Hook", [
+        final ? "final female lead octave up with male line 3 and oh-oh drones" : "female lead with male line 3 and low unison chant under",
+        timing("hook"),
+        final ? "war-drum driven" : "full drums",
+      ], [f1, under(0), f2, under(1), "[Male]", m3, under(2), "[Female]", f4, under(3)]);
+    };
+    // A trading verse: male couplets, a female answer every two to four
+    // bars, an oh-oh fill in place of the answer every eight bars.
+    const trading = (v) => {
+      const out = ["[Male]"];
+      const slots = new Set([0, 2, 3, 5, 7]);
+      for (let c = 0; c < 8; c++) {
+        out.push(v.lines[2 * c], v.lines[2 * c + 1]);
+        if (slots.has(c)) out.push("[Female]", c === 3 || c === 7 ? ohF() : answer(), ...(c < 7 ? ["[Male]"] : []));
+      }
+      return out;
+    };
+    const plain = (v) => {
+      const lines = withAdlibs(v.lines, personaObj, r, 4, 0.5);
+      const at = lines.indexOf(v.lines[7]) + 1;
+      return [...lines.slice(0, at), "[Female]", ohF(), "[Male]", ...lines.slice(at)];
+    };
+    const verseBlock = (name, v, trade) => section(name, [
+      trade ? "male rap trading lines with female answers" : "male rap with one female oh-oh line",
+      timing("verse"),
+      choose(["sparse 808", "sparse 808 and drone", "sparse 808 under war drums"], r),
+    ], trade ? trading(v) : plain(v));
+    const tradeV1 = r() < 0.5;
     const parts = [
-      section("Intro", ["female vocal alone", "drone with a horn call", "8 bars"], [hook.lines[0]]),
-      verseBlock("Verse 1", v1),
-      section("Pre-Hook", ["female rising", timing("pre"), "war drums enter"], pre),
+      section("Intro", ["female vocal alone", "drone with a horn call", "8 bars"], [hook.lines[0], ohF(), ohF()]),
+      verseBlock("Verse 1", v1, tradeV1),
+      section("Pre-Hook", ["male and female alternating lines", timing("pre"), "war drums enter"], ["[Male]", pre[0], "[Female]", pre[1]]),
       hookBlock(false),
-      verseBlock("Verse 2", v2),
-      section("Pre-Hook", ["female rising", timing("pre"), "war drums enter"], pre),
+      verseBlock("Verse 2", v2, true),
+      section("Pre-Hook", ["male and female alternating lines", timing("pre"), "war drums enter"], ["[Male]", pre[0], "[Female]", pre[1]]),
       hookBlock(false),
-      section("Breakdown", ["drums out with drone", "low male unison chant", timing("bridge")], [chantLine, "(mm)", chantLine]),
+      section("Breakdown", ["drums out with drone", "female oh-oh vocalize high", "deep male oh-oh drone under"], [ohF(), ohM(), chantLine, ohF(), ohM()]),
       hookBlock(true),
-      section("Outro", ["female vocal alone", timing("outro"), "horn then fade"], [outroLine, outroLine]),
+      section("Outro", ["female vocal alone", timing("outro"), "horn then fade"], [outroLine, ohF()]),
       "[End]",
     ];
     return {
@@ -2379,10 +2418,10 @@ const OneLyrics = (() => {
   // The viking lane may say chant, shouts, haunting, ethereal, folk and
   // joik; the engine unlocks these for that genre only. Never choir, crowd,
   // anthemic, arena, singalong, epic, cinematic or trailer.
-  const VIKING_ALLOW = /\b(chant\w*|shout\w*|haunt\w*|ethereal|folk|joik\w*)\b/i;
+  const VIKING_ALLOW = /\b(chant\w*|shout\w*|haunt\w*|ethereal|folk|joik\w*|growl\w*)\b/i;
   const ALLOW = /\b(vocal|vocals|vocalist|rap|rapper|rapped|sing|sings|singing|singer|sung|hum|humming|hummed|lyric\w*|ad-?lib\w*|falsetto|harmonies|doubles|belt\w*|whisper\w*|spoken)\b/i;
 
-  return { write, rhymes, lastWord, syllables, plain, BANK, LANE_BANK, LANE_PERSONAS, LANES, FLOW, VIKING, VIKING_PERSONAS, VIKING_ALLOW, FEEL, TIMING, TIMING_ALL, RHYMES, PERSONAS, THEMES, HOOK_T, VERSE_T, DELIVERY, TEXTURE, BEAT, EXCLUDE, ALLOW };
+  return { write, rhymes, lastWord, syllables, plain, BANK, LANE_BANK, LANE_PERSONAS, LANES, FLOW, VIKING, VIKING_PERSONAS, VIKING_ALLOW, VOCALIZE_CLAUSE, OH_FEMALE, OH_MALE, FEEL, TIMING, TIMING_ALL, RHYMES, PERSONAS, THEMES, HOOK_T, VERSE_T, DELIVERY, TEXTURE, BEAT, EXCLUDE, ALLOW };
 })();
 
 if (typeof module !== "undefined") module.exports = OneLyrics;

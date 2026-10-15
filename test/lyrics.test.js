@@ -84,16 +84,22 @@ const BRANDS = /\b(nike|jordans?|gucci|prada|rolex|amex|venmo|cashapp|uber|lyft|
 const TAG = /^\[[^\]]+\]$/;
 const LYRIC = /^[A-Za-z0-9'"(),.?!:&\- ]+$/;
 const ADLIB = /^\([a-z' ,-]{1,24}\)$/i;
+// Duet role lines and the non-lexical fills both voices sing.
+const ROLE = /^\[(Male|Female)\]$/;
+const VOC = /^(oh|ah)[oah, \-]*h+$/i;
+// The lines a voice sings in a duet section, by the role line before them (male by default).
+const byRole = (sec, first = "male") => { const r = { male: [], female: [] }; let cur = first; for (const l of sec.raw) { if (ROLE.test(l)) cur = l === "[Male]" ? "male" : "female"; else if (!ADLIB.test(l)) r[cur].push(l); } return r; };
 
 const lines = (text) => text.split("\n").filter((l) => l.trim());
 // Sections as [{ name, cues, lines }].
 function sections(text) {
   const out = [];
   for (const l of lines(text)) {
-    if (TAG.test(l)) {
+    if (ROLE.test(l)) { const s = out[out.length - 1]; s.raw.push(l); s.roles.push(l); }
+    else if (TAG.test(l)) {
       const m = l.match(/^\[([^|\]]+)(?:\|(.*))?\]$/);
-      out.push({ name: m[1].trim(), cues: m[2] ? m[2].split(",").map((c) => c.trim()).filter(Boolean) : [], lines: [] });
-    } else out[out.length - 1].lines.push(l);
+      out.push({ name: m[1].trim(), cues: m[2] ? m[2].split(",").map((c) => c.trim()).filter(Boolean) : [], lines: [], raw: [], roles: [] });
+    } else { const s = out[out.length - 1]; s.lines.push(l); s.raw.push(l); }
   }
   return out;
 }
@@ -219,9 +225,10 @@ test("radio shape: a vocal line in the first section, 3-4 hook statements, verse
     const outro = secs.find((s) => s.name === "Outro");
     if (out.lane !== "viking") assert.deepStrictEqual(outro.lines.slice(0, 2), [out.hook.lines[0], out.hook.lines[0]], `seed ${seed}: outro is not the title line twice`);
     if (out.lane === "rap" || L.LANES.includes(out.lane)) for (const v of [v1, v2]) assert.ok(v.cues.includes("rapped"), `seed ${seed}: rap verse without the rapped cue`);
-    if (out.lane === "viking") for (const v of [v1, v2]) assert.ok(v.cues.includes("male rap"), `seed ${seed}: viking verse without the male rap cue`);
+    if (out.lane === "viking") for (const v of [v1, v2]) assert.ok(v.cues.some((c) => /male rap/.test(c)), `seed ${seed}: viking verse without the male rap cue`);
     if (gritty(out)) continue;
     // Rap verses: 16 / 12 / 8 bars; sung verses: one or two stanzas, plus the callback couplet.
+    if (out.lane === "viking") continue;
     for (const v of [v1, v2]) {
       const n = v.lines.filter((l) => !ADLIB.test(l)).length;
       assert.ok([4, 6, 8, 10, 12, 16].includes(n), `seed ${seed}: [${v.name}] has ${n} lines`);
@@ -240,7 +247,7 @@ test("couplets rhyme, no couplet repeats in a song, and every rap verse carries 
   for (const { seed, out } of SONGS) {
     const seen = new Set();
     for (const s of sections(out.lyrics).filter((x) => /^Verse/.test(x.name))) {
-      const lyr = s.lines.filter((l) => !ADLIB.test(l));
+      const lyr = out.lane === "viking" ? byRole(s).male : s.lines.filter((l) => !ADLIB.test(l));
       for (let i = 0; i + 1 < lyr.length; i += 2) {
         assert.ok(coupletOk(lyr[i], lyr[i + 1]), `seed ${seed}: couplet does not rhyme: ${lyr[i]} / ${lyr[i + 1]}`);
         const key = `${P(lyr[i])}\n${P(lyr[i + 1])}`;
@@ -359,6 +366,7 @@ test("human feel: one feel clause on the style, a timing cue on 70%+ of tags tha
     const lyr = [...new Set(lines(out.lyrics).filter((l) => !TAG.test(l)))];
     let touches = 0;
     for (const l of lyr) {
+      if (VOC.test(l)) continue;
       if (ADLIB.test(l)) { assert.ok(!/\.\.\.| - |([aeiou])\1\1/i.test(l), `seed ${seed}: device inside an ad-lib: ${l}`); continue; }
       const stretched = /([aeiou])\1\1/i.test(l), dots = /^\.\.\./.test(l), breath = / - /.test(l), stutter = /^([A-Za-z]{1,2})-\1/i.test(l);
       assert.ok((l.match(/([aeiou])\1\1/gi) || []).length <= 1, `seed ${seed}: two stretched words on one line: ${l}`);
@@ -448,15 +456,17 @@ test("gritty lanes: personas, bars-first shape, punchline rhymes, dense runs, st
 test("viking duet: three persona pairs, exact structure, every tag names a voice, female lines 4-7 syllables, male lines <= 12, chants 2-4 words", () => {
   assert.strictEqual(L.VIKING_PERSONAS.length, 3);
   for (const p of L.VIKING_PERSONAS) {
-    assert.ok(p.female && p.male && p.tag === `${p.female}, long notes behind the beat, breathy, ${p.male}`, p.id);
+    assert.ok(p.female && p.male && p.tag === `${p.female}, long notes behind the beat, ${p.male}, ${L.VOCALIZE_CLAUSE}`, p.id);
+    assert.ok(/\b(deep|burly|thunderous|huge|baritone|booming)\b/.test(p.male) && /\bhigh\b/.test(p.female), p.id);
     assert.deepStrictEqual(Guard.check(p.tag, ALLOW_VIKING), [], p.tag);
     assert.ok(!/\b(choir|crowd|epic|cinematic|trailer)\b/i.test(p.tag), p.tag);
   }
   const GODS = /\b(odin|thor|freya|loki|tyr|baldur|heimdall|marvel|avengers)\b/i;
   assert.ok(Object.keys(L.VIKING).length >= 3);
   for (const [theme, b] of Object.entries(L.VIKING)) {
-    assert.ok(b.hooks.length >= 12 && b.rap.length >= 12 && b.pre.length >= 4 && b.chant.length >= 4 && b.outro.length >= 4, theme);
-    const every = [...b.hooks.flatMap((h) => h.l), ...b.rap.flatMap((c) => [c.a, c.b]), ...b.pre.flat(), ...b.chant, ...b.outro];
+    assert.ok(b.hooks.length >= 12 && b.rap.length >= 12 && b.pre.length >= 4 && b.chant.length >= 4 && b.outro.length >= 4 && b.answer.length >= 12, theme);
+    for (const a of b.answer) { const n = L.syllables(a); assert.ok(n >= 4 && n <= 7, `${theme}: answer ${n}: ${a}`); }
+    const every = [...b.hooks.flatMap((h) => h.l), ...b.rap.flatMap((c) => [c.a, c.b]), ...b.pre.flat(), ...b.chant, ...b.outro, ...b.answer];
     for (const l of every) { assert.deepStrictEqual(Guard.check(l, ALLOW_VIKING), [], `${theme}: ${l}`); assert.ok(!GODS.test(l) && !PROFANITY.test(l), `${theme}: ${l}`); }
     for (const h of b.hooks) { assert.strictEqual(h.l.length, 4); for (const l of h.l) { const n = L.syllables(l); assert.ok(n >= 4 && n <= 7, `${theme}: ${n} syllables: ${l}`); } assert.ok(h.l[0].toLowerCase().includes(h.obj)); }
     for (const c of b.rap) {
@@ -471,11 +481,39 @@ test("viking duet: three persona pairs, exact structure, every tag names a voice
     assert.deepStrictEqual(secs.map((s) => s.name), ["Intro", "Verse 1", "Pre-Hook", "Hook", "Verse 2", "Pre-Hook", "Hook", "Breakdown", "Hook", "Outro", "End"], `${seed}: structure`);
     for (const s of secs) if (s.name !== "End") assert.ok(/\b(female|male|both)\b/i.test(s.cues.join(" ")), `${seed}: [${s.name}] names no voice: ${s.cues}`);
     for (const l of out.hook.lines) { const n = L.syllables(l); assert.ok(n >= 4 && n <= 7, `${seed}: hook line ${n}: ${l}`); }
-    for (const v of secs.filter((s) => /^Verse/.test(s.name))) { const lyr = v.lines.filter((l) => !ADLIB.test(l)); assert.strictEqual(lyr.length, 16); for (const l of lyr) assert.ok(L.syllables(l) <= 12, `${seed}: ${l}`); }
+    for (const v of secs.filter((s) => /^Verse/.test(s.name))) {
+      const roles = byRole(v);
+      assert.strictEqual(roles.male.length, 16, `${seed}: [${v.name}] male lines`);
+      for (const l of roles.male) assert.ok(L.syllables(l) <= 12, `${seed}: ${l}`);
+      assert.ok(v.roles.includes("[Male]") && v.roles.includes("[Female]"), `${seed}: [${v.name}] has no role lines`);
+      for (const l of roles.female) { const n = L.syllables(l); assert.ok(n >= 4 && n <= 7, `${seed}: female line ${n}: ${l}`); assert.ok(VOC.test(l) || L.VIKING[out.theme.id].answer.includes(l), `${seed}: female line not an answer or a vocalize: ${l}`); }
+      assert.ok(roles.female.some((l) => VOC.test(l)), `${seed}: [${v.name}] needs an oh-oh line`);
+    }
+    const v2 = secs.find((s) => s.name === "Verse 2");
+    assert.ok(byRole(v2).female.filter((l) => !VOC.test(l)).length >= 3, `${seed}: verse 2 should trade lines`);
     const hook = secs.find((s) => s.name === "Hook");
-    const chants = hook.lines.filter((l) => ADLIB.test(l));
-    assert.ok(chants.length >= 4, `${seed}: hook needs the chant and the shouts under it`);
+    assert.ok(hook.lines.filter((l) => ADLIB.test(l)).length >= 4, `${seed}: hook needs the chant and the shouts under it`);
+    assert.deepStrictEqual(hook.roles, ["[Male]", "[Female]"], `${seed}: hook line 3 is the male`);
+    assert.deepStrictEqual(byRole(hook, "female").male, [out.hook.lines[2]], `${seed}: the male sings only line 3 of the hook`);
     const bd = secs.find((s) => s.name === "Breakdown");
-    assert.ok(bd.lines.every((l) => ADLIB.test(l)) && bd.lines.some((l) => l.replace(/[()]/g, "").split(/\s+/).length >= 2), `${seed}: breakdown chant`);
+    assert.ok(bd.lines.some((l) => VOC.test(l)) && bd.lines.some((l) => L.OH_MALE.includes(l)) && bd.lines.some((l) => l.startsWith("(") && !L.OH_MALE.includes(l)), `${seed}: breakdown needs a female vocalize, a male drone and the chant`);
+    assert.ok(/oh-oh vocalize/.test(bd.cues.join(" ")) && /male/.test(bd.cues.join(" ")));
+    const all = lines(out.lyrics);
+    for (const l of all.filter((x) => VOC.test(x))) { const n = L.syllables(l); assert.ok(n >= 4 && n <= 6 && /(oh|ah)h{2,}$/i.test(l), `${seed}: vocalize line: ${l}`); }
+    const intro = secs.find((s) => s.name === "Intro"), outro = secs.find((s) => s.name === "Outro"), last = secs.filter((s) => s.name === "Hook").pop();
+    assert.ok(intro.lines.filter((l) => VOC.test(l)).length === 2 && VOC.test(outro.lines[outro.lines.length - 1]), `${seed}: intro and outro vocalize`);
+    assert.ok(last.lines.filter((l) => L.OH_MALE.includes(l)).length >= 2, `${seed}: final hook needs the male drones`);
+    assert.ok(out.style.includes(L.VOCALIZE_CLAUSE) && out.style.length <= 400, `${seed}: style`);
+  }
+});
+
+test("viking through the engine: the wife genre stays under the 1000-char style cap with no guard warnings", () => {
+  const E = require("../src/one/engine.js");
+  if (!E.genres().some((g) => g.id === "wife")) return;
+  for (let seed = 1; seed <= 300; seed++) {
+    const out = E.generate({ seed, genre: "wife" });
+    assert.ok(out.style.length <= 1000, `seed ${seed}: style ${out.style.length}`);
+    assert.deepStrictEqual(out.warnings, [], `seed ${seed}: ${out.warnings.map((w) => w.message).join("; ")}`);
+    assert.ok(out.style.includes(L.VOCALIZE_CLAUSE));
   }
 });
