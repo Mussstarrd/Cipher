@@ -55,11 +55,18 @@
     $("blurb").textContent = E.genres().find((g) => g.id === genre).blurb;
   }
 
+  // Suno collapses similar descriptions into one sound, so the page also keeps the
+  // lead family and the bass type from repeating across the last three rolls.
+  const recentSounds = [];
   function roll() {
-    for (let i = 0; i < 40; i++) {
+    for (let i = 0; i < 60; i++) {
       pkg = E.generate({ seed: Math.floor(Math.random() * 4294967295), genre, avoidKeys: recentKeys });
-      if (!seen.has(pkg.fingerprint)) break;
+      const fam = pkg.parts.lead.family, bass = pkg.parts.bass.source;
+      const clash = recentSounds.some((s) => s.fam === fam || s.bass === bass);
+      if (!seen.has(pkg.fingerprint) && (!clash || i > 40)) break;
     }
+    recentSounds.push({ fam: pkg.parts.lead.family, bass: pkg.parts.bass.source });
+    if (recentSounds.length > 3) recentSounds.shift();
     remember(pkg.fingerprint);
     recentKeys.push(pkg.meta.key);
     if (recentKeys.length > 4) recentKeys.shift();

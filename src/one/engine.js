@@ -216,12 +216,18 @@ const OneEngine = (() => {
     };
   }
 
+  // The first clause of the processing phrase, short enough for the head: "pitched down a whole step".
+  const timbre = (character) => {
+    const first = character.split(",")[0].trim().split(/\s+/).slice(0, 5).join(" ");
+    return first;
+  };
+
   function style(p, G) {
     const { lead, bass, drums, rhythm } = p;
     const head = [
       `${p.anchor}, ${p.bpm} BPM, ${p.key}`,
       rhythm.sync, rhythm.twitch, rhythm.slur, p.mode === "loop" ? "minimal" : null, rhythm.mode, rhythm.low,
-      lead.handle, G.MIX_TAG, p.vocal ? p.vocal.tag : G.VOCAL ? "vocals up front" : "instrumental",
+      `${lead.handle} ${timbre(lead.character)}`, G.MIX_TAG, p.vocal ? p.vocal.tag : G.VOCAL ? "vocals up front" : "instrumental",
     ].filter(Boolean).join(", ") + ".";
     const leadLine = `lead: ${lead.source}, ${lead.character}, ${lead.register}, playing ${lead.motif} as ${lead.articulation}, ${lead.human}, ${lead.placement}.`;
     const leadNoPlace = `lead: ${lead.source}, ${lead.character}, ${lead.register}, playing ${lead.motif} as ${lead.articulation}, ${lead.human}.`;
@@ -249,6 +255,11 @@ const OneEngine = (() => {
     ];
     let s;
     for (const t of tries) if ((s = t.filter(Boolean).join(" ")).length <= 1000) break;
+    // Last resort: the head without the lead's timbre clause.
+    if (s.length > 1000) {
+      const headShort = head.replace(`${lead.handle} ${timbre(lead.character)}`, lead.handle);
+      for (const t of tries) if ((s = [headShort, ...t.slice(1)].filter(Boolean).join(" ")).length <= 1000) break;
+    }
     return s;
   }
 
