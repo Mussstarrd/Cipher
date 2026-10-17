@@ -91,9 +91,11 @@ test("the lead gets every slot, up front", () => {
   for (const seed of seeds) {
     const { style, lyrics, parts } = E.generate({ seed });
     const L = parts.lead;
-    for (const slot of ["source", "character", "register", "motif", "articulation", "human"]) {
+    for (const slot of ["source", "character", "register", "motif", "articulation"]) {
       assert.ok(style.includes(L[slot]), `${slot} missing: ${style}`);
     }
+    // The human-feel clause is the last thing trimmed; it may only go when the field is full.
+    assert.ok(style.includes(L.human) || style.length >= 960, `human missing with room to spare: ${style}`);
     // Placement always reaches Suno: in the style field or the intro tag.
     assert.ok(style.includes(L.placement) || lyrics.includes(L.placement.split(",")[0]), style);
     assert.ok(style.indexOf("lead:") < style.indexOf("bass:") && style.indexOf("bass:") < style.indexOf("drums:"), style);
@@ -233,4 +235,20 @@ test("Crossbreed stitches two genres and stays clean", () => {
     pairs.add(out.meta.lane);
   }
   assert.ok(pairs.size >= 20, `${pairs.size} pairs`);
+});
+
+test("the bounce lane rolls bright: its own instruments, claps, major keys often", () => {
+  let n = 0, major = 0, fam = 0;
+  for (const seed of seeds) {
+    const { meta, parts, style } = E.generate({ seed });
+    if (meta.lane !== "Bounce radio") continue;
+    n++;
+    if (/major/.test(meta.key)) major++;
+    if (parts.lead.family === "bounce") fam++;
+    assert.ok(/clap/.test(parts.drums.snare), parts.drums.snare);
+    assert.ok(style.includes("loud radio-ready club mix"), style);
+  }
+  assert.ok(n > seeds.length * 0.2, `${n} bounce rolls`);
+  assert.ok(major > n * 0.3, `${major} major of ${n}`);
+  assert.ok(fam > n * 0.45, `${fam} bounce-family leads of ${n}`);
 });

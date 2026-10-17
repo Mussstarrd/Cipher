@@ -27,8 +27,10 @@ const OneTheory = (() => {
   const name = (pc, tonic, tonality) => (SHARP_KEYS[tonality].has(tonic) ? SHARP : FLAT)[((pc % 12) + 12) % 12];
 
   function harmony(r, pick, avoidKeys = [], majorShare = 0.15) {
-    // Minor most of the time; a genre pack can raise the major share.
-    const pool = LOOPS.filter((l) => (r() < 1 - majorShare ? l.tonality === "minor" : l.tonality === "major"));
+    // Minor most of the time; a genre pack or lane can raise the major share.
+    // One roll decides the tonality (filtering per loop would call r() eleven times and drown the share).
+    const wantMajor = r() < majorShare;
+    const pool = LOOPS.filter((l) => l.tonality === (wantMajor ? "major" : "minor"));
     const loop = pick(pool.length ? pool : LOOPS, r);
     const keys = loop.tonality === "minor" ? MINOR_KEYS : MAJOR_KEYS;
     let tonic = pick(keys, r);

@@ -227,7 +227,7 @@ const OneEngine = (() => {
     const head = [
       `${p.anchor}, ${p.bpm} BPM, ${p.key}`,
       rhythm.sync, rhythm.twitch, rhythm.slur, p.mode === "loop" ? "minimal" : null, rhythm.mode, rhythm.low,
-      `${lead.handle} ${timbre(lead.character)}`, G.MIX_TAG, p.vocal ? p.vocal.tag : G.VOCAL ? "vocals up front" : "instrumental",
+      `${lead.handle} ${timbre(lead.character)}`, p.mixTag || G.MIX_TAG, p.vocal ? p.vocal.tag : G.VOCAL ? "vocals up front" : "instrumental",
     ].filter(Boolean).join(", ") + ".";
     const leadLine = `lead: ${lead.source}, ${lead.character}, ${lead.register}, playing ${lead.motif} as ${lead.articulation}, ${lead.human}, ${lead.placement}.`;
     const leadNoPlace = `lead: ${lead.source}, ${lead.character}, ${lead.register}, playing ${lead.motif} as ${lead.articulation}, ${lead.human}.`;
@@ -281,7 +281,7 @@ const OneEngine = (() => {
     if (p.mode === "loop") {
       const loop = `${L} playing ${bare(lead.articulation)}, ${bare(drums.kick)}, ${bare(drums.hats)}, ${bassWord} ${bass.pattern}`;
       return [
-        `[Intro | the loop alone, ${bassWord} and kick only, 2 bars]`,
+        `[Intro | ${L} alone, ${lead.placement.split(",")[0]}, 2 bars]`,
         `[Loop | same two-bar loop, ${loop}, everything else identical]`,
         `[Loop | same loop, identical, ${twitchCue}${slurCue ? `, ${slurCue}` : ""}]`,
         "[Loop | same loop, identical, hats cut for two bars then back]",
@@ -323,8 +323,9 @@ const OneEngine = (() => {
   function generate({ seed = 1, genre = "hiphop", mode, avoidKeys = [] } = {}) {
     const r = mulberry32(seed >>> 0);
     const G = genre === "cross" ? crossbreed(r) : grammarFor(genre);
-    const harmony = T.harmony(r, pick, avoidKeys, G.MAJOR_SHARE);
     const lane = weighted(G.LANES.map((l) => [l, l.weight]), r);
+    // A lane may lean major (the bounce lane does) and carry its own mix tag.
+    const harmony = T.harmony(r, pick, avoidKeys, lane.majorShare != null ? lane.majorShare : G.MAJOR_SHARE);
     // A lane may carry its own tempo and mode mix (the Prof moods do).
     const [lo, hi] = pick(lane.tempo || G.TEMPO, r);
     const chosenMode = mode || weighted(lane.modes || G.MODES, r);
@@ -341,6 +342,7 @@ const OneEngine = (() => {
       key: `in ${harmony.key}`,
       mode: chosenMode,
       lane: lane.id,
+      mixTag: lane.mixTag,
       noCounter: !!(G.NO_COUNTER || lane.noCounter),
       lead, counter, bass, drums, sw, rhythm,
     };

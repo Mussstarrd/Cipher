@@ -513,7 +513,47 @@ OneGrammar.FAMILIES = {
 };
 
 // Lanes set the opening tags and which instrument families a roll can use.
+OneGrammar.FAMILIES.bounce = {
+  frame: "over big bouncy club drums and a rubbery bass",
+  sources: [
+    "a bright rubbery pluck synth hook, two notes bouncing an octave, cartoonish|the rubber pluck hook",
+    "a chirping square-wave hook like a toy phone, mid register|the toy phone hook",
+    "a fat detuned saw lead playing a four-note club riff, big and dumb|the club riff",
+    "a tuned tongue-click melody, clicky and playful, two notes per bar|the click melody",
+    "a plucked synth boing lead bouncing on every beat|the boing lead",
+    "a hollow wooden-bar patch hook, mallet knock left in, bouncy|the mallet hook",
+    "a sampled guitar stab pitched up, two hits per bar, bouncing|the guitar stab",
+    "a fat synth brass patch stabbing on the and of two|the brass patch",
+    "a pitched-down kick drum hook, four notes, booming and silly|the kick hook",
+    "a slapped bass guitar sample played as a riff, popping and dry|the popping bass riff",
+  ],
+  character: [
+    "bright and loud, up front",
+    "bouncy, every note cut short",
+    "doubled an octave down, the low copy louder",
+    "hard-clipped so it pops on a car system",
+    "dry and close, the knock audible",
+    "gated tight so it bounces off the clap",
+    "detuned a few cents so it grins",
+  ],
+};
+
 OneGrammar.LANES = [
+  {
+    id: "bounce", label: "Bounce radio", weight: 3,
+    anchors: ["Atlanta bounce hip hop, playful, radio-ready", "crunk-era club bounce, big claps, loud", "southern bounce beat, bright hook, heavy claps", "radio bounce hip hop, rubbery bass, big and dumb"],
+    families: { bounce: 6, synth: 2, found: 2 },
+    bass: ["a bouncy mono synth bass with a fast pitch envelope, playing the riff", "a big 808 bouncing on the one and the and of two", "a rubbery synth bass boinging on every note", "a popping bass guitar sample, short and dry"],
+    drums: {
+      kick: ["a big bouncy kick on the one and the and of two", "a kick that skips the one and lands on the and", "a punchy kick doubled on the and of three", "a hard kick on one and three with a bounce on the and of four"],
+      snare: ["a big layered hand clap on two and four, wide", "a clap stacked with a snap, loud and dry", "a crunk clap on two and four with a snare under it", "a huge dry clap, a hair late"],
+      hats: ["sparse closed hats in 8ths with an open hat on the and of four", "clicky percussion in place of hats, tongue-click style", "hats in 16ths with the accents bouncing", "a shaker bouncing on the off-beats"],
+    },
+    tempo: [[92, 104], [138, 148]],
+    modes: [["straight", 55], ["loop", 25], ["switch", 20]],
+    majorShare: 0.45,
+    mixTag: "loud radio-ready club mix",
+  },
   {
     id: "southside", label: "South Side brass", weight: 1,
     anchors: ["southern trap, tuba and trombone", "Atlanta trap, heavy low brass", "southern hip hop, low brass trap"],

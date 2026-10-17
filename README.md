@@ -14,7 +14,7 @@ One button and a genre row. It fills Suno's create screen in Suno's order: **Lyr
 
 | genre | identity | structure |
 | --- | --- | --- |
-| Syncopated hip hop | the base engine: found sounds, mutant synths, guitar, organ, low brass, flipped wind | switch / loop / straight |
+| Syncopated hip hop | the base engine: found sounds, mutant synths, guitar, organ, low brass, flipped wind, plus a **Bounce radio** lane (about a third of rolls: rubbery pluck hooks, boing leads, toy-phone chirps, fat club riffs, clicky percussion, big claps, bouncy kicks, major keys almost half the time, a loud radio-ready club mix) so not every roll scowls | switch / loop / straight |
 | R&B radio pop | glossy keys, tropical plucks, trap-soul guitar; major keys 60%; Weirdness 30–45 | verse, pre-hook, hook, **[Feature Verse]** slot for a guest |
 | Soul / emo hip hop | drawbar organ, tine keys, bright piano, sad guitar, sped-up soul sample; buzzing 808 | switch 60 / loop 20 / straight 20 |
 | Boom bap soul mashup | sped-up soul record sliced into stabs, 12-bit snare, boom kick, modern 808 | switch 55 / loop 25 / straight 20 |
