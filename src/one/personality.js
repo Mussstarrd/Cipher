@@ -90,7 +90,6 @@ const OnePersonality = {
     "kicks stacked off the downbeat",
     "808 skipping the one, snare locked",
     "kick chasing the lead's rhythm",
-    "uneven kicks, hats dead straight",
   ],
   twitch: [
     "nervous perc ticks between kicks",
@@ -233,10 +232,10 @@ const OnePersonality = {
       id: "call_response", label: "Call and response, two-bar phrases", mode: "straight", weight: 2, minimal: 0.5,
       sections: [
         "[Intro | {LEAD} two bars, {COUNTER} two bars, drums out]",
-        "[Verse | full drums, {LEAD} asks, {COUNTER} answers]",
-        "[Hook | full beat, {SLUR}, two-bar phrases traded]",
-        "[Verse | same drums, {FEEL}, two-bar phrases traded]",
-        "[Hook | identical, {LEAD} and {COUNTER} trading two bars]",
+        "[Verse | full drums, {LEAD} two bars, then {COUNTER} two bars]",
+        "[Hook | full beat, {SLUR}, {LEAD} and {COUNTER} two bars each]",
+        "[Verse | same drums, {FEEL}, {LEAD} and {COUNTER} two bars each]",
+        "[Hook | identical, {LEAD} two bars, then {COUNTER} two bars]",
         "[Outro | drums cut dead, {LEAD} once, {COUNTER} once]",
         "[End]",
       ],

@@ -69,7 +69,7 @@ test("pop always leaves a feature-verse slot; every genre stays instrumental", (
         for (const w of ["choir", "crowd vocals", "gospel"]) assert.ok(items.includes(w), o.exclude);
         continue;
       }
-      assert.ok(o.style.endsWith("instrumental.") || o.style.includes("instrumental."), o.style);
+      assert.ok(/\binstrumental\b/.test(o.style), o.style);
       assert.ok(o.exclude.startsWith("vocals"));
     }
   }
@@ -89,7 +89,10 @@ test("the lead gets every slot, up front", () => {
   for (const seed of seeds) {
     const { style, lyrics, parts } = E.generate({ seed });
     const L = parts.lead;
+    // A source that states its own figure ("a two-note hook") carries no second motif.
+    const figured = /\b(\w+-note|\w+-chord|arp|riff|loop|hook|stab|figure|melody)\b/.test(L.source);
     for (const slot of ["source", "character", "register", "motif", "articulation"]) {
+      if (slot === "motif" && figured) continue;
       assert.ok(style.includes(L[slot]), `${slot} missing: ${style}`);
     }
     // The human-feel clause is the last thing trimmed; it may only go when the field is full.

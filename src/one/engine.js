@@ -230,20 +230,26 @@ const OneEngine = (() => {
 
   function style(p, G) {
     const { lead, bass, drums, rhythm } = p;
+    const voiceTag = p.vocal ? p.vocal.tag : G.VOCAL ? "vocals up front" : "instrumental";
     const head = [
-      `${p.anchor}, ${p.bpm} BPM, ${p.key}`,
+      `${p.anchor}, ${p.bpm} BPM, ${p.key}`, G.VOCAL ? null : voiceTag,
       rhythm.sync, rhythm.twitch, rhythm.slur, p.mode === "loop" || (p.layout && p.layout.minimal >= 0.7) ? "minimal" : null, rhythm.mode, p.extraTag, rhythm.low,
-      `${lead.handle} ${timbre(lead.character)}`.trim(), p.mixTag || G.MIX_TAG, p.vocal ? p.vocal.tag : G.VOCAL ? "vocals up front" : "instrumental",
+      `${lead.handle} ${timbre(lead.character)}`.trim(), p.mixTag || G.MIX_TAG, G.VOCAL ? voiceTag : null,
     ].filter(Boolean).join(", ") + ".";
-    const leadLine = `lead: ${lead.source}, ${lead.character}, ${lead.register}, playing ${lead.motif} as ${lead.articulation}, ${lead.human}, ${lead.placement}.`;
-    const leadNoPlace = `lead: ${lead.source}, ${lead.character}, ${lead.register}, playing ${lead.motif} as ${lead.articulation}, ${lead.human}.`;
-    const leadShort = `lead: ${lead.source}, ${lead.character}, ${lead.register}, playing ${lead.motif} as ${lead.articulation}.`;
-    // The head already says the lead is low; the shortest lead line keeps the sound, its processing and the motif.
-    const leadMin = `lead: ${lead.source}, ${lead.character}, playing ${lead.motif}.`;
+    // A source that already states its figure ("a two-note hook", "a four-chord loop") gets no second one.
+    const figured = /\b(\w+-note|\w+-chord|arp|riff|loop|hook|stab|figure|melody)\b/.test(lead.source);
+    const plays = figured ? lead.articulation : `playing ${lead.motif} as ${lead.articulation}`;
+    // A compact pack leaves the register to the head's low tag and the slur to the head's slur tag.
+    const reg = G.COMPACT && rhythm.low ? "" : `, ${lead.register}`;
+    const leadLine = `lead: ${lead.source}, ${lead.character}${reg}, ${plays}, ${lead.human}, ${lead.placement}.`;
+    const leadNoPlace = `lead: ${lead.source}, ${lead.character}${reg}, ${plays}, ${lead.human}.`;
+    const leadShort = `lead: ${lead.source}, ${lead.character}${reg}, ${plays}.`;
+    // The head already says the lead is low; the shortest lead line keeps the sound, its processing and the figure.
+    const leadMin = figured ? `lead: ${lead.source}, ${lead.character}.` : `lead: ${lead.source}, ${lead.character}, playing ${lead.motif}.`;
     const bassMin = `bass: ${bass.source}.`;
     const bassLine = `bass: ${bass.source}, ${bass.tone}, ${bass.human}.`;
     const bassShort = `bass: ${bass.source}, ${bass.human}.`;
-    const slur = rhythm.slur ? `, ${drums.slur}` : "";
+    const slur = rhythm.slur && !G.COMPACT ? `, ${drums.slur}` : "";
     const anti = p.anti ? `, ${p.anti}` : "";
     const drumLine = `drums: ${drums.kick}, ${drums.snare}, ${drums.hats}, ${drums.color}${slur}${anti}.`;
     const drumShort = `drums: ${drums.kick}, ${drums.snare}, ${drums.hats}${slur}.`;
@@ -255,6 +261,8 @@ const OneEngine = (() => {
     const tries = [
       [head, leadLine, bassLine, drumLine, counterLine],
       [head, leadLine, bassLine, drumLine, counterShort],
+      [head, leadLine, bassShort, drumLine, counterShort],
+      [head, leadNoPlace, bassShort, drumLine, counterShort],
       [head, leadLine, bassLine, drumLine],
       [head, leadLine, bassShort, drumLine],
       [head, leadLine, bassShort, drumShort],
@@ -304,7 +312,7 @@ const OneEngine = (() => {
       const shaped = { ...vals, KICK: Personality.drumWord(drums.kick), HATS: Personality.drumWord(drums.hats), SNARE: Personality.drumWord(drums.snare) };
       for (const k of Object.keys(shaped)) shaped[k] = clip(k, shaped[k]);
       const out = Personality.render(layout, shaped);
-      return /\[End\]/.test(out) ? out : `${out}\n\n[End]`;
+      return `[Instrumental]\n\n${/\[End\]/.test(out) ? out : `${out}\n\n[End]`}`;
     }
     const lines = layout.sections.map((t) => t.replace(/\{(\w+)\}/g, (m, k) => (vals[k] != null ? vals[k] : m)));
     if (!/\[End\]/.test(lines[lines.length - 1])) lines.push("[End]");
@@ -392,7 +400,8 @@ const OneEngine = (() => {
     const sw = buildSwitch(r, G, lead, bass, drums, lane);
     const rhythm = buildRhythm(r, G, chosenMode, lead, sw, allow);
     const p = {
-      anchor: G.cross ? `${pick(lane.anchors, r)}, crossed with ${G.cross.drumsTag}` : pick(lane.anchors, r),
+      anchor: G.cross ? `${pick(lane.anchors, r)}, crossed with ${G.cross.drumsTag}`
+        : lane.neutralAnchor && lead.family !== lane.mainFamily ? lane.neutralAnchor : pick(lane.anchors, r),
       bpm: int(lo, hi, r),
       key: `in ${harmony.key}`,
       mode: chosenMode,
@@ -400,7 +409,7 @@ const OneEngine = (() => {
       layout,
       extraTag: lane.tags ? pick(lane.tags, r) : layout && G.LAYOUT_TAGS && G.LAYOUT_TAGS[layout.id] ? pick(G.LAYOUT_TAGS[layout.id], r) : null,
       anti: G.ANTI ? pick(G.ANTI, r) : null,
-      mixTag: lane.mixTag,
+      mixTag: lane.neutralMixTag && lead.family !== lane.mainFamily ? lane.neutralMixTag : lane.mixTag,
       noCounter: !!(G.NO_COUNTER || lane.noCounter),
       lead, counter, bass, drums, sw, rhythm,
     };
