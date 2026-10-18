@@ -1,5 +1,26 @@
 # Runbook
 
+## How a beat flows (the target, once steps 3b to 3f are built)
+
+```
+Suno (ONE OF ONE roll) -> inbox\ -> py -m anom run -> queue page (10 min of taps) -> BeatStars + TikTok + Reels + Shorts -> weekly report
+```
+
+1. Roll in ONE OF ONE, render in Suno, keep the one you like, download it into `inbox\`.
+2. `py -m anom run`. One command: analyze, cut the hook, write the BeatStars package, render the videos, schedule the posts.
+3. Open the queue page (`py -m anom queue`, a local web page). Clear it: confirm any `BPM?`/`KEY?` flag by ear, pick a cover from three, approve the persona clip, press "copy fields" and drag the package folder into BeatStars, tap any post the platform would not let us send.
+4. Monday: one short report. Nothing else interrupts you.
+
+## Your setup checklist (do once, in this order)
+
+1. Install Git, Python 3.11+ and ffmpeg on the Lenovo. Clone the repo, check out the work branch, run the install block below, confirm `6 passed`.
+2. Accounts: switch Instagram `anomculture` to a **Business** account; confirm the YouTube handle; make sure BeatStars, TikTok, Instagram and YouTube all use the same display name and (for now) no avatar until the persona still is approved.
+3. Persona: run Recipe B from `persona-two-ways.md` four to six times in any image tool, pick one, save it as `docs\publicity\reference\persona-three-v1.png`, commit and push. That image is the character sheet for every video.
+4. Keys: create `secrets.env` at the repo root (gitignored) with `HEDRA_API_KEY=` and `ELEVENLABS_API_KEY=`. Fund the Hedra wallet ($5) only after you have said yes here.
+5. Send one real render into this chat (drag the file in) so the video step can be tuned on actual audio.
+6. First beat: drop a render in `inbox\`, run `py -m anom ingest --render-date YYYY-MM-DD`, commit `catalog\catalog.json`, push. That is how a track reaches me.
+
+
 Grows one section per pipeline step. Commands are for the Lenovo (Windows, PowerShell); on Linux or macOS swap `py` for `python3`.
 
 ## Install (once)
