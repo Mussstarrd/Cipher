@@ -227,7 +227,7 @@ const OneEngine = (() => {
     const { lead, bass, drums, rhythm } = p;
     const head = [
       `${p.anchor}, ${p.bpm} BPM, ${p.key}`,
-      rhythm.sync, rhythm.twitch, rhythm.slur, p.mode === "loop" ? "minimal" : null, rhythm.mode, rhythm.low,
+      rhythm.sync, rhythm.twitch, rhythm.slur, p.mode === "loop" || (p.layout && p.layout.minimal >= 0.7) ? "minimal" : null, rhythm.mode, p.extraTag, rhythm.low,
       `${lead.handle} ${timbre(lead.character)}`, p.mixTag || G.MIX_TAG, p.vocal ? p.vocal.tag : G.VOCAL ? "vocals up front" : "instrumental",
     ].filter(Boolean).join(", ") + ".";
     const leadLine = `lead: ${lead.source}, ${lead.character}, ${lead.register}, playing ${lead.motif} as ${lead.articulation}, ${lead.human}, ${lead.placement}.`;
@@ -236,7 +236,8 @@ const OneEngine = (() => {
     const bassLine = `bass: ${bass.source}, ${bass.tone}, ${bass.human}.`;
     const bassShort = `bass: ${bass.source}, ${bass.human}.`;
     const slur = rhythm.slur ? `, ${drums.slur}` : "";
-    const drumLine = `drums: ${drums.kick}, ${drums.snare}, ${drums.hats}, ${drums.color}${slur}.`;
+    const anti = p.anti ? `, ${p.anti}` : "";
+    const drumLine = `drums: ${drums.kick}, ${drums.snare}, ${drums.hats}, ${drums.color}${slur}${anti}.`;
     const drumShort = `drums: ${drums.kick}, ${drums.snare}, ${drums.hats}${slur}.`;
     const noCounter = p.mode === "loop" || G.NO_COUNTER || p.noCounter;
     const counterLine = noCounter ? null : `counter: ${p.counter.source}, ${p.counter.character}, ${p.counter.role}.`;
@@ -264,8 +265,23 @@ const OneEngine = (() => {
     return s;
   }
 
+  function renderLayout(p) {
+    const { lead, drums, sw, bass, counter, rhythm, layout } = p;
+    const vals = {
+      LEAD: lead.handle, COUNTER: counter.handle, BASS: /808/.test(bass.source) ? "808" : "bass",
+      KICK: bare(drums.kick), HATS: bare(drums.hats), SNARE: bare(drums.snare), SYNC: drums.sync, SLUR: drums.slur,
+      FEEL: drums.feel, MOTION: lead.motion, CUE: sw.cue, AFTER: sw.after, LAND: sw.land,
+      PLACE: lead.placement.split(",")[0], TWITCH: `${drums.twitch.sound} ${drums.twitch.rhythm}`, ROLE: counter.role,
+      BASSPAT: bass.pattern, ANTI: p.anti || "the same loop the whole way",
+    };
+    const lines = layout.sections.map((t) => t.replace(/\{(\w+)\}/g, (m, k) => (vals[k] != null ? vals[k] : m)));
+    if (!/\[End\]/.test(lines[lines.length - 1])) lines.push("[End]");
+    return lines.join("\n\n");
+  }
+
   function lyrics(p, G, r) {
     const h = { bare, int, pick };
+    if (p.layout) return renderLayout(p);
     if (G.STRUCTURE) {
       const custom = G.STRUCTURE(p, r, h);
       if (custom) return custom;
@@ -329,7 +345,13 @@ const OneEngine = (() => {
     const harmony = T.harmony(r, pick, avoidKeys, lane.majorShare != null ? lane.majorShare : G.MAJOR_SHARE);
     // A lane may carry its own tempo and mode mix (the Prof moods do).
     const [lo, hi] = pick(lane.tempo || G.TEMPO, r);
-    const chosenMode = mode || weighted(lane.modes || G.MODES, r);
+    // A pack with LAYOUTS lets the lyrics layout decide the mode (minimal loop, ballad, A-then-B...).
+    let layout = null;
+    if (G.LAYOUTS && !mode) {
+      const allowed = lane.layouts ? G.LAYOUTS.filter((l) => lane.layouts.includes(l.id)) : G.LAYOUTS;
+      layout = weighted(allowed.map((l) => [l, l.weight || 1]), r);
+    }
+    const chosenMode = mode || (layout ? layout.mode : weighted(lane.modes || G.MODES, r));
     const allow = makeAllow(chosenMode);
     const lead = buildLead(r, G, lane, allow);
     const counter = buildCounter(r, G, lead, lane, allow, chosenMode);
@@ -343,6 +365,9 @@ const OneEngine = (() => {
       key: `in ${harmony.key}`,
       mode: chosenMode,
       lane: lane.id,
+      layout,
+      extraTag: lane.tags ? pick(lane.tags, r) : null,
+      anti: G.ANTI ? pick(G.ANTI, r) : null,
       mixTag: lane.mixTag,
       noCounter: !!(G.NO_COUNTER || lane.noCounter),
       lead, counter, bass, drums, sw, rhythm,
@@ -358,10 +383,10 @@ const OneEngine = (() => {
     const lyricsText = p.vocal ? p.vocal.lyrics : lyrics(p, G, r);
     const allowRe = G.VOCAL ? new RegExp([G.ALLOW && G.ALLOW.source, VOICE_WORDS.source].filter(Boolean).join("|"), "i") : G.ALLOW;
     const warnings = Guard.check(`${styleText}\n${lyricsText}`, allowRe).map((h) => ({ ...h, message: `${h.rule}: "${h.word}" ${h.why}` }));
-    const S = G.SLIDERS[chosenMode] || G.SLIDERS.switch;
+    const S = (lane.sliders) || G.SLIDERS[chosenMode] || G.SLIDERS.switch;
     const weirdness = int(S.weirdness[0], S.weirdness[1], r);
     const styleInfluence = int(S.styleInfluence[0], S.styleInfluence[1], r);
-    const model = G.MODEL || (chosenMode === "switch" && r() < 0.5 ? "v6-wild" : "v6");
+    const model = lane.model || G.MODEL || (chosenMode === "switch" && r() < 0.5 ? "v6-wild" : "v6");
     return {
       style: styleText,
       lyrics: lyricsText,
@@ -370,6 +395,7 @@ const OneEngine = (() => {
       settings: { model, variety: "Off", maxMode: "On", instrumental: G.VOCAL ? "Off" : "On" },
       meta: {
         genre: G.id, genreLabel: G.label, lane: G.cross ? `${G.cross.lead} lead × ${G.cross.drums} drums` : lane.label, mode: p.mode, seed: seed >>> 0,
+        layout: layout ? layout.label : undefined,
         title: p.vocal ? p.vocal.title : `${pick(G.TITLE.a, r)} ${pick(G.TITLE.b, r)}`, bpm: p.bpm, key: harmony.key,
         hook: p.vocal ? p.vocal.hook : undefined, vocal: p.vocal ? p.vocal.persona.tag : undefined,
       },
@@ -379,7 +405,7 @@ const OneEngine = (() => {
     };
   }
 
-  const genres = () => Object.values(Genres).map((g) => ({ id: g.id, label: g.label, blurb: g.blurb }));
+  const genres = () => Object.values(Genres).filter((g) => g.show !== false).map((g) => ({ id: g.id, label: g.label, blurb: g.blurb }));
 
   return { generate, genres, EVERY };
 })();

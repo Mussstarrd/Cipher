@@ -33,6 +33,8 @@
   function renderGenres() {
     const row = $("genres");
     row.textContent = "";
+    row.hidden = E.genres().length < 2;
+    if (!E.genres().some((g) => g.id === genre)) genre = E.genres()[0].id;
     for (const g of E.genres()) {
       const b = document.createElement("button");
       b.type = "button";
@@ -109,7 +111,7 @@
     vibe.textContent = "";
     const em = document.createElement("em");
     em.textContent = pkg.meta.title;
-    vibe.append(em, ` · ${pkg.meta.lane} · ${{ loop: "hypnotic loop", switch: "beat switch", straight: "locked pocket" }[pkg.meta.mode]} · ${pkg.meta.bpm} BPM · ${pkg.meta.key}`);
+    vibe.append(em, ` · ${pkg.meta.lane} · ${pkg.meta.layout || { loop: "hypnotic loop", switch: "beat switch", straight: "locked pocket" }[pkg.meta.mode]} · ${pkg.meta.bpm} BPM · ${pkg.meta.key}`);
     $("lyrics").textContent = pkg.lyrics;
     $("lyrics-count").textContent = `${pkg.lyrics.length}/5000`;
     $("style").textContent = pkg.style;
