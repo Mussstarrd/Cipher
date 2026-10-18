@@ -20,7 +20,9 @@ SR = 22050
 _MAJOR = np.array([6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88])
 _MINOR = np.array([6.33, 2.68, 3.52, 5.38, 2.60, 3.53, 2.54, 4.75, 3.98, 2.69, 3.34, 3.17])
 _NOTES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
-_FLAT = {"C#": "Db", "D#": "Eb", "F#": "Gb", "G#": "Ab", "A#": "Bb"}
+# Conventional spellings: minor keys on D# and A# are written Eb and Bb; F#, C#, G# minor keep sharps.
+_FLAT_MINOR = {"D#": "Eb", "A#": "Bb"}
+_FLAT_MAJOR = {"C#": "Db", "D#": "Eb", "G#": "Ab", "A#": "Bb"}
 
 
 @dataclass
@@ -102,7 +104,8 @@ def detect_bpm(y: np.ndarray, sr: int) -> tuple[float, float, float, np.ndarray]
 
 
 def detect_key(y: np.ndarray, sr: int) -> tuple[str, str, float]:
-    chroma = librosa.feature.chroma_cqt(y=y, sr=sr)
+    # Key on the harmonic component only; kicks and hats smear the chroma.
+    chroma = librosa.feature.chroma_cqt(y=librosa.effects.harmonic(y), sr=sr)
     profile = chroma.mean(axis=1)
     profile = profile / (np.linalg.norm(profile) + 1e-9)
     scores = []
@@ -113,11 +116,11 @@ def detect_key(y: np.ndarray, sr: int) -> tuple[str, str, float]:
             scores.append((float(np.dot(profile, r)), tonic, mode))
     scores.sort(reverse=True)
     best, second = scores[0], scores[1]
-    conf = float(np.clip((best[0] - second[0]) * 10.0, 0.0, 1.0))
+    # Real mixes separate the top two keys by a few thousandths; 0.02 is a clear call.
+    conf = float(np.clip((best[0] - second[0]) * 50.0, 0.0, 1.0))
     tonic, mode = best[1], best[2]
     name = _NOTES[tonic]
-    if mode == "minor" and name in _FLAT:
-        name = _FLAT[name]
+    name = (_FLAT_MINOR if mode == "minor" else _FLAT_MAJOR).get(name, name)
     return f"{name} {mode}", camelot(tonic, mode), conf
 
 
