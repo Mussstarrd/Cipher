@@ -356,6 +356,7 @@ const OneGrammar = {
   EXCLUDE: [
     "vocals", "singing", "rap", "choir", "humming", "background vocals", "vocal chops", "chanting",
     "DJ scratching", "riser", "drum fills", "tom fills", "snare rolls", "hat rolls", "transition fills", "section transitions",
+    "shrill high-pitched leads",
     "jazz", "smooth jazz", "blues", "big band", "EDM", "techno", "house", "elevator music", "lounge",
     "new age", "film score", "cinematic", "orchestral strings", "marching band", "lo-fi",
   ],

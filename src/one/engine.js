@@ -218,8 +218,9 @@ const OneEngine = (() => {
 
   // The first clause of the processing phrase, short enough for the head: "pitched down a whole step".
   const timbre = (character) => {
-    const first = character.split(",")[0].trim().split(/\s+/).slice(0, 5).join(" ");
-    return first;
+    const words = character.split(",")[0].trim().split(/\s+/).slice(0, 5);
+    while (words.length > 2 && /^(the|a|an|on|of|with|and|in|to|at|by|so|like|its|for|into|over|under)$/i.test(words[words.length - 1])) words.pop();
+    return words.join(" ");
   };
 
   function style(p, G) {
