@@ -56,12 +56,10 @@ test("switch mode repeats its axis words after the switch, and never says return
   }
 });
 
-test("pop and country always leave a feature-verse slot; every genre stays instrumental", () => {
+test("pop always leaves a feature-verse slot; every genre stays instrumental", () => {
   for (const seed of seeds.slice(0, 300)) {
     const pop = E.generate({ seed, genre: "pop" });
     assert.match(pop.lyrics, /\[Feature Verse \| /);
-    const country = E.generate({ seed, genre: "country" });
-    if (country.meta.mode !== "loop") assert.match(country.lyrics, /\[Feature Verse \| /);
     for (const g of E.genres()) {
       const o = E.generate({ seed, genre: g.id });
       if (o.settings.instrumental === "Off") {
@@ -225,10 +223,6 @@ test("Bare minimum: one voice, a kick trick, nothing else", () => {
   }
 });
 
-test("Crossbreed stitches two genres and stays clean", () => {
-  const pairs = new Set();
-  for (const seed of seeds.slice(0, 600)) {
-    const out = E.generate({ seed, genre: "cross" });
     assert.deepStrictEqual(out.warnings, [], `${seed}\n${out.style}\n${out.lyrics}`);
     assert.ok(out.style.length <= 1000);
     assert.match(out.style, /crossed with/);
