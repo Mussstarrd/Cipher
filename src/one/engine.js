@@ -20,6 +20,8 @@ const OneEngine = (() => {
   const Genres = typeof OneGenres !== "undefined" ? OneGenres : require("./genres.js");
   const T = typeof OneTheory !== "undefined" ? OneTheory : require("./theory.js");
   const Guard = typeof OneGuard !== "undefined" ? OneGuard : require("./guard.js");
+  // The personality layer (signature sounds, layouts, the weird mode) renders the layout templates when present.
+  const Personality = typeof OnePersonality !== "undefined" ? OnePersonality : (() => { try { return require("./personality.js"); } catch { return null; } })();
   // The lyric writer is only needed by vocal packs; the instrumental page can run without it.
   const Lyrics = typeof OneLyrics !== "undefined" ? OneLyrics : (() => { try { return require("./lyrics.js"); } catch { return null; } })();
   // Vocal packs unlock the voice words the instrumental guard bans, and drop the vocal exclusions.
@@ -274,6 +276,14 @@ const OneEngine = (() => {
       PLACE: lead.placement.split(",")[0], TWITCH: `${drums.twitch.sound} ${drums.twitch.rhythm}`, ROLE: counter.role,
       BASSPAT: bass.pattern, ANTI: p.anti || "the same loop the whole way",
     };
+    if (Personality && Personality.render) {
+      const lim = Personality.limits || {};
+      const clip = (k, v) => (v && lim[k] && v.length > lim[k] ? v.split(",")[0].slice(0, lim[k]).trim() : v);
+      const shaped = { ...vals, KICK: Personality.drumWord(drums.kick), HATS: Personality.drumWord(drums.hats), SNARE: Personality.drumWord(drums.snare) };
+      for (const k of Object.keys(shaped)) shaped[k] = clip(k, shaped[k]);
+      const out = Personality.render(layout, shaped);
+      return /\[End\]/.test(out) ? out : `${out}\n\n[End]`;
+    }
     const lines = layout.sections.map((t) => t.replace(/\{(\w+)\}/g, (m, k) => (vals[k] != null ? vals[k] : m)));
     if (!/\[End\]/.test(lines[lines.length - 1])) lines.push("[End]");
     return lines.join("\n\n");
