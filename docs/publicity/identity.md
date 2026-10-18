@@ -2,7 +2,7 @@
 
 *Written by the publicity agent from the handoff brief and the Anom Culture storefront repo. Correct anything wrong; this file is the vocabulary every caption, bio and video script will draw from.*
 
-**Status note.** The `Cipher` repo on GitHub is empty (one blank README). The ONE OF ONE engine (`src/one/`, `dist/one.html`), the ANOMALY grammar (`src/anomaly/`), `docs/producer-brief.md` and `docs/one-button-samples.md` are not on GitHub in any repo I can see. Everything below comes from your brief plus the `anomculture-website` repo. When you push the engine, I will re-read it and tighten this page.
+**Sources.** Your brief, the ONE OF ONE build you sent (now at `dist/one.html`, personality layer `OnePersonality`), and the `anomculture-website` repo. The `src/` grammar files and docs memos are still not in any repo; the built page carries the same data so nothing is missing for brand work.
 
 ## The one-line fingerprint
 
@@ -23,6 +23,15 @@ Anom Culture's existing pack regions (Atlanta, Chicago, Bronx, Miami, Houston, M
 - **Extremes only.** A track is stripped to two sounds, or it is slow like a ballad. The middle is where other people live.
 - **A seldom weird lane.** Occasionally a record goes somewhere that should not work, and does.
 
+## Straight from the engine (the words we reuse)
+
+- **Signature frame:** "sampled, slurred and pitched down over hard trap drums and 808s." Lead handles: *the slurred harmonica, the low harmonica, the amp harmonica, the smeared harmonica, the harmonica-erhu stack, the low erhu, the distorted erhu, the fuzz lap steel, the melodica.* Character: "slurring between notes, never landing clean", "bent flat into every note by hand", "breath noise and reed buzz left in", "pitched down until it sounds heavy and sad".
+- **Slur cadence (beat 3):** "beat 3 slurs, the one lands hard", "drunk triplet skip on beat 3", "the pocket slips drunk on beat 3", "808 tumbles on 3, sober on 1".
+- **Syncopation and twitch:** "kick skipping beat 1", "snare early, 808 late", "nervous perc ticks between kicks", "jittery clicks, never twice the same".
+- **Anti-transition:** "hard cuts only, straight in on beat 1", "drums cut dead, then slam back on the one", "the hook is the verse with one more sound".
+- **Banned on purpose (the Exclude box):** fills, rolls, transitions, risers, sweeps, build-ups, impacts, crashes, tape stops, cowbell, vocal chops, choir. Also never: waltz, lilt, shuffle, swing, folk, harp, phonk, memphis, artist names.
+- **Vocal lanes exist too** (grit, technical, story, plus a viking duet lane with voyage, oath, winter), with timing like "slurred into beat 3 then catching up on 4" and "half a beat late on purpose". The instrumental business comes first; the vocal lanes are a later product.
+
 ## What "one of one" means for the brand
 
 - No two beats alike, no two videos alike, no template captions. Each post names its anomaly: "the anomaly in this one is the harmonica that trips on beat 3."
@@ -32,6 +41,10 @@ Anom Culture's existing pack regions (Atlanta, Chicago, Bronx, Miami, Houston, M
 ## Existing voice to keep (from Anom Culture)
 
 The storefront speaks in short declaratives, Impact-style caps, red on black, and the signature "— ANOM". Its manifesto: *"I didn't sample the culture."* The stems are clean because they were tracked clean, radio-ready because that is the only standard. That first-person, no-apology register is the right one for the persona; what changes is that this brand adds the limp, the slur and the wrong note on purpose.
+
+## Persona look direction (from your reference photos)
+
+Direction only; the persona is a synthetic original until you say otherwise in writing. What the photos give: a lean build, dark brown hair cut in a heavy fringe that falls forward, light grey-blue eyes, light stubble, a direct unsmiling stare straight down the lens. The fourth photo is the brand frame: a dark room, one cold light from the side and below, everything behind in shadow, one warm lit object out of place on the right edge. That picture already is "low and heavy with one thing wrong on purpose." Wardrobe reads plain: washed-out dark tees, grey, no logos we can use.
 
 ## Words we use / words we avoid
 

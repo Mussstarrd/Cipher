@@ -1,0 +1,9 @@
+# No photos of people in a public repo
+*.jpg
+*.jpeg
+*.png
+*.heic
+*.webp
+*.mp4
+*.mov
+!INDEX.md

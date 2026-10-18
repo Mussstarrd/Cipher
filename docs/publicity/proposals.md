@@ -1,6 +1,6 @@
 # Step 2: decisions I need from you
 
-Answer inline, or just reply with numbers. Nothing gets built until this is answered.
+**Update 2026-10-18:** Jeff chose Anom Culture as the company (owned domain and handles) and liked ON THREE. ON THREE is now the persona and release ritual. Live record in `decisions.md`. Remaining open items are marked OPEN below.
 
 ## A. Three company names
 
@@ -8,7 +8,7 @@ Answer inline, or just reply with numbers. Nothing gets built until this is answ
 2. **LOW MIDS** — where the harmonica and erhu live and where this brand keeps its leads. Says "we sit low and heavy" without saying trap. Handles: `@lowmids`, `lowmids.co`.
 3. **WRONG ON PURPOSE** — the thesis as a name. Strongest hook for video copy ("the wrong note in this one is…"), longest to type. Handles: `@wrongonpurpose`, `wrong.on.purpose`.
 
-My pick: **ON THREE**, with "wrong on purpose" kept as the tagline.
+Decided: company is **Anom Culture**. **ON THREE** is the persona's name ("Three") and the drop ritual. Tagline stays "wrong on purpose".
 
 ## B. Three persona concepts
 
@@ -36,14 +36,14 @@ Everything else (YouTube API, Instagram API, analytics) is free. Details and sou
 
 ## D. Questions only you can answer
 
-1. **Parent brand.** Is the new company an imprint of Anom Culture, a replacement for it, or unrelated?
-2. **Your face and voice.** Persona stays a synthetic original unless you say in writing that it may be built from your face or voice. Which?
+1. ~~Parent brand~~ Decided: Anom Culture is the company.
+2. OPEN **Your face and voice.** Photos received as direction. Persona stays a synthetic original unless you say in writing that it may be built from your face or voice. Which?
 3. **Suno tier.** Stay on Pro (20 downloads/month, so at most 20 new beats/month) or move to Premier ($30, 60/month)?
 4. **Budget ceiling** per month, so I never have to ask twice.
 5. **Where the pipeline runs.** Your Anom Culture repo shows a Windows machine. Windows native, WSL, or a small Linux VPS?
-6. **Accounts.** Which of BeatStars, TikTok, Instagram (must be Business type), YouTube already exist, and under what handles?
+6. Accounts: fresh @anom / @anomculture on TikTok, Instagram, YouTube; working BeatStars with ~100 followers. OPEN: confirm the exact handle on each, and switch Instagram to a Business account.
 7. **Pricing.** Anom Culture sells packs at $49.99. What do you want for BeatStars lease tiers? My default: MP3 lease $29.99, WAV $49.99, trackout $99.99, unlimited $199.99, exclusive by offer.
 8. **Audience and time zone**, so posting times start from something.
-9. **The ONE OF ONE source.** It is not on GitHub. Push it to `Cipher` or tell me where it lives.
-10. **Reference photos.** Drop them in `docs/publicity/reference/` (or send them here) and I will index them before any persona design.
+9. ~~ONE OF ONE source~~ Received the built page; committed at `dist/one.html`.
+10. ~~Reference photos~~ Received four; indexed in `reference/INDEX.md`. OPEN: make `Cipher` private if you want them committed.
 11. **Branch name.** This session is pinned to `ccr-384ae46a-fxs91x` by the harness, not `publicity/<topic>`. Fine to keep, or do you want me to also mirror to a `publicity/` branch?
