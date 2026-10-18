@@ -311,7 +311,7 @@ module.exports = {
     "a hard layered kick, sub plus knock, on 1 and the and of 3",
     "a deep thud kick with the low end cut so the 808 carries the sub, on 1 and the and of 2",
     "a short punchy kick with a click on top, on 1 and a quick double before the 3",
-    "a dry knocking kick that sits out the one every other bar, the 808 holding the downbeat",
+    "a dry knocking kick that sits out the one through the verse, the 808 holding the downbeat",
     "a tight kick that hits like a car door, on the one only, the 808 doing the rest",
     "a syncopated double kick before the snare, the 808 following it exactly",
   ],
@@ -381,7 +381,7 @@ module.exports = {
     "off-beat stabs on the and of 2 and 4",
     "two stabs, then two bars of silence for the 808",
     "legato runs that slur into each other, one phrase per 2 bars",
-    "a three-note pickup that lands on beat 1 and stops",
+    "three quick notes landing on beat 1, then silence",
   ],
   sliders: "Weirdness 40-55, Style Influence 75-85, v6 only, Variety Off, Max Mode On so the holes stay silent.",
   exclude: "vocals, singing, rap, choir, chanting, humming, vocal chops, ad-libs, DJ scratching, riser, drum fills, hat rolls, section transitions, jazz, blues, EDM, dubstep, house, techno, lo-fi, vinyl crackle, pads, strings, bells, bright high lead, shrill lead, piercing lead, cinematic, orchestral, film score, ambient, gospel choir, church organ, bluegrass, honky-tonk",
@@ -409,7 +409,7 @@ module.exports = {
           "a deep thud kick with the low end cut so the 808 carries the sub, on 1 and the and of 2",
           "a tight kick that hits like a car door, on the one only, the 808 doing the rest",
           "a short punchy kick on 1 and the and of 3, nothing else, the bar mostly empty",
-          "a dry knocking kick that sits out the one every other bar, the 808 holding the downbeat",
+          "a dry knocking kick that sits out the one through the verse, the 808 holding the downbeat",
         ],
         snare: [
           "a tight layered clap and snare on 2 and 4, dead dry, a hair late",
@@ -731,7 +731,7 @@ module.exports = {
         kick: [
           "a tight kick that hits like a car door, on 1 and the and of 3, nothing else",
           "a hard-clipped kick on 1 and a quick double on the and of 2, buried inside the 808",
-          "a dry knocking kick that sits out the one every other bar, the 808 holding the downbeat",
+          "a dry knocking kick that sits out the one through the verse, the 808 holding the downbeat",
           "a kick that only hits on the one, the sliding 808 doing the rest",
         ],
         snare: [

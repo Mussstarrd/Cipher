@@ -63,11 +63,11 @@
   function roll() {
     for (let i = 0; i < 60; i++) {
       pkg = E.generate({ seed: Math.floor(Math.random() * 4294967295), genre, avoidKeys: recentKeys });
-      const fam = pkg.parts.lead.family, bass = pkg.parts.bass.source;
-      const clash = recentSounds.some((s) => s.fam === fam || s.bass === bass);
+      const fam = pkg.parts.lead.family, bass = pkg.parts.bass.source, d = pkg.parts.drums;
+      const clash = recentSounds.some((s) => s.fam === fam || s.bass === bass || s.kick === d.kick || s.snare === d.snare || s.hats === d.hats);
       if (!seen.has(pkg.fingerprint) && (!clash || i > 40)) break;
     }
-    recentSounds.push({ fam: pkg.parts.lead.family, bass: pkg.parts.bass.source });
+    recentSounds.push({ fam: pkg.parts.lead.family, bass: pkg.parts.bass.source, kick: pkg.parts.drums.kick, snare: pkg.parts.drums.snare, hats: pkg.parts.drums.hats });
     if (recentSounds.length > 3) recentSounds.shift();
     remember(pkg.fingerprint);
     recentKeys.push(pkg.meta.key);

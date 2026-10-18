@@ -311,7 +311,7 @@ const OneEngine = (() => {
       };
       const shaped = { ...vals, KICK: Personality.drumWord(drums.kick), HATS: Personality.drumWord(drums.hats), SNARE: Personality.drumWord(drums.snare) };
       for (const k of Object.keys(shaped)) shaped[k] = clip(k, shaped[k]);
-      const out = Personality.render(layout, shaped);
+      const out = Personality.render(layout, shaped).replace(/\[Intro \| ([^\]]*), 4 bars\]/, (m, body) => `[Intro | ${body}, ${p.introBars} bars]`);
       return `[Instrumental]\n\n${/\[End\]/.test(out) ? out : `${out}\n\n[End]`}`;
     }
     const lines = layout.sections.map((t) => t.replace(/\{(\w+)\}/g, (m, k) => (vals[k] != null ? vals[k] : m)));
@@ -411,6 +411,7 @@ const OneEngine = (() => {
       anti: G.ANTI ? pick(G.ANTI, r) : null,
       mixTag: lane.neutralMixTag && lead.family !== lane.mainFamily ? lane.neutralMixTag : lane.mixTag,
       noCounter: !!(G.NO_COUNTER || lane.noCounter),
+      introBars: pick([2, 4, 4, 8], r),
       lead, counter, bass, drums, sw, rhythm,
     };
     if (G.VOCAL && Lyrics) {

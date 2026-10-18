@@ -7,6 +7,7 @@ const P = require("../../src/one/personality.js");
 const J = (v) => JSON.stringify(v);
 const norm = (o) => Object.fromEntries(Object.entries(o).map(([k, v]) => [k.replace(/\s+/g, "_"), v]));
 const sum = (o) => Object.values(o).reduce((a, b) => a + b, 0);
+const uniq = (a) => [...new Set(a)];
 
 // How often the harmonica / erhu signature takes the lead in a hit lane.
 const SIGNATURE_SHARE = 0.22;
@@ -45,7 +46,8 @@ const laneOf = (l) => {
   families.signature = +((tot * SIGNATURE_SHARE) / (1 - SIGNATURE_SHARE)).toFixed(2);
   return {
     id: l.id, label: l.label, weight: WEIGHTS[l.id] || 1, anchors: l.anchors, families, tempo: l.tempo, modes: l.modes,
-    majorShare: l.majorShare, mixTag: MIX[l.id] || l.mixTag, mainFamily: main, neutralAnchor: NEUTRAL_ANCHORS[l.id], drums: l.drums, bassPattern: l.bassPattern, switchAxes: l.switchAxes,
+    majorShare: l.majorShare, mixTag: MIX[l.id] || l.mixTag, mainFamily: main, neutralAnchor: NEUTRAL_ANCHORS[l.id],
+    drums: { kick: uniq(l.drums.kick.concat(d.kick)), snare: uniq(l.drums.snare.concat(d.snare)), hats: uniq(l.drums.hats.concat(d.hats)) }, bassPattern: l.bassPattern, switchAxes: l.switchAxes,
     bass: [], layouts: layoutIds(l.id), ...(l.id === "triumph" ? { counterFamily: "brass_stack" } : {}),
   };
 };
@@ -107,12 +109,12 @@ module.exports = `  one: {
       LOW_SHARE: 0.8,
       SLIDERS: { switch: { weirdness: [40, 55], styleInfluence: [75, 85] }, loop: { weirdness: [40, 52], styleInfluence: [76, 85] }, straight: { weirdness: [40, 55], styleInfluence: [75, 85] } },
       EXCLUDE: [...new Set(BASE_EXCLUDE.concat(${J(exclude)}))],
-      LANES: ${J(lanes)},
+      LANES: ${J(lanes)}.map((l) => ({ ...l, drums: { kick: [...new Set(l.drums.kick.concat(Base.DRUMS.kick))], snare: [...new Set(l.drums.snare.concat(Base.DRUMS.snare))], hats: [...new Set(l.drums.hats.concat(Base.DRUMS.hats))] } })),
       ALLOW: /${d.allow}/i,
       FAMILIES: { ...${J(fams(d.families))}, signature: P.signature, found: Base.FAMILIES.found, synth: Base.FAMILIES.synth, organ: Base.FAMILIES.organ },
       BASS: { source: ${J(d.bass)}.concat(Base.BASS.source.filter((x) => /808|sub/.test(x) && !/tuba|sousaphone|horn/.test(x))), tone: ${J(d.btone)}, pattern: Base.BASS.pattern, human: Base.BASS.human },
       DRUMS: { kick: ${J(d.kick)}, snare: ${J(d.snare)}, hats: ${J(d.hats)} },
-      COLOR: ${J(d.color)},
+      COLOR: ${J(d.color)}.concat(Base.COLOR),
       GROOVE: { sync: ${J(d.sync)}, human: ${J(d.human.map((h) => h.replace(/^the piano/, "the lead")))}, triplet: Base.GROOVE.triplet },
       LEAD: { ...Base.LEAD, motif: ${J(d.motif)}, articulation: ${J(d.artic)} },
       COUNTER_ROLE: Base.COUNTER_ROLE.concat(P.signatureCounterRoles),

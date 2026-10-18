@@ -50,7 +50,7 @@ const OnePersonality = {
     ],
   },
   signatureCounterRoles: [
-    "one slurred reply every 4 bars",
+    "one slurred reply at the end of each phrase",
     "a bent note answering the snare",
     "one slide down under the hook only",
     "a breathy held note in the gaps the lead leaves",
