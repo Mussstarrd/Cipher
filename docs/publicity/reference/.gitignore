@@ -7,3 +7,7 @@
 *.mp4
 *.mov
 !INDEX.md
+
+# the synthetic persona is not a person; it is committed on purpose
+!persona-three-v*.jpg
+!persona-three-v*.png

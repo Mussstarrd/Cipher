@@ -4,6 +4,7 @@ Newest first. One line each; the reasoning lives in the linked file.
 
 | Date | Decision | By | Notes |
 |---|---|---|---|
+| 2026-10-18 | **Character sheet approved: `reference/persona-three-v1.jpg`** (Concept 2, the erhu). Trademarks: erhu held like a rifle with the bow in the teeth, mismatched eyes, braid, clock at 3:33, harmonica wall. | Jeff | Wu-Tang shirt from the first pass was replaced with a plain tee; no third-party marks. |
 | 2026-10-18 | **Persona is Version B, a synthetic original inspired by Jeff's references.** Written decision. Reason: reverse-image separation from 1010 Logic. | Jeff | persona-two-ways.md |
 | 2026-10-18 | Suno stays on **Pro** (20 downloads/month, so at most 20 new beats a month). | Jeff | |
 | 2026-10-18 | **Budget: as cheap as possible, under $50 in the first month.** | Jeff | Revised stack in proposals.md C. |

@@ -10,6 +10,7 @@ Each row: what the file is, where it came from, whether the owner holds rights t
 | ref-02 (couch, portrait) | Same scene, smiling | Jeff | Yes | Same as above. |
 | ref-03 (hotel mirror) | Full-length mirror selfie, black shell jacket, navy polo, khakis, backpack | Jeff | Yes | Build, posture and proportion direction. Not the wardrobe. |
 | ref-04 (dark studio) | Head-and-shoulders, dark room, side/under light, direct stare, washed navy tee, warm lit object right edge | Jeff | Yes | **Primary look and lighting reference for the persona and cover art.** |
+| **persona-three-v1.jpg** | **The character sheet.** Three: shaved head, one long braid, heterochromia (left ice grey, right brown), scar through the left brow, stubble, plain washed black tee, chrome harmonica on a neck rack, erhu held upright with the bow clamped in his teeth. Room: harmonica wall on nails, hanging cables, acoustic foam, red LED clock at 3:33, MPC with red pads, monitor. Generated 2026-10-18 from Concept 2 (`persona-concepts-v2.md`), no reference photo attached. | Jeff via Gemini | Yes, synthetic, no real person | Every avatar, cover, talking clip and desk-footage clip starts from this file. |
 | hero.png | Anom Culture storefront hero image | `anomculture-website` repo | Yes | Brand continuity check. |
 
-Pending your written decision: whether the persona may be generated *from* ref-04 (your face) or only *inspired by* it. Until then, inspired-by only.
+Decided 2026-10-18: Version B, synthetic original. ref-01 to ref-04 are now archive only.
