@@ -1,0 +1,11 @@
+# audio and renders never go to GitHub; the catalogue JSON does
+inbox/*
+!inbox/.gitkeep
+out/*
+!out/.gitkeep
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+.env
+secrets.env

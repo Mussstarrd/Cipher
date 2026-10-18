@@ -20,28 +20,30 @@ All three are synthetic originals. The look is not designed until your reference
 
 My pick: **LOWMID** for a channel built on your face-adjacent references, **A.N.O.M.** if you want the persona fully detached from you.
 
-## C. Recommended stack and monthly cost
+## C. Stack and monthly cost (revised 2026-10-18 for the under-$50 rule)
 
-| Item | Monthly | Status |
+| Item | New money / month | Status |
 |---|---|---|
-| Suno Pro | $10 | you have it. 20 downloads/month cap now applies; Premier ($30) gives 60 |
-| BeatStars Starter | $1.67 ($19.99/yr) | need your yes |
-| ElevenLabs Starter | $6 | need your yes |
-| Hedra API wallet | ~$15–25 pay-as-you-go (≈ 30–50 ten-second clips) | need your yes; starts at $0 |
-| Postiz hosted | $29 | need your yes; drop after our own TikTok/Meta approvals |
-| Python/ffmpeg pipeline | $0 | runs on your machine or a $6 VPS |
-| **Total** | **$62–72** | |
+| Suno Pro | $0 new (already paid) | 20 downloads/month cap |
+| ElevenLabs | $0 new (already subscribed) | confirm tier is Starter or above for the commercial license |
+| BeatStars | $0 new (store already live) | |
+| Hedra API wallet | ~$5 one-time top-up, then ~$0.50 per 10 s clip | needs your yes |
+| YouTube Data API | $0 | OAuth only, no review |
+| Instagram Graph API | $0 | app in development mode can post to its own admin's Business account without review ⚠ to confirm at build |
+| TikTok | $0 own API but private-only until audited; **Zernio from $6/month for one account** bridges it | needs your yes when we reach step 3d |
+| Pipeline | $0 | Python + ffmpeg on the Lenovo; Windows Task Scheduler |
+| **First month, new money** | **about $11** | well under $50 |
 
-Everything else (YouTube API, Instagram API, analytics) is free. Details and sources in `platforms.md`.
+Postiz hosted ($29) is dropped from the plan; it only earns its keep if the direct Instagram route fails review, and then it is still inside the cap.
 
 ## D. Questions only you can answer
 
 1. ~~Parent brand~~ Decided: Anom Culture is the company.
-2. OPEN **Your face and voice.** Photos received as direction. Persona stays a synthetic original unless you say in writing that it may be built from your face or voice. Which?
-3. **Suno tier.** Stay on Pro (20 downloads/month, so at most 20 new beats/month) or move to Premier ($30, 60/month)?
-4. **Budget ceiling** per month, so I never have to ask twice.
-5. **Where the pipeline runs.** Your Anom Culture repo shows a Windows machine. Windows native, WSL, or a small Linux VPS?
-6. Accounts: fresh @anom / @anomculture on TikTok, Instagram, YouTube; working BeatStars with ~100 followers. OPEN: confirm the exact handle on each, and switch Instagram to a Business account.
+2. ~~Face and voice~~ Decided in writing: Version B, synthetic original. Persona stays a synthetic original unless you say in writing that it may be built from your face or voice. Which?
+3. ~~Suno tier~~ Pro.
+4. ~~Budget~~ As cheap as possible, under $50 the first month.
+5. ~~Where it runs~~ The Lenovo, Windows, this repo.
+6. Handles: beatstars.com/anomculture, Instagram anomculture, TikTok @anomculture. OPEN: YouTube handle, and switch Instagram to a Business account.
 7. **Pricing.** Anom Culture sells packs at $49.99. What do you want for BeatStars lease tiers? My default: MP3 lease $29.99, WAV $49.99, trackout $99.99, unlimited $199.99, exclusive by offer.
 8. **Audience and time zone**, so posting times start from something.
 9. ~~ONE OF ONE source~~ Received the built page; committed at `dist/one.html`.
