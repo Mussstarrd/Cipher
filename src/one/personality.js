@@ -136,7 +136,7 @@ const OnePersonality = {
   // ---------------------------------------------------------------- 5. layouts
   // When a placeholder's value is null the engine substitutes the fallback,
   // then collapses ", ," left by an empty one.
-  fallbacks: { SLUR: "{FEEL}", COUNTER: "the 808", MOTION: "identical", LAND: "on a hard cut", SYNC: "{FEEL}" },
+  fallbacks: { SLUR: "{FEEL}", COUNTER: "the 808", MOTION: "the lead a hair louder", LAND: "on a hard cut", SYNC: "{FEEL}" },
   // Max rendered length of each placeholder so every line stays under 100
   // chars (the engine picks with pickWhere(x => x.length <= limit)).
   limits: { LEAD: 25, COUNTER: 25, KICK: 22, HATS: 23, SNARE: 20, SYNC: 34, SLUR: 37, FEEL: 44, MOTION: 45, CUE: 79, AFTER: 39, LAND: 55 },
@@ -389,7 +389,7 @@ OnePersonality.render = function render(layout, values) {
     return m ? resolve(m[1], depth + 1) : fb;
   };
   return layout.sections
-    .map((s) => s.replace(/\{(\w+)\}/g, (_, k) => resolve(k)).replace(/,\s*(?=,|\])/g, "").replace(/\|\s*,/, "|"))
+    .map((s) => s.replace(/\{(\w+)\}/g, (_, k) => resolve(k)).replace(/,\s*(?=,|\])/g, "").replace(/\|\s*,/, "|").replace(/\bidentical, identical\b/g, "identical"))
     .join("\n\n");
 };
 

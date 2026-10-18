@@ -220,8 +220,11 @@ const OneEngine = (() => {
 
   // The first clause of the processing phrase, short enough for the head: "pitched down a whole step".
   const timbre = (character) => {
-    const words = character.split(",")[0].trim().split(/\s+/).slice(0, 5);
-    while (words.length > 2 && /^(the|a|an|on|of|with|and|in|to|at|by|so|like|its|for|into|over|under)$/i.test(words[words.length - 1])) words.pop();
+    const first = character.split(",")[0].trim();
+    // A long first clause would only fit as a fragment: the handle then stands alone.
+    if (first.split(/\s+/).length > 6) return "";
+    const words = first.split(/\s+/).slice(0, 6);
+    while (words.length > 2 && /^(the|a|an|on|of|with|and|in|to|at|by|so|like|its|for|into|over|under|every|each|until|then|all|that|this|more|too|very|no|never)$/i.test(words[words.length - 1])) words.pop();
     return words.join(" ");
   };
 
@@ -230,11 +233,14 @@ const OneEngine = (() => {
     const head = [
       `${p.anchor}, ${p.bpm} BPM, ${p.key}`,
       rhythm.sync, rhythm.twitch, rhythm.slur, p.mode === "loop" || (p.layout && p.layout.minimal >= 0.7) ? "minimal" : null, rhythm.mode, p.extraTag, rhythm.low,
-      `${lead.handle} ${timbre(lead.character)}`, p.mixTag || G.MIX_TAG, p.vocal ? p.vocal.tag : G.VOCAL ? "vocals up front" : "instrumental",
+      `${lead.handle} ${timbre(lead.character)}`.trim(), p.mixTag || G.MIX_TAG, p.vocal ? p.vocal.tag : G.VOCAL ? "vocals up front" : "instrumental",
     ].filter(Boolean).join(", ") + ".";
     const leadLine = `lead: ${lead.source}, ${lead.character}, ${lead.register}, playing ${lead.motif} as ${lead.articulation}, ${lead.human}, ${lead.placement}.`;
     const leadNoPlace = `lead: ${lead.source}, ${lead.character}, ${lead.register}, playing ${lead.motif} as ${lead.articulation}, ${lead.human}.`;
     const leadShort = `lead: ${lead.source}, ${lead.character}, ${lead.register}, playing ${lead.motif} as ${lead.articulation}.`;
+    // The head already says the lead is low; the shortest lead line keeps the sound, its processing and the motif.
+    const leadMin = `lead: ${lead.source}, ${lead.character}, playing ${lead.motif}.`;
+    const bassMin = `bass: ${bass.source}.`;
     const bassLine = `bass: ${bass.source}, ${bass.tone}, ${bass.human}.`;
     const bassShort = `bass: ${bass.source}, ${bass.human}.`;
     const slur = rhythm.slur ? `, ${drums.slur}` : "";
@@ -255,13 +261,17 @@ const OneEngine = (() => {
       [head, leadNoPlace, bassShort, drumShort],
       [head, leadShort, bassShort, drumShort],
       [head, leadShort, bassShort, `drums: ${drums.kick}, ${drums.snare}, ${drums.hats}.`],
+      [head, leadMin, bassShort, drumShort],
+      [head, leadMin, bassMin, drumShort],
+      [head, leadMin, bassMin, `drums: ${drums.kick}, ${drums.snare}, ${drums.hats}.`],
+      [head, leadMin, bassMin, `drums: ${drums.kick}, ${drums.snare}.`],
       [head, leadShort, bassShort],
     ];
     let s;
     for (const t of tries) if ((s = t.filter(Boolean).join(" ")).length <= 1000) break;
     // Last resort: the head without the lead's timbre clause.
     if (s.length > 1000) {
-      const headShort = head.replace(`${lead.handle} ${timbre(lead.character)}`, lead.handle);
+      const headShort = head.replace(`${lead.handle} ${timbre(lead.character)}`.trim(), lead.handle);
       for (const t of tries) if ((s = [headShort, ...t.slice(1)].filter(Boolean).join(" ")).length <= 1000) break;
     }
     return s;
@@ -271,14 +281,26 @@ const OneEngine = (() => {
     const { lead, drums, sw, bass, counter, rhythm, layout } = p;
     const vals = {
       LEAD: lead.handle, COUNTER: counter.handle, BASS: /808/.test(bass.source) ? "808" : "bass",
-      KICK: bare(drums.kick), HATS: bare(drums.hats), SNARE: bare(drums.snare), SYNC: drums.sync, SLUR: drums.slur,
+      KICK: bare(drums.kick), HATS: bare(drums.hats), SNARE: bare(drums.snare), SYNC: rhythm.sync || drums.sync, SLUR: rhythm.slur || null,
       FEEL: drums.feel, MOTION: lead.motion, CUE: sw.cue, AFTER: sw.after, LAND: sw.land,
       PLACE: lead.placement.split(",")[0], TWITCH: `${drums.twitch.sound} ${drums.twitch.rhythm}`, ROLE: counter.role,
       BASSPAT: bass.pattern, ANTI: p.anti || "the same loop the whole way",
     };
     if (Personality && Personality.render) {
       const lim = Personality.limits || {};
-      const clip = (k, v) => (v && lim[k] && v.length > lim[k] ? v.split(",")[0].slice(0, lim[k]).trim() : v);
+      // Keep as many whole clauses as fit the limit; never cut mid-word. The after-words stay intact:
+      // the head's switch tag and the lyrics must carry the same words.
+      const clip = (k, v) => {
+        if (!v || !lim[k] || v.length <= lim[k] || k === "AFTER") return v;
+        const parts = v.split(", ");
+        let out = parts[0];
+        for (const q of parts.slice(1)) {
+          if (`${out}, ${q}`.length > lim[k]) break;
+          out = `${out}, ${q}`;
+        }
+        // A first clause that does not fit is dropped whole, so the fallback speaks instead of a cut-off phrase.
+        return out.length > lim[k] ? null : out;
+      };
       const shaped = { ...vals, KICK: Personality.drumWord(drums.kick), HATS: Personality.drumWord(drums.hats), SNARE: Personality.drumWord(drums.snare) };
       for (const k of Object.keys(shaped)) shaped[k] = clip(k, shaped[k]);
       const out = Personality.render(layout, shaped);
@@ -376,7 +398,7 @@ const OneEngine = (() => {
       mode: chosenMode,
       lane: lane.id,
       layout,
-      extraTag: lane.tags ? pick(lane.tags, r) : null,
+      extraTag: lane.tags ? pick(lane.tags, r) : layout && G.LAYOUT_TAGS && G.LAYOUT_TAGS[layout.id] ? pick(G.LAYOUT_TAGS[layout.id], r) : null,
       anti: G.ANTI ? pick(G.ANTI, r) : null,
       mixTag: lane.mixTag,
       noCounter: !!(G.NO_COUNTER || lane.noCounter),

@@ -1,0 +1,41 @@
+module.exports = {
+  id: "wife",
+  title: "Wife",
+  identity: "Nordic folk-trap duet: a female ethereal sung hook over war drums and a bowed tagelharpa drone, a gravel-voiced male rapping the verses over sparse 808s, low male shouts answering the hook, a horn call, snow and fire. A song, never a trailer.",
+  anchors: ["Nordic folk trap, war drums, female folk vocals, male gravel rap", "Viking rap, tagelharpa drone, 808s, female sung hook", "ritual folk hip hop, frame drums, lur horn, female vocals and male rap", "Norse folk trap duet, war drums, bowed drone, gravel rap", "northern folk hip hop, taiko-like toms, female melody, male shouts", "dark folk trap, nyckelharpa, 808 under war drums, female hook"],
+  bpm: ["76-90 half-time war march", "140-160 double-time trap", "92-104 mid march"],
+  families: {
+    "ritual strings": {
+      src: ["a bowed two-string tagelharpa drone, horsehair rasp on every stroke|the tagelharpa", "a nyckelharpa playing a slow minor melody, keys clacking|the nyckelharpa", "a hurdy-gurdy drone with the wheel grinding, one melody string on top|the hurdy-gurdy", "a low bowed fiddle sawing a two-note minor figure, rosin dust and all|the low fiddle", "a plucked lyre picked slowly, dry and close|the lyre", "a bowed cello-register drone on one note with a slow pulse|the low drone", "a detuned folk fiddle sliding between two minor notes|the sliding fiddle", "a gut-string lute plucked slowly on the pulse under the drone|the lute"],
+      ch: ["bowed by hand, the pressure uneven, the pitch wavering", "recorded close, every scrape and breath of the bow left in", "low-passed so it sits under the drums like fog", "doubled an octave down, the low copy louder", "the drone held under everything, never stopping", "pitched down until it growls", "dry and bare, a wooden room, the reverb cut"],
+    },
+    "horns and calls": {
+      src: ["a lur horn calling one long note, then two short|the lur horn", "a war horn blown hard, cracked and raspy|the war horn", "a wooden flute playing a slow five-note folk figure, breathy|the wooden flute", "a low horn drone doubling the 808 root|the low horn", "a bone whistle-free reed pipe, thin and reedy, one short phrase|the reed pipe", "a hunting horn answering the hook, far away|the far horn", "a bull horn blast on the one, once per eight bars|the bull horn", "a conch-like shell horn, round and low|the shell horn"],
+      ch: ["blown so hard it cracks on the top note", "far away, with a long cold echo", "dry and close, the breath audible", "pitched down a whole step so it sounds enormous", "one call per eight bars, then silence", "doubled by a distorted 808 on the root", "flutter-tongued and raspy on the long notes"],
+    },
+    "war drums": {
+      src: ["a taiko-like floor tom hit with mallets, booming on 1 and 3|the war drum", "a frame drum played with the hand, the skin slapping|the frame drum", "a bodhran rolled with a tipper, driving the pulse|the bodhran", "a huge low surdo-like drum thumping the downbeat|the big drum", "a rack of toms played in a marching pattern, close-miked|the toms", "a shield struck with a stick, tuned to the key|the shield hit", "an anvil struck once per bar, ringing|the anvil", "a stomp on a wooden deck with a chain shake on the and|the deck stomp"],
+      ch: ["hit by hand, every stroke a different weight", "close-miked, the skin and the stick both audible", "doubled by a trap kick on the downbeat", "pitched down until the room shakes", "played slightly ahead of the beat like a march", "the hits landing uneven, a war party not a machine", "with the room left in, stone walls"],
+    },
+  },
+  bass: ["a long-decay 808 tuned to the drone root", "a distorted 808 that slides a fourth into each chord", "a sine sub holding the drone note under the whole bar", "an 808 doubled by a bowed low drone", "a hard-knocking 808 on the downbeat only, the tail cut before the snare", "a saturated 808 stepping down the minor scale, one note per bar"],
+  btone: ["tube saturation so it carries on a phone", "a clean round body following the drone", "long tails that ring into the snare", "glide into the downbeat only", "overdriven until it growls under the drums", "the sub holding the root the whole song"],
+  kick: ["a trap kick stacked on a war drum, the knock and the boom", "a deep soft kick under the frame drum", "a hard-clipped kick on 1 and the and of 3", "a kick that only hits with the big drum", "a kick doubled a 16th before the snare on bar 4", "a dry knocking kick, the war drum carrying the weight"],
+  snare: ["a half-time trap snare on 3, cracking, with a rim of the frame drum", "a hard clap stacked on a shield hit on 2 and 4", "a snare with the wires rattling, dry, on 3 only", "a fat snare stacked with a hand clap, a hair late", "a thin crispy trap snare pitched up, on the backbeat", "a snare smacked on 3, the frame drum answering on 4"],
+  hats: ["trap hats in 16ths under the war drums, low in the mix", "hats that twitch into 32nds then stop dead", "sparse closed hats on the off-beats only", "a chain shaken on the and of each beat in place of hats", "hand-played hats, every hit a different velocity", "tight closed hats in 16ths, the same pattern every bar"],
+  color: ["a chain shake on the and of 4", "a shield struck once per bar, tuned to the key", "a wooden deck stomp on 2 and 4, never quite even", "an anvil ring on the last bar of each eight", "a frame drum slapped by hand, the accents wandering", "sticks clicked together on the off-beats"],
+  sync: ["war drums on 1 and 3, the trap snare dead on 3", "the 808 anticipates the downbeat by a 16th, the big drum lands dead on", "a half-time snare under double-time hats", "the frame drum pushing ahead, the kick dead on", "a full stop on beat 4 every 8 bars, the drone the only thing left", "kicks pushed off the beat, the war drum on the one"],
+  human: ["drums hit by hand, every stroke a different weight", "the war drum a hair early, the snare dead on", "the drone wavering in pitch, bowed by hand", "a loose pocket, a war party not a machine", "the horn cracking on the top note, left in", "the frame drum dragging, the hats pushing"],
+  structure: ["[Intro | 4 bars]", "[Verse 1]", "[Pre-Hook]", "[Hook]", "[Verse 2]", "[Pre-Hook]", "[Hook]", "[Breakdown]", "[Hook]", "[Outro]", "[End]"],
+  motif: ["a four-note minor figure that falls to the root and holds", "a two-note drone and a third note that leans flat", "a slow minor melody that climbs a fifth and falls back", "a three-note call, the same three notes, every four bars", "a minor figure ending on the flat second", "a five-note folk figure circling the fifth"],
+  artic: ["long bowed notes that start a hair late", "one call per eight bars, then silence", "slow quarter notes, every one leaned into", "two long notes then a short one, repeated", "the drone held under everything, never stopping", "stabs that only answer the big drum"],
+  sliders: "Weirdness 30-40, Style Influence 75-85, v6, Variety Off, Max Mode On.",
+  exclude: "gospel, trailer music, symphonic metal, power metal, black metal, screamo, opera, EDM drop, dubstep, children's choir, crowd vocals, gang vocals, brass band, electric guitar, celtic fiddle, autotune",
+  ban: "",
+  names: "ragal ironbull, valhalla calling, wardruna, heilung, danheim, einar selvik, amon amarth, skald",
+  allow: "tagelharpa|nyckelharpa|hurdy-gurdy|lur|bowed|horns?|chant\\w*|haunt\\w*|epic|shouts?|drone|frame drums?|bodhran|folk|nordic|norse|viking|fiddle|cello-register|lyre|reed pipe|whistle-free|flute|ethereal|joik|growl\\w*|drones?|vocalize|vocalizing",
+  allowWhy: "The whole genre is built from words the instrumental guard bans for good reason elsewhere: bowed folk strings, horns, a drone, chants and shouts. They are unlocked for this button only.",
+  lanes: [
+    { id: "viking", label: "Valhalla duet", anchors: ["dark Nordic folk trap, Viking rap, half-time 808s, war drums, tagelharpa drone", "Viking rap, tagelharpa drone, half-time 808s, war drums, female folk hook", "ritual folk hip hop, frame drums, lur horn, throat singing drone, 808s", "Norse folk trap duet, war drums, bowed drone, gravel rap, female hook"], families: { "ritual strings": 4, "horns and calls": 3, "war drums": 2 }, tempo: [[80, 90], [70, 76], [84, 92]], modes: [["straight", 70], ["switch", 30]] },
+  ],
+};

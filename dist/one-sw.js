@@ -1,7 +1,7 @@
 /* ONE OF ONE — service worker. The page is one self-contained file, so offline is just: keep that file.
    The build stamps VERSION so a new build replaces the cache on the next load. */
 "use strict";
-const VERSION = "6b86cbe294";
+const VERSION = "85d15d260b";
 const CACHE = `oneofone-${VERSION}`;
 const SHELL = ["./one.html", "./one.webmanifest", "./one-icon-192.png", "./one-icon-512.png"];
 

@@ -780,7 +780,7 @@ const OneGrammar = {
       "a clap that lands a hair late",
       "a bone-dry clap, close and hard",
       "a half-time snare on 3 only",
-      "a clap with a short reverse lead-in",
+      "a clap stacked on a dry snare",
       "a snare with a heavy transient snap",
       "a loose hand clap stacked three times, slightly out of sync",
     ],
@@ -3618,6 +3618,402 @@ const OneLyrics = (() => {
 })();
 
 
+/* ONE BUTTON — the artist's personality layer, the lyrics-field layouts and
+ * the seldom "weird" mode. Pure data for the engine, plus one render helper.
+ *
+ * Rules every phrase obeys (tested by personality-test.js):
+ *   - passes src/one/guard.js (so never: waltz, lilt, shuffle, swing, bowed,
+ *     folk, harp, phonk, memphis, cowbell, fills, transitions, "no X", names)
+ *   - no arrangement verbs: enters, comes in, builds, drops, transition, returns
+ *   - the beat-3 cadence is a drunken triplet slur in hip hop language
+ *   - "every N bars" appears only where the engine's EVERY cap can see it
+ *
+ * Layout placeholders (all optional; see `fallbacks` for the null case):
+ *   {LEAD}    lead handle ("the slurred harmonica")
+ *   {COUNTER} counter handle
+ *   {BASS}    "808" or "bass"
+ *   {KICK} {HATS} {SNARE}   bare drum sources (engine's bare(), short form)
+ *   {SYNC}    a syncopation head tag       {SLUR} a slurCadence phrase
+ *   {FEEL}    GROOVE.human phrase          {MOTION} LEAD.motion phrase
+ *   {CUE}     switch cue   {AFTER} switch after-words   {LAND} switch landing
+ */
+"use strict";
+
+const OnePersonality = {
+  // ---------------------------------------------------------------- 1. signature
+  // A grammar-shaped FAMILY. Every source states its register.
+  signature: {
+    frame: "sampled, slurred and pitched down over hard trap drums and 808s",
+    sources: [
+      "a harmonica sample slurred and bent between notes, pitched down into the low mids|the slurred harmonica",
+      "a breathy harmonica pitched down an octave, parked under the snare|the low harmonica",
+      "a harmonica run through a cranked guitar amp until it barks, kept in the low mids|the amp harmonica",
+      "a harmonica resampled down an octave until the grain shows, sitting under the snare|the resampled harmonica",
+      "a harmonica time-stretched so every bend smears, low mids, under the snare|the smeared harmonica",
+      "a harmonica and erhu stacked an octave apart, both sliding, the low copy louder|the harmonica erhu stack",
+      "an erhu sample sliding between every note, pitched down into the mids|the erhu",
+      "an erhu bending into each note late from below, pitched down under the snare|the low erhu",
+      "an erhu resampled and distorted, the slides smeared, parked in the low mids|the distorted erhu",
+      "a sliding two-string fiddle sample pitched down into the low mids, slurred like the erhu|the two-string fiddle",
+      "a lap steel through a fuzz pedal sliding between two notes, pitched down under the snare|the fuzz lap steel",
+      "a melodica played breathy and slurred, pitched down into the low mids|the melodica",
+    ],
+    character: [
+      "slurring between notes, never landing clean",
+      "bent flat into every note by hand",
+      "breath noise and reed buzz left in",
+      "pitched down until it sounds heavy and sad",
+      "run through a cranked amp, barking on the loud notes",
+      "resampled until the grain shows",
+      "each note sliding in late from below",
+      "doubled by a distorted 808 on the root",
+    ],
+  },
+  signatureCounterRoles: [
+    "one slurred reply every 4 bars",
+    "a bent note answering the snare",
+    "one slide down under the hook only",
+    "a breathy held note in the gaps the lead leaves",
+    "two slurred notes on the turnaround, then gone",
+    "doubling the last note of each lead phrase, bent flat",
+  ],
+
+  // ---------------------------------------------------------------- 2. slur cadence
+  // The beat-3 drunken triplet slur. Head tags (<= 7 words) and lyric cues.
+  slurCadence: [
+    "808 stumbles into three on beat 3",
+    "beat 3 slurs, the one lands hard",
+    "drunk triplet skip on beat 3",
+    "kick slurs three quick on beat 3",
+    "beat 3 trips, beat 4 straightens",
+    "lazy three-note drag on beat 3",
+    "808 tumbles on 3, sober on 1",
+    "a slurred triplet lean on beat 3",
+    "kick drags into threes on beat 3",
+    "third beat slurs, downbeat snaps back",
+    "808 trips three steps into beat 4",
+    "drunk bounce on 3, straight hats",
+    "one slurred triplet per bar, beat 3",
+    "the pocket slips drunk on beat 3",
+  ],
+
+  // ---------------------------------------------------------------- 3. syncopation, twitch
+  syncopation: [
+    "kick a 16th ahead of one",
+    "808 on the and of 4",
+    "kick skipping beat 1",
+    "off-grid kick, snare dead center",
+    "double kick before each snare",
+    "pushed kicks, snare on the grid",
+    "kick on the e of 2",
+    "snare early, 808 late",
+    "kicks stacked off the downbeat",
+    "808 skipping the one, snare locked",
+    "kick chasing the lead's rhythm",
+    "uneven kicks, hats dead straight",
+  ],
+  twitch: [
+    "nervous perc ticks between kicks",
+    "twitching hat clicks, off the grid",
+    "jittery 32nd knock bursts",
+    "clipped perc blips under the hats",
+    "skittering metallic ticks",
+    "stop-start perc clicks",
+    "retriggered hat ticks in the gaps",
+    "twitchy knock flams before the snare",
+    "tiny perc blips answering the snare",
+    "nervous bitcrushed tick pattern",
+    "jittery clicks, never twice the same",
+    "shaky hat retriggers under the loop",
+  ],
+
+  // ---------------------------------------------------------------- 4. anti-transition
+  antiTransition: {
+    phrases: [
+      "the same loop the whole way",
+      "drums cut dead, then slam back on the one",
+      "every section identical except one sound",
+      "the beat stays frozen from start to finish",
+      "hard cuts only, straight in on beat 1",
+      "sections change on a hard cut, nothing in between",
+      "the loop runs flat through every section",
+      "one sound in, one sound out, drums identical",
+      "drums stop dead on beat 4, back on beat 1",
+      "the hook is the verse with one more sound",
+    ],
+    // For the Exclude box only. These are the banned words on purpose and are
+    // skipped by the guard test (they never go in the style or lyrics field).
+    excludeTerms: [
+      "drum fills", "tom fills", "snare rolls", "hat rolls", "drum rolls",
+      "transitions", "transition fills", "section transitions",
+      "risers", "sweeps", "filter sweeps", "white noise sweeps", "build-ups",
+      "breakdown FX", "impacts", "crash cymbals", "reverse cymbals",
+      "DJ drops", "DJ scratching", "tape stop", "phaser",
+      "cowbell", "vocal chops", "vocals", "choir", "humming", "chanting",
+    ],
+  },
+
+  // ---------------------------------------------------------------- 5. layouts
+  // When a placeholder's value is null the engine substitutes the fallback,
+  // then collapses ", ," left by an empty one.
+  fallbacks: { SLUR: "{FEEL}", COUNTER: "the 808", MOTION: "the lead a hair louder", LAND: "on a hard cut", SYNC: "{FEEL}" },
+  // Max rendered length of each placeholder so every line stays under 100
+  // chars (the engine picks with pickWhere(x => x.length <= limit)).
+  limits: { LEAD: 25, COUNTER: 25, KICK: 22, HATS: 23, SNARE: 20, SYNC: 34, SLUR: 37, FEEL: 44, MOTION: 45, CUE: 79, AFTER: 39, LAND: 55 },
+  layouts: [
+    {
+      id: "bare_loop", label: "Two-bar loop, nothing changes, 2:00", mode: "loop", weight: 3, minimal: 1.0,
+      sections: [
+        "[Intro | {LEAD} alone, 2 bars]",
+        "[Loop | same two bars, {LEAD} over {KICK} and {BASS} only]",
+        "[Loop | same loop, identical, {SLUR}]",
+        "[Loop | same loop, identical, nothing changes]",
+        "[Loop | same loop, identical, {FEEL}]",
+        "[Outro | the loop stops dead on beat 1, 2:00]",
+        "[End]",
+      ],
+    },
+    {
+      id: "one_in_one_out", label: "One sound added, one sound removed", mode: "loop", weight: 2, minimal: 0.8,
+      sections: [
+        "[Intro | {KICK} and {BASS} only, 4 bars]",
+        "[Loop | same loop, {LEAD} added, everything else identical]",
+        "[Loop | same loop, {HATS} added, identical]",
+        "[Loop | same loop, hats removed, {LEAD} and {BASS} identical]",
+        "[Loop | same loop, {LEAD} removed, drums and {BASS} alone]",
+        "[Loop | same loop, {LEAD} back, identical]",
+        "[Outro | {KICK} and {BASS} only, stops dead on beat 1]",
+        "[End]",
+      ],
+    },
+    {
+      id: "hook_first", label: "Hook first", mode: "straight", weight: 2, minimal: 0.3,
+      sections: [
+        "[Hook | full beat from beat 1, {LEAD} up front]",
+        "[Verse | same drums, {SYNC}, {SLUR}]",
+        "[Hook | identical to the first hook, {LEAD} up front]",
+        "[Verse | same drums, {COUNTER} alone, {LEAD} out]",
+        "[Hook | identical, {MOTION}]",
+        "[Outro | drums cut dead, {LEAD} alone, ends on beat 1]",
+        "[End]",
+      ],
+    },
+    {
+      id: "verse_bare_hook_full", label: "Verse bare, hook full", mode: "straight", weight: 2, minimal: 0.5,
+      sections: [
+        "[Intro | {LEAD} alone, 4 bars]",
+        "[Verse | {KICK} and {BASS} only, {SLUR}]",
+        "[Hook | full drums, {HATS}, {LEAD} up front]",
+        "[Verse | {KICK} and {BASS} only again, hats out, {LEAD} thinner]",
+        "[Hook | full drums, identical, {MOTION}]",
+        "[Outro | {KICK} and {BASS} only, {LEAD} alone on the last bar]",
+        "[End]",
+      ],
+    },
+    {
+      id: "slow_motif", label: "Slow and sad: long intro on the lead, the motif grows", mode: "straight", weight: 2, minimal: 0.6,
+      sections: [
+        "[Intro | {LEAD} alone, slow long notes, 8 bars]",
+        "[Verse | {BASS} one note per bar, {SNARE} on 3 only, {LEAD} three notes]",
+        "[Hook | same density, the motif grows to five notes, {LEAD} still low]",
+        "[Verse | same density, identical drums, the motif grows one note more]",
+        "[Hook | same density, full motif, {MOTION}]",
+        "[Outro | drums cut dead, {LEAD} alone on the full motif, 8 bars]",
+        "[End]",
+      ],
+    },
+    {
+      id: "halftime_last_third", label: "Half-time drop-down for the last third", mode: "switch", weight: 2, minimal: 0.4,
+      sections: [
+        "[Intro | {LEAD} alone, 4 bars]",
+        "[Verse | full drums, {SYNC}, {SLUR}]",
+        "[Hook | full beat, {LEAD} up front, {COUNTER} answering]",
+        "[Verse | {LEAD} thinner, {FEEL}]",
+        "[Break | drums cut dead, {LAND}]",
+        "[Beat Switch | {CUE}]",
+        "[Hook | {AFTER}, {MOTION}]",
+        "[Outro | {AFTER}, drums cut dead, ends on beat 1]",
+        "[End]",
+      ],
+    },
+    {
+      id: "a_then_b", label: "A then B, two beats one song", mode: "switch", weight: 2, minimal: 0.3,
+      sections: [
+        "[Intro | {LEAD} alone, 2 bars]",
+        "[Hook | beat A, {SYNC}, {LEAD} up front]",
+        "[Verse | beat A, same drums, {SLUR}]",
+        "[Beat Switch | {CUE}]",
+        "[Hook | beat B, {AFTER}, {LEAD} up front]",
+        "[Verse | beat B, {AFTER}, {COUNTER} answering]",
+        "[Outro | beat B, {AFTER}, stops dead on beat 1]",
+        "[End]",
+      ],
+    },
+    {
+      id: "call_response", label: "Call and response, two-bar phrases", mode: "straight", weight: 2, minimal: 0.5,
+      sections: [
+        "[Intro | {LEAD} two bars, {COUNTER} two bars, drums out]",
+        "[Verse | full drums, {LEAD} asks, {COUNTER} answers]",
+        "[Hook | full beat, {SLUR}, two-bar phrases traded]",
+        "[Verse | same drums, {FEEL}, two-bar phrases traded]",
+        "[Hook | identical, {LEAD} and {COUNTER} trading two bars]",
+        "[Outro | drums cut dead, {LEAD} once, {COUNTER} once]",
+        "[End]",
+      ],
+    },
+    {
+      id: "kick_and_lead", label: "Stripped to kick and lead, 3 minutes", mode: "loop", weight: 2, minimal: 0.95,
+      sections: [
+        "[Intro | {LEAD} alone, 2 bars]",
+        "[Loop | {KICK} and {LEAD} only, same two-bar loop, 3 minutes]",
+        "[Loop | same loop, identical, {SLUR}]",
+        "[Loop | same loop, identical, {FEEL}]",
+        "[Loop | same loop, {MOTION}, kick identical]",
+        "[Outro | {KICK} alone, stops dead on beat 1]",
+        "[End]",
+      ],
+    },
+    {
+      id: "long_fade", label: "Long outro fade", mode: "straight", weight: 1, minimal: 0.5,
+      sections: [
+        "[Intro | {LEAD} alone, 4 bars]",
+        "[Verse | full drums, {SYNC}, {SLUR}]",
+        "[Hook | full beat, {LEAD} up front, {COUNTER} answering]",
+        "[Verse | same drums, identical, {FEEL}]",
+        "[Hook | identical, {MOTION}]",
+        "[Outro | same loop fading out slowly over 32 bars, nothing else changes]",
+        "[End]",
+      ],
+    },
+    {
+      id: "lead_out_middle", label: "Lead out for 8 bars, slams back", mode: "straight", weight: 1, minimal: 0.6,
+      sections: [
+        "[Intro | full drums from beat 1, {KICK}, {HATS}]",
+        "[Verse | full drums, {LEAD} low, {SLUR}]",
+        "[Hook | full beat, {LEAD} up front]",
+        "[Break | {LEAD} out, drums and {BASS} alone, 8 bars]",
+        "[Hook | {LEAD} slams back on the one, identical to the first hook]",
+        "[Outro | drums cut dead, {LEAD} alone, ends on beat 1]",
+        "[End]",
+      ],
+    },
+    {
+      id: "switch_strip", label: "Drums cut, lead alone, then beat B slams in", mode: "switch", weight: 1, minimal: 0.5,
+      sections: [
+        "[Intro | {KICK} and {BASS} only, 4 bars]",
+        "[Verse | full drums, {SYNC}, {LEAD} low]",
+        "[Hook | full beat, {LEAD} up front, {SLUR}]",
+        "[Break | {LEAD} alone, {LAND}]",
+        "[Beat Switch | {CUE}]",
+        "[Verse | {AFTER}, {COUNTER} answering]",
+        "[Hook | {AFTER}, {MOTION}]",
+        "[Outro | {AFTER}, stops dead on beat 1]",
+        "[End]",
+      ],
+    },
+  ],
+
+  // ---------------------------------------------------------------- 6. weird
+  weird: {
+    share: 0.12,
+    model: "v6-wild",
+    sliders: { weirdness: [70, 85], styleInfluence: [55, 70] },
+    mixTag: "raw clipped mix, loud and dark",
+    anchors: [
+      "experimental hip hop, dark slowed drums, distorted 808, left-field",
+      "left-field trap, slowed and slammed drums, blown-out 808",
+      "experimental southern hip hop, drums pitched down, dark",
+      "dark experimental trap, slowed, distorted 808, off-grid",
+      "left-field hip hop, sliced samples, slammed drums",
+      "underground experimental trap, drums slowed and crushed",
+    ],
+    tags: [
+      "bit-mangled lead",
+      "drums slowed and slammed",
+      "reversed sample stabs",
+      "808 blown out and clipped",
+      "pitch-warped lead",
+      "drums pitched down a step",
+      "sliced sample stabs off the grid",
+      "hats crushed to grit",
+    ],
+    families: { found: 4, synth: 3, organ: 2 },
+    sources: [
+      "a pitch-warped sample stab sliced into one-beat pieces and reshuffled, low mids|the warped stab",
+      "a reversed harmonica note resampled into the lead, swelling backward into each beat, low|the reversed harmonica",
+      "a bit-mangled lead run through a broken sample-rate reducer, grinding in the low mids|the mangled lead",
+      "a soul-record keys sample sliced into stabs, pitched down and dark|the sliced soul keys",
+      "a dial-up modem screech tuned down into a melody, thick and low|the modem lead",
+      "a slowed-down radio jingle sliced into stabs, pitched down into the mids|the sliced jingle",
+    ],
+    dreamville: [
+      "sliced soul keys over off-grid drums",
+      "a pitched-down soul loop under hard drums",
+      "warm piano stabs under slammed drums",
+      "a soul guitar lick sliced into one bar, dark",
+      "muted keys loop, drums slowed and dry",
+      "low soul keys stab sliced off the one",
+    ],
+  },
+
+  // ---------------------------------------------------------------- 7. slow register, minimal register
+  ballad: {
+    tags: [
+      "slow, long notes, sad and low",
+      "slow sad hip hop, piano and 808",
+      "long held notes under the snare",
+      "slow heavy drums, sad low lead",
+      "quiet piano, hard snare, slow",
+      "sad low harmonica, long notes",
+      "slow and heavy, bare and low",
+      "whole notes over slow drums",
+    ],
+    sources: [
+      "a dark low piano playing long single notes, each one left to ring, under the snare|the low piano",
+      "a clean electric guitar playing long bent notes, low and sad|the sad guitar",
+      "a harmonica pitched down, breathy whole notes slurred into each other, under the snare|the slow harmonica",
+      "an erhu sliding slowly into each long note, pitched down into the low mids|the slow erhu",
+      "a detuned piano playing two chords per bar, slow and heavy, low|the slow piano",
+      "a baritone guitar picked slow, one note per bar, left to ring, low|the slow baritone guitar",
+    ],
+  },
+  minimal: [
+    "two sounds only",
+    "kick, 808 and one lead",
+    "bare bones, nothing else",
+    "stripped to the bone",
+    "one loop, three sounds",
+    "empty space between every hit",
+    "so sparse the room shows",
+    "bare drums, one-note lead",
+  ],
+};
+
+// The short drum word for {KICK} {HATS} {SNARE}: the words up to and including
+// the drum noun. "a syncopated double kick before the snare" -> "syncopated double kick".
+OnePersonality.drumWord = function drumWord(source) {
+  const m = source.replace(/^an? /, "").match(/^(.*?\b(kick|hats?|snare|clap|shaker|snap)s?)\b/i);
+  return m ? m[1] : source.replace(/^an? /, "").split(",")[0];
+};
+
+// Render a layout with a values map. Null values take `fallbacks`; a
+// placeholder with nothing left is dropped and the comma list is tidied.
+OnePersonality.render = function render(layout, values) {
+  const F = OnePersonality.fallbacks;
+  const resolve = (key, depth = 0) => {
+    const v = values[key];
+    if (v) return v;
+    const fb = F[key];
+    if (!fb || depth > 3) return "";
+    const m = fb.match(/^\{(\w+)\}$/);
+    return m ? resolve(m[1], depth + 1) : fb;
+  };
+  return layout.sections
+    .map((s) => s.replace(/\{(\w+)\}/g, (_, k) => resolve(k)).replace(/,\s*(?=,|\])/g, "").replace(/\|\s*,/, "|").replace(/\bidentical, identical\b/g, "identical"))
+    .join("\n\n");
+};
+
+
 /* ONE OF ONE — genre packs. Each pack overrides whole sections of the base
  * grammar (src/one/grammar.js). The base is the syncopated experimental
  * hip hop engine; the spin-offs carry their own instruments, drums, groove,
@@ -3628,17 +4024,54 @@ const OneLyrics = (() => {
 const OneGenres = (() => {
   const Base = typeof OneGrammar !== "undefined" ? OneGrammar : require("./grammar.js");
   const BASE_EXCLUDE = Base.EXCLUDE;
+  const P = typeof OnePersonality !== "undefined" ? OnePersonality : require("./personality.js");
   const j = (lines) => lines.join("\n\n");
 
   return {
+  one: {
+    id: "one",
+    label: "ONE OF ONE",
+    blurb: "One button. The sound that ran radio for the last decade, eleven archetypes from squeak-and-space to trunk 808 switches, with the harmonica and erhu slur worked in. Some rolls are two sounds and a kick, some are slow and sad, one in eight goes weird on v6-wild.",
+    grammar: {
+      TEMPO: [[112,126],[80,92],[70,82],[80,100],[72,80],[66,76],[70,78],[96,104],[80,92],[76,84],[78,86]],
+      MAJOR_SHARE: 0.3,
+      GUEST_SHARE: 0.15,
+      GUEST_FRAME: "over hard radio trap drums and a huge 808",
+      MIX_TAG: "clean loud radio mix, huge 808, the lead dead center",
+      MODEL: "v6",
+      DRUMS_TAG: "hard modern trap drums and a huge 808",
+      MODES: [["straight", 45], ["loop", 30], ["switch", 25]],
+      SLUR_SHARE: 0.6,
+      LOW_SHARE: 0.8,
+      SLIDERS: { switch: { weirdness: [40, 55], styleInfluence: [75, 85] }, loop: { weirdness: [40, 52], styleInfluence: [76, 85] }, straight: { weirdness: [40, 55], styleInfluence: [75, 85] } },
+      EXCLUDE: [...new Set(BASE_EXCLUDE.concat(["vocals","singing","rap","choir","chanting","humming","vocal chops","ad-libs","DJ scratching","riser","drum fills","hat rolls","section transitions","jazz","blues","EDM","dubstep","house","techno","lo-fi","vinyl crackle","pads","strings","bells","bright high lead","shrill lead","piercing lead","cinematic","orchestral","film score","ambient","gospel choir","church organ","bluegrass","honky-tonk","tom fills","snare rolls","drum rolls","transitions","transition fills","risers","sweeps","filter sweeps","white noise sweeps","build-ups","breakdown FX","impacts","crash cymbals","reverse cymbals","DJ drops","tape stop","phaser","cowbell"]))],
+      LANES: [{"id":"squeak","label":"Squeak and space","weight":2,"anchors":["minimal trap, tiny rubber squeak hook, long 808, open space","sparse radio trap, one squeak sound in the mids, huge 808, dry claps","minimal Atlanta trap, pitched found-sound hook, half the bar empty","stripped trap, a single squeak on the and of 2, 808 doing the rest"],"families":{"squeak_hooks":6,"trunk_stabs":2,"coast_plinks":1,"signature":2.54},"tempo":[[112,126],[138,150]],"modes":[["straight",45],["loop",35],["switch",20]],"majorShare":0.1,"mixTag":"clean radio mix, huge 808, the squeak dead center","drums":{"kick":["a deep thud kick with the low end cut so the 808 carries the sub, on 1 and the and of 2","a tight kick that hits like a car door, on the one only, the 808 doing the rest","a short punchy kick on 1 and the and of 3, nothing else, the bar mostly empty","a dry knocking kick that sits out the one every other bar, the 808 holding the downbeat"],"snare":["a tight layered clap and snare on 2 and 4, dead dry, a hair late","a bone-dry clap on 2 and 4, close and hard, the loudest thing after the 808","a crisp dry snare on 2 and 4 with a short tail, a finger snap stacked on it","a pitched-up snappy snare on 2 and 4, a clap doubled under it"],"hats":["tight closed hats in uneven 16ths, one open hat on the and of 4","sparse closed hats in 8ths, low, the 808 louder than them","hats that twitch into 32nds on the 4 then stop dead","closed hats in 16ths that cut out for a bar whenever the 808 slides"]},"bassPattern":["one long note per bar, sliding a fifth into the hook","following the kick exactly, the tail eating the gap","silent for a bar, then a long slide into the next","root and flat second only, one note per 2 beats","playing the squeak's two notes two octaves down"],"switchAxes":[{"tag":"beat switch, the floor goes out","cue":"the drums cut for good, the 808 and the squeak alone, the snare back only on 3, half as often","after":"drums gone, 808 and squeak alone, sparse snare on 3"},{"tag":"beat switch to half-time","cue":"half-time drums, the tempo halves, slow heavy kick, long 808 slides, the squeak pitched down a step","after":"half-time, slow heavy kick, the squeak pitched down"}],"bass":[],"layouts":["bare_loop","one_in_one_out","hook_first","verse_bare_hook_full","halftime_last_third","a_then_b","call_response","kick_and_lead","long_fade","lead_out_middle","switch_strip"]},{"id":"countryloop","label":"Country-trap loop","weight":1,"anchors":["country trap, plucked string loop, 808, trap hats, big hook","country trap, muted banjo loop pitched down, hard 808, half-time","trap country, acoustic riff loop, stomps and claps, major key","radio country trap, four-string plucked loop, 808, snare on 3"],"families":{"string_loops":6,"emo_guitar":2,"pain_piano":1,"signature":2.54},"tempo":[[80,92],[132,140]],"modes":[["straight",50],["loop",30],["switch",20]],"majorShare":0.65,"mixTag":"loud radio mix, the loop bright and thin, the 808 huge underneath","drums":{"kick":["a hard layered kick, sub plus knock, on 1 and the and of 3","a boot stomp on a wooden floor stacked on a trap kick, on 1 and the and of 2","a short punchy kick with a click on top, on 1 and a quick double before the 3","a tight kick on the one and a late hit on the and of 4 into the next bar"],"snare":["a hard sampled snare on 3, compressed until it cracks, a room of hand claps under it","a tight layered clap and snare on 3, a small room on it","a loose hand clap stacked three times on 3, slightly out of sync","a crisp dry snare on 2 and 4, a tambourine under it"],"hats":["tight closed hats in 16ths pitched down a step, one open hat on the and of 4","hats in triplets through the hook, straight 8ths in the verse","a shaker in place of hats, even and low","hand-played hats in 16ths, every hit a different velocity"]},"bassPattern":["one long note per bar, following the loop's root","a slide up a fifth into each new bar, long tail","following the kick, the tail ringing into the snare","holding under the loop and moving when it rests","silent for 2 bars under the intro, then a long slide in"],"switchAxes":[{"tag":"beat switch to double-time","cue":"double-time drums, the hats double, the kick pattern doubles, the loop unchanged, the 808 shorter","after":"double-time, hats doubled, short 808"},{"tag":"hard beat switch halfway","cue":"everything strips to the 808 and one snare, the loop pitched down a fourth","after":"stripped to 808 and snare, loop pitched down"}],"bass":[],"layouts":["bare_loop","one_in_one_out","hook_first","verse_bare_hook_full","halftime_last_third","a_then_b","call_response","kick_and_lead","long_fade","lead_out_middle","switch_strip"]},{"id":"triumph","label":"Drawbar triumph","weight":1,"anchors":["triumphant hip hop, sustained drawbar keyboard, stacked trumpets, cracking snare","big southern hip hop, drawbar keyboard swelling on the four, hard 808","victory-lap trap, trumpet stack riff, low piano, snare on 3","Atlanta hip hop, drawbar keys and brass, heavy kick, huge hook"],"families":{"drawbar_keys":5,"brass_stack":3,"soul_slices":1,"signature":2.54},"tempo":[[70,82],[140,152]],"modes":[["straight",45],["switch",35],["loop",20]],"majorShare":0.55,"mixTag":"big loud radio mix, keys wide, 808 and snare in front","drums":{"kick":["a hard layered kick, sub plus knock, on 1 and the and of 3","a hard-clipped kick on 1 and a quick double on the and of 2, buried inside the 808","a deep thud kick with the low end cut so the 808 carries the sub, on 1 and the and of 2","a tight kick on the one and a late hit on the and of 4 into the next bar"],"snare":["a hard sampled snare on 3, compressed until it cracks, a clap under it","a snare with a heavy transient snap on 3, the loudest thing in the mix","a tight layered clap and snare on 3, a short room on it, a hair late","a crisp dry snare on 2 and 4, a tambourine under it"],"hats":["tight closed hats in uneven 16ths, one open hat on the and of 4","hats in triplets through the hook, straight 8ths in the verse","sparse closed hats in 8ths, low, the keys louder than them","hats that twitch into 32nds on the 4 then stop dead"]},"bassPattern":["one long note per bar, following the keys' root","following the kick exactly, the tail eating the gap","a slide up an octave into the hook, then one note per bar","holding under the keys and moving when they rest"],"switchAxes":[{"tag":"beat switch, key falls","cue":"key falls a minor third, the keys pitched down, the 808 longer, same drums","after":"in the lower key, the keys pitched down, longer 808"},{"tag":"hard beat switch halfway","cue":"everything strips to the 808 and one snare, the keys pitched down an octave, the brass gone","after":"stripped to 808 and snare, keys pitched down"}],"bass":[],"layouts":["bare_loop","one_in_one_out","hook_first","verse_bare_hook_full","halftime_last_third","a_then_b","call_response","kick_and_lead","long_fade","lead_out_middle","switch_strip"],"counterFamily":"brass_stack"},{"id":"soulslice","label":"Soul slice, modern 808","weight":3,"anchors":["soul-sample hip hop, sliced soul stabs, knocking 808, Dallas bounce","Dallas hip hop, sped-up soul loop, hard trap drums, heavy 808","sample-flip hip hop, four soul stabs, boom bap pocket, modern 808","southern hip hop, pitched-up soul record, slapping snare, 808 slides"],"families":{"soul_slices":6,"drawbar_keys":1,"trunk_stabs":1,"brass_stack":1,"signature":2.54},"tempo":[[80,92],[92,100]],"modes":[["straight",50],["loop",30],["switch",20]],"majorShare":0.3,"mixTag":"crisp loud mix, the loop bright, the 808 knocking underneath","drums":{"kick":["a dry knocking kick on 1 and the and of 3, the 808 following it","a muffled sampled kick with room on it, on 1 and the and of 2","a short punchy kick with a click on top, a syncopated double before the snare","a hard-clipped kick on 1 and the and of 2, the 808 running under it"],"snare":["a hard sampled snare on 2 and 4, compressed until it cracks","a slapping snare dead on 2 and 4, loud, the one thing that never moves","a tight clap stacked on a snare, slapping on 2 and 4","a crisp dry snare on 2 and 4 with a short tail, a hair late"],"hats":["tight closed hats in uneven 16ths, pushed a hair ahead of the snare","closed hats in plain 8ths, low, the loop louder than them","hats in 16ths with the accents moving each bar","a shaker in place of hats, even and low"]},"bassPattern":["following the loop's root, one note per bar, knocking","playing the sample's bassline two octaves down, in 8ths","following the kick exactly","a slide up a fifth into each new bar","silent for 2 bars, then hits"],"switchAxes":[{"tag":"beat switch, new drums","cue":"new kick pattern, the 808 goes running 8ths, harder snare, the loop pitched down a step","after":"new drums, running 808, loop pitched down"},{"tag":"beat switch, the floor goes out","cue":"the drums cut for good, the 808 and the loop alone, the snare back only on 4","after":"drums gone, 808 and loop alone, snare on 4"}],"bass":[],"layouts":["bare_loop","one_in_one_out","hook_first","verse_bare_hook_full","halftime_last_third","a_then_b","call_response","kick_and_lead","long_fade","lead_out_middle","switch_strip"]},{"id":"flute","label":"Flute and 808 menace","weight":2,"anchors":["dark flute trap, low flute over a sliding 808, half-time","menacing Atlanta trap, flute loop pitched down, hard 808, sparse kick","dark Carolina trap, thin sine chirp lead, bouncing 808, snare on 3","trap, low flute riff, long 808 slides, hats in triplets"],"families":{"flute_and_chirp":6,"trunk_stabs":2,"cold_keys":1,"signature":2.54},"tempo":[[72,80],[144,158]],"modes":[["loop",40],["straight",35],["switch",25]],"majorShare":0.05,"mixTag":"dark crisp mix, the flute dry and close, the 808 huge","drums":{"kick":["a hard layered kick, sub plus knock, on 1 and the and of 3","a deep thud kick with the low end cut so the 808 carries the sub, on 1 and the and of 2","a short punchy kick with a click on top, on 1 and a quick double before the 3","a kick that only hits on the one, the sliding 808 doing the rest"],"snare":["a hard sampled snare on 3, compressed until it cracks, a clap under it","a tight layered clap and snare on 3, bone-dry, loud","a bone-dry clap on 3, close and hard, a hair late","a pitched-up snappy snare on 3 with a finger snap stacked on it"],"hats":["hats in triplets through the hook, straight 8ths in the verse","tight closed hats in uneven 16ths, one open hat on the and of 4","hats that twitch into 32nds on the 4 then stop dead","closed hats in 16ths that cut out for a bar whenever the 808 slides"]},"bassPattern":["one long note per bar, sliding up into the next","following the kick, the tail ringing into the snare","a slide up a fifth into each new bar, long tail","root and flat second only, one note per 2 beats","playing the flute's riff two octaves down"],"switchAxes":[{"tag":"beat switch, key falls","cue":"key falls a minor third, the flute pitched down, the 808 longer and more distorted, same sparse drums","after":"in the lower key, the flute pitched down, longer 808"},{"tag":"second half double-time","cue":"double-time drums, hats double, kick pattern doubles, the flute unchanged","after":"double-time, hats doubled"}],"bass":[],"layouts":["bare_loop","one_in_one_out","hook_first","verse_bare_hook_full","halftime_last_third","a_then_b","call_response","kick_and_lead","long_fade","lead_out_middle","switch_strip"]},{"id":"pain","label":"Pain piano trap","weight":3,"anchors":["pain trap, low piano four-chord loop, triplet hats, long 808 slides","Baton Rouge pain trap, dark piano, hard 808, sad low melody","Chicago pain trap, piano in the low register, 808 sliding into the hook","sad trap, close piano, bass guitar under the 808, half-time"],"families":{"pain_piano":6,"emo_guitar":2,"string_loops":1,"signature":2.54},"tempo":[[66,76],[134,150]],"modes":[["straight",45],["switch",30],["loop",25]],"majorShare":0.2,"mixTag":"warm loud mix, the piano close, the 808 round and huge","drums":{"kick":["a deep thud kick with the low end cut so the 808 carries the sub, on 1 and the and of 2","a tight kick on the one and a late hit on the and of 4 into the next bar","a hard knocking kick on 1 and the and of 3, the 808 sliding under it","a short punchy kick on 1 with a double on the and of 2, dry"],"snare":["a tight layered clap and snare on 3, a small room on it","a clap on 3 stacked with a finger snap, a hair late","a crisp dry snare on 3 with a short tail, a clap doubled under it","a hard sampled snare on 3 with a dry clap stacked under it"],"hats":["trap hats in 16ths with triplet bursts on the 4, an open hat on the and of 4","hats in triplets through the hook, straight 8ths in the verse","closed hats in 16ths, a triplet burst on the and of 2 and the 4","hand-played hats in 16ths, every hit a different velocity, one open hat per bar"]},"bassPattern":["one long note per bar, sliding up an octave into the hook","following the kick, the tail ringing into the snare","playing the piano's root notes, a slide into each chord change","holding under the melody and moving when it rests","silent for 2 bars under the intro, then a long slide in"],"switchAxes":[{"tag":"beat switch to double-time","cue":"double-time drums, the hats double, the kick pattern doubles, the piano unchanged, the 808 shorter","after":"double-time, hats doubled, short 808"},{"tag":"hard beat switch halfway","cue":"everything strips to the 808 and one snare, the piano pitched down an octave","after":"stripped to 808 and snare, piano pitched down"}],"bass":[],"layouts":["bare_loop","one_in_one_out","hook_first","verse_bare_hook_full","slow_motif","halftime_last_third","a_then_b","call_response","kick_and_lead","long_fade","lead_out_middle","switch_strip"]},{"id":"cold","label":"Cold southern trap","weight":3,"anchors":["cold southern trap, two-note dark piano, dead dry, 808 melody","Tennessee cold trap, dark piano stab, sparse kick, 808 sliding","Bronx drill, dark piano loop, sliding 808, hats twitching","cold trap, creeping piano riff, bone-dry snare, 808 doing the melody"],"families":{"cold_keys":6,"trunk_stabs":2,"pain_piano":1,"signature":2.54},"tempo":[[70,78],[140,150]],"modes":[["straight",45],["loop",35],["switch",20]],"majorShare":0,"mixTag":"cold dry mix, the piano dead center, the 808 hard and short","drums":{"kick":["a tight kick that hits like a car door, on 1 and the and of 3, nothing else","a hard-clipped kick on 1 and a quick double on the and of 2, buried inside the 808","a dry knocking kick that sits out the one every other bar, the 808 holding the downbeat","a kick that only hits on the one, the sliding 808 doing the rest"],"snare":["a bone-dry snare crack on 3, dead center, the loudest thing in the mix","a hard sampled snare on 3, compressed until it cracks, a clap under it","a snare with a heavy transient snap on 3, a hair late","a tight clap stacked on a snare on 3, dead dry"],"hats":["hats that twitch into 32nds right before the snare then stop dead","tight closed hats in uneven 16ths, one open hat on the and of 4","sparse closed hats in 8ths, low, the 808 louder than them","closed hats in 16ths that cut out for a bar whenever the 808 slides"]},"bassPattern":["the 808 playing the melody, sliding between every note","one long note per bar, sliding a fifth into the next","a slide up an octave into the hook, then one note per bar","root and flat second only, one note per 2 beats","silent for a bar, then a long slide in"],"switchAxes":[{"tag":"beat switch, the floor goes out","cue":"the drums cut for good, the 808 melody and the piano alone, the snare back only on 3","after":"drums gone, 808 melody and piano alone, snare on 3"},{"tag":"beat switch, new drums","cue":"new kick pattern, the 808 goes running 8ths, harder snare, the piano cut shorter","after":"new drums, running 808, short piano"}],"bass":[],"layouts":["bare_loop","one_in_one_out","hook_first","verse_bare_hook_full","halftime_last_third","a_then_b","call_response","kick_and_lead","long_fade","lead_out_middle","switch_strip"]},{"id":"coast","label":"West Coast bounce","weight":2,"anchors":["West Coast bounce hip hop, two-note piano plink, hard claps, synth bass","LA bounce, piano plink hook, big claps on 2 and 4, rubbery bass","Compton bounce trap, muted pluck hook, hard claps, 808 bouncing","West Coast club hip hop, bright piano hook, finger snaps, synth bass"],"families":{"coast_plinks":6,"pluck_earworms":2,"squeak_hooks":1,"signature":2.54},"tempo":[[96,104],[82,92]],"modes":[["straight",55],["loop",25],["switch",20]],"majorShare":0.35,"mixTag":"loud club-ready radio mix, claps huge, bass rubbery","drums":{"kick":["a big bouncy kick on the one and the and of two, the bass boinging with it","a hard kick on one and three with a bounce on the and of four","a short punchy kick on 1 and the and of 3, the 808 following it exactly","a kick that skips the one and lands on the and, the claps dead on"],"snare":["a big layered hand clap on two and four, wide","a clap stacked with a finger snap, loud and dry, on 2 and 4","a huge dry clap on 2 and 4, a hair late","a crisp dry snare under a clap on 2 and 4, the clap louder"],"hats":["sparse closed hats in 8ths with an open hat on the and of four","finger snaps in place of hats, on the off-beats","hats in 16ths with the accents bouncing","a shaker bouncing on the off-beats"]},"bassPattern":["boinging on the one and the and of two, the riff in the bass","following the kick exactly, short and rubbery","playing the plink's two notes an octave down","a quick double on the and of 2, then one held note","one note per bar with a boing on the attack"],"switchAxes":[{"tag":"beat switch to half-time","cue":"half-time drums, the tempo halves, slow heavy kick, the plink pitched down a step, long 808 slides","after":"half-time, slow heavy kick, the plink pitched down"},{"tag":"beat switch, key falls","cue":"key falls a minor third, the plink pitched down, same claps, the bass longer","after":"in the lower key, the plink pitched down"}],"bass":[],"layouts":["bare_loop","one_in_one_out","hook_first","verse_bare_hook_full","halftime_last_third","a_then_b","call_response","kick_and_lead","long_fade","lead_out_middle","switch_strip"]},{"id":"emo","label":"Guitar-sample emo","weight":2,"anchors":["emo trap, clean picked guitar sample, soft 808, sad and slow","sad guitar trap, fingerpicked guitar loop, hard 808, snare on 3","melodic guitar trap, muted electric guitar hook, bouncing 808, half-time","pop trap, electric guitar riff loop, trap hats, big 808, major key"],"families":{"emo_guitar":6,"pain_piano":2,"pluck_earworms":1,"signature":2.54},"tempo":[[80,92],[138,160]],"modes":[["straight",50],["switch",25],["loop",25]],"majorShare":0.45,"mixTag":"clean radio mix, the guitar close and dry, the 808 round","drums":{"kick":["a deep thud kick with the low end cut so the 808 carries the sub, on 1 and the and of 2","a tight kick on the one and a late hit on the and of 4 into the next bar","a short punchy kick with a click on top, on 1 and a quick double before the 3","a hard layered kick, sub plus knock, on 1 and the and of 3"],"snare":["a tight layered clap and snare on 3, a small room on it","a crisp dry snare on 3 with a short tail, a finger snap stacked on it","a clap on 3 stacked with a finger snap, a hair late","a hard sampled snare on 3, compressed until it cracks, a clap under it"],"hats":["tight closed hats in uneven 16ths, one open hat on the and of 4","hats in triplets through the hook, straight 8ths in the verse","sparse closed hats in 8ths, low, the guitar louder than them","hand-played hats in 16ths, every hit a different velocity, one open hat per bar"]},"bassPattern":["one long note per bar, following the guitar's root","following the kick, the tail ringing into the snare","a slide up a fifth into each new bar, long tail","holding under the guitar and moving when it rests","silent for 2 bars under the intro, then a long slide in"],"switchAxes":[{"tag":"beat switch to double-time","cue":"double-time drums, the hats double, the kick pattern doubles, the guitar unchanged, the 808 shorter","after":"double-time, hats doubled, short 808"},{"tag":"beat switch, key falls","cue":"key falls a minor third, the guitar pitched down, the 808 longer, same drums","after":"in the lower key, the guitar pitched down, longer 808"}],"bass":[],"layouts":["bare_loop","one_in_one_out","hook_first","verse_bare_hook_full","slow_motif","halftime_last_third","a_then_b","call_response","kick_and_lead","long_fade","lead_out_middle","switch_strip"]},{"id":"earworm","label":"Pop-trap earworm","weight":2,"anchors":["pop trap earworm, three-note plucked synth hook, hook first, steady beat","radio trap, plucked synth hook of two notes, hard 808, snare on 3","Toronto pop trap, round pluck hook, sparse drums, huge 808","melodic trap, one three-note synth hook all song, bouncing 808"],"families":{"pluck_earworms":6,"flute_and_chirp":2,"cold_keys":1,"signature":2.54},"tempo":[[76,84],[128,136]],"modes":[["straight",50],["loop",35],["switch",15]],"majorShare":0.3,"mixTag":"crisp punchy radio mix, the hook dead center, 808 huge","drums":{"kick":["a hard layered kick, sub plus knock, on 1 and the and of 3","a deep thud kick with the low end cut so the 808 carries the sub, on 1 and the and of 2","a tight kick that hits like a car door, on the one only, the 808 doing the rest","a short punchy kick with a click on top, on 1 and a quick double before the 3"],"snare":["a tight layered clap and snare on 3, dead dry","a crisp dry snare on 3 with a short tail, a finger snap stacked on it","a hard sampled snare on 3, compressed until it cracks, a clap under it","a bone-dry clap on 3, close and hard, a hair late"],"hats":["tight closed hats in uneven 16ths, one open hat on the and of 4","sparse closed hats in 8ths, low, the 808 louder than them","hats in triplets through the hook, straight 8ths in the verse","one hat pattern that never changes"]},"bassPattern":["one long note per bar, following the hook's root","following the kick exactly","a slide up a fifth into each new bar","playing the hook's three notes two octaves down","holding under the hook and moving when it rests"],"switchAxes":[{"tag":"beat switch to half-time","cue":"half-time drums, the tempo halves, slow heavy kick, long 808 slides, the hook unchanged","after":"half-time, slow heavy kick"},{"tag":"beat switch, key falls","cue":"key falls a minor third, the hook pitched down, same drums","after":"in the lower key, the hook pitched down"}],"bass":[],"layouts":["bare_loop","one_in_one_out","hook_first","verse_bare_hook_full","halftime_last_third","a_then_b","call_response","kick_and_lead","long_fade","lead_out_middle","switch_strip"]},{"id":"trunk","label":"Trunk 808 switch","weight":2,"anchors":["trunk-rattling trap, hard-clipped sampled bass riff, low piano stab, beat switch","hard Atlanta trap, sampled bass riff as the hook, distorted 808, snare on 3","Houston trap, low piano stab on the one, huge 808, beat switch halfway","heavy trap, 808 lead, hard-clipped kick, the beat switching to something slower"],"families":{"trunk_stabs":6,"soul_slices":2,"brass_stack":1,"signature":2.54},"tempo":[[78,86],[150,164]],"modes":[["switch",60],["straight",25],["loop",15]],"majorShare":0.05,"mixTag":"loud dark mix, the 808 the biggest thing, everything else out of its way","drums":{"kick":["a hard-clipped kick on 1 and a quick double on the and of 2, buried inside the 808","a hard layered kick, sub plus knock, clipped, on 1 and the and of 3","a kick that only hits on the one, the distorted 808 doing the rest","a syncopated double kick before the snare, the 808 following it exactly"],"snare":["a hard sampled snare on 3, compressed until it cracks, a short clap under it","a snare with a heavy transient snap on 3, the loudest thing after the 808","a tight layered clap and snare on 3, bone-dry, loud","a bone-dry snare crack on 3, dead center"],"hats":["tight closed hats in uneven 16ths, one open hat on the and of 4","hats that twitch into 32nds on the 4 then stop dead","sparse closed hats in 8ths, low, the 808 louder than them","closed hats in 16ths that cut out for a bar whenever the 808 slides"]},"bassPattern":["playing the sampled riff two octaves down, clipped","one long clipped note per bar, sliding a fifth into the next","following the kick exactly, the tail eating the gap","running 8ths on the root for one bar, then one note for the next","a slide up an octave into the hook, then one note per bar"],"switchAxes":[{"tag":"hard beat switch halfway","cue":"everything strips to 808 and one snare, the riff pitched down an octave, the tempo feels slower","after":"stripped to 808 and snare, riff pitched down"},{"tag":"beat switch to half-time","cue":"half-time drums, the tempo halves, slow heavy kick, long 808 slides, a new low piano stab","after":"half-time, slow heavy kick, new piano stab"}],"bass":[],"layouts":["bare_loop","one_in_one_out","hook_first","verse_bare_hook_full","halftime_last_third","a_then_b","call_response","kick_and_lead","long_fade","lead_out_middle","switch_strip"]},{"id":"slow","label":"Slow and sad","weight":2.5,"anchors":["slow sad hip hop, low piano, long 808, half-time","slow heavy trap, long notes under the snare, sad and low","sad hip hop, quiet piano and 808, slow","slow pain trap, long held notes, heavy drums, low"],"families":{"slow_lead":5,"signature":3,"pain_piano":2},"tempo":[[58,72],[116,140]],"modes":[["straight",45],["switch",30],["loop",25]],"majorShare":0.35,"mixTag":"quiet wide mix, the lead close, the 808 soft and long","tags":["slow, long notes, sad and low","slow sad hip hop, piano and 808","long held notes under the snare","slow heavy drums, sad low lead","quiet piano, hard snare, slow","sad low harmonica, long notes","slow and heavy, bare and low","whole notes over slow drums"],"drums":{"kick":["a deep thud kick with the low end cut so the 808 carries the sub, on 1 and the and of 2","a tight kick on the one and a late hit on the and of 4 into the next bar","a hard knocking kick on 1 and the and of 3, the 808 sliding under it","a short punchy kick on 1 with a double on the and of 2, dry"],"snare":["a tight layered clap and snare on 3, a small room on it","a clap on 3 stacked with a finger snap, a hair late","a crisp dry snare on 3 with a short tail, a clap doubled under it","a hard sampled snare on 3 with a dry clap stacked under it"],"hats":["trap hats in 16ths with triplet bursts on the 4, an open hat on the and of 4","hats in triplets through the hook, straight 8ths in the verse","closed hats in 16ths, a triplet burst on the and of 2 and the 4","hand-played hats in 16ths, every hit a different velocity, one open hat per bar"]},"bassPattern":["one long note per bar, sliding up an octave into the hook","following the kick, the tail ringing into the snare","playing the piano's root notes, a slide into each chord change","holding under the melody and moving when it rests","silent for 2 bars under the intro, then a long slide in"],"switchAxes":[{"tag":"beat switch to double-time","cue":"double-time drums, the hats double, the kick pattern doubles, the piano unchanged, the 808 shorter","after":"double-time, hats doubled, short 808"},{"tag":"hard beat switch halfway","cue":"everything strips to the 808 and one snare, the piano pitched down an octave","after":"stripped to 808 and snare, piano pitched down"}],"bass":[],"layouts":["slow_motif","long_fade","verse_bare_hook_full","call_response","lead_out_middle"],"sliders":{"weirdness":[38,50],"styleInfluence":[75,85]}},{"id":"weird","label":"Weird, v6-wild","weight":3.5,"anchors":["experimental hip hop, dark slowed drums, distorted 808, left-field","left-field trap, slowed and slammed drums, blown-out 808","experimental southern hip hop, drums pitched down, dark","dark experimental trap, slowed, distorted 808, off-grid","left-field hip hop, sliced samples, slammed drums","underground experimental trap, drums slowed and crushed"],"families":{"warped":4,"signature":2,"found":3,"synth":2,"organ":1,"soul_slices":2},"tempo":[[66,80],[130,150]],"modes":[["switch",60],["straight",25],["loop",15]],"majorShare":0.1,"mixTag":"raw clipped mix, loud and dark","tags":["bit-mangled lead","drums slowed and slammed","reversed sample stabs","808 blown out and clipped","pitch-warped lead","drums pitched down a step","sliced sample stabs off the grid","hats crushed to grit","sliced soul keys over off-grid drums","a pitched-down soul loop under hard drums","warm piano stabs under slammed drums","a soul guitar lick sliced into one bar, dark","muted keys loop, drums slowed and dry","low soul keys stab sliced off the one"],"drums":{"kick":["a hard-clipped kick on 1 and a quick double on the and of 2, buried inside the 808","a hard layered kick, sub plus knock, clipped, on 1 and the and of 3","a kick that only hits on the one, the distorted 808 doing the rest","a syncopated double kick before the snare, the 808 following it exactly"],"snare":["a hard sampled snare on 3, compressed until it cracks, a short clap under it","a snare with a heavy transient snap on 3, the loudest thing after the 808","a tight layered clap and snare on 3, bone-dry, loud","a bone-dry snare crack on 3, dead center"],"hats":["tight closed hats in uneven 16ths, one open hat on the and of 4","hats that twitch into 32nds on the 4 then stop dead","sparse closed hats in 8ths, low, the 808 louder than them","closed hats in 16ths that cut out for a bar whenever the 808 slides"]},"bassPattern":["playing the sampled riff two octaves down, clipped","one long clipped note per bar, sliding a fifth into the next","following the kick exactly, the tail eating the gap","running 8ths on the root for one bar, then one note for the next","a slide up an octave into the hook, then one note per bar"],"switchAxes":[{"tag":"hard beat switch halfway","cue":"everything strips to 808 and one snare, the riff pitched down an octave, the tempo feels slower","after":"stripped to 808 and snare, riff pitched down"},{"tag":"beat switch to half-time","cue":"half-time drums, the tempo halves, slow heavy kick, long 808 slides, a new low piano stab","after":"half-time, slow heavy kick, new piano stab"}],"bass":[],"layouts":["bare_loop","one_in_one_out","hook_first","verse_bare_hook_full","halftime_last_third","a_then_b","call_response","kick_and_lead","long_fade","lead_out_middle","switch_strip"],"model":"v6-wild","sliders":{"weirdness":[70,85],"styleInfluence":[55,70]}}],
+      ALLOW: /country|banjo/i,
+      FAMILIES: { ...{"squeak_hooks":{"frame":"over hard radio trap drums and a huge 808","sources":["a tiny rubber squeak, like a wet thumb dragged across glass, pitched down into the mids and played as a two-note hook|the rubber squeak","a windshield-wiper squeak sampled once and tuned to the key, one squeak per beat, dark and dry|the wiper squeak","a tuned mouth-pop sample pitched down a fifth, two pops per bar, dead center|the mouth pop","a short plastic creak sampled and pitched into a three-note riff, thin, sitting under the snare|the plastic creak","a tuned knock on a hollow door pitched into the key, a two-note hook, dull and close|the door knock","a sine blip tuned to the root, chirping one note on the and of 2, pitched down until it sits in the mids|the sine blip","a balloon-rub squeak resampled and tuned, one long squeak per bar bending down|the balloon squeak","a tuned bottle-neck squeak pitched down an octave, two notes a minor third apart|the bottle squeak"],"character":["pitched down until it sits in the mids, under the snare","bone-dry, dead center, the loudest thing after the 808","resampled until the grain shows","tuned by ear, a few cents off","gated so each squeak stops dead","doubled by the 808 on the root, quiet","placed on the and of 2 and nowhere else"]},"string_loops":{"frame":"over hard radio trap drums and a huge 808","sources":["a banjo loop picked with the head muted, cut to two bars and pitched down a fourth, filtered thin like an old field recording|the muted banjo loop","a tiny four-string plucked loop, picked bright then pitched down into the mids, two bars, the pick click left in|the four-string loop","an acoustic guitar strum sample high-passed hard, two chords per bar, chugging over the 808|the acoustic strum","a flat-picked acoustic guitar riff sampled dry and close, four notes, looped two bars|the acoustic riff","a harmonica sample pitched down a fourth, one long note per bar, breath left in|the low harmonica","a dobro sample picked slow, the bar rattling on the string, pitched down a step|the dobro","a mandolin-style tremolo loop pitched down an octave, dark and woody, two bars|the low tremolo loop","a clean picked electric guitar riff with a bridge pickup, sampled and looped, bright but under the snare|the bridge-pickup riff"],"character":["filtered thin like an old field recording, the 808 owning the lows","cut to two bars and re-ordered, the seam audible","pitched down until it sits under the snare","high-passed hard so the 808 carries everything under 100 Hz","the pick noise and string buzz left in","played in one take, the small mistakes left in","sped up a few percent so the loop runs ahead of the drums"]},"drawbar_keys":{"frame":"over hard radio trap drums and a huge 808","sources":["a sustained drawbar keyboard holding one chord, swelling on the four, dark bars pulled out|the drawbar keys","a drawbar keyboard playing a slow four-chord climb, one chord per bar, the swell cut dead on the one|the climbing keys","a grand piano doubling a drawbar keyboard, low chords struck hard, both pitched down a step|the piano and drawbar stack","a drawbar keyboard with the percussion click on, stabbing the chord on the and of 2, mid register|the clicking drawbar","a reversed drawbar keyboard chord resampled into a swell that cuts dead on beat 1|the reversed swell","a tine keyboard with a hard bark, stacked under a drawbar keyboard, low and wide|the tine and drawbar stack","a drawbar keyboard tremolo on one minor chord, the tremolo slow, sitting below the hats|the tremolo keys","a low piano playing a triumphant four-note figure in octaves, the drawbar keyboard holding under it|the octave piano"],"character":["swelling in over two beats, then cut dead","the bright drawbars pushed in so it sits under the snare","pushed through a cranked tube preamp until the chords snarl","the room tail cut off, dry and close","a few cents sharp against the 808, settling by the second bar","low-passed so it sounds like it is behind a wall","doubled an octave down by a sine sub on the root"]},"brass_stack":{"frame":"over hard radio trap drums and a huge 808","sources":["a stacked trumpet section playing a four-note riff in unison, pitched down a whole step, big and dry|the trumpet stack","a trumpet and trombone stacked an octave apart, stabbing on the one and the and of 3|the trumpet and trombone","a low brass section playing one long note per bar, swelling and cut dead|the low brass","a sampled trumpet riff cut to one bar, pitched down a fourth, the room cut|the trumpet riff","a French horn section holding a minor chord, dark, below the hats|the horn chord","a trumpet section hit resampled into a one-shot that slams on beat 1|the brass hit","a bass trombone sliding up into each note, two notes then silence|the bass trombone","a tuba doubling the 808 on the root, pumping once per bar|the tuba"],"character":["blown so hard the brass rasps","fat and compressed into one wall of sound","pitched down off a record so it sounds enormous","tight and dry, the room tail cut off","spread wide, the lows summed to mono","a little out of tune between players, so it sounds real","distorted just enough to sound like it is coming out of a car trunk"]},"soul_slices":{"frame":"over hard radio trap drums and a huge 808","sources":["a 70s soul record sped up and sliced into four stabs, pitched up a whole step, the tail cut before each snare|the soul stabs","a soul-record keyboard intro looped at two bars, pitched up a step, the seam audible|the keyboard loop","a soul-record bass-and-guitar intro sliced to one stab per beat, the 808 doubling the root|the intro slices","a soul-record horn line cut to three notes then silence, pitched down a whole step|the horn line","a soul-record string swell sliced to one lift per bar, high-passed thin, static riding the tail|the string lift","a filtered soul loop with its bass cut out so the 808 owns everything under 100 Hz|the filtered loop","a soul-record piano lick sliced into eight pieces and re-ordered, pitched up a third|the re-ordered piano","a soul-record flute lift pitched up a step, diced into two-note pieces over the 808|the flute lift"],"character":["pitched up and sped up like an old record played fast","12-bit grain on every slice","the loop seam audible on every bar line","high-passed hard so the 808 carries the sub","the tail of each stab cut off clean so the gap is bare","AM-radio static riding on every stab","re-pitched a half step on the second pass"]},"flute_and_chirp":{"frame":"over hard radio trap drums and a huge 808","sources":["a low flute sample pitched down an octave, dark and woody, playing a four-note minor riff over the 808|the low flute","a bamboo flute sample overblown so it squeaks on the high note, the riff in the mids|the bamboo flute","a thin sine lead that chirps like a kettle, two notes a half step apart, pitched down into the mids|the kettle sine","a glassy plucked synth with a fast decay, running a six-note arp, pitched down until it sits under the snare|the glassy pluck","a flute sample cut to two bars and looped, the breath noise louder than the note|the flute loop","a sine lead with a slow vibrato, one held note per bar, a half step above the root, sour|the sour sine","an erhu sample bending between two notes a minor third apart, dark and low|the erhu","a low recorder-style flute preset from a cheap keyboard, pitched down a fifth, nasal|the flute preset"],"character":["breath and finger noise left in","bent hard between notes","doubled by a distorted 808 on the root","pitched down until the top note still sits under the snare","time-stretched so the grain smears","cut into one-bar pieces and rearranged","a slight pitch warble, never steady"]},"pain_piano":{"frame":"over hard radio trap drums and a huge 808","sources":["a dark low piano playing a four-chord loop an octave below middle C, heavy and sad, one chord per bar|the low piano","a piano playing a sad three-note hook over a held bass note, the sustain pedal down, low register|the pedal piano","a grand piano recorded close, the hammer thud louder than the note, playing two chords per bar|the close piano","a piano doubled by a clean guitar on the melody, both low, the guitar a hair behind|the piano and guitar","a detuned piano a few cents flat, playing a four-chord loop with the top note held|the flat piano","a cheap keyboard piano preset pitched down a fourth, two fingers, every note held too long|the cheap piano","a low piano playing octaves on the root, one hit per bar, the tail ringing into the snare|the octave root piano","a piano four-chord loop that falls a half step on the last chord, low and heavy|the falling piano"],"character":["played by hand, the second chord always a hair late","the top end cut until only the body speaks","dry and close, the key noise left in","a small dark plate behind it, drums in front","pitched down until it sounds heavy","the sustain pedal down so the chords smear into each other","doubled an octave down by a sine sub"]},"cold_keys":{"frame":"over hard radio trap drums and a huge 808","sources":["a two-note dark piano stab, one low octave, dead dry, hit on the one and the and of 3|the two-note piano","a piano playing a cold four-note figure in the low register, the last note a half step flat, dry|the cold piano","a tuned glass tap pitched down into the mids, two notes a tritone apart, dead and dry|the glass tap","a dark piano riff of five notes creeping up a half step at a time, low, gated short|the creeping piano","a muted pluck synth pitched down an octave, poking one sour note on the and of 2|the muted pluck","a low piano and a sine sub stacked, playing a three-note dark hook, the piano clacking|the piano and sub","a detuned square lead a few cents flat, nagging two notes under the snare|the flat square","a sliced piano sample cut to one stab per bar, pitched down a fourth, the seam audible|the piano stab"],"character":["dead dry, the key clack and release noise left in","gated so each note stops dead a 16th early","pitched down until it sounds heavy and mean","band-passed thin like a phone speaker","the pitch a few cents off, never corrected","one take, the poked wrong notes left in","low-passed so it sits under the snare"]},"coast_plinks":{"frame":"over hard radio trap drums and a huge 808","sources":["a bright piano plink playing two notes a minor third apart on the and of 2 and 4, dry and short|the piano plink","a piano playing a four-note hook in the mids, every note cut short, bouncing with the claps|the bouncing piano","a muted pluck synth playing a two-note hook, rubbery, mid register, gated tight|the rubber pluck","a sine lead playing a three-note hook, round and dry, pitched down into the mids|the sine hook","a tuned clap pitched into the key, playing the hook as percussion, dead dry|the tuned clap hook","a square-wave pluck on a three-note riff, bright attack, the body thinned out, bouncing|the square pluck","a sampled piano stab pitched up a third, two hits per bar, cut dead|the piano stab","a plucked synth hook of two notes bouncing an octave, cartoonish, mid register|the octave pluck"],"character":["bright and loud, up front, under the snare","bouncy, every note cut short","doubled an octave down, the low copy louder","hard-clipped so it pops on a car system","dry and close, the hammer audible","gated tight so it bounces off the clap","detuned a few cents so it grins"]},"emo_guitar":{"frame":"over hard radio trap drums and a huge 808","sources":["a clean picked electric guitar sample, four chords arpeggiated, sad, looped two bars, the pick click left in|the picked guitar","a classical-style guitar sample pitched down a step, fingerpicked slow, dark and close|the fingerpicked guitar","a muted electric guitar playing a two-note hook, palm-muted, pitched down a fourth|the muted guitar","an electric guitar riff through a small amp, mid register, four notes, bent flat on the last|the amp riff","a clean guitar loop with its tail reversed, pitched down, the reverse swell cut dead on the one|the reversed guitar","an acoustic guitar sample strummed once per bar, high-passed, sad major chords|the acoustic strum","a guitar harmonic sampled and pitched into a three-note hook, thin, in the mids|the harmonic hook","a bass guitar played up high as the melody, round and sad, sliding between notes|the bass guitar melody"],"character":["palm-muted and gated tight","overdriven through a small amp, quiet","string squeaks and pick noise left in","bent slightly flat on the long notes","doubled and panned hard left and right","band-passed thin like a phone speaker","a small dark plate behind it, drums in front"]},"pluck_earworms":{"frame":"over hard radio trap drums and a huge 808","sources":["a plucked synth hook of three notes, round and dry, pitched down into the mids, the same three notes all song|the three-note pluck","a sine pluck with a fast decay playing a two-note hook on the and of 2 and the 4|the sine pluck","a muted pluck synth playing a four-note minor hook, the last note bent down|the bent pluck","a glassy pluck synth playing a six-note arp pitched down an octave, under the snare|the glassy arp","a plucked synth doubled by a low piano, a three-note hook, both dry|the pluck and piano","a square pluck a few cents detuned, nagging two notes a fifth apart, mid register|the detuned square pluck","a plucked synth hook that climbs a minor third and falls back, four notes, dry|the climbing pluck","a tuned knock pitched into a two-note hook, dull and close, more percussion than melody|the tuned knock"],"character":["bone-dry, center, tucked right above the 808","gated tight so every note cuts off clean","the top end cut so it sits under the snare","detuned a few cents against itself","soft-clipped and glued with slow compression","doubled an octave down, the low copy louder","frozen and identical every bar while the drums move"]},"trunk_stabs":{"frame":"over hard radio trap drums and a huge 808","sources":["a sampled 80s drum-machine bass riff hard-clipped and pitched down, playing the hook as bass|the sampled bass riff","a low piano stab, two notes a tritone apart, struck hard on the one and left to ring|the low piano stab","a distorted 808 played up an octave as the lead, each note clipped at the top|the 808 lead","a dark sawtooth synth stab pitched down two octaves, hit once per bar and cut dead|the saw stab","a sampled bass guitar riff pitched down an octave, dead and thumping, playing the riff in 8ths|the bass guitar riff","a grand piano hit through a distortion pedal, one low chord per bar|the distorted piano","a tuned kick drum pitched into a four-note melody, booming each note|the tuned kick melody","a sine lead pitched down into the low mids, playing a two-note taunt a half step apart|the low sine taunt"],"character":["hard-clipped on every transient until it crunches","pitched down until it sounds heavy and mean","resampled down an octave so the grain shows","gated tight so every note cuts off clean before the kick","doubled by a distorted 808 on the root","tube saturation so it shows up on phone speakers","one take, the wrong stab left in"]},"slow_lead":{"frame":"slow, over heavy half-time drums and a long 808","sources":["a dark low piano playing long single notes, each one left to ring, under the snare|the low piano","a clean electric guitar playing long bent notes, low and sad|the sad guitar","a harmonica pitched down, breathy whole notes slurred into each other, under the snare|the slow harmonica","an erhu sliding slowly into each long note, pitched down into the low mids|the slow erhu","a detuned piano playing two chords per bar, slow and heavy, low|the slow piano","a baritone guitar picked slow, one note per bar, left to ring, low|the slow baritone guitar"],"character":["played by hand, the second chord always a hair late","the top end cut until only the body speaks","dry and close, the key noise left in","a small dark plate behind it, drums in front","pitched down until it sounds heavy","the sustain pedal down so the chords smear into each other","doubled an octave down by a sine sub"]},"warped":{"frame":"over slowed, slammed experimental drums and a blown-out 808","sources":["a pitch-warped sample stab sliced into one-beat pieces and reshuffled, low mids|the warped stab","a reversed harmonica note resampled into the lead, swelling backward into each beat, low|the reversed harmonica","a bit-mangled lead run through a broken sample-rate reducer, grinding in the low mids|the mangled lead","a soul-record keys sample sliced into stabs, pitched down and dark|the sliced soul keys","a dial-up modem screech tuned down into a melody, thick and low|the modem lead","a slowed-down radio jingle sliced into stabs, pitched down into the mids|the sliced jingle"],"character":["hard-clipped on every transient until it crunches","pitched down until it sounds heavy and mean","resampled down an octave so the grain shows","gated tight so every note cuts off clean before the kick","doubled by a distorted 808 on the root","tube saturation so it shows up on phone speakers","one take, the wrong stab left in"]}}, signature: P.signature, found: Base.FAMILIES.found, synth: Base.FAMILIES.synth, organ: Base.FAMILIES.organ },
+      BASS: { source: ["a long-decay 808 that holds one note per bar and slides a fifth into the hook","a short punchy 808 with a hard knock on top, hitting with the kick and dying before the snare","a distorted 808 clipped at the top, the kick buried inside it","a clean sine sub that only sustains on the root, the 808 knock layered on top","a rubbery mono synth bass that boings on every note, bouncing with the claps","a sampled bass guitar riff pitched down an octave doubling a clean 808"], tone: ["tube saturation so it shows up on phone speakers","a clean round body, the upper harmonics brought up a little with distortion","glide only into the downbeat","a tight decay that dies before the next kick","long tails that ring into the snare","hard-clipped grit, a clean mono sub underneath"], pattern: Base.BASS.pattern, human: Base.BASS.human },
+      DRUMS: { kick: ["a hard layered kick, sub plus knock, on 1 and the and of 3","a deep thud kick with the low end cut so the 808 carries the sub, on 1 and the and of 2","a short punchy kick with a click on top, on 1 and a quick double before the 3","a dry knocking kick that sits out the one every other bar, the 808 holding the downbeat","a tight kick that hits like a car door, on the one only, the 808 doing the rest","a syncopated double kick before the snare, the 808 following it exactly"], snare: ["a hard sampled snare on 3, compressed until it cracks, a clap under it","a tight layered clap and snare on 2 and 4, dead dry","a bone-dry clap on 3, close and hard, a hair late","a pitched-up snappy snare on 3 with a finger snap stacked on it","a crisp dry snare on 2 and 4 with a short tail, the loudest thing after the 808","a loose hand clap stacked three times on 3, slightly out of sync"], hats: ["tight closed hats in uneven 16ths, one open hat on the and of 4","hats in triplets through the hook, straight 8ths in the verse","sparse closed hats in 8ths, low, the 808 louder than them","hats that twitch into 32nds on the 4 then stop dead","a shaker in place of hats, even and low","closed hats in 16ths that cut out for a bar whenever the 808 slides"] },
+      COLOR: ["finger snaps on the off-beats, low in the mix","a tambourine smacked on 2 and 4, never quite even","a dry woodblock knocking the and of 2 only","a single metallic tick answering the snare","a short noise burst on the 4, dead dry","a second clap layer slapped by hand, slightly early"],
+      GROOVE: { sync: ["the kick on 1 and the and of 3, the snare on 3, everything else empty","the 808 anticipates the downbeat by a 16th, the hook lands dead on","a full stop on beat 4 every 8 bars, the 808 tail the only thing left","half-time snare on 3 under double-time hats","kicks pushed off the beat, the claps dead on 2 and 4","a gap on beat 1 so the hook hits harder"], human: ["the hook played by hand, every note a slightly different velocity","the 808 slides played by hand, each one a different length","unquantized, the snare a hair late","the loop a hair late against the kick, every bar a slightly different amount","clap layers a few milliseconds apart","the lead rushed into the bar, then laid back"], triplet: Base.GROOVE.triplet },
+      LEAD: { ...Base.LEAD, motif: ["a two-note hook a minor third apart, repeated until it nags, the second note a hair late","a three-note cell: root, flat second, root, hammered on the ands","a four-note minor figure that climbs a minor third and falls back, the last note bent flat","a four-chord loop with the fourth chord left hanging on the flat sixth","a three-note hook that falls a fifth and sits on the root","a six-note arp circling the fifth, pitched down an octave, never resolving"], articulation: ["clipped staccato 16ths that skip the downbeat","one held note per bar, cut dead before the snare","off-beat stabs on the and of 2 and 4","two stabs, then two bars of silence for the 808","legato runs that slur into each other, one phrase per 2 bars","a three-note pickup that lands on beat 1 and stops"] },
+      COUNTER_ROLE: Base.COUNTER_ROLE.concat(P.signatureCounterRoles),
+      RHYTHM: { ...Base.RHYTHM, sync: P.syncopation, twitch: P.twitch, slur: P.slurCadence },
+      ANTI: P.antiTransition.phrases,
+      LAYOUTS: P.layouts,
+      LAYOUT_TAGS: { bare_loop: P.minimal, kick_and_lead: P.minimal, one_in_one_out: P.minimal },
+      SWITCH: { axes: Base.SWITCH.axes, land: ["on a hard cut","straight in on beat 1","beat B slams in on the one","one beat of dead silence, then beat B","the 808 tail the only thing left, then beat B on the one","cut dead, beat B on the next downbeat"] },
+      STRUCTURE: null,
+    },
+  },
   hiphop: {
     id: "hiphop",
+    show: false,
     label: "Syncopated hip hop",
     blurb: "Twitchy, minimal, one-of-one instrumentals. Beat switch, hypnotic loop, or one locked pocket.",
     grammar: {},
   },
   pop: {
     id: "pop",
+    show: false,
     label: "R&B radio pop",
     blurb: "Glossy radio pop R&B with a hole in the mids for a guest verse. Verse, pre-hook, hook.",
     grammar: {
@@ -3681,6 +4114,7 @@ const OneGenres = (() => {
   },
   soul: {
     id: "soul",
+    show: false,
     label: "Soul / emo hip hop",
     blurb: "Sample-born keys or sad guitar over a loose played-in pocket, a buzzing 808, one hook. Chicago-soul and emo flavors.",
     grammar: {
@@ -3730,6 +4164,7 @@ const OneGenres = (() => {
   },
   boombap: {
     id: "boombap",
+    show: false,
     label: "Boom bap soul mashup",
     blurb: "A sped-up soul record sliced into stabs on a cracking 12-bit snare and a boom kick, with a modern 808 under it all.",
     grammar: {
@@ -3779,6 +4214,7 @@ const OneGenres = (() => {
   },
   prof: {
     id: "prof",
+    show: false,
     label: "Prof",
     blurb: "Two moods in one button: a crawl through a low tide (drunk piano, dark organ, muddy sliding bass, slurred triplets) or good time boy (stomping claps, huge saw bass, siren hooks, horn stabs).",
     grammar: {
@@ -3829,6 +4265,7 @@ const OneGenres = (() => {
   },
   bare: {
     id: "bare",
+    show: false,
     label: "Bare minimum",
     blurb: "One toy voice, one dumb-simple riff, kick and snare. A single kick stumbles early before the snare and the snare cracks it back onto the beat.",
     grammar: {
@@ -3873,6 +4310,7 @@ const OneGenres = (() => {
   },
   pulse: {
     id: "pulse",
+    show: false,
     label: "Bass is the drums",
     blurb: "Take the kit out and let the 808 do its job. Drumless loop, Running 808 (Detroit stop-start), or Trapdoor: a one-bar hole where everything cuts but the 808, then slams back on the one.",
     grammar: {
@@ -3942,6 +4380,7 @@ const OneGenres = (() => {
   },
   radio: {
     id: "radio",
+    show: false,
     label: "Radio hit",
     blurb: "A vocal record on radio's clock: the hook inside twenty seconds, a quotable first line, a pre-hook lift, the biggest hook last. Melodic rap or late-night R&B, lyrics written fresh each roll.",
     grammar: {
@@ -3978,6 +4417,7 @@ const OneGenres = (() => {
   },
   newwave: {
     id: "newwave",
+    show: false,
     label: "New wave",
     blurb: "What the under-25 crowd streams in 2026. Rage (clipped 808s, detuned saw riffs, drums cutting dead), Jerk (pitched-up sliced loops, stuttering snares rushing ahead, elastic bass), Pain (dark low piano or picked guitar, long 808 slides, triplet hats).",
     grammar: {
@@ -4006,6 +4446,7 @@ const OneGenres = (() => {
   },
   space: {
     id: "space",
+    show: false,
     label: "Spaceship",
     blurb: "The Houston psychedelic melodic-trap lane: sliding distorted 808s, detuned synth leads soaked in a long dark hall, pitched-up guitar loops with the seam audible, analog mono leads with slow portamento, half-time snares, sparse open hats.",
     grammar: {
@@ -4060,6 +4501,8 @@ const OneEngine = (() => {
   const Genres = typeof OneGenres !== "undefined" ? OneGenres : require("./genres.js");
   const T = typeof OneTheory !== "undefined" ? OneTheory : require("./theory.js");
   const Guard = typeof OneGuard !== "undefined" ? OneGuard : require("./guard.js");
+  // The personality layer (signature sounds, layouts, the weird mode) renders the layout templates when present.
+  const Personality = typeof OnePersonality !== "undefined" ? OnePersonality : (() => { try { return require("./personality.js"); } catch { return null; } })();
   // The lyric writer is only needed by vocal packs; the instrumental page can run without it.
   const Lyrics = typeof OneLyrics !== "undefined" ? OneLyrics : (() => { try { return require("./lyrics.js"); } catch { return null; } })();
   // Vocal packs unlock the voice words the instrumental guard bans, and drop the vocal exclusions.
@@ -4258,8 +4701,11 @@ const OneEngine = (() => {
 
   // The first clause of the processing phrase, short enough for the head: "pitched down a whole step".
   const timbre = (character) => {
-    const words = character.split(",")[0].trim().split(/\s+/).slice(0, 5);
-    while (words.length > 2 && /^(the|a|an|on|of|with|and|in|to|at|by|so|like|its|for|into|over|under)$/i.test(words[words.length - 1])) words.pop();
+    const first = character.split(",")[0].trim();
+    // A long first clause would only fit as a fragment: the handle then stands alone.
+    if (first.split(/\s+/).length > 6) return "";
+    const words = first.split(/\s+/).slice(0, 6);
+    while (words.length > 2 && /^(the|a|an|on|of|with|and|in|to|at|by|so|like|its|for|into|over|under|every|each|until|then|all|that|this|more|too|very|no|never)$/i.test(words[words.length - 1])) words.pop();
     return words.join(" ");
   };
 
@@ -4267,16 +4713,20 @@ const OneEngine = (() => {
     const { lead, bass, drums, rhythm } = p;
     const head = [
       `${p.anchor}, ${p.bpm} BPM, ${p.key}`,
-      rhythm.sync, rhythm.twitch, rhythm.slur, p.mode === "loop" ? "minimal" : null, rhythm.mode, rhythm.low,
-      `${lead.handle} ${timbre(lead.character)}`, p.mixTag || G.MIX_TAG, p.vocal ? p.vocal.tag : G.VOCAL ? "vocals up front" : "instrumental",
+      rhythm.sync, rhythm.twitch, rhythm.slur, p.mode === "loop" || (p.layout && p.layout.minimal >= 0.7) ? "minimal" : null, rhythm.mode, p.extraTag, rhythm.low,
+      `${lead.handle} ${timbre(lead.character)}`.trim(), p.mixTag || G.MIX_TAG, p.vocal ? p.vocal.tag : G.VOCAL ? "vocals up front" : "instrumental",
     ].filter(Boolean).join(", ") + ".";
     const leadLine = `lead: ${lead.source}, ${lead.character}, ${lead.register}, playing ${lead.motif} as ${lead.articulation}, ${lead.human}, ${lead.placement}.`;
     const leadNoPlace = `lead: ${lead.source}, ${lead.character}, ${lead.register}, playing ${lead.motif} as ${lead.articulation}, ${lead.human}.`;
     const leadShort = `lead: ${lead.source}, ${lead.character}, ${lead.register}, playing ${lead.motif} as ${lead.articulation}.`;
+    // The head already says the lead is low; the shortest lead line keeps the sound, its processing and the motif.
+    const leadMin = `lead: ${lead.source}, ${lead.character}, playing ${lead.motif}.`;
+    const bassMin = `bass: ${bass.source}.`;
     const bassLine = `bass: ${bass.source}, ${bass.tone}, ${bass.human}.`;
     const bassShort = `bass: ${bass.source}, ${bass.human}.`;
     const slur = rhythm.slur ? `, ${drums.slur}` : "";
-    const drumLine = `drums: ${drums.kick}, ${drums.snare}, ${drums.hats}, ${drums.color}${slur}.`;
+    const anti = p.anti ? `, ${p.anti}` : "";
+    const drumLine = `drums: ${drums.kick}, ${drums.snare}, ${drums.hats}, ${drums.color}${slur}${anti}.`;
     const drumShort = `drums: ${drums.kick}, ${drums.snare}, ${drums.hats}${slur}.`;
     const noCounter = p.mode === "loop" || G.NO_COUNTER || p.noCounter;
     const counterLine = noCounter ? null : `counter: ${p.counter.source}, ${p.counter.character}, ${p.counter.role}.`;
@@ -4292,20 +4742,59 @@ const OneEngine = (() => {
       [head, leadNoPlace, bassShort, drumShort],
       [head, leadShort, bassShort, drumShort],
       [head, leadShort, bassShort, `drums: ${drums.kick}, ${drums.snare}, ${drums.hats}.`],
+      [head, leadMin, bassShort, drumShort],
+      [head, leadMin, bassMin, drumShort],
+      [head, leadMin, bassMin, `drums: ${drums.kick}, ${drums.snare}, ${drums.hats}.`],
+      [head, leadMin, bassMin, `drums: ${drums.kick}, ${drums.snare}.`],
       [head, leadShort, bassShort],
     ];
     let s;
     for (const t of tries) if ((s = t.filter(Boolean).join(" ")).length <= 1000) break;
     // Last resort: the head without the lead's timbre clause.
     if (s.length > 1000) {
-      const headShort = head.replace(`${lead.handle} ${timbre(lead.character)}`, lead.handle);
+      const headShort = head.replace(`${lead.handle} ${timbre(lead.character)}`.trim(), lead.handle);
       for (const t of tries) if ((s = [headShort, ...t.slice(1)].filter(Boolean).join(" ")).length <= 1000) break;
     }
     return s;
   }
 
+  function renderLayout(p) {
+    const { lead, drums, sw, bass, counter, rhythm, layout } = p;
+    const vals = {
+      LEAD: lead.handle, COUNTER: counter.handle, BASS: /808/.test(bass.source) ? "808" : "bass",
+      KICK: bare(drums.kick), HATS: bare(drums.hats), SNARE: bare(drums.snare), SYNC: rhythm.sync || drums.sync, SLUR: rhythm.slur || null,
+      FEEL: drums.feel, MOTION: lead.motion, CUE: sw.cue, AFTER: sw.after, LAND: sw.land,
+      PLACE: lead.placement.split(",")[0], TWITCH: `${drums.twitch.sound} ${drums.twitch.rhythm}`, ROLE: counter.role,
+      BASSPAT: bass.pattern, ANTI: p.anti || "the same loop the whole way",
+    };
+    if (Personality && Personality.render) {
+      const lim = Personality.limits || {};
+      // Keep as many whole clauses as fit the limit; never cut mid-word. The after-words stay intact:
+      // the head's switch tag and the lyrics must carry the same words.
+      const clip = (k, v) => {
+        if (!v || !lim[k] || v.length <= lim[k] || k === "AFTER") return v;
+        const parts = v.split(", ");
+        let out = parts[0];
+        for (const q of parts.slice(1)) {
+          if (`${out}, ${q}`.length > lim[k]) break;
+          out = `${out}, ${q}`;
+        }
+        // A first clause that does not fit is dropped whole, so the fallback speaks instead of a cut-off phrase.
+        return out.length > lim[k] ? null : out;
+      };
+      const shaped = { ...vals, KICK: Personality.drumWord(drums.kick), HATS: Personality.drumWord(drums.hats), SNARE: Personality.drumWord(drums.snare) };
+      for (const k of Object.keys(shaped)) shaped[k] = clip(k, shaped[k]);
+      const out = Personality.render(layout, shaped);
+      return /\[End\]/.test(out) ? out : `${out}\n\n[End]`;
+    }
+    const lines = layout.sections.map((t) => t.replace(/\{(\w+)\}/g, (m, k) => (vals[k] != null ? vals[k] : m)));
+    if (!/\[End\]/.test(lines[lines.length - 1])) lines.push("[End]");
+    return lines.join("\n\n");
+  }
+
   function lyrics(p, G, r) {
     const h = { bare, int, pick };
+    if (p.layout) return renderLayout(p);
     if (G.STRUCTURE) {
       const custom = G.STRUCTURE(p, r, h);
       if (custom) return custom;
@@ -4369,7 +4858,13 @@ const OneEngine = (() => {
     const harmony = T.harmony(r, pick, avoidKeys, lane.majorShare != null ? lane.majorShare : G.MAJOR_SHARE);
     // A lane may carry its own tempo and mode mix (the Prof moods do).
     const [lo, hi] = pick(lane.tempo || G.TEMPO, r);
-    const chosenMode = mode || weighted(lane.modes || G.MODES, r);
+    // A pack with LAYOUTS lets the lyrics layout decide the mode (minimal loop, ballad, A-then-B...).
+    let layout = null;
+    if (G.LAYOUTS && !mode) {
+      const allowed = lane.layouts ? G.LAYOUTS.filter((l) => lane.layouts.includes(l.id)) : G.LAYOUTS;
+      layout = weighted(allowed.map((l) => [l, l.weight || 1]), r);
+    }
+    const chosenMode = mode || (layout ? layout.mode : weighted(lane.modes || G.MODES, r));
     const allow = makeAllow(chosenMode);
     const lead = buildLead(r, G, lane, allow);
     const counter = buildCounter(r, G, lead, lane, allow, chosenMode);
@@ -4383,6 +4878,9 @@ const OneEngine = (() => {
       key: `in ${harmony.key}`,
       mode: chosenMode,
       lane: lane.id,
+      layout,
+      extraTag: lane.tags ? pick(lane.tags, r) : layout && G.LAYOUT_TAGS && G.LAYOUT_TAGS[layout.id] ? pick(G.LAYOUT_TAGS[layout.id], r) : null,
+      anti: G.ANTI ? pick(G.ANTI, r) : null,
       mixTag: lane.mixTag,
       noCounter: !!(G.NO_COUNTER || lane.noCounter),
       lead, counter, bass, drums, sw, rhythm,
@@ -4398,10 +4896,10 @@ const OneEngine = (() => {
     const lyricsText = p.vocal ? p.vocal.lyrics : lyrics(p, G, r);
     const allowRe = G.VOCAL ? new RegExp([G.ALLOW && G.ALLOW.source, VOICE_WORDS.source].filter(Boolean).join("|"), "i") : G.ALLOW;
     const warnings = Guard.check(`${styleText}\n${lyricsText}`, allowRe).map((h) => ({ ...h, message: `${h.rule}: "${h.word}" ${h.why}` }));
-    const S = G.SLIDERS[chosenMode] || G.SLIDERS.switch;
+    const S = (lane.sliders) || G.SLIDERS[chosenMode] || G.SLIDERS.switch;
     const weirdness = int(S.weirdness[0], S.weirdness[1], r);
     const styleInfluence = int(S.styleInfluence[0], S.styleInfluence[1], r);
-    const model = G.MODEL || (chosenMode === "switch" && r() < 0.5 ? "v6-wild" : "v6");
+    const model = lane.model || G.MODEL || (chosenMode === "switch" && r() < 0.5 ? "v6-wild" : "v6");
     return {
       style: styleText,
       lyrics: lyricsText,
@@ -4410,6 +4908,7 @@ const OneEngine = (() => {
       settings: { model, variety: "Off", maxMode: "On", instrumental: G.VOCAL ? "Off" : "On" },
       meta: {
         genre: G.id, genreLabel: G.label, lane: G.cross ? `${G.cross.lead} lead × ${G.cross.drums} drums` : lane.label, mode: p.mode, seed: seed >>> 0,
+        layout: layout ? layout.label : undefined,
         title: p.vocal ? p.vocal.title : `${pick(G.TITLE.a, r)} ${pick(G.TITLE.b, r)}`, bpm: p.bpm, key: harmony.key,
         hook: p.vocal ? p.vocal.hook : undefined, vocal: p.vocal ? p.vocal.persona.tag : undefined,
       },
@@ -4419,7 +4918,7 @@ const OneEngine = (() => {
     };
   }
 
-  const genres = () => Object.values(Genres).map((g) => ({ id: g.id, label: g.label, blurb: g.blurb }));
+  const genres = () => Object.values(Genres).filter((g) => g.show !== false).map((g) => ({ id: g.id, label: g.label, blurb: g.blurb }));
 
   return { generate, genres, EVERY };
 })();
@@ -4462,6 +4961,8 @@ const OneEngine = (() => {
   function renderGenres() {
     const row = $("genres");
     row.textContent = "";
+    row.hidden = E.genres().length < 2;
+    if (!E.genres().some((g) => g.id === genre)) genre = E.genres()[0].id;
     for (const g of E.genres()) {
       const b = document.createElement("button");
       b.type = "button";
@@ -4538,7 +5039,7 @@ const OneEngine = (() => {
     vibe.textContent = "";
     const em = document.createElement("em");
     em.textContent = pkg.meta.title;
-    vibe.append(em, ` · ${pkg.meta.lane} · ${{ loop: "hypnotic loop", switch: "beat switch", straight: "locked pocket" }[pkg.meta.mode]} · ${pkg.meta.bpm} BPM · ${pkg.meta.key}`);
+    vibe.append(em, ` · ${pkg.meta.lane} · ${pkg.meta.layout || { loop: "hypnotic loop", switch: "beat switch", straight: "locked pocket" }[pkg.meta.mode]} · ${pkg.meta.bpm} BPM · ${pkg.meta.key}`);
     $("lyrics").textContent = pkg.lyrics;
     $("lyrics-count").textContent = `${pkg.lyrics.length}/5000`;
     $("style").textContent = pkg.style;

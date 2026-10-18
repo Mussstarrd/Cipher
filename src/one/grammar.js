@@ -199,7 +199,7 @@ const OneGrammar = {
       "a clap that lands a hair late",
       "a bone-dry clap, close and hard",
       "a half-time snare on 3 only",
-      "a clap with a short reverse lead-in",
+      "a clap stacked on a dry snare",
       "a snare with a heavy transient snap",
       "a loose hand clap stacked three times, slightly out of sync",
     ],
