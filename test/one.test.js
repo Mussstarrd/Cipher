@@ -223,13 +223,6 @@ test("Bare minimum: one voice, a kick trick, nothing else", () => {
   }
 });
 
-    assert.deepStrictEqual(out.warnings, [], `${seed}\n${out.style}\n${out.lyrics}`);
-    assert.ok(out.style.length <= 1000);
-    assert.match(out.style, /crossed with/);
-    pairs.add(out.meta.lane);
-  }
-  assert.ok(pairs.size >= 20, `${pairs.size} pairs`);
-});
 
 test("the bounce lane rolls bright: its own instruments, claps, major keys often", () => {
   let n = 0, major = 0, fam = 0;
