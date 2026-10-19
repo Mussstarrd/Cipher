@@ -157,7 +157,7 @@ def main(argv: list[str] | None = None) -> int:
 
     s = sub.add_parser("video", help="render the beat-of-the-day video for one catalogue entry")
     s.add_argument("beat_id")
-    s.add_argument("--still", default="docs/publicity/reference/persona-three-v1.jpg")
+    s.add_argument("--still", default="docs/publicity/reference/persona-three-v2.jpg")
     s.add_argument("--audio", default=None, help="source audio (default: inbox/<source_file>)")
     s.add_argument("--hook-text", default=None)
     s.add_argument("--title", default=None)
@@ -173,7 +173,7 @@ def main(argv: list[str] | None = None) -> int:
     s.add_argument("--lane", default=None, help="trap, pain-piano, cold-southern, soul-slice, west-coast-bounce, guitar-emo, pop-trap, trunk-808, slow-and-sad, weird")
     s.add_argument("--anomaly", default=None, help='the named anomaly, e.g. "the brass that trips on three"')
     s.add_argument("--no-type-beat", action="store_true", help="leave the Type Beat handle out of the title")
-    s.add_argument("--still", default="docs/publicity/reference/persona-three-v1.jpg")
+    s.add_argument("--still", default="docs/publicity/reference/persona-three-v2.jpg")
     s.add_argument("--audio", default=None, help="source audio (default: inbox/<source_file>)")
     s.add_argument("--inbox", default=str(INBOX))
     s.add_argument("--out", default=str(OUT))

@@ -15,8 +15,12 @@ Suno (ONE OF ONE roll) -> inbox\ -> py -m anom run -> queue page (10 min of taps
 
 1. Install Git, Python 3.11+ and ffmpeg on the Lenovo. Clone the repo, check out the work branch, run the install block below, confirm `17 passed`.
 2. Accounts: switch Instagram `anomculture` to a **Business** account; confirm the YouTube handle; make sure BeatStars, TikTok, Instagram and YouTube all use the same display name and (for now) no avatar until the persona still is approved.
-3. Persona: run Recipe B from `persona-two-ways.md` four to six times in any image tool, pick one, save it as `docs\publicity\reference\persona-three-v1.png`, commit and push. That image is the character sheet for every video.
-4. Keys: create `secrets.env` at the repo root (gitignored) with `HEDRA_API_KEY=` and `ELEVENLABS_API_KEY=`. Fund the Hedra wallet ($5) only after you have said yes here.
+3. Persona: done 2026-10-19, `docs\publicityeference\persona-three-v2.jpg` is the character sheet (local file).
+4. Keys. ElevenLabs: elevenlabs.io, profile icon top right, API Keys, Generate New API Key, allow Text to Speech and Voices read, copy it once. Hedra: hedra.com, sign up, `hedra.com/develop/api-keys` to create a key; the API wallet is prepaid and separate from Studio, fund it with $5 in the Develop billing page. Put both in `secrets.env` at the repo root (gitignored):
+   ```
+   HEDRA_API_KEY=keyid:secret
+   ELEVENLABS_API_KEY=
+   ```
 5. Send one real render into this chat (drag the file in) so the video step can be tuned on actual audio.
 6. First beat: drop a render in `inbox\`, run `py -m anom ingest --render-date YYYY-MM-DD`, commit `catalog\catalog.json`, push. That is how a track reaches me.
 
@@ -71,7 +75,7 @@ BeatStars has no upload API, so the pipeline writes every field the Studio form 
    Optional: `--artist "Travis Scott"` makes the title `"BRASS ALONE" | Travis Scott Type Beat` (otherwise the lane stands in: `| Cold Southern Type Beat`); `--no-type-beat` drops the handle; `--force` rebuilds. Lanes: trap, pain-piano, cold-southern, soul-slice, west-coast-bounce, guitar-emo, pop-trap, trunk-808, slow-and-sad, weird.
 3. Read the line it prints. Flags: `ANOMALY?` (no anomaly named; the description carries `[name the anomaly]`), `BPM?`, `KEY?` (confirm by ear), `WAV?` (source is an MP3, so no WAV deliverable; the WAV lease needs a lossless render).
 4. Outputs in `out\<beat-id>\package\`: `cover.jpg` (3000 x 3000, persona still, red Impact title, AI mark), `<slug>.mp3` (ID3-tagged with the cover; a Suno MP3 is copied, not re-encoded), `<slug>.wav` (only when the source is lossless), `preview.mp3`, `copy-fields.txt`, `metadata.json`. The same data is written into `catalog\catalog.json` under `package`, status moves to `packaged`. Commit the catalogue.
-5. In BeatStars Studio: upload the audio and cover, then paste from `copy-fields.txt` top to bottom (Title, Genre, Moods, BPM, Key, Tags, Description), and set the licenses listed there.
+5. In BeatStars Studio: upload the audio and cover, then paste from `copy-fields.txt` top to bottom (Title, Genre, Moods, BPM, Key, Tags, Description), and set the licenses listed there. Why this stays a human step, and the one-minute routine: `beatstars-terms.md`.
 
 Prices are the defaults from proposals.md D.7 (MP3 $29.99, WAV $49.99, Trackout $99.99, Unlimited $199.99, Exclusive by offer). Override one with an environment variable, e.g. `ANOM_PRICE_MP3=24.99`. Trackout is written into the record but marked "not listed: no stems yet" until a stem split exists.
 

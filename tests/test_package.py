@@ -11,7 +11,9 @@ from anom.package import (
 )
 from anom.preview import ffmpeg_available
 
-STILL = Path(__file__).resolve().parent.parent / "docs" / "publicity" / "reference" / "persona-three-v1.jpg"
+_REF = Path(__file__).resolve().parent.parent / "docs" / "publicity" / "reference"
+# v2 is the current sheet but lives only on the owner's machine; v1 is committed and stands in elsewhere.
+STILL = next(p for p in (_REF / "persona-three-v2.jpg", _REF / "persona-three-v1.jpg") if p.exists())
 
 
 def test_title_convention():
