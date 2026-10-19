@@ -67,6 +67,24 @@ def cmd_ingest(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_video(args: argparse.Namespace) -> int:
+    from anom.video import render_beat_of_day
+    data = cat.load(Path(args.catalog))
+    e = data.get("beats", {}).get(args.beat_id)
+    if not e:
+        print(f"no such beat: {args.beat_id}", file=sys.stderr)
+        return 2
+    a = e["analysis"]
+    bpm = a["bpm"] if a["bpm"] >= 100 else a["bpm_alt"]   # print the fast reading for trap
+    audio = Path(args.audio) if args.audio else INBOX / e["source_file"]
+    title = args.title or e.get("package", {}).get("title") or e["id"].rsplit("-", 1)[0].replace("-", " ").upper()
+    hook = args.hook_text or e.get("anomaly") or "the anomaly in this one\nis the harmonica"
+    out = Path(args.out) if args.out else OUT / e["id"] / "beat-of-the-day.mp4"
+    render_beat_of_day(Path(args.still), audio, a["hook_start_s"], out, int(round(bpm)), a["key"], hook, title, args.seconds)
+    print(out)
+    return 0
+
+
 def cmd_list(args: argparse.Namespace) -> int:
     data = cat.load(Path(args.catalog))
     beats = data.get("beats", {})
@@ -95,6 +113,17 @@ def main(argv: list[str] | None = None) -> int:
     s = sub.add_parser("analyze", help="analyze one file and print JSON")
     s.add_argument("file")
     s.set_defaults(fn=cmd_analyze)
+
+    s = sub.add_parser("video", help="render the beat-of-the-day video for one catalogue entry")
+    s.add_argument("beat_id")
+    s.add_argument("--still", default="docs/publicity/reference/persona-three-v1.jpg")
+    s.add_argument("--audio", default=None, help="source audio (default: inbox/<source_file>)")
+    s.add_argument("--hook-text", default=None)
+    s.add_argument("--title", default=None)
+    s.add_argument("--seconds", type=float, default=20.0)
+    s.add_argument("--out", default=None)
+    s.add_argument("--catalog", default=str(CATALOG))
+    s.set_defaults(fn=cmd_video)
 
     s = sub.add_parser("list", help="show the catalogue")
     s.add_argument("--catalog", default=str(CATALOG))
