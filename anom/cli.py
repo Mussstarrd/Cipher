@@ -2,6 +2,8 @@
 
   ingest   analyze every new audio file in the inbox, cut previews, update the catalogue
   analyze  print the analysis of one file (no catalogue write)
+  package  write the BeatStars package for one beat (step 3b)
+  video    render the beat-of-the-day video for one beat (step 3c)
   list     show the catalogue
 """
 from __future__ import annotations
@@ -43,8 +45,14 @@ def cmd_ingest(args: argparse.Namespace) -> int:
     done = 0
     for f in files:
         sha = sha1_of(f)
-        if cat.find_by_sha1(data, sha) and not args.force:
-            print(f"skip  {f.name} (already in catalogue)")
+        existing = cat.find_by_sha1(data, sha)
+        if existing and not args.force:
+            if args.render_date and not existing["rights"].get("render_date"):
+                existing["rights"]["render_date"] = args.render_date
+                cat.save(data, catalog_path)
+                print(f"skip  {f.name} (already in catalogue; render date set to {args.render_date})")
+            else:
+                print(f"skip  {f.name} (already in catalogue)")
             continue
         a = analyze(f, PREVIEW_SECONDS)
         bid = cat.beat_id(f.stem, a.sha1)
@@ -82,6 +90,39 @@ def cmd_video(args: argparse.Namespace) -> int:
     out = Path(args.out) if args.out else OUT / e["id"] / "beat-of-the-day.mp4"
     render_beat_of_day(Path(args.still), audio, a["hook_start_s"], out, int(round(bpm)), a["key"], hook, title, args.seconds)
     print(out)
+    return 0
+
+
+def cmd_package(args: argparse.Namespace) -> int:
+    from anom.package import build_package
+    catalog_path = Path(args.catalog)
+    data = cat.load(catalog_path)
+    e = data.get("beats", {}).get(args.beat_id)
+    if not e:
+        print(f"no such beat: {args.beat_id}", file=sys.stderr)
+        return 2
+    if e.get("package") and not args.force:
+        print(f"{args.beat_id} is already packaged (use --force to rebuild)")
+        return 0
+    out_root = Path(args.out)
+    audio = Path(args.audio) if args.audio else Path(args.inbox) / e["source_file"]
+    preview = out_root / e["id"] / "preview.mp3"
+    pkg = build_package(
+        e, audio, Path(args.still), out_root / e["id"] / "package", out_root.parent,
+        title=args.title, artist=args.artist, lane=args.lane, anomaly=args.anomaly,
+        type_beat=not args.no_type_beat, preview=preview,
+    )
+    e["package"] = pkg
+    if args.anomaly:
+        e["anomaly"] = args.anomaly
+    if e.get("status") == "analyzed":
+        e["status"] = "packaged"
+    e["updated_at"] = cat._now()
+    cat.save(data, catalog_path)
+    print(f"packaged {e['id']}: {pkg['display_title']}  {pkg['bpm']} bpm  {pkg['key']}  {' '.join(pkg['flags'])}")
+    print(out_root / e["id"] / "package" / "copy-fields.txt")
+    if not audio.exists():
+        print(f"note: source audio not found at {audio}; no tagged mp3 written", file=sys.stderr)
     return 0
 
 
@@ -124,6 +165,21 @@ def main(argv: list[str] | None = None) -> int:
     s.add_argument("--out", default=None)
     s.add_argument("--catalog", default=str(CATALOG))
     s.set_defaults(fn=cmd_video)
+
+    s = sub.add_parser("package", help="write the BeatStars package for one catalogue entry")
+    s.add_argument("beat_id")
+    s.add_argument("--title", default=None, help='beat name, e.g. "BRASS ALONE" (default: from the id)')
+    s.add_argument("--artist", default=None, help='artist for the "<Artist> Type Beat" title; default is the lane')
+    s.add_argument("--lane", default=None, help="trap, pain-piano, cold-southern, soul-slice, west-coast-bounce, guitar-emo, pop-trap, trunk-808, slow-and-sad, weird")
+    s.add_argument("--anomaly", default=None, help='the named anomaly, e.g. "the brass that trips on three"')
+    s.add_argument("--no-type-beat", action="store_true", help="leave the Type Beat handle out of the title")
+    s.add_argument("--still", default="docs/publicity/reference/persona-three-v1.jpg")
+    s.add_argument("--audio", default=None, help="source audio (default: inbox/<source_file>)")
+    s.add_argument("--inbox", default=str(INBOX))
+    s.add_argument("--out", default=str(OUT))
+    s.add_argument("--catalog", default=str(CATALOG))
+    s.add_argument("--force", action="store_true", help="rebuild an existing package")
+    s.set_defaults(fn=cmd_package)
 
     s = sub.add_parser("list", help="show the catalogue")
     s.add_argument("--catalog", default=str(CATALOG))

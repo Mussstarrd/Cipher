@@ -13,7 +13,7 @@ Suno (ONE OF ONE roll) -> inbox\ -> py -m anom run -> queue page (10 min of taps
 
 ## Your setup checklist (do once, in this order)
 
-1. Install Git, Python 3.11+ and ffmpeg on the Lenovo. Clone the repo, check out the work branch, run the install block below, confirm `9 passed`.
+1. Install Git, Python 3.11+ and ffmpeg on the Lenovo. Clone the repo, check out the work branch, run the install block below, confirm `17 passed`.
 2. Accounts: switch Instagram `anomculture` to a **Business** account; confirm the YouTube handle; make sure BeatStars, TikTok, Instagram and YouTube all use the same display name and (for now) no avatar until the persona still is approved.
 3. Persona: run Recipe B from `persona-two-ways.md` four to six times in any image tool, pick one, save it as `docs\publicity\reference\persona-three-v1.png`, commit and push. That image is the character sheet for every video.
 4. Keys: create `secrets.env` at the repo root (gitignored) with `HEDRA_API_KEY=` and `ELEVENLABS_API_KEY=`. Fund the Hedra wallet ($5) only after you have said yes here.
@@ -31,7 +31,7 @@ py -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 winget install Gyan.FFmpeg      # or any ffmpeg build on PATH; or set ANOM_FFMPEG to the exe
-py -m pytest -q                 # must print "9 passed"
+py -m pytest -q                 # must print "17 passed"
 ```
 
 ## Step 3a: add a beat (catalogue + analysis + preview)
@@ -58,6 +58,26 @@ Other commands: `py -m anom analyze file.wav` prints the analysis without writin
 | `ANOM_CATALOG` | `catalog/catalog.json` | the catalogue |
 | `ANOM_FFMPEG` | `ffmpeg` | path to ffmpeg |
 | `ANOM_SUNO_PLAN` | `Pro` | plan tier written into each rights record |
+
+## Step 3b: write the BeatStars package
+
+BeatStars has no upload API, so the pipeline writes every field the Studio form asks for and you paste.
+
+1. The beat must already be in the catalogue (step 3a) and its source file still in `inbox\`.
+2. Run, naming the anomaly and the lane:
+   ```powershell
+   py -m anom package brass-alone-09d58a --title "BRASS ALONE" --lane cold-southern --anomaly "the brass that trips on three"
+   ```
+   Optional: `--artist "Travis Scott"` makes the title `"BRASS ALONE" | Travis Scott Type Beat` (otherwise the lane stands in: `| Cold Southern Type Beat`); `--no-type-beat` drops the handle; `--force` rebuilds. Lanes: trap, pain-piano, cold-southern, soul-slice, west-coast-bounce, guitar-emo, pop-trap, trunk-808, slow-and-sad, weird.
+3. Read the line it prints. Flags: `ANOMALY?` (no anomaly named; the description carries `[name the anomaly]`), `BPM?`, `KEY?` (confirm by ear), `WAV?` (source is an MP3, so no WAV deliverable; the WAV lease needs a lossless render).
+4. Outputs in `out\<beat-id>\package\`: `cover.jpg` (3000 x 3000, persona still, red Impact title, AI mark), `<slug>.mp3` (ID3-tagged with the cover; a Suno MP3 is copied, not re-encoded), `<slug>.wav` (only when the source is lossless), `preview.mp3`, `copy-fields.txt`, `metadata.json`. The same data is written into `catalog\catalog.json` under `package`, status moves to `packaged`. Commit the catalogue.
+5. In BeatStars Studio: upload the audio and cover, then paste from `copy-fields.txt` top to bottom (Title, Genre, Moods, BPM, Key, Tags, Description), and set the licenses listed there.
+
+Prices are the defaults from proposals.md D.7 (MP3 $29.99, WAV $49.99, Trackout $99.99, Unlimited $199.99, Exclusive by offer). Override one with an environment variable, e.g. `ANOM_PRICE_MP3=24.99`. Trackout is written into the record but marked "not listed: no stems yet" until a stem split exists.
+
+Before the first real upload, read BeatStars' current terms on AI-generated audio and tell me what they say; the package records the generator and plan in `rights` either way.
+
+Fonts: Arial on Windows, DejaVu on Linux, Impact for the cover title when present. Override with `ANOM_FONT`, `ANOM_FONT_BOLD`, `ANOM_FONT_DISPLAY`.
 
 ## Credentials
 
