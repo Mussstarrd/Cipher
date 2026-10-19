@@ -15,8 +15,7 @@ Suno (ONE OF ONE roll) -> inbox\ -> py -m anom run -> queue page (10 min of taps
 
 1. Install Git, Python 3.11+ and ffmpeg on the Lenovo. Clone the repo, check out the work branch, run the install block below, confirm `17 passed`.
 2. Accounts: switch Instagram `anomculture` to a **Business** account; confirm the YouTube handle; make sure BeatStars, TikTok, Instagram and YouTube all use the same display name and (for now) no avatar until the persona still is approved.
-3. Persona: done 2026-10-19, `docs\publicity
-eference\persona-three-v2.jpg` is the character sheet (local file).
+3. Persona: done 2026-10-19, `docs/publicity/reference/persona-three-v2.jpg` is the character sheet (local file).
 4. Keys. ElevenLabs: elevenlabs.io, profile icon top right, API Keys, Generate New API Key, allow Text to Speech and Voices read, copy it once. Hedra: hedra.com, sign up, `hedra.com/develop/api-keys` to create a key; the API wallet is prepaid and separate from Studio, fund it with $5 in the Develop billing page. Put both in `secrets.env` at the repo root (gitignored):
    ```
    HEDRA_API_KEY=keyid:secret
