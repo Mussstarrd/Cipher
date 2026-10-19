@@ -13,7 +13,7 @@ Suno (ONE OF ONE roll) -> inbox\ -> py -m anom run -> queue page (10 min of taps
 
 ## Your setup checklist (do once, in this order)
 
-1. Install Git, Python 3.11+ and ffmpeg on the Lenovo. Clone the repo, check out the work branch, run the install block below, confirm `6 passed`.
+1. Install Git, Python 3.11+ and ffmpeg on the Lenovo. Clone the repo, check out the work branch, run the install block below, confirm `9 passed`.
 2. Accounts: switch Instagram `anomculture` to a **Business** account; confirm the YouTube handle; make sure BeatStars, TikTok, Instagram and YouTube all use the same display name and (for now) no avatar until the persona still is approved.
 3. Persona: run Recipe B from `persona-two-ways.md` four to six times in any image tool, pick one, save it as `docs\publicity\reference\persona-three-v1.png`, commit and push. That image is the character sheet for every video.
 4. Keys: create `secrets.env` at the repo root (gitignored) with `HEDRA_API_KEY=` and `ELEVENLABS_API_KEY=`. Fund the Hedra wallet ($5) only after you have said yes here.
@@ -31,7 +31,7 @@ py -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 winget install Gyan.FFmpeg      # or any ffmpeg build on PATH; or set ANOM_FFMPEG to the exe
-py -m pytest -q                 # must print "6 passed"
+py -m pytest -q                 # must print "9 passed"
 ```
 
 ## Step 3a: add a beat (catalogue + analysis + preview)

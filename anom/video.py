@@ -9,14 +9,42 @@ Layers, 1080x1920 @ 30 fps:
 """
 from __future__ import annotations
 
+import os
 import shutil
 import subprocess
 from pathlib import Path
 
 from anom.config import FFMPEG
 
-FONT_BOLD = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
-FONT = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
+# Font candidates per platform, first existing file wins. DejaVu on Linux
+# (the cloud session), Arial on Windows (the Lenovo) and macOS.
+FONT_BOLD_CANDIDATES = (
+    "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+    "C:/Windows/Fonts/arialbd.ttf",
+    "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
+    "/Library/Fonts/Arial Bold.ttf",
+)
+FONT_CANDIDATES = (
+    "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+    "C:/Windows/Fonts/arial.ttf",
+    "/System/Library/Fonts/Supplemental/Arial.ttf",
+    "/Library/Fonts/Arial.ttf",
+)
+
+
+def find_font(candidates: tuple[str, ...]) -> str:
+    """First font file that exists; env ANOM_FONT / ANOM_FONT_BOLD override. Raises if none."""
+    for c in candidates:
+        if Path(c).is_file():
+            return c
+    raise RuntimeError("no usable font found; set ANOM_FONT and ANOM_FONT_BOLD to .ttf paths")
+
+
+def fonts() -> tuple[str, str]:
+    bold = os.environ.get("ANOM_FONT_BOLD") or find_font(FONT_BOLD_CANDIDATES)
+    regular = os.environ.get("ANOM_FONT") or find_font(FONT_CANDIDATES)
+    return bold, regular
+
 RED = "0xFF2D2D"
 LABEL = "AI CHARACTER · ANOM CULTURE"
 STORE = "beatstars.com/anomculture"
@@ -41,7 +69,8 @@ def render_beat_of_day(
     out.parent.mkdir(parents=True, exist_ok=True)
     total = seconds + card_s
     frames = int(total * FPS)
-    fb, fr = _font(FONT_BOLD), _font(FONT)
+    bold, regular = fonts()
+    fb, fr = _font(bold), _font(regular)
     lower = f"{bpm} BPM · {key} · {STORE}"
     vf = (
         # 1. still, cover-crop to 9:16, slow push-in
