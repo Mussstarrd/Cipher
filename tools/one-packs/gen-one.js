@@ -71,13 +71,13 @@ const ballad = {
 };
 
 const weird = {
-  id: "weird", label: "Weird, v6-wild", weight: 2.5,
+  id: "weird", label: "Weird, v6-wild", weight: 3.7,
   anchors: P.weird.anchors,
   families: { warped: 4, signature: 2, found: 3, synth: 2, organ: 1, soul_slices: 2 },
   tempo: [[66, 84]], modes: trunk.modes, majorShare: 0.1,
   mixTag: P.weird.mixTag, tags: P.weird.tags.concat(P.weird.dreamville),
   drums: trunk.drums, bassPattern: trunk.bassPattern, switchAxes: trunk.switchAxes, bass: [],
-  layouts: layoutIds("weird"), model: P.weird.model, sliders: P.weird.sliders,
+  layouts: layoutIds("weird"), layoutWeights: { hook_first: 6, bare_loop: 3, a_then_b: 3 }, model: P.weird.model, sliders: P.weird.sliders,
 };
 
 const lanes = d.lanes.map(laneOf).concat([ballad, weird]);

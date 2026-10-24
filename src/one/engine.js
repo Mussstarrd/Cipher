@@ -389,7 +389,8 @@ const OneEngine = (() => {
     let layout = null;
     if (G.LAYOUTS && !mode) {
       const allowed = lane.layouts ? G.LAYOUTS.filter((l) => lane.layouts.includes(l.id)) : G.LAYOUTS;
-      layout = weighted(allowed.map((l) => [l, l.weight || 1]), r);
+      // A lane may re-weight the layouts it allows (the weird lane leans hook-first).
+      layout = weighted(allowed.map((l) => [l, (lane.layoutWeights && lane.layoutWeights[l.id]) || l.weight || 1]), r);
     }
     const chosenMode = mode || (layout ? layout.mode : weighted(lane.modes || G.MODES, r));
     const allow = makeAllow(chosenMode);

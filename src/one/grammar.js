@@ -85,7 +85,7 @@ const OneGrammar = {
       "the notes get shorter as the song goes on",
       "a second copy an octave down, louder in the hook",
       "the last note of each phrase plays reversed",
-      "it gets grittier on the second verse",
+      "it gets grittier each pass",
       "one note changes each pass, so it never repeats exactly",
       "it thins to half its notes in the verse, whole in the hook",
       "it drifts up a few cents over 16 bars, then snaps back",
