@@ -27,3 +27,14 @@ Wanted, not in v1. Each line: what, why deferred, source.
 - **Per-track metadata edits survive Regenerate** (mark a metadata draft as chosen).
   Deferred: edits already persist; only Regenerate discards them.
 - **Delete a track.** Deferred: archive covers the need without data loss.
+
+## Non-blocking review carry-overs (ux-02, qa-02)
+- Reopen on a later stage while an earlier one is undone expands the earlier stage.
+- Settings: stale ffmpeg-not-found message remains after clearing the path box.
+- Shorter-clip note appears only in the toast; show the clip duration on the Clip line.
+- Stage 6 shows the previous success line above a new failure.
+- Partially corrupt database yields a generic 500 instead of the database sentence.
+- Disk full yields a generic 500 (data intact).
+- Settings accepts a library root that is a file.
+- Duplicate-title slugs are silent; native confirm() for Release anyway.
+- Untested: CLI exit code 2, CLI assemble success, read-only data dir end to end.
