@@ -7,9 +7,12 @@ import re
 import unicodedata
 from pathlib import Path
 
-from . import NotFound, UserError
-from .db import now, one, rows, transaction
+from . import NotFound, UserError, file_exists
+from .db import now, one, rows, transaction, was_created_by_us
 from .settings import library_root
+
+MAX_TEXT = 4000      # longest text or path field accepted from a request
+MAX_ID_DIGITS = 18   # anything longer cannot be a SQLite row id
 
 STAGE_KEYS = ["download", "master", "clip", "prompt", "video", "assemble", "meta", "upload"]
 
@@ -82,12 +85,37 @@ def ensure_library(settings: dict, slug: str, base: Path | None = None) -> Path:
     return root
 
 
+def text_value(value, name: str, max_len: int = MAX_TEXT) -> str:
+    """Require a string (None counts as empty) no longer than max_len; else a sentence."""
+    if value is None:
+        return ""
+    if not isinstance(value, str):
+        raise UserError(f"The field '{name}' should be text.")
+    if len(value) > max_len:
+        raise UserError(f"The field '{name}' is too long (over {max_len:,} characters).")
+    return value
+
+
+def id_value(value, name: str = "id") -> int:
+    """A whole number that could be a row id; anything else is a sentence (404 for ids)."""
+    if isinstance(value, bool) or not isinstance(value, (int, str)):
+        raise UserError(f"The field '{name}' should be a whole number.")
+    text = str(value).strip()
+    if not text.isdigit():
+        raise UserError(f"The field '{name}' should be a whole number.")
+    if len(text) > MAX_ID_DIGITS:
+        raise NotFound(f"There is nothing with {name} {text}.")
+    return int(text)
+
+
 def _clean_fields(fields: dict, settings: dict, creating: bool) -> dict:
+    if not isinstance(fields, dict):
+        raise UserError("Send a JSON object.")
     clean = {}
     text_keys = ("title", "artist", "genre", "mood", "bpm", "key", "hook", "suno_url", "notes")
     for k in text_keys:
         if k in fields and fields[k] is not None:
-            clean[k] = str(fields[k]).strip()
+            clean[k] = text_value(fields[k], k).strip()
     if creating:
         if not clean.get("title"):
             raise UserError("Give the track a title. Everything else is optional.")
@@ -103,12 +131,12 @@ def _clean_fields(fields: dict, settings: dict, creating: bool) -> dict:
         if not re.match(r"https?://", clean["suno_url"]):
             raise UserError("The Suno link should start with http:// or https://, or be blank.")
     if "energy" in fields and fields["energy"] is not None:
-        e = str(fields["energy"]).strip().lower() or "mid"
+        e = text_value(fields["energy"], "energy", 20).strip().lower() or "mid"
         if e not in ENERGIES:
             raise UserError("Energy must be low, mid or high.")
         clean["energy"] = e
     if "status" in fields and fields["status"] is not None:
-        s = str(fields["status"]).strip().lower()
+        s = text_value(fields["status"], "status", 20).strip().lower()
         if s not in STATUSES:
             raise UserError("Status must be active, released or archived.")
         clean["status"] = s
@@ -118,10 +146,12 @@ def _clean_fields(fields: dict, settings: dict, creating: bool) -> dict:
 def create_track(conn, settings: dict, fields: dict, base: Path | None = None) -> dict:
     clean = _clean_fields(fields, settings, creating=True)
     clean.setdefault("energy", "mid")
-    slug = unique_slug(conn, clean["title"])
-    ensure_library(settings, slug, base)
     ts = now()
+    # The slug is chosen inside BEGIN IMMEDIATE, so two requests creating the same title at
+    # the same moment cannot both pick "night-shift": the second waits, then sees the first.
     with transaction(conn):
+        slug = unique_slug(conn, clean["title"])
+        ensure_library(settings, slug, base)
         cur = conn.execute(
             "INSERT INTO tracks(slug, title, artist, genre, mood, energy, bpm, key, hook, "
             "suno_url, notes, status, created_at, updated_at) VALUES "
@@ -146,7 +176,7 @@ def get_track(conn, ident) -> dict:
     """Find by numeric id or slug. Raises NotFound with a sentence."""
     ident_s = str(ident).strip()
     row = None
-    if ident_s.isdigit():
+    if ident_s.isdigit() and len(ident_s) <= MAX_ID_DIGITS:
         row = one(conn.execute("SELECT * FROM tracks WHERE id = ?", (int(ident_s),)))
     if row is None:
         row = one(conn.execute("SELECT * FROM tracks WHERE slug = ?", (ident_s,)))
@@ -201,22 +231,24 @@ def _check_path_fields(key: str, data: dict) -> list[tuple[str, str]]:
     found = []
     for field, kind in PATH_FIELDS.get(key, {}).items():
         if field in data and data[field] is not None:
-            raw = str(data[field]).strip()
+            raw = text_value(data[field], field).strip()
             data[field] = raw
             if not raw:
                 continue
             p = Path(raw).expanduser()
-            if not p.is_file():
+            if not file_exists(p):
                 raise UserError(f"File not found: {raw}. Check the path and try again.")
             found.append((kind, str(p)))
-    if key == "video" and isinstance(data.get("shots"), list):
+    if key == "video" and "shots" in data and data["shots"] is not None:
+        if not isinstance(data["shots"], list):
+            raise UserError("Shot paths should be a list, one path per shot.")
         cleaned = []
         for raw in data["shots"]:
-            raw = str(raw or "").strip()
+            raw = text_value(raw, "shots").strip()
             if not raw:
                 continue
             p = Path(raw).expanduser()
-            if not p.is_file():
+            if not file_exists(p):
                 raise UserError(f"File not found: {raw}. Check the path and try again.")
             cleaned.append(str(p))
             found.append(("video", str(p)))
@@ -276,7 +308,7 @@ def assets_report(conn, track: dict, settings: dict, base: Path | None = None) -
     recorded = rows(conn.execute(
         "SELECT * FROM assets WHERE track_id = ? ORDER BY id", (track["id"],)))
     for a in recorded:
-        a["exists"] = Path(a["path"]).is_file()
+        a["exists"] = file_exists(a["path"])
     root = track_dir(settings, track["slug"], base)
     on_disk = {}
     for name in LIBRARY_FOLDERS:
@@ -310,8 +342,29 @@ def list_tracks(conn) -> list[dict]:
     return out
 
 
-def dashboard(conn) -> dict:
+def unlinked_library_folders(conn, settings: dict, base: Path | None = None) -> list[str]:
+    """Folders in the library root that no track in the database points at."""
+    root = library_root(settings, base)
+    try:
+        if not root.is_dir():
+            return []
+        names = sorted(p.name for p in root.iterdir() if p.is_dir() and not p.name.startswith("."))
+    except OSError:
+        return []
+    slugs = {r["slug"] for r in rows(conn.execute("SELECT slug FROM tracks"))}
+    return [n for n in names if n not in slugs]
+
+
+def dashboard(conn, settings: dict | None = None, base: Path | None = None) -> dict:
     tracks = list_tracks(conn)
+    notice = None
+    if settings is not None and was_created_by_us(base):
+        orphans = unlinked_library_folders(conn, settings, base)
+        if orphans:
+            folder = library_root(settings, base)
+            notice = (f"The database was recreated; {len(orphans)} track folder"
+                      f"{'s' if len(orphans) != 1 else ''} in {folder} "
+                      f"{'are' if len(orphans) != 1 else 'is'} not linked to any track.")
     groups = {key: [] for key in STAGE_KEYS}
     groups["finished"] = []
     released, archived = [], []
@@ -333,6 +386,7 @@ def dashboard(conn) -> dict:
         "counts": {"active": sum(1 for t in tracks if t["status"] == "active"),
                    "released": len(released), "archived": len(archived),
                    "total": len(tracks)},
+        "notice": notice,
     }
 
 
@@ -399,19 +453,21 @@ def update_platforms(conn, items: list) -> list[dict]:
         for it in items:
             if not isinstance(it, dict) or "id" not in it:
                 raise UserError("Each platform needs an id.")
+            pid = id_value(it["id"], "platform id")
+            if not one(conn.execute("SELECT id FROM platforms WHERE id = ?", (pid,))):
+                raise NotFound(f"There is no platform with id {pid}.")
             sets, vals = [], []
             if "enabled" in it:
                 sets.append("enabled = ?"); vals.append(1 if it["enabled"] else 0)
             if "upload_url" in it:
-                url = str(it["upload_url"] or "").strip()
+                url = text_value(it["upload_url"], "upload_url").strip()
                 if url and not re.match(r"https?://", url):
-                    raise UserError(f"The upload URL for platform {it['id']} should start with http:// or https://.")
+                    raise UserError(f"The upload URL for platform {pid} should start with http:// or https://.")
                 sets.append("upload_url = ?"); vals.append(url)
             if "notes" in it:
-                sets.append("notes = ?"); vals.append(str(it["notes"] or ""))
+                sets.append("notes = ?"); vals.append(text_value(it["notes"], "notes"))
             if sets:
-                conn.execute(f"UPDATE platforms SET {', '.join(sets)} WHERE id = ?",
-                             (*vals, int(it["id"])))
+                conn.execute(f"UPDATE platforms SET {', '.join(sets)} WHERE id = ?", (*vals, pid))
     return platforms(conn)
 
 
@@ -424,7 +480,7 @@ def posts_for(conn, track_id: int) -> list[dict]:
 
 def set_post(conn, track_id: int, platform_id: int, url: str) -> dict:
     """Record (or clear) the posted URL for a platform; release if all enabled have URLs."""
-    url = str(url or "").strip()
+    url = text_value(url, "url").strip()
     if url and not re.match(r"https?://", url):
         raise UserError("A posted URL should start with http:// or https://.")
     if not one(conn.execute("SELECT id FROM platforms WHERE id = ?", (platform_id,))):
@@ -465,10 +521,10 @@ def release(conn, track_id: int) -> dict:
 # ---- feedback -----------------------------------------------------------------
 
 def add_feedback(conn, text: str, screen: str, base: Path) -> dict:
-    text = str(text or "").strip()
+    text = text_value(text, "text", 20000).strip()
     if not text:
         raise UserError("Write a sentence or two first, then send.")
-    screen = str(screen or "").strip()[:80]
+    screen = text_value(screen, "screen").strip()[:80]
     ts = now()
     with transaction(conn):
         cur = conn.execute("INSERT INTO feedback(created_at, screen, text) VALUES (?,?,?)",

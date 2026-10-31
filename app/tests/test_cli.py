@@ -1,8 +1,11 @@
 import os
 import subprocess
 import sys
+import unittest
+from pathlib import Path
 
 from tests.helpers import APP_DIR, TempDataCase
+from tests.test_media import FFMPEG, make_test_media
 
 
 class CliTests(TempDataCase):
@@ -78,3 +81,48 @@ class CliTests(TempDataCase):
         self.assertEqual(code, 1)
         self.assertIn("releaseline.db", err)
         self.assertNotIn("Traceback", err)
+
+    def test_argument_errors_exit_1_with_a_sentence(self):
+        for args in (("new",), ("prompts", "1", "--seed", "abc"), ("prompts", "1", "--aspect", "4:3"),
+                     ("dance",), ("serve", "--port", "abc"), ("cut", "1")):
+            code, out, err = self.run_cli(*args)
+            self.assertEqual(code, 1, args)
+            self.assertIn("Error:", err, args)
+            self.assertIn("usage:", err, args)
+            self.assertNotIn("Traceback", err)
+
+    def test_old_python_is_refused_with_a_sentence(self):
+        env = dict(os.environ, RELEASELINE_DATA=str(self.data))
+        proc = subprocess.run([sys.executable, "-c",
+                               "import sys; sys.version_info = (3, 8, 0, 'final', 0); import runpy; "
+                               "runpy.run_module('releaseline', run_name='__main__')", "list"],
+                              cwd=str(APP_DIR), env=env, capture_output=True, text=True, timeout=60)
+        self.assertEqual(proc.returncode, 1)
+        self.assertEqual(proc.stderr.strip(), "ReleaseLine needs Python 3.10 or newer. You have 3.8.")
+        self.assertNotIn("Traceback", proc.stderr)
+
+    @unittest.skipUnless(FFMPEG["found"], "ffmpeg is not installed on this machine; the CLI cut execution "
+                                          "test is skipped (the CLI error-path tests above still ran).")
+    def test_cut_with_ffmpeg_past_end_clamped_and_ok(self):
+        media_dir = self.tmp / "qa media"
+        media_dir.mkdir()
+        audio, _, _ = make_test_media(media_dir)  # 3 s tone
+        self.run_cli("new", "Night Shift")
+        clip_dir = self.data / "library" / "night-shift" / "clip"
+        code, out, err = self.run_cli("cut", "1", "--start", "0:10", "--len", "2", "--src", str(audio))
+        self.assertEqual(code, 1, out)
+        self.assertEqual(err.strip(), "Error: 0:10 is past the end of the file (0:03 long). Pick an earlier start.")
+        code, out, err = self.run_cli("cut", "1", "--start", "3", "--len", "2", "--src", str(audio))
+        self.assertEqual(code, 1, out)
+        self.assertIn("is past the end", err)
+        self.assertEqual(list(clip_dir.iterdir()), [])
+        code, out, err = self.run_cli("list")
+        self.assertIn("Download from Suno", out)  # stage 3 is still to do; nothing advanced
+        code, out, err = self.run_cli("cut", "1", "--start", "0:02", "--len", "30", "--src", str(audio))
+        self.assertEqual(code, 0, err)
+        self.assertIn("Clip saved: night-shift-clip.wav and night-shift-clip.mp3.", out)
+        self.assertIn("The clip will be 0:01 long because the file ends there.", out)
+        self.assertTrue((clip_dir / "night-shift-clip.wav").stat().st_size > 1024)
+        code, out, err = self.run_cli("cut", "1", "--start", "0:00", "--len", "2", "--src", str(audio))
+        self.assertEqual(code, 0, err)
+        self.assertEqual(out.strip(), "Clip saved: night-shift-clip.wav and night-shift-clip.mp3.")

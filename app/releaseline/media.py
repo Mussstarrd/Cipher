@@ -17,7 +17,7 @@ import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from . import UserError
+from . import UserError, file_exists
 from .tracks import get_stages, track_dir, update_stage
 
 ASPECT_SIZES = {"9:16": (1080, 1920), "16:9": (1920, 1080), "1:1": (1080, 1080)}
@@ -35,9 +35,13 @@ def find_ffmpeg(configured: str = "") -> dict:
     path = None
     if configured:
         p = Path(configured).expanduser()
-        if p.is_file():
+        try:
+            is_file, is_dir = p.is_file(), p.is_dir()
+        except (OSError, ValueError):
+            is_file = is_dir = False
+        if is_file:
             path = str(p)
-        elif p.is_dir():
+        elif is_dir:
             for name in ("ffmpeg", "ffmpeg.exe"):
                 if (p / name).is_file():
                     path = str(p / name)
@@ -237,8 +241,24 @@ def run(cmd: list[str], timeout: int = 600) -> RunResult:
         return RunResult(False, 124, "", f"Gave up after {timeout} seconds.", time.time() - t0)
     except OSError as exc:
         return RunResult(False, 126, "", str(exc), time.time() - t0)
-    tail = "\n".join(line for line in proc.stderr.strip().splitlines()[-4:])
-    return RunResult(proc.returncode == 0, proc.returncode, proc.stdout, tail, time.time() - t0)
+    return RunResult(proc.returncode == 0, proc.returncode, proc.stdout, stderr_tail(proc.stderr),
+                     time.time() - t0)
+
+
+_PROGRESS_RE = re.compile(r"^\s*(frame|size|time|bitrate|speed|video|audio|Lsize)\s*=|^\s*\[?(out|in)#?\d*.*\s(Lsize|size|time)=|^\s*$")
+_ADDR_RE = re.compile(r"\[([^\]@]+)\s*@\s*0x[0-9a-fA-F]+\]\s*")
+
+
+def stderr_tail(text: str, keep: int = 4) -> str:
+    """The last few meaningful lines of ffmpeg's stderr: progress lines (frame=, size=,
+    time=) and memory addresses ([aac @ 0x55...]) are dropped so the user sees the cause."""
+    lines = []
+    for raw in (text or "").replace("\r", "\n").splitlines():
+        line = _ADDR_RE.sub(lambda m: f"[{m.group(1).strip()}] ", raw).strip()
+        if not line or _PROGRESS_RE.match(line):
+            continue
+        lines.append(line)
+    return "\n".join(lines[-keep:])
 
 
 def probe_duration(path, tools: dict) -> float | None:
@@ -252,11 +272,34 @@ def probe_duration(path, tools: dict) -> float | None:
             except (ValueError, IndexError):
                 pass
     if tools.get("path"):
-        proc = subprocess.run([tools["path"], "-hide_banner", "-i", str(path)],
-                              capture_output=True, text=True, errors="replace", timeout=60)
+        try:
+            proc = subprocess.run([tools["path"], "-hide_banner", "-nostdin", "-i", str(path)],
+                                  capture_output=True, text=True, errors="replace", timeout=60,
+                                  stdin=subprocess.DEVNULL)
+        except (OSError, subprocess.SubprocessError):
+            return None
         m = re.search(r"Duration:\s*(\d+):(\d+):(\d+(?:\.\d+)?)", proc.stderr)
         if m:
             return int(m.group(1)) * 3600 + int(m.group(2)) * 60 + float(m.group(3))
+    return None
+
+
+MIN_CLIP_BYTES = 1024
+
+
+def check_clip_output(path, tools: dict) -> str | None:
+    """Return a sentence if the cut output is empty or unreadable, else None."""
+    try:
+        size = Path(path).stat().st_size
+    except OSError:
+        return f"ffmpeg did not write {Path(path).name}."
+    if size < MIN_CLIP_BYTES:
+        return (f"ffmpeg produced an empty clip ({size} bytes). Check that the source is a playable "
+                "audio file and the start time is inside it. Nothing was saved.")
+    dur = probe_duration(path, tools)
+    if dur is not None and dur <= 0:
+        return ("ffmpeg produced a clip with no audio in it. Check the source file and the start time. "
+                "Nothing was saved.")
     return None
 
 
@@ -285,7 +328,7 @@ def cut_clip(conn, settings: dict, track: dict, start, length=None, fade=None,
     if not src:
         raise UserError("Record the mastered file (stage 2) or the Suno download (stage 1) first, "
                         "so there is something to cut.")
-    if not Path(src).expanduser().is_file():
+    if not file_exists(Path(src).expanduser()):
         raise UserError(f"File not found: {src}. Check the path and try again.")
     src = str(Path(src).expanduser())
     folder = track_dir(settings, track["slug"], base) / "clip"
@@ -301,6 +344,20 @@ def cut_clip(conn, settings: dict, track: dict, start, length=None, fade=None,
         update_stage(conn, track["id"], "clip", data=inputs, verify_paths=False)
         return {"ran": False, "message": tools["message"], "commands": [shell_join(shown)],
                 "inputs": inputs}
+    # Check the start time against the real length of the file before writing anything.
+    note = ""
+    duration = probe_duration(src, tools)
+    if duration is not None and duration > 0:
+        if start_s >= duration:
+            raise UserError(f"{format_time(start_s)} is past the end of the file "
+                            f"({format_time(duration)} long). Pick an earlier start.")
+        if start_s + length_s > duration + 0.05:
+            length_s = round(duration - start_s, 3)
+            if fade_s * 2 >= length_s:
+                fade_s = round(length_s / 4, 3)
+            note = f" The clip will be {format_time(length_s)} long because the file ends there."
+            inputs.update(length=length_s, fade=fade_s)
+            shown = build_cut_cmd(src, start_s, length_s, fade_s, out_wav, out_mp3, ffmpeg)
     try:
         folder.mkdir(parents=True, exist_ok=True)
     except OSError as exc:
@@ -310,6 +367,12 @@ def cut_clip(conn, settings: dict, track: dict, start, length=None, fade=None,
     if not res.ok:
         _cleanup([part_wav, part_mp3])
         raise UserError(f"ffmpeg could not cut the clip. It said: {res.stderr_tail or 'nothing'}")
+    # Belt and braces: an output that is a bare header or has no readable duration is a
+    # failure, not a clip. Nothing is recorded and the stage stays as it was.
+    problem = check_clip_output(part_wav, tools)
+    if problem:
+        _cleanup([part_wav, part_mp3])
+        raise UserError(problem)
     try:
         os.replace(part_wav, out_wav)
         os.replace(part_mp3, out_mp3)
@@ -318,7 +381,8 @@ def cut_clip(conn, settings: dict, track: dict, start, length=None, fade=None,
         raise UserError(f"Could not save the clip into {folder}: {exc.strerror or exc}.")
     data = dict(inputs, wav=str(out_wav), mp3=str(out_mp3))
     update_stage(conn, track["id"], "clip", state="done", data=data)
-    return {"ran": True, "message": f"Clip saved: {out_wav.name} and {out_mp3.name}.",
+    return {"ran": True, "message": f"Clip saved: {out_wav.name} and {out_mp3.name}.{note}",
+            "note": note.strip(), "source_duration": duration,
             "commands": [shell_join(shown)], "wav": str(out_wav), "mp3": str(out_mp3),
             "seconds": round(res.seconds, 1), "inputs": inputs}
 
@@ -328,7 +392,7 @@ def find_shots(conn, settings: dict, track: dict, base: Path | None = None) -> l
     stages = _stage_data(conn, track["id"])
     recorded = [p for p in stages["video"]["data"].get("shots", []) if p]
     if recorded:
-        missing = [p for p in recorded if not Path(p).is_file()]
+        missing = [p for p in recorded if not file_exists(p)]
         if missing:
             raise UserError(f"File not found: {missing[0]}. Re-record the shot paths in stage 5.")
         return recorded
@@ -346,7 +410,7 @@ def assemble(conn, settings: dict, track: dict, aspect: str | None = None,
     audio = clip.get("wav") or clip.get("mp3")
     if not audio:
         raise UserError("Cut the clip first (stage 3), so there is audio to lay the video over.")
-    if not Path(audio).is_file():
+    if not file_exists(audio):
         raise UserError(f"File not found: {audio}. Cut the clip again in stage 3.")
     shots = find_shots(conn, settings, track, base)
     video_dir = track_dir(settings, track["slug"], base) / "video"

@@ -59,9 +59,15 @@ def validate(values: dict) -> dict:
             continue
         val = values[key]
         if key in ("artist", "library_root", "ffmpeg_path"):
-            clean[key] = str(val or "").strip()
+            if val is None:
+                val = ""
+            if not isinstance(val, str):
+                raise UserError(f"The setting '{key}' should be text.")
+            if len(val) > 4000:
+                raise UserError(f"The setting '{key}' is too long (over 4,000 characters).")
+            clean[key] = val.strip()
         elif key == "aspect":
-            if val not in ASPECTS:
+            if not isinstance(val, str) or val not in ASPECTS:
                 raise UserError("Aspect ratio must be one of 9:16, 16:9 or 1:1.")
             clean[key] = val
         elif key == "shot_len":

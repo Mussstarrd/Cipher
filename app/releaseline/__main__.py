@@ -2,10 +2,17 @@
 
 from __future__ import annotations
 
-import argparse
-import os
 import sys
-import traceback
+
+MIN_PYTHON = (3, 10)
+if sys.version_info < MIN_PYTHON:  # before importing anything that uses newer syntax
+    print(f"ReleaseLine needs Python {MIN_PYTHON[0]}.{MIN_PYTHON[1]} or newer. "
+          f"You have {sys.version_info[0]}.{sys.version_info[1]}.", file=sys.stderr)
+    sys.exit(1)
+
+import argparse  # noqa: E402
+import os  # noqa: E402
+import traceback  # noqa: E402
 from contextlib import closing
 from pathlib import Path
 
@@ -13,9 +20,18 @@ from . import UserError, __version__, media, meta, prompts, settings as settings
 from .db import connect
 
 
+class Parser(argparse.ArgumentParser):
+    """argparse exits 2 on bad arguments; the spec says 1 means "something you can fix"."""
+
+    def error(self, message):
+        self.print_usage(sys.stderr)
+        print(f"Error: {message}", file=sys.stderr)
+        sys.exit(1)
+
+
 def build_parser() -> argparse.ArgumentParser:
-    p = argparse.ArgumentParser(prog="python3 -m releaseline",
-                                description="ReleaseLine: walk each track from download to posted.")
+    p = Parser(prog="python3 -m releaseline",
+               description="ReleaseLine: walk each track from download to posted.")
     p.add_argument("--version", action="version", version=f"ReleaseLine {__version__}")
     sub = p.add_subparsers(dest="cmd")
 

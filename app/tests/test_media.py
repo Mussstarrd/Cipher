@@ -3,6 +3,7 @@ import shutil
 import subprocess
 import unittest
 from pathlib import Path
+from unittest import mock
 
 from releaseline import UserError, media, tracks
 from tests.helpers import TempDataCase
@@ -206,17 +207,134 @@ class ExecutionTests(TempDataCase):
         clip_dir = self.data / "library" / "exec-test" / "clip"
         self.assertEqual([p.name for p in clip_dir.iterdir()], [])
 
+    def _clip_stage(self):
+        return next(s for s in tracks.get_stages(self.conn, self.track["id"]) if s["key"] == "clip")
+
+    def test_cut_start_past_end_is_a_sentence_and_writes_nothing(self):
+        # the test tone is 3 s long
+        tracks.update_stage(self.conn, self.track["id"], "download", data={"path": str(self.audio)})
+        clip_dir = self.data / "library" / "exec-test" / "clip"
+        for start in ("0:10", "3", 3.0, "0:03"):
+            with self.assertRaises(UserError, msg=repr(start)) as cm:
+                media.cut_clip(self.conn, self.s, self.track, start, 2, 0.2, None, self.data)
+            msg = str(cm.exception)
+            self.assertIn("is past the end of the file", msg)
+            self.assertIn("(0:03 long)", msg)
+            self.assertIn("Pick an earlier start.", msg)
+        self.assertEqual(sorted(p.name for p in clip_dir.iterdir()) if clip_dir.exists() else [], [])
+        self.assertEqual(self._clip_stage()["state"], "todo")
+        self.assertEqual([a for a in tracks.assets_report(self.conn, self.track, self.s, self.data)["recorded"]
+                          if a["kind"] == "clip"], [])
+
+    def test_cut_start_past_end_message_uses_the_entered_time(self):
+        tracks.update_stage(self.conn, self.track["id"], "download", data={"path": str(self.audio)})
+        with self.assertRaises(UserError) as cm:
+            media.cut_clip(self.conn, self.s, self.track, "0:10", 2, 0.2, None, self.data)
+        self.assertEqual(str(cm.exception), "0:10 is past the end of the file (0:03 long). Pick an earlier start.")
+
+    def test_cut_length_past_end_is_clamped_with_a_note(self):
+        tracks.update_stage(self.conn, self.track["id"], "download", data={"path": str(self.audio)})
+        r = media.cut_clip(self.conn, self.s, self.track, "0:01", 30, 0.2, None, self.data)
+        self.assertTrue(r["ran"])
+        self.assertIn("Clip saved", r["message"])
+        self.assertIn("The clip will be 0:02 long because the file ends there.", r["message"])
+        self.assertAlmostEqual(media.probe_duration(r["wav"], FFMPEG), 2.0, delta=0.15)
+        self.assertEqual(self._clip_stage()["state"], "done")
+        self.assertEqual(self._clip_stage()["data"]["length"], 2.0)
+        # a fade longer than the clamped clip is shortened rather than refused
+        tracks.update_stage(self.conn, self.track["id"], "clip", state="todo")
+        r = media.cut_clip(self.conn, self.s, self.track, "2.5", 30, 0.5, None, self.data)
+        self.assertTrue(r["ran"])
+        self.assertIn("will be 0:00.5 long", r["message"])
+
+    def test_cut_output_is_verified_and_empty_output_is_rejected(self):
+        tracks.update_stage(self.conn, self.track["id"], "download", data={"path": str(self.audio)})
+        real_run = media.run
+
+        def fake_run(cmd, timeout=600):
+            # pretend ffmpeg "succeeded" but wrote a 78-byte header-only WAV (what B1 produced)
+            parts = [c for c in cmd if ".part." in str(c)]
+            if parts:
+                for c in parts:
+                    Path(c).write_bytes(b"RIFF" + b"\0" * 74)
+                return media.RunResult(True, 0, "", "", 0.1)
+            return real_run(cmd, timeout)
+
+        with mock.patch.object(media, "run", fake_run):
+            with self.assertRaises(UserError) as cm:
+                media.cut_clip(self.conn, self.s, self.track, "0:01", 1, 0.1, None, self.data)
+        self.assertIn("empty clip", str(cm.exception))
+        self.assertIn("Nothing was saved", str(cm.exception))
+        clip_dir = self.data / "library" / "exec-test" / "clip"
+        self.assertEqual([p.name for p in clip_dir.iterdir()], [])
+        self.assertEqual(self._clip_stage()["state"], "todo")
+        self.assertEqual([a for a in tracks.assets_report(self.conn, self.track, self.s, self.data)["recorded"]
+                          if a["kind"] == "clip"], [])
+        # and an output ffprobe cannot read a duration from is also refused
+        with mock.patch.object(media, "probe_duration", side_effect=[3.0, 0.0]):
+            with self.assertRaises(UserError) as cm:
+                media.cut_clip(self.conn, self.s, self.track, "0:01", 1, 0.1, None, self.data)
+        self.assertIn("no audio in it", str(cm.exception))
+        self.assertEqual([p.name for p in clip_dir.iterdir()], [])
+        self.assertEqual(self._clip_stage()["state"], "todo")
+
+    def test_probe_duration_falls_back_to_ffmpeg_without_ffprobe(self):
+        tools = {"found": True, "path": FFMPEG["path"], "ffprobe": None}
+        self.assertAlmostEqual(media.probe_duration(self.audio, tools), 3.0, delta=0.1)
+        self.assertIsNone(media.probe_duration(self.tmp / "missing.wav", tools))
+        bad = self.media_dir / "not audio.wav"
+        bad.write_text("this is not audio")
+        self.assertIsNone(media.probe_duration(bad, FFMPEG))
+
     def test_ffmpeg_status_reports_version(self):
         st = media.ffmpeg_status({"ffmpeg_path": ""})
         self.assertTrue(st["found"])
         self.assertIn("ffmpeg", st.get("version", "").lower())
 
+
+
+class NoFfmpegTests(TempDataCase):
+    """Runs on every machine: ffmpeg's absence is simulated by patching find_ffmpeg."""
+
+    NOT_FOUND = {"found": False, "path": None, "ffprobe": None,
+                 "message": "ffmpeg was not found on this computer. " + media.INSTALL_HINT}
+
     def test_without_ffmpeg_commands_are_shown(self):
-        tracks.update_stage(self.conn, self.track["id"], "download", data={"path": str(self.audio)})
-        s = dict(self.s, ffmpeg_path="/definitely/not/here/ffmpeg")
-        r = media.cut_clip(self.conn, s, self.track, "0:01", 2, 0.2, None, self.data)
+        conn = self.connect()
+        s = self.settings()
+        track = tracks.create_track(conn, s, {"title": "Exec Test"}, self.data)
+        audio = self.tmp / "sine tone.wav"
+        audio.write_bytes(b"RIFF" + b"\0" * 100)
+        tracks.update_stage(conn, track["id"], "download", data={"path": str(audio)})
+        with mock.patch.object(media, "find_ffmpeg", return_value=dict(self.NOT_FOUND)):
+            r = media.cut_clip(conn, s, track, "0:01", 2, 0.2, None, self.data)
         self.assertFalse(r["ran"])
         self.assertIn("not found", r["message"])
+        self.assertIn("Install ffmpeg", r["message"])
         self.assertEqual(len(r["commands"]), 1)
         self.assertIn("sine tone.wav", r["commands"][0])
         self.assertFalse((self.data / "library" / "exec-test" / "clip" / "exec-test-clip.wav").exists())
+        stage = next(x for x in tracks.get_stages(conn, track["id"]) if x["key"] == "clip")
+        self.assertEqual(stage["state"], "todo")
+        self.assertEqual(stage["data"]["start"], "0:01")  # inputs remembered for next time
+
+
+class StderrTailTests(unittest.TestCase):
+    def test_progress_lines_and_addresses_are_dropped(self):
+        sample = ("ffmpeg version 6.1.1\n"
+                  "[in#0 @ 0x55b8d65d6f80] Error opening input: Invalid data found when processing input\n"
+                  "Error opening input file /tmp/x.wav.\n"
+                  "frame=    0 fps=0.0 q=0.0 size=       0kB time=N/A bitrate=N/A speed=N/A    \r"
+                  "size=       0kB time=00:00:00.00 bitrate=N/A speed=   0x\n"
+                  "\n"
+                  "[aac @ 0x5581] Qavg: nan\n"
+                  "Conversion failed!")
+        tail = media.stderr_tail(sample)
+        self.assertNotIn("frame=", tail)
+        self.assertNotIn("size=", tail)
+        self.assertNotIn("0x55b8d65d6f80", tail)
+        self.assertIn("[in#0] Error opening input: Invalid data found", tail)
+        self.assertIn("Conversion failed!", tail)
+        self.assertLessEqual(len(tail.splitlines()), 4)
+        self.assertEqual(media.stderr_tail(""), "")
+        self.assertEqual(media.stderr_tail("frame=1 fps=0\nsize=0kB time=0"), "")

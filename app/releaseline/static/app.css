@@ -126,6 +126,9 @@ th { color: var(--muted); font-weight: 600; font-size: 13px; }
 .toast { position: fixed; left: 50%; bottom: 70px; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 9px 16px; border-radius: 6px; font-size: 14px; z-index: 30; max-width: 90vw; }
 .toast.bad { background: var(--bad); }
 .empty { text-align: center; padding: 36px 16px; color: var(--muted); }
+.notice { border-color: var(--warn); background: #fff8ee; }
+.url-row input { flex: 1 1 160px; width: auto; }
+.badge[hidden] { display: none; }
 
 @media (max-width: 600px) {
   .view { padding: 14px 12px; }
@@ -134,4 +137,10 @@ th { color: var(--muted); font-weight: 600; font-size: 13px; }
   .kv { grid-template-columns: 1fr; }
   th, td { padding: 5px 4px; font-size: 13px; }
   .footer { flex-direction: column; align-items: flex-start; }
+  /* Upload stage: one card per platform instead of a three-column table. */
+  .upload-table, .upload-table tbody, .upload-table tr, .upload-table td { display: block; width: 100%; }
+  .upload-table thead { display: none; }
+  .upload-table tr { border-bottom: 1px solid var(--line); padding: 8px 0 10px; }
+  .upload-table td { border: 0; padding: 2px 0; }
+  .url-row input { flex: 1 1 100%; }
 }

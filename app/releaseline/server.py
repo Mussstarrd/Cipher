@@ -84,6 +84,22 @@ class App:
                 raise UserError(f"The field '{k}' is required.")
         return body
 
+    @staticmethod
+    def _text(body: dict, key: str, default: str = "", max_len: int = tracks.MAX_TEXT) -> str:
+        """A string field (None/missing -> default); anything else is a 400 sentence."""
+        return tracks.text_value(body.get(key, default), key, max_len) if body.get(key) is not None else default
+
+    @staticmethod
+    def _number(body: dict, key: str, default=None):
+        """A number-ish field: int, float or a string the generator can parse. No lists,
+        objects or booleans."""
+        v = body.get(key)
+        if v is None or v == "":
+            return default
+        if isinstance(v, bool) or not isinstance(v, (int, float, str)):
+            raise UserError(f"The field '{key}' should be a number.")
+        return v
+
     def _track(self, conn, ident) -> dict:
         return tracks.get_track(conn, ident)
 
@@ -122,7 +138,11 @@ class App:
 
     def dashboard(self, **_):
         with self.db() as conn:
-            return tracks.dashboard(conn)
+            try:
+                s = self.settings()
+            except UserError:
+                s = dict(settings_mod.DEFAULTS)  # a broken settings.json must not hide the Dashboard
+            return tracks.dashboard(conn, s, self.base)
 
     def list_tracks(self, **_):
         with self.db() as conn:
@@ -157,9 +177,12 @@ class App:
 
     def update_stage(self, ident, key, body=None, **_):
         body = self._need(body)
+        state = body.get("state")
+        if state is not None and not isinstance(state, str):
+            raise UserError("A stage can be todo, done or skipped.")
         with self.db() as conn:
             t = self._track(conn, ident)
-            stage = tracks.update_stage(conn, t["id"], key, state=body.get("state"), data=body.get("data"))
+            stage = tracks.update_stage(conn, t["id"], key, state=state, data=body.get("data"))
             return {"stage": stage, "stages": tracks.get_stages(conn, t["id"]),
                     "assets": tracks.assets_report(conn, t, self.settings(), self.base)}
 
@@ -167,13 +190,18 @@ class App:
         body = body or {}
         self._need(body)
         s = self.settings()
+        preset = self._text(body, "preset", "cinematic", 100) or "cinematic"
+        setting = self._text(body, "setting", "", 500)
+        aspect = self._text(body, "aspect", s["aspect"], 10) or s["aspect"]
+        shot_len = self._number(body, "shot_len", s["shot_len"]) or s["shot_len"]
+        clip_len = self._number(body, "clip_len", s["clip_len"]) or s["clip_len"]
+        n = self._number(body, "n", 4) or 4
         with self.db() as conn:
             t = self._track(conn, ident)
             result = prompts.generate(
-                t, preset=body.get("preset") or "cinematic", setting=body.get("setting") or "",
-                aspect=body.get("aspect") or s["aspect"], shot_len=body.get("shot_len") or s["shot_len"],
-                clip_len=body.get("clip_len") or s["clip_len"], n=body.get("n") or 4,
-                seed=body.get("seed"), shots=body.get("shots"))
+                t, preset=preset, setting=setting, aspect=aspect, shot_len=shot_len,
+                clip_len=clip_len, n=n, seed=self._number(body, "seed"),
+                shots=self._number(body, "shots"))
             tracks.update_stage(conn, t["id"], "prompt", data={
                 "preset": result["preset"], "setting": result["setting"], "aspect": result["aspect"],
                 "shot_len": result["shot_len"], "clip_len": result["clip_len"], "shots": result["shots"],
@@ -183,10 +211,22 @@ class App:
     def choose_prompt(self, ident, body=None, **_):
         body = self._need(body, "variant")
         v = body["variant"]
-        if not isinstance(v, dict) or not v.get("prompt"):
+        if not isinstance(v, dict) or not isinstance(v.get("prompt"), str) or not v["prompt"].strip():
             raise UserError("Pick one of the generated variants to save.")
-        seed = body.get("seed")
+        seed = self._number(body, "seed")
+        if isinstance(seed, str):
+            seed = int(seed) if seed.strip().lstrip("-").isdigit() else None
+        if isinstance(seed, float):
+            seed = int(seed)
         shots = v.get("shots") or []
+        bad_shape = UserError("That variant is not in the shape ReleaseLine generates. Press Generate "
+                              "again and pick one of the variants shown.")
+        if not isinstance(shots, list) or not all(isinstance(sh, dict) for sh in shots):
+            raise bad_shape
+        for k in ("label", "negative"):
+            if not isinstance(v.get(k, ""), str):
+                raise bad_shape
+        tracks.text_value(v["prompt"], "prompt")
         with self.db() as conn:
             t = self._track(conn, ident)
             tracks.replace_drafts(conn, t["id"], "prompt", [], seed)
@@ -209,8 +249,9 @@ class App:
         s = self.settings()
         with self.db() as conn:
             t = self._track(conn, ident)
-            result = media.cut_clip(conn, s, t, body["start"], body.get("length"), body.get("fade"),
-                                    body.get("src"), self.base)
+            result = media.cut_clip(conn, s, t, self._number(body, "start", body["start"]),
+                                    self._number(body, "length"), self._number(body, "fade"),
+                                    self._text(body, "src"), self.base)
             result["stages"] = tracks.get_stages(conn, t["id"])
             result["assets"] = tracks.assets_report(conn, t, s, self.base)
             return result
@@ -220,7 +261,8 @@ class App:
         s = self.settings()
         with self.db() as conn:
             t = self._track(conn, ident)
-            result = media.assemble(conn, s, t, body.get("aspect") if isinstance(body, dict) else None, self.base)
+            aspect = self._text(body, "aspect", "", 10) if isinstance(body, dict) else ""
+            result = media.assemble(conn, s, t, aspect or None, self.base)
             result["stages"] = tracks.get_stages(conn, t["id"])
             result["assets"] = tracks.assets_report(conn, t, s, self.base)
             return result
@@ -239,31 +281,31 @@ class App:
 
     def update_draft(self, ident, draft_id, body=None, **_):
         body = self._need(body)
+        did = tracks.id_value(draft_id, "draft id")
+        text = self._text(body, "text") if "text" in body else None
         with self.db() as conn:
             t = self._track(conn, ident)
-            d = tracks.update_draft(conn, t["id"], int(draft_id), None, None)
+            d = tracks.update_draft(conn, t["id"], did, None, None)
             try:
                 content = json.loads(d["content"])
             except ValueError:
                 content = {"label": d["kind"], "text": d["content"]}
             if not isinstance(content, dict):
                 content = {"label": d["kind"], "text": str(content)}
-            if "text" in body:
-                content["text"] = str(body["text"])
+            if text is not None:
+                content["text"] = text
             chosen = body.get("chosen")
-            d = tracks.update_draft(conn, t["id"], int(draft_id), json.dumps(content),
+            d = tracks.update_draft(conn, t["id"], did, json.dumps(content),
                                     None if chosen is None else bool(chosen))
             return {"draft": d, "drafts": tracks.drafts_for(conn, t["id"])}
 
     def set_post(self, ident, body=None, **_):
         body = self._need(body, "platform_id")
-        try:
-            pid = int(body["platform_id"])
-        except (TypeError, ValueError):
-            raise UserError("platform_id must be a number.")
+        pid = tracks.id_value(body["platform_id"], "platform_id")
+        url = self._text(body, "url")
         with self.db() as conn:
             t = self._track(conn, ident)
-            result = tracks.set_post(conn, t["id"], pid, body.get("url", ""))
+            result = tracks.set_post(conn, t["id"], pid, url)
             result["track"] = tracks.get_track(conn, t["id"])
             result["stages"] = tracks.get_stages(conn, t["id"])
             return result
@@ -295,7 +337,7 @@ class App:
                 "data_dir": str(self.base), "ffmpeg": media.ffmpeg_status(s)}
 
     def ffmpeg_test(self, body=None, **_):
-        path = (body or {}).get("path", "") if isinstance(body, dict) else ""
+        path = self._text(body, "path") if isinstance(body, dict) else ""
         return media.ffmpeg_status({"ffmpeg_path": path})
 
     def list_feedback(self, **_):
@@ -327,7 +369,10 @@ def make_handler(app: App):
             self.wfile.write(data)
 
         def _read_body(self):
-            length = int(self.headers.get("Content-Length") or 0)
+            try:
+                length = int(self.headers.get("Content-Length") or 0)
+            except ValueError:
+                raise UserError("The Content-Length header was not a number.")
             if length > MAX_BODY:
                 raise UserError("That request is too large.")
             raw = self.rfile.read(length) if length else b""

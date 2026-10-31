@@ -43,3 +43,39 @@ Each item: what the spec left open, the simplest reading I took, and where it li
     without "[FREE]": whether a beat is free is a licensing choice, left to the owner.
 15. **Hashtag counts**: YouTube up to 4, TikTok up to 8, Instagram up to 15. Chosen as
     sane defaults, not platform rules.
+
+## Added after review round 1 (qa-01, ux-01)
+
+16. **Cut checks the source length first.** With ffmpeg present, `cut_clip` runs ffprobe
+    (falling back to `ffmpeg -i`) on the source. Start at or past the end → sentence, no
+    files, stage unchanged. Start inside but length past the end → length clamped to what
+    is left (and the fade shortened to a quarter of that if it no longer fits) with the
+    note "The clip will be M:SS long because the file ends there." appended to the
+    message. After every cut the WAV is verified (≥ 1 KB and a probed duration > 0) before
+    it is renamed into place; otherwise outputs are deleted and a sentence is returned.
+    If neither ffprobe nor ffmpeg can report a duration, the pre-check is skipped and the
+    post-check still applies. `media.cut_clip`, `media.check_clip_output`.
+17. **Slug chosen inside the write transaction.** `create_track` does BEGIN IMMEDIATE,
+    then picks the free slug, makes the folders, inserts. Concurrent same-title creates
+    serialize instead of colliding. The library folder check is still DB-only (an existing
+    folder with no track is reused), see the Dashboard notice below.
+18. **Request validation is central.** `tracks.text_value` (string, ≤ 4,000 chars; feedback
+    text ≤ 20,000), `tracks.id_value` (digits, ≤ 18 of them, else 404) and
+    `server.App._text/_number` reject wrong JSON types with "The field 'x' should be
+    text / a number." Non-string scalars are no longer coerced with `str()`.
+19. **ffmpeg stderr is filtered** (`media.stderr_tail`): progress lines (`frame=`,
+    `size=`, `time=`…) are dropped and `[name @ 0x…]` prefixes lose the address; the last
+    four meaningful lines are shown.
+20. **argparse errors exit 1** via a `Parser.error` override (usage + "Error: …"). Exit 2
+    stays for unexpected exceptions. A Python < 3.10 check runs in `__main__` before any
+    other import.
+21. **Dashboard notice for a recreated database.** `db.connect` remembers database files
+    this process created from nothing; when that is true and `library/` has folders no
+    track points at, `/api/dashboard` carries `notice` and the UI shows an amber card.
+    Chosen over scanning folders on every request unconditionally so a fresh install
+    never shows it.
+22. **UI**: `busy()` always restores a button's label; metadata boxes render only in
+    stage 7 (the Drafts card links there); variants stay visible after Use this with the
+    chosen one marked, and the Drafts card refreshes in place; empty path/URL saves are
+    "Enter … first." or "… cleared."; the Suno link is a text field with `inputmode=url`;
+    the upload table stacks into blocks under 600 px.

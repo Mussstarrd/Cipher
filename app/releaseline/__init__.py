@@ -16,3 +16,12 @@ class NotFound(UserError):
     """Something the user asked for does not exist."""
 
     status = 404
+
+
+def file_exists(path) -> bool:
+    """Path.is_file() that treats unusable paths (too long, bad characters) as missing."""
+    from pathlib import Path
+    try:
+        return Path(path).is_file()
+    except (OSError, ValueError):
+        return False

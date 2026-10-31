@@ -105,11 +105,23 @@ def db_path(base: Path | None = None) -> Path:
     return (base or data_dir()) / "releaseline.db"
 
 
+# Database files this process created from nothing (first run, or the file was deleted
+# while the app was running). The Dashboard uses this to say so when library/ still has
+# track folders that no longer belong to any track.
+_CREATED: set = set()
+
+
+def was_created_by_us(base: Path | None = None) -> bool:
+    return str(db_path(base)) in _CREATED
+
+
 def connect(base: Path | None = None) -> sqlite3.Connection:
     """Open (and initialize) the database. Problems become one sentence with the path."""
     path = db_path(base)
     try:
         path.parent.mkdir(parents=True, exist_ok=True)
+        if not path.exists():
+            _CREATED.add(str(path))
         conn = sqlite3.connect(str(path), isolation_level=None, timeout=10)
     except (sqlite3.Error, OSError) as exc:
         raise UserError(

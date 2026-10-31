@@ -55,9 +55,12 @@ installed; command-building tests always run.
    checklist. Work the checklist, paste the path to the downloaded file, **Save path**,
    **Mark done**. Stage 2 opens.
 4. Stage 3: type where the hook starts (`0:45`), press **Cut clip**. With ffmpeg, the WAV
-   and MP3 land in `clip/`; without it, copy the shown command.
+   and MP3 land in `clip/`; without it, copy the shown command. A start time past the end
+   of the file is refused with a sentence; a length that runs past the end gives a shorter
+   clip and says so.
 5. Stage 4: pick a style preset, press **Generate**. Read the variants, **Shuffle** if they
    feel flat, **Copy** the one you like, press **Use this** so it is saved to the track.
+   The variants stay on screen with the chosen one marked.
 6. Stage 5: paste prompts into Kling, download the shots into `video/`.
 7. Stage 6: **Assemble** builds `final/<slug>-final.mp4` (or shows the commands).
 8. Stage 7: **Generate** titles, descriptions, hashtags and tags. Edit in place, **Copy**.
@@ -100,7 +103,10 @@ Everything is in `app/data/` (or wherever `RELEASELINE_DATA` points):
 - `library/<slug>/` — the track folders with your audio, shots and final video (unless
   you changed the library root in Settings).
 
-**Backup:** copy the `data/` folder. **Restore:** put it back. That is all.
+**Backup:** copy the `data/` folder. **Restore:** put it back. That is all. Recorded file
+paths are absolute, so if you move `data/` to another machine or drive the Assets list will
+flag the old paths as "file not found" until you re-save them; the files themselves are in
+`library/` and are listed there regardless.
 
 ## Command line
 
@@ -114,24 +120,38 @@ python3 -m releaseline meta <id-or-slug> [--explicit]
 python3 -m releaseline feedback "text"
 ```
 
-Exit codes: 0 ok, 1 something you can fix (message says what), 2 unexpected.
+Exit codes: 0 ok, 1 something you can fix (message says what, including wrong or missing
+arguments), 2 unexpected.
 
 ## Troubleshooting
 
 - **"Port 8477 is already in use."** Another program (or another ReleaseLine) has the
   port. Run `python3 -m releaseline serve --port 8500`.
-- **"python3: command not found" / Python too old.** Install Python 3.10+ from
-  python.org. On Windows use `py -3 -m releaseline serve` (that is what `run.bat` does).
-  Check the version with `python3 --version`.
+- **"python3: command not found" / "ReleaseLine needs Python 3.10 or newer. You have
+  3.8."** Install Python 3.10+ from python.org. On Windows use `py -3 -m releaseline
+  serve` (that is what `run.bat` does). Check the version with `python3 --version`.
 - **Pill says "ffmpeg not found".** Install it (see Requirements), open a new terminal,
   restart ReleaseLine. Or set the full path to `ffmpeg.exe` in Settings and press Test.
   Until then the Cut and Assemble buttons show commands you can run by hand.
 - **"File not found: …"** The path you pasted does not point at a file. On Windows, paste
   the full path from Explorer (Shift + right-click → Copy as path, then remove the
   quotes). Paths with spaces are fine. Network drives must be mounted.
-- **"ffmpeg failed while trying to …"** The last lines ffmpeg printed are in the message.
-  Usual causes: a shot that is not a video file, a clip that was moved, or a read-only
-  folder.
+- **"0:45 is past the end of the file (0:30 long). Pick an earlier start."** The start
+  time you typed is beyond the end of the audio. ReleaseLine reads the file's length with
+  ffprobe before cutting and writes nothing in this case. If the start is inside the file
+  but the length runs past the end, the clip is cut shorter and the message says so
+  ("The clip will be 0:12 long because the file ends there.").
+- **"ffmpeg produced an empty clip …"** ffmpeg exited cleanly but the output had no
+  audio in it (a bare header). Nothing was saved and the stage stays to-do. Check that the
+  source is a playable audio file.
+- **"ffmpeg failed while trying to …"** The last meaningful lines ffmpeg printed are in
+  the message (progress counters and memory addresses are stripped). Usual causes: a shot
+  that is not a video file, a clip that was moved, or a read-only folder.
+- **Dashboard says "The database was recreated; N track folders in … are not linked to
+  any track."** `data/releaseline.db` was missing (deleted or lost) and a fresh, empty
+  one was created, but `library/` still holds the old track folders. Nothing on disk was
+  removed. Restore `data/` from a backup to get the tracks back, or create tracks with the
+  same titles so the folders are reused.
 - **"The database at … could not be opened."** The `data/` folder is missing, read-only,
   or `releaseline.db` is corrupt. Fix permissions or restore `data/` from your backup.
 - **"The settings file … could not be read."** `data/settings.json` is not valid JSON.

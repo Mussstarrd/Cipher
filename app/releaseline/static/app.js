@@ -95,7 +95,11 @@
   }
 
   function errorCard(msg) { return el("div", { class: "card" }, el("p", { class: "error", text: msg })); }
-  function busy(btn, on, label) { btn.disabled = on; if (label !== undefined) { if (on) { btn.dataset.old = btn.textContent; btn.textContent = label; } else if (btn.dataset.old) btn.textContent = btn.dataset.old; } }
+  function busy(btn, on, label) {
+    btn.disabled = on;
+    if (on) { if (label !== undefined) { btn.dataset.old = btn.textContent; btn.textContent = label; } }
+    else if (btn.dataset.old !== undefined) { btn.textContent = btn.dataset.old; delete btn.dataset.old; }
+  }
 
   // ---- ffmpeg pill ---------------------------------------------------------------
   function setPill(info) {
@@ -151,6 +155,7 @@
         el("p", { class: "muted", text: `${c.active} in progress · ${c.released} released` + (c.archived ? ` · ${c.archived} archived` : "") })),
       el("a", { class: "btn btn-primary", href: "#/new", text: "New track" }));
     const nodes = [head];
+    if (data.notice) nodes.push(el("div", { class: "card notice" }, el("p", { text: data.notice }), el("p", { class: "muted small", text: "Nothing was deleted from disk. Create a track with the same title to get a matching folder, or move the old folders out of library/." })));
     if (c.total === 0) {
       nodes.push(el("div", { class: "card empty" }, el("p", { text: "No tracks yet. Add the one you are working on." }), el("a", { class: "btn btn-primary", href: "#/new", text: "New track" })));
     }
@@ -195,7 +200,7 @@
       bpm: input({ value: values.bpm || "", placeholder: "e.g. 140", inputmode: "numeric" }),
       key: input({ value: values.key || "", placeholder: "e.g. F minor" }),
       hook: el("textarea", { rows: 2, placeholder: "The line people will remember", text: values.hook || "" }),
-      suno_url: input({ value: values.suno_url || "", placeholder: "https://suno.com/song/…", type: "url" }),
+      suno_url: input({ value: values.suno_url || "", placeholder: "https://suno.com/song/…", inputmode: "url", spellcheck: "false" }),
       notes: el("textarea", { rows: 3, text: values.notes || "" }),
     };
     const fields = {
@@ -279,12 +284,26 @@
         files.length ? el("ul", { class: "files" }, files.map((f) => el("li", { text: f }))) : el("p", { class: "muted small", text: "empty" })))),
       a.recorded.length ? el("div", {}, el("h3", { text: "Recorded paths" }), el("ul", { class: "files" }, a.recorded.map((r) => el("li", { class: r.exists ? "" : "missing" }, el("span", { class: "muted", text: r.kind + ": " }), r.path, r.exists ? "" : " — file not found")))) : null);
 
-    const chosen = d.drafts.filter((x) => x.chosen);
-    const drafts = el("div", { class: "card" }, el("h2", { text: "Drafts" }),
-      d.drafts.length ? draftList(d, d.drafts, reload) : el("p", { class: "muted", text: "Nothing generated yet. The Video prompt and Tags stages fill this in." }),
-      chosen.length ? null : (d.drafts.length ? el("p", { class: "muted small", text: "Chosen prompts show first once you press Use this." }) : null));
+    view.replaceChildren(el("p", { class: "small" }, el("a", { href: "#/", text: "← Dashboard" })), header, rail, ...stages, notes, assets, draftsCard(d, reload));
+  }
 
-    view.replaceChildren(el("p", { class: "small" }, el("a", { href: "#/", text: "← Dashboard" })), header, rail, ...stages, notes, assets, drafts);
+  const META_KINDS = ["title", "description", "hashtags", "tags"];
+
+  // The Drafts card shows the chosen prompt and shot list. Titles, descriptions and tags
+  // are edited in stage 7 only, so there is one copy of each box on the page.
+  function draftsCard(d, reload) {
+    const promptDrafts = d.drafts.filter((x) => !META_KINDS.includes(x.kind));
+    const metaCount = d.drafts.length - promptDrafts.length;
+    const openStage = (key) => el("a", { href: "#/track/" + d.track.id, onclick: (e) => { e.preventDefault(); STAGE_OPEN[d.track.id] = key; reload(); }, text: key === "meta" ? "stage 7" : "stage 4" });
+    return el("div", { class: "card", id: "drafts-card" }, el("h2", { text: "Drafts" }),
+      promptDrafts.length ? draftList(d, promptDrafts, reload) : el("p", { class: "muted" }, "No prompt chosen yet. Generate variants in ", openStage("prompt"), " and press Use this."),
+      metaCount ? el("p", { class: "muted small" }, `Titles, descriptions, hashtags and tags (${metaCount} boxes) are edited in `, openStage("meta"), ".") : null);
+  }
+
+  function refreshDrafts(d, drafts, reload) {
+    d.drafts = drafts;
+    const old = $("#drafts-card");
+    if (old) old.replaceWith(draftsCard(d, reload));
   }
 
   function parseDraft(dr) {
@@ -329,7 +348,9 @@
     const fld = field(label, inp, hint);
     const save = el("button", { class: "btn btn-small", type: "button", onclick: async () => {
       fld.setError("");
-      try { await api("POST", `/api/tracks/${d.track.id}/stages/${s.key}`, { data: { [key]: inp.value } }); toast("Path saved."); reload(); } catch (e) { fld.setError(e.message); }
+      const had = !!((s.data && s.data[key]) || "");
+      if (!inp.value.trim() && !had) { fld.setError("Enter a path first."); return; }
+      try { await api("POST", `/api/tracks/${d.track.id}/stages/${s.key}`, { data: { [key]: inp.value } }); toast(inp.value.trim() ? "Path saved." : "Path cleared."); reload(); } catch (e) { fld.setError(e.message); }
     } }, "Save path");
     return el("div", {}, fld, save);
   }
@@ -411,7 +432,7 @@
         try {
           const r = await api("POST", `/api/tracks/${d.track.id}/cut`, { start: start.value, length: len.value, fade: fade.value });
           if (r.ran) { toast(r.message); STAGE_OPEN[d.track.id] = null; reload(); return; }
-          out.replaceChildren(el("p", { class: "muted small", text: r.message }), cmdBlock(r.commands, "Run this in a terminal once ffmpeg is installed; it writes the WAV and the MP3."));
+          out.replaceChildren(cmdBlock(r.commands, "Run this in a terminal once ffmpeg is installed; it writes the WAV and the MP3."));
         } catch (e) { fStart.setError(e.message); }
         busy(run, false);
       } }, d.ffmpeg.found ? "Cut clip" : "Show ffmpeg command");
@@ -436,12 +457,22 @@
       const seedInfo = el("span", { class: "muted small" });
       const out = el("div", {});
       let lastSeed = data.seed || null;
+      const chosenNow = el("p", { class: "small muted" });
+      if (data.chosen_label && d.drafts.some((x) => x.kind === "prompt" && x.chosen)) chosenNow.textContent = `Chosen: ${data.chosen_label} (saved in Drafts below). Press Generate (same seed) to see the variants again.`;
+      else chosenNow.hidden = true;
       const gen = async (seed) => {
         out.replaceChildren(el("p", { class: "muted", text: "Generating…" }));
         try {
           const r = await api("POST", `/api/tracks/${d.track.id}/prompts`, { preset: preset.value, setting: setting.value, aspect: aspect.value, shot_len: Number(shotLen.value), clip_len: clipLen, shots: shots.value, n: Number(n.value), seed });
           lastSeed = r.seed; seedInfo.textContent = `seed ${r.seed} · ${r.genre_family} vocabulary · ${r.mood_category} mood · ${r.shots} shots × ${r.shot_len} s`;
-          out.replaceChildren(...r.variants.map((v, i) => variantBox(d, v, i, r.seed, reload)));
+          chosenNow.hidden = true;
+          const chosenLabel = (r.seed === data.seed && data.chosen_label) || null;
+          const onChosen = (label, drafts) => {
+            data.chosen_label = label; data.seed = r.seed;
+            out.querySelectorAll(".variant").forEach((node) => node.markChosen(node.dataset.label === label));
+            refreshDrafts(d, drafts, reload);
+          };
+          out.replaceChildren(...r.variants.map((v, i) => variantBox(d, v, i, r.seed, onChosen, v.label === chosenLabel)));
         } catch (e) { out.replaceChildren(el("p", { class: "error", text: e.message })); }
       };
       return el("div", {},
@@ -450,14 +481,17 @@
         el("div", { class: "stage-actions" },
           el("button", { class: "btn btn-primary", type: "button", onclick: () => gen(lastSeed) }, lastSeed ? "Generate (same seed)" : "Generate"),
           el("button", { class: "btn", type: "button", onclick: () => gen(null) }, "Shuffle"), seedInfo),
-        out);
+        chosenNow, out);
     },
     video(d, s, reload) {
       const files = d.assets.on_disk.video || [];
       const ta = el("textarea", { rows: 4, text: ((s.data && s.data.shots) || []).join("\n"), placeholder: "One full path per line, in order.", spellcheck: "false" });
       const fld = field("Shot paths (one per line, in playback order)", ta, "Optional if the files are already in video/: they are picked up in name order.");
       const save = el("button", { class: "btn btn-small", type: "button", onclick: async () => { fld.setError("");
-        try { await api("POST", `/api/tracks/${d.track.id}/stages/video`, { data: { shots: ta.value.split("\n").map((x) => x.trim()).filter(Boolean) } }); toast("Paths saved."); reload(); } catch (e) { fld.setError(e.message); } } }, "Save paths");
+        const list = ta.value.split("\n").map((x) => x.trim()).filter(Boolean);
+        const had = ((s.data && s.data.shots) || []).length > 0;
+        if (!list.length && !had) { fld.setError("Enter at least one path first, or leave this empty and use the files in video/."); return; }
+        try { await api("POST", `/api/tracks/${d.track.id}/stages/video`, { data: { shots: list } }); toast(list.length ? "Paths saved." : "Paths cleared."); reload(); } catch (e) { fld.setError(e.message); } } }, "Save paths");
       return el("div", {},
         el("p", { text: "Generate each shot in Kling with the chosen prompts, then download them here." }),
         checklist(d, s, [
@@ -479,7 +513,7 @@
         try {
           const r = await api("POST", `/api/tracks/${d.track.id}/assemble`, {});
           if (r.ran) { toast(r.message); STAGE_OPEN[d.track.id] = null; reload(); return; }
-          out.replaceChildren(el("p", { class: "muted small", text: r.message }),
+          out.replaceChildren(
             el("p", { class: "small" }, "1. Save this as ", el("code", { text: r.listfile }), ":"), el("pre", { text: r.listfile_text }), copyBtn(r.listfile_text, "Copy list"),
             el("p", { class: "small", text: "2. Run these in order:" }), cmdBlock(r.commands));
         } catch (e) { out.replaceChildren(el("p", { class: "error", text: e.message })); }
@@ -515,31 +549,40 @@
         const inp = input({ value: (posts[p.id] && posts[p.id].url) || "", placeholder: "https://… after posting", type: "url" });
         const err = el("div", { class: "field-error" }); err.hidden = true;
         const save = el("button", { class: "btn btn-small", type: "button", onclick: async () => { err.hidden = true;
-          try { const r = await api("POST", `/api/tracks/${d.track.id}/posts`, { platform_id: p.id, url: inp.value }); toast(r.released ? "All platforms have a link. Released." : "Saved."); reload(); } catch (e) { err.textContent = e.message; err.hidden = false; } } }, "Save");
+          const had = !!(posts[p.id] && posts[p.id].url);
+          if (!inp.value.trim() && !had) { err.textContent = "Paste the posted URL first."; err.hidden = false; return; }
+          try { const r = await api("POST", `/api/tracks/${d.track.id}/posts`, { platform_id: p.id, url: inp.value }); toast(r.released ? "All platforms have a link. Released." : inp.value.trim() ? "Link saved." : "Link cleared."); reload(); } catch (e) { err.textContent = e.message; err.hidden = false; } } }, "Save");
         return el("tr", {},
           el("td", {}, el("strong", { text: p.name }), el("br"), p.upload_url ? el("a", { href: p.upload_url, target: "_blank", rel: "noopener", class: "small", text: "Open upload page" }) : el("span", { class: "muted small", text: "No upload URL set (Settings)" })),
           el("td", { class: "small muted", text: p.notes || "" }),
-          el("td", {}, el("div", { class: "row gap" }, inp, save), err));
+          el("td", {}, el("div", { class: "row gap url-row" }, inp, save), err));
       });
       return el("div", {},
         el("p", { text: "One row per enabled platform. Paste the public URL after posting; the track becomes Released when every row has one." }),
-        el("div", { style: "overflow-x:auto" }, el("table", {}, el("thead", {}, el("tr", {}, el("th", { text: "Platform" }), el("th", { text: "Format reminders" }), el("th", { text: "Posted URL" }))), el("tbody", {}, rows))),
+        el("div", { style: "overflow-x:auto" }, el("table", { class: "upload-table" }, el("thead", {}, el("tr", {}, el("th", { text: "Platform" }), el("th", { text: "Format reminders" }), el("th", { text: "Posted URL" }))), el("tbody", {}, rows))),
         d.track.status !== "released" ? el("p", { class: "small muted", text: "Not every platform applies to every track: use Release anyway (top of the page) to finish without filling all rows." }) : null);
     },
   };
 
-  function variantBox(d, v, i, seed, reload) {
+  function variantBox(d, v, i, seed, onChosen, isChosen) {
     const shots = el("details", {}, el("summary", { text: `Shot list (${v.shots.length} shots × ${v.duration} s)` }),
       v.shots.map((sh) => el("div", { class: "draft" }, el("div", { class: "draft-head" }, el("strong", { text: `Shot ${sh.n} — ${sh.moment}` }), copyBtn(sh.prompt)), el("p", { class: "small", text: sh.prompt }))),
       copyBtn(() => v.shots.map((sh) => `Shot ${sh.n}: ${sh.prompt}`).join("\n\n"), "Copy all shots"));
+    const badge = el("span", { class: "badge done", text: "chosen" });
     const use = el("button", { class: "btn btn-primary btn-small", type: "button", onclick: async () => { busy(use, true, "Saving…");
-      try { await api("POST", `/api/tracks/${d.track.id}/prompts/choose`, { variant: v, seed }); toast("Prompt and shot list saved to the track."); reload(); } catch (e) { toast(e.message, true); busy(use, false); } } }, "Use this");
-    return el("div", { class: "draft" },
-      el("div", { class: "draft-head" }, el("strong", { text: `Variant ${i + 1}: ${v.label}` }), copyBtn(v.prompt), use),
+      let r = null;
+      try { r = await api("POST", `/api/tracks/${d.track.id}/prompts/choose`, { variant: v, seed }); } catch (e) { toast(e.message, true); }
+      busy(use, false);  // restore the label first, then mark, so "Chosen" is not overwritten
+      if (r) { toast("Prompt and shot list saved to the track."); onChosen(v.label, r.drafts); } } }, "Use this");
+    const box = el("div", { class: "draft variant", "data-label": v.label },
+      el("div", { class: "draft-head" }, el("strong", { text: `Variant ${i + 1}: ${v.label}` }), badge, copyBtn(v.prompt), use),
       el("p", { text: v.prompt }),
       el("dl", { class: "kv" }, el("dt", { text: "Scene" }), el("dd", { text: v.scene }), el("dt", { text: "Camera" }), el("dd", { text: v.camera }), el("dt", { text: "Lighting" }), el("dd", { text: v.lighting }),
         el("dt", { text: "Style" }), el("dd", { text: v.style }), el("dt", { text: "Mood" }), el("dd", { text: v.mood_words.join(", ") }), el("dt", { text: "Negative" }), el("dd", {}, v.negative, " ", copyBtn(v.negative))),
       shots);
+    box.markChosen = (on) => { box.classList.toggle("chosen", on); badge.hidden = !on; use.textContent = on ? "Chosen" : "Use this"; };
+    box.markChosen(!!isChosen);
+    return box;
   }
 
   // ---- settings ------------------------------------------------------------------

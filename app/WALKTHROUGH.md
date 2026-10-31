@@ -30,7 +30,9 @@ touched. Empty state on first run: "No tracks yet. Add the one you are working o
 the button.
 
 If the database cannot be read you get one sentence with the file path to check instead
-of the lists.
+of the lists. If the database file was missing and had to be recreated while `library/`
+still holds track folders, an amber card at the top says "The database was recreated; N
+track folders in … are not linked to any track." and that nothing on disk was deleted.
 
 ## New track (`#/new`)
 
@@ -59,7 +61,8 @@ collapsed to a single header line you can click. Every expanded stage ends with
 1. **Download from Suno.** Four checklist items (tick boxes are remembered), the Suno
    link if you gave one, a "Downloaded file path" box and **Save path**. If the file does
    not exist you see "File not found: <path>. Check the path and try again." under the
-   box, and nothing is saved.
+   box, and nothing is saved. Pressing Save path with an empty box says "Enter a path
+   first." (or "Path cleared." if there was one before).
 2. **Master in FL Studio.** Checklist (import, trim, EQ, compressor, limiter with the
    ~-14 LUFS note phrased as a common target, export WAV 24/44.1 + MP3 320), mastered
    file path, a mastering-notes box.
@@ -67,7 +70,12 @@ collapsed to a single header line you can click. Every expanded stage ends with
    (pre-filled from Settings). Button reads **Cut clip** when ffmpeg is found: it runs,
    the stage shows "Clip: <path>" with a Copy button and marks itself done. Without
    ffmpeg the button reads **Show ffmpeg command** and gives you the exact command plus a
-   sentence about installing ffmpeg. Bad time → sentence under the Start field.
+   sentence about installing ffmpeg. Bad time → sentence under the Start field. A start
+   past the end of the file → "0:45 is past the end of the file (0:30 long). Pick an
+   earlier start." and nothing is written. A length that runs past the end still cuts, and
+   the toast adds "The clip will be 0:12 long because the file ends there." While ffmpeg
+   runs the button reads "Cutting…" and returns to "Cut clip" when it finishes, success or
+   not.
 4. **Video prompt.** Pickers: style preset (cinematic, anime, VHS / lo-fi, 3D render,
    street documentary, abstract / visualizer, surreal), optional free-text setting,
    aspect ratio, Kling clip length (5 or 10 s), number of shots (defaults to clip length
@@ -77,7 +85,10 @@ collapsed to a single header line you can click. Every expanded stage ends with
    lighting, style, mood, negative prompt with its own Copy), a fold-out **Shot list**
    with one prompt per shot (same character, wardrobe and location; camera and moment
    change) each with Copy, plus "Copy all shots". **Use this** saves that variant and
-   its shot list to the track's Drafts.
+   its shot list to the track's Drafts; the variants stay on screen, the chosen one gets a
+   green "chosen" badge and border, and the Drafts card below updates at once. When you
+   come back to the stage later, a grey line says which variant is chosen and that
+   **Generate (same seed)** brings the variants back.
 5. **Generate video in Kling.** Checklist, then "Found in video/" listing files already
    saved there, then a box for shot paths one per line with **Save paths** (each path is
    checked to exist). If the files are simply in `video/`, you do not need to type paths.
@@ -90,16 +101,19 @@ collapsed to a single header line you can click. Every expanded stage ends with
    appear as labelled boxes you can edit: three titles, short and long description, three
    hashtag sets (YouTube, TikTok, Instagram), the YouTube tag list (always under 500
    characters) and the distributor note. Each has **Copy**. Edits save when you click
-   out of a box.
+   out of a box. This stage is the only place these boxes appear; the Drafts card below
+   just links back here.
 8. **Upload.** A table with one row per platform enabled in Settings: name with an "Open
-   upload page" link, format reminders, a Posted URL box with **Save**. When every row has
-   a URL the track becomes Released and you get a toast saying so. A line reminds you
-   about Release anyway for tracks that do not go everywhere.
+   upload page" link, format reminders, a Posted URL box with **Save**. On a phone-width
+   window each platform becomes its own block with a full-width URL box. When every row
+   has a URL the track becomes Released and you get a toast saying so. Saving an empty box
+   says "Paste the posted URL first." (or "Link cleared." if one was saved). A line
+   reminds you about Release anyway for tracks that do not go everywhere.
 
 Below the stages: **Notes** (a text box with Save), **Assets** (the library folder path,
 what is actually in each of source/ master/ clip/ video/ final/, and recorded paths with
-"file not found" flagged in red), and **Drafts** (chosen prompt and shot list first, then
-everything generated, all editable with Copy).
+"file not found" flagged in red), and **Drafts** (the chosen prompt and shot list,
+editable with Copy, plus one line pointing at stage 7 for titles, descriptions and tags).
 
 ## Settings (`#/settings`)
 
@@ -113,4 +127,6 @@ bottom; validation errors appear as a sentence above it.
 ## Command line
 
 The same actions exist as `python3 -m releaseline new|list|prompts|cut|assemble|meta|
-feedback`; see README. Errors are one line starting with "Error:" and exit code 1.
+feedback`; see README. Errors, including wrong or missing arguments, are one line starting
+with "Error:" and exit code 1; only unexpected failures exit 2. On a Python older than
+3.10 the only output is "ReleaseLine needs Python 3.10 or newer. You have X.Y."
