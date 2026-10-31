@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ReleaseLine</title>
+<link rel="stylesheet" href="/app.css">
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="#/">ReleaseLine</a>
+  <nav class="nav">
+    <a href="#/" data-nav="dashboard">Dashboard</a>
+    <a href="#/new" data-nav="new">New track</a>
+    <a href="#/settings" data-nav="settings">Settings</a>
+  </nav>
+  <span id="ffmpeg-pill" class="pill pill-muted" title="ffmpeg status">checking ffmpeg…</span>
+</header>
+
+<main id="view" class="view" aria-live="polite">
+  <p class="muted">Loading…</p>
+</main>
+
+<footer class="footer">
+  <p class="honesty">ReleaseLine organizes your release steps and drafts text from your inputs. It cannot predict or promise how a release will perform.</p>
+  <button id="feedback-open" class="btn btn-ghost" type="button">Feedback</button>
+</footer>
+
+<div id="feedback-modal" class="modal" hidden>
+  <div class="modal-card" role="dialog" aria-labelledby="feedback-title" aria-modal="true">
+    <h2 id="feedback-title">Leave a note</h2>
+    <p class="muted small">What annoyed you, what was missing, what worked. Saved locally to <code>data/feedback.md</code> with the time and this screen's name.</p>
+    <textarea id="feedback-text" rows="5" placeholder="One or two sentences is plenty."></textarea>
+    <p id="feedback-error" class="error" hidden></p>
+    <div class="row gap">
+      <button id="feedback-send" class="btn btn-primary" type="button">Save note</button>
+      <button id="feedback-cancel" class="btn" type="button">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast" hidden></div>
+<script src="/app.js"></script>
+</body>
+</html>
