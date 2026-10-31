@@ -1,0 +1,82 @@
+# Tempo and key tables
+
+Built from `research/04-radio-ready-conventions.md` and `research/03-artist-vocabulary.md` (accessed 2026-10-31). Key data from auto-detectors is unreliable about major vs. relative minor; treat pitch class as roughly right and the minor label as the intended dark reading. Suno treats a BPM number in the Style field as a bias, not a setting; always pair it with a feel word ("140 BPM, half-time feel", "92 BPM, laid-back swung pocket").
+
+## Radio-ready structure numbers
+
+| Item | Target | Evidence |
+|---|---|---|
+| Runtime | **2:30-3:30**, default 3:00 | Hot 100 #1s averaged 3:29 (2024, 2025); Spotify charting average ~3:00; hip hop shortened ~29 s 2018-2024 |
+| Intro | **4 bars default, 8 max** (about 15 s) | #1-hit intros averaged 14 s (2023-24); hip hop intros ~17 s with first chorus near 0:30; Spotify counts a stream at 30 s |
+| First hook / drop | by **0:30-0:45**, hook-first arcs by ~0:15 | 30-second skip rule; counter-trend: a third of 2025 #1s delayed the chorus past 1:00 (superstar outliers) |
+| Sections | Hook 8 / Verse 16 / Bridge or Break 4-8 / Outro 4-8 bars (straight time); in half-time lanes hooks, pre-hooks, drops and outros double in written bars, verses stay 16 | Template A (72 bars) = 3:08 at 92 BPM |
+| Ending | **Cold / hard stop**; fade-outs have nearly vanished from hits | |
+| Beat-leasing convention | hook x2 at the end, clear hook/verse markers, verse energy <= 6 so a vocal can sit on top | |
+
+## Bars to seconds (4/4; seconds per bar = 240 / BPM)
+
+| BPM | sec/bar | 2 bars | 4 bars | 8 bars | 12 bars | 16 bars | 24 bars | 32 bars |
+|---|---|---|---|---|---|---|---|---|
+| 85 | 2.82 | 0:06 | 0:11 | 0:23 | 0:34 | 0:45 | 1:08 | 1:30 |
+| 92 | 2.61 | 0:05 | 0:10 | 0:21 | 0:31 | 0:42 | 1:03 | 1:23 |
+| 100 | 2.40 | 0:05 | 0:10 | 0:19 | 0:29 | 0:38 | 0:58 | 1:17 |
+| 130 | 1.85 | 0:04 | 0:07 | 0:15 | 0:22 | 0:30 | 0:44 | 0:59 |
+| 140 | 1.71 | 0:03 | 0:07 | 0:14 | 0:21 | 0:27 | 0:41 | 0:55 |
+| 150 | 1.60 | 0:03 | 0:06 | 0:13 | 0:19 | 0:26 | 0:38 | 0:51 |
+| 160 | 1.50 | 0:03 | 0:06 | 0:12 | 0:18 | 0:24 | 0:36 | 0:48 |
+
+Half-time lanes (written 130-160 BPM) feel at half the count: a 16-written-bar hook at 140 BPM is 27 s, the same felt length as an 8-bar hook at 70 BPM.
+
+## Loudness and mastering vocabulary
+
+| Context | Integrated loudness | True peak |
+|---|---|---|
+| Streaming normalization (Spotify, YouTube, Amazon) | -14 LUFS (Apple ~-16) | <= -1 dBTP (Spotify: <= -2 dBTP if louder than -14) |
+| Hip hop releases in practice | -8 to -10 LUFS (some -6 to -8) | -1 dBTP |
+| suno-forge lane targets for a DAW master after stems | trap-pop / phonk -8 to -7; hybrid -9; neo-soul -11 to -10 | -1 dBTP |
+
+Suno has no loudness control; these numbers are for the post-Suno polish. Mix words a text-to-music model responds to (use 1-2 at the end of the Style field, describe the result not the process): punchy drums, glued cohesive mix, wide stereo image, clean low end, tight controlled sub, bright clear top end, well-defined bass, good instrument separation, clean production, loud modern master, polished, radio-ready, balanced full-range, crisp transients. Technical jargon ("sidechain compression at 4:1") is reported as ignored.
+
+## Per-lane tempo and key
+
+| Lane | Written BPM (default) | Felt pulse | Time feel | Keys (generator picks from the first three by default) | Notes |
+|---|---|---|---|---|---|
+| `connor-price` | 130-160 (**140**) | 65-80 | half-time | B minor, F minor, F# minor, C# minor, D minor, G minor | Catalog is bimodal: 130-141 half-time trap or 90-105 straight bounce. `--bpm 105` gives the straight bounce (planner switches to straight time under 120). |
+| `paak-pocket` | 85-100 (**92**) | same | straight, swung 16ths | F minor, D Dorian, C minor, Eb major, C# minor, Ab major, Bb minor | Pocket 86-96; 98-105 leans funk; 78-86 leans lo-fi soul. Minor 7th/9th and Dorian vamps. |
+| `jid-dark` | 130-160 (**146**) | 65-80 | half-time | E minor, C minor, G minor, F minor, C# minor, A minor | Boom-bap variant at 88-95 straight (`--bpm 90`). For a beat switch pair 90 with 135-150 so the felt pulses relate ~2:3 or 1:2. |
+| `phonk-experimental` | 130-150 (**140**) | 65-75 | half-time | C minor, G minor, F minor, D minor, G# minor, B minor | Blog ranges 130-150 for Memphis/OG; measured viral drift hits sit 115-125 (not our lane). Natural minor, occasional Phrygian motif. |
+| `hybrid` | 136-150 (**142**) | 68-75 | half-time | F minor, C minor, D minor, G minor, Bb minor | Phonk drums on the written count; Rhodes/bass pocket on the felt pulse. |
+
+## Most common keys in hip hop and trap (best available evidence; no genre-wide dataset exists)
+
+| Rank (approx.) | Key | Evidence |
+|---|---|---|
+| 1 | F minor | Mixed In Key trap top-10; "Fm-Db-Eb" cited as the stock trap loop |
+| 2 | F# / Gb minor | Mixed In Key top trap key |
+| 3 | C# / Db minor | Frequent across analysed trap-pop and neo-soul catalogs |
+| 4 | G minor | Mixed In Key: ~60% of trap sits on F or G |
+| 5 | E minor | Unison; several analysed hybrids |
+| 6 | B minor | Unison; analysed trap-pop and phonk |
+| 7 | A minor | Hooktheory: most popular minor key pop-wide |
+| 8 | Bb / A# minor | Mixed In Key sample |
+| low | G# minor | Rare pop-wide but common in phonk and trap by ear (unverified) |
+
+## Energy arcs (as implemented in `lib/arrange.js`)
+
+| Arc | Sections (nominal bars, straight-time) | Energy 1-10 | Best for |
+|---|---|---|---|
+| `flat-bang` | intro 4, hook 8, verse 16, hook 8, verse 16, break 8, hook 8, hook/final 8, outro 4 | 4-9-6-9-7-3-10-10-2 | Hook lands immediately after a short intro; energy stays high with a break for contrast and a doubled hook at the end. Best for radio and playlists. |
+| `build-release` | intro 8, verse 12, pre 4, hook 8, verse 16, pre 4, hook 8, bridge 8, hook/final 8, outro 4 | 3-5-7-9-6-8-10-4-10-2 | Classic verse-to-hook lift with pre-hook risers; hook by ~0:40. Best when the hook needs tension before it hits. |
+| `slow-burn` | intro 8, verse/sparse 16, hook/medium 8, verse 16, hook 8, break 4, hook/final 8, outro 8 | 2-4-6-6-8-3-10-2 | Sparse start, each hook adds layers; the last hook is the biggest. Best for mood-first and sync-leaning instrumentals. |
+| `stop-start` | intro 4, hook 8, verse/mutes 16, hook 8, break/drums-only 4, verse/mutes 16, drop 8, hook/final 8, outro/hard-stop 2 | 5-9-6-9-3-7-10-10-1 | Hook first, then mutes, drum-only breaks and a drop; maximum arrangement contrast. Best for bouncy trap-pop and phonk. |
+| `beat-switch` | intro 4, hook 8, verse 16, hook 8, switch 4, verse/part-b 16, hook/part-b 8, hook/final 8, outro 4 | 4-8-6-9-3-7-10-10-2 | Part A establishes the hook; a 4-bar switch flips drums and key feel into Part B. Best for dark boom-bap/trap hybrids and hybrids across lanes. |
+
+Half-time scaling doubles hook, drop, pre-chorus, beat-switch and outro bars; the planner then trims or extends verses and hook repeats to land in 2:30-3:30 with the intro capped at 8 bars and the first hook by 0:45.
+
+| Use case | Arc |
+|---|---|
+| Radio | build-release or flat-bang; peak on the final hook; cold ending |
+| Playlist / algorithmic | flat-bang; compact map; 2:30-3:00 |
+| Sync / library | slow-burn or stop-start; stepped plateaus every 8 bars; bar-aligned drop-outs as edit points; deliver alt mixes (the safer / weirder variations) |
+| Album-style / long form | beat-switch |
+| Beat-leasing | flat-bang or build-release with the doubled final hook |

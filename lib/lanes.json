@@ -1,0 +1,1150 @@
+{
+  "_comment": "Lane definitions for suno-forge. Descriptor pools are ordered by priority: earlier items are more characteristic and are selected more often. Real artist names NEVER appear here (not even in labels); the artist-to-lane mapping lives only in README.md and research/.",
+  "lanes": {
+    "connor-price": {
+      "label": "Bouncy playful trap-pop",
+      "description": "Bouncy, playful trap-pop instrumental: tight syncopated drums, bright synth plucks and bells, stop-start arrangement with mutes and drops, crisp clean modern mix.",
+      "bpm": {
+        "min": 130,
+        "max": 160,
+        "default": 140,
+        "halfTime": true,
+        "note": "Written half-time trap count (felt 65-80). Analysed tracks in this lane sit at 130-141 half-time or 100-112 straight-time; use --bpm 105 for the straight bounce (the planner switches to straight time under 120)."
+      },
+      "keys": [
+        "B minor",
+        "F minor",
+        "F# minor",
+        "C# minor",
+        "D minor",
+        "G minor"
+      ],
+      "defaultArc": "stop-start",
+      "model": {
+        "pick": "default",
+        "rationale": "Needs crisp transient detail, clean stereo plucks and tight drum programming; the flagship model has the cleanest mix and follows stop-start structure cues best.",
+        "wild": "Try the experimental/wild variant when the result is too generic pop and you want odd fills, unexpected synth timbres or playful rhythmic turnarounds."
+      },
+      "sliders": {
+        "weirdness": 30,
+        "styleInfluence": 70,
+        "weirdnessWhy": "Low-moderate: keep the drums tight and the hook predictable; raise only if the plucks feel stock.",
+        "styleInfluenceWhy": "High: the Style field carries the whole identity (bounce, plucks, stop-start) and must be followed closely."
+      },
+      "pools": {
+        "genre": [
+          "bouncy trap-pop instrumental",
+          "playful pop-rap beat",
+          "upbeat hip hop instrumental",
+          "modern pop-trap",
+          "feel-good bounce"
+        ],
+        "drums": [
+          "tight syncopated trap drums",
+          "crisp snappy snare",
+          "finger snaps and claps",
+          "punchy snappy snare",
+          "crisp rolling hi-hats with triplet stutters",
+          "bouncy off-beat kick pattern",
+          "clap and rimshot layers",
+          "stop-start drum mutes",
+          "swung 16th hi-hats",
+          "snare on the and-of-4 pickups"
+        ],
+        "bass": [
+          "clean 808 bass with glides",
+          "clean round 808 bass",
+          "short tight sub hits",
+          "bouncy sub bass that follows the kick"
+        ],
+        "harmony": [
+          "bright synth plucks",
+          "music-box bells",
+          "major-key hooky melody",
+          "sparkly bell lead",
+          "marimba and kalimba plucks",
+          "staccato chord stabs",
+          "whistle-like synth lead",
+          "pitched percussion melody",
+          "major 7th chord stabs"
+        ],
+        "texture": [
+          "vinyl stop effects",
+          "riser into the drop",
+          "white-noise sweeps",
+          "finger snaps",
+          "cartoonish FX hits",
+          "tape stop before the hook",
+          "pitch-bend plucks"
+        ],
+        "mood": [
+          "playful",
+          "cheeky",
+          "confident",
+          "sunny",
+          "mischievous",
+          "bouncy",
+          "energetic",
+          "fun"
+        ],
+        "mix": [
+          "clean modern mix",
+          "bright top end",
+          "crisp transients",
+          "wide stereo",
+          "punchy",
+          "radio-ready loud master",
+          "polished",
+          "tight low end"
+        ],
+        "wild": [
+          "glitchy micro-edits",
+          "toy piano",
+          "8-bit chiptune blips",
+          "reversed pluck swells",
+          "polyrhythmic percussion layer",
+          "beatbox-style percussion hits"
+        ]
+      },
+      "safer": [
+        "bouncy trap-pop instrumental",
+        "tight syncopated trap drums",
+        "punchy snappy snare",
+        "bright synth plucks",
+        "clean round 808 bass",
+        "playful",
+        "clean modern mix",
+        "radio-ready"
+      ],
+      "exclude": [
+        "drift phonk",
+        "EDM build",
+        "dubstep",
+        "lo-fi hiss",
+        "dark",
+        "aggressive distortion",
+        "slow ballad",
+        "orchestral"
+      ],
+      "cues": {
+        "intro": [
+          "bright synth pluck motif alone",
+          "finger snaps and a filtered hi-hat",
+          "no kick yet",
+          "short riser into the hook",
+          "pitch-bend pluck",
+          "muted chord stabs"
+        ],
+        "hook": [
+          "full drums in",
+          "bouncy off-beat kick",
+          "bright pluck melody up front",
+          "808 locks to the kick",
+          "snappy snare with claps",
+          "hi-hat triplet stutters",
+          "catchy whistle-like lead doubles the plucks"
+        ],
+        "hook_final": [
+          "biggest hook",
+          "extra percussion layer",
+          "pluck melody up an octave",
+          "full stereo width",
+          "snare fills every 4 bars",
+          "drums cut for the last beat then slam back"
+        ],
+        "verse": [
+          "half the elements drop out",
+          "kick and snare only with sparse plucks",
+          "stop-start mutes on bar 4 and 8",
+          "swung hats",
+          "subtle sub pulse",
+          "staccato chord stabs on off-beats"
+        ],
+        "verse_mutes": [
+          "full stop on the last beat of every 4th bar",
+          "beat drops out for one bar then returns",
+          "kick-and-snare-only bars",
+          "plucks answer the drums in call and response",
+          "tape stop into bar 16"
+        ],
+        "pre": [
+          "drums thin to hats only",
+          "riser builds",
+          "filter opens over 4 bars",
+          "snare roll into the hook"
+        ],
+        "bridge": [
+          "drums out",
+          "plucks and pad only",
+          "half-time feel",
+          "slow filter sweep",
+          "snaps keep time"
+        ],
+        "break": [
+          "drums only",
+          "percussion-only break",
+          "hi-hat stutter pattern",
+          "one bar of silence before the drop"
+        ],
+        "break_drums-only": [
+          "drums only",
+          "kick snare and claps isolated",
+          "quick fills",
+          "silence on the last beat"
+        ],
+        "drop": [
+          "hard drop",
+          "bouncy full drums",
+          "808 slides",
+          "plucks and bells stacked",
+          "snare on every 2 and 4 with rimshot layers"
+        ],
+        "switch": [
+          "beat switch",
+          "new drum pattern",
+          "tempo feel flips to straight time",
+          "plucks replaced by bells"
+        ],
+        "outro": [
+          "drums thin out",
+          "pluck motif repeats and fades",
+          "final snap",
+          "clean hard stop"
+        ],
+        "outro_hard-stop": [
+          "everything stops together on the downbeat",
+          "one last pluck ring-out",
+          "hard stop"
+        ]
+      },
+      "listenFor": [
+        "Does the beat actually stop and restart on the mute bars, or does Suno smooth them over? If smoothed, add 'stop-start' earlier in the Style field and put 'full stop' cues in more sections.",
+        "Plucks should be bright and forward; if they are buried, move 'bright synth plucks' to the second position in Style.",
+        "Hi-hats should bounce and stutter, not run as a flat 16th grid; if rigid, add 'swung 16th hi-hats' and raise Weirdness by 10.",
+        "Watch for Suno adding sung hooks or ad-libs on bouncy pop beats; confirm the Instrumental toggle is on and the Exclude field lists vocals, singing, rap, ad-libs."
+      ]
+    },
+    "paak-pocket": {
+      "label": "Live swung neo-soul funk hip hop",
+      "description": "Live-drummer neo-soul/funk hip hop instrumental: swung drums played behind the beat, Rhodes and Wurlitzer chords, fingered bass guitar, breakbeat feel, warm analog saturation.",
+      "bpm": {
+        "min": 85,
+        "max": 100,
+        "default": 92,
+        "halfTime": false,
+        "note": "Straight-time, swung 16ths. Sweet spot 86-96; 98-105 leans funk; 78-86 leans lo-fi soul."
+      },
+      "keys": [
+        "F minor",
+        "D Dorian",
+        "C minor",
+        "Eb major",
+        "C# minor",
+        "Ab major",
+        "Bb minor"
+      ],
+      "defaultArc": "build-release",
+      "model": {
+        "pick": "default",
+        "rationale": "Live-sounding drums and real-instrument timbres (Rhodes, bass guitar, horns) need the most realistic acoustic rendering and the loosest timing feel; the flagship model renders swing and room most convincingly.",
+        "wild": "Try the experimental/wild variant when the groove comes back too clean and quantized, or you want odd meters, drunken fills and tape-warped chords."
+      },
+      "sliders": {
+        "weirdness": 45,
+        "styleInfluence": 60,
+        "weirdnessWhy": "Mid: enough looseness to humanize the drums and chord voicings without derailing the groove; the pocket comes from the vocabulary, not the slider.",
+        "styleInfluenceWhy": "Moderate-high: follow the instrument list closely but let the model improvise the pocket."
+      },
+      "pools": {
+        "genre": [
+          "live neo-soul hip hop instrumental",
+          "funk breaks",
+          "soul-sampling boom bap",
+          "West Coast funk-soul groove",
+          "jazzy hip hop",
+          "lo-fi soul"
+        ],
+        "drums": [
+          "live drum kit played behind the beat",
+          "laid-back swung pocket",
+          "late behind-the-beat snare",
+          "ghost-note hi-hats",
+          "swung loose pocket",
+          "drunk swing",
+          "ghost-note snare",
+          "unquantized human timing",
+          "tight dry snare with brushes-light touch",
+          "shuffled hi-hats",
+          "breakbeat feel",
+          "cross-stick rimshots",
+          "lazy kick pushes and pulls",
+          "open hi-hat barks"
+        ],
+        "bass": [
+          "fingerstyle electric bass guitar",
+          "warm electric bass with slides",
+          "syncopated funk bass line",
+          "muted palm bass"
+        ],
+        "harmony": [
+          "Rhodes electric piano with tremolo",
+          "Rhodes chords",
+          "Wurlitzer",
+          "minor 9th and major 7th voicings",
+          "clavinet stabs",
+          "funk guitar chucks",
+          "horn section stabs",
+          "soul organ swells",
+          "jazzy chord extensions",
+          "Dorian groove"
+        ],
+        "texture": [
+          "warm tape saturation",
+          "vinyl crackle",
+          "room mic ambience",
+          "tambourine on the swung 8ths",
+          "congas and shaker",
+          "lo-fi sampled soul chops"
+        ],
+        "mood": [
+          "laid-back",
+          "sunny",
+          "smooth",
+          "groovy",
+          "warm",
+          "late-night",
+          "head-nod"
+        ],
+        "mix": [
+          "warm analog mix",
+          "glued",
+          "punchy but relaxed",
+          "wide stereo Rhodes",
+          "clean low end",
+          "mastered loud",
+          "vintage console warmth"
+        ],
+        "wild": [
+          "odd-meter turnaround",
+          "polyrhythmic percussion",
+          "psychedelic tape flutter",
+          "detuned Rhodes",
+          "half-speed breakdown",
+          "live crowd room noise"
+        ]
+      },
+      "safer": [
+        "live neo-soul hip hop instrumental",
+        "live drum kit played behind the beat",
+        "swung loose pocket",
+        "Rhodes chords",
+        "fingered bass guitar",
+        "warm tape saturation",
+        "laid-back",
+        "warm analog mix"
+      ],
+      "exclude": [
+        "trap hi-hats",
+        "EDM",
+        "quantized drum machine",
+        "808 trap bass",
+        "autotune",
+        "synthwave",
+        "metal",
+        "smooth jazz elevator"
+      ],
+      "cues": {
+        "intro": [
+          "Rhodes chord loop alone",
+          "vinyl crackle",
+          "hi-hat count-in with ghost notes",
+          "bass slides in on bar 3",
+          "no full kit yet",
+          "warm tape hiss"
+        ],
+        "hook": [
+          "full live kit drops in",
+          "kick behind the beat",
+          "ghost-note snare",
+          "fingered bass locks the groove",
+          "Rhodes comping",
+          "horn stab answers every 4 bars",
+          "tambourine on swung 8ths"
+        ],
+        "hook_final": [
+          "biggest groove",
+          "horn section joins",
+          "organ swells",
+          "drummer opens the hi-hats",
+          "fills every 4 bars",
+          "bass walks up into the final chord"
+        ],
+        "verse": [
+          "drums simplify to kick snare and shuffled hats",
+          "Rhodes voicings open up",
+          "bass plays sparse",
+          "clavinet chucks enter at bar 9",
+          "ghost notes stay",
+          "guitar chucks on the off-beats"
+        ],
+        "verse_mutes": [
+          "drums drop out every 8th bar",
+          "bass and Rhodes carry one bar alone",
+          "drummer re-enters with a fill"
+        ],
+        "pre": [
+          "snare build with brushes",
+          "chords rise",
+          "bass walks up",
+          "hi-hat opens"
+        ],
+        "bridge": [
+          "drums out",
+          "Rhodes and bass only",
+          "half-time feel",
+          "chords modulate up",
+          "congas enter"
+        ],
+        "break": [
+          "drum break",
+          "live kit solo with ghost notes",
+          "breakbeat fills",
+          "bass drops out"
+        ],
+        "break_drums-only": [
+          "drum break",
+          "live kit only",
+          "loose fills",
+          "kick pushes behind the beat"
+        ],
+        "drop": [
+          "full band returns",
+          "horns stacked",
+          "bass guitar riff up front",
+          "funk guitar"
+        ],
+        "switch": [
+          "beat switch",
+          "tempo feel halves",
+          "drummer moves to a breakbeat pattern",
+          "new Rhodes progression"
+        ],
+        "outro": [
+          "band thins to drums and bass",
+          "Rhodes rings out",
+          "drummer plays out with brushes",
+          "tape slows slightly",
+          "final chord with room reverb"
+        ],
+        "outro_hard-stop": [
+          "everyone stops on the downbeat",
+          "Rhodes chord rings",
+          "hard stop"
+        ]
+      },
+      "listenFor": [
+        "The kick and snare should feel pulled back behind the grid; if the drums sound like a drum machine, move 'live drum kit played behind the beat' and 'drunk swing' to positions 2-3 in Style and raise Weirdness to 55-60.",
+        "Rhodes should sound like an electric piano, not a synth pad; if it is pad-like, add 'Wurlitzer' and 'clavinet' and remove 'pad'-adjacent words.",
+        "Bass should be fingered guitar, not an 808; if it is a sub, keep '808 trap bass' in Exclude and add 'muted palm bass'.",
+        "Suno likes to add hummed or sung melodies on soul grooves; make sure Exclude lists humming, vocals, singing, scat."
+      ]
+    },
+    "jid-dark": {
+      "label": "Dense dark boom-bap/trap hybrid",
+      "description": "Dense, dark boom-bap/trap hybrid instrumental: pitched chopped sample textures, odd drum fills and switch-ups, aggressive busy hi-hats, cinematic strings and choir pads.",
+      "bpm": {
+        "min": 130,
+        "max": 160,
+        "default": 146,
+        "halfTime": true,
+        "note": "Written half-time trap tempo (felt 70-80). For a boom-bap-first feel use --bpm 90 which switches to straight time."
+      },
+      "keys": [
+        "E minor",
+        "C minor",
+        "G minor",
+        "F minor",
+        "C# minor",
+        "A minor"
+      ],
+      "defaultArc": "beat-switch",
+      "model": {
+        "pick": "default",
+        "rationale": "Dense layered arrangements, sample-chop textures and beat switches need the model with the best structural adherence and the clearest low-mid separation so strings, chops and 808 do not blur.",
+        "wild": "Try the experimental/wild variant for odd fills, unexpected time-feel changes and stranger chop textures; this lane benefits most from the wild variant."
+      },
+      "sliders": {
+        "weirdness": 50,
+        "styleInfluence": 65,
+        "weirdnessWhy": "Moderate-high: odd fills, off-kilter chops and switch-ups are the point of this lane; stay under 60 so the beat switch stays on plan.",
+        "styleInfluenceWhy": "Moderate-high: the Style field defines the hybrid; too low and it collapses into generic trap."
+      },
+      "pools": {
+        "genre": [
+          "dark boom-bap trap hybrid instrumental",
+          "gritty East Coast meets Southern trap",
+          "cinematic underground hip hop",
+          "menacing hip hop beat",
+          "experimental boom bap"
+        ],
+        "drums": [
+          "aggressive busy hi-hats with rapid triplet rolls",
+          "heavy boom-bap snare over trap hats",
+          "rolling triplet hi-hats",
+          "odd fills and dropped beats",
+          "hard knocking boom-bap kick and snare",
+          "odd drum fills and switch-ups",
+          "off-grid swung drums",
+          "layered trap and breakbeat drums",
+          "snare rushes",
+          "stuttering kick patterns",
+          "crunchy sampled drum breaks",
+          "half-time pocket"
+        ],
+        "bass": [
+          "distorted 808 bass",
+          "sliding sub bass",
+          "gritty bass with overdrive",
+          "808 slides into the downbeat"
+        ],
+        "harmony": [
+          "chopped pitched-down soul sample",
+          "cinematic string ostinato",
+          "pitched-down chopped sample textures",
+          "cinematic strings",
+          "dark synth pad",
+          "eerie music-box melody",
+          "detuned piano chops",
+          "sinister minor-key motif",
+          "orchestral staccato strings",
+          "reversed sample swells",
+          "ominous brass hits"
+        ],
+        "texture": [
+          "vinyl crackle",
+          "tape warble",
+          "filtered sample loop",
+          "siren-like synth",
+          "glitch stutters",
+          "sub drops",
+          "record scratch stabs"
+        ],
+        "mood": [
+          "dark",
+          "menacing",
+          "tense",
+          "cinematic",
+          "paranoid",
+          "gritty",
+          "relentless",
+          "ominous"
+        ],
+        "mix": [
+          "dense but clear mix",
+          "dense mid-heavy saturated mix",
+          "heavy low end",
+          "aggressive loud master",
+          "punchy transients",
+          "wide strings narrow drums",
+          "controlled sub",
+          "gritty saturation"
+        ],
+        "wild": [
+          "polymetric hi-hat pattern",
+          "beat switch into double-time",
+          "tape-stop chop edits",
+          "dissonant string clusters",
+          "half-speed breakdown",
+          "free-time drum fill section"
+        ]
+      },
+      "safer": [
+        "dark boom-bap trap hybrid instrumental",
+        "hard knocking kick and snare",
+        "aggressive busy hi-hats",
+        "distorted 808 bass",
+        "pitched-down chopped sample textures",
+        "cinematic strings",
+        "dark",
+        "dense but clear mix"
+      ],
+      "exclude": [
+        "drift phonk",
+        "EDM build",
+        "cinematic trailer",
+        "happy",
+        "major key pop",
+        "smooth jazz",
+        "lo-fi chill",
+        "dubstep"
+      ],
+      "cues": {
+        "intro": [
+          "filtered pitched-down sample chop alone",
+          "vinyl crackle",
+          "strings swell underneath",
+          "no drums yet",
+          "reversed cymbal into the hook",
+          "eerie music-box motif"
+        ],
+        "hook": [
+          "hard knocking drums in",
+          "distorted 808 slides",
+          "aggressive triplet hi-hat rolls",
+          "pitched chop melody up front",
+          "strings stab on the 1",
+          "dark synth pad under everything",
+          "snare rush at bar 8"
+        ],
+        "hook_final": [
+          "biggest and densest hook",
+          "strings and synth pad stacked",
+          "double-time hi-hats",
+          "808 distortion pushed",
+          "fills every 2 bars",
+          "sub drop into the last bar"
+        ],
+        "verse": [
+          "drums simplify",
+          "kick and snare knock with sparse hats",
+          "chop melody filtered",
+          "strings drop out",
+          "808 holds the low end",
+          "odd fill every 4 bars",
+          "hi-hats switch pattern at bar 9"
+        ],
+        "verse_mutes": [
+          "drums stop on the last bar of each 8",
+          "chop plays alone for one bar",
+          "drums return with a snare rush"
+        ],
+        "verse_part-b": [
+          "new drum pattern",
+          "boom-bap breakbeat feel",
+          "swung off-grid kick",
+          "chop pitched up",
+          "strings replaced by detuned piano"
+        ],
+        "pre": [
+          "hi-hats roll faster",
+          "strings rise",
+          "drums thin to kick only",
+          "riser"
+        ],
+        "bridge": [
+          "drums out",
+          "strings and synth pad alone",
+          "chop reversed",
+          "tension build",
+          "808 re-enters on bar 7"
+        ],
+        "break": [
+          "drum break",
+          "crunchy sampled drums only",
+          "odd fills",
+          "record scratch stabs"
+        ],
+        "break_drums-only": [
+          "drums only",
+          "snare rushes",
+          "kick stutters",
+          "hats stop then slam"
+        ],
+        "drop": [
+          "hard drop",
+          "distorted 808 slides",
+          "strings staccato",
+          "string swells",
+          "busy hats"
+        ],
+        "switch": [
+          "beat switch",
+          "tempo feel flips to straight boom bap",
+          "new chop sample",
+          "drums cut for two bars then new pattern slams in",
+          "key shifts up a minor third"
+        ],
+        "hook_part-b": [
+          "part B hook",
+          "boom-bap drums with trap hats layered",
+          "new chop melody",
+          "brass hits",
+          "808 slides return"
+        ],
+        "outro": [
+          "drums drop out",
+          "strings and chop ring out",
+          "vinyl crackle",
+          "sub drop",
+          "music-box motif alone",
+          "hard stop"
+        ],
+        "outro_hard-stop": [
+          "everything stops on the downbeat",
+          "one chop ring-out",
+          "hard stop"
+        ]
+      },
+      "listenFor": [
+        "The chop should sound like a pitched, sliced sample, not a sung lead; if Suno renders it as a vocal melody, swap 'pitched-down chopped sample textures' for 'detuned piano chops' and add 'vocal melody' to Exclude.",
+        "Hi-hats should be busy with rolls and pattern switches; if flat, add 'snare rushes' and 'hi-hats switch pattern at bar 9' cues.",
+        "The beat switch should be audible as a real pattern change; if not, make the switch section 8 bars and put 'beat switch' in the Style field too.",
+        "Strings can take over and turn it into a trailer cue; keep 'cinematic trailer' in Exclude and keep strings behind the drums in cue ordering."
+      ]
+    },
+    "phonk-experimental": {
+      "label": "Memphis-rooted original phonk",
+      "description": "Original/experimental phonk instrumental: Memphis-style cowbell patterns, distorted saturated 808s, tape hiss and vinyl crackle, chopped-and-screwed sample textures used as instruments, lo-fi jazz/soul samples, off-grid swing, dark minor keys. Not drift phonk.",
+      "bpm": {
+        "min": 130,
+        "max": 150,
+        "default": 140,
+        "halfTime": true,
+        "note": "Written 130-150 half-time (felt 65-75). Classic SoundCloud phonk sits at 130-140; slower feels more screwed."
+      },
+      "keys": [
+        "C minor",
+        "G minor",
+        "F minor",
+        "D minor",
+        "G# minor",
+        "B minor"
+      ],
+      "defaultArc": "stop-start",
+      "model": {
+        "pick": "default",
+        "rationale": "Lo-fi grit, tape hiss and chopped textures are easy to render but the model must hold the swing and keep the cowbell audible in a distorted mix; the flagship model handles this with the best control.",
+        "wild": "Try the experimental/wild variant often here: this lane thrives on off-grid drums, stranger chops and tape-warped pitch, which the wild variant leans into."
+      },
+      "sliders": {
+        "weirdness": 55,
+        "styleInfluence": 55,
+        "weirdnessWhy": "Upper end of the usable hip hop range: off-grid swing, screwed textures and grit are the goal, but above 60 Suno starts drifting tempo and structure.",
+        "styleInfluenceWhy": "Moderate: hold the Memphis palette but let the model get experimental with chops and texture."
+      },
+      "pools": {
+        "genre": [
+          "experimental phonk instrumental",
+          "Memphis rap beat",
+          "lo-fi phonk",
+          "chopped and screwed hip hop",
+          "underground Southern hip hop",
+          "dark lo-fi trap"
+        ],
+        "drums": [
+          "Memphis cowbell pattern",
+          "808 cowbell accents riding the off-beats",
+          "slow swung half-time groove",
+          "808 drum machine kick and snare",
+          "off-grid swung drums",
+          "dusty drum machine kick and snare",
+          "lazy swung hi-hats",
+          "cowbell riding the off-beats",
+          "crunchy lo-fi snare",
+          "sparse half-time groove",
+          "stuttering kick",
+          "unquantized drum machine feel"
+        ],
+        "bass": [
+          "distorted long-decay 808 bass",
+          "pitched 808 bassline",
+          "blown-out sub bass",
+          "808 slides"
+        ],
+        "harmony": [
+          "chopped and screwed sample textures used as instruments",
+          "slowed jazz piano sample loop",
+          "pitched-down slowed sample chops",
+          "lo-fi jazz piano sample",
+          "dusty soul sample loop",
+          "eerie detuned keys",
+          "haunting minor-key melody",
+          "dark bell melody",
+          "slowed Rhodes sample"
+        ],
+        "texture": [
+          "tape hiss",
+          "vinyl crackle",
+          "bitcrushed 12-bit grit",
+          "cassette warble",
+          "pitched-down sample stabs as percussion",
+          "reversed reverb tails",
+          "low-pass filtered sample",
+          "bit-crushed texture",
+          "tape stop"
+        ],
+        "mood": [
+          "dark",
+          "haunted",
+          "hazy",
+          "murky",
+          "menacing",
+          "nocturnal",
+          "lo-fi",
+          "hypnotic"
+        ],
+        "mix": [
+          "lo-fi saturated mix",
+          "murky low-passed mix with a controlled clean sub",
+          "gritty",
+          "heavy distorted low end",
+          "narrow mono-ish drums",
+          "loud and crunchy master",
+          "cassette-degraded top end",
+          "punchy despite the grit"
+        ],
+        "wild": [
+          "tape-speed wobble",
+          "polyrhythmic cowbell",
+          "broken-beat drum programming",
+          "detuned sample pitch drift",
+          "half-speed collapse section",
+          "free-time intro"
+        ]
+      },
+      "safer": [
+        "experimental phonk instrumental",
+        "Memphis cowbell pattern",
+        "off-grid swung drums",
+        "distorted saturated 808 bass",
+        "chopped and screwed sample textures",
+        "tape hiss",
+        "dark",
+        "lo-fi saturated mix"
+      ],
+      "exclude": [
+        "drift phonk",
+        "Brazilian funk",
+        "EDM build",
+        "sidechain pump",
+        "cowbell lead melody",
+        "clean modern mix",
+        "house",
+        "dubstep"
+      ],
+      "excludeVocalStyle": "lead",
+      "cues": {
+        "intro": [
+          "tape hiss and vinyl crackle",
+          "slowed sample chop plays alone",
+          "pitched-down texture drifts",
+          "cowbell enters on bar 3",
+          "no 808 yet",
+          "tape stop into the hook"
+        ],
+        "hook": [
+          "distorted 808 slams in",
+          "Memphis cowbell pattern rides the off-beats",
+          "off-grid swung kick and snare",
+          "screwed sample chop melody",
+          "lazy hi-hats",
+          "crunchy snare on 2 and 4",
+          "808 slides"
+        ],
+        "hook_final": [
+          "biggest and dirtiest hook",
+          "808 distortion pushed",
+          "cowbell doubles",
+          "chop pitched down further",
+          "tape wobble",
+          "drums cut for the last beat then slam back"
+        ],
+        "verse": [
+          "808 and kick carry it",
+          "cowbell drops to a sparse pattern",
+          "sample filtered low",
+          "snare hits only every other bar",
+          "swung hats",
+          "chop stutter at bar 8"
+        ],
+        "verse_mutes": [
+          "full stop on the last beat of every 4th bar",
+          "cowbell alone for one bar",
+          "808 returns with a slide",
+          "tape stop then slam back"
+        ],
+        "pre": [
+          "hats double up",
+          "chop rises in pitch",
+          "808 cuts out",
+          "cowbell builds"
+        ],
+        "bridge": [
+          "drums out",
+          "slowed sample and tape hiss only",
+          "pitch drifts down",
+          "cowbell pattern alone",
+          "reversed reverb swell"
+        ],
+        "break": [
+          "drums only",
+          "cowbell and dusty kick break",
+          "lo-fi snare fills",
+          "silence on the last beat"
+        ],
+        "break_drums-only": [
+          "drums only",
+          "Memphis cowbell and kick isolated",
+          "crunchy snare fills",
+          "one bar of tape hiss silence"
+        ],
+        "drop": [
+          "hard drop",
+          "blown-out 808",
+          "cowbell pattern doubles",
+          "screwed chop",
+          "stuttering kick"
+        ],
+        "switch": [
+          "beat switch",
+          "tempo feel drags slower",
+          "new slowed sample",
+          "cowbell pattern flips",
+          "808 pitched down"
+        ],
+        "outro": [
+          "808 drops out",
+          "cowbell and chop ring out",
+          "tape slows to a stop",
+          "vinyl crackle alone",
+          "hard stop"
+        ],
+        "outro_hard-stop": [
+          "tape stop",
+          "everything cuts on the downbeat",
+          "hiss tail",
+          "hard stop"
+        ]
+      },
+      "listenFor": [
+        "Cowbell should be a rhythmic pattern in the drums, not a lead melody; a cowbell melody means it drifted into drift phonk. Keep 'cowbell lead melody' and 'drift phonk' in Exclude and move 'Memphis cowbell pattern' to position 2 in Style.",
+        "The 808 should be distorted and saturated but still readable; if it is a clean sine sub, add 'blown-out sub bass' early in Style.",
+        "Chopped textures should read as sliced, slowed samples; if Suno sings actual words, add 'rapping, lyrics, lead vocals, singing' to Exclude (already default) and swap 'pitched-down sample stabs' for 'detuned keys'.",
+        "Drums should feel dragged and off-grid; if they are rigid, add 'unquantized drum machine feel' to Style and raise Weirdness by 10."
+      ]
+    },
+    "hybrid": {
+      "label": "Phonk drums + neo-soul pocket + trap-pop brightness",
+      "description": "Hybrid instrumental: Memphis-style cowbell and distorted 808 drums with off-grid swing, under live-feel neo-soul Rhodes chords and fingered bass pocket, topped with bright synth plucks and a clean punchy stop-start arrangement.",
+      "bpm": {
+        "min": 136,
+        "max": 150,
+        "default": 142,
+        "halfTime": true,
+        "note": "Written half-time so the phonk drums read correctly (felt 68-75); the Rhodes/bass pocket sits on the felt pulse."
+      },
+      "keys": [
+        "F minor",
+        "C minor",
+        "D minor",
+        "G minor",
+        "Bb minor"
+      ],
+      "defaultArc": "beat-switch",
+      "model": {
+        "pick": "default",
+        "rationale": "Genre blends need the model with the best multi-genre coherence so the lo-fi drums, warm Rhodes and bright plucks share one mix instead of switching genres mid-song.",
+        "wild": "Try the experimental/wild variant when the blend comes back as three songs stitched together; the wild variant tends to fuse unusual combinations more organically."
+      },
+      "sliders": {
+        "weirdness": 50,
+        "styleInfluence": 60,
+        "weirdnessWhy": "Mid-high: a three-way blend needs some freedom to fuse, but not so much that it drifts into a fourth genre.",
+        "styleInfluenceWhy": "Moderate-high: keep the specified instruments but allow re-balancing between them."
+      },
+      "pools": {
+        "genre": [
+          "phonk neo-soul hybrid instrumental",
+          "lo-fi Memphis drums with live funk pocket",
+          "bright trap-soul beat",
+          "experimental hip hop instrumental"
+        ],
+        "drums": [
+          "Memphis cowbell pattern",
+          "808 cowbell accents",
+          "off-grid swung kick and snare behind the beat",
+          "dusty drum machine with live-drummer swing",
+          "ghost-note snare",
+          "lazy swung hi-hats",
+          "stop-start drum mutes",
+          "crunchy lo-fi snare"
+        ],
+        "bass": [
+          "distorted 808 under a fingered bass guitar",
+          "808 slides",
+          "warm electric bass riff"
+        ],
+        "harmony": [
+          "Rhodes chords with minor 9th voicings",
+          "bright synth plucks on top",
+          "music-box bells",
+          "Wurlitzer comping",
+          "sparkly bell lead",
+          "clavinet stabs",
+          "major 7th chord stabs over a minor bass"
+        ],
+        "texture": [
+          "tape hiss",
+          "vinyl crackle",
+          "white-noise sweeps",
+          "tape stop before the hook",
+          "tambourine on swung 8ths",
+          "pitched-down sample texture"
+        ],
+        "mood": [
+          "playful but hazy",
+          "sunny and dark at once",
+          "groovy",
+          "confident",
+          "nocturnal",
+          "head-nod"
+        ],
+        "mix": [
+          "clean punchy master with lo-fi drum texture",
+          "warm low mids bright top",
+          "wide plucks narrow drums",
+          "glued",
+          "radio-ready loud",
+          "tight distorted low end"
+        ],
+        "wild": [
+          "beat switch into straight-time funk",
+          "polyrhythmic cowbell against swung hats",
+          "detuned Rhodes",
+          "half-speed collapse",
+          "glitchy pluck edits"
+        ]
+      },
+      "safer": [
+        "phonk neo-soul hybrid instrumental",
+        "Memphis cowbell pattern",
+        "off-grid swung kick and snare behind the beat",
+        "distorted 808 under a fingered bass guitar",
+        "Rhodes chords",
+        "bright synth plucks on top",
+        "groovy",
+        "clean punchy master with lo-fi drum texture"
+      ],
+      "exclude": [
+        "drift phonk",
+        "Brazilian funk",
+        "EDM build",
+        "cowbell lead melody",
+        "quantized rigid drums",
+        "smooth jazz",
+        "cinematic trailer",
+        "dubstep"
+      ],
+      "cues": {
+        "intro": [
+          "Rhodes chord loop with tape hiss",
+          "vinyl crackle",
+          "bright pluck motif answers the chords",
+          "cowbell enters on bar 3",
+          "no 808 yet",
+          "tape stop into the hook"
+        ],
+        "hook": [
+          "distorted 808 and Memphis cowbell slam in",
+          "kick and snare behind the beat",
+          "fingered bass locks with the 808",
+          "Rhodes comping",
+          "bright plucks carry the melody",
+          "ghost-note snare",
+          "lazy swung hats"
+        ],
+        "hook_final": [
+          "biggest hook",
+          "plucks up an octave",
+          "cowbell doubles",
+          "bass guitar riff up front",
+          "fills every 4 bars",
+          "drums cut for the last beat then slam back"
+        ],
+        "verse": [
+          "808 and cowbell thin out",
+          "Rhodes and bass carry the pocket",
+          "plucks sparse",
+          "stop-start mutes every 4th bar",
+          "swung hats",
+          "clavinet stabs enter at bar 9"
+        ],
+        "verse_part-b": [
+          "beat flips to straight-time live funk feel",
+          "drum machine swaps for a swung live-feel kit",
+          "bass guitar leads",
+          "plucks become bells",
+          "cowbell drops to a sparse pattern"
+        ],
+        "verse_mutes": [
+          "full stop on the last beat of every 4th bar",
+          "Rhodes alone for one bar",
+          "drums return with a fill"
+        ],
+        "pre": [
+          "hats double",
+          "riser",
+          "808 cuts",
+          "Rhodes rises"
+        ],
+        "bridge": [
+          "drums out",
+          "Rhodes and plucks only",
+          "tape hiss",
+          "half-time feel",
+          "bass re-enters on bar 7"
+        ],
+        "break": [
+          "drums only",
+          "cowbell kick and ghost-note snare",
+          "lo-fi fills",
+          "silence on the last beat"
+        ],
+        "break_drums-only": [
+          "drums only",
+          "cowbell and dusty kick isolated",
+          "ghost-note snare fills",
+          "one bar of silence"
+        ],
+        "drop": [
+          "hard drop",
+          "blown-out 808 with bass guitar",
+          "plucks and bells stacked",
+          "cowbell pattern doubles"
+        ],
+        "switch": [
+          "beat switch",
+          "drums cut for two bars",
+          "tempo feel flips to straight-time funk",
+          "new Rhodes progression",
+          "cowbell pattern flips"
+        ],
+        "hook_part-b": [
+          "part B hook",
+          "live-feel swung drums with cowbell layered",
+          "bright plucks and Rhodes together",
+          "bass guitar riff",
+          "808 slides return"
+        ],
+        "outro": [
+          "808 drops out",
+          "Rhodes and plucks ring out",
+          "cowbell fades",
+          "tape slows",
+          "hard stop"
+        ],
+        "outro_hard-stop": [
+          "everything stops on the downbeat",
+          "Rhodes chord rings with hiss",
+          "hard stop"
+        ]
+      },
+      "listenFor": [
+        "All three elements must coexist in one mix: lo-fi cowbell drums, warm Rhodes/bass, bright plucks. If Suno picks one genre and drops the others, raise Weirdness to 60-65 and reorder Style to lead with the missing element.",
+        "The drums should swing behind the beat; a rigid cowbell grid means it drifted toward drift phonk. Keep 'quantized rigid drums' and 'cowbell lead melody' in Exclude.",
+        "Plucks should sit on top and stay bright; if they are dull, add 'sparkly bell lead' and 'bright top' to the mix descriptors.",
+        "Suno may add hummed soul melodies on Rhodes grooves; keep humming, scat, vocals, singing in Exclude."
+      ]
+    }
+  }
+}

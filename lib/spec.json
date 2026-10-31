@@ -1,0 +1,284 @@
+{
+  "_comment": "Single source of truth for Suno field facts used by the generator and QA checker. Verified against research/01-suno-platform.md (sources dated 2026-09-09 to 2026-10-31). Re-verify with the suno-researcher agent whenever Suno ships a new model; Suno retired every pre-v6 model on 2026-09-09.",
+  "verifiedOn": "2026-10-31",
+  "models": {
+    "default": "v6",
+    "wild": "v6-wild",
+    "mini": "v6-mini",
+    "list": [
+      "v6",
+      "v6-wild",
+      "v6-mini"
+    ],
+    "notes": {
+      "v6": "Flagship (Pro/Premier). Best prompt adherence and structure-tag following; cleanest, most polished mix. Reported slightly narrower stereo than v5.5 and mixes that can go muffled after ~2:30 in standard mode, so run Max Mode for full-length beats.",
+      "v6-wild": "Exploration checkpoint (Pro/Premier). Deliberately drifts from the prompt, more genre-blending and texture, unpredictable length. Defaults Variety to Off. Not the same as high Weirdness.",
+      "v6-mini": "Faster, lighter, available on Free. Closer to v6 than to wild, a little flatter with more artifacts. Use for cheap palette tests or if you are on the Free plan."
+    },
+    "retired": [
+      "v3.5",
+      "v4",
+      "v4.5",
+      "v4.5+",
+      "v4.5-all",
+      "v5",
+      "v5.5"
+    ],
+    "retiredOn": "2026-09-09"
+  },
+  "mode": {
+    "name": "Custom (Advanced) mode",
+    "optionsPanel": "More Options (older UI: Advanced Options)",
+    "note": "Help pages still say Custom; hands-on reports of the v6 web UI say Simple / Advanced / Sounds with a More Options panel. Both names are in circulation."
+  },
+  "fields": {
+    "style": {
+      "uiName": "Styles (Style of Music)",
+      "limit": 1000,
+      "target": 500,
+      "status": "community-measured 2026-09-16, unchanged since v4.5"
+    },
+    "lyrics": {
+      "uiName": "Lyrics",
+      "limit": 5000,
+      "status": "community-measured"
+    },
+    "exclude": {
+      "uiName": "Exclude Styles (Pro/Premier, under More Options)",
+      "limit": 1000,
+      "target": 200,
+      "status": "community-measured",
+      "tip": "Bare terms, comma-separated, never prefixed with 'no'. Hands-on testers report Exclude bites hardest with a short list; if Suno ignores it, trim to the 4 most important terms."
+    },
+    "title": {
+      "uiName": "Song Title",
+      "limit": 80,
+      "status": "unverified (sources say 80 or 100); 80 used as the safe bound"
+    }
+  },
+  "sliders": {
+    "weirdness": {
+      "min": 0,
+      "max": 100,
+      "default": 50,
+      "labels": "Safe to Chaos",
+      "status": "official: 50% = normal expected result",
+      "hipHopRange": "20-40 commercial, 40-55 experimental; above 60 community reports tempo shifts, odd instrumentation and structure drift"
+    },
+    "styleInfluence": {
+      "min": 0,
+      "max": 100,
+      "default": 50,
+      "labels": "Loose to Strong",
+      "status": "default community-reported",
+      "hipHopRange": "50-70 for specific engineered prompts; 70+ when the Style field is thin"
+    },
+    "audioInfluence": {
+      "min": 0,
+      "max": 100,
+      "default": 25,
+      "used": false,
+      "status": "only appears when audio is uploaded; never used by suno-forge"
+    },
+    "variety": {
+      "exists": true,
+      "stops": [
+        "Off (Exact style)",
+        "Normal (Balanced variety)",
+        "High (Distinct styles)",
+        "Extra (Bold exploration)",
+        "Max (Unreasonably varied)"
+      ],
+      "default": "Normal on v6 and v6-mini; Off on v6-wild",
+      "recommended": "Off",
+      "why": "Any setting above Off rewrites and expands the Style text before the model sees it (official FAQ: 'reduce the Variety slider to 0 to retain full control of your style tags'). Engineered prompts must run at Off.",
+      "status": "control verified; stop labels community-reported"
+    }
+  },
+  "maxMode": {
+    "exists": true,
+    "credits": "2x (20 per generation vs 10)",
+    "recommended": "ON for any instrumental over ~2:00; OFF for 30-60 s palette tests",
+    "status": "official: 'best for songs longer than two minutes'; cost multiplier from in-app tooltip"
+  },
+  "duration": {
+    "control": "Auto, or Custom 10 s to 6:00 (default 3:00)",
+    "note": "Custom hard-cuts at the value; Auto tends to run long on v6. Set Custom to the planned runtime plus a small buffer and let [End] stop it early; Crop any tail.",
+    "bufferSeconds": 10
+  },
+  "instrumental": {
+    "method": "Custom (Advanced) mode -> Instrumental toggle ON -> Variety OFF -> Lyrics field holds bracketed structure/production tags only (no words) -> Exclude Styles lists vocal terms as bare words.",
+    "lyricsTagsHonored": "Community consensus (hands-on 2026-09-16): yes, bracket tags are followed as structure with the toggle on. [End] works most of the time; named breaks are the most reliable mid-song tags.",
+    "inlineNegatives": "Weak or counterproductive in Style ('remove the humming' produced more humming). Negatives go in Exclude Styles only."
+  },
+  "personas": {
+    "uiName": "Voices (formerly Personas; Style Personas live inside the Voices menu)",
+    "instrumentalCompatible": false,
+    "note": "In-app text: 'Songs with Voices cannot be instrumental.' Not used in this workflow."
+  },
+  "features": {
+    "extend": "Extend adds music after a chosen point (max 8 min total). Paste only the remaining section tags into the Extend lyrics box.",
+    "replaceSection": "Replace Section (Pro/Premier, Song Editor): highlight the region, edit the tags/prompt, get two versions. Use it on a leaked hum or an ignored break instead of re-rolling.",
+    "remaster": "Remaster (Pro/Premier) renders subtle variations and runs on v6; use it on the keeper for a cleaner, louder master.",
+    "crop": "Crop trims start/end on the waveform (Pro/Premier).",
+    "stems": "Get Stems (Pro/Premier): Auto Split up to 12 stems for 50 credits; Split from Mix 10 credits per stem; Advanced Split (choose from ~100 instruments) 10 credits per stem, Premier only.",
+    "studio": "Suno Studio (Premier) is a browser DAW; exports are not subject to download caps.",
+    "credits": "Standard generation: 2 songs for 10 credits. Max Mode: 20. Free 50/day (v6-mini only), Pro 2,500/mo, Premier 10,000/mo. Download caps since 2026-09-03: Free 7 lifetime, Pro 20/mo, Premier 60/mo.",
+    "artistNames": "Suno silently rewrites prompts containing artist names ('We don't reference artists directly, so we've replaced your prompt with similar styles you might like'), so a name costs you control of the whole Style field."
+  },
+  "baseExclude": {
+    "_comment": "Hands-on testers report Exclude Styles bites hardest with a short list (2-4 bare nouns); the generator defaults to core vocal terms + up to 4 lane guards (~8 terms). 'full' is the belt-and-braces preset; 'short' is the minimal one.",
+    "core": {
+      "full": [
+        "vocals",
+        "humming",
+        "ad-libs",
+        "vocal chops"
+      ],
+      "lead": [
+        "lead vocals",
+        "humming",
+        "singing",
+        "rapping"
+      ]
+    },
+    "presets": {
+      "short": [
+        "vocals",
+        "humming",
+        "ad-libs",
+        "vocal chops"
+      ],
+      "default": "core + first 4 lane guards",
+      "full": [
+        "vocals",
+        "lyrics",
+        "singing",
+        "rap",
+        "spoken word",
+        "humming",
+        "ad-libs",
+        "vocal chops",
+        "choir",
+        "EDM build",
+        "piano ballad",
+        "quantized rigid drums",
+        "drift phonk",
+        "cinematic trailer"
+      ]
+    }
+  },
+  "bannedNames": [
+    "Connor Price",
+    "Anderson .Paak",
+    "Anderson Paak",
+    ".Paak",
+    "Paak",
+    "JID",
+    "J.I.D",
+    "Three 6 Mafia",
+    "Three Six Mafia",
+    "DJ Smokey",
+    "DJ Paul",
+    "Juicy J",
+    "Tommy Wright",
+    "DJ Spanish Fly",
+    "Soudiere",
+    "DJ Yung Vamp",
+    "Mythic",
+    "Kaytranada",
+    "Knxwledge",
+    "NxWorries",
+    "J Dilla",
+    "Dilla",
+    "Madlib",
+    "Metro Boomin",
+    "Kenny Beats",
+    "Christo",
+    "ChaseTheMoney",
+    "Dreamville",
+    "Pharrell",
+    "Timbaland",
+    "Kanye",
+    "Drake",
+    "Kendrick",
+    "Travis Scott",
+    "Tyler, the Creator",
+    "Tyler the Creator",
+    "Thundercat",
+    "Dr. Dre",
+    "Flying Lotus",
+    "Mac Miller",
+    "Earl Sweatshirt",
+    "MF DOOM",
+    "Freddie Gibbs",
+    "Denzel Curry",
+    "Playboi Carti",
+    "Pi'erre Bourne",
+    "Pierre Bourne",
+    "Southside",
+    "Wheezy",
+    "Zaytoven",
+    "Lex Luger",
+    "Mike Will",
+    "DJ Screw",
+    "Kaytra",
+    "Silk Sonic",
+    "Bruno Mars",
+    "Free Nationals",
+    "Hi-Tek",
+    "9th Wonder",
+    "Alchemist",
+    "Pete Rock",
+    "DJ Premier",
+    "RZA",
+    "Mndsgn",
+    "Robert Glasper",
+    "Tom Misch",
+    "Kreepa",
+    "DVRST",
+    "Ghostface Playa",
+    "KORDHELL",
+    "Smokepurpp",
+    "Pink Guy",
+    "Lil Ugly Mane",
+    "SpaceGhostPurrp",
+    "Playa Fly",
+    "Gangsta Pat",
+    "Lord Infamous",
+    "Koopsta Knicca",
+    "Eminem",
+    "Jay-Z",
+    "Lil Wayne",
+    "Future",
+    "Young Thug",
+    "21 Savage",
+    "Pharrell Williams",
+    "Anderson",
+    "Price",
+    "Connor",
+    "Dilla swing",
+    "Dilla feel"
+  ],
+  "bannedPhrases": [
+    "type beat",
+    "in the style of",
+    "sounds like",
+    "inspired by",
+    "style of"
+  ],
+  "audioRefTerms": [
+    "audio influence",
+    "upload",
+    "reference clip",
+    "reference track",
+    "audio reference",
+    "reference audio",
+    "sample upload",
+    "upload a clip",
+    "cover of",
+    "audio prompt",
+    "add vocals",
+    "add instrumental"
+  ]
+}

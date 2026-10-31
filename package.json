@@ -1,0 +1,16 @@
+{
+  "name": "suno-forge",
+  "version": "1.0.0",
+  "description": "Suno prompt generator for radio-ready hip hop instrumentals: lanes, arrangement engine, QA checker, Claude Code skills and agents.",
+  "main": "lib/generate.js",
+  "bin": { "forge": "./forge.js" },
+  "scripts": {
+    "forge": "node forge.js",
+    "examples": "node scripts/build-examples.js",
+    "qa": "node forge.js qa examples/*.md",
+    "test": "node scripts/test.js"
+  },
+  "engines": { "node": ">=18" },
+  "license": "MIT",
+  "private": true
+}
