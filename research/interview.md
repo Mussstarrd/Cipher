@@ -1,29 +1,34 @@
 # Owner interview
 
-Status: **in progress** (batch 1 of 3 sent 2026-10-31)
+Status: **delegated** — 2026-10-31
 
-Interviewer notes: answers recorded verbatim where possible, paraphrased in brackets.
-Probe once on vague answers, then move on.
+The owner declined the question-and-answer interview and asked the studio to work it out
+itself. The studio's working profile of the owner is therefore held in-session and is
+**not** written to this repo. What follows is the product-level output the later phases
+need: the pain-area hypotheses the studio is proceeding on, in the order it ranks them.
 
-## Batch 1 — Pain and workarounds
+The owner can correct, reorder, or strike any line in one sentence and the studio
+re-runs from there.
 
-1. **What do you do every week that you resent?**
-   _(pending)_
+## Pain-area hypotheses
 
-2. **What do you already pay for, or hack together, to cope with that?**
-   _(pending)_
+| # | Hypothesis | Why it ranks here |
+|---|------------|-------------------|
+| A | A personal trading-research workflow (screener thesis plus daily generated reports) has no durable home: nothing links a flagged setup to what was actually done to how it worked out, and nothing accumulates into a scorecard. | Daily use already exists; compounding is natural; honesty rule is satisfiable (record and compute, never predict). |
+| B | Email is being used as a catch-all system of record and has stopped working as one. | Daily pain, but any fix needs Gmail OAuth and competes with mature products. |
+| C | Household and school logistics arrive by email and are relayed by hand. | Weekly pain, shared with another adult, privacy-sensitive, crowded market. |
+| D | Work-travel expense preparation. | Recurring but bounded; employer tooling likely mandatory. |
+| E | A personal music-production catalog is scattered across folders and versions. | High delight, episodic use, low pain. |
 
-3. **What have you started building or setting up and then abandoned?**
-   _(pending)_
+## Constraints every candidate must respect
 
-4. **If this existed, what would you actually show off to someone?**
-   _(pending)_
+- Usable in five minutes a day from a laptop or Android phone browser.
+- Local-first, zero required accounts, default configuration costs nothing.
+- Brokerage data arrives by export or paste first; any live API is optional.
+- Anything touching trading records and computes from the owner's own entries. It
+  never promises returns or predicts prices.
 
-## Batch 2 — People and constraints
-_(not yet asked)_
+## What "life-changing" means (working definition)
 
-## Batch 3 — What "life-changing" means
-_(not yet asked)_
-
-## Interviewer's synthesis
-_(written after all batches)_
+Open one local page each evening and know, in under five minutes, whether the system is
+working, with that answer getting sharper every week.
