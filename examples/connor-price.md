@@ -6,7 +6,7 @@ Lane `connor-price` | 140 BPM (half-time feel) | B minor | arc: Stop-start | pla
 
 ## 1. MODEL
 **Pick:** v6
-**Why:** Needs crisp transient detail, clean stereo plucks and tight drum programming; the flagship model has the cleanest mix and follows stop-start structure cues best. Flagship (Pro/Premier). Best prompt adherence and structure-tag following; cleanest, most polished mix. Reported slightly narrower stereo than v5.5 and mixes that can go muffled after ~2:30 in standard mode, so run Max Mode for full-length beats.
+**Why:** Needs crisp transient detail, clean stereo plucks and tight drum programming; the flagship model has the cleanest mix and follows stop-start structure cues best. Flagship (Pro/Premier). Best prompt adherence and structure-tag following; cleanest, most polished mix. Reported slightly narrower stereo than the previous generation and mixes that can go muffled after ~2:30 in standard mode, so run Max Mode for full-length beats.
 **Wild/experimental variant:** Try the experimental/wild variant when the result is too generic pop and you want odd fills, unexpected synth timbres or playful rhythmic turnarounds. (Variant: v6-wild; it defaults Variety to Off. Exploration checkpoint (Pro/Premier). Deliberately drifts from the prompt, more genre-blending and texture, unpredictable length. Defaults Variety to Off. Not the same as high Weirdness.)
 **Free-plan fallback:** v6-mini: Faster, lighter, available on Free. Closer to v6 than to wild, a little flatter with more artifacts. Use for cheap palette tests or if you are on the Free plan.
 
@@ -16,23 +16,23 @@ Lane `connor-price` | 140 BPM (half-time feel) | B minor | arc: Stop-start | pla
 - **Max Mode:** ON. ON for any instrumental over ~2:00; OFF for 30-60 s palette tests (2x (20 per generation vs 10)).
 - **Variety:** Off. Any setting above Off rewrites and expands the Style text before the model sees it (official FAQ: 'reduce the Variety slider to 0 to retain full control of your style tags'). Engineered prompts must run at Off.
 - **Persona:** NO. Voices (formerly Personas; Style Personas live inside the Voices menu): In-app text: 'Songs with Voices cannot be instrumental.' Not used in this workflow.
-- **Duration:** Custom 3:20 (planned 3:05 = 108 bars at 140 BPM, plus a 10 s buffer so [End] lands before the hard cut; Crop any tail). Do not use Auto: v6 runs long on Auto.
+- **Duration:** Custom 3:20 (planned 3:05 = 108 bars at 140 BPM, plus a 10 s buffer rounded up to the next 5 s, so [End] lands before the hard cut; Crop any tail). Do not use Auto: v6 runs long on Auto.
 - **Song Title:** Bounce House (B minor, 140 BPM)
 
-## 3. STYLE FIELD (384/1000 chars, most important descriptors first)
+## 3. STYLE FIELD (319/1000 chars, most important descriptors first)
 ```text
-bouncy trap-pop instrumental, upbeat hip hop instrumental, playful, sunny, tight syncopated trap drums, clap and rimshot layers, finger snaps and claps, 140 BPM, B minor, half-time feel, clean 808 bass with glides, bright synth plucks, marimba and kalimba plucks, staccato chord stabs, stop-start arrangement, vinyl stop effects, mischievous, clean modern mix, radio-ready loud master
+bouncy trap-pop instrumental, upbeat hip hop instrumental, playful, sunny, tight syncopated trap drums, clap and rimshot layers, 140 BPM, half-time feel, B minor, clean 808 bass with glides, bright synth plucks, staccato chord stabs, stop-start arrangement, vinyl stop effects, clean modern mix, radio-ready loud master
 ```
 
-## 4. LYRICS FIELD (1233/5000 chars, section tags only, no words)
+## 4. LYRICS FIELD (1217/5000 chars, section tags only, no words)
 ```text
 [Instrumental]
 [Short Instrumental Intro - 4 bars: bright synth pluck motif alone, pitch-bend pluck, no kick yet]
 [Hook 1 - 16 bars: full drums in, bright pluck melody up front, bouncy off-beat kick, snappy snare with claps, hi-hats swung not straight]
-[Verse 1 - 16 bars: full stop on the last beat of every 4th bar, plucks answer the drums in call and response, beat drops out for one bar then returns, kick-and-snare-only bars, off-grid snare placement]
+[Verse 1 - 16 bars: full stop on the last beat of every 4th bar, plucks and drums trade short phrases, beat drops out for one bar then returns, kick-and-snare-only bars, off-grid snare placement]
 [Hook 2 - 16 bars: full drums in, bouncy off-beat kick, hi-hat triplet stutters, 808 locks to the kick, hi-hats swung not straight]
 [Drum Break - 4 bars: drums only, kick snare and claps isolated, quick fills, silence on the last beat]
-[Verse 2 - 16 bars: full stop on the last beat of every 4th bar, kick-and-snare-only bars, beat drops out for one bar then returns, plucks answer the drums in call and response, loose drum machine swing]
+[Verse 2 - 16 bars: full stop on the last beat of every 4th bar, kick-and-snare-only bars, beat drops out for one bar then returns, plucks and drums trade short phrases, loose drum machine swing]
 [Drop - 16 bars: hard drop, 808 slides, bouncy full drums, plucks and bells stacked, rolls land lazily]
 [Hook 3 - 16 bars: biggest hook, full stereo width, snare fills every 4 bars, pluck melody up an octave, loose drum machine swing]
 [Outro - 4 bars: everything stops together on the downbeat, one last pluck ring-out, hard stop]
@@ -51,21 +51,21 @@ vocals, humming, ad-libs, vocal chops, drift phonk, EDM build, dubstep, lo-fi hi
 - **Variety:** Off (Exact style). Any setting above Off rewrites and expands the Style text before the model sees it (official FAQ: 'reduce the Variety slider to 0 to retain full control of your style tags'). Engineered prompts must run at Off.
 
 ## 7. VARIATIONS
-**A. Safer** (Weirdness 10%, Style Influence 80%; 289 chars)
+**A. Safer** (Weirdness 10%, Style Influence 80%; 271 chars)
 ```text
-bouncy trap-pop instrumental, tight syncopated trap drums, playful, sunny, punchy snappy snare, bright synth plucks, 140 BPM, B minor, half-time feel, clean round 808 bass, whistle-like synth lead, stop-start arrangement, white-noise sweeps, mischievous, clean modern mix, crisp transients
+bouncy trap-pop instrumental, playful, sunny, tight syncopated trap drums, punchy snappy snare, bright synth plucks, 140 BPM, half-time feel, B minor, clean round 808 bass, whistle-like synth lead, stop-start arrangement, white-noise sweeps, clean modern mix, radio-ready
 ```
-**B. Weirder** (Weirdness 45%, Style Influence 60%; 390 chars)
+**B. Weirder** (Weirdness 45%, Style Influence 60%; 323 chars)
 ```text
-bouncy trap-pop instrumental, modern pop-trap, playful, sunny, tight syncopated trap drums, finger snaps and claps, swung 16th hi-hats, 140 BPM, B minor, half-time feel, clean 808 bass with glides, bright synth plucks, music-box bells, major-key hooky melody, stop-start arrangement, vinyl stop effects, riser into the drop, toy piano, 8-bit chiptune blips, cheeky, clean modern mix, punchy
+bouncy trap-pop instrumental, modern pop-trap, playful, sunny, tight syncopated trap drums, finger snaps and claps, swung 16th hi-hats, 140 BPM, half-time feel, B minor, clean 808 bass with glides, bright synth plucks, music-box bells, stop-start arrangement, vinyl stop effects, confident, clean modern mix, bright top end
 ```
 
 ## 8. POST-GEN NOTES
 - Structure check: intro should hand off to the first hook/drop around 0:07; total near 3:05. If Suno ignores a section, use Replace Section on that time range with a shorter, blunter cue (e.g. "[Break - 4 bars: drums only]").
-- Does the beat actually stop and restart on the mute bars, or does Suno smooth them over? If smoothed, add 'stop-start' earlier in the Style field and put 'full stop' cues in more sections.
-- Plucks should be bright and forward; if they are buried, move 'bright synth plucks' to the second position in Style.
+- Does the beat actually stop and restart on the mute bars, or does Suno smooth them over? If smoothed, lead the drums group with 'stop-start drum mutes' and put 'full stop' cues in more sections.
+- Plucks should be bright and forward; if they are buried, make 'bright synth plucks' the first instrument descriptor.
 - Hi-hats should bounce and stutter, not run as a flat 16th grid; if rigid, add 'swung 16th hi-hats' and raise Weirdness by 10.
-- Watch for Suno adding sung hooks or ad-libs on bouncy pop beats; confirm the Instrumental toggle is on and the Exclude field lists vocals, singing, rap, ad-libs.
+- Suno likes to add sung hooks or ad-libs on bouncy pop beats; if any appear, add 'singing, pop vocals' to the Exclude field and re-roll.
 - Vocal leak: any hum, ad-lib or sung syllable means a re-roll, not a fix. Confirm the Instrumental toggle, keep the Exclude list intact, and do not add negatives to the Style field.
 - Ending: the [End] tag should produce a stop near 3:05. If Suno keeps playing, Crop to the last downbeat. If it stops early, Extend from the last good section and paste only the remaining section tags into the Extend lyrics box.
 - When to Extend vs re-roll: Extend when the first 60-90 s are keepers and only the back half drifts. Re-roll (and pick the safer or weirder variation) when the drums or genre are wrong from the start.

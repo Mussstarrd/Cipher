@@ -44,13 +44,13 @@ Words Suno responds to, per lane, grouped by the order they go into the Style fi
 
 | Group | Descriptors |
 |---|---|
-| Genre | dark boom-bap trap hybrid instrumental, soul-sample trap, East Coast meets Southern trap, menacing Atlanta trap instrumental, dusty soul-sample hip hop, experimental hip hop beat, cinematic underground hip hop (one ingredient, never the genre) |
-| Drums & groove | heavy boom-bap snare over trap hats, aggressive busy hi-hat work, rolling hi-hat triplets*, stuttering off-grid hat fills, odd fills and dropped beats, drum switch-ups every eight bars, beat switch halfway through, stop-start drums leaving only the sample, punchy dry kick, hard knocking kick and snare, snare rushes, crunchy sampled drum breaks, half-time pocket, 150 BPM half-time |
+| Genre | dark boom-bap trap hybrid instrumental, soul-sample trap, East Coast meets Southern trap, menacing Atlanta trap instrumental, menacing underground hip hop, dusty soul-sample hip hop, experimental hip hop beat (keep "cinematic" for the strings only, never as a genre tag) |
+| Drums & groove | heavy boom-bap snare over trap hats, busy hi-hat work with rapid triplet rolls, rolling hi-hat triplets*, stuttering off-grid hat fills, odd fills and dropped beats, drum switch-ups every eight bars, beat switch halfway through, stop-start drums leaving only the sample, punchy dry kick, hard knocking kick and snare, snare rushes, crunchy sampled drum breaks, half-time pocket, 150 BPM half-time |
 | Bass | distorted 808 bass, deep sliding 808 bass*, saturated sub bass, dark heavy low end, 808 slides into the downbeat |
 | Harmony & instruments | chopped pitched-down soul sample, pitched sample chops as melody, cinematic string ostinato, dark string swells, dark synth pad (never "choir"), mellotron pad, eerie high synth lead, eerie music-box melody, detuned bells, dark muted piano, detuned piano chops, brass stabs, ominous brass hits, organ sample, reversed sample swells |
 | Texture & FX | vinyl crackle, dusty collage-like sampling, tape-stop into the switch, filtered intro that opens up, sample stutter edits, sub drop, DJ rewind, siren-like synth, record scratch stabs, glitch stutters |
 | Mood | dark, menacing, gritty, paranoid, intense, ominous, restless, tense, relentless |
-| Mix & master | dense mid-heavy saturated mix, lo-fi sample against hi-fi drums, saturated drums, loud aggressive master, snare cuts through the mix, moderate width with centred drums, controlled sub, dense but clear |
+| Mix & master | dense mid-heavy saturated mix, lo-fi sample against hi-fi drums, saturated drums, loud dense master, snare cuts through the mix, moderate width with centred drums, wide stereo pads with centred drums, controlled sub, dense but clear |
 | Wild pool | polymetric hi-hat pattern, beat switch into double-time, tape-stop chop edits, dissonant string clusters, half-speed breakdown, free-time drum fill section |
 | Avoid | cinematic trailer, epic orchestral, film score, choir, gospel choir, vocal chops, drill, UK drill, lo-fi chill, chillhop, boom bap + jazzy alone, EDM, dubstep, bass drop, clean polished pop mix, horrorcore (invites screams) |
 

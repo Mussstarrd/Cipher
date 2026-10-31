@@ -92,6 +92,15 @@ test('QA catches structure violations', () => {
   assert(txt.includes('outside 150-210'));
 });
 
+test('QA scans the block heading for artist names and vocal-implying cue text', () => {
+  const md = renderBlock(generate({ lane: 'connor-price', seed: 1 })).replace('# suno-forge prompt block: ', '# suno-forge prompt block: Connor Price lane: ');
+  const r = checkBlock(parseMarkdownBlock(md));
+  assert(!r.ok && r.errors.some((e) => /prose\/header/.test(e)), r.errors.join(' | '));
+  const b = generate({ lane: 'paak-pocket', seed: 1 });
+  b.lyrics = b.lyrics.replace('[Hook 1', '[Hook 1 - call and response between horns and drums');
+  assert(checkBlock(b).errors.some((e) => /Vocal-implying/.test(e)));
+});
+
 test('markdown round-trip: rendered block parses back and passes QA', () => {
   const b = generate({ lane: 'phonk-experimental', seed: 5 });
   const parsed = parseMarkdownBlock(renderBlock(b));

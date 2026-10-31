@@ -11,7 +11,7 @@
       "v6-mini"
     ],
     "notes": {
-      "v6": "Flagship (Pro/Premier). Best prompt adherence and structure-tag following; cleanest, most polished mix. Reported slightly narrower stereo than v5.5 and mixes that can go muffled after ~2:30 in standard mode, so run Max Mode for full-length beats.",
+      "v6": "Flagship (Pro/Premier). Best prompt adherence and structure-tag following; cleanest, most polished mix. Reported slightly narrower stereo than the previous generation and mixes that can go muffled after ~2:30 in standard mode, so run Max Mode for full-length beats.",
       "v6-wild": "Exploration checkpoint (Pro/Premier). Deliberately drifts from the prompt, more genre-blending and texture, unpredictable length. Defaults Variety to Off. Not the same as high Weirdness.",
       "v6-mini": "Faster, lighter, available on Free. Closer to v6 than to wild, a little flatter with more artifacts. Use for cheap palette tests or if you are on the Free plan."
     },
@@ -280,5 +280,32 @@
     "audio prompt",
     "add vocals",
     "add instrumental"
+  ],
+  "vocalImplying": [
+    "call and response",
+    "call-and-response",
+    "chant",
+    "singalong",
+    "sing-along",
+    "choir",
+    "gospel",
+    "soulful",
+    "anthemic",
+    "scat",
+    "talkbox",
+    "oohs",
+    "ahhs",
+    "la-la",
+    "vocal pad",
+    "wordless vocals",
+    "ad-lib",
+    "R&B",
+    "pop song",
+    "ballad",
+    "lead vocal",
+    "backing vocal",
+    "crowd vocal",
+    "vocal hook",
+    "chorus vocal"
   ]
 }

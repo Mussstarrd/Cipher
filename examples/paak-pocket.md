@@ -6,7 +6,7 @@ Lane `paak-pocket` | 94 BPM | D Dorian | arc: Build-release | planned 3:04, hook
 
 ## 1. MODEL
 **Pick:** v6
-**Why:** Live-sounding drums and real-instrument timbres (Rhodes, bass guitar, horns) need the most realistic acoustic rendering and the loosest timing feel; the flagship model renders swing and room most convincingly. Flagship (Pro/Premier). Best prompt adherence and structure-tag following; cleanest, most polished mix. Reported slightly narrower stereo than v5.5 and mixes that can go muffled after ~2:30 in standard mode, so run Max Mode for full-length beats.
+**Why:** Live-sounding drums and real-instrument timbres (Rhodes, bass guitar, horns) need the most realistic acoustic rendering and the loosest timing feel; the flagship model renders swing and room most convincingly. Flagship (Pro/Premier). Best prompt adherence and structure-tag following; cleanest, most polished mix. Reported slightly narrower stereo than the previous generation and mixes that can go muffled after ~2:30 in standard mode, so run Max Mode for full-length beats.
 **Wild/experimental variant:** Try the experimental/wild variant when the groove comes back too clean and quantized, or you want odd meters, drunken fills and tape-warped chords. (Variant: v6-wild; it defaults Variety to Off. Exploration checkpoint (Pro/Premier). Deliberately drifts from the prompt, more genre-blending and texture, unpredictable length. Defaults Variety to Off. Not the same as high Weirdness.)
 **Free-plan fallback:** v6-mini: Faster, lighter, available on Free. Closer to v6 than to wild, a little flatter with more artifacts. Use for cheap palette tests or if you are on the Free plan.
 
@@ -16,12 +16,12 @@ Lane `paak-pocket` | 94 BPM | D Dorian | arc: Build-release | planned 3:04, hook
 - **Max Mode:** ON. ON for any instrumental over ~2:00; OFF for 30-60 s palette tests (2x (20 per generation vs 10)).
 - **Variety:** Off. Any setting above Off rewrites and expands the Style text before the model sees it (official FAQ: 'reduce the Variety slider to 0 to retain full control of your style tags'). Engineered prompts must run at Off.
 - **Persona:** NO. Voices (formerly Personas; Style Personas live inside the Voices menu): In-app text: 'Songs with Voices cannot be instrumental.' Not used in this workflow.
-- **Duration:** Custom 3:15 (planned 3:04 = 72 bars at 94 BPM, plus a 10 s buffer so [End] lands before the hard cut; Crop any tail). Do not use Auto: v6 runs long on Auto.
+- **Duration:** Custom 3:15 (planned 3:04 = 72 bars at 94 BPM, plus a 10 s buffer rounded up to the next 5 s, so [End] lands before the hard cut; Crop any tail). Do not use Auto: v6 runs long on Auto.
 - **Song Title:** Backseat Pocket (D Dorian, 94 BPM)
 
-## 3. STYLE FIELD (371/1000 chars, most important descriptors first)
+## 3. STYLE FIELD (367/1000 chars, most important descriptors first)
 ```text
-live neo-soul hip hop instrumental, West Coast funk-soul groove, sun-soaked, late-night, live drum kit played behind the beat, tight dry snare with brushes-light touch, ghost-note hi-hats, 94 BPM, D Dorian, fingerstyle electric bass guitar, Rhodes electric piano with tremolo, clavinet stabs, funk guitar chucks, warm tape saturation, warm, warm analog mix, mastered loud
+live neo-soul hip hop instrumental, West Coast funk-soul groove, sun-soaked, late-night, live drum kit played behind the beat, tight dry snare with a light brushed touch, ghost-note hi-hats, 94 BPM, D Dorian, fingerstyle electric bass guitar, Rhodes electric piano with tremolo, clavinet stabs, funk guitar chucks, warm tape saturation, warm analog mix, mastered loud
 ```
 
 ## 4. LYRICS FIELD (1145/5000 chars, section tags only, no words)
@@ -52,21 +52,21 @@ vocals, humming, ad-libs, vocal chops, trap hi-hats, EDM, quantized drum machine
 - **Variety:** Off (Exact style). Any setting above Off rewrites and expands the Style text before the model sees it (official FAQ: 'reduce the Variety slider to 0 to retain full control of your style tags'). Engineered prompts must run at Off.
 
 ## 7. VARIATIONS
-**A. Safer** (Weirdness 25%, Style Influence 70%; 263 chars)
+**A. Safer** (Weirdness 25%, Style Influence 70%; 279 chars)
 ```text
-live neo-soul hip hop instrumental, live drum kit played behind the beat, sun-soaked, late-night, swung loose pocket, Rhodes chords, 94 BPM, D Dorian, fingered bass guitar, warm tape saturation, soul organ swells, room mic ambience, groovy, warm analog mix, glued
+live neo-soul hip hop instrumental, sun-soaked, late-night, live drum kit played behind the beat, swung loose pocket, Rhodes chords, 94 BPM, D Dorian, fingered bass guitar, warm tape saturation, soul organ swells, room mic ambience, laid-back, warm analog mix, wide stereo Rhodes
 ```
-**B. Weirder** (Weirdness 60%, Style Influence 50%; 409 chars)
+**B. Weirder** (Weirdness 60%, Style Influence 50%; 372 chars)
 ```text
-live neo-soul hip hop instrumental, jazzy hip hop, sun-soaked, late-night, live drum kit played behind the beat, late behind-the-beat snare, lazy kick pushes and pulls, 94 BPM, D Dorian, fingerstyle electric bass guitar, Rhodes electric piano with tremolo, Wurlitzer, warm tape saturation, vinyl crackle, polyrhythmic percussion, psychedelic tape flutter, laid-back, sunny, warm analog mix, wide stereo Rhodes
+live neo-soul hip hop instrumental, jazzy hip hop, sun-soaked, late-night, live drum kit played behind the beat, late behind-the-beat snare, lazy kick pushes and pulls, 94 BPM, D Dorian, fingerstyle electric bass guitar, Rhodes electric piano with tremolo, warm tape saturation, vinyl crackle, odd-meter turnaround, psychedelic tape flutter, smooth, warm analog mix, glued
 ```
 
 ## 8. POST-GEN NOTES
 - Structure check: intro should hand off to the first hook/drop around 0:41; total near 3:04. If Suno ignores a section, use Replace Section on that time range with a shorter, blunter cue (e.g. "[Break - 4 bars: drums only]").
-- The kick and snare should feel pulled back behind the grid; if the drums sound like a drum machine, move 'live drum kit played behind the beat' and 'drunk swing' to positions 2-3 in Style and raise Weirdness to 55-60.
-- Rhodes should sound like an electric piano, not a synth pad; if it is pad-like, add 'Wurlitzer' and 'clavinet' and remove 'pad'-adjacent words.
-- Bass should be fingered guitar, not an 808; if it is a sub, keep '808 trap bass' in Exclude and add 'muted palm bass'.
-- Suno likes to add hummed or sung melodies on soul grooves; make sure Exclude lists humming, vocals, singing, scat.
+- The kick and snare should feel pulled back behind the grid; if the drums sound like a drum machine, lead the drums group with 'live drum kit played behind the beat' and add 'drunk swing', then raise Weirdness to 50-55.
+- Rhodes should sound like an electric piano, not a synth pad; if it is pad-like, add 'Wurlitzer' and 'clavinet stabs' and remove any pad words.
+- Bass should be fingered guitar, not an 808; if it is a sub, add '808 trap bass' to Exclude (it is in the lane preset) and 'muted palm bass' to Style.
+- Suno likes to add hummed or sung melodies on soul grooves; if one appears, add 'singing, scat' to Exclude and re-roll.
 - Vocal leak: any hum, ad-lib or sung syllable means a re-roll, not a fix. Confirm the Instrumental toggle, keep the Exclude list intact, and do not add negatives to the Style field.
 - Ending: the [End] tag should produce a stop near 3:04. If Suno keeps playing, Crop to the last downbeat. If it stops early, Extend from the last good section and paste only the remaining section tags into the Extend lyrics box.
 - When to Extend vs re-roll: Extend when the first 60-90 s are keepers and only the back half drifts. Re-roll (and pick the safer or weirder variation) when the drums or genre are wrong from the start.

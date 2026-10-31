@@ -6,7 +6,7 @@ Lane `phonk-experimental` | 138 BPM (half-time feel) | G minor | arc: Stop-start
 
 ## 1. MODEL
 **Pick:** v6
-**Why:** Lo-fi grit, tape hiss and chopped textures are easy to render but the model must hold the swing and keep the cowbell audible in a distorted mix; the flagship model handles this with the best control. Flagship (Pro/Premier). Best prompt adherence and structure-tag following; cleanest, most polished mix. Reported slightly narrower stereo than v5.5 and mixes that can go muffled after ~2:30 in standard mode, so run Max Mode for full-length beats.
+**Why:** Lo-fi grit, tape hiss and chopped textures are easy to render but the model must hold the swing and keep the cowbell audible in a distorted mix; the flagship model handles this with the best control. Flagship (Pro/Premier). Best prompt adherence and structure-tag following; cleanest, most polished mix. Reported slightly narrower stereo than the previous generation and mixes that can go muffled after ~2:30 in standard mode, so run Max Mode for full-length beats.
 **Wild/experimental variant:** Try the experimental/wild variant often here: this lane thrives on off-grid drums, stranger chops and tape-warped pitch, which the wild variant leans into. (Variant: v6-wild; it defaults Variety to Off. Exploration checkpoint (Pro/Premier). Deliberately drifts from the prompt, more genre-blending and texture, unpredictable length. Defaults Variety to Off. Not the same as high Weirdness.)
 **Free-plan fallback:** v6-mini: Faster, lighter, available on Free. Closer to v6 than to wild, a little flatter with more artifacts. Use for cheap palette tests or if you are on the Free plan.
 
@@ -16,12 +16,12 @@ Lane `phonk-experimental` | 138 BPM (half-time feel) | G minor | arc: Stop-start
 - **Max Mode:** ON. ON for any instrumental over ~2:00; OFF for 30-60 s palette tests (2x (20 per generation vs 10)).
 - **Variety:** Off. Any setting above Off rewrites and expands the Style text before the model sees it (official FAQ: 'reduce the Variety slider to 0 to retain full control of your style tags'). Engineered prompts must run at Off.
 - **Persona:** NO. Voices (formerly Personas; Style Personas live inside the Voices menu): In-app text: 'Songs with Voices cannot be instrumental.' Not used in this workflow.
-- **Duration:** Custom 3:20 (planned 3:08 = 108 bars at 138 BPM, plus a 10 s buffer so [End] lands before the hard cut; Crop any tail). Do not use Auto: v6 runs long on Auto.
+- **Duration:** Custom 3:20 (planned 3:08 = 108 bars at 138 BPM, plus a 10 s buffer rounded up to the next 5 s, so [End] lands before the hard cut; Crop any tail). Do not use Auto: v6 runs long on Auto.
 - **Song Title:** Cassette Cowbell (G minor, 138 BPM)
 
-## 3. STYLE FIELD (371/1000 chars, most important descriptors first)
+## 3. STYLE FIELD (348/1000 chars, most important descriptors first)
 ```text
-experimental phonk instrumental, chopped and screwed hip hop, haunted, woozy, Memphis cowbell pattern, cowbell riding the off-beats, slow swung half-time groove, 138 BPM, G minor, half-time feel, distorted long-decay 808 bass, dusty soul sample loop, eerie detuned keys, stop-start arrangement, tape hiss, nocturnal, menacing, lo-fi saturated mix, loud and crunchy master
+experimental phonk instrumental, chopped and screwed hip hop, haunted, woozy, Memphis cowbell pattern, slow swung half-time groove, 138 BPM, G minor, distorted long-decay 808 bass, chopped and screwed sample textures used as instruments, eerie detuned keys, stop-start arrangement, tape hiss, nocturnal, lo-fi saturated mix, loud and crunchy master
 ```
 
 ## 4. LYRICS FIELD (1191/5000 chars, section tags only, no words)
@@ -51,21 +51,21 @@ lead vocals, humming, singing, rapping, drift phonk, Brazilian funk, EDM build, 
 - **Variety:** Off (Exact style). Any setting above Off rewrites and expands the Style text before the model sees it (official FAQ: 'reduce the Variety slider to 0 to retain full control of your style tags'). Engineered prompts must run at Off.
 
 ## 7. VARIATIONS
-**A. Safer** (Weirdness 35%, Style Influence 65%; 313 chars)
+**A. Safer** (Weirdness 35%, Style Influence 65%; 324 chars)
 ```text
-experimental phonk instrumental, Memphis cowbell pattern, haunted, woozy, off-grid swung drums, distorted saturated 808 bass, 138 BPM, G minor, half-time feel, chopped and screwed sample textures, tape hiss, haunting minor-key melody, stop-start arrangement, cassette warble, menacing, lo-fi saturated mix, gritty
+experimental phonk instrumental, haunted, woozy, Memphis cowbell pattern, off-grid swung drums, distorted saturated 808 bass, 138 BPM, half-time feel, G minor, chopped and screwed sample textures, tape hiss, haunting minor-key melody, stop-start arrangement, cassette warble, dark, lo-fi saturated mix, narrow mono-ish drums
 ```
-**B. Weirder** (Weirdness 70%, Style Influence 45%; 496 chars)
+**B. Weirder** (Weirdness 70%, Style Influence 45%; 380 chars)
 ```text
-experimental phonk instrumental, underground Southern hip hop, haunted, woozy, Memphis cowbell pattern, slow swung half-time groove, stuttering kick, 138 BPM, G minor, half-time feel, distorted long-decay 808 bass, chopped and screwed sample textures used as instruments, slowed jazz piano sample loop, pitched-down slowed sample chops, stop-start arrangement, tape hiss, bitcrushed 12-bit grit, polyrhythmic cowbell, broken-beat drum programming, dark, lo-fi saturated mix, narrow mono-ish drums
+experimental phonk instrumental, underground Southern hip hop, haunted, woozy, Memphis cowbell pattern, slow swung half-time groove, stuttering kick, 138 BPM, G minor, distorted long-decay 808 bass, chopped and screwed sample textures used as instruments, stop-start arrangement, tape hiss, vinyl crackle, tape-speed wobble, broken-beat drum programming, hazy, lo-fi saturated mix
 ```
 
 ## 8. POST-GEN NOTES
 - Structure check: intro should hand off to the first hook/drop around 0:07; total near 3:08. If Suno ignores a section, use Replace Section on that time range with a shorter, blunter cue (e.g. "[Break - 4 bars: drums only]").
-- Cowbell should be a rhythmic pattern in the drums, not a lead melody; a cowbell melody means it drifted into drift phonk. Keep 'cowbell lead melody' and 'drift phonk' in Exclude and move 'Memphis cowbell pattern' to position 2 in Style.
-- The 808 should be distorted and saturated but still readable; if it is a clean sine sub, add 'blown-out sub bass' early in Style.
-- Chopped textures should read as sliced, slowed samples; if Suno sings actual words, add 'rapping, lyrics, lead vocals, singing' to Exclude (already default) and swap 'pitched-down sample stabs' for 'detuned keys'.
-- Drums should feel dragged and off-grid; if they are rigid, add 'unquantized drum machine feel' to Style and raise Weirdness by 10.
+- Cowbell should be a rhythmic pattern in the drums, not a lead melody; a cowbell melody means it drifted into drift phonk. Add 'cowbell lead melody' to Exclude and lead the drums group with 'Memphis cowbell pattern'.
+- The 808 should be distorted and saturated but still readable; if it is a clean sine sub, make 'blown-out sub bass' the bass descriptor.
+- Chopped textures should read as sliced, slowed samples; if Suno sings actual words, add 'lyrics, vocal melody' to Exclude and swap the sample-texture descriptor for 'eerie detuned keys'.
+- Drums should feel dragged and off-grid; if they are rigid, add 'unquantized drum machine feel' to Style and raise Weirdness by 5-10 (stay under 60).
 - Vocal leak: any hum, ad-lib or sung syllable means a re-roll, not a fix. Confirm the Instrumental toggle, keep the Exclude list intact, and do not add negatives to the Style field.
 - Ending: the [End] tag should produce a stop near 3:08. If Suno keeps playing, Crop to the last downbeat. If it stops early, Extend from the last good section and paste only the remaining section tags into the Extend lyrics box.
 - When to Extend vs re-roll: Extend when the first 60-90 s are keepers and only the back half drifts. Re-roll (and pick the safer or weirder variation) when the drums or genre are wrong from the start.

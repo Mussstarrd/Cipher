@@ -2,11 +2,11 @@
 
 # suno-forge prompt block: Phonk drums + neo-soul pocket + trap-pop brightness
 
-Lane `hybrid` | 142 BPM (half-time feel) | F minor | arc: Beat switch (two-part) | planned 3:09, hook at 0:07 | seed 2026
+Lane `hybrid` | 142 BPM (half-time feel) | F minor | arc: Beat switch (two-part) | planned 3:23, hook at 0:07 | seed 2026
 
 ## 1. MODEL
 **Pick:** v6
-**Why:** Genre blends need the model with the best multi-genre coherence so the lo-fi drums, warm Rhodes and bright plucks share one mix instead of switching genres mid-song. Flagship (Pro/Premier). Best prompt adherence and structure-tag following; cleanest, most polished mix. Reported slightly narrower stereo than v5.5 and mixes that can go muffled after ~2:30 in standard mode, so run Max Mode for full-length beats.
+**Why:** Genre blends need the model with the best multi-genre coherence so the lo-fi drums, warm Rhodes and bright plucks share one mix instead of switching genres mid-song. Flagship (Pro/Premier). Best prompt adherence and structure-tag following; cleanest, most polished mix. Reported slightly narrower stereo than the previous generation and mixes that can go muffled after ~2:30 in standard mode, so run Max Mode for full-length beats.
 **Wild/experimental variant:** Try the experimental/wild variant when the blend comes back as three songs stitched together; the wild variant tends to fuse unusual combinations more organically. (Variant: v6-wild; it defaults Variety to Off. Exploration checkpoint (Pro/Premier). Deliberately drifts from the prompt, more genre-blending and texture, unpredictable length. Defaults Variety to Off. Not the same as high Weirdness.)
 **Free-plan fallback:** v6-mini: Faster, lighter, available on Free. Closer to v6 than to wild, a little flatter with more artifacts. Use for cheap palette tests or if you are on the Free plan.
 
@@ -16,15 +16,15 @@ Lane `hybrid` | 142 BPM (half-time feel) | F minor | arc: Beat switch (two-part)
 - **Max Mode:** ON. ON for any instrumental over ~2:00; OFF for 30-60 s palette tests (2x (20 per generation vs 10)).
 - **Variety:** Off. Any setting above Off rewrites and expands the Style text before the model sees it (official FAQ: 'reduce the Variety slider to 0 to retain full control of your style tags'). Engineered prompts must run at Off.
 - **Persona:** NO. Voices (formerly Personas; Style Personas live inside the Voices menu): In-app text: 'Songs with Voices cannot be instrumental.' Not used in this workflow.
-- **Duration:** Custom 3:20 (planned 3:09 = 112 bars at 142 BPM, plus a 10 s buffer so [End] lands before the hard cut; Crop any tail). Do not use Auto: v6 runs long on Auto.
+- **Duration:** Custom 3:35 (planned 3:23 = 120 bars at 142 BPM, plus a 10 s buffer rounded up to the next 5 s, so [End] lands before the hard cut; Crop any tail). Do not use Auto: v6 runs long on Auto.
 - **Song Title:** Hazy Bounce (F minor, 142 BPM)
 
-## 3. STYLE FIELD (490/1000 chars, most important descriptors first)
+## 3. STYLE FIELD (408/1000 chars, most important descriptors first)
 ```text
-phonk neo-soul hybrid instrumental, bright trap-soul beat, sunny and dark at once, head-nod, Memphis cowbell pattern, lazy swung hi-hats, off-grid swung kick and snare behind the beat, 142 BPM, F minor, half-time feel, distorted 808 under a fingered bass guitar, Rhodes chords with minor 9th voicings, Wurlitzer comping, sparkly bell lead, music-box bells answer the Rhodes, beat switch halfway, tape hiss, confident, nocturnal, clean punchy master with lo-fi drum texture, radio-ready loud
+phonk neo-soul hybrid instrumental, bright trap-soul beat, sunny and dark at once, head-nod, Memphis cowbell pattern, lazy swung hi-hats, 142 BPM, half-time feel, F minor, distorted 808 under a fingered bass guitar, Rhodes chords with minor 9th voicings, bright synth plucks on top, music-box bells answer the Rhodes, beat switch halfway, tape hiss, groovy, clean punchy master with lo-fi drum texture, glued
 ```
 
-## 4. LYRICS FIELD (1137/5000 chars, section tags only, no words)
+## 4. LYRICS FIELD (1245/5000 chars, section tags only, no words)
 ```text
 [Instrumental]
 [Short Instrumental Intro - 4 bars: Rhodes chord loop with tape hiss, no 808 yet, bright pluck motif answers the chords]
@@ -32,10 +32,11 @@ phonk neo-soul hybrid instrumental, bright trap-soul beat, sunny and dark at onc
 [Verse 1 - 16 bars: 808 and cowbell thin out, swung hats, Rhodes and bass carry the pocket, plucks sparse]
 [Hook 2 - 16 bars: distorted 808 and Memphis cowbell slam in, kick and snare behind the beat, ghost-note snare, Rhodes comping]
 [Beat Switch - 8 bars: beat switch, drums cut for two bars, tempo feel flips to straight-time funk, new Rhodes progression]
-[Verse 2 - 12 bars: beat flips to straight-time live funk feel, bass guitar leads, drum machine swaps for a swung live-feel kit, plucks become bells]
+[Verse 2 - 16 bars: beat flips to straight-time live funk feel, bass guitar leads, a swung live-feel kit replaces the drum machine, plucks become bells]
 [Hook 3 - 16 bars: part B hook, bright plucks and Rhodes together, live-feel swung drums with cowbell layered, bass guitar riff]
-[Hook 4 - 16 bars: biggest hook, bass guitar riff up front, fills every 4 bars, cowbell doubles, loose drum machine swing]
-[Outro - 8 bars: 808 drops out, Rhodes and plucks ring out, cowbell fades]
+[Drum Break - 4 bars: drums only, ghost-note snare fills, one bar of silence, cowbell and dusty kick isolated]
+[Hook 4 - 16 bars: biggest hook, plucks up an octave, bass guitar riff up front, fills every 4 bars, rolls land lazily]
+[Outro - 8 bars: 808 drops out, Rhodes and plucks ring out, tape slows]
 [End]
 ```
 
@@ -51,23 +52,23 @@ vocals, humming, ad-libs, vocal chops, drift phonk, Brazilian funk, EDM build, c
 - **Variety:** Off (Exact style). Any setting above Off rewrites and expands the Style text before the model sees it (official FAQ: 'reduce the Variety slider to 0 to retain full control of your style tags'). Engineered prompts must run at Off.
 
 ## 7. VARIATIONS
-**A. Safer** (Weirdness 30%, Style Influence 70%; 438 chars)
+**A. Safer** (Weirdness 30%, Style Influence 70%; 416 chars)
 ```text
-phonk neo-soul hybrid instrumental, Memphis cowbell pattern, sunny and dark at once, head-nod, off-grid swung kick and snare behind the beat, distorted 808 under a fingered bass guitar, 142 BPM, F minor, half-time feel, Rhodes chords, bright synth plucks on top, sparkly bell lead, music-box bells answer the Rhodes, beat switch halfway, white-noise sweeps, confident, clean punchy master with lo-fi drum texture, warm low mids bright top
+phonk neo-soul hybrid instrumental, sunny and dark at once, head-nod, Memphis cowbell pattern, off-grid swung kick and snare behind the beat, distorted 808 under a fingered bass guitar, 142 BPM, half-time feel, F minor, Rhodes chords, bright synth plucks on top, sparkly bell lead, music-box bells answer the Rhodes, beat switch halfway, white-noise sweeps, groovy, clean punchy master with lo-fi drum texture, glued
 ```
-**B. Weirder** (Weirdness 65%, Style Influence 50%; 499 chars)
+**B. Weirder** (Weirdness 65%, Style Influence 50%; 447 chars)
 ```text
-phonk neo-soul hybrid instrumental, experimental hip hop instrumental, sunny and dark at once, head-nod, Memphis cowbell pattern, 808 cowbell accents, crunchy lo-fi snare, 142 BPM, F minor, half-time feel, distorted 808 under a fingered bass guitar, Rhodes chords with minor 9th voicings, bright synth plucks on top, music-box bells, beat switch halfway, tape hiss, vinyl crackle, polyrhythmic cowbell against swung hats, detuned Rhodes, playful but hazy, clean punchy master with lo-fi drum texture
+phonk neo-soul hybrid instrumental, experimental hip hop instrumental, sunny and dark at once, head-nod, Memphis cowbell pattern, crunchy lo-fi snare, 142 BPM, half-time feel, F minor, distorted 808 under a fingered bass guitar, Rhodes chords with minor 9th voicings, bright synth plucks on top, music-box bells answer the Rhodes, beat switch halfway, tape hiss, vinyl crackle, clean punchy master with lo-fi drum texture, wide plucks narrow drums
 ```
 
 ## 8. POST-GEN NOTES
-- Structure check: intro should hand off to the first hook/drop around 0:07; total near 3:09. If Suno ignores a section, use Replace Section on that time range with a shorter, blunter cue (e.g. "[Break - 4 bars: drums only]").
-- All three elements must coexist in one mix: lo-fi cowbell drums, warm Rhodes/bass, bright plucks. If Suno picks one genre and drops the others, raise Weirdness to 60-65 and reorder Style to lead with the missing element.
-- The drums should swing behind the beat; a rigid cowbell grid means it drifted toward drift phonk. Keep 'quantized rigid drums' and 'cowbell lead melody' in Exclude.
-- Plucks should sit on top and stay bright; if they are dull, add 'sparkly bell lead' and 'bright top' to the mix descriptors.
-- Suno may add hummed soul melodies on Rhodes grooves; keep humming, scat, vocals, singing in Exclude.
+- Structure check: intro should hand off to the first hook/drop around 0:07; total near 3:23. If Suno ignores a section, use Replace Section on that time range with a shorter, blunter cue (e.g. "[Break - 4 bars: drums only]").
+- All three elements must coexist in one mix: lo-fi cowbell drums, warm Rhodes and bass, bright plucks. If Suno picks one genre and drops the others, raise Weirdness to 55-60 and reorder Style to lead with the missing element.
+- The drums should swing behind the beat; a rigid cowbell grid means it drifted toward drift phonk. Add 'quantized rigid drums, cowbell lead melody' to Exclude if either shows up.
+- Plucks should sit on top and stay bright; if they are dull, add 'sparkly bell lead' and 'bright top end' near the end of Style.
+- Suno may add hummed soul melodies on Rhodes grooves; if one appears, add 'singing, scat' to Exclude and re-roll.
 - Vocal leak: any hum, ad-lib or sung syllable means a re-roll, not a fix. Confirm the Instrumental toggle, keep the Exclude list intact, and do not add negatives to the Style field.
-- Ending: the [End] tag should produce a stop near 3:09. If Suno keeps playing, Crop to the last downbeat. If it stops early, Extend from the last good section and paste only the remaining section tags into the Extend lyrics box.
+- Ending: the [End] tag should produce a stop near 3:23. If Suno keeps playing, Crop to the last downbeat. If it stops early, Extend from the last good section and paste only the remaining section tags into the Extend lyrics box.
 - When to Extend vs re-roll: Extend when the first 60-90 s are keepers and only the back half drifts. Re-roll (and pick the safer or weirder variation) when the drums or genre are wrong from the start.
 - Remaster: Remaster (Pro/Premier) renders subtle variations and runs on v6; use it on the keeper for a cleaner, louder master. Compare loudness against a current radio instrumental before export.
 - Stems: Get Stems (Pro/Premier): Auto Split up to 12 stems for 50 credits; Split from Mix 10 credits per stem; Advanced Split (choose from ~100 instruments) 10 credits per stem, Premier only. Export stems from the final take for a DAW polish (re-balance the 808, add a limiter).
@@ -84,9 +85,10 @@ phonk neo-soul hybrid instrumental, experimental hip hop instrumental, sunny and
 | 3 | verse | 16 | 0:34 | 6/10 |
 | 4 | hook | 16 | 1:01 | 9/10 |
 | 5 | switch | 8 | 1:28 | 3/10 |
-| 6 | verse (part-b) | 12 | 1:41 | 7/10 |
-| 7 | hook (part-b) | 16 | 2:02 | 10/10 |
-| 8 | hook (final) | 16 | 2:29 | 10/10 |
-| 9 | outro | 8 | 2:56 | 2/10 |
+| 6 | verse (part-b) | 16 | 1:41 | 7/10 |
+| 7 | hook (part-b) | 16 | 2:08 | 10/10 |
+| 8 | break (drums-only) | 4 | 2:35 | 3/10 |
+| 9 | hook (final) | 16 | 2:42 | 10/10 |
+| 10 | outro | 8 | 3:09 | 2/10 |
 
 </details>

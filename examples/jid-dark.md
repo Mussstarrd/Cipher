@@ -2,11 +2,11 @@
 
 # suno-forge prompt block: Dense dark boom-bap/trap hybrid
 
-Lane `jid-dark` | 146 BPM (half-time feel) | E minor | arc: Beat switch (two-part) | planned 3:11, hook at 0:07 | seed 2026
+Lane `jid-dark` | 146 BPM (half-time feel) | E minor | arc: Beat switch (two-part) | planned 3:17, hook at 0:07 | seed 2026
 
 ## 1. MODEL
 **Pick:** v6
-**Why:** Dense layered arrangements, sample-chop textures and beat switches need the model with the best structural adherence and the clearest low-mid separation so strings, chops and 808 do not blur. Flagship (Pro/Premier). Best prompt adherence and structure-tag following; cleanest, most polished mix. Reported slightly narrower stereo than v5.5 and mixes that can go muffled after ~2:30 in standard mode, so run Max Mode for full-length beats.
+**Why:** Dense layered arrangements, sample-chop textures and beat switches need the model with the best structural adherence and the clearest low-mid separation so strings, chops and 808 do not blur. Flagship (Pro/Premier). Best prompt adherence and structure-tag following; cleanest, most polished mix. Reported slightly narrower stereo than the previous generation and mixes that can go muffled after ~2:30 in standard mode, so run Max Mode for full-length beats.
 **Wild/experimental variant:** Try the experimental/wild variant for odd fills, unexpected time-feel changes and stranger chop textures; this lane benefits most from the wild variant. (Variant: v6-wild; it defaults Variety to Off. Exploration checkpoint (Pro/Premier). Deliberately drifts from the prompt, more genre-blending and texture, unpredictable length. Defaults Variety to Off. Not the same as high Weirdness.)
 **Free-plan fallback:** v6-mini: Faster, lighter, available on Free. Closer to v6 than to wild, a little flatter with more artifacts. Use for cheap palette tests or if you are on the Free plan.
 
@@ -16,26 +16,27 @@ Lane `jid-dark` | 146 BPM (half-time feel) | E minor | arc: Beat switch (two-par
 - **Max Mode:** ON. ON for any instrumental over ~2:00; OFF for 30-60 s palette tests (2x (20 per generation vs 10)).
 - **Variety:** Off. Any setting above Off rewrites and expands the Style text before the model sees it (official FAQ: 'reduce the Variety slider to 0 to retain full control of your style tags'). Engineered prompts must run at Off.
 - **Persona:** NO. Voices (formerly Personas; Style Personas live inside the Voices menu): In-app text: 'Songs with Voices cannot be instrumental.' Not used in this workflow.
-- **Duration:** Custom 3:25 (planned 3:11 = 116 bars at 146 BPM, plus a 10 s buffer so [End] lands before the hard cut; Crop any tail). Do not use Auto: v6 runs long on Auto.
+- **Duration:** Custom 3:30 (planned 3:17 = 120 bars at 146 BPM, plus a 10 s buffer rounded up to the next 5 s, so [End] lands before the hard cut; Crop any tail). Do not use Auto: v6 runs long on Auto.
 - **Song Title:** Low Ceiling (E minor, 146 BPM)
 
-## 3. STYLE FIELD (425/1000 chars, most important descriptors first)
+## 3. STYLE FIELD (399/1000 chars, most important descriptors first)
 ```text
-dark boom-bap trap hybrid instrumental, cinematic underground hip hop, paranoid, relentless, aggressive busy hi-hats with rapid triplet rolls, layered trap and breakbeat drums, rolling triplet hi-hats, 146 BPM, E minor, half-time feel, distorted 808 bass, chopped pitched-down soul sample, eerie music-box melody, detuned piano chops, beat switch halfway, vinyl crackle, gritty, dense but clear mix, wide strings narrow drums
+dark boom-bap trap hybrid instrumental, menacing underground hip hop, paranoid, relentless, busy hi-hats with rapid triplet rolls, layered trap and breakbeat drums, 146 BPM, half-time feel, E minor, distorted 808 bass, chopped pitched-down soul sample, eerie music-box melody, detuned piano chops, beat switch halfway, vinyl crackle, gritty, dense but clear mix, wide stereo pads with centered drums
 ```
 
-## 4. LYRICS FIELD (1172/5000 chars, section tags only, no words)
+## 4. LYRICS FIELD (1268/5000 chars, section tags only, no words)
 ```text
 [Instrumental]
 [Short Instrumental Intro - 4 bars: filtered pitched-down sample chop alone, reversed cymbal into the hook, strings swell underneath]
-[Hook 1 - 16 bars: hard knocking drums in, aggressive triplet hi-hat rolls, distorted 808 slides, strings stab on the 1, hi-hats swung not straight]
+[Hook 1 - 16 bars: hard knocking drums in, rapid triplet hi-hat rolls, distorted 808 slides, strings stab on the 1, hi-hats swung not straight]
 [Verse 1 - 16 bars: drums simplify, odd fill every 4 bars, chop melody filtered, kick and snare knock with sparse hats, off-grid snare placement]
 [Hook 2 - 16 bars: hard knocking drums in, distorted 808 slides, dark synth pad under everything, pitched chop melody up front, hi-hats swung not straight]
 [Beat Switch - 8 bars: beat switch, tempo feel flips to straight boom bap, new chop sample, drums cut for two bars then new pattern slams in]
 [Verse 2 - 16 bars: new drum pattern, swung off-grid kick, boom-bap breakbeat feel, chop pitched up]
 [Hook 3 - 16 bars: part B hook, new chop melody, boom-bap drums with trap hats layered, brass hits, rolls land lazily]
-[Hook 4 - 16 bars: biggest and densest hook, 808 distortion pushed, fills every 2 bars, double-time hi-hats, loose drum machine swing]
-[Outro - 8 bars: drums drop out, strings and chop ring out, sub drop]
+[Drum Break - 4 bars: drums only, kick stutters, hats stop then slam, snare rushes]
+[Hook 4 - 16 bars: biggest and densest hook, strings and synth pad stacked, 808 distortion pushed, double-time hi-hats, rolls land lazily]
+[Outro - 8 bars: drums drop out, strings and chop ring out, music-box motif alone]
 [End]
 ```
 
@@ -51,23 +52,23 @@ vocals, humming, ad-libs, vocal chops, drift phonk, EDM build, cinematic trailer
 - **Variety:** Off (Exact style). Any setting above Off rewrites and expands the Style text before the model sees it (official FAQ: 'reduce the Variety slider to 0 to retain full control of your style tags'). Engineered prompts must run at Off.
 
 ## 7. VARIATIONS
-**A. Safer** (Weirdness 30%, Style Influence 75%; 331 chars)
+**A. Safer** (Weirdness 30%, Style Influence 75%; 349 chars)
 ```text
-dark boom-bap trap hybrid instrumental, hard knocking kick and snare, paranoid, relentless, aggressive busy hi-hats, distorted 808 bass, 146 BPM, E minor, half-time feel, pitched-down chopped sample textures, cinematic strings, sinister minor-key motif, beat switch halfway, filtered sample loop, dense but clear mix, heavy low end
+dark boom-bap trap hybrid instrumental, paranoid, relentless, hard knocking kick and snare, busy hi-hats with rapid triplet rolls, distorted 808 bass, 146 BPM, half-time feel, E minor, pitched-down chopped sample textures, cinematic strings, sinister minor-key motif, beat switch halfway, filtered sample loop, dense but clear mix, punchy transients
 ```
-**B. Weirder** (Weirdness 65%, Style Influence 55%; 487 chars)
+**B. Weirder** (Weirdness 65%, Style Influence 55%; 370 chars)
 ```text
-dark boom-bap trap hybrid instrumental, menacing hip hop beat, paranoid, relentless, aggressive busy hi-hats with rapid triplet rolls, rolling triplet hi-hats, crunchy sampled drum breaks, 146 BPM, E minor, half-time feel, distorted 808 bass, chopped pitched-down soul sample, cinematic string ostinato, pitched-down chopped sample textures, beat switch halfway, vinyl crackle, tape warble, beat switch into double-time, tape-stop chop edits, dark, dense but clear mix, punchy transients
+dark boom-bap trap hybrid instrumental, menacing hip hop beat, paranoid, relentless, busy hi-hats with rapid triplet rolls, crunchy sampled drum breaks, 146 BPM, half-time feel, E minor, distorted 808 bass, chopped pitched-down soul sample, cinematic string ostinato, beat switch halfway, vinyl crackle, tape warble, polymetric hi-hat pattern, tense, dense but clear mix
 ```
 
 ## 8. POST-GEN NOTES
-- Structure check: intro should hand off to the first hook/drop around 0:07; total near 3:11. If Suno ignores a section, use Replace Section on that time range with a shorter, blunter cue (e.g. "[Break - 4 bars: drums only]").
-- The chop should sound like a pitched, sliced sample, not a sung lead; if Suno renders it as a vocal melody, swap 'pitched-down chopped sample textures' for 'detuned piano chops' and add 'vocal melody' to Exclude.
-- Hi-hats should be busy with rolls and pattern switches; if flat, add 'snare rushes' and 'hi-hats switch pattern at bar 9' cues.
-- The beat switch should be audible as a real pattern change; if not, make the switch section 8 bars and put 'beat switch' in the Style field too.
-- Strings can take over and turn it into a trailer cue; keep 'cinematic trailer' in Exclude and keep strings behind the drums in cue ordering.
+- Structure check: intro should hand off to the first hook/drop around 0:07; total near 3:17. If Suno ignores a section, use Replace Section on that time range with a shorter, blunter cue (e.g. "[Break - 4 bars: drums only]").
+- The chop should sound like a pitched, sliced sample, not a sung lead; if Suno renders it as a vocal melody, swap the sample descriptor for 'detuned piano chops' and add 'vocal melody' to Exclude.
+- Hi-hats should be busy with rolls and pattern switches; if flat, add 'snare rushes' to Style and 'hi-hats switch pattern at bar 9' cues to the verses.
+- The beat switch should be audible as a real pattern change; if not, make the switch section 8 bars and keep 'beat switch halfway' in the Style field.
+- Strings can take over and turn it into a trailer cue; if they do, add 'cinematic trailer, epic orchestra' to Exclude and keep strings behind the drums in cue ordering.
 - Vocal leak: any hum, ad-lib or sung syllable means a re-roll, not a fix. Confirm the Instrumental toggle, keep the Exclude list intact, and do not add negatives to the Style field.
-- Ending: the [End] tag should produce a stop near 3:11. If Suno keeps playing, Crop to the last downbeat. If it stops early, Extend from the last good section and paste only the remaining section tags into the Extend lyrics box.
+- Ending: the [End] tag should produce a stop near 3:17. If Suno keeps playing, Crop to the last downbeat. If it stops early, Extend from the last good section and paste only the remaining section tags into the Extend lyrics box.
 - When to Extend vs re-roll: Extend when the first 60-90 s are keepers and only the back half drifts. Re-roll (and pick the safer or weirder variation) when the drums or genre are wrong from the start.
 - Remaster: Remaster (Pro/Premier) renders subtle variations and runs on v6; use it on the keeper for a cleaner, louder master. Compare loudness against a current radio instrumental before export.
 - Stems: Get Stems (Pro/Premier): Auto Split up to 12 stems for 50 credits; Split from Mix 10 credits per stem; Advanced Split (choose from ~100 instruments) 10 credits per stem, Premier only. Export stems from the final take for a DAW polish (re-balance the 808, add a limiter).
@@ -86,7 +87,8 @@ dark boom-bap trap hybrid instrumental, menacing hip hop beat, paranoid, relentl
 | 5 | switch | 8 | 1:25 | 3/10 |
 | 6 | verse (part-b) | 16 | 1:39 | 7/10 |
 | 7 | hook (part-b) | 16 | 2:05 | 10/10 |
-| 8 | hook (final) | 16 | 2:31 | 10/10 |
-| 9 | outro | 8 | 2:58 | 2/10 |
+| 8 | break (drums-only) | 4 | 2:31 | 3/10 |
+| 9 | hook (final) | 16 | 2:38 | 10/10 |
+| 10 | outro | 8 | 3:04 | 2/10 |
 
 </details>
