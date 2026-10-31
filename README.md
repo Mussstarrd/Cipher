@@ -22,7 +22,7 @@ Custom blends: `--blend phonk-experimental,paak-pocket,connor-price` takes drums
 generate  ->  paste into Suno  ->  listen  ->  critique  ->  regenerate
 ```
 
-1. **Generate**
+1. **Generate.** Easiest: open **`app/index.html`** in a browser (double-click it; no server, no install). Pick a lane, press **Generate**, and copy each Suno field with its button. The same engine from the command line:
    ```bash
    node forge.js                                   # interactive
    node forge.js --lane paak-pocket --bpm 94 --key "D Dorian" --mood "sun-soaked" --arc build-release --seed 42 --qa
@@ -51,12 +51,13 @@ generate  ->  paste into Suno  ->  listen  ->  critique  ->  regenerate
 - Radio structure: intro <= 8 bars, hook or drop by 0:45, 2:30-3:30, a contrast section, `[Outro]` then `[End]`.
 - No audio references anywhere.
 
-`node forge.js qa <file...>` checks any block (markdown or JSON) against all of these; `npm test` runs the engine and QA tests; `node scripts/build-examples.js` regenerates `examples/` and fails on any QA error.
+`node forge.js qa <file...>` checks any block (markdown or JSON) against all of these; `npm test` runs the engine and QA tests; `node scripts/build-examples.js` regenerates `examples/` and fails on any QA error; `node scripts/build-app.js` rebuilds `app/index.html` after any change to `lib/`.
 
 ## Repository map
 
 ```
 CLAUDE.md                  project rules for Claude Code
+app/index.html             one-page generator with a Generate button and Copy buttons (built from app/src by scripts/build-app.js)
 forge.js                   CLI (interactive, flags, --config, --batch, --blend, qa, lanes, arcs, spec)
 lib/spec.json              verified Suno facts (models, limits, sliders, Variety, Max Mode, features, banned names)
 lib/lanes.json             lane vocabulary pools, section cues, sliders, exclusions, BPM and keys

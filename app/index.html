@@ -1,0 +1,1134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>suno-forge</title>
+<style>
+  :root { --bg:#0f1115; --panel:#171a21; --panel2:#1e222b; --line:#2a2f3a; --text:#e8eaf0; --muted:#9aa3b2; --accent:#f5b84a; --accent2:#5ad1b3; --bad:#ff6b6b; --ok:#7ad97a; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:15px/1.45 -apple-system, "Segoe UI", Inter, Roboto, sans-serif; }
+  header { padding:20px 24px 8px; display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; }
+  header h1 { margin:0; font-size:22px; letter-spacing:.3px; }
+  header h1 span { color:var(--accent); }
+  header .sub { color:var(--muted); font-size:13px; }
+  main { display:grid; grid-template-columns: 340px 1fr; gap:18px; padding:12px 24px 40px; }
+  @media (max-width: 900px) { main { grid-template-columns:1fr; } }
+  .panel { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:16px; }
+  .controls label { display:block; font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.6px; margin:12px 0 5px; }
+  .controls label:first-child { margin-top:0; }
+  .controls input, .controls select, .controls textarea { width:100%; background:var(--panel2); color:var(--text); border:1px solid var(--line); border-radius:8px; padding:9px 10px; font:inherit; }
+  .controls textarea { min-height:52px; resize:vertical; }
+  .hint { font-size:12px; color:var(--muted); margin-top:4px; }
+  .row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  details.adv summary { cursor:pointer; color:var(--muted); font-size:13px; margin-top:14px; }
+  button { font:inherit; cursor:pointer; border-radius:8px; border:1px solid var(--line); background:var(--panel2); color:var(--text); padding:8px 12px; }
+  button:hover { border-color:#3a4150; }
+  button.primary { background:var(--accent); color:#1a1200; border-color:var(--accent); font-weight:700; font-size:16px; padding:13px; width:100%; margin-top:16px; }
+  button.primary:hover { filter:brightness(1.07); }
+  button.ghost { width:100%; margin-top:8px; }
+  .out { display:flex; flex-direction:column; gap:14px; }
+  .empty { color:var(--muted); text-align:center; padding:60px 20px; border:1px dashed var(--line); border-radius:12px; }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:14px 16px; }
+  .card h2 { margin:0 0 8px; font-size:14px; text-transform:uppercase; letter-spacing:.8px; color:var(--accent2); display:flex; align-items:center; gap:10px; }
+  .card h2 .count { color:var(--muted); font-weight:400; text-transform:none; letter-spacing:0; font-size:12px; margin-left:auto; }
+  .field { position:relative; }
+  .field textarea { width:100%; background:#0b0d12; color:#f3f4f8; border:1px solid var(--line); border-radius:8px; padding:12px 12px 12px; font:14px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; resize:vertical; }
+  .copyrow { display:flex; gap:8px; margin-top:8px; align-items:center; flex-wrap:wrap; }
+  .copy { background:var(--accent2); color:#06201a; border-color:var(--accent2); font-weight:700; }
+  .copy.done { background:var(--ok); border-color:var(--ok); }
+  .meta { color:var(--muted); font-size:13px; }
+  .checklist { display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:8px; }
+  .check { background:var(--panel2); border:1px solid var(--line); border-radius:8px; padding:9px 11px; font-size:14px; }
+  .check b { display:block; font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.6px; margin-bottom:2px; }
+  .check .big { font-size:20px; font-weight:700; color:var(--accent); }
+  .badge { font-size:12px; padding:3px 8px; border-radius:999px; border:1px solid var(--line); }
+  .badge.ok { color:var(--ok); border-color:var(--ok); } .badge.bad { color:var(--bad); border-color:var(--bad); }
+  .steps { margin:0; padding-left:18px; color:var(--muted); font-size:13px; }
+  .steps li { margin:3px 0; }
+  details.notes summary { cursor:pointer; }
+  .notes ul { margin:8px 0 0; padding-left:18px; font-size:14px; }
+  .notes li { margin:5px 0; }
+  .var h3 { margin:10px 0 6px; font-size:13px; color:var(--muted); }
+  .qa { font-size:13px; color:var(--bad); white-space:pre-wrap; }
+  table.plan { border-collapse:collapse; font-size:13px; width:100%; margin-top:8px; }
+  table.plan td, table.plan th { border-bottom:1px solid var(--line); padding:4px 6px; text-align:left; }
+  footer { color:var(--muted); font-size:12px; padding:0 24px 24px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>suno-<span>forge</span></h1>
+  <div class="sub">Suno prompts for radio-ready hip hop instrumentals. Pick a lane, hit Generate, copy the three fields into Suno. Spec verified 2026-10-31 (models: v6 / v6-wild / v6-mini).</div>
+</header>
+<main>
+  <section class="panel controls">
+    <label for="lane">Lane</label>
+    <select id="lane"></select>
+    <div class="hint" id="laneHint"></div>
+
+    <div class="row">
+      <div>
+        <label for="bpm">BPM</label>
+        <input id="bpm" type="number" min="60" max="200" step="1">
+        <div class="hint" id="bpmHint"></div>
+      </div>
+      <div>
+        <label for="key">Key</label>
+        <input id="key" list="keys" placeholder="lane default">
+        <datalist id="keys"></datalist>
+      </div>
+    </div>
+
+    <label for="mood">Mood (comma words, optional)</label>
+    <input id="mood" placeholder="e.g. haunted, woozy">
+
+    <label for="arc">Energy arc</label>
+    <select id="arc"></select>
+    <div class="hint" id="arcHint"></div>
+
+    <details class="adv">
+      <summary>More options</summary>
+      <label for="constraints">Must-have descriptors (comma)</label>
+      <input id="constraints" placeholder="e.g. music-box bells answer the Rhodes">
+      <label for="exclude">Extra Exclude Styles terms (comma)</label>
+      <input id="exclude" placeholder="e.g. siren, acoustic guitar">
+      <div class="row">
+        <div><label for="weirdness">Weirdness % (blank = lane)</label><input id="weirdness" type="number" min="0" max="100"></div>
+        <div><label for="styleInfluence">Style Influence % (blank = lane)</label><input id="styleInfluence" type="number" min="0" max="100"></div>
+      </div>
+      <div class="row">
+        <div><label for="excludePreset">Exclude preset</label>
+          <select id="excludePreset"><option value="default">default (~8 terms)</option><option value="short">short (4 vocal guards)</option><option value="full">full (belt and braces)</option></select></div>
+        <div><label for="seed">Seed (blank = random)</label><input id="seed" placeholder="42"></div>
+      </div>
+      <label for="title">Song title</label>
+      <input id="title" placeholder="auto">
+    </details>
+
+    <button class="primary" id="go">Generate</button>
+    <button class="ghost" id="again" hidden>Roll again (new seed, same settings)</button>
+  </section>
+
+  <section class="out" id="out">
+    <div class="empty">Choose a lane and press <b>Generate</b>. You'll get the Suno setup checklist and the three fields with copy buttons.</div>
+  </section>
+</main>
+<footer>No audio uploads, no Audio Influence, no artist names: everything is steered by the Styles, Lyrics and Exclude Styles fields plus the sliders. Built 2026-10-31.</footer>
+
+<script>
+// suno-forge browser bundle (generated by scripts/build-app.js; do not edit by hand)
+(function () {
+  const __json = {"spec.json":"{\n  \"_comment\": \"Single source of truth for Suno field facts used by the generator and QA checker. Verified against research/01-suno-platform.md (sources dated 2026-09-09 to 2026-10-31). Re-verify with the suno-researcher agent whenever Suno ships a new model; Suno retired every pre-v6 model on 2026-09-09.\",\n  \"verifiedOn\": \"2026-10-31\",\n  \"models\": {\n    \"default\": \"v6\",\n    \"wild\": \"v6-wild\",\n    \"mini\": \"v6-mini\",\n    \"list\": [\n      \"v6\",\n      \"v6-wild\",\n      \"v6-mini\"\n    ],\n    \"notes\": {\n      \"v6\": \"Flagship (Pro/Premier). Best prompt adherence and structure-tag following; cleanest, most polished mix. Reported slightly narrower stereo than the previous generation and mixes that can go muffled after ~2:30 in standard mode, so run Max Mode for full-length beats.\",\n      \"v6-wild\": \"Exploration checkpoint (Pro/Premier). Deliberately drifts from the prompt, more genre-blending and texture, unpredictable length. Defaults Variety to Off. Not the same as high Weirdness.\",\n      \"v6-mini\": \"Faster, lighter, available on Free. Closer to v6 than to wild, a little flatter with more artifacts. Use for cheap palette tests or if you are on the Free plan.\"\n    },\n    \"retired\": [\n      \"v3.5\",\n      \"v4\",\n      \"v4.5\",\n      \"v4.5+\",\n      \"v4.5-all\",\n      \"v5\",\n      \"v5.5\"\n    ],\n    \"retiredOn\": \"2026-09-09\"\n  },\n  \"mode\": {\n    \"name\": \"Custom (Advanced) mode\",\n    \"optionsPanel\": \"More Options (older UI: Advanced Options)\",\n    \"note\": \"Help pages still say Custom; hands-on reports of the v6 web UI say Simple / Advanced / Sounds with a More Options panel. Both names are in circulation.\"\n  },\n  \"fields\": {\n    \"style\": {\n      \"uiName\": \"Styles (Style of Music)\",\n      \"limit\": 1000,\n      \"target\": 500,\n      \"status\": \"community-measured 2026-09-16, unchanged since v4.5\"\n    },\n    \"lyrics\": {\n      \"uiName\": \"Lyrics\",\n      \"limit\": 5000,\n      \"status\": \"community-measured\"\n    },\n    \"exclude\": {\n      \"uiName\": \"Exclude Styles (Pro/Premier, under More Options)\",\n      \"limit\": 1000,\n      \"target\": 200,\n      \"status\": \"community-measured\",\n      \"tip\": \"Bare terms, comma-separated, never prefixed with 'no'. Hands-on testers report Exclude bites hardest with a short list; if Suno ignores it, trim to the 4 most important terms.\"\n    },\n    \"title\": {\n      \"uiName\": \"Song Title\",\n      \"limit\": 80,\n      \"status\": \"unverified (sources say 80 or 100); 80 used as the safe bound\"\n    }\n  },\n  \"sliders\": {\n    \"weirdness\": {\n      \"min\": 0,\n      \"max\": 100,\n      \"default\": 50,\n      \"labels\": \"Safe to Chaos\",\n      \"status\": \"official: 50% = normal expected result\",\n      \"hipHopRange\": \"20-40 commercial, 40-55 experimental; above 60 community reports tempo shifts, odd instrumentation and structure drift\"\n    },\n    \"styleInfluence\": {\n      \"min\": 0,\n      \"max\": 100,\n      \"default\": 50,\n      \"labels\": \"Loose to Strong\",\n      \"status\": \"default community-reported\",\n      \"hipHopRange\": \"50-70 for specific engineered prompts; 70+ when the Style field is thin\"\n    },\n    \"audioInfluence\": {\n      \"min\": 0,\n      \"max\": 100,\n      \"default\": 25,\n      \"used\": false,\n      \"status\": \"only appears when audio is uploaded; never used by suno-forge\"\n    },\n    \"variety\": {\n      \"exists\": true,\n      \"stops\": [\n        \"Off (Exact style)\",\n        \"Normal (Balanced variety)\",\n        \"High (Distinct styles)\",\n        \"Extra (Bold exploration)\",\n        \"Max (Unreasonably varied)\"\n      ],\n      \"default\": \"Normal on v6 and v6-mini; Off on v6-wild\",\n      \"recommended\": \"Off\",\n      \"why\": \"Any setting above Off rewrites and expands the Style text before the model sees it (official FAQ: 'reduce the Variety slider to 0 to retain full control of your style tags'). Engineered prompts must run at Off.\",\n      \"status\": \"control verified; stop labels community-reported\"\n    }\n  },\n  \"maxMode\": {\n    \"exists\": true,\n    \"credits\": \"2x (20 per generation vs 10)\",\n    \"recommended\": \"ON for any instrumental over ~2:00; OFF for 30-60 s palette tests\",\n    \"status\": \"official: 'best for songs longer than two minutes'; cost multiplier from in-app tooltip\"\n  },\n  \"duration\": {\n    \"control\": \"Auto, or Custom 10 s to 6:00 (default 3:00)\",\n    \"note\": \"Custom hard-cuts at the value; Auto tends to run long on v6. Set Custom to the planned runtime plus a small buffer and let [End] stop it early; Crop any tail.\",\n    \"bufferSeconds\": 10\n  },\n  \"instrumental\": {\n    \"method\": \"Custom (Advanced) mode -> Instrumental toggle ON -> Variety OFF -> Lyrics field holds bracketed structure/production tags only (no words) -> Exclude Styles lists vocal terms as bare words.\",\n    \"lyricsTagsHonored\": \"Community consensus (hands-on 2026-09-16): yes, bracket tags are followed as structure with the toggle on. [End] works most of the time; named breaks are the most reliable mid-song tags.\",\n    \"inlineNegatives\": \"Weak or counterproductive in Style ('remove the humming' produced more humming). Negatives go in Exclude Styles only.\"\n  },\n  \"personas\": {\n    \"uiName\": \"Voices (formerly Personas; Style Personas live inside the Voices menu)\",\n    \"instrumentalCompatible\": false,\n    \"note\": \"In-app text: 'Songs with Voices cannot be instrumental.' Not used in this workflow.\"\n  },\n  \"features\": {\n    \"extend\": \"Extend adds music after a chosen point (max 8 min total). Paste only the remaining section tags into the Extend lyrics box.\",\n    \"replaceSection\": \"Replace Section (Pro/Premier, Song Editor): highlight the region, edit the tags/prompt, get two versions. Use it on a leaked hum or an ignored break instead of re-rolling.\",\n    \"remaster\": \"Remaster (Pro/Premier) renders subtle variations and runs on v6; use it on the keeper for a cleaner, louder master.\",\n    \"crop\": \"Crop trims start/end on the waveform (Pro/Premier).\",\n    \"stems\": \"Get Stems (Pro/Premier): Auto Split up to 12 stems for 50 credits; Split from Mix 10 credits per stem; Advanced Split (choose from ~100 instruments) 10 credits per stem, Premier only.\",\n    \"studio\": \"Suno Studio (Premier) is a browser DAW; exports are not subject to download caps.\",\n    \"credits\": \"Standard generation: 2 songs for 10 credits. Max Mode: 20. Free 50/day (v6-mini only), Pro 2,500/mo, Premier 10,000/mo. Download caps since 2026-09-03: Free 7 lifetime, Pro 20/mo, Premier 60/mo.\",\n    \"artistNames\": \"Suno silently rewrites prompts containing artist names ('We don't reference artists directly, so we've replaced your prompt with similar styles you might like'), so a name costs you control of the whole Style field.\"\n  },\n  \"baseExclude\": {\n    \"_comment\": \"Hands-on testers report Exclude Styles bites hardest with a short list (2-4 bare nouns); the generator defaults to core vocal terms + up to 4 lane guards (~8 terms). 'full' is the belt-and-braces preset; 'short' is the minimal one.\",\n    \"core\": {\n      \"full\": [\n        \"vocals\",\n        \"humming\",\n        \"ad-libs\",\n        \"vocal chops\"\n      ],\n      \"lead\": [\n        \"lead vocals\",\n        \"humming\",\n        \"singing\",\n        \"rapping\"\n      ]\n    },\n    \"presets\": {\n      \"short\": [\n        \"vocals\",\n        \"humming\",\n        \"ad-libs\",\n        \"vocal chops\"\n      ],\n      \"default\": \"core + first 4 lane guards\",\n      \"full\": [\n        \"vocals\",\n        \"lyrics\",\n        \"singing\",\n        \"rap\",\n        \"spoken word\",\n        \"humming\",\n        \"ad-libs\",\n        \"vocal chops\",\n        \"choir\",\n        \"EDM build\",\n        \"piano ballad\",\n        \"quantized rigid drums\",\n        \"drift phonk\",\n        \"cinematic trailer\"\n      ]\n    }\n  },\n  \"bannedNames\": [\n    \"Connor Price\",\n    \"Anderson .Paak\",\n    \"Anderson Paak\",\n    \".Paak\",\n    \"Paak\",\n    \"JID\",\n    \"J.I.D\",\n    \"Three 6 Mafia\",\n    \"Three Six Mafia\",\n    \"DJ Smokey\",\n    \"DJ Paul\",\n    \"Juicy J\",\n    \"Tommy Wright\",\n    \"DJ Spanish Fly\",\n    \"Soudiere\",\n    \"DJ Yung Vamp\",\n    \"Mythic\",\n    \"Kaytranada\",\n    \"Knxwledge\",\n    \"NxWorries\",\n    \"J Dilla\",\n    \"Dilla\",\n    \"Madlib\",\n    \"Metro Boomin\",\n    \"Kenny Beats\",\n    \"Christo\",\n    \"ChaseTheMoney\",\n    \"Dreamville\",\n    \"Pharrell\",\n    \"Timbaland\",\n    \"Kanye\",\n    \"Drake\",\n    \"Kendrick\",\n    \"Travis Scott\",\n    \"Tyler, the Creator\",\n    \"Tyler the Creator\",\n    \"Thundercat\",\n    \"Dr. Dre\",\n    \"Flying Lotus\",\n    \"Mac Miller\",\n    \"Earl Sweatshirt\",\n    \"MF DOOM\",\n    \"Freddie Gibbs\",\n    \"Denzel Curry\",\n    \"Playboi Carti\",\n    \"Pi'erre Bourne\",\n    \"Pierre Bourne\",\n    \"Southside\",\n    \"Wheezy\",\n    \"Zaytoven\",\n    \"Lex Luger\",\n    \"Mike Will\",\n    \"DJ Screw\",\n    \"Kaytra\",\n    \"Silk Sonic\",\n    \"Bruno Mars\",\n    \"Free Nationals\",\n    \"Hi-Tek\",\n    \"9th Wonder\",\n    \"Alchemist\",\n    \"Pete Rock\",\n    \"DJ Premier\",\n    \"RZA\",\n    \"Mndsgn\",\n    \"Robert Glasper\",\n    \"Tom Misch\",\n    \"Kreepa\",\n    \"DVRST\",\n    \"Ghostface Playa\",\n    \"KORDHELL\",\n    \"Smokepurpp\",\n    \"Pink Guy\",\n    \"Lil Ugly Mane\",\n    \"SpaceGhostPurrp\",\n    \"Playa Fly\",\n    \"Gangsta Pat\",\n    \"Lord Infamous\",\n    \"Koopsta Knicca\",\n    \"Eminem\",\n    \"Jay-Z\",\n    \"Lil Wayne\",\n    \"Future\",\n    \"Young Thug\",\n    \"21 Savage\",\n    \"Pharrell Williams\",\n    \"Anderson\",\n    \"Price\",\n    \"Connor\",\n    \"Dilla swing\",\n    \"Dilla feel\"\n  ],\n  \"bannedPhrases\": [\n    \"type beat\",\n    \"in the style of\",\n    \"sounds like\",\n    \"inspired by\",\n    \"style of\"\n  ],\n  \"audioRefTerms\": [\n    \"audio influence\",\n    \"upload\",\n    \"reference clip\",\n    \"reference track\",\n    \"audio reference\",\n    \"reference audio\",\n    \"sample upload\",\n    \"upload a clip\",\n    \"cover of\",\n    \"audio prompt\",\n    \"add vocals\",\n    \"add instrumental\"\n  ],\n  \"vocalImplying\": [\n    \"call and response\",\n    \"call-and-response\",\n    \"chant\",\n    \"singalong\",\n    \"sing-along\",\n    \"choir\",\n    \"gospel\",\n    \"soulful\",\n    \"anthemic\",\n    \"scat\",\n    \"talkbox\",\n    \"oohs\",\n    \"ahhs\",\n    \"la-la\",\n    \"vocal pad\",\n    \"wordless vocals\",\n    \"ad-lib\",\n    \"R&B\",\n    \"pop song\",\n    \"ballad\",\n    \"lead vocal\",\n    \"backing vocal\",\n    \"crowd vocal\",\n    \"vocal hook\",\n    \"chorus vocal\"\n  ]\n}","lanes.json":"{\n  \"_comment\": \"Lane definitions for suno-forge. Descriptor pools are ordered by priority: earlier items are more characteristic and are selected more often. Real artist names NEVER appear here (not even in labels); the artist-to-lane mapping lives only in README.md and research/.\",\n  \"lanes\": {\n    \"connor-price\": {\n      \"label\": \"Bouncy playful trap-pop\",\n      \"description\": \"Bouncy, playful trap-pop instrumental: tight syncopated drums, bright synth plucks and bells, stop-start arrangement with mutes and drops, crisp clean modern mix.\",\n      \"bpm\": {\n        \"min\": 130,\n        \"max\": 160,\n        \"default\": 140,\n        \"halfTime\": true,\n        \"note\": \"Written half-time trap count (felt 65-80). Analysed tracks in this lane sit at 130-141 half-time or 100-112 straight-time; use --bpm 105 for the straight bounce (the planner switches to straight time under 120).\"\n      },\n      \"keys\": [\n        \"B minor\",\n        \"F minor\",\n        \"F# minor\",\n        \"C# minor\",\n        \"D minor\",\n        \"G minor\"\n      ],\n      \"defaultArc\": \"stop-start\",\n      \"model\": {\n        \"pick\": \"default\",\n        \"rationale\": \"Needs crisp transient detail, clean stereo plucks and tight drum programming; the flagship model has the cleanest mix and follows stop-start structure cues best.\",\n        \"wild\": \"Try the experimental/wild variant when the result is too generic pop and you want odd fills, unexpected synth timbres or playful rhythmic turnarounds.\"\n      },\n      \"sliders\": {\n        \"weirdness\": 30,\n        \"styleInfluence\": 70,\n        \"weirdnessWhy\": \"Low-moderate: keep the drums tight and the hook predictable; raise only if the plucks feel stock.\",\n        \"styleInfluenceWhy\": \"High: the Style field carries the whole identity (bounce, plucks, stop-start) and must be followed closely.\"\n      },\n      \"pools\": {\n        \"genre\": [\n          \"bouncy trap-pop instrumental\",\n          \"playful pop-rap beat\",\n          \"upbeat hip hop instrumental\",\n          \"modern pop-trap\",\n          \"feel-good bounce\"\n        ],\n        \"drums\": [\n          \"tight syncopated trap drums\",\n          \"crisp snappy snare\",\n          \"finger snaps and claps\",\n          \"punchy snappy snare\",\n          \"crisp rolling hi-hats with triplet stutters\",\n          \"bouncy off-beat kick pattern\",\n          \"clap and rimshot layers\",\n          \"stop-start drum mutes\",\n          \"swung 16th hi-hats\",\n          \"snare on the and-of-4 pickups\"\n        ],\n        \"bass\": [\n          \"clean 808 bass with glides\",\n          \"clean round 808 bass\",\n          \"short tight sub hits\",\n          \"bouncy sub bass that follows the kick\"\n        ],\n        \"harmony\": [\n          \"bright synth plucks\",\n          \"music-box bells\",\n          \"major-key hooky melody\",\n          \"sparkly bell lead\",\n          \"marimba and kalimba plucks\",\n          \"staccato chord stabs\",\n          \"whistle-like synth lead\",\n          \"pitched percussion melody\",\n          \"major 7th chord stabs\"\n        ],\n        \"texture\": [\n          \"vinyl stop effects\",\n          \"riser into the drop\",\n          \"white-noise sweeps\",\n          \"finger snaps\",\n          \"cartoonish FX hits\",\n          \"tape stop before the hook\",\n          \"pitch-bend plucks\"\n        ],\n        \"mood\": [\n          \"playful\",\n          \"cheeky\",\n          \"confident\",\n          \"sunny\",\n          \"mischievous\",\n          \"bouncy\",\n          \"energetic\",\n          \"fun\"\n        ],\n        \"mix\": [\n          \"clean modern mix\",\n          \"bright top end\",\n          \"crisp transients\",\n          \"wide stereo\",\n          \"punchy\",\n          \"radio-ready loud master\",\n          \"polished\",\n          \"tight low end\"\n        ],\n        \"wild\": [\n          \"glitchy micro-edits\",\n          \"toy piano\",\n          \"8-bit chiptune blips\",\n          \"reversed pluck swells\",\n          \"polyrhythmic percussion layer\",\n          \"beatbox-style percussion hits\"\n        ]\n      },\n      \"safer\": [\n        \"bouncy trap-pop instrumental\",\n        \"tight syncopated trap drums\",\n        \"punchy snappy snare\",\n        \"bright synth plucks\",\n        \"clean round 808 bass\",\n        \"playful\",\n        \"clean modern mix\",\n        \"radio-ready\"\n      ],\n      \"exclude\": [\n        \"drift phonk\",\n        \"EDM build\",\n        \"dubstep\",\n        \"lo-fi hiss\",\n        \"dark\",\n        \"aggressive distortion\",\n        \"slow ballad\",\n        \"orchestral\"\n      ],\n      \"cues\": {\n        \"intro\": [\n          \"bright synth pluck motif alone\",\n          \"finger snaps and a filtered hi-hat\",\n          \"no kick yet\",\n          \"short riser into the hook\",\n          \"pitch-bend pluck\",\n          \"muted chord stabs\"\n        ],\n        \"hook\": [\n          \"full drums in\",\n          \"bouncy off-beat kick\",\n          \"bright pluck melody up front\",\n          \"808 locks to the kick\",\n          \"snappy snare with claps\",\n          \"hi-hat triplet stutters\",\n          \"catchy whistle-like lead doubles the plucks\"\n        ],\n        \"hook_final\": [\n          \"biggest hook\",\n          \"extra percussion layer\",\n          \"pluck melody up an octave\",\n          \"full stereo width\",\n          \"snare fills every 4 bars\",\n          \"drums cut for the last beat then slam back\"\n        ],\n        \"verse\": [\n          \"half the elements drop out\",\n          \"kick and snare only with sparse plucks\",\n          \"stop-start mutes on bar 4 and 8\",\n          \"swung hats\",\n          \"subtle sub pulse\",\n          \"staccato chord stabs on off-beats\"\n        ],\n        \"verse_mutes\": [\n          \"full stop on the last beat of every 4th bar\",\n          \"beat drops out for one bar then returns\",\n          \"kick-and-snare-only bars\",\n          \"plucks and drums trade short phrases\",\n          \"tape stop into bar 16\"\n        ],\n        \"pre\": [\n          \"drums thin to hats only\",\n          \"riser builds\",\n          \"filter opens over 4 bars\",\n          \"snare roll into the hook\"\n        ],\n        \"bridge\": [\n          \"drums out\",\n          \"plucks and pad only\",\n          \"half-time feel\",\n          \"slow filter sweep\",\n          \"snaps keep time\"\n        ],\n        \"break\": [\n          \"drums only\",\n          \"percussion-only break\",\n          \"hi-hat stutter pattern\",\n          \"one bar of silence before the drop\"\n        ],\n        \"break_drums-only\": [\n          \"drums only\",\n          \"kick snare and claps isolated\",\n          \"quick fills\",\n          \"silence on the last beat\"\n        ],\n        \"drop\": [\n          \"hard drop\",\n          \"bouncy full drums\",\n          \"808 slides\",\n          \"plucks and bells stacked\",\n          \"snare on every 2 and 4 with rimshot layers\"\n        ],\n        \"switch\": [\n          \"beat switch\",\n          \"new drum pattern\",\n          \"tempo feel flips to straight time\",\n          \"plucks replaced by bells\"\n        ],\n        \"outro\": [\n          \"drums thin out\",\n          \"pluck motif repeats and fades\",\n          \"final snap\",\n          \"clean hard stop\"\n        ],\n        \"outro_hard-stop\": [\n          \"everything stops together on the downbeat\",\n          \"one last pluck ring-out\",\n          \"hard stop\"\n        ]\n      },\n      \"listenFor\": [\n        \"Does the beat actually stop and restart on the mute bars, or does Suno smooth them over? If smoothed, lead the drums group with 'stop-start drum mutes' and put 'full stop' cues in more sections.\",\n        \"Plucks should be bright and forward; if they are buried, make 'bright synth plucks' the first instrument descriptor.\",\n        \"Hi-hats should bounce and stutter, not run as a flat 16th grid; if rigid, add 'swung 16th hi-hats' and raise Weirdness by 10.\",\n        \"Suno likes to add sung hooks or ad-libs on bouncy pop beats; if any appear, add 'singing, pop vocals' to the Exclude field and re-roll.\"\n      ]\n    },\n    \"paak-pocket\": {\n      \"label\": \"Live swung neo-soul funk hip hop\",\n      \"description\": \"Live-drummer neo-soul/funk hip hop instrumental: swung drums played behind the beat, Rhodes and Wurlitzer chords, fingered bass guitar, breakbeat feel, warm analog saturation.\",\n      \"bpm\": {\n        \"min\": 85,\n        \"max\": 100,\n        \"default\": 92,\n        \"halfTime\": false,\n        \"note\": \"Straight-time, swung 16ths. Sweet spot 86-96; 98-105 leans funk; 78-86 leans lo-fi soul.\"\n      },\n      \"keys\": [\n        \"F minor\",\n        \"D Dorian\",\n        \"C minor\",\n        \"Eb major\",\n        \"C# minor\",\n        \"Ab major\",\n        \"Bb minor\"\n      ],\n      \"defaultArc\": \"build-release\",\n      \"model\": {\n        \"pick\": \"default\",\n        \"rationale\": \"Live-sounding drums and real-instrument timbres (Rhodes, bass guitar, horns) need the most realistic acoustic rendering and the loosest timing feel; the flagship model renders swing and room most convincingly.\",\n        \"wild\": \"Try the experimental/wild variant when the groove comes back too clean and quantized, or you want odd meters, drunken fills and tape-warped chords.\"\n      },\n      \"sliders\": {\n        \"weirdness\": 45,\n        \"styleInfluence\": 60,\n        \"weirdnessWhy\": \"Mid: enough looseness to humanize the drums and chord voicings without derailing the groove; the pocket comes from the vocabulary, not the slider.\",\n        \"styleInfluenceWhy\": \"Moderate-high: follow the instrument list closely but let the model improvise the pocket.\"\n      },\n      \"pools\": {\n        \"genre\": [\n          \"live neo-soul hip hop instrumental\",\n          \"funk breaks\",\n          \"soul-sampling boom bap\",\n          \"West Coast funk-soul groove\",\n          \"jazzy hip hop\",\n          \"lo-fi soul\"\n        ],\n        \"drums\": [\n          \"live drum kit played behind the beat\",\n          \"laid-back swung pocket\",\n          \"late behind-the-beat snare\",\n          \"ghost-note hi-hats\",\n          \"swung loose pocket\",\n          \"drunk swing\",\n          \"ghost-note snare\",\n          \"unquantized human timing\",\n          \"tight dry snare with a light brushed touch\",\n          \"shuffled hi-hats\",\n          \"breakbeat feel\",\n          \"cross-stick rimshots\",\n          \"lazy kick pushes and pulls\",\n          \"open hi-hat barks\"\n        ],\n        \"bass\": [\n          \"fingerstyle electric bass guitar\",\n          \"warm electric bass with slides\",\n          \"syncopated funk bass line\",\n          \"muted palm bass\"\n        ],\n        \"harmony\": [\n          \"Rhodes electric piano with tremolo\",\n          \"Rhodes chords\",\n          \"Wurlitzer\",\n          \"minor 9th and major 7th voicings\",\n          \"clavinet stabs\",\n          \"funk guitar chucks\",\n          \"horn section stabs\",\n          \"soul organ swells\",\n          \"jazzy chord extensions\",\n          \"Dorian groove\"\n        ],\n        \"texture\": [\n          \"warm tape saturation\",\n          \"vinyl crackle\",\n          \"room mic ambience\",\n          \"tambourine on the swung 8ths\",\n          \"congas and shaker\",\n          \"lo-fi sampled soul chops\"\n        ],\n        \"mood\": [\n          \"laid-back\",\n          \"sunny\",\n          \"smooth\",\n          \"groovy\",\n          \"late-night\",\n          \"head-nod\",\n          \"warm and nostalgic\"\n        ],\n        \"mix\": [\n          \"warm analog mix\",\n          \"glued\",\n          \"punchy but relaxed\",\n          \"wide stereo Rhodes\",\n          \"clean low end\",\n          \"mastered loud\",\n          \"vintage console warmth\"\n        ],\n        \"wild\": [\n          \"odd-meter turnaround\",\n          \"polyrhythmic percussion\",\n          \"psychedelic tape flutter\",\n          \"detuned Rhodes\",\n          \"half-speed breakdown\",\n          \"live crowd room noise\"\n        ]\n      },\n      \"safer\": [\n        \"live neo-soul hip hop instrumental\",\n        \"live drum kit played behind the beat\",\n        \"swung loose pocket\",\n        \"Rhodes chords\",\n        \"fingered bass guitar\",\n        \"warm tape saturation\",\n        \"laid-back\",\n        \"warm analog mix\"\n      ],\n      \"exclude\": [\n        \"trap hi-hats\",\n        \"EDM\",\n        \"quantized drum machine\",\n        \"808 trap bass\",\n        \"autotune\",\n        \"synthwave\",\n        \"metal\",\n        \"smooth jazz elevator\"\n      ],\n      \"cues\": {\n        \"intro\": [\n          \"Rhodes chord loop alone\",\n          \"vinyl crackle\",\n          \"hi-hat count-in with ghost notes\",\n          \"bass slides in on bar 3\",\n          \"no full kit yet\",\n          \"warm tape hiss\"\n        ],\n        \"hook\": [\n          \"full live kit drops in\",\n          \"kick behind the beat\",\n          \"ghost-note snare\",\n          \"fingered bass locks the groove\",\n          \"Rhodes comping\",\n          \"horn stab answers every 4 bars\",\n          \"tambourine on swung 8ths\"\n        ],\n        \"hook_final\": [\n          \"biggest groove\",\n          \"horn section joins\",\n          \"organ swells\",\n          \"drummer opens the hi-hats\",\n          \"fills every 4 bars\",\n          \"bass walks up into the final chord\"\n        ],\n        \"verse\": [\n          \"drums simplify to kick snare and shuffled hats\",\n          \"Rhodes voicings open up\",\n          \"bass plays sparse\",\n          \"clavinet chucks enter at bar 9\",\n          \"ghost notes stay\",\n          \"guitar chucks on the off-beats\"\n        ],\n        \"verse_mutes\": [\n          \"drums drop out every 8th bar\",\n          \"bass and Rhodes carry one bar alone\",\n          \"drummer re-enters with a fill\"\n        ],\n        \"pre\": [\n          \"snare build with brushes\",\n          \"chords rise\",\n          \"bass walks up\",\n          \"hi-hat opens\"\n        ],\n        \"bridge\": [\n          \"drums out\",\n          \"Rhodes and bass only\",\n          \"half-time feel\",\n          \"chords modulate up\",\n          \"congas enter\"\n        ],\n        \"break\": [\n          \"drum break\",\n          \"live kit solo with ghost notes\",\n          \"breakbeat fills\",\n          \"bass drops out\"\n        ],\n        \"break_drums-only\": [\n          \"drum break\",\n          \"live kit only\",\n          \"loose fills\",\n          \"kick pushes behind the beat\"\n        ],\n        \"drop\": [\n          \"full band returns\",\n          \"horns stacked\",\n          \"bass guitar riff up front\",\n          \"funk guitar\"\n        ],\n        \"switch\": [\n          \"beat switch\",\n          \"tempo feel halves\",\n          \"drummer moves to a breakbeat pattern\",\n          \"new Rhodes progression\"\n        ],\n        \"outro\": [\n          \"band thins to drums and bass\",\n          \"Rhodes rings out\",\n          \"drummer plays out with brushes\",\n          \"tape slows slightly\",\n          \"final chord with room reverb\"\n        ],\n        \"outro_hard-stop\": [\n          \"everyone stops on the downbeat\",\n          \"Rhodes chord rings\",\n          \"hard stop\"\n        ]\n      },\n      \"listenFor\": [\n        \"The kick and snare should feel pulled back behind the grid; if the drums sound like a drum machine, lead the drums group with 'live drum kit played behind the beat' and add 'drunk swing', then raise Weirdness to 50-55.\",\n        \"Rhodes should sound like an electric piano, not a synth pad; if it is pad-like, add 'Wurlitzer' and 'clavinet stabs' and remove any pad words.\",\n        \"Bass should be fingered guitar, not an 808; if it is a sub, add '808 trap bass' to Exclude (it is in the lane preset) and 'muted palm bass' to Style.\",\n        \"Suno likes to add hummed or sung melodies on soul grooves; if one appears, add 'singing, scat' to Exclude and re-roll.\"\n      ]\n    },\n    \"jid-dark\": {\n      \"label\": \"Dense dark boom-bap/trap hybrid\",\n      \"description\": \"Dense, dark boom-bap/trap hybrid instrumental: pitched chopped sample textures, odd drum fills and switch-ups, busy hi-hats with rapid triplet rolls, cinematic strings and choir pads.\",\n      \"bpm\": {\n        \"min\": 130,\n        \"max\": 160,\n        \"default\": 146,\n        \"halfTime\": true,\n        \"note\": \"Written half-time trap tempo (felt 70-80). For a boom-bap-first feel use --bpm 90 which switches to straight time.\"\n      },\n      \"keys\": [\n        \"E minor\",\n        \"C minor\",\n        \"G minor\",\n        \"F minor\",\n        \"C# minor\",\n        \"A minor\"\n      ],\n      \"defaultArc\": \"beat-switch\",\n      \"model\": {\n        \"pick\": \"default\",\n        \"rationale\": \"Dense layered arrangements, sample-chop textures and beat switches need the model with the best structural adherence and the clearest low-mid separation so strings, chops and 808 do not blur.\",\n        \"wild\": \"Try the experimental/wild variant for odd fills, unexpected time-feel changes and stranger chop textures; this lane benefits most from the wild variant.\"\n      },\n      \"sliders\": {\n        \"weirdness\": 50,\n        \"styleInfluence\": 65,\n        \"weirdnessWhy\": \"Moderate-high: odd fills, off-kilter chops and switch-ups are the point of this lane; stay under 60 so the beat switch stays on plan.\",\n        \"styleInfluenceWhy\": \"Moderate-high: the Style field defines the hybrid; too low and it collapses into generic trap.\"\n      },\n      \"pools\": {\n        \"genre\": [\n          \"dark boom-bap trap hybrid instrumental\",\n          \"gritty East Coast meets Southern trap\",\n          \"menacing underground hip hop\",\n          \"menacing hip hop beat\",\n          \"experimental boom bap\"\n        ],\n        \"drums\": [\n          \"busy hi-hats with rapid triplet rolls\",\n          \"heavy boom-bap snare over trap hats\",\n          \"rolling triplet hi-hats\",\n          \"odd fills and dropped beats\",\n          \"hard knocking boom-bap kick and snare\",\n          \"odd drum fills and switch-ups\",\n          \"off-grid swung drums\",\n          \"layered trap and breakbeat drums\",\n          \"snare rushes\",\n          \"stuttering kick patterns\",\n          \"crunchy sampled drum breaks\",\n          \"half-time pocket\"\n        ],\n        \"bass\": [\n          \"distorted 808 bass\",\n          \"sliding sub bass\",\n          \"gritty bass with overdrive\",\n          \"808 slides into the downbeat\"\n        ],\n        \"harmony\": [\n          \"chopped pitched-down soul sample\",\n          \"cinematic string ostinato\",\n          \"pitched-down chopped sample textures\",\n          \"cinematic strings\",\n          \"dark synth pad\",\n          \"eerie music-box melody\",\n          \"detuned piano chops\",\n          \"sinister minor-key motif\",\n          \"orchestral staccato strings\",\n          \"reversed sample swells\",\n          \"ominous brass hits\"\n        ],\n        \"texture\": [\n          \"vinyl crackle\",\n          \"tape warble\",\n          \"filtered sample loop\",\n          \"siren-like synth\",\n          \"glitch stutters\",\n          \"sub drops\",\n          \"record scratch stabs\"\n        ],\n        \"mood\": [\n          \"dark\",\n          \"menacing\",\n          \"tense\",\n          \"cinematic\",\n          \"paranoid\",\n          \"gritty\",\n          \"relentless\",\n          \"ominous\"\n        ],\n        \"mix\": [\n          \"dense but clear mix\",\n          \"dense mid-heavy saturated mix\",\n          \"heavy low end\",\n          \"loud dense master\",\n          \"punchy transients\",\n          \"wide stereo pads with centered drums\",\n          \"controlled sub\",\n          \"gritty saturation\"\n        ],\n        \"wild\": [\n          \"polymetric hi-hat pattern\",\n          \"beat switch into double-time\",\n          \"tape-stop chop edits\",\n          \"dissonant string clusters\",\n          \"half-speed breakdown\",\n          \"free-time drum fill section\"\n        ]\n      },\n      \"safer\": [\n        \"dark boom-bap trap hybrid instrumental\",\n        \"hard knocking kick and snare\",\n        \"busy hi-hats with rapid triplet rolls\",\n        \"distorted 808 bass\",\n        \"pitched-down chopped sample textures\",\n        \"cinematic strings\",\n        \"dark\",\n        \"dense but clear mix\"\n      ],\n      \"exclude\": [\n        \"drift phonk\",\n        \"EDM build\",\n        \"cinematic trailer\",\n        \"happy\",\n        \"major key pop\",\n        \"smooth jazz\",\n        \"lo-fi chill\",\n        \"dubstep\"\n      ],\n      \"cues\": {\n        \"intro\": [\n          \"filtered pitched-down sample chop alone\",\n          \"vinyl crackle\",\n          \"strings swell underneath\",\n          \"no drums yet\",\n          \"reversed cymbal into the hook\",\n          \"eerie music-box motif\"\n        ],\n        \"hook\": [\n          \"hard knocking drums in\",\n          \"distorted 808 slides\",\n          \"rapid triplet hi-hat rolls\",\n          \"pitched chop melody up front\",\n          \"strings stab on the 1\",\n          \"dark synth pad under everything\",\n          \"snare rush at bar 8\"\n        ],\n        \"hook_final\": [\n          \"biggest and densest hook\",\n          \"strings and synth pad stacked\",\n          \"double-time hi-hats\",\n          \"808 distortion pushed\",\n          \"fills every 2 bars\",\n          \"sub drop into the last bar\"\n        ],\n        \"verse\": [\n          \"drums simplify\",\n          \"kick and snare knock with sparse hats\",\n          \"chop melody filtered\",\n          \"strings drop out\",\n          \"808 holds the low end\",\n          \"odd fill every 4 bars\",\n          \"hi-hats switch pattern at bar 9\"\n        ],\n        \"verse_mutes\": [\n          \"drums stop on the last bar of each 8\",\n          \"chop plays alone for one bar\",\n          \"drums return with a snare rush\"\n        ],\n        \"verse_part-b\": [\n          \"new drum pattern\",\n          \"boom-bap breakbeat feel\",\n          \"swung off-grid kick\",\n          \"chop pitched up\",\n          \"strings replaced by detuned piano\"\n        ],\n        \"pre\": [\n          \"hi-hats roll faster\",\n          \"strings rise\",\n          \"drums thin to kick only\",\n          \"riser\"\n        ],\n        \"bridge\": [\n          \"drums out\",\n          \"strings and synth pad alone\",\n          \"chop reversed\",\n          \"tension build\",\n          \"808 re-enters on bar 7\"\n        ],\n        \"break\": [\n          \"drum break\",\n          \"crunchy sampled drums only\",\n          \"odd fills\",\n          \"record scratch stabs\"\n        ],\n        \"break_drums-only\": [\n          \"drums only\",\n          \"snare rushes\",\n          \"kick stutters\",\n          \"hats stop then slam\"\n        ],\n        \"drop\": [\n          \"hard drop\",\n          \"distorted 808 slides\",\n          \"strings staccato\",\n          \"string swells\",\n          \"busy hats\"\n        ],\n        \"switch\": [\n          \"beat switch\",\n          \"tempo feel flips to straight boom bap\",\n          \"new chop sample\",\n          \"drums cut for two bars then new pattern slams in\",\n          \"key shifts up a minor third\"\n        ],\n        \"hook_part-b\": [\n          \"part B hook\",\n          \"boom-bap drums with trap hats layered\",\n          \"new chop melody\",\n          \"brass hits\",\n          \"808 slides return\"\n        ],\n        \"outro\": [\n          \"drums drop out\",\n          \"strings and chop ring out\",\n          \"vinyl crackle\",\n          \"sub drop\",\n          \"music-box motif alone\",\n          \"hard stop\"\n        ],\n        \"outro_hard-stop\": [\n          \"everything stops on the downbeat\",\n          \"one chop ring-out\",\n          \"hard stop\"\n        ]\n      },\n      \"listenFor\": [\n        \"The chop should sound like a pitched, sliced sample, not a sung lead; if Suno renders it as a vocal melody, swap the sample descriptor for 'detuned piano chops' and add 'vocal melody' to Exclude.\",\n        \"Hi-hats should be busy with rolls and pattern switches; if flat, add 'snare rushes' to Style and 'hi-hats switch pattern at bar 9' cues to the verses.\",\n        \"The beat switch should be audible as a real pattern change; if not, make the switch section 8 bars and keep 'beat switch halfway' in the Style field.\",\n        \"Strings can take over and turn it into a trailer cue; if they do, add 'cinematic trailer, epic orchestra' to Exclude and keep strings behind the drums in cue ordering.\"\n      ]\n    },\n    \"phonk-experimental\": {\n      \"label\": \"Memphis-rooted original phonk\",\n      \"description\": \"Original/experimental phonk instrumental: Memphis-style cowbell patterns, distorted saturated 808s, tape hiss and vinyl crackle, chopped-and-screwed sample textures used as instruments, lo-fi jazz/soul samples, off-grid swing, dark minor keys. Not drift phonk.\",\n      \"bpm\": {\n        \"min\": 130,\n        \"max\": 150,\n        \"default\": 140,\n        \"halfTime\": true,\n        \"note\": \"Written 130-150 half-time (felt 65-75). Classic SoundCloud phonk sits at 130-140; slower feels more screwed.\"\n      },\n      \"keys\": [\n        \"C minor\",\n        \"G minor\",\n        \"F minor\",\n        \"D minor\",\n        \"G# minor\",\n        \"B minor\"\n      ],\n      \"defaultArc\": \"stop-start\",\n      \"model\": {\n        \"pick\": \"default\",\n        \"rationale\": \"Lo-fi grit, tape hiss and chopped textures are easy to render but the model must hold the swing and keep the cowbell audible in a distorted mix; the flagship model handles this with the best control.\",\n        \"wild\": \"Try the experimental/wild variant often here: this lane thrives on off-grid drums, stranger chops and tape-warped pitch, which the wild variant leans into.\"\n      },\n      \"sliders\": {\n        \"weirdness\": 55,\n        \"styleInfluence\": 55,\n        \"weirdnessWhy\": \"Upper end of the usable hip hop range: off-grid swing, screwed textures and grit are the goal, but above 60 Suno starts drifting tempo and structure.\",\n        \"styleInfluenceWhy\": \"Moderate: hold the Memphis palette but let the model get experimental with chops and texture.\"\n      },\n      \"pools\": {\n        \"genre\": [\n          \"experimental phonk instrumental\",\n          \"Memphis rap beat\",\n          \"lo-fi phonk\",\n          \"chopped and screwed hip hop\",\n          \"underground Southern hip hop\",\n          \"dark lo-fi trap\"\n        ],\n        \"drums\": [\n          \"Memphis cowbell pattern\",\n          \"808 cowbell accents riding the off-beats\",\n          \"slow swung half-time groove\",\n          \"808 drum machine kick and snare\",\n          \"off-grid swung drums\",\n          \"dusty drum machine kick and snare\",\n          \"lazy swung hi-hats\",\n          \"cowbell riding the off-beats\",\n          \"crunchy lo-fi snare\",\n          \"sparse half-time groove\",\n          \"stuttering kick\",\n          \"unquantized drum machine feel\"\n        ],\n        \"bass\": [\n          \"distorted long-decay 808 bass\",\n          \"pitched 808 bassline\",\n          \"blown-out sub bass\",\n          \"808 slides\"\n        ],\n        \"harmony\": [\n          \"chopped and screwed sample textures used as instruments\",\n          \"slowed jazz piano sample loop\",\n          \"pitched-down slowed sample chops\",\n          \"lo-fi jazz piano sample\",\n          \"dusty soul sample loop\",\n          \"eerie detuned keys\",\n          \"haunting minor-key melody\",\n          \"dark bell melody\",\n          \"slowed Rhodes sample\"\n        ],\n        \"texture\": [\n          \"tape hiss\",\n          \"vinyl crackle\",\n          \"bitcrushed 12-bit grit\",\n          \"cassette warble\",\n          \"pitched-down sample stabs as percussion\",\n          \"reversed reverb tails\",\n          \"low-pass filtered sample\",\n          \"bit-crushed texture\",\n          \"tape stop\"\n        ],\n        \"mood\": [\n          \"dark\",\n          \"haunted\",\n          \"hazy\",\n          \"murky\",\n          \"menacing\",\n          \"nocturnal\",\n          \"lo-fi\",\n          \"hypnotic\"\n        ],\n        \"mix\": [\n          \"lo-fi saturated mix\",\n          \"murky low-passed mix with a controlled clean sub\",\n          \"gritty\",\n          \"heavy distorted low end\",\n          \"narrow mono-ish drums\",\n          \"loud and crunchy master\",\n          \"cassette-degraded top end\",\n          \"punchy despite the grit\"\n        ],\n        \"wild\": [\n          \"tape-speed wobble\",\n          \"polyrhythmic cowbell\",\n          \"broken-beat drum programming\",\n          \"detuned sample pitch drift\",\n          \"half-speed collapse section\",\n          \"free-time intro\"\n        ]\n      },\n      \"safer\": [\n        \"experimental phonk instrumental\",\n        \"Memphis cowbell pattern\",\n        \"off-grid swung drums\",\n        \"distorted saturated 808 bass\",\n        \"chopped and screwed sample textures\",\n        \"tape hiss\",\n        \"dark\",\n        \"lo-fi saturated mix\"\n      ],\n      \"exclude\": [\n        \"drift phonk\",\n        \"Brazilian funk\",\n        \"EDM build\",\n        \"sidechain pump\",\n        \"cowbell lead melody\",\n        \"clean modern mix\",\n        \"house\",\n        \"dubstep\"\n      ],\n      \"excludeVocalStyle\": \"lead\",\n      \"cues\": {\n        \"intro\": [\n          \"tape hiss and vinyl crackle\",\n          \"slowed sample chop plays alone\",\n          \"pitched-down texture drifts\",\n          \"cowbell enters on bar 3\",\n          \"no 808 yet\",\n          \"tape stop into the hook\"\n        ],\n        \"hook\": [\n          \"distorted 808 slams in\",\n          \"Memphis cowbell pattern rides the off-beats\",\n          \"off-grid swung kick and snare\",\n          \"screwed sample chop melody\",\n          \"lazy hi-hats\",\n          \"crunchy snare on 2 and 4\",\n          \"808 slides\"\n        ],\n        \"hook_final\": [\n          \"biggest and dirtiest hook\",\n          \"808 distortion pushed\",\n          \"cowbell doubles\",\n          \"chop pitched down further\",\n          \"tape wobble\",\n          \"drums cut for the last beat then slam back\"\n        ],\n        \"verse\": [\n          \"808 and kick carry it\",\n          \"cowbell drops to a sparse pattern\",\n          \"sample filtered low\",\n          \"snare hits only every other bar\",\n          \"swung hats\",\n          \"chop stutter at bar 8\"\n        ],\n        \"verse_mutes\": [\n          \"full stop on the last beat of every 4th bar\",\n          \"cowbell alone for one bar\",\n          \"808 returns with a slide\",\n          \"tape stop then slam back\"\n        ],\n        \"pre\": [\n          \"hats double up\",\n          \"chop rises in pitch\",\n          \"808 cuts out\",\n          \"cowbell builds\"\n        ],\n        \"bridge\": [\n          \"drums out\",\n          \"slowed sample and tape hiss only\",\n          \"pitch drifts down\",\n          \"cowbell pattern alone\",\n          \"reversed reverb swell\"\n        ],\n        \"break\": [\n          \"drums only\",\n          \"cowbell and dusty kick break\",\n          \"lo-fi snare fills\",\n          \"silence on the last beat\"\n        ],\n        \"break_drums-only\": [\n          \"drums only\",\n          \"Memphis cowbell and kick isolated\",\n          \"crunchy snare fills\",\n          \"one bar of tape hiss silence\"\n        ],\n        \"drop\": [\n          \"hard drop\",\n          \"blown-out 808\",\n          \"cowbell pattern doubles\",\n          \"screwed chop\",\n          \"stuttering kick\"\n        ],\n        \"switch\": [\n          \"beat switch\",\n          \"tempo feel drags slower\",\n          \"new slowed sample\",\n          \"cowbell pattern flips\",\n          \"808 pitched down\"\n        ],\n        \"outro\": [\n          \"808 drops out\",\n          \"cowbell and chop ring out\",\n          \"tape slows to a stop\",\n          \"vinyl crackle alone\",\n          \"hard stop\"\n        ],\n        \"outro_hard-stop\": [\n          \"tape stop\",\n          \"everything cuts on the downbeat\",\n          \"hiss tail\",\n          \"hard stop\"\n        ]\n      },\n      \"listenFor\": [\n        \"Cowbell should be a rhythmic pattern in the drums, not a lead melody; a cowbell melody means it drifted into drift phonk. Add 'cowbell lead melody' to Exclude and lead the drums group with 'Memphis cowbell pattern'.\",\n        \"The 808 should be distorted and saturated but still readable; if it is a clean sine sub, make 'blown-out sub bass' the bass descriptor.\",\n        \"Chopped textures should read as sliced, slowed samples; if Suno sings actual words, add 'lyrics, vocal melody' to Exclude and swap the sample-texture descriptor for 'eerie detuned keys'.\",\n        \"Drums should feel dragged and off-grid; if they are rigid, add 'unquantized drum machine feel' to Style and raise Weirdness by 5-10 (stay under 60).\"\n      ]\n    },\n    \"hybrid\": {\n      \"label\": \"Phonk drums + neo-soul pocket + trap-pop brightness\",\n      \"description\": \"Hybrid instrumental: Memphis-style cowbell and distorted 808 drums with off-grid swing, under live-feel neo-soul Rhodes chords and fingered bass pocket, topped with bright synth plucks and a clean punchy stop-start arrangement.\",\n      \"bpm\": {\n        \"min\": 136,\n        \"max\": 150,\n        \"default\": 142,\n        \"halfTime\": true,\n        \"note\": \"Written half-time so the phonk drums read correctly (felt 68-75); the Rhodes/bass pocket sits on the felt pulse.\"\n      },\n      \"keys\": [\n        \"F minor\",\n        \"C minor\",\n        \"D minor\",\n        \"G minor\",\n        \"Bb minor\"\n      ],\n      \"defaultArc\": \"beat-switch\",\n      \"model\": {\n        \"pick\": \"default\",\n        \"rationale\": \"Genre blends need the model with the best multi-genre coherence so the lo-fi drums, warm Rhodes and bright plucks share one mix instead of switching genres mid-song.\",\n        \"wild\": \"Try the experimental/wild variant when the blend comes back as three songs stitched together; the wild variant tends to fuse unusual combinations more organically.\"\n      },\n      \"sliders\": {\n        \"weirdness\": 50,\n        \"styleInfluence\": 60,\n        \"weirdnessWhy\": \"Mid-high: a three-way blend needs some freedom to fuse, but not so much that it drifts into a fourth genre.\",\n        \"styleInfluenceWhy\": \"Moderate-high: keep the specified instruments but allow re-balancing between them.\"\n      },\n      \"pools\": {\n        \"genre\": [\n          \"phonk neo-soul hybrid instrumental\",\n          \"lo-fi Memphis drums with live funk pocket\",\n          \"bright trap-soul beat\",\n          \"experimental hip hop instrumental\"\n        ],\n        \"drums\": [\n          \"Memphis cowbell pattern\",\n          \"808 cowbell accents\",\n          \"off-grid swung kick and snare behind the beat\",\n          \"dusty drum machine with live-drummer swing\",\n          \"ghost-note snare\",\n          \"lazy swung hi-hats\",\n          \"stop-start drum mutes\",\n          \"crunchy lo-fi snare\"\n        ],\n        \"bass\": [\n          \"distorted 808 under a fingered bass guitar\",\n          \"808 slides\",\n          \"warm electric bass riff\"\n        ],\n        \"harmony\": [\n          \"Rhodes chords with minor 9th voicings\",\n          \"bright synth plucks on top\",\n          \"music-box bells\",\n          \"Wurlitzer comping\",\n          \"sparkly bell lead\",\n          \"clavinet stabs\",\n          \"major 7th chord stabs over a minor bass\"\n        ],\n        \"texture\": [\n          \"tape hiss\",\n          \"vinyl crackle\",\n          \"white-noise sweeps\",\n          \"tape stop before the hook\",\n          \"tambourine on swung 8ths\",\n          \"pitched-down sample texture\"\n        ],\n        \"mood\": [\n          \"playful but hazy\",\n          \"sunny and dark at once\",\n          \"groovy\",\n          \"nocturnal\",\n          \"head-nod\",\n          \"confident\"\n        ],\n        \"mix\": [\n          \"clean punchy master with lo-fi drum texture\",\n          \"warm low mids bright top\",\n          \"wide plucks narrow drums\",\n          \"glued\",\n          \"radio-ready loud\",\n          \"tight distorted low end\"\n        ],\n        \"wild\": [\n          \"beat switch into straight-time funk\",\n          \"polyrhythmic cowbell against swung hats\",\n          \"detuned Rhodes\",\n          \"half-speed collapse\",\n          \"glitchy pluck edits\"\n        ]\n      },\n      \"safer\": [\n        \"phonk neo-soul hybrid instrumental\",\n        \"Memphis cowbell pattern\",\n        \"off-grid swung kick and snare behind the beat\",\n        \"distorted 808 under a fingered bass guitar\",\n        \"Rhodes chords\",\n        \"bright synth plucks on top\",\n        \"groovy\",\n        \"clean punchy master with lo-fi drum texture\"\n      ],\n      \"exclude\": [\n        \"drift phonk\",\n        \"Brazilian funk\",\n        \"EDM build\",\n        \"cowbell lead melody\",\n        \"quantized rigid drums\",\n        \"smooth jazz\",\n        \"cinematic trailer\",\n        \"dubstep\"\n      ],\n      \"cues\": {\n        \"intro\": [\n          \"Rhodes chord loop with tape hiss\",\n          \"vinyl crackle\",\n          \"bright pluck motif answers the chords\",\n          \"cowbell enters on bar 3\",\n          \"no 808 yet\",\n          \"tape stop into the hook\"\n        ],\n        \"hook\": [\n          \"distorted 808 and Memphis cowbell slam in\",\n          \"kick and snare behind the beat\",\n          \"fingered bass locks with the 808\",\n          \"Rhodes comping\",\n          \"bright plucks carry the melody\",\n          \"ghost-note snare\",\n          \"lazy swung hats\"\n        ],\n        \"hook_final\": [\n          \"biggest hook\",\n          \"plucks up an octave\",\n          \"cowbell doubles\",\n          \"bass guitar riff up front\",\n          \"fills every 4 bars\",\n          \"drums cut for the last beat then slam back\",\n          \"loose swung drums\"\n        ],\n        \"verse\": [\n          \"808 and cowbell thin out\",\n          \"Rhodes and bass carry the pocket\",\n          \"plucks sparse\",\n          \"stop-start mutes every 4th bar\",\n          \"swung hats\",\n          \"clavinet stabs enter at bar 9\"\n        ],\n        \"verse_part-b\": [\n          \"beat flips to straight-time live funk feel\",\n          \"a swung live-feel kit replaces the drum machine\",\n          \"bass guitar leads\",\n          \"plucks become bells\",\n          \"cowbell drops to a sparse pattern\"\n        ],\n        \"verse_mutes\": [\n          \"full stop on the last beat of every 4th bar\",\n          \"Rhodes alone for one bar\",\n          \"drums return with a fill\"\n        ],\n        \"pre\": [\n          \"hats double\",\n          \"riser\",\n          \"808 cuts\",\n          \"Rhodes rises\"\n        ],\n        \"bridge\": [\n          \"drums out\",\n          \"Rhodes and plucks only\",\n          \"tape hiss\",\n          \"half-time feel\",\n          \"bass re-enters on bar 7\"\n        ],\n        \"break\": [\n          \"drums only\",\n          \"cowbell kick and ghost-note snare\",\n          \"lo-fi fills\",\n          \"silence on the last beat\"\n        ],\n        \"break_drums-only\": [\n          \"drums only\",\n          \"cowbell and dusty kick isolated\",\n          \"ghost-note snare fills\",\n          \"one bar of silence\"\n        ],\n        \"drop\": [\n          \"hard drop\",\n          \"blown-out 808 with bass guitar\",\n          \"plucks and bells stacked\",\n          \"cowbell pattern doubles\"\n        ],\n        \"switch\": [\n          \"beat switch\",\n          \"drums cut for two bars\",\n          \"tempo feel flips to straight-time funk\",\n          \"new Rhodes progression\",\n          \"cowbell pattern flips\"\n        ],\n        \"hook_part-b\": [\n          \"part B hook\",\n          \"live-feel swung drums with cowbell layered\",\n          \"bright plucks and Rhodes together\",\n          \"bass guitar riff\",\n          \"808 slides return\"\n        ],\n        \"outro\": [\n          \"808 drops out\",\n          \"Rhodes and plucks ring out\",\n          \"cowbell fades\",\n          \"tape slows\",\n          \"hard stop\"\n        ],\n        \"outro_hard-stop\": [\n          \"everything stops on the downbeat\",\n          \"Rhodes chord rings with hiss\",\n          \"hard stop\"\n        ]\n      },\n      \"listenFor\": [\n        \"All three elements must coexist in one mix: lo-fi cowbell drums, warm Rhodes and bass, bright plucks. If Suno picks one genre and drops the others, raise Weirdness to 55-60 and reorder Style to lead with the missing element.\",\n        \"The drums should swing behind the beat; a rigid cowbell grid means it drifted toward drift phonk. Add 'quantized rigid drums, cowbell lead melody' to Exclude if either shows up.\",\n        \"Plucks should sit on top and stay bright; if they are dull, add 'sparkly bell lead' and 'bright top end' near the end of Style.\",\n        \"Suno may add hummed soul melodies on Rhodes grooves; if one appears, add 'singing, scat' to Exclude and re-roll.\"\n      ],\n      \"keep\": {\n        \"harmony\": 2\n      }\n    }\n  }\n}"};
+  const __defs = {}, __cache = {};
+  const __fs = { readFileSync: (p) => { const k = String(p).split('/').pop(); if (!(k in __json)) throw new Error('no file ' + p); return __json[k]; } };
+  const __path = { join: (...a) => a.join('/') };
+  function __require(name) {
+    if (name === 'fs') return __fs;
+    if (name === 'path') return __path;
+    const key = name.replace(/\.js$/, '');
+    if (__cache[key]) return __cache[key].exports;
+    if (!__defs[key]) throw new Error('module not bundled: ' + name);
+    const module = { exports: {} }; __cache[key] = module;
+    __defs[key](module, module.exports, __require, '');
+    return module.exports;
+  }
+  __defs["./arrange"] = function (module, exports, require, __dirname) {
+'use strict';
+/**
+ * Arrangement engine: turns an energy arc + BPM into a timed, radio-structured
+ * section map, then renders it as a Suno Lyrics field for an INSTRUMENTAL
+ * (bracketed section tags with production cues, zero sung words).
+ *
+ * All timing assumes 4/4. For half-time lanes (trap, trap-pop, phonk) the BPM
+ * is the written tempo (e.g. 140), so one bar = 240 / bpm seconds.
+ */
+
+const RADIO = {
+  minSeconds: 150, // 2:30
+  maxSeconds: 210, // 3:30
+  targetSeconds: 180,
+  maxIntroBars: 8,
+  hookByMin: 30,
+  hookByMax: 45,
+};
+
+/** Energy arc templates. bars are nominal; the planner scales to runtime. */
+const ARCS = {
+  'flat-bang': {
+    label: 'Flat-bang (hook first)',
+    summary: 'Hook lands immediately after a short intro; energy stays high with a break for contrast and a doubled hook at the end. Best for radio and playlists.',
+    sections: [
+      { type: 'intro', bars: 4, energy: 4 },
+      { type: 'hook', bars: 8, energy: 9 },
+      { type: 'verse', bars: 16, energy: 6 },
+      { type: 'hook', bars: 8, energy: 9 },
+      { type: 'verse', bars: 16, energy: 7 },
+      { type: 'break', bars: 8, energy: 3 },
+      { type: 'hook', bars: 8, energy: 10 },
+      { type: 'hook', bars: 8, energy: 10, variant: 'final' },
+      { type: 'outro', bars: 4, energy: 2 },
+    ],
+  },
+  'build-release': {
+    label: 'Build-release',
+    summary: 'Classic verse-to-hook lift with pre-hook risers; hook by ~0:40. Best when the hook needs tension before it hits.',
+    sections: [
+      { type: 'intro', bars: 8, energy: 3 },
+      { type: 'verse', bars: 12, energy: 5 },
+      { type: 'pre', bars: 4, energy: 7 },
+      { type: 'hook', bars: 8, energy: 9 },
+      { type: 'verse', bars: 16, energy: 6 },
+      { type: 'pre', bars: 4, energy: 8 },
+      { type: 'hook', bars: 8, energy: 10 },
+      { type: 'bridge', bars: 8, energy: 4 },
+      { type: 'hook', bars: 8, energy: 10, variant: 'final' },
+      { type: 'outro', bars: 4, energy: 2 },
+    ],
+  },
+  'slow-burn': {
+    label: 'Slow burn',
+    summary: 'Sparse start, each hook adds layers; the last hook is the biggest. Best for mood-first and sync-leaning instrumentals.',
+    sections: [
+      { type: 'intro', bars: 8, energy: 2 },
+      { type: 'verse', bars: 16, energy: 4, variant: 'sparse' },
+      { type: 'hook', bars: 8, energy: 6, variant: 'medium' },
+      { type: 'verse', bars: 16, energy: 6 },
+      { type: 'hook', bars: 8, energy: 8 },
+      { type: 'break', bars: 4, energy: 3 },
+      { type: 'hook', bars: 8, energy: 10, variant: 'final' },
+      { type: 'outro', bars: 8, energy: 2 },
+    ],
+  },
+  'stop-start': {
+    label: 'Stop-start',
+    summary: 'Hook first, then mutes, drum-only breaks and a drop; maximum arrangement contrast. Best for bouncy trap-pop and phonk.',
+    sections: [
+      { type: 'intro', bars: 4, energy: 5 },
+      { type: 'hook', bars: 8, energy: 9 },
+      { type: 'verse', bars: 16, energy: 6, variant: 'mutes' },
+      { type: 'hook', bars: 8, energy: 9 },
+      { type: 'break', bars: 4, energy: 3, variant: 'drums-only' },
+      { type: 'verse', bars: 16, energy: 7, variant: 'mutes' },
+      { type: 'drop', bars: 8, energy: 10 },
+      { type: 'hook', bars: 8, energy: 10, variant: 'final' },
+      { type: 'outro', bars: 2, energy: 1, variant: 'hard-stop' },
+    ],
+  },
+  'beat-switch': {
+    label: 'Beat switch (two-part)',
+    summary: 'Part A establishes the hook; a 4-bar switch flips drums and key feel into Part B. Best for dark boom-bap/trap hybrids and hybrids across lanes.',
+    sections: [
+      { type: 'intro', bars: 4, energy: 4 },
+      { type: 'hook', bars: 8, energy: 8 },
+      { type: 'verse', bars: 16, energy: 6 },
+      { type: 'hook', bars: 8, energy: 9 },
+      { type: 'switch', bars: 4, energy: 3 },
+      { type: 'verse', bars: 16, energy: 7, variant: 'part-b' },
+      { type: 'hook', bars: 8, energy: 10, variant: 'part-b' },
+      { type: 'break', bars: 4, energy: 3, variant: 'drums-only' },
+      { type: 'hook', bars: 8, energy: 10, variant: 'final' },
+      { type: 'outro', bars: 4, energy: 2 },
+    ],
+  },
+};
+
+const SECTION_TAG = {
+  intro: 'Short Instrumental Intro',
+  hook: 'Hook',
+  verse: 'Verse',
+  pre: 'Pre-Chorus',
+  bridge: 'Instrumental Bridge',
+  break: 'Break',
+  drop: 'Drop',
+  switch: 'Beat Switch',
+  outro: 'Outro',
+};
+
+function barSeconds(bpm) {
+  return 240 / bpm;
+}
+
+function fmtTime(sec) {
+  const s = Math.round(sec);
+  const m = Math.floor(s / 60);
+  return `${m}:${String(s % 60).padStart(2, '0')}`;
+}
+
+/** Deep-copy an arc's sections. */
+function cloneSections(arc) {
+  return ARCS[arc].sections.map((s) => ({ ...s }));
+}
+
+/**
+ * Scale a section list to the radio runtime window at the given BPM.
+ * Strategy: fix intro to <= 8 bars and hook arrival <= 45 s; then add or trim
+ * verse/hook material until total lands in [min, max].
+ */
+function planSections(arcName, bpm, opts = {}) {
+  if (!ARCS[arcName]) throw new Error(`Unknown energy arc: ${arcName}`);
+  const bs = barSeconds(bpm);
+  let sections = cloneSections(arcName);
+  const target = opts.targetSeconds || RADIO.targetSeconds;
+  const halfTime = opts.halfTime === undefined ? bpm >= 120 : !!opts.halfTime;
+
+  // 0. Half-time lanes (trap, trap-pop, phonk at 130-160 written BPM): the
+  //    felt tempo is half, so hooks/drops/pre-hooks/switches/outros double in
+  //    written bars. Verses stay 16 written bars (industry standard) and the
+  //    intro stays capped at 8 written bars.
+  if (halfTime) {
+    const mult = { hook: 2, drop: 2, pre: 2, switch: 2, outro: 2 };
+    for (const s of sections) if (mult[s.type]) s.bars *= mult[s.type];
+  }
+
+  // 1. Intro: cap at 8 bars and make sure the first hook/drop starts by 45 s.
+  const intro = sections[0];
+  intro.bars = Math.min(intro.bars, RADIO.maxIntroBars);
+  const firstHookIdx = sections.findIndex((s) => s.type === 'hook' || s.type === 'drop');
+  const barsBeforeHook = () => sections.slice(0, firstHookIdx).reduce((a, s) => a + s.bars, 0);
+  let guard = 0;
+  while (barsBeforeHook() * bs > RADIO.hookByMax && guard++ < 8) {
+    // shrink the longest pre-hook section (never below 4 bars).
+    const pre = sections.slice(0, firstHookIdx);
+    const longest = pre.filter((s) => s.bars > 4).sort((a, b) => b.bars - a.bars)[0];
+    if (!longest) break;
+    longest.bars -= 4;
+  }
+
+  // 2. Total runtime fit.
+  const total = () => sections.reduce((a, s) => a + s.bars, 0) * bs;
+  const outroIdx = () => sections.length - 1;
+  guard = 0;
+  while (total() < RADIO.minSeconds && guard++ < 12) {
+    // Add material: restore shortened verses to 16, then add a hook repeat
+    // before the outro, then grow verses to 20 as a last resort.
+    const shortVerse = sections.filter((s) => s.type === 'verse' && s.bars < 16).sort((a, b) => a.bars - b.bars)[0];
+    if (shortVerse) { shortVerse.bars += 4; continue; }
+    const finals = sections.filter((s) => s.type === 'hook' && s.variant === 'final');
+    if (finals.length < 2) {
+      sections.splice(outroIdx(), 0, { type: 'hook', bars: halfTime ? 16 : 8, energy: 10, variant: 'final' });
+      continue;
+    }
+    const verse = sections.filter((s) => s.type === 'verse' && s.bars < 20).sort((a, b) => a.bars - b.bars)[0];
+    if (verse) { verse.bars += 4; continue; }
+    break;
+  }
+  guard = 0;
+  while (total() > RADIO.maxSeconds && guard++ < 12) {
+    // Trim: duplicate final hook first, then verses down to 12, then outro, then break/bridge.
+    const finals = sections.filter((s) => s.type === 'hook' && s.variant === 'final');
+    if (finals.length > 1) { sections.splice(sections.indexOf(finals[finals.length - 1]), 1); continue; }
+    const verseMin = halfTime ? 16 : 12;
+    const verse = sections.filter((s) => s.type === 'verse' && s.bars > verseMin).sort((a, b) => b.bars - a.bars)[0];
+    if (verse) { verse.bars -= 4; continue; }
+    const outro = sections[outroIdx()];
+    if (outro.bars > 4) { outro.bars -= 4; continue; }
+    const mid = sections.filter((s) => ['break', 'bridge', 'pre', 'switch'].includes(s.type) && s.bars > 4)[0];
+    if (mid) { mid.bars -= 4; continue; }
+    if (outro.bars > 2) { outro.bars -= 2; continue; }
+    break;
+  }
+  // 3. Nudge toward the target with the last verse (+/- 4 bars) if that keeps us in-window.
+  const lastVerse = [...sections].reverse().find((s) => s.type === 'verse');
+  if (lastVerse) {
+    const t = total();
+    if (t < target - 8 * bs && t + 4 * bs <= RADIO.maxSeconds && lastVerse.bars < 20) lastVerse.bars += 4;
+    else if (t > target + 8 * bs && lastVerse.bars > (halfTime ? 16 : 12) && t - 4 * bs >= RADIO.minSeconds) lastVerse.bars -= 4;
+  }
+
+  // 4. Timestamps and numbering.
+  let cursor = 0;
+  const counters = {};
+  for (const s of sections) {
+    counters[s.type] = (counters[s.type] || 0) + 1;
+    s.index = counters[s.type];
+    s.startSec = cursor;
+    s.seconds = s.bars * bs;
+    cursor += s.seconds;
+    s.endSec = cursor;
+  }
+  const hookAt = sections.find((s) => s.type === 'hook' || s.type === 'drop').startSec;
+  return {
+    arc: arcName,
+    bpm,
+    barSeconds: bs,
+    sections,
+    totalSeconds: cursor,
+    totalFormatted: fmtTime(cursor),
+    introBars: sections[0].bars,
+    hookAtSeconds: hookAt,
+    hookAtFormatted: fmtTime(hookAt),
+    halfTime,
+  };
+}
+
+/**
+ * Render the Lyrics field for an instrumental. `cues` is a function
+ * (section) => string[] of production cues; `lane` supplies defaults.
+ */
+function renderLyrics(plan, cueFn, opts = {}) {
+  const lines = ['[Instrumental]'];
+  const multiOccurring = new Set(
+    Object.entries(plan.sections.reduce((m, s) => { m[s.type] = (m[s.type] || 0) + 1; return m; }, {}))
+      .filter(([, n]) => n > 1).map(([t]) => t)
+  );
+  for (const s of plan.sections) {
+    let name = SECTION_TAG[s.type];
+    if (s.type === 'break' && s.variant === 'drums-only') name = 'Drum Break';
+    if (multiOccurring.has(s.type) && s.type !== 'outro' && s.type !== 'intro') name += ` ${s.index}`;
+    const cues = (cueFn(s) || []).filter(Boolean);
+    const barNote = `${s.bars} bars`;
+    lines.push(`[${name} - ${barNote}: ${cues.join(', ')}]`);
+    if (opts.timestamps) lines[lines.length - 1] += `  <!-- ${fmtTime(s.startSec)} -->`;
+  }
+  lines.push('[End]');
+  return lines.join('\n');
+}
+
+function barsToSecondsTable(bpms = [85, 92, 100, 130, 140, 150, 160], bars = [4, 8, 16]) {
+  return bpms.map((bpm) => ({ bpm, ...Object.fromEntries(bars.map((b) => [`${b} bars`, fmtTime(b * barSeconds(bpm))])) }));
+}
+
+module.exports = { RADIO, ARCS, SECTION_TAG, barSeconds, fmtTime, planSections, renderLyrics, barsToSecondsTable };
+
+  };
+  __defs["./generate"] = function (module, exports, require, __dirname) {
+'use strict';
+const path = require('path');
+const fs = require('fs');
+const { planSections, renderLyrics, fmtTime, RADIO, ARCS } = require('./arrange');
+
+const SPEC = JSON.parse(fs.readFileSync(path.join(__dirname, 'spec.json'), 'utf8'));
+const LANES = JSON.parse(fs.readFileSync(path.join(__dirname, 'lanes.json'), 'utf8')).lanes;
+
+/** Small seeded PRNG (mulberry32) so examples are reproducible. */
+function rng(seed) {
+  let a = (typeof seed === 'string' ? hashStr(seed) : seed) >>> 0;
+  return function () {
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function hashStr(s) { let h = 2166136261; for (const c of s) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
+
+/**
+ * Pick `n` items from an ordered pool, biased toward the front (priority).
+ * The first item is always included when n >= 1 and `keepFirst` is true.
+ */
+function pick(pool, n, rand, keepFirst = true) {
+  if (!pool || !pool.length) return [];
+  const out = [];
+  const rest = [...pool];
+  const keepN = keepFirst === true ? 1 : Number(keepFirst) || 0;
+  for (let i = 0; i < keepN && rest.length; i++) out.push(rest.shift());
+  while (out.length < n && rest.length) {
+    // triangular bias toward index 0
+    const i = Math.floor(Math.min(rand(), rand()) * rest.length);
+    out.push(rest.splice(i, 1)[0]);
+  }
+  return out;
+}
+
+function laneOrThrow(name) {
+  const lane = LANES[name];
+  if (!lane) throw new Error(`Unknown lane "${name}". Available: ${Object.keys(LANES).join(', ')}`);
+  return lane;
+}
+
+/** Build a blended lane: drums from a, bass+harmony from b, texture+mix from c. */
+function blendLanes(names) {
+  const [a, b, c] = names.map(laneOrThrow);
+  const third = c || a;
+  const merge = (k) => [...new Set([...(a.pools[k] || []), ...(b.pools[k] || []), ...(third.pools[k] || [])])];
+  return {
+    label: `Custom blend: ${a.label} drums + ${b.label} pocket + ${third.label} texture`,
+    description: `Custom blend. Drums from ${names[0]}, bass and harmony from ${names[1]}, texture and mix from ${names[2] || names[0]}.`,
+    bpm: a.bpm,
+    keys: b.keys,
+    defaultArc: 'beat-switch',
+    model: LANES.hybrid.model,
+    sliders: LANES.hybrid.sliders,
+    pools: {
+      genre: [`${a.pools.genre[0].replace(' instrumental', '')} meets ${b.pools.genre[0].replace(' instrumental', '')} instrumental`, ...merge('genre')],
+      drums: a.pools.drums, bass: b.pools.bass, harmony: b.pools.harmony,
+      texture: third.pools.texture, mood: merge('mood'), mix: third.pools.mix, wild: merge('wild'),
+    },
+    safer: [a.pools.genre[0], a.pools.drums[0], a.pools.drums[1], b.pools.bass[0], b.pools.harmony[0], third.pools.texture[0], merge('mood')[0], third.pools.mix[0]],
+    exclude: [...new Set([...a.exclude, ...b.exclude, ...third.exclude])].slice(0, 8),
+    excludeVocalStyle: a.excludeVocalStyle || b.excludeVocalStyle,
+    cues: Object.fromEntries(Object.keys(LANES.hybrid.cues).map((k) => [k, [...new Set([...(a.cues[k] || []), ...(b.cues[k] || []), ...(third.cues[k] || [])])]])),
+    listenFor: [...a.listenFor.slice(0, 1), ...b.listenFor.slice(0, 1), ...third.listenFor.slice(0, 1)],
+  };
+}
+
+function clampLen(parts, limit) {
+  // Drop from the END (least important) until under limit.
+  const out = [...parts];
+  while (out.join(', ').length > limit && out.length > 1) out.pop();
+  return out;
+}
+
+/**
+ * Compose a Style field. Order = importance: genre -> user mood -> drums/groove ->
+ * tempo/key -> bass -> harmony/instruments -> texture -> mood -> mix/master.
+ */
+const KEY_NOUNS = ['cowbell', 'clap', 'bell', 'pluck', 'triplet', '808', 'rhodes', 'wurlitzer', 'hi-hat', 'hat', 'string', 'chop', 'sample', 'swing', 'swung', 'tape', 'vinyl', 'half-time', 'snare', 'kick', 'bass', 'synth', 'piano', 'horn', 'organ', 'guitar', 'cassette', 'hiss', 'crackle', 'stop-start', 'beat switch', 'loud', 'master', 'mix', 'wide', 'warm', 'clean', 'punchy', 'gritty', 'lo-fi', 'dark', 'bright'];
+function nouns(text) {
+  const t = text.toLowerCase();
+  return KEY_NOUNS.filter((n) => new RegExp(`(^|[^a-z0-9])${n.replace(/[-]/g, '\\-')}s?(?=$|[^a-z0-9])`).test(t));
+}
+
+/**
+ * Compose a Style field. Order = importance: genre -> "instrumental" -> user mood ->
+ * drums/groove -> tempo + feel -> key -> bass -> harmony/instruments -> constraints ->
+ * texture -> mood -> mix/master. Community guidance: 12-18 comma tags, ~350-500 chars.
+ */
+function buildStyle(lane, input, rand, variant = 'main') {
+  const p = lane.pools;
+  const keep = lane.keep || {};
+  const limit = SPEC.fields.style.limit;
+  const target = input.styleTarget || SPEC.fields.style.target;
+  const hasMood = !!input.mood;
+  const counts = {
+    main:   { genre: 2, drums: 3, bass: 1, harmony: input.constraints ? 2 : 3, texture: 1, mood: hasMood ? 1 : 2, mix: 2, wild: 0 },
+    safer:  { genre: 1, drums: 3, bass: 1, harmony: 2, texture: 1, mood: 1, mix: 2, wild: 0 },
+    weirder:{ genre: 2, drums: 3, bass: 1, harmony: 2, texture: 2, mood: 1, mix: 2, wild: 2 },
+  }[variant];
+  const safer = variant === 'safer' && lane.safer;
+
+  const parts = []; // {text, group}
+  const add = (group, items) => { for (const t of items) parts.push({ text: t, group }); };
+  add('genre', safer ? lane.safer.slice(0, 1) : pick(p.genre, counts.genre, rand));
+  add('core', ['instrumental']);
+  if (hasMood) add('usermood', splitList(input.mood));
+  add('drums', safer ? lane.safer.slice(1, 4) : pick(p.drums, counts.drums, rand));
+  add('tempo', [`${input.bpm} BPM`]);
+  if (lane.bpm.halfTime && input.bpm >= 120) add('tempo', ['half-time feel']);
+  if (input.key) add('key', [input.key]);
+  add('bass', safer ? [lane.safer[4]] : pick(p.bass, counts.bass, rand));
+  add('harmony', safer ? lane.safer.slice(5, 6).concat(pick(p.harmony, 1, rand, false)) : pick(p.harmony, counts.harmony, rand, keep.harmony || true));
+  if (input.constraints) add('user', splitList(input.constraints));
+  if (input.arc === 'beat-switch') add('arrangement', ['beat switch halfway']);
+  if (input.arc === 'stop-start') add('arrangement', ['stop-start arrangement']);
+  add('texture', pick(p.texture, counts.texture, rand, !safer));
+  if (counts.wild) add('wild', pick(p.wild, counts.wild, rand, false));
+  add('mood', safer ? [lane.safer[6]] : pick(p.mood, counts.mood, rand, false));
+  add('mix', safer ? [lane.safer[7]].concat(pick(p.mix, 1, rand, false)) : pick(p.mix, counts.mix, rand));
+
+  // De-dupe: exact repeats; a standalone "instrumental" when a genre tag carries it; single words
+  // already contained in an earlier descriptor; and descriptors sharing a key noun with an earlier
+  // descriptor in the same group (or with the tempo/feel words).
+  const seen = new Set();
+  const groupNouns = {};
+  const out = [];
+  for (const part of parts) {
+    const k = part.text.toLowerCase().trim();
+    if (!k || seen.has(k)) continue;
+    if (k === 'instrumental' && out.some((o) => /instrumental/i.test(o.text))) continue;
+    if (!/\s/.test(k) && out.some((o) => new RegExp(`(^|[^a-z])${k}(?=$|[^a-z])`, 'i').test(o.text))) continue;
+    const ns = nouns(k);
+    const bucket = ['tempo', 'drums'].includes(part.group) ? 'drums' : part.group; // "half-time feel" vs "half-time groove"
+    const prior = groupNouns[bucket] || new Set();
+    if (part.group !== 'user' && part.group !== 'usermood' && ns.some((n) => prior.has(n))) continue;
+    ns.forEach((n) => prior.add(n));
+    groupNouns[bucket] = prior;
+    seen.add(k);
+    out.push(part);
+  }
+  // Cap at 18 descriptors: drop texture/mood/wild items first, then extra harmony, never genre/tempo/mix.
+  const MAX = 18;
+  const droppable = ['wild', 'texture', 'mood', 'harmony', 'drums'];
+  for (const g of droppable) {
+    while (out.length > MAX) {
+      const idx = out.map((o) => o.group).lastIndexOf(g);
+      if (idx < 0) break;
+      if ((g === 'harmony' || g === 'drums') && out.filter((o) => o.group === g).length <= 2) break;
+      out.splice(idx, 1);
+    }
+  }
+  const texts = clampLen(out.map((o) => o.text), Math.min(limit, target));
+  return texts.join(', ');
+}
+
+function splitList(s) { return String(s).split(/[,;]+/).map((x) => x.trim()).filter(Boolean); }
+
+function buildExclude(lane, input) {
+  const preset = input.excludePreset || 'default';
+  const core = SPEC.baseExclude.core[lane.excludeVocalStyle === 'lead' ? 'lead' : 'full'];
+  let parts;
+  if (preset === 'short') parts = [...core];
+  else if (preset === 'full') parts = [...SPEC.baseExclude.presets.full.filter((t) => lane.excludeVocalStyle !== 'lead' || !/^(vocals|vocal chops|rap)$/.test(t)), ...(lane.excludeVocalStyle === 'lead' ? ['lead vocals', 'rapping'] : []), ...(lane.exclude || [])];
+  else parts = [...core, ...(lane.exclude || []).slice(0, 4)];
+  parts.push(...splitList(input.exclude || ''));
+  const seen = new Set();
+  const out = parts.filter((x) => { const k = x.toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; });
+  return clampLen(out, SPEC.fields.exclude.limit).join(', ');
+}
+
+function cueFor(lane, rand, input) {
+  const used = new Set();
+  return (s) => {
+    const key = s.variant && lane.cues[`${s.type}_${s.variant}`] ? `${s.type}_${s.variant}` : s.type;
+    const pool = lane.cues[key] || lane.cues[s.type] || ['groove continues'];
+    // first cue is the anchor; vary the rest, avoid repeating cue sets across same-type sections
+    const n = s.type === 'intro' || s.type === 'outro' ? 3 : 4;
+    let cues = pick(pool, n, rand);
+    const sig = cues.join('|');
+    if (used.has(sig)) cues = pick(pool, n, rand);
+    used.add(sig);
+    // Anti-grid cue for drum-bearing sections in swung lanes
+    if (['hook', 'verse', 'drop'].includes(s.type) && input.antiGrid !== false) {
+      const anti = ANTI_GRID[lane.bpm.halfTime ? 'half' : 'straight'];
+      const extra = anti[Math.floor(rand() * anti.length)];
+      if (!cues.some((c) => c.includes('swung') || c.includes('behind') || c.includes('ghost') || c.includes('off-grid'))) cues.push(extra);
+    }
+    // Drop cues that reference a bar number beyond this section's length.
+    cues = cues.filter((c) => { const m = c.match(/bar (\d+)/); return !m || Number(m[1]) <= s.bars; });
+    return cues;
+  };
+}
+
+const ANTI_GRID = {
+  straight: ['swung 16ths', 'kick pushed slightly late', 'ghost notes on the snare', 'loose human timing', 'drummer leans behind the beat'],
+  half: ['hi-hats swung not straight', 'kick lands slightly behind the grid', 'off-grid snare placement', 'loose drum machine swing', 'rolls land lazily'],
+};
+
+function sliders(lane, input, variant) {
+  let w = input.weirdness ?? lane.sliders.weirdness;
+  let si = input.styleInfluence ?? lane.sliders.styleInfluence;
+  if (variant === 'safer') { w = Math.max(0, w - 20); si = Math.min(100, si + 10); }
+  if (variant === 'weirder') { w = Math.min(80, w + 15); si = Math.max(0, si - 10); }
+  return { weirdness: w, styleInfluence: si };
+}
+
+/**
+ * Generate a full prompt block object. input: { lane, bpm, key, mood, arc, constraints,
+ * exclude, weirdness, styleInfluence, seed, blend, title, durationTarget }
+ */
+function generate(input = {}) {
+  const laneName = input.lane || 'hybrid';
+  const lane = input.blend ? blendLanes(input.blend) : laneOrThrow(laneName);
+  const rand = rng(input.seed ?? `${laneName}-${input.bpm || ''}-${input.mood || ''}`);
+  const bpm = Number(input.bpm) || lane.bpm.default;
+  if (bpm < 60 || bpm > 200) throw new Error('BPM must be between 60 and 200');
+  const key = input.key || lane.keys[Math.floor(rand() * Math.min(3, lane.keys.length))];
+  const arc = input.arc || lane.defaultArc;
+  if (!ARCS[arc]) throw new Error(`Unknown energy arc "${arc}". Available: ${Object.keys(ARCS).join(', ')}`);
+  const halfTime = lane.bpm.halfTime && bpm >= 120;
+  const plan = planSections(arc, bpm, { halfTime, targetSeconds: input.durationTarget });
+  const full = { ...input, bpm, key, arc, lane: laneName };
+
+  const style = buildStyle(lane, full, rng(`${rand()}-main`), 'main');
+  const safer = buildStyle(lane, full, rng(`${rand()}-safer`), 'safer');
+  const weirder = buildStyle(lane, full, rng(`${rand()}-weird`), 'weirder');
+  const exclude = buildExclude(lane, full);
+  const lyrics = renderLyrics(plan, cueFor(lane, rng(`${rand()}-cues`), full));
+  const sl = sliders(lane, full, 'main');
+
+  const modelPick = SPEC.models.default;
+  const title = input.title || defaultTitle(laneName, key, bpm);
+
+  return {
+    meta: { lane: laneName, laneLabel: lane.label, bpm, key, arc, arcLabel: ARCS[arc].label, halfTime, seed: input.seed ?? null, generatedWithSpecVerifiedOn: SPEC.verifiedOn },
+    model: {
+      pick: modelPick,
+      rationale: `${lane.model.rationale} ${SPEC.models.notes[modelPick]}`,
+      wild: `${lane.model.wild} (Variant: ${SPEC.models.wild}; it defaults Variety to Off. ${SPEC.models.notes[SPEC.models.wild]})`,
+      mini: `${SPEC.models.mini}: ${SPEC.models.notes[SPEC.models.mini]}`,
+      alternatives: SPEC.models.list.filter((m) => m !== modelPick),
+    },
+    toggles: {
+      customMode: true,
+      modeName: SPEC.mode.name,
+      instrumental: true,
+      persona: false,
+      personaNote: `${SPEC.personas.uiName}: ${SPEC.personas.note}`,
+      maxMode: plan.totalSeconds > 120,
+      maxModeNote: SPEC.maxMode.recommended + ` (${SPEC.maxMode.credits}).`,
+      variety: 'Off',
+      varietyNote: SPEC.sliders.variety.why,
+      duration: `Custom ${durationSetting(plan.totalSeconds)} (planned ${plan.totalFormatted} = ${plan.sections.reduce((a, s) => a + s.bars, 0)} bars at ${bpm} BPM, plus a ${SPEC.duration.bufferSeconds} s buffer rounded up to the next 5 s, so [End] lands before the hard cut; Crop any tail). Do not use Auto: v6 runs long on Auto.`,
+      title,
+    },
+    style,
+    lyrics,
+    exclude,
+    sliders: {
+      weirdness: sl.weirdness, weirdnessWhy: lane.sliders.weirdnessWhy,
+      styleInfluence: sl.styleInfluence, styleInfluenceWhy: lane.sliders.styleInfluenceWhy,
+      audioInfluence: 'Not used. No audio is uploaded in this workflow, so the slider does not even appear; leave it alone.',
+      variety: `Off (Exact style). ${SPEC.sliders.variety.why}`,
+    },
+    variations: {
+      safer: { style: safer, sliders: sliders(lane, full, 'safer') },
+      weirder: { style: weirder, sliders: sliders(lane, full, 'weirder') },
+    },
+    postGen: postGenNotes(lane, plan, full),
+    plan: {
+      totalSeconds: Math.round(plan.totalSeconds), totalFormatted: plan.totalFormatted,
+      introBars: plan.introBars, hookAt: plan.hookAtFormatted,
+      sections: plan.sections.map((s) => ({ type: s.type, variant: s.variant || null, bars: s.bars, start: fmtTime(s.startSec), energy: s.energy })),
+    },
+    limits: { style: SPEC.fields.style.limit, lyrics: SPEC.fields.lyrics.limit, exclude: SPEC.fields.exclude.limit },
+  };
+}
+
+function durationSetting(totalSeconds) {
+  const t = Math.ceil((totalSeconds + SPEC.duration.bufferSeconds) / 5) * 5;
+  return fmtTime(Math.min(t, 360));
+}
+
+function defaultTitle(lane, key, bpm) {
+  const names = { 'connor-price': 'Bounce House', 'paak-pocket': 'Backseat Pocket', 'jid-dark': 'Low Ceiling', 'phonk-experimental': 'Cassette Cowbell', 'hybrid': 'Hazy Bounce' };
+  return `${names[lane] || 'Untitled Instrumental'} (${key}, ${bpm} BPM)`;
+}
+
+function postGenNotes(lane, plan, input) {
+  const f = SPEC.features;
+  const notes = [];
+  notes.push(`Structure check: intro should hand off to the first hook/drop around ${plan.hookAtFormatted}; total near ${plan.totalFormatted}. If Suno ignores a section, use Replace Section on that time range with a shorter, blunter cue (e.g. "[Break - 4 bars: drums only]").`);
+  notes.push(...lane.listenFor);
+  notes.push('Vocal leak: any hum, ad-lib or sung syllable means a re-roll, not a fix. Confirm the Instrumental toggle, keep the Exclude list intact, and do not add negatives to the Style field.');
+  notes.push(`Ending: the [End] tag should produce a stop near ${plan.totalFormatted}. If Suno keeps playing, Crop to the last downbeat. If it stops early, Extend from the last good section and paste only the remaining section tags into the Extend lyrics box.`);
+  notes.push('When to Extend vs re-roll: Extend when the first 60-90 s are keepers and only the back half drifts. Re-roll (and pick the safer or weirder variation) when the drums or genre are wrong from the start.');
+  notes.push(`Remaster: ${f.remaster} Compare loudness against a current radio instrumental before export.`);
+  notes.push(`Stems: ${f.stems} Export stems from the final take for a DAW polish (re-balance the 808, add a limiter).`);
+  notes.push(`Prompt ignored? First check Variety is Off (v6 and v6-mini default it to Normal, which rewrites the Style text), then check Max Mode is on for a full-length beat. ${SPEC.fields.exclude.tip}`);
+  notes.push(`If the mix goes muffled or thin after ~2:30, that is the reported v6 standard-mode drift: re-run with Max Mode on, or Extend from the last clean bar.`);
+  notes.push('A/B: generate the main Style and one variation back to back with identical Lyrics/Exclude and sliders changed only as listed, so the comparison isolates the Style wording.');
+  return notes;
+}
+
+module.exports = { generate, LANES, SPEC, ARCS, RADIO, blendLanes, splitList };
+
+  };
+  __defs["./qa"] = function (module, exports, require, __dirname) {
+'use strict';
+/**
+ * QA checker for suno-forge blocks. Enforces:
+ *  - verified character limits (Style, Lyrics, Exclude)
+ *  - no real artist names or "type beat"/"in the style of" phrasing anywhere in copy fields
+ *  - no audio-reference / Audio Influence usage (copy fields: zero tolerance; prose: only "not used" statements allowed)
+ *  - truly instrumental (toggle on, Lyrics are bracket tags only, Exclude covers vocals)
+ *  - no inline negatives in the Style field
+ *  - radio structure (intro <= 8 bars, hook/drop by 0:45, runtime 2:30-3:30, contrast section, [End])
+ *  - sliders in range, model in the verified list
+ */
+const fs = require('fs');
+const path = require('path');
+const { barSeconds, RADIO } = require('./arrange');
+
+const SPEC = JSON.parse(fs.readFileSync(path.join(__dirname, 'spec.json'), 'utf8'));
+
+function esc(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+
+const LANE_IDS = /\b(connor-price|paak-pocket|jid-dark|phonk-experimental|hybrid)\b/gi;
+function findBannedNames(text, { allowLaneIds = false } = {}) {
+  const hits = [];
+  if (allowLaneIds) text = text.replace(LANE_IDS, 'lane');
+  for (const name of SPEC.bannedNames) {
+    const re = new RegExp(`(^|[^A-Za-z0-9])${esc(name)}(?=$|[^A-Za-z0-9])`, 'i');
+    if (re.test(text)) hits.push(name);
+  }
+  for (const p of SPEC.bannedPhrases) if (text.toLowerCase().includes(p)) hits.push(`phrase: "${p}"`);
+  return hits;
+}
+
+function findAudioRefs(text, prose = false) {
+  const hits = [];
+  const lower = text.toLowerCase();
+  for (const t of SPEC.audioRefTerms) {
+    if (!lower.includes(t)) continue;
+    if (!prose) { hits.push(t); continue; }
+    // In prose, allow only sentences that say it is NOT used.
+    const sentences = text.split(/(?<=[.!?])\s+|\n/);
+    for (const sen of sentences) {
+      const l = sen.toLowerCase();
+      if (!l.includes(t)) continue;
+      if (!/\b(not used|not applicable|leave|off|do not|don't|never|no audio|without)\b/.test(l)) hits.push(`${t}: "${sen.trim().slice(0, 80)}"`);
+    }
+  }
+  return hits;
+}
+
+/** Parse the Lyrics field into sections: [{tag, bars}] and detect non-tag lines. */
+function parseLyrics(lyrics) {
+  const lines = lyrics.split('\n').map((l) => l.trim()).filter(Boolean);
+  const sections = [];
+  const bareLines = [];
+  for (const line of lines) {
+    const m = line.match(/^\[([^\]]+)\]$/);
+    if (!m) { bareLines.push(line); continue; }
+    const inner = m[1];
+    const name = inner.split(/\s*[-:]\s*/)[0].trim();
+    const bm = inner.match(/(\d+)\s*bars?/i);
+    sections.push({ raw: line, name, type: name.toLowerCase().replace(/\s*\d+$/, ''), bars: bm ? Number(bm[1]) : null });
+  }
+  return { sections, bareLines };
+}
+
+/**
+ * Validate a block object (as produced by generate()). Returns {ok, errors, warnings, stats}.
+ */
+function checkBlock(block) {
+  const errors = [], warnings = [];
+  const style = block.style || '';
+  const lyrics = block.lyrics || '';
+  const exclude = block.exclude || '';
+  const bpm = block.meta && block.meta.bpm;
+
+  // Limits
+  if (style.length > SPEC.fields.style.limit) errors.push(`Style field is ${style.length} chars; limit ${SPEC.fields.style.limit}.`);
+  if (style.length > SPEC.fields.style.target) warnings.push(`Style field is ${style.length} chars; soft target ${SPEC.fields.style.target} (long prompts dilute early-token weighting).`);
+  if (lyrics.length > SPEC.fields.lyrics.limit) errors.push(`Lyrics field is ${lyrics.length} chars; limit ${SPEC.fields.lyrics.limit}.`);
+  if (exclude.length > SPEC.fields.exclude.limit) errors.push(`Exclude field is ${exclude.length} chars; limit ${SPEC.fields.exclude.limit}.`);
+  if (style.length < 40) errors.push('Style field is too short to steer the model.');
+  for (const v of ['safer', 'weirder']) {
+    const vs = block.variations && block.variations[v] && block.variations[v].style;
+    if (vs && vs.length > SPEC.fields.style.limit) errors.push(`Variation "${v}" Style is ${vs.length} chars; limit ${SPEC.fields.style.limit}.`);
+  }
+
+  // Banned names / phrases in copy fields and in prose
+  const copyText = [style, lyrics, exclude, block.variations?.safer?.style, block.variations?.weirder?.style, block.toggles?.title].filter(Boolean).join('\n');
+  const nameHits = findBannedNames(copyText);
+  if (nameHits.length) errors.push(`Real artist name or style-of phrasing in copy fields: ${nameHits.join('; ')}.`);
+  const proseText = [block.meta?.laneLabel, block.model?.rationale, block.model?.wild, block.model?.mini, ...(block.postGen || []), block.sliders?.weirdnessWhy, block.sliders?.styleInfluenceWhy, block.toggles?.personaNote].filter(Boolean).join('\n');
+  const proseNames = findBannedNames(proseText, { allowLaneIds: true });
+  if (proseNames.length) errors.push(`Artist name or style-of phrasing in the block's prose/header (artist names belong only in README and research): ${proseNames.join('; ')}.`);
+
+  // Audio reference ban
+  const audioCopy = findAudioRefs(copyText, false);
+  if (audioCopy.length) errors.push(`Audio-reference term in copy fields: ${audioCopy.join(', ')}.`);
+  const audioProse = findAudioRefs([proseText, block.sliders?.audioInfluence || '', block.toggles?.personaNote || ''].join('\n'), true);
+  if (audioProse.length) errors.push(`Prose suggests using audio references/Audio Influence: ${audioProse.join(' | ')}.`);
+
+  // Instrumental
+  if (!block.toggles || block.toggles.instrumental !== true) errors.push('Instrumental toggle must be ON.');
+  if (!block.toggles || block.toggles.customMode !== true) errors.push('Custom Mode must be ON (Style/Lyrics/Exclude fields need it).');
+  const parsed = parseLyrics(lyrics);
+  const bareLines = parsed.bareLines;
+  const sections = parsed.sections.filter((s) => s.type !== 'instrumental');
+  if (/\([^)]*\)/.test(lyrics)) errors.push('Lyrics field contains parentheses; Suno sings parenthesized text as backing vocals. Use brackets only.');
+  if (bareLines.length) errors.push(`Lyrics field has ${bareLines.length} non-bracketed line(s) that Suno may sing: "${bareLines[0].slice(0, 60)}".`);
+  const exLower = exclude.toLowerCase();
+  if (!/\bvocals\b/.test(exLower)) errors.push('Exclude field must contain "vocals" or "lead vocals".');
+  if (!['humming', 'singing', 'ad-libs', 'lyrics'].some((w) => exLower.includes(w))) errors.push('Exclude field must also cover wordless leaks (humming / singing / ad-libs / lyrics).');
+  if (!exLower.includes('humming')) warnings.push('Exclude field does not list "humming"; hums are the most common instrumental leak.');
+  if (/(^|,)\s*no\s+\w/.test(exLower)) errors.push('Exclude terms must be bare nouns ("vocals"), never negated ("no vocals").');
+  if (!/\binstrumental\b/i.test(style)) warnings.push('Style field does not include the word "instrumental"; the toggle usually suffices but the word helps.');
+
+  // Vocal-implying words in copy fields (they summon hums even in instrumental mode)
+  const vocalHits = [];
+  for (const term of SPEC.vocalImplying || []) {
+    const re = new RegExp(`(^|[^a-z0-9])${esc(term.toLowerCase())}(?=$|[^a-z0-9])`, 'i');
+    if (re.test(copyText.replace(/^.*$/gm, (line) => line))) vocalHits.push(term);
+  }
+  // Exclude field is allowed to name vocal terms (that is its job).
+  const vocalHitsOutsideExclude = vocalHits.filter((t) => new RegExp(`(^|[^a-z0-9])${esc(t.toLowerCase())}(?=$|[^a-z0-9])`, 'i').test([style, lyrics, block.variations?.safer?.style, block.variations?.weirder?.style, block.toggles?.title].filter(Boolean).join('\n')));
+  if (vocalHitsOutsideExclude.length) errors.push(`Vocal-implying term in Style/Lyrics (summons hums in instrumental mode): ${vocalHitsOutsideExclude.join(', ')}.`);
+
+  // Negatives inline in Style
+  const neg = style.match(/\b(no|without|avoid|not|never|free of)\s+[a-z]/i);
+  if (neg && !/vocal-free/i.test(neg[0])) errors.push(`Inline negative in Style field ("${neg[0]}..."). Negatives belong in Exclude Styles.`);
+  if (/\bvocal(s)?\b/i.test(style) && !/vocal-free/i.test(style)) warnings.push('Style field mentions "vocal"; Suno often pattern-matches this and adds vocals. Prefer "pitched-down sample texture".');
+
+  // Radio structure
+  if (!sections.length) errors.push('Lyrics field has no section tags.');
+  else {
+    const first = sections[0];
+    if (!/intro/.test(first.type)) warnings.push(`First section is [${first.name}], not an intro tag.`);
+    if (first.bars && first.bars > RADIO.maxIntroBars) errors.push(`Intro is ${first.bars} bars; must be <= ${RADIO.maxIntroBars}.`);
+    const hookIdx = sections.findIndex((s) => /^(hook|chorus|drop)/.test(s.type));
+    if (hookIdx < 0) errors.push('No [Hook]/[Chorus]/[Drop] section.');
+    else if (bpm) {
+      const before = sections.slice(0, hookIdx).reduce((a, s) => a + (s.bars || 0), 0) * barSeconds(bpm);
+      if (before > RADIO.hookByMax) errors.push(`First hook/drop arrives at ${Math.round(before)} s; must be <= ${RADIO.hookByMax} s.`);
+    }
+    if (bpm && sections.every((s) => s.bars !== null || s.type === 'end')) {
+      const total = sections.reduce((a, s) => a + (s.bars || 0), 0) * barSeconds(bpm);
+      if (total < RADIO.minSeconds || total > RADIO.maxSeconds) errors.push(`Planned runtime ${Math.round(total)} s is outside ${RADIO.minSeconds}-${RADIO.maxSeconds} s.`);
+    }
+    const hasContrast = sections.some((s) => /(break|bridge|drop|beat switch|breakdown|interlude|pre-chorus|build)/.test(s.type));
+    if (!hasContrast) errors.push('No contrast section ([Break]/[Bridge]/[Drop]/[Beat Switch]).');
+    const last = sections[sections.length - 1];
+    if (!/^(end|outro|fade out)/.test(last.type)) errors.push('Lyrics must finish with [Outro] and/or [End].');
+    if (!sections.some((s) => s.type === 'end')) warnings.push('No [End] tag; Suno may run on past the outro.');
+    const hooks = sections.filter((s) => /^(hook|chorus)/.test(s.type)).length;
+    if (hooks < 2) warnings.push('Fewer than two hook sections; radio structure usually repeats the hook.');
+  }
+
+  // Sliders and model
+  const sl = block.sliders || {};
+  for (const k of ['weirdness', 'styleInfluence']) {
+    const v = sl[k];
+    const r = SPEC.sliders[k];
+    if (typeof v !== 'number' || v < r.min || v > r.max) errors.push(`${k} must be a number in ${r.min}-${r.max}.`);
+  }
+  if (block.model && !SPEC.models.list.includes(block.model.pick)) errors.push(`Model "${block.model.pick}" is not in the verified list: ${SPEC.models.list.join(', ')}.`);
+
+  // Required sections of the block
+  for (const k of ['model', 'toggles', 'style', 'lyrics', 'exclude', 'sliders', 'variations', 'postGen']) if (!block[k]) errors.push(`Block is missing section "${k}".`);
+
+  return {
+    ok: errors.length === 0,
+    errors, warnings,
+    stats: { styleChars: style.length, lyricsChars: lyrics.length, excludeChars: exclude.length, sections: sections.length },
+  };
+}
+
+/**
+ * Parse a rendered markdown block (as written by render.js / examples) back into a block object.
+ */
+function parseMarkdownBlock(md) {
+  // Split on level-2/3 headings and return the body of the first section whose heading matches the label.
+  const chunks = md.split(/^(?=#{2,3}\s)/m);
+  const grab = (label) => {
+    const re = new RegExp(`^#{2,3}\\s*\\d*\\.?\\s*${label}`, 'i');
+    const hit = chunks.find((c) => re.test(c));
+    return hit ? hit.replace(/^[^\n]*\n/, '') : '';
+  };
+  const code = (s) => { const m = s.match(/```[a-z]*\n([\s\S]*?)```/); return m ? m[1].trim() : s.trim(); };
+  const modelSec = grab('MODEL');
+  const toggles = grab('MODE\\/TOGGLES');
+  const styleSec = grab('STYLE FIELD');
+  const lyricsSec = grab('LYRICS FIELD');
+  const exSec = grab('EXCLUDE STYLES FIELD');
+  const slSec = grab('SLIDERS');
+  const varSec = grab('VARIATIONS');
+  const postSec = grab('POST-GEN NOTES');
+  const num = (re, s) => { const m = s.match(re); return m ? Number(m[1]) : NaN; };
+  const bpmM = md.match(/(\d{2,3})\s*BPM/i);
+  const h1 = (md.match(/^#\s+suno-forge prompt block:\s*(.+)$/m) || [])[1] || '';
+  const laneLine = (md.match(/^Lane\s+`[^`]+`.*$/m) || [])[0] || '';
+  const codeBlocks = [...varSec.matchAll(/```[a-z]*\n([\s\S]*?)```/g)].map((m) => m[1].trim());
+  const modelPick = (modelSec.match(/\*\*Pick:\*\*\s*`?([^`\n]+?)`?\s*(?:\n|$)/) || [])[1];
+  return {
+    meta: { bpm: bpmM ? Number(bpmM[1]) : undefined, laneLabel: [h1, laneLine].filter(Boolean).join(' | ') },
+    model: { pick: modelPick ? modelPick.trim() : undefined, rationale: modelSec },
+    toggles: { customMode: /Custom Mode:\*{0,2}\s*ON/i.test(toggles), instrumental: /Instrumental:\*{0,2}\s*ON/i.test(toggles), personaNote: toggles },
+    style: code(styleSec),
+    lyrics: code(lyricsSec),
+    exclude: code(exSec),
+    sliders: { weirdness: num(/Weirdness:\*{0,2}\s*(\d+)/i, slSec), styleInfluence: num(/Style Influence:\*{0,2}\s*(\d+)/i, slSec), audioInfluence: slSec, weirdnessWhy: slSec },
+    variations: { safer: { style: codeBlocks[0] || '' }, weirder: { style: codeBlocks[1] || '' } },
+    postGen: postSec ? [postSec] : [],
+  };
+}
+
+module.exports = { checkBlock, parseMarkdownBlock, findBannedNames, findAudioRefs, parseLyrics };
+
+  };
+  __defs["./render"] = function (module, exports, require, __dirname) {
+'use strict';
+/** Render a block object as the copy-ready markdown block with the eight labeled sections. */
+function renderBlock(b, opts = {}) {
+  const L = [];
+  const h = opts.compact ? '##' : '##';
+  L.push(`# suno-forge prompt block: ${b.meta.laneLabel}`);
+  L.push('');
+  L.push(`Lane \`${b.meta.lane}\` | ${b.meta.bpm} BPM${b.meta.halfTime ? ' (half-time feel)' : ''} | ${b.meta.key} | arc: ${b.meta.arcLabel} | planned ${b.plan.totalFormatted}, hook at ${b.plan.hookAt}${b.meta.seed !== null && b.meta.seed !== undefined ? ` | seed ${b.meta.seed}` : ''}`);
+  L.push('');
+  L.push(`${h} 1. MODEL`);
+  L.push(`**Pick:** ${b.model.pick}`);
+  L.push(`**Why:** ${b.model.rationale}`);
+  L.push(`**Wild/experimental variant:** ${b.model.wild}`);
+  if (b.model.mini) L.push(`**Free-plan fallback:** ${b.model.mini}`);
+  L.push('');
+  L.push(`${h} 2. MODE/TOGGLES`);
+  L.push(`- **Custom Mode:** ON (${b.toggles.modeName})`);
+  L.push(`- **Instrumental:** ON`);
+  L.push(`- **Max Mode:** ${b.toggles.maxMode ? 'ON' : 'OFF'}. ${b.toggles.maxModeNote}`);
+  L.push(`- **Variety:** ${b.toggles.variety}. ${b.toggles.varietyNote}`);
+  L.push(`- **Persona:** ${b.toggles.persona ? 'YES' : 'NO'}. ${b.toggles.personaNote}`);
+  L.push(`- **Duration:** ${b.toggles.duration}`);
+  L.push(`- **Song Title:** ${b.toggles.title}`);
+  L.push('');
+  L.push(`${h} 3. STYLE FIELD (${b.style.length}/${b.limits.style} chars, most important descriptors first)`);
+  L.push('```text');
+  L.push(b.style);
+  L.push('```');
+  L.push('');
+  L.push(`${h} 4. LYRICS FIELD (${b.lyrics.length}/${b.limits.lyrics} chars, section tags only, no words)`);
+  L.push('```text');
+  L.push(b.lyrics);
+  L.push('```');
+  L.push('');
+  L.push(`${h} 5. EXCLUDE STYLES FIELD (${b.exclude.length}/${b.limits.exclude} chars)`);
+  L.push('```text');
+  L.push(b.exclude);
+  L.push('```');
+  L.push('');
+  L.push(`${h} 6. SLIDERS`);
+  L.push(`- **Weirdness:** ${b.sliders.weirdness}% — ${b.sliders.weirdnessWhy}`);
+  L.push(`- **Style Influence:** ${b.sliders.styleInfluence}% — ${b.sliders.styleInfluenceWhy}`);
+  L.push(`- **Audio Influence:** ${b.sliders.audioInfluence}`);
+  L.push(`- **Variety:** ${b.sliders.variety}`);
+  L.push('');
+  L.push(`${h} 7. VARIATIONS`);
+  L.push(`**A. Safer** (Weirdness ${b.variations.safer.sliders.weirdness}%, Style Influence ${b.variations.safer.sliders.styleInfluence}%; ${b.variations.safer.style.length} chars)`);
+  L.push('```text');
+  L.push(b.variations.safer.style);
+  L.push('```');
+  L.push(`**B. Weirder** (Weirdness ${b.variations.weirder.sliders.weirdness}%, Style Influence ${b.variations.weirder.sliders.styleInfluence}%; ${b.variations.weirder.style.length} chars)`);
+  L.push('```text');
+  L.push(b.variations.weirder.style);
+  L.push('```');
+  L.push('');
+  L.push(`${h} 8. POST-GEN NOTES`);
+  for (const n of b.postGen) L.push(`- ${n}`);
+  L.push('');
+  L.push(`<details><summary>Arrangement plan</summary>`);
+  L.push('');
+  L.push('| # | Section | Bars | Starts | Energy |');
+  L.push('|---|---------|------|--------|--------|');
+  b.plan.sections.forEach((s, i) => L.push(`| ${i + 1} | ${s.type}${s.variant ? ` (${s.variant})` : ''} | ${s.bars} | ${s.start} | ${s.energy}/10 |`));
+  L.push('');
+  L.push(`</details>`);
+  return L.join('\n');
+}
+
+/** Render a batch as a markdown table. */
+function renderBatchTable(blocks) {
+  const rows = ['| # | Seed | BPM | Key | Arc | Weird | Style Inf | Style field |', '|---|------|-----|-----|-----|-------|-----------|-------------|'];
+  blocks.forEach((b, i) => rows.push(`| ${i + 1} | ${b.meta.seed} | ${b.meta.bpm} | ${b.meta.key} | ${b.meta.arc} | ${b.sliders.weirdness}% | ${b.sliders.styleInfluence}% | ${b.style.replace(/\|/g, '/')} |`));
+  const sameArc = blocks.every((b) => b.meta.arc === blocks[0].meta.arc && b.meta.bpm === blocks[0].meta.bpm);
+  if (sameArc) rows.push('', 'Shared Lyrics field (identical across the batch so the A/B isolates the Style wording):', '', '```text', blocks[0].lyrics, '```');
+  else { rows.push('', 'Lyrics fields differ per row (arcs or BPMs vary):'); blocks.forEach((b, i) => rows.push('', `Row ${i + 1} (${b.meta.arc}, ${b.meta.bpm} BPM):`, '', '```text', b.lyrics, '```')); }
+  rows.push('', 'Shared Exclude Styles field:', '', '```text', blocks[0].exclude, '```');
+  return rows.join('\n');
+}
+
+module.exports = { renderBlock, renderBatchTable };
+
+  };
+  window.SunoForge = { ...__require('./generate'), ...__require('./qa'), ...__require('./render'), arrange: __require('./arrange') };
+})();
+</script>
+<script>
+(function () {
+  const F = window.SunoForge;
+  const $ = (id) => document.getElementById(id);
+  const LANES = F.LANES, ARCS = F.ARCS;
+  let lastInput = null;
+
+  // ---- controls ----
+  const laneSel = $('lane');
+  for (const [id, l] of Object.entries(LANES)) { const o = document.createElement('option'); o.value = id; o.textContent = `${id}  —  ${l.label}`; laneSel.appendChild(o); }
+  const arcSel = $('arc');
+  for (const [id, a] of Object.entries(ARCS)) { const o = document.createElement('option'); o.value = id; o.textContent = `${id}  —  ${a.label}`; arcSel.appendChild(o); }
+
+  function applyLane() {
+    const l = LANES[laneSel.value];
+    $('laneHint').textContent = l.description;
+    $('bpm').value = l.bpm.default; $('bpm').min = 60; $('bpm').max = 200;
+    $('bpmHint').textContent = `${l.bpm.min}-${l.bpm.max} BPM. ${l.bpm.note}`;
+    const dl = $('keys'); dl.innerHTML = ''; for (const k of l.keys) { const o = document.createElement('option'); o.value = k; dl.appendChild(o); }
+    $('key').value = ''; $('key').placeholder = `lane default (${l.keys.slice(0, 3).join(' / ')})`;
+    arcSel.value = l.defaultArc; applyArc();
+  }
+  function applyArc() { $('arcHint').textContent = ARCS[arcSel.value].summary; }
+  laneSel.addEventListener('change', applyLane);
+  arcSel.addEventListener('change', applyArc);
+
+  try { const saved = JSON.parse(localStorage.getItem('suno-forge:last') || 'null'); if (saved && LANES[saved.lane]) { laneSel.value = saved.lane; applyLane(); for (const k of ['bpm', 'key', 'mood', 'arc', 'constraints', 'exclude', 'weirdness', 'styleInfluence', 'excludePreset', 'title']) if (saved[k] !== undefined && saved[k] !== null) $(k).value = saved[k]; applyArc(); } else applyLane(); } catch (e) { applyLane(); }
+
+  function readInput(newSeed) {
+    const v = (id) => $(id).value.trim();
+    const num = (id) => v(id) === '' ? undefined : Number(v(id));
+    const input = { lane: v('lane'), bpm: num('bpm'), key: v('key') || undefined, mood: v('mood') || undefined, arc: v('arc'), constraints: v('constraints') || undefined, exclude: v('exclude') || undefined, weirdness: num('weirdness'), styleInfluence: num('styleInfluence'), excludePreset: v('excludePreset'), title: v('title') || undefined };
+    let seed = v('seed');
+    if (newSeed || !seed) seed = String(Math.floor(Math.random() * 1e6));
+    input.seed = /^\d+$/.test(seed) ? Number(seed) : seed;
+    $('seed').value = seed;
+    try { localStorage.setItem('suno-forge:last', JSON.stringify({ ...input, seed: undefined })); } catch (e) {}
+    return input;
+  }
+
+  // ---- rendering ----
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  function fieldCard(title, text, limit, hint) {
+    const rows = Math.min(18, Math.max(3, text.split('\n').length + 1));
+    return `<div class="card"><h2>${title}<span class="count">${text.length}/${limit} chars</span></h2>
+      <div class="field"><textarea readonly rows="${rows}" spellcheck="false">${esc(text)}</textarea></div>
+      <div class="copyrow"><button class="copy" data-copy>Copy ${title.replace(/^\d+\.\s*/, '')}</button><span class="meta">${hint}</span></div></div>`;
+  }
+  function render(b, qa) {
+    const t = b.toggles, s = b.sliders, v = b.variations;
+    const qaBadge = qa.ok ? '<span class="badge ok">QA pass</span>' : '<span class="badge bad">QA fail</span>';
+    let html = `
+    <div class="card">
+      <h2>Setup in Suno ${qaBadge}<span class="count">${esc(b.meta.laneLabel)} · ${b.meta.bpm} BPM${b.meta.halfTime ? ' half-time' : ''} · ${esc(b.meta.key)} · ${esc(b.meta.arcLabel)} · seed ${esc(b.meta.seed)}</span></h2>
+      <div class="checklist">
+        <div class="check"><b>Model</b><span class="big">${esc(b.model.pick)}</span></div>
+        <div class="check"><b>Mode</b>Custom (Advanced)</div>
+        <div class="check"><b>Instrumental</b>ON</div>
+        <div class="check"><b>Max Mode</b>${t.maxMode ? 'ON' : 'OFF'}</div>
+        <div class="check"><b>Variety</b>Off (Exact style)</div>
+        <div class="check"><b>Voice / Persona</b>None</div>
+        <div class="check"><b>Weirdness</b><span class="big">${s.weirdness}%</span></div>
+        <div class="check"><b>Style Influence</b><span class="big">${s.styleInfluence}%</span></div>
+        <div class="check"><b>Duration (Custom)</b><span class="big">${esc(t.duration.match(/Custom (\d+:\d\d)/)[1])}</span> planned ${esc(b.plan.totalFormatted)}, hook at ${esc(b.plan.hookAt)}</div>
+        <div class="check"><b>Audio Influence</b>leave alone, no upload</div>
+      </div>
+      <ol class="steps" style="margin-top:10px">
+        <li>Create → Custom. Pick <b>${esc(b.model.pick)}</b>. Open More Options: Instrumental on, Max Mode ${t.maxMode ? 'on' : 'off'}, <b>Variety Off</b>, Duration Custom ${esc(t.duration.match(/Custom (\d+:\d\d)/)[1])}.</li>
+        <li>Paste the three fields below into Styles, Lyrics and Exclude Styles. Set Weirdness ${s.weirdness}% and Style Influence ${s.styleInfluence}%.</li>
+        <li>Title: <code>${esc(t.title)}</code>. Generate, then read the notes at the bottom while you listen.</li>
+      </ol>
+      ${qa.ok ? '' : `<div class="qa">${esc(qa.errors.join('\n'))}</div>`}
+    </div>`;
+    html += fieldCard('1. Styles', b.style, b.limits.style, 'Most important descriptors first; Suno weights early words more.');
+    html += fieldCard('2. Lyrics', b.lyrics, b.limits.lyrics, 'Section tags only, no words. Keep Instrumental ON.');
+    html += fieldCard('3. Exclude Styles', b.exclude, b.limits.exclude, 'Bare nouns. If Suno ignores it, keep only the first four.');
+    html += `<div class="card var"><h2>Alternate Styles fields (A/B)</h2>
+      <h3>A. Safer — Weirdness ${v.safer.sliders.weirdness}%, Style Influence ${v.safer.sliders.styleInfluence}%</h3>
+      <div class="field"><textarea readonly rows="3" spellcheck="false">${esc(v.safer.style)}</textarea></div>
+      <div class="copyrow"><button class="copy" data-copy>Copy safer Styles</button><span class="meta">${v.safer.style.length} chars</span></div>
+      <h3>B. Weirder — Weirdness ${v.weirder.sliders.weirdness}%, Style Influence ${v.weirder.sliders.styleInfluence}%</h3>
+      <div class="field"><textarea readonly rows="3" spellcheck="false">${esc(v.weirder.style)}</textarea></div>
+      <div class="copyrow"><button class="copy" data-copy>Copy weirder Styles</button><span class="meta">${v.weirder.style.length} chars</span></div>
+      <p class="meta" style="margin:10px 0 0">Same Lyrics and Exclude for both; only the Styles text and sliders change, so the A/B tells you what the wording did.</p></div>`;
+    html += `<div class="card notes"><details class="notes"><summary><b>Why this model, and what to listen for</b></summary>
+      <p class="meta"><b>${esc(b.model.pick)}:</b> ${esc(b.model.rationale)}</p><p class="meta"><b>Try wild when:</b> ${esc(b.model.wild)}</p><p class="meta"><b>Sliders:</b> Weirdness ${s.weirdness}% — ${esc(s.weirdnessWhy)} Style Influence ${s.styleInfluence}% — ${esc(s.styleInfluenceWhy)}</p>
+      <ul>${b.postGen.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>
+      <table class="plan"><tr><th>#</th><th>Section</th><th>Bars</th><th>Starts</th><th>Energy</th></tr>${b.plan.sections.map((x, i) => `<tr><td>${i + 1}</td><td>${esc(x.type)}${x.variant ? ` (${esc(x.variant)})` : ''}</td><td>${x.bars}</td><td>${esc(x.start)}</td><td>${x.energy}/10</td></tr>`).join('')}</table>
+      </details></div>`;
+    html += `<div class="card"><div class="copyrow"><button class="copy" id="copyAll">Copy the whole block as markdown</button><span class="meta">Everything above in the eight-section suno-forge format, for notes or a teammate.</span></div></div>`;
+    $('out').innerHTML = html;
+    const md = F.renderBlock(b);
+    $('out').querySelectorAll('[data-copy]').forEach((btn) => btn.addEventListener('click', () => copyText(btn, btn.parentElement.previousElementSibling.querySelector('textarea').value)));
+    $('copyAll').addEventListener('click', () => copyText($('copyAll'), md));
+  }
+
+  async function copyText(btn, text) {
+    let ok = false;
+    try { await navigator.clipboard.writeText(text); ok = true; } catch (e) {
+      try { const ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select(); ok = document.execCommand('copy'); ta.remove(); } catch (e2) { ok = false; }
+    }
+    const old = btn.textContent;
+    btn.textContent = ok ? 'Copied ✓' : 'Select the text and press Ctrl/Cmd+C';
+    btn.classList.toggle('done', ok);
+    if (!ok) { const ta = btn.parentElement.previousElementSibling && btn.parentElement.previousElementSibling.querySelector('textarea'); if (ta) { ta.focus(); ta.select(); } }
+    setTimeout(() => { btn.textContent = old; btn.classList.remove('done'); }, 1800);
+  }
+
+  function run(newSeed) {
+    try {
+      lastInput = readInput(newSeed);
+      const b = F.generate(lastInput);
+      const qa = F.checkBlock(b);
+      render(b, qa);
+      $('again').hidden = false;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (e) {
+      $('out').innerHTML = `<div class="card"><h2>Could not generate</h2><div class="qa">${esc(e.message)}</div></div>`;
+    }
+  }
+  $('go').addEventListener('click', () => run(false));
+  $('again').addEventListener('click', () => run(true));
+})();
+</script>
+</body>
+</html>

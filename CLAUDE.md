@@ -17,6 +17,7 @@ Suno prompt generator for radio-ready hip hop **instrumentals**. A reusable tool
 
 | Path | What |
 |---|---|
+| `app/index.html` | One-page generator UI (Generate button, Copy buttons). Built, do not edit; source is `app/src/index.template.html` + `scripts/build-app.js` |
 | `forge.js` | CLI: interactive, flags, `--config file.json`, `--batch N`, `--blend a,b,c`, `qa <files>`, `lanes`, `arcs`, `spec` |
 | `lib/spec.json` | Verified Suno facts: models, limits, sliders, Variety, Max Mode, features, banned names, exclude presets |
 | `lib/lanes.json` | Per-lane descriptor pools (priority-ordered), cues per section, sliders, exclusions, BPM/keys, listen-for notes |
@@ -29,7 +30,7 @@ Suno prompt generator for radio-ready hip hop **instrumentals**. A reusable tool
 | `examples/` | One generated block per lane plus the hybrid, all QA-passed, plus JSON configs |
 | `.claude/skills/` | `suno-prompt`, `suno-critique`, `suno-batch` |
 | `.claude/agents/` | `suno-researcher`, `groove-designer`, `style-writer`, `qa-checker` |
-| `scripts/` | `build-examples.js`, `test.js` |
+| `scripts/` | `build-examples.js`, `build-app.js`, `test.js` |
 
 ## Workflow
 
@@ -49,4 +50,4 @@ Generate -> paste the three fields into Suno (Custom mode, Instrumental ON, Vari
 - Never add a word that community testing reports as destabilizing ("complex drums", "aggressive", "crescendo", "ethereal", "lush", "shimmering", "realistic") unless the lane needs it; prefer "slight"/"subtle" modifiers.
 - Cues in `lanes.json` are plain descriptive phrases inside the bracket; no parentheses, no sung words, no mix-operation tags as standalone brackets (`[filter sweep]` alone is unreliable).
 - Any change to `lib/spec.json` must cite a source in `research/01-suno-platform.md` and be mirrored in `reference/suno-field-spec.md`.
-- Run `npm test` and `node forge.js qa examples/*.md` before committing. Regenerate examples if `lanes.json` or `arrange.js` changed.
+- Run `npm test` and `node forge.js qa examples/*.md` before committing. Regenerate examples (`node scripts/build-examples.js`) and the app (`node scripts/build-app.js`) if anything in `lib/` changed.

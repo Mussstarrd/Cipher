@@ -7,6 +7,7 @@
   "scripts": {
     "forge": "node forge.js",
     "examples": "node scripts/build-examples.js",
+    "app": "node scripts/build-app.js",
     "qa": "node forge.js qa examples/*.md",
     "test": "node scripts/test.js"
   },
