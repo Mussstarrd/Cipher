@@ -5,116 +5,95 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>suno-forge</title>
 <style>
-  :root { --bg:#0f1115; --panel:#171a21; --panel2:#1e222b; --line:#2a2f3a; --text:#e8eaf0; --muted:#9aa3b2; --accent:#f5b84a; --accent2:#5ad1b3; --bad:#ff6b6b; --ok:#7ad97a; }
+  :root { --bg:#0b0c10; --panel:#14161c; --panel2:#1b1e26; --line:#272b36; --text:#eceef3; --muted:#98a0b0; --accent:#f5b84a; --accent2:#5ad1b3; --bad:#ff6b6b; --ok:#7ad97a; }
   * { box-sizing:border-box; }
-  body { margin:0; background:var(--bg); color:var(--text); font:15px/1.45 -apple-system, "Segoe UI", Inter, Roboto, sans-serif; }
-  header { padding:20px 24px 8px; display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; }
+  html { scroll-behavior:smooth; }
+  body { margin:0; background:var(--bg); color:var(--text); font:15px/1.45 -apple-system, "Segoe UI", Inter, Roboto, sans-serif; padding-bottom:120px; }
+  header { padding:18px 20px 6px; display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; }
   header h1 { margin:0; font-size:22px; letter-spacing:.3px; }
   header h1 span { color:var(--accent); }
   header .sub { color:var(--muted); font-size:13px; }
-  main { display:grid; grid-template-columns: 340px 1fr; gap:18px; padding:12px 24px 40px; }
-  @media (max-width: 900px) { main { grid-template-columns:1fr; } }
-  .panel { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:16px; }
-  .controls label { display:block; font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.6px; margin:12px 0 5px; }
-  .controls label:first-child { margin-top:0; }
-  .controls input, .controls select, .controls textarea { width:100%; background:var(--panel2); color:var(--text); border:1px solid var(--line); border-radius:8px; padding:9px 10px; font:inherit; }
-  .controls textarea { min-height:52px; resize:vertical; }
-  .hint { font-size:12px; color:var(--muted); margin-top:4px; }
-  .row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-  details.adv summary { cursor:pointer; color:var(--muted); font-size:13px; margin-top:14px; }
-  button { font:inherit; cursor:pointer; border-radius:8px; border:1px solid var(--line); background:var(--panel2); color:var(--text); padding:8px 12px; }
+  main { max-width:980px; margin:0 auto; padding:8px 20px 20px; display:flex; flex-direction:column; gap:14px; }
+  .top { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+  .top select { background:var(--panel2); color:var(--text); border:1px solid var(--line); border-radius:8px; padding:10px 12px; font:inherit; min-width:220px; }
+  button { font:inherit; cursor:pointer; border-radius:8px; border:1px solid var(--line); background:var(--panel2); color:var(--text); padding:10px 14px; }
   button:hover { border-color:#3a4150; }
-  button.primary { background:var(--accent); color:#1a1200; border-color:var(--accent); font-weight:700; font-size:16px; padding:13px; width:100%; margin-top:16px; }
+  button.primary { background:var(--accent); color:#1a1200; border-color:var(--accent); font-weight:800; font-size:17px; padding:12px 26px; }
   button.primary:hover { filter:brightness(1.07); }
-  button.ghost { width:100%; margin-top:8px; }
-  .out { display:flex; flex-direction:column; gap:14px; }
-  .empty { color:var(--muted); text-align:center; padding:60px 20px; border:1px dashed var(--line); border-radius:12px; }
+  details.more { color:var(--muted); font-size:13px; }
+  details.more summary { cursor:pointer; padding:4px 0; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:10px; margin-top:8px; }
+  .grid label { display:block; font-size:11px; text-transform:uppercase; letter-spacing:.6px; color:var(--muted); margin-bottom:4px; }
+  .grid input, .grid select { width:100%; background:var(--panel2); color:var(--text); border:1px solid var(--line); border-radius:8px; padding:8px 10px; font:inherit; }
+  .vibe { color:var(--muted); font-size:13px; }
+  .vibe em { color:var(--text); font-style:normal; font-weight:700; }
   .card { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:14px 16px; }
-  .card h2 { margin:0 0 8px; font-size:14px; text-transform:uppercase; letter-spacing:.8px; color:var(--accent2); display:flex; align-items:center; gap:10px; }
+  .card.active { border-color:var(--accent2); }
+  .card.pasted h2 .count::after { content:"  ✓ copied"; color:var(--ok); }
+  .card h2 { margin:0 0 8px; font-size:13px; text-transform:uppercase; letter-spacing:.8px; color:var(--accent2); display:flex; align-items:center; gap:10px; }
   .card h2 .count { color:var(--muted); font-weight:400; text-transform:none; letter-spacing:0; font-size:12px; margin-left:auto; }
-  .field { position:relative; }
-  .field textarea { width:100%; background:#0b0d12; color:#f3f4f8; border:1px solid var(--line); border-radius:8px; padding:12px 12px 12px; font:14px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; resize:vertical; }
+  .card h2 .step { background:var(--panel2); border:1px solid var(--line); border-radius:999px; padding:2px 8px; font-size:11px; color:var(--muted); }
+  textarea.field { width:100%; background:#07080b; color:#f3f4f8; border:1px solid var(--line); border-radius:8px; padding:12px; font:14px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; resize:vertical; }
   .copyrow { display:flex; gap:8px; margin-top:8px; align-items:center; flex-wrap:wrap; }
   .copy { background:var(--accent2); color:#06201a; border-color:var(--accent2); font-weight:700; }
   .copy.done { background:var(--ok); border-color:var(--ok); }
   .meta { color:var(--muted); font-size:13px; }
-  .checklist { display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:8px; }
-  .check { background:var(--panel2); border:1px solid var(--line); border-radius:8px; padding:9px 11px; font-size:14px; }
+  .checklist { display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:8px; }
+  .check { background:var(--panel2); border:1px solid var(--line); border-radius:8px; padding:8px 10px; font-size:14px; }
   .check b { display:block; font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.6px; margin-bottom:2px; }
   .check .big { font-size:20px; font-weight:700; color:var(--accent); }
   .badge { font-size:12px; padding:3px 8px; border-radius:999px; border:1px solid var(--line); }
   .badge.ok { color:var(--ok); border-color:var(--ok); } .badge.bad { color:var(--bad); border-color:var(--bad); }
-  .steps { margin:0; padding-left:18px; color:var(--muted); font-size:13px; }
-  .steps li { margin:3px 0; }
-  details.notes summary { cursor:pointer; }
   .notes ul { margin:8px 0 0; padding-left:18px; font-size:14px; }
   .notes li { margin:5px 0; }
-  .var h3 { margin:10px 0 6px; font-size:13px; color:var(--muted); }
+  details.notes summary { cursor:pointer; }
   .qa { font-size:13px; color:var(--bad); white-space:pre-wrap; }
-  table.plan { border-collapse:collapse; font-size:13px; width:100%; margin-top:8px; }
-  table.plan td, table.plan th { border-bottom:1px solid var(--line); padding:4px 6px; text-align:left; }
-  footer { color:var(--muted); font-size:12px; padding:0 24px 24px; }
+  .empty { color:var(--muted); text-align:center; padding:50px 20px; border:1px dashed var(--line); border-radius:12px; }
+  /* Pinned paste bar: copies the next Suno field in Suno's order. */
+  .bar { position:fixed; left:0; right:0; bottom:0; background:rgba(20,22,28,.96); border-top:1px solid var(--line); padding:10px 16px env(safe-area-inset-bottom, 10px); display:flex; gap:12px; align-items:center; justify-content:center; flex-wrap:wrap; backdrop-filter:blur(8px); }
+  .bar .kicker { color:var(--muted); font-size:12px; flex-basis:100%; text-align:center; }
+  .bar button.next { background:var(--accent2); color:#06201a; border-color:var(--accent2); font-weight:800; font-size:16px; padding:12px 22px; min-width:260px; }
+  .bar button.next.done { background:var(--ok); border-color:var(--ok); }
+  .bar button.next.flash { transform:scale(1.03); }
+  .bar .count { color:var(--muted); font-size:12px; }
+  footer { color:var(--muted); font-size:12px; padding:0 20px 24px; max-width:980px; margin:0 auto; }
 </style>
 </head>
 <body>
 <header>
   <h1>suno-<span>forge</span></h1>
-  <div class="sub">Suno prompts for radio-ready hip hop instrumentals. Pick a lane, hit Generate, copy the three fields into Suno. Spec verified __SPEC_VERIFIED__ (models: __MODELS__).</div>
+  <div class="sub">One button. Each roll is one of one. Fields come out in Suno's order: Lyrics, Styles, Exclude Styles, then the sliders. Spec verified __SPEC_VERIFIED__ (__MODELS__).</div>
 </header>
 <main>
-  <section class="panel controls">
-    <label for="lane">Lane</label>
-    <select id="lane"></select>
-    <div class="hint" id="laneHint"></div>
-
-    <div class="row">
-      <div>
-        <label for="bpm">BPM</label>
-        <input id="bpm" type="number" min="60" max="200" step="1">
-        <div class="hint" id="bpmHint"></div>
-      </div>
-      <div>
-        <label for="key">Key</label>
-        <input id="key" list="keys" placeholder="lane default">
-        <datalist id="keys"></datalist>
-      </div>
-    </div>
-
-    <label for="mood">Mood (comma words, optional)</label>
-    <input id="mood" placeholder="e.g. haunted, woozy">
-
-    <label for="arc">Energy arc</label>
-    <select id="arc"></select>
-    <div class="hint" id="arcHint"></div>
-
-    <details class="adv">
-      <summary>More options</summary>
-      <label for="constraints">Must-have descriptors (comma)</label>
-      <input id="constraints" placeholder="e.g. music-box bells answer the Rhodes">
-      <label for="exclude">Extra Exclude Styles terms (comma)</label>
-      <input id="exclude" placeholder="e.g. siren, acoustic guitar">
-      <div class="row">
-        <div><label for="weirdness">Weirdness % (blank = lane)</label><input id="weirdness" type="number" min="0" max="100"></div>
-        <div><label for="styleInfluence">Style Influence % (blank = lane)</label><input id="styleInfluence" type="number" min="0" max="100"></div>
-      </div>
-      <div class="row">
-        <div><label for="excludePreset">Exclude preset</label>
-          <select id="excludePreset"><option value="default">default (~8 terms)</option><option value="short">short (4 vocal guards)</option><option value="full">full (belt and braces)</option></select></div>
-        <div><label for="seed">Seed (blank = random)</label><input id="seed" placeholder="42"></div>
-      </div>
-      <label for="title">Song title</label>
-      <input id="title" placeholder="auto">
-    </details>
-
+  <div class="top">
+    <select id="lane" aria-label="Lane"></select>
     <button class="primary" id="go">Generate</button>
-    <button class="ghost" id="again" hidden>Roll again (new seed, same settings)</button>
-  </section>
-
-  <section class="out" id="out">
-    <div class="empty">Choose a lane and press <b>Generate</b>. You'll get the Suno setup checklist and the three fields with copy buttons.</div>
-  </section>
+    <button id="again" hidden>Roll again</button>
+    <span class="vibe" id="vibe"></span>
+  </div>
+  <details class="more">
+    <summary>More options (BPM, key, mood, mode, seed)</summary>
+    <div class="grid">
+      <div><label for="bpm">BPM (blank = lane)</label><input id="bpm" type="number" min="60" max="200"></div>
+      <div><label for="key">Key (blank = lane)</label><input id="key" placeholder="F minor, D dorian, Eb major"></div>
+      <div><label for="mood">Mood words</label><input id="mood" placeholder="dark, sun-soaked"></div>
+      <div><label for="mode">Mode</label><select id="mode"><option value="">layout decides</option><option value="straight">straight</option><option value="loop">loop</option><option value="switch">switch</option></select></div>
+      <div><label for="constraints">Must-have (guarded)</label><input id="constraints" placeholder="horn stabs up front"></div>
+      <div><label for="exclude">Extra Exclude terms</label><input id="exclude" placeholder="siren, acoustic guitar"></div>
+      <div><label for="seed">Seed (blank = random)</label><input id="seed" placeholder="42"></div>
+      <div><label for="wild">Model</label><select id="wild"><option value="">v6 (follows the prompt)</option><option value="1">v6-wild (strange accidents)</option></select></div>
+    </div>
+  </details>
+  <section id="out"><div class="empty">Pick a lane (or leave it on <b>any lane</b>) and press <b>Generate</b>. Then use the bar at the bottom: tap, switch to Suno, paste, come back, tap.</div></section>
 </main>
-<footer>No audio uploads, no Audio Influence, no artist names: everything is steered by the Styles, Lyrics and Exclude Styles fields plus the sliders. Built __BUILD_DATE__.</footer>
+<div class="bar" id="bar" hidden>
+  <span class="kicker" id="kicker"></span>
+  <button class="next" id="next"><span id="nextLabel">COPY LYRICS</span></button>
+  <span class="count" id="nextStep"></span>
+  <button id="restart" title="Start the paste sequence over">Restart</button>
+  <button id="copyAll" title="Everything as one text block">Copy all</button>
+</div>
+<footer>No audio uploads, no Audio Influence, no artist names. Every sound is described physically; the guard blocks the words that summon voices, fills, EDM drops and elevator jazz. Built __BUILD_DATE__.</footer>
 
 <script>
 /*__BUNDLE__*/
@@ -123,124 +102,164 @@
 (function () {
   const F = window.SunoForge;
   const $ = (id) => document.getElementById(id);
-  const LANES = F.LANES, ARCS = F.ARCS;
-  let lastInput = null;
+  const LANES = F.LANES;
+  let pkg = null;
 
-  // ---- controls ----
+  // ---- lane picker ----
   const laneSel = $('lane');
-  for (const [id, l] of Object.entries(LANES)) { const o = document.createElement('option'); o.value = id; o.textContent = `${id}  —  ${l.label}`; laneSel.appendChild(o); }
-  const arcSel = $('arc');
-  for (const [id, a] of Object.entries(ARCS)) { const o = document.createElement('option'); o.value = id; o.textContent = `${id}  —  ${a.label}`; arcSel.appendChild(o); }
+  const addOpt = (v, t) => { const o = document.createElement('option'); o.value = v; o.textContent = t; laneSel.appendChild(o); };
+  addOpt('any', 'any lane (weighted random)');
+  for (const [id, l] of Object.entries(LANES)) addOpt(id, `${id}  —  ${l.label}`);
+  try { const saved = localStorage.getItem('suno-forge:lane'); if (saved && (saved === 'any' || LANES[saved])) laneSel.value = saved; } catch (e) {}
+  laneSel.addEventListener('change', () => { try { localStorage.setItem('suno-forge:lane', laneSel.value); } catch (e) {} });
 
-  function applyLane() {
-    const l = LANES[laneSel.value];
-    $('laneHint').textContent = l.description;
-    $('bpm').value = l.bpm.default; $('bpm').min = 60; $('bpm').max = 200;
-    $('bpmHint').textContent = `${l.bpm.min}-${l.bpm.max} BPM. ${l.bpm.note}`;
-    const dl = $('keys'); dl.innerHTML = ''; for (const k of l.keys) { const o = document.createElement('option'); o.value = k; dl.appendChild(o); }
-    $('key').value = ''; $('key').placeholder = `lane default (${l.keys.slice(0, 3).join(' / ')})`;
-    arcSel.value = l.defaultArc; applyArc();
-  }
-  function applyArc() { $('arcHint').textContent = ARCS[arcSel.value].summary; }
-  laneSel.addEventListener('change', applyLane);
-  arcSel.addEventListener('change', applyArc);
+  // ---- memory: never repeat a fingerprint; avoid the last three lead families / drum phrases and last four keys ----
+  const STORE = 'suno-forge:seen.v2';
+  let seen = new Set();
+  try { seen = new Set(JSON.parse(localStorage.getItem(STORE) || '[]')); } catch (e) {}
+  const remember = (fp) => { seen.add(fp); try { localStorage.setItem(STORE, JSON.stringify([...seen].slice(-5000))); } catch (e) {} };
+  const recentKeys = [], recentSounds = [];
 
-  try { const saved = JSON.parse(localStorage.getItem('suno-forge:last') || 'null'); if (saved && LANES[saved.lane]) { laneSel.value = saved.lane; applyLane(); for (const k of ['bpm', 'key', 'mood', 'arc', 'constraints', 'exclude', 'weirdness', 'styleInfluence', 'excludePreset', 'title']) if (saved[k] !== undefined && saved[k] !== null) $(k).value = saved[k]; applyArc(); } else applyLane(); } catch (e) { applyLane(); }
-
-  function readInput(newSeed) {
+  function readInput(forceSeed) {
     const v = (id) => $(id).value.trim();
-    const num = (id) => v(id) === '' ? undefined : Number(v(id));
-    const input = { lane: v('lane'), bpm: num('bpm'), key: v('key') || undefined, mood: v('mood') || undefined, arc: v('arc'), constraints: v('constraints') || undefined, exclude: v('exclude') || undefined, weirdness: num('weirdness'), styleInfluence: num('styleInfluence'), excludePreset: v('excludePreset'), title: v('title') || undefined };
-    let seed = v('seed');
-    if (newSeed || !seed) seed = String(Math.floor(Math.random() * 1e6));
-    input.seed = /^\d+$/.test(seed) ? Number(seed) : seed;
-    $('seed').value = seed;
-    try { localStorage.setItem('suno-forge:last', JSON.stringify({ ...input, seed: undefined })); } catch (e) {}
+    const input = { lane: laneSel.value, bpm: v('bpm') ? Number(v('bpm')) : undefined, key: v('key') || undefined, mood: v('mood') || undefined, mode: v('mode') || undefined, constraints: v('constraints') || undefined, exclude: v('exclude') || undefined, wild: !!v('wild'), avoidKeys: recentKeys };
+    if (forceSeed !== undefined) input.seed = forceSeed;
     return input;
   }
 
-  // ---- rendering ----
-  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  function fieldCard(title, text, limit, hint) {
-    const rows = Math.min(18, Math.max(3, text.split('\n').length + 1));
-    return `<div class="card"><h2>${title}<span class="count">${text.length}/${limit} chars</span></h2>
-      <div class="field"><textarea readonly rows="${rows}" spellcheck="false">${esc(text)}</textarea></div>
-      <div class="copyrow"><button class="copy" data-copy>Copy ${title.replace(/^\d+\.\s*/, '')}</button><span class="meta">${hint}</span></div></div>`;
+  function roll(newSeed) {
+    const typed = $('seed').value.trim();
+    const fixedSeed = !newSeed && typed ? (/^\d+$/.test(typed) ? Number(typed) : typed) : undefined;
+    try {
+      if (fixedSeed !== undefined) pkg = F.generate(readInput(fixedSeed));
+      else {
+        for (let i = 0; i < 60; i++) {
+          pkg = F.generate(readInput(Math.floor(Math.random() * 4294967295)));
+          const d = pkg.parts.drums, fam = pkg.parts.lead.family, bass = pkg.parts.bass.source;
+          const clash = recentSounds.some((s) => s.fam === fam || s.bass === bass || s.kick === d.kick || s.snare === d.snare || s.hats === d.hats);
+          if (!seen.has(pkg.fingerprint) && (!clash || i > 40)) break;
+        }
+      }
+    } catch (e) { $('out').innerHTML = `<div class="card"><h2>Could not generate</h2><div class="qa">${esc(e.message)}</div></div>`; return; }
+    const d = pkg.parts.drums;
+    recentSounds.push({ fam: pkg.parts.lead.family, bass: pkg.parts.bass.source, kick: d.kick, snare: d.snare, hats: d.hats });
+    if (recentSounds.length > 3) recentSounds.shift();
+    remember(pkg.fingerprint);
+    recentKeys.push(pkg.meta.key); if (recentKeys.length > 4) recentKeys.shift();
+    $('seed').value = String(pkg.meta.seed);
+    render();
+    resetSequence();
+    $('again').hidden = false;
+    $('bar').hidden = false;
   }
-  function render(b, qa) {
-    const t = b.toggles, s = b.sliders, v = b.variations;
-    const qaBadge = qa.ok ? '<span class="badge ok">QA pass</span>' : '<span class="badge bad">QA fail</span>';
-    let html = `
-    <div class="card">
-      <h2>Setup in Suno ${qaBadge}<span class="count">${esc(b.meta.laneLabel)} · ${b.meta.bpm} BPM${b.meta.halfTime ? ' half-time' : ''} · ${esc(b.meta.key)} · ${esc(b.meta.arcLabel)} · seed ${esc(b.meta.seed)}</span></h2>
+
+  // ---- rendering (Suno's order) ----
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  function fieldCard(key, step, title, text, limit, hint) {
+    const rows = Math.min(20, Math.max(3, text.split('\n').length + 1));
+    return `<div class="card" data-field="${key}"><h2><span class="step">${step}</span>${title}<span class="count">${text.length}/${limit}</span></h2>
+      <textarea class="field" readonly rows="${rows}" spellcheck="false" id="ta-${key}">${esc(text)}</textarea>
+      <div class="copyrow"><button class="copy" data-copy="${key}">Copy ${title}</button><span class="meta">${hint}</span></div></div>`;
+  }
+  function render() {
+    const b = pkg, s = b.sliders, qa = F.checkBlock(b);
+    const dur = (b.toggles.duration.match(/Custom (\d+:\d\d)/) || [])[1] || b.plan.durationSetting;
+    $('vibe').innerHTML = `<em>${esc(b.meta.title)}</em> · ${esc(b.meta.laneLabel)} · ${esc(b.meta.layoutLabel)} · ${b.meta.bpm} BPM${b.meta.halfTime ? ' half-time' : ''} · ${esc(b.meta.key)} · #${b.meta.seed.toString(36).toUpperCase()}`;
+    let html = fieldCard('lyrics', '1', 'Lyrics', b.lyrics, b.limits.lyrics, 'Section tags only. Suno reads the words inside each bracket as directions.');
+    html += fieldCard('style', '2', 'Styles', b.style, b.limits.style, 'Head tags first (Suno weights the front), then lead, bass, drums, counter.');
+    html += fieldCard('exclude', '3', 'Exclude Styles', b.exclude, b.limits.exclude, 'Under More Options. Bare nouns; this is the only place a ban works.');
+    html += `<div class="card" data-field="sliders"><h2><span class="step">4</span>Sliders and settings ${qa.ok ? '<span class="badge ok">QA pass</span>' : '<span class="badge bad">QA fail</span>'}</h2>
       <div class="checklist">
-        <div class="check"><b>Model</b><span class="big">${esc(b.model.pick)}</span></div>
-        <div class="check"><b>Mode</b>Custom (Advanced)</div>
-        <div class="check"><b>Instrumental</b>ON</div>
-        <div class="check"><b>Max Mode</b>${t.maxMode ? 'ON' : 'OFF'}</div>
-        <div class="check"><b>Variety</b>Off (Exact style)</div>
-        <div class="check"><b>Voice / Persona</b>None</div>
         <div class="check"><b>Weirdness</b><span class="big">${s.weirdness}%</span></div>
         <div class="check"><b>Style Influence</b><span class="big">${s.styleInfluence}%</span></div>
-        <div class="check"><b>Duration (Custom)</b><span class="big">${esc(t.duration.match(/Custom (\d+:\d\d)/)[1])}</span> planned ${esc(b.plan.totalFormatted)}, hook at ${esc(b.plan.hookAt)}</div>
+        <div class="check"><b>Model</b><span class="big">${esc(b.model.pick)}</span></div>
+        <div class="check"><b>Variety</b>Off (Exact style)</div>
+        <div class="check"><b>Max Mode</b>${b.toggles.maxMode ? 'ON' : 'OFF'}</div>
+        <div class="check"><b>Instrumental</b>ON</div>
+        <div class="check"><b>Duration (Custom)</b><span class="big">${esc(dur)}</span>about ${esc(b.plan.totalFormatted)}</div>
+        <div class="check"><b>Voice / Persona</b>None</div>
         <div class="check"><b>Audio Influence</b>leave alone, no upload</div>
+        <div class="check"><b>Title</b>${esc(b.meta.title)}</div>
       </div>
-      <ol class="steps" style="margin-top:10px">
-        <li>Create → Custom. Pick <b>${esc(b.model.pick)}</b>. Open More Options: Instrumental on, Max Mode ${t.maxMode ? 'on' : 'off'}, <b>Variety Off</b>, Duration Custom ${esc(t.duration.match(/Custom (\d+:\d\d)/)[1])}.</li>
-        <li>Paste the three fields below into Styles, Lyrics and Exclude Styles. Set Weirdness ${s.weirdness}% and Style Influence ${s.styleInfluence}%.</li>
-        <li>Title: <code>${esc(t.title)}</code>. Generate, then read the notes at the bottom while you listen.</li>
-      </ol>
       ${qa.ok ? '' : `<div class="qa">${esc(qa.errors.join('\n'))}</div>`}
+      ${b.warnings.length ? `<div class="meta" style="margin-top:8px">${esc(b.warnings.join(' · '))}</div>` : ''}
     </div>`;
-    html += fieldCard('1. Styles', b.style, b.limits.style, 'Most important descriptors first; Suno weights early words more.');
-    html += fieldCard('2. Lyrics', b.lyrics, b.limits.lyrics, 'Section tags only, no words. Keep Instrumental ON.');
-    html += fieldCard('3. Exclude Styles', b.exclude, b.limits.exclude, 'Bare nouns. If Suno ignores it, keep only the first four.');
-    html += `<div class="card var"><h2>Alternate Styles fields (A/B)</h2>
-      <h3>A. Safer — Weirdness ${v.safer.sliders.weirdness}%, Style Influence ${v.safer.sliders.styleInfluence}%</h3>
-      <div class="field"><textarea readonly rows="3" spellcheck="false">${esc(v.safer.style)}</textarea></div>
-      <div class="copyrow"><button class="copy" data-copy>Copy safer Styles</button><span class="meta">${v.safer.style.length} chars</span></div>
-      <h3>B. Weirder — Weirdness ${v.weirder.sliders.weirdness}%, Style Influence ${v.weirder.sliders.styleInfluence}%</h3>
-      <div class="field"><textarea readonly rows="3" spellcheck="false">${esc(v.weirder.style)}</textarea></div>
-      <div class="copyrow"><button class="copy" data-copy>Copy weirder Styles</button><span class="meta">${v.weirder.style.length} chars</span></div>
-      <p class="meta" style="margin:10px 0 0">Same Lyrics and Exclude for both; only the Styles text and sliders change, so the A/B tells you what the wording did.</p></div>`;
-    html += `<div class="card notes"><details class="notes"><summary><b>Why this model, and what to listen for</b></summary>
-      <p class="meta"><b>${esc(b.model.pick)}:</b> ${esc(b.model.rationale)}</p><p class="meta"><b>Try wild when:</b> ${esc(b.model.wild)}</p><p class="meta"><b>Sliders:</b> Weirdness ${s.weirdness}% — ${esc(s.weirdnessWhy)} Style Influence ${s.styleInfluence}% — ${esc(s.styleInfluenceWhy)}</p>
+    html += `<div class="card notes"><details class="notes"><summary><b>Alternates, model notes, and what to listen for</b></summary>
+      <p class="meta"><b>Safer Styles</b> (${b.variations.safer.model}, Weirdness ${b.variations.safer.sliders.weirdness}%, Style Influence ${b.variations.safer.sliders.styleInfluence}%): ${esc(b.variations.safer.note)}</p>
+      <textarea class="field" readonly rows="4" spellcheck="false" id="ta-safer">${esc(b.variations.safer.style)}</textarea>
+      <div class="copyrow"><button class="copy" data-copy="safer">Copy safer Styles</button></div>
+      <p class="meta"><b>Weirder Styles</b> (${b.variations.weirder.model}, Weirdness ${b.variations.weirder.sliders.weirdness}%, Style Influence ${b.variations.weirder.sliders.styleInfluence}%): ${esc(b.variations.weirder.note)}</p>
+      <textarea class="field" readonly rows="4" spellcheck="false" id="ta-weirder">${esc(b.variations.weirder.style)}</textarea>
+      <div class="copyrow"><button class="copy" data-copy="weirder">Copy weirder Styles</button></div>
+      <p class="meta"><b>${esc(b.model.pick)}:</b> ${esc(b.model.rationale)}</p><p class="meta"><b>Wild:</b> ${esc(b.model.wild)}</p>
       <ul>${b.postGen.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>
-      <table class="plan"><tr><th>#</th><th>Section</th><th>Bars</th><th>Starts</th><th>Energy</th></tr>${b.plan.sections.map((x, i) => `<tr><td>${i + 1}</td><td>${esc(x.type)}${x.variant ? ` (${esc(x.variant)})` : ''}</td><td>${x.bars}</td><td>${esc(x.start)}</td><td>${x.energy}/10</td></tr>`).join('')}</table>
       </details></div>`;
-    html += `<div class="card"><div class="copyrow"><button class="copy" id="copyAll">Copy the whole block as markdown</button><span class="meta">Everything above in the eight-section suno-forge format, for notes or a teammate.</span></div></div>`;
     $('out').innerHTML = html;
-    const md = F.renderBlock(b);
-    $('out').querySelectorAll('[data-copy]').forEach((btn) => btn.addEventListener('click', () => copyText(btn, btn.parentElement.previousElementSibling.querySelector('textarea').value)));
-    $('copyAll').addEventListener('click', () => copyText($('copyAll'), md));
+    $('out').querySelectorAll('[data-copy]').forEach((btn) => btn.addEventListener('click', async () => {
+      const key = btn.dataset.copy;
+      const ok = await copyText(textFor(key));
+      flash(btn, ok ? 'Copied ✓' : 'Select and press Ctrl/Cmd+C', btn.textContent);
+      if (!ok) { const ta = $(`ta-${key}`); if (ta) { ta.focus(); ta.select(); } }
+      const card = btn.closest('[data-field]'); if (card) card.classList.add('pasted');
+    }));
   }
 
-  async function copyText(btn, text) {
-    let ok = false;
-    try { await navigator.clipboard.writeText(text); ok = true; } catch (e) {
-      try { const ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select(); ok = document.execCommand('copy'); ta.remove(); } catch (e2) { ok = false; }
-    }
-    const old = btn.textContent;
-    btn.textContent = ok ? 'Copied ✓' : 'Select the text and press Ctrl/Cmd+C';
-    btn.classList.toggle('done', ok);
-    if (!ok) { const ta = btn.parentElement.previousElementSibling && btn.parentElement.previousElementSibling.querySelector('textarea'); if (ta) { ta.focus(); ta.select(); } }
-    setTimeout(() => { btn.textContent = old; btn.classList.remove('done'); }, 1800);
-  }
+  const textFor = (key) => key === 'safer' ? pkg.variations.safer.style : key === 'weirder' ? pkg.variations.weirder.style : pkg[key];
+  const sliderLine = () => `Weirdness ${pkg.sliders.weirdness}% · Style Influence ${pkg.sliders.styleInfluence}%`;
+  const settingsLine = () => `Model ${pkg.model.pick} · Variety Off · Max Mode On · Instrumental On · Duration Custom ${pkg.plan.durationSetting}`;
+  const block = () => ['LYRICS', pkg.lyrics, '', 'STYLES', pkg.style, '', 'EXCLUDE STYLES', pkg.exclude, '', 'SLIDERS AND SETTINGS', sliderLine(), settingsLine(), `Title: ${pkg.meta.title}`].join('\n');
 
-  function run(newSeed) {
-    try {
-      lastInput = readInput(newSeed);
-      const b = F.generate(lastInput);
-      const qa = F.checkBlock(b);
-      render(b, qa);
-      $('again').hidden = false;
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } catch (e) {
-      $('out').innerHTML = `<div class="card"><h2>Could not generate</h2><div class="qa">${esc(e.message)}</div></div>`;
+  async function copyText(text) {
+    try { await navigator.clipboard.writeText(text); return true; } catch (e) {
+      try { const ta = document.createElement('textarea'); ta.value = text; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select(); const ok = document.execCommand('copy'); ta.remove(); return ok; } catch (e2) { return false; }
     }
   }
-  $('go').addEventListener('click', () => run(false));
-  $('again').addEventListener('click', () => run(true));
+  function flash(btn, label, idle, ms = 1400) { btn.textContent = label; btn.classList.add('done'); setTimeout(() => { btn.textContent = idle; btn.classList.remove('done'); }, ms); }
+
+  // ---- paste sequence: Lyrics, Styles, Exclude Styles, then the sliders by hand ----
+  const STEPS = [
+    { key: 'lyrics', label: 'LYRICS', where: 'the Lyrics box' },
+    { key: 'style', label: 'STYLES', where: 'the Styles box' },
+    { key: 'exclude', label: 'EXCLUDE STYLES', where: 'Exclude Styles (under More Options)' },
+  ];
+  let step = 0, pasted = new Set();
+  function renderBar() {
+    for (const card of document.querySelectorAll('[data-field]')) {
+      const k = card.dataset.field;
+      card.classList.toggle('active', step < STEPS.length ? STEPS[step].key === k : k === 'sliders');
+      card.classList.toggle('pasted', pasted.has(k));
+    }
+    const btn = $('next');
+    if (step < STEPS.length) {
+      const s = STEPS[step], prev = step > 0 ? STEPS[step - 1] : null;
+      btn.classList.remove('done');
+      $('kicker').textContent = prev ? `${prev.label} is on the clipboard. Paste it into ${prev.where} in Suno, then:` : 'Tap, switch to Suno, paste. Repeat for each field.';
+      $('nextLabel').textContent = `COPY ${s.label}`;
+      $('nextStep').textContent = `${step + 1} / ${STEPS.length}`;
+    } else {
+      btn.classList.add('done');
+      $('kicker').textContent = 'EXCLUDE STYLES is on the clipboard. Paste it, then set these by hand:';
+      $('nextLabel').textContent = sliderLine();
+      $('nextStep').textContent = settingsLine();
+    }
+  }
+  async function advance() {
+    if (step >= STEPS.length) { resetSequence(); return; }
+    const s = STEPS[step];
+    await copyText(pkg[s.key]);
+    pasted.add(s.key); step++;
+    const btn = $('next'); btn.classList.add('flash'); setTimeout(() => btn.classList.remove('flash'), 300);
+    renderBar();
+    const card = document.querySelector(`[data-field="${step < STEPS.length ? STEPS[step].key : 'sliders'}"]`);
+    if (card) card.scrollIntoView({ block: 'center' });
+  }
+  function resetSequence() { step = 0; pasted = new Set(); renderBar(); }
+
+  $('next').addEventListener('click', advance);
+  $('restart').addEventListener('click', resetSequence);
+  $('copyAll').addEventListener('click', async () => { const ok = await copyText(block()); flash($('copyAll'), ok ? 'Copied the whole block' : 'Clipboard blocked', 'Copy all'); });
+  $('go').addEventListener('click', () => roll(false));
+  $('again').addEventListener('click', () => roll(true));
 })();
 </script>
 </body>

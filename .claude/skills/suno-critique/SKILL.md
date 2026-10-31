@@ -1,42 +1,35 @@
 ---
 name: suno-critique
-description: Diagnose and rewrite a Suno prompt that produced a bad instrumental. Use when the user pastes a Style / Lyrics / Exclude prompt (or a full suno-forge block) plus a description of what went wrong (vocals leaked, drums too rigid, wrong genre, no hook, too long, muddy, ignored structure). Outputs a diagnosis table and a corrected copy-ready block.
+description: Diagnose and rewrite a Suno prompt that produced a bad instrumental. Use when the user pastes a Styles / Lyrics / Exclude prompt (or a suno-forge block) plus what went wrong (voices or humming, fills or risers at section changes, carnival or jazz feel, rigid grid, wrong genre, EDM drop, trailer music, no hook, muddy, stopped early). Outputs a diagnosis table and a corrected copy-ready block.
 ---
 
 # suno-critique
 
-Input: the prompt that was used (Style field, Lyrics field, Exclude field, sliders, model, toggles if known) and the user's description of the bad result. Output: a diagnosis, then a full corrected block in the `suno-prompt` format.
+Input: the fields that were used (Styles, Lyrics, Exclude, sliders, model, toggles if known) plus the complaint. Output: a short diagnosis, then a full corrected block from the generator.
 
 ## Procedure
 
-1. **Run QA on what they pasted.** Save the pasted fields into a temporary block file (or JSON with `style`, `lyrics`, `exclude`, `sliders`, `toggles`, `model`, `meta.bpm`) and run:
-   ```bash
-   node forge.js qa /tmp/critique.json
-   ```
-   Report every ERROR and warning; many "Suno ignored me" cases are a rule violation (Variety left on Normal, a negative in Style, a vocal-implying word, an artist name that got silently rewritten, bare `[Intro]`).
-2. **Match the symptom to a known failure mode** using the table in `reference/metatag-cheatsheet.md` ("Known instrumental failure modes") and the lane's `listenFor` notes in `lib/lanes.json`. Common mappings:
+1. **Run the guard and QA on what they pasted.** Save the fields as JSON (`style`, `lyrics`, `exclude`, `sliders.weirdness`, `sliders.styleInfluence`, `toggles.instrumental`, `toggles.customMode`, `toggles.variety`, `model.pick`, `meta.bpm`, `meta.lane` if known) and run `node forge.js qa /tmp/critique.json`. Most "Suno ignored me" cases are a rule violation the guard names: a word that summons voices, a swing/meter word, a fill or transition word, a negation, an artist name, Variety left on Normal, a bare `[Intro]`.
+2. **Map the symptom** (the listening rules in `reference/grammar-and-guard.md` and `reference/metatag-cheatsheet.md`):
 
    | Symptom | First suspects | Fix |
    |---|---|---|
-   | Humming, "ooh" pads, ad-libs, sung syllables | vocal-implying Style words (soulful, choir, chant, gospel, vocal chops, R&B); Variety above Off; long empty intro | strip words; Variety Off; Exclude `vocals, humming, ad-libs, vocal chops`; `[Instrumental]` first line; Replace Section on the leak |
-   | Prompt ignored / generic result | Variety Normal rewrote Style; artist name triggered the rewrite; Style Influence too low | Variety Off; remove names; Style Influence +10-15 |
-   | Rigid, quantized "grid" drums | no groove vocabulary; "aggressive"/"hard"/"complex drums" present | add 2-3 of: live drums, behind the beat, swung hi-hats, ghost notes, unquantized groove, loose pocket; Weirdness 40-55; remove destabilisers |
-   | Drifted to drift phonk / EDM / trailer | genre words too broad; too many genre tags | lead with one precise genre tag; Exclude `drift phonk, cowbell lead melody, EDM build, cinematic trailer` |
-   | Genre switch mid-song | Weirdness > 60; conflicting genre tags; no Max Mode | Weirdness -15; two genre tags max; Max Mode ON |
-   | Long intro, late hook | bare `[Intro]`, no bar hints, slow-burn arc | `[Short Instrumental Intro - 4 bars: ...]`; flat-bang or stop-start arc |
-   | No hook / no drop / flat energy | identical cue text in every section; no contrast section | "full drums in" / "hard drop" / "biggest hook" cues; add Break or Drum Break; stop-start arc |
-   | Muddy low end | two bass descriptors; "distorted" + "sub" fighting | one bass descriptor; mix words "clean low end, controlled sub" |
-   | Stopped early / ran long | `[End]` ignored; Duration Auto | Duration Custom = plan + 10 s; Crop or Extend |
+   | Humming, "ooh" pads, chants, a sung hook | a voice-class word (soulful, choir, chant, gospel, anthem, crowd, call and response, vocal chops); Variety above Off; a long empty intro | strip the word (the guard names it); Variety Off; re-roll with a new seed; Replace Section on the leak |
+   | Fills, risers, a roll at every section change | fill/roll/riser/sweep/build/drop/transition/"comes in"/"enters"/"bar 4"/"every 4 bars" anywhere; two "every N bars" phrases | remove the words; keep the anti-transition phrase in the drums line; Exclude has drum fills, snare rolls, risers, sweeps, transitions |
+   | Carnival, oom-pah, jazz-club feel | waltz, lilt, shuffle, swing, swung, a time signature | say the slur physically ("the 808 stumbles into three on beat 3"); the generator never uses those words |
+   | Rigid, quantized grid | no human-timing clauses; a label instead of a physical description; Weirdness under 40 | re-roll (every lead carries a "played by hand" clause); Weirdness 45-55; v6-wild for the weird lane |
+   | Generic trap / stock preset | the drums line got cut, or the lead was a one-phrase label | shorten the counter, keep `drums:` and `lead:` lines; physical descriptions with handles |
+   | EDM drop, trailer music, elevator jazz | drop, riser, sidechain, cinematic, epic, orchestral, strings, pads, smooth, Rhodes, sax, mellow | remove; the lane's deny list and Exclude handle it |
+   | Beat "returns" after the switch | the switch had no single axis or its words were not repeated | one axis; its words in the head tag, the cue and every later section |
+   | Long intro, late hook | bare `[Intro]`; a 16-bar verse before the first hook | `[Intro \| the lead alone, 2 bars]`; hook_first or verse_bare_hook_full layout |
+   | Stopped early / ran long | `[End]` ignored; Duration Auto | Duration Custom at estimate + buffer; Crop or Extend |
    | Muffled after ~2:30 | v6 standard mode | Max Mode ON |
-   | 4-bar loop, no development | no section contrast | vary cues per section; add Instrumental Bridge or Beat Switch |
 
-3. **Decide: edit or regenerate.** If the lane, BPM and arc were right, regenerate with the same seed plus targeted flags (`--constraints`, `--exclude`, `--weirdness`, `--styleInfluence`, `--arc`). If the lane was wrong, say so and regenerate on the right lane.
-4. **Rewrite.** Produce the corrected block with `node forge.js ... --qa`. If you hand-edit, re-run `node forge.js qa <file>`.
-5. **Respond** with: (a) a short diagnosis table (symptom -> cause -> change made), (b) the full corrected block verbatim, (c) one sentence on what to listen for on the next generation. Never recommend uploading audio, Audio Influence, Cover, or a reference clip as a fix.
+3. **Decide: regenerate.** Almost always regenerate with the same seed plus targeted flags (`--mood`, `--constraints`, `--exclude`, `--mode`, `--layout`, `--weirdness`, `--styleInfluence`, `--wild`) or a new seed when the sounds themselves were wrong. If the lane was wrong, say so and use the right lane.
+4. **Respond** with: (a) a diagnosis table (symptom -> cause -> change), quoting the offending words exactly, (b) the corrected block verbatim from `node forge.js ... --qa`, (c) one sentence on what to listen for. Never recommend uploads, Audio Influence, Cover or a reference clip.
 
 ## Rules
 
-- Negatives never move into the Style field as a fix; they go to Exclude as bare nouns.
-- Do not add more than four new descriptors in one rewrite; change the fewest things that explain the symptom so the next A/B is informative.
-- Keep lane vocabulary from `reference/vocabulary-bank.md`; no artist names, no "type beat".
-- If the user's complaint is about Suno behaviour that `reference/suno-field-spec.md` cannot explain, suggest running the `suno-researcher` agent to re-verify the spec before guessing.
+- Negatives never move into Styles as a fix; the Exclude box is the only place a ban works.
+- Change the fewest things that explain the symptom so the next A/B is informative.
+- If the complaint is about Suno behaviour the field spec cannot explain, suggest the `suno-researcher` agent before guessing.

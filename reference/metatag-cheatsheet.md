@@ -2,21 +2,25 @@
 
 Built from `research/02-metatag-grammar.md` (community-tested on v4.5 through v6; Suno documents almost none of this). Ratings: **Reliable** (3+ independent sources, consistent), **Mixed** (works often, not always), **Unreliable** (mostly ignored). Everything in the Lyrics field is a hint, not a command; the Style field and sliders decide most of the sound.
 
-## Grammar
+## Grammar (as suno-forge writes it)
 
-- One tag per line, square brackets, case-insensitive. `[Hook 2 - 16 bars: distorted 808 slams in, cowbell rides the off-beats]` works: the tag name first, then a dash or colon, then plain descriptive cues.
-- **Never use parentheses.** Parenthesized text is reliably sung as backing vocals.
+- One tag per line, square brackets: `[Hook | full beat from beat 1, the tine piano up front, hard cuts only]`. The tag name, a pipe, then plain directions. Suno reads the words inside the bracket as arrangement and performance cues (render-tested; see `research/handoff/`).
+- **Never use parentheses.** Parenthesized text is reliably sung as backing voices.
 - No bare text lines. Anything outside brackets may be sung.
-- Bar counts are approximate hints only; Suno does not count bars. We keep them because they time the plan and they do bias section length.
-- Start the field with `[Instrumental]` (reliable "no vocals here" marker on v4.5+) and end with `[End]`.
-- Mix-operation words work as **descriptions inside a section tag** ("tape stop into the hook") but not as standalone tags (`[Tape Stop]` alone is unreliable).
+- Refer to sounds by the same **handle** the Style field used ("the sliced soul keys", "the cassette loop"), so the tags and the Style field describe one record.
+- Bar counts are approximate hints only; the generator writes them on intros and bare verses and sets the Duration control from its own estimate.
+- Start with `[Instrumental]` and end with `[End]`; one `[End]` only.
+- Never write fill, roll, riser, sweep, build, drop, transition, "comes in", "enters", "returns", "every 4 bars" inside a tag. Say the positive: "drums cut dead, then slam back on the one", "same drums, identical", "stops dead on beat 1".
+- Mix-operation words work as descriptions inside a tag but not as standalone tags (`[Tape Stop]` alone is unreliable, and "tape stop" is banned here anyway as a transition word).
+- Loop mode: every `[Loop | ...]` tag says identical. Switch mode: one axis, its words in the head tag, the `[Beat Switch | ...]` cue and every section after it.
 
 ## Section tags
 
 | Tag | Rating | Notes |
 |---|---|---|
 | `[Instrumental]` | Reliable | Leading line; marks the track as no-vocals |
-| `[Short Instrumental Intro]` | Reliable | Use instead of bare `[Intro]`, which is "notoriously unreliable" |
+| `[Intro \| the lead alone, 4 bars]` | Reliable with directions | A bare `[Intro]` is "notoriously unreliable"; `[Intro \| ...]` with the lead handle and a bar count behaves. (`[Short Instrumental Intro]` also works.) |
+| `[Loop \| same loop, identical, ...]` | Reliable | The hypnotic minimal layouts; say identical every time |
 | `[Verse]`, `[Verse 1]` | Reliable | 16 written bars standard |
 | `[Pre-Chorus]` | Reliable | Riser / thinning section before a hook |
 | `[Hook]` / `[Chorus]` | Reliable | The most consistently followed tag |
@@ -40,12 +44,13 @@ Built from `research/02-metatag-grammar.md` (community-tested on v4.5 through v6
 ## Writing a section without words
 
 ```
-[Verse 1 - 16 bars: drums simplify to kick and snare, Rhodes voicings open up, bass plays sparse, ghost notes stay]
-[Drum Break - 4 bars: drums only, loose fills, kick pushes behind the beat]
-[Hook 3 - 8 bars: biggest groove, horn section joins, fills every 4 bars]
+[Verse | 8 bars, live kick and bass only, beats 1 and 2 straight, beat 3 slurred into three]
+[Hook | full drums, hand-played hats, the tine piano up front, hard cuts only, straight in on beat 1]
+[Break | the tine piano out, drums and bass alone, 8 bars, a dry wooden click in uneven pairs, between the kick and snare]
+[Hook | the tine piano slams back on the one, identical to the first hook]
 ```
 
-Describe what plays, what drops out, and one timing-feel cue. Contrast sells the arrangement: a sparse verse into a full hook is the best-supported trick for dynamics.
+Describe what plays, what is out, and one timing-feel cue. Contrast sells the arrangement: a bare verse into a full hook, or the lead out for 8 bars then slamming back, with no fill between.
 
 ## Ending and length control
 

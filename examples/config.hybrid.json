@@ -2,9 +2,8 @@
   "lane": "hybrid",
   "bpm": 142,
   "key": "F minor",
-  "mood": "sunny and dark at once, head-nod",
-  "arc": "beat-switch",
-  "constraints": "music-box bells answer the Rhodes",
-  "seed": 2026,
-  "title": "Hazy Bounce (F minor, 142 BPM)"
+  "mood": "sunny and dark at once",
+  "mode": "switch",
+  "constraints": "bright plucks on top",
+  "seed": 2026
 }

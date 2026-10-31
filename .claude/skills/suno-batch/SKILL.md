@@ -1,29 +1,28 @@
 ---
 name: suno-batch
-description: Generate N varied Suno prompts for one instrumental lane for A/B testing, as a markdown table or JSON. Use when the user wants several Style-field variants, a test matrix, or a batch of prompts for a lane (connor-price, paak-pocket, jid-dark, phonk-experimental, hybrid).
+description: Generate N one-of-one Suno prompts for a lane for A/B testing, as a markdown table, JSON, or full blocks. Use when the user wants several rolls, a test matrix, or a batch of prompts for a lane (any, connor-price, paak-pocket, jid-dark, phonk-experimental, hybrid).
 ---
 
 # suno-batch
 
-Produce N variants for one lane so the user can A/B in Suno. By default the batch holds the Lyrics field, Exclude field, arc and BPM constant and varies only the Style wording, seed and Weirdness, so each comparison isolates the Style text.
+Produce N rolls for one lane. Every row has a distinct fingerprint (different lead source, processing, motif, articulation, mode or key), so the batch is a real A/B of sounds, not of wording.
 
 ## Inputs
 
-- lane (required), N (default 5), optional: BPM, key, mood, arc, constraints, `--varyArc` (cycle energy arcs across rows), `--bpm` (fix tempo; otherwise rows step around the lane default), format `table` (default) | `json` | `blocks`.
+lane (or `any`), N (default 5), optional: BPM, key, mood, mode, layout, constraints, seed (base), `--wild`, format `table` (default) | `json` | `blocks`.
 
 ## Procedure
 
 ```bash
-node forge.js --lane <lane> --batch <N> [--bpm n] [--mood "..."] [--arc <arc>] [--seed <base>] --format table
-node forge.js --lane <lane> --batch <N> --format json --out batch.json
-node forge.js --lane <lane> --batch <N> --format blocks --out batch.md   # full eight-section blocks per row
+node forge.js --lane <lane> --batch <N> [--bpm n] [--mood "..."] [--mode loop|straight|switch] [--seed <base>] --format table
+node forge.js --lane <lane> --batch <N> --format json --out batch.json      # per-row qa object included
+node forge.js --lane <lane> --batch <N> --format blocks --out batch.md      # full eight-section blocks
 ```
 
-- Every row is QA-checked by the CLI (JSON output includes a `qa` object per row). Do not deliver a row with `qa.ok: false`.
-- Table output lists: row, seed, BPM, key, arc, Weirdness, Style Influence, Style field, then the shared Lyrics and Exclude fields once underneath. Remind the user that model (`v6`), Custom mode, Instrumental ON, Max Mode ON and Variety OFF apply to every row.
-- For a "safer vs weirder" ladder, pass `--weirdness` per row manually or let the default pattern run (lane default, -10, +10, -20, +20 cycling).
-- For a tempo sweep, run once per BPM with the same seed and `--format table`, then concatenate.
+- Every row is QA-checked; do not deliver a row with `qa.ok: false`.
+- To isolate one variable, fix the others: `--mode straight --bpm 92` and vary only the seed; or fix `--seed 1` and vary `--mode`.
+- The table shows seed, BPM, key, layout, lead handle, sliders and the head tags; the full Lyrics, Styles and Exclude fields follow per row.
 
 ## Delivering
 
-Return the table or JSON verbatim, then two or three sentences: what dimension the batch varies, how to A/B (generate rows back to back with identical toggles; keep the pair whose drums feel most human; then feed the winner to `/suno-critique` for the next pass). Never suggest audio uploads or Audio Influence.
+Return the table or JSON verbatim, then two or three sentences: what the batch varies, how to A/B (generate rows back to back with identical settings, Variety Off, Max Mode On; keep the row whose drums sit furthest behind the grid and whose lead sounds least like a preset), and that the winner's seed reproduces it. Never suggest audio uploads or Audio Influence.

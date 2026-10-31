@@ -61,22 +61,28 @@ Suno has no loudness control; these numbers are for the post-Suno polish. Mix wo
 | 8 | Bb / A# minor | Mixed In Key sample |
 | low | G# minor | Rare pop-wide but common in phonk and trap by ear (unverified) |
 
-## Energy arcs (as implemented in `lib/arrange.js`)
+## Lyrics layouts (as implemented in `lib/layouts.js`)
 
-| Arc | Sections (nominal bars, straight-time) | Energy 1-10 | Best for |
-|---|---|---|---|
-| `flat-bang` | intro 4, hook 8, verse 16, hook 8, verse 16, break 8, hook 8, hook/final 8, outro 4 | 4-9-6-9-7-3-10-10-2 | Hook lands immediately after a short intro; energy stays high with a break for contrast and a doubled hook at the end. Best for radio and playlists. |
-| `build-release` | intro 8, verse 12, pre 4, hook 8, verse 16, pre 4, hook 8, bridge 8, hook/final 8, outro 4 | 3-5-7-9-6-8-10-4-10-2 | Classic verse-to-hook lift with pre-hook risers; hook by ~0:40. Best when the hook needs tension before it hits. |
-| `slow-burn` | intro 8, verse/sparse 16, hook/medium 8, verse 16, hook 8, break 4, hook/final 8, outro 8 | 2-4-6-6-8-3-10-2 | Sparse start, each hook adds layers; the last hook is the biggest. Best for mood-first and sync-leaning instrumentals. |
-| `stop-start` | intro 4, hook 8, verse/mutes 16, hook 8, break/drums-only 4, verse/mutes 16, drop 8, hook/final 8, outro/hard-stop 2 | 5-9-6-9-3-7-10-10-1 | Hook first, then mutes, drum-only breaks and a drop; maximum arrangement contrast. Best for bouncy trap-pop and phonk. |
-| `beat-switch` | intro 4, hook 8, verse 16, hook 8, switch 4, verse/part-b 16, hook/part-b 8, hook/final 8, outro 4 | 4-8-6-9-3-7-10-10-2 | Part A establishes the hook; a 4-bar switch flips drums and key feel into Part B. Best for dark boom-bap/trap hybrids and hybrids across lanes. |
+Each roll picks a layout first; the layout decides the mode. Nominal bars estimate the runtime; in half-time lanes hooks double and loops run 1.5x. Runtime at representative tempos (first full beat in brackets):
 
-Half-time scaling doubles hook, drop, pre-chorus, beat-switch and outro bars; the planner then trims or extends verses and hook repeats to land in 2:30-3:30 with the intro capped at 8 bars and the first hook by 0:45.
+| Layout | Mode | 88 BPM | 96 | 106 | 132 half | 140 half | 152 half |
+|---|---|---|---|---|---|---|---|
+| `bare_loop` Two-bar loop, nothing changes | loop | 3:11 (11s) | 2:55 (10s) | 2:38 (9s) | 3:05 (7s) | 2:55 (7s) | 2:41 (6s) |
+| `one_in_one_out` One sound added, one sound removed | loop | 3:16 (11s) | 3:00 (10s) | 2:43 (9s) | 3:09 (7s) | 2:58 (7s) | 2:44 (6s) |
+| `kick_and_lead` Stripped to kick and lead | loop | 3:11 (11s) | 2:55 (10s) | 2:38 (9s) | 3:05 (7s) | 2:55 (7s) | 2:41 (6s) |
+| `hook_first` Hook first | straight | 3:05 (0s) | 2:50 (0s) | 2:34 (0s) | 3:02 (0s) | 2:51 (0s) | 2:38 (0s) |
+| `verse_bare_hook_full` Verse bare, hook full | straight | 3:16 (33s) | 3:00 (30s) | 2:43 (27s) | 2:55 (22s) | 2:45 (21s) | 2:32 (19s) |
+| `slow_motif` Slow burn: long intro on the lead, the motif grows | straight | 3:05 (33s) | 2:50 (30s) | 2:34 (27s) | 3:02 (22s) | 2:51 (21s) | 2:38 (19s) |
+| `halftime_last_third` Half-time for the last third | switch | 3:11 (33s) | 2:55 (30s) | 2:38 (27s) | 3:05 (22s) | 2:55 (21s) | 2:41 (19s) |
+| `a_then_b` A then B, two beats one song | switch | 3:16 (11s) | 3:00 (10s) | 2:43 (9s) | 3:09 (7s) | 2:58 (7s) | 2:44 (6s) |
+| `call_response` Call and reply, two-bar phrases | straight | 3:16 (33s) | 3:00 (30s) | 2:43 (27s) | 2:55 (22s) | 2:45 (21s) | 2:32 (19s) |
+| `lead_out_middle` Lead out for 8 bars, slams back | straight | 3:16 (33s) | 3:00 (30s) | 2:43 (27s) | 3:09 (22s) | 2:58 (21s) | 2:44 (19s) |
+| `switch_strip` Drums cut, lead alone, then beat B slams in | switch | 3:27 (33s) | 3:10 (30s) | 2:52 (27s) | 3:02 (22s) | 2:51 (21s) | 2:38 (19s) |
 
-| Use case | Arc |
+| Use case | Layouts |
 |---|---|
-| Radio | build-release or flat-bang; peak on the final hook; cold ending |
-| Playlist / algorithmic | flat-bang; compact map; 2:30-3:00 |
-| Sync / library | slow-burn or stop-start; stepped plateaus every 8 bars; bar-aligned drop-outs as edit points; deliver alt mixes (the safer / weirder variations) |
-| Album-style / long form | beat-switch |
-| Beat-leasing | flat-bang or build-release with the doubled final hook |
+| Radio | hook_first, verse_bare_hook_full, lead_out_middle; cold ending |
+| Playlist / algorithmic | hook_first, a_then_b |
+| Hypnotic / minimal (a third of rolls) | bare_loop, one_in_one_out, kick_and_lead |
+| Sync / underscore | slow_motif, kick_and_lead |
+| Album-style | a_then_b, halftime_last_third, switch_strip |

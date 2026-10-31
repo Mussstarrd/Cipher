@@ -1,0 +1,68 @@
+# The grammar and the guard
+
+How suno-forge writes a prompt, and why. Nine tenths of the quality is vocabulary and rules; one tenth is code. The rules come from a few hundred rendered Suno tracks (`research/handoff/handoff-generator-team.md`, this repo's earlier generator) plus the platform research in `research/`.
+
+## 1. Every sound is a physical description with a handle
+
+Never a label. Not "piano" but "a grand piano through a distortion pedal, one chord per bar". A label points Suno at the average of thousands of tracks: the preset. Physical detail pushes it off the average. Each source line carries a short **handle** after a pipe (`...|the distorted piano`) so the Lyrics tags can refer to the same sound by name.
+
+Every lead is built from slots (`lib/grammar.js`): **source** (from a lane family), **character** (processing, from the same family so a tuba never gets "ring-modulated"), **register** (low or low-mid: high leads come back shrill), **motif**, **articulation**, **human** (the anti-quantize clause: "played by hand, never snapped to the grid"), **motion** (how it changes across the song), **placement**. Bass: source, tone, pattern, human. Drums: kick, snare, hats, one percussion colour, a syncopation phrase, a human-timing phrase, the beat-3 slur, and always one anti-transition phrase. A counter instrument from another family with a sparse role.
+
+Suno collapses similar descriptions into the same sound, so uniqueness lives in the physical description, not the arrangement words. A roll's **fingerprint** (lane, lead source, character, motif, articulation, human clause, mode, key, counter) never repeats across thousands of seeds, and the page refuses to re-use the last three rolls' lead family, bass, kick, snare or hats.
+
+## 2. The Style field, line by line
+
+**Head tags** (comma list, ~260 characters, never cut): anchor (lane sub-genre and the two or three sounds that define it), BPM (+ "half-time" when written 120+), key, `instrumental`, user mood words, a syncopation tag, a twitch tag, the beat-3 slur tag (about 60% of rolls), `minimal` on minimal layouts, the mode tag (the switch axis, or a loop tag, or "steady pocket start to finish"), must-have words, the low-lead tag, the lead handle plus a short timbre clause, the mix tag. Suno reads the first 200-260 characters as tags and decides genre, tempo, key and feel from them.
+
+Then four sentences: **lead:** every slot. **bass:** source, tone, pattern, human. **drums:** kick, snare, hats, colour, slur, anti-transition phrase. **counter:** source, character, role (dropped in loop mode).
+
+Cut order when over 1000 characters: counter detail, bass tone, lead placement, lead human clause, lead register, then the lead's timbre clause in the head. The head, the lead and the drums line always survive (tested over thousands of seeds). Losing the drums line is how tracks come back as generic trap.
+
+## 3. The Lyrics field is directions
+
+`[Hook | full beat from beat 1, the sliced soul keys up front, hard cuts only]` is followed as arrangement and performance cues. Structure lives here, never in the Style field (bar-level instructions in Styles are ignored). Each roll picks a **layout** before it picks sounds (`lib/layouts.js`): three loop layouts (nothing changes; the hypnotic minimal third of rolls), five straight layouts (hook first, verse bare / hook full, slow burn, call and reply, lead out then slams back), three switch layouts (half-time last third, A then B, drums cut then B slams in). Placeholders (`{LEAD}`, `{KICK}`, `{SLUR}`, `{CUE}`, ...) are filled with the roll's handles and phrases; a value that does not fit its limit is dropped whole, never cut mid-word.
+
+Rules: `[Instrumental]` first, `[End]` last, no parentheses (sung as backing voices), no bare lines. Intros are 2, 4 or 8 bars. The first full beat lands by 0:45 and every layout runs 2:30-3:30 at its lane tempos (estimated from nominal bars; the Duration control is set to the estimate plus a buffer and `[End]` stops it early).
+
+**Switch mode** has one axis (half-time, double-time, key falls, new drums, strip to 808 and snare, flip to off-beats). Its words appear in the head tag, in the `[Beat Switch | ...]` cue and in every section after it, so nothing ever "returns" to beat A. **Loop mode**: every `[Loop | ...]` tag says identical, the counter is dropped, and no "every N bars" phrase is allowed.
+
+## 4. No transitions, no fillers, ever
+
+Every section change in Suno grows a fill, a riser or a fourth-bar roll unless you prevent it three ways at once:
+
+1. **Vocabulary.** fill, roll, riser, sweep, build, transition, lead-in, pickup, "comes in", "enters", "every other bar", "bar 4", "4th bar" never appear in the grammar. The guard enforces it over every string.
+2. **Positive instruction.** The drums line always carries an anti-transition phrase: "hard cuts only, straight in on beat 1", "the same loop the whole way", "drums cut dead, then slam back on the one". Beat switches land "on a hard cut", never "after one bar of silence" or "the 808 comes in first".
+3. **The Exclude box.** `drum fills, snare rolls, risers, sweeps, transitions` in every lane's list.
+
+"Every N bars" phrases are budgeted to one per roll and zero in loop mode: a motif that changes every 4 bars plus hats that cut every 8 produces exactly the four-bar-filler feel.
+
+## 5. Rhythm vocabulary: the fingerprint
+
+Syncopation, a drunken triplet slur on beat 3, twitchy percussion, and non-quantised feel, in hip hop language. The beat-3 slur is never "waltz", "lilt", "shuffle", "swing" or a time signature: those come back as carnival or jazz-club music. Say it physically: "the 808 stumbles into three on beat 3", "beat 3 trips, beat 4 straightens", "the pocket slips drunk on beat 3". Humanising words that work: "played by hand", "the second note always a hair late", "a few cents off, never corrected", "breath noise left in", "one take, the mistakes left in", "resampled until the grain shows". Modifiers "slight" and "subtle" keep imperfection from tipping into chaos. The slur tag appears on about 60% of rolls; a fingerprint on every roll becomes a rut.
+
+## 6. The guard (`lib/guard.js`)
+
+Word classes that sent a rendered take somewhere the prompt did not intend. A regex guard runs over every finished prompt and, in the test suite, over every string in the grammar, lanes and layouts.
+
+| Rule | Examples | Why |
+|---|---|---|
+| voice | vocal, rap, sing, chant, choir, hum, gospel, crowd, anthem, call-and-response, scat, talk box, soulful, oohs | summon voices into an instrumental |
+| meter and swing | waltz, lilt, shuffle, swing, swung, 3/4, 6/8, carnival | oom-pah carnival or jazz-club feels |
+| transitions and fillers | transition, sweep, riser, fill, roll, build, drop, impact, crash, reverse cymbal, tape stop, pickup, comes in, enters, bar 4, every other bar, crescendo | fills and FX every few bars |
+| EDM and film-score magnets | EDM, dubstep, house, sidechain, supersaw, festival, cinematic, epic, orchestral, trailer, ethereal, lush, strings-family instrument names, music box, whistle | drops or trailer music |
+| elevator and lounge magnets | sax, Rhodes, Wurlitzer, Hammond, smooth, lounge, mellow, jazz, chill, lo-fi study | smooth jazz and elevator music |
+| negation | "no X", "without X" | plants X |
+| vague stock words | realistic, complex drums, professional, catchy, vibes | the preset |
+| names | artist, producer, label and record names; "type beat", "in the style of", comparisons to a capitalised name | Suno rewrites the whole field |
+
+Lanes **allow** specific words they need (phonk: cowbell, cassette, lo-fi, Memphis, chop; neo-soul: funk, soul; dark hybrid: strings) and **deny** extra words that pull them off course (bright pop: lo-fi, dusty, distorted 808; live pocket: 808, drum machine, quantized; phonk: drift, gym, Brazilian, cowbell melody). Base-grammar phrases that trip a lane's deny rule are simply not offered to that lane. User mood and must-have words go through the same guard; anything that trips it is dropped and reported in the block.
+
+Keep the names list clean: common words in it block ordinary phrases.
+
+## 7. Sliders and models
+
+v6: Weirdness 40-55 and Style Influence 75-85 landed closest to the written prompt. Above Weirdness 60 on v6, tempo and structure drift. v6-wild at Weirdness 65-80 and Style Influence 55-70 is where the strange, great accidents happen; the phonk and dark-hybrid lanes suggest it most often, and the weirder variation always targets it. Variety Off (it rewrites the Style text), Max Mode On (it also keeps silences silent on minimal rolls).
+
+## 8. Measuring, not guessing
+
+`npm test` walks every grammar string through the guard, rolls thousands of seeds inside the limits, checks the head carries the identity in the front 300 characters, that the drums line and the anti-transition phrase survive, that every lyrics line is a bracket tag, that "every N bars" stays capped, that switch rolls repeat their axis, that fingerprints never repeat, and that no single kick, snare or hats phrase takes more than a third of a lane's rolls. `node scripts/audit.js` prints phrase shares and length histograms. Then render in Suno and listen: the ear finds what tests cannot ("all horns sound the same", "high leads are frequent", "after the switch it goes quantised"); turn each finding into a guard rule, a clash rule or a vocabulary change, and add a test.
