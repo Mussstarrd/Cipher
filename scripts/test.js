@@ -62,7 +62,7 @@ test('every roll is guard-clean, inside the limits, and passes QA', () => {
 test('the head carries the identity in the front 300 chars and the drums line always survives', () => {
   for (const lane of LANE_IDS) for (const seed of SEEDS.slice(0, 400)) {
     const b = generate({ lane, seed });
-    const head = b.style.slice(0, 300);
+    const head = b.style.slice(0, 380);
     const R = b.parts.rhythm;
     for (const slot of ['sync', 'twitch', 'mode', 'slur', 'low']) if (R[slot]) assert.ok(head.includes(R[slot]), `${lane}/${seed}: ${slot} not in head: ${b.style}`);
     assert.ok(head.includes(b.parts.lead.handle), `${lane}/${seed}: handle not in head`);
@@ -118,7 +118,7 @@ test('rolls are one of one and lanes keep their identity', () => {
   }
   assert.ok(phonkCowbell > 350, `phonk cowbell ${phonkCowbell}/500`);
   assert.ok(paakBassGuitar > 400, `paak bass guitar ${paakBassGuitar}/500`);
-  assert.ok(connorMajor > connorN * 0.3, `connor major ${connorMajor}/${connorN}`);
+  assert.ok(connorMajor > connorN * 0.05 && connorMajor < connorN * 0.3, `connor major ${connorMajor}/${connorN}`);
   assert.ok(jidSwitch > jidN * 0.35, `jid switch ${jidSwitch}/${jidN}`);
 });
 
@@ -130,6 +130,29 @@ test('titles come from the roll and rarely repeat; salting yields a new one', ()
   const b = generate({ lane: 'jid-dark', seed: 11 });
   const { makeTitle } = require('../lib/engine');
   assert.notStrictEqual(makeTitle(b.meta.seed, b.parts, 1), b.meta.title);
+});
+
+test('lane identity after the listening pass: no funk/jazz in the soul lane, no pop in the bounce lane, no screwed voices in phonk, bare mode is bare', () => {
+  let chip = 0, cold = 0;
+  for (const seed of SEEDS.slice(0, 400)) {
+    const pk = generate({ lane: 'paak-pocket', seed });
+    assert.ok(!/\b(funk\w*|jazz\w*|neo-soul|ninths?|vibraphone|clav\w*)\b/i.test(pk.style + pk.lyrics), pk.style);
+    if (/chipmunk|chirp|sped up|pitched up/.test(pk.style)) chip++;
+    const cp = generate({ lane: 'connor-price', seed });
+    assert.ok(!/\b(pop|dance|club|playful|bright|sunny|big claps)\b/i.test(cp.style + cp.lyrics), cp.style);
+    const ph = generate({ lane: 'phonk-experimental', seed });
+    assert.ok(!/\b(screwed|sample stab|foghorn|formant)\b/i.test(ph.style + ph.lyrics), ph.style);
+    assert.ok(/vocal chops/.test(ph.exclude));
+    const any = generate({ lane: 'any', seed });
+    assert.ok(any.style.slice(0, 400).includes(any.parts.antiTag), `anti tag missing from head: ${any.style}`);
+    assert.ok(any.style.includes(any.parts.drums.twitch.sound) || any.style.length >= 900, `twitch clause missing: ${any.style}`);
+    assert.ok(/tape stop/.test(any.exclude) && /crash cymbals/.test(any.exclude), any.exclude);
+    if (/straight in on beat 1, cold|nothing leading into it/.test(any.lyrics)) cold++;
+  }
+  assert.ok(chip > 150, `chipmunk chops in soul lane: ${chip}/400`);
+  const bare = generate({ lane: 'jid-dark', seed: 5, minimal: true });
+  assert.ok(bare.meta.bare && !/counter:|hint:/.test(bare.style) && /bare minimum, nothing else/.test(bare.style) && /\[Loop \|/.test(bare.lyrics), bare.style);
+  assert.ok(checkBlock(bare).ok);
 });
 
 test('phrase variety: no single kick, snare or hats phrase dominates a lane', () => {

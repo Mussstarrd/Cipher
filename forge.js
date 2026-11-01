@@ -30,6 +30,7 @@ const FLAGS = {
   exclude: 'Extra Exclude Styles terms, comma-separated',
   weirdness: 'Override Weirdness % (0-100)',
   styleInfluence: 'Override Style Influence % (0-100)',
+  minimal: 'Bare mode: the lead, one kick, one bass, silence; forces a minimal layout',
   hint: 'Force the extra ingredient: fuzzlament | machineglitch | staxtwitch | hits | none (random about half the time if omitted)',
   wild: 'Pick v6-wild as the model for this block',
   seed: 'Seed for reproducible output (number or string; random if omitted)',
@@ -91,6 +92,7 @@ function fromArgs(args) {
   if (args.config) Object.assign(input, JSON.parse(fs.readFileSync(path.resolve(args.config), 'utf8')));
   for (const k of ['lane', 'bpm', 'key', 'mood', 'mode', 'layout', 'hint', 'constraints', 'exclude', 'weirdness', 'styleInfluence', 'seed', 'title']) if (args[k] !== undefined && args[k] !== true) input[k] = args[k];
   if (args.wild) input.wild = true;
+  if (args.minimal) input.minimal = true;
   for (const k of ['bpm', 'weirdness', 'styleInfluence']) if (input[k] !== undefined && input[k] !== '') input[k] = Number(input[k]);
   if (input.seed !== undefined && /^\d+$/.test(String(input.seed))) input.seed = Number(input.seed);
   return input;

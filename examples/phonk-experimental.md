@@ -2,7 +2,7 @@
 
 # suno-forge prompt block: Memphis-rooted original phonk
 
-Lane `phonk-experimental` | 138 BPM (half-time feel) | G minor (i - iv: Gm - Cm) | layout: Two-bar loop, nothing changes (loop) | about 3:04, full beat at 0:14 | seed 2026
+Lane `phonk-experimental` | 138 BPM (half-time feel) | G minor (i - iv: Gm - Cm) | layout: Bare minimum: the lead, one kick, one 808, silence (loop) | about 2:57, full beat at 0:07 | seed 2026
 
 ## 1. MODEL
 **Pick:** v6
@@ -16,64 +16,65 @@ Lane `phonk-experimental` | 138 BPM (half-time feel) | G minor (i - iv: Gm - Cm)
 - **Max Mode:** ON. ON for any instrumental over ~2:00; OFF for 30-60 s palette tests (2x (20 per generation vs 10)). Max Mode also keeps silences silent on minimal rolls.
 - **Variety:** Off. Any setting above Off rewrites and expands the Style text before the model sees it (official FAQ: 'reduce the Variety slider to 0 to retain full control of your style tags'). Engineered prompts must run at Off.
 - **Persona:** NO. Voices (formerly Personas; Style Personas live inside the Voices menu): In-app text: 'Songs with Voices cannot be instrumental.' Not used in this workflow.
-- **Duration:** Custom 3:15 (estimated 3:04 from the layout at 138 BPM, plus a buffer rounded up to the next 5 s; [End] stops it early, Crop any tail). Never Auto: v6 runs long on Auto.
+- **Duration:** Custom 3:10 (estimated 2:57 from the layout at 138 BPM, plus a buffer rounded up to the next 5 s; [End] stops it early, Crop any tail). Never Auto: v6 runs long on Auto.
 - **Song Title:** Stolen Syrupy Synth
 
-## 3. STYLE FIELD (993/1000 chars; head tags first, then lead / bass / drums / counter)
+## 3. STYLE FIELD (983/1000 chars; head tags first, then lead / bass / drums / counter)
 ```text
-Memphis phonk instrumental, slowed samples, distorted 808, 138 BPM, half-time, in G minor, instrumental, dark, snare dead on, kick early, shaky hat retriggers under the loop, hats dragging on beat 3, minimal, single loop, never changes, low register lead, the syrupy synth, a faint hint of the wah lament, murky lo-fi mix, the sub kept clean, loud and crunchy. lead: a syrupy slowed-down synth lead with a pitch sag, hard-clipped on every transient, playing a stubborn root note leaning on the flat sixth. bass: a long 808 that slides between every note like it is dragging. drums: a kick that hits late on 1 and early on 3, never straight, a dry 808 snare with the noise cranked, late, a shaker loop off a tape, wobbling, an 808 cowbell on the off-beats, dry, pitched to the key, the hook is the verse with one more sound. hint: an electric guitar through a fuzz pedal and a half-open wah, one slow bend per bar, feedback swelling into the next, one long note before the last hook, then gone.
+lo-fi Memphis hip hop, cassette hiss, cowbell knocks, dark bells, 138 BPM, half-time, in G minor, instrumental, dark, off-grid kick pattern, jittery metallic ticks, bare minimum, nothing else, same two bars all song, sections cut dead, nothing between, lead an octave above the 808, the syrupy synth, murky lo-fi mix, the sub kept clean, loud and crunchy. lead: a syrupy slowed-down synth lead with a pitch sag, hard-clipped on every transient, a deep lead parked an octave above the 808, playing a stubborn root note leaning on the flat sixth as 16th stutters that cut out in the verse, the last note of the hook lands a 16th early every time. bass: a distorted 808 with a long decay, blown out. drums: a kick that skips the one and lands on the and, slow, an 808 snare and a clap played a 32nd apart, smeared, closed 808 hats in triplets, lazy, with one open hat a hair late, the drums never announce a change, they just change, nothing else in the drums, silence between the hits.
 ```
 
-## 4. LYRICS FIELD (539/5000 chars; section tags only, no words)
+## 4. LYRICS FIELD (547/5000 chars; section tags only, no words)
 ```text
 [Instrumental]
 
-[Intro | the syrupy synth alone, 8 bars]
+[Intro | the syrupy synth alone, 4 bars, silence around it]
 
-[Loop | same two bars, the syrupy synth over kick and 808 only, the hook is the verse with one more sound]
+[Loop | the syrupy synth, kick and 808 only, nothing else, the rest of the bar is silence]
 
-[Loop | same loop, identical, the 808 skids into beat 3 like a missed step]
+[Loop | same loop, identical, a loose pocket, played in, never snapped, nothing added]
 
-[Loop | same loop, identical, a short noise burst in uneven pairs, long-short, quietly through the verse]
+[Loop | same loop, identical, a tongue-click sample stop-start, 3 on, 2 off, only in the gaps the lead leaves, nothing else added]
 
-[Loop | same loop, identical, clap layers a few milliseconds apart, the wah lament one long note before the last hook, then gone]
+[Loop | same loop, identical, a loose pocket, played in, never snapped, still nothing else]
 
-[Outro | the loop stops dead on beat 1, about 3:04]
+[Outro | kick alone for one bar, then silence, about 2:57]
 
 [End]
 ```
 
-## 5. EXCLUDE STYLES FIELD (165/1000 chars)
+## 5. EXCLUDE STYLES FIELD (423/1000 chars)
 ```text
-lead vocals, humming, singing, rapping, drum fills, snare rolls, risers, transitions, drift phonk, Brazilian funk, EDM, house, cowbell melody, clean pop mix, dubstep
+vocals, vocal chops, chopped vocals, pitched vocals, humming, singing, rapping, drum fills, tom fills, snare rolls, hat rolls, drum rolls, transitions, transition fills, section transitions, risers, sweeps, filter sweeps, white noise sweeps, build-ups, breakdown FX, impacts, crash cymbals, reverse cymbals, DJ drops, DJ scratching, tape stop, drift phonk, Brazilian funk, EDM, house, cowbell melody, clean pop mix, dubstep
 ```
 
 ## 6. SLIDERS
-- **Weirdness:** 59% — Memphis-rooted original phonk: the lane's tested range is 50-60; above 60 Suno starts drifting tempo and structure.
-- **Style Influence:** 73% — High so the physical descriptions are followed; 70-80 landed closest to the written prompt.
+- **Weirdness:** 54% — Memphis-rooted original phonk: the lane's tested range is 50-60; above 60 Suno starts drifting tempo and structure.
+- **Style Influence:** 70% — High so the physical descriptions are followed; 70-80 landed closest to the written prompt.
 - **Audio Influence:** Not used. No audio is uploaded in this workflow, so the slider does not appear; leave it alone.
 - **Variety:** Off (Exact style). Any setting above Off rewrites and expands the Style text before the model sees it (official FAQ: 'reduce the Variety slider to 0 to retain full control of your style tags'). Engineered prompts must run at Off.
 
 ## 7. VARIATIONS
-**A. Safer** (v6, Weirdness 49%, Style Influence 78%; 999 chars). Sound-neutral anchor, no twitch or slur tags, no hint: the plainest reading of the same sounds.
+**A. Safer** (v6, Weirdness 44%, Style Influence 75%; 984 chars). Sound-neutral anchor, no twitch or slur tags, no hint: the plainest reading of the same sounds.
 ```text
-Memphis phonk instrumental, cassette grit, distorted 808, 138 BPM, half-time, in G minor, instrumental, dark, minimal, single loop, never changes, low register lead, the syrupy synth hard-clipped on every transient, murky lo-fi mix, the sub kept clean. lead: a syrupy slowed-down synth lead with a pitch sag, hard-clipped on every transient, a deep lead parked an octave above the 808, playing a stubborn root note leaning on the flat sixth as 16th stutters that cut out in the verse, the last note of the hook lands a 16th early every time, bent into pitch by hand, never landing in tune twice. bass: a long 808 that slides between every note like it is dragging, a triplet bounce against straight hats. drums: a kick that hits late on 1 and early on 3, never straight, a dry 808 snare with the noise cranked, late, a shaker loop off a tape, wobbling, an 808 cowbell on the off-beats, dry, pitched to the key, the 808 skids into beat 3 like a missed step, the hook is the verse with one more sound.
+dark Memphis phonk instrumental, cassette grit, distorted 808, 138 BPM, half-time, in G minor, instrumental, dark, bare minimum, nothing else, same two bars all song, sections cut dead, nothing between, lead an octave above the 808, the syrupy synth hard-clipped on every transient, murky lo-fi mix, the sub kept clean. lead: a syrupy slowed-down synth lead with a pitch sag, hard-clipped on every transient, playing a stubborn root note leaning on the flat sixth as 16th stutters that cut out in the verse, the last note of the hook lands a 16th early every time. bass: a distorted 808 with a long decay, blown out. drums: a kick that skips the one and lands on the and, slow, an 808 snare and a clap played a 32nd apart, smeared, closed 808 hats in triplets, lazy, with one open hat a hair late, a tongue-click sample stop-start, 3 on, 2 off, only in the gaps the lead leaves, the drums never announce a change, they just change, nothing else in the drums, silence between the hits.
 ```
-**B. Weirder** (v6-wild, Weirdness 80%, Style Influence 64%; 996 chars). One wild tag added; run it on v6-wild.
+**B. Weirder** (v6-wild, Weirdness 80%, Style Influence 68%; 975 chars). One wild tag added; run it on v6-wild.
 ```text
-Memphis phonk instrumental, slowed samples, distorted 808, 138 BPM, half-time, in G minor, instrumental, dark, snare dead on, kick early, shaky hat retriggers under the loop, hats dragging on beat 3, minimal, single loop, never changes, bit-mangled lead, low register lead, the syrupy synth, a faint hint of the wah lament, murky lo-fi mix, the sub kept clean, loud and crunchy. lead: a syrupy slowed-down synth lead with a pitch sag, hard-clipped on every transient, playing a stubborn root note leaning on the flat sixth. bass: a long 808 that slides between every note like it is dragging, landing a hair behind the kick. drums: a kick that hits late on 1 and early on 3, never straight, a dry 808 snare with the noise cranked, late, a shaker loop off a tape, wobbling, an 808 cowbell on the off-beats, dry, pitched to the key, the hook is the verse with one more sound. hint: an electric guitar through a fuzz pedal and a half-open wah, one slow bend per bar, feedback swelling into the next.
+lo-fi Memphis hip hop, cassette hiss, cowbell knocks, dark bells, 138 BPM, half-time, in G minor, instrumental, dark, off-grid kick pattern, jittery metallic ticks, bare minimum, nothing else, same two bars all song, sections cut dead, nothing between, bit-mangled lead, lead an octave above the 808, the syrupy synth, murky lo-fi mix, the sub kept clean, loud and crunchy. lead: a syrupy slowed-down synth lead with a pitch sag, hard-clipped on every transient, playing a stubborn root note leaning on the flat sixth as 16th stutters that cut out in the verse, the last note of the hook lands a 16th early every time. bass: a distorted 808 with a long decay, blown out, one note per bar. drums: a kick that skips the one and lands on the and, slow, an 808 snare and a clap played a 32nd apart, smeared, closed 808 hats in triplets, lazy, with one open hat a hair late, the drums never announce a change, they just change, nothing else in the drums, silence between the hits.
 ```
 
 ## 8. POST-GEN NOTES
-- Structure: the first full beat lands at about 0:14; the layout is "Two-bar loop, nothing changes" and runs about 3:04. Loop mode: every [Loop] tag says identical on purpose; if Suno adds changes anyway, raise Style Influence five points.
-- The hint (the wah lament) is one ingredient, one long note before the last hook, then gone. If it takes over the record, run the safer variation (no hint) or re-roll; if it is inaudible, raise Style Influence five points. The hook device in the lead line ("the last note of the hook lands a 16th early every time") is what makes the lead stick; listen for it on the second pass.
-- The cowbell must stay a rhythmic knock in the drums, never the melody; the color line says "never the melody" and "cowbell melody" is in the Exclude list.
+- Bare mode: the lead, one kick, one bass and silence; no counter, no hint, no percussion colour. If Suno adds anything, raise Style Influence five points and keep "bare minimum, nothing else" in the head.
+- Structure: the first full beat lands at about 0:07; the layout is "Bare minimum: the lead, one kick, one 808, silence" and runs about 2:57. Loop mode: every [Loop] tag says identical on purpose; if Suno adds changes anyway, raise Style Influence five points.
+- No hint on this roll; the hook device in the lead line ("the last note of the hook lands a 16th early every time") carries the stickiness. Listen for it on the second pass.
+- The cowbell must stay a rhythmic knock in the drums, never the melody; the colour line says "never the melody" and "cowbell melody" is in the Exclude list.
 - The 808 should be distorted but readable; if it is a clean sine, the bass line got cut for length, so shorten the counter and re-roll.
-- The samples should drag and sag; if the lead sounds played clean, pick a source with "slowed" or "screwed" in it.
+- The slowed record must be an instrument (piano, organ, bell, guitar); if any gibberish voice appears, the Exclude list has vocal chops, chopped vocals and pitched vocals, so re-roll rather than edit.
 - This lane benefits most from v6-wild: when v6 comes back too tidy, run the same prompt on v6-wild at the listed wild sliders.
 - Fills, risers or a roll at a section change mean a word slipped through: run the QA checker on the block, and keep the anti-transition phrase in the drums line (it is the positive form of "no fills").
 - Any hum, chant or sung syllable means a re-roll, not a fix: the Exclude list is already complete, so change the seed rather than adding words.
-- Ending: [End] should stop it near 3:04. If it runs on, Crop to the last downbeat. If it stops early, Extend from the last good section and paste only the remaining section tags.
+- Ending: [End] should stop it near 2:57. If it runs on, Crop to the last downbeat. If it stops early, Extend from the last good section and paste only the remaining section tags.
 - Extend when the first 60-90 s are keepers and only the back half drifts. Re-roll (or run the weirder variation on v6-wild) when the drums or the lead are wrong from the start.
 - Remaster: Remaster (Pro/Premier) renders subtle variations and runs on v6; use it on the keeper for a cleaner, louder master.
 - Stems: Get Stems (Pro/Premier): Auto Split up to 12 stems for 50 credits; Split from Mix 10 credits per stem; Advanced Split (choose from ~100 instruments) 10 credits per stem, Premier only.
@@ -83,11 +84,11 @@ Memphis phonk instrumental, slowed samples, distorted 808, 138 BPM, half-time, i
 
 | # | Section | Bars | Starts |
 |---|---------|------|--------|
-| 1 | Intro | 8 | 0:00 |
-| 2 | Loop | 24 | 0:14 |
-| 3 | Loop | 24 | 0:56 |
-| 4 | Loop | 24 | 1:37 |
-| 5 | Loop | 24 | 2:19 |
-| 6 | Outro | 2 | 3:01 |
+| 1 | Intro | 4 | 0:00 |
+| 2 | Loop | 24 | 0:07 |
+| 3 | Loop | 24 | 0:49 |
+| 4 | Loop | 24 | 1:30 |
+| 5 | Loop | 24 | 2:12 |
+| 6 | Outro | 2 | 2:54 |
 
 </details>

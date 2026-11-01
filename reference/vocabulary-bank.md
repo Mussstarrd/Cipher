@@ -259,6 +259,10 @@ Generated from `lib/grammar.js` and `lib/lanes.js` by `node scripts/docs.js` (ed
 - twitching snare retriggers
 - nervous perc ticks between kicks
 - shaky hat retriggers under the loop
+- twitchy off-grid clicks
+- nervous stop-start ticks
+- jittery 32nd knock bursts
+- twitching kick retriggers
 
 - drunk 808 bounce
 - slurred triplet bounce
@@ -310,6 +314,8 @@ Generated from `lib/grammar.js` and `lib/lanes.js` by `node scripts/docs.js` (ed
 - one sound in, one sound out, drums identical
 - drums stop dead on beat 4, back on beat 1
 - the hook is the verse with one more sound
+- every section starts cold on beat 1, nothing leads into it
+- the drums never announce a change, they just change
 
 **Beat-switch axes (tag / cue / after-words)**
 - beat switch to half-time / half-time drums, tempo halves, slow heavy kick, long 808 slides / half-time, slow heavy kick
@@ -613,160 +619,180 @@ Roles:
 - a five-note motif on a simple rise-and-fall shape, the second note always a sixteenth late, every pass
 - the motif plays four times, on the fourth pass one note a half step lower and the rest identical
 
-## Lane `connor-price`: Bouncy playful trap-pop
+## Lane `connor-price`: Technical syncopated bounce
 
-Bright plucks and bells over tight bouncy drums and big claps, stop-start cuts, crisp clean radio mix.
+Clever, tight, syncopated drums with stop-start cuts, dry plucks and knocks, nothing padded, a crisp dry mix.
 
-**Anchors** (sound-neutral when the lead is a guest: "bouncy pop hip hop instrumental, tight drums, big claps")
-- bouncy pop hip hop instrumental, bright plucks, big claps
-- playful trap-pop beat, bright and clean, bouncy
-- upbeat hip hop instrumental, bouncy, radio-bright
-- feel-good pop-trap, tight drums, bright hook
-- bouncy pop hip hop beat, big claps, bright keys
+**Anchors** (sound-neutral when the lead is a guest: "syncopated hip hop bounce, tight dry drums, hard cuts")
+- technical syncopated hip hop bounce, tight dry drums, stop-start cuts
+- stop-start trap bounce, off-grid kicks, dry plucks
+- syncopated hip hop instrumental, tight pocket, hard cuts
+- clever bounce hip hop, broken kick pattern, dry snaps
+- tight syncopated bounce beat, dry and close, stop-start
 
-**Mix tag:** crisp clean radio mix, bright top, tight low end (neutral: crisp clean radio mix, tight low end)
+**Mix tag:** crisp dry mix, tight low end, nothing padded (neutral: crisp dry mix, tight low end)
 
-**Tempo:** 138-148 or 96-106 BPM (half-time above 120). Major share 0.45, soul/Dorian loops 0, slur tag 0.4, low lead 0.35. Modes straight 60, switch 25, loop 15. Sliders Weirdness 40-50, Style Influence 75-85.
+**Tempo:** 138-148 or 96-106 BPM (half-time above 120). Major share 0.15, soul/Dorian loops 0, slur tag 0.5, low lead 0.5. Modes straight 50, loop 30, switch 20. Sliders Weirdness 40-50, Style Influence 75-85.
 
 **Families** (weights pluck 5, bell 3, synth 1, found 1; guest share 0.15)
 
-**pluck** (over tight bouncy drums and big claps)
+**pluck** (over tight syncopated drums, dry and close)
 
 Sources (description | handle):
-- a bright plucked synth hook, two notes bouncing an octave, every hit cut short | the bouncing pluck
-- a nylon-string guitar sample pitched up and plucked in short stabs, bright and dry | the pitched guitar pluck
-- a rubbery pluck synth with a fast pitch envelope, boinging on every note | the rubber pluck
-- a chirping square-wave hook like a toy phone, mid register | the toy phone hook
-- a plucked synth boing lead bouncing on every beat | the boing lead
-- a short staccato synth stab, two chords per bar, bright and clipped | the stab chords
-- a sampled guitar stab pitched up, two hits per bar, bouncing | the guitar stab
-- a steel-string guitar harmonic sampled and looped as a hook, bright and short | the harmonic hook
-- a pizz-style synth pluck with a fast decay, hopping between two octaves | the hopping pluck
+- a dry plucked synth hook, two notes an octave apart, every hit cut dead before the next kick | the dry pluck
+- a nylon-string guitar sample plucked in short muted stabs, close and dry | the muted guitar pluck
+- a rubbery mono synth pluck with a fast pitch envelope, one note per kick, cut short | the rubber pluck
+- a wooden-bar patch hit with a hard mallet, the knock louder than the note, dry | the mallet knock
+- a plucked synth playing stabs only on the off-beats, silent on the downbeats | the off-beat pluck
+- a short staccato keys stab, two chords per bar, dry and clipped | the stab chords
+- a sampled guitar stab pitched down a step, one hit per bar on the and of 2 | the guitar stab
+- a steel-string guitar harmonic sampled and looped as a hook, short and dry | the harmonic hook
+- a tuned knock melody, wood on wood, hopping between two octaves | the knock melody
+- a muted thumb-piano pluck sample, dry, four notes that skip the one | the thumb pluck
 
 Processing characters:
-- bright and loud, up front
-- bouncy, every note cut short
+- dry and close, the knock audible
+- every note cut dead before the next kick
 - doubled an octave down, the low copy louder
 - hard-clipped so it pops on a phone speaker
-- dry and close, the knock audible
-- gated tight so it bounces off the clap
-- detuned a few cents so it grins
-- pitched up a step on the last hit of the hook
+- gated tight so it locks to the snare
+- detuned a few cents against itself
+- the attack clicky, the tail gone
+- played a 16th behind the kick on purpose
 
-**bell** (over tight bouncy drums and big claps)
+**bell** (over tight syncopated drums, dry and close)
 
 Sources (description | handle):
-- a tuned wooden-bar patch hook, the mallet knock left in, bouncy | the mallet hook
-- a toy bell patch, plastic and bright, two notes answering the snare | the toy bells
-- a tubular bell sample pitched into the mids, short decay, playful | the tube bell
-- a bottle-blow patch tuned to the key, breathy and bouncy | the bottle hook
-- a tuned tongue-click melody, clicky and playful, two notes per bar | the click melody
-- an electric piano preset off a cheap home keyboard, bright and plasticky, staccato | the plastic keys
-- a bell-like FM patch with a glassy attack, four notes hopping around the root | the glass bells
+- a tuned wooden-bar hook, the mallet knock left in, dry | the mallet hook
+- a dull metal bell patch, two notes answering the snare, the tail cut | the dull bells
+- a tubular bell sample pitched into the low mids, short decay, dry | the tube bell
+- a bottle-blow patch tuned to the key, breathy, one note per bar | the bottle hook
+- a tuned tongue-click melody, clicky and dry, two notes per bar | the click melody
+- an electric piano preset off a cheap home keyboard, plasticky, staccato, dry | the plastic keys
+- a glassy FM patch, four notes hopping around the root, the attack cut off | the glass keys
 
 Processing characters:
-- bright and loud, up front
-- bouncy, every note cut short
 - dry and close, the knock audible
-- gated tight so it bounces off the clap
-- detuned a few cents so it grins
+- every note cut dead before the next kick
+- gated tight so it locks to the snare
+- detuned a few cents against itself
 - a quick slapback on the right only
 - the attack clicky, the tail cut before the next hit
+- low-passed so it sits under the snare
 
 **Bass**
 - a clean round 808 with glide into the downbeat
 - a short punchy 808 following the kick
-- a rubbery mono synth bass boinging on every note
+- a rubbery mono synth bass, one note per kick, cut short
 - a sine sub that only sustains on the root, the kick doing the knock
-- a bouncy mono synth bass with a fast pitch envelope, playing the riff
+- a dry 808 that skips the one and lands on the and
 
 Bass patterns:
 - following the kick exactly
 - playing off the kick, landing in its gaps
 - one octave slide into the hook
 - three notes then nothing
-- bouncing on the one and the and of two
+- landing on the one and the and of two, silent elsewhere
+- syncopated 16ths with long rests
 
 **Kick**
-- a short punchy kick with a click on top
-- a bouncy kick on the one and the and of two
+- a short punchy kick with a click on top, placed a 16th ahead of the one
+- a kick on the one and the and of two, nothing on 3
 - a kick that skips the one and lands on the and
-- a tight kick doubled before the clap
-- a clean thumpy kick, the low end left to the 808
+- a tight kick doubled before the snare, the second hit softer
+- a dry kick, the low end left to the 808, syncopated against the hats
 - a kick on beat 1 and the and of 3, nothing else
-- a round kick with the click filtered off, tucked under the 808
+- a kick pattern that changes every two bars and never repeats twice in a row
 - a kick that lands a 16th early on the last beat of every 2nd bar
 - two short kicks stacked on the one, the second a hair softer
 - a kick that skips beat 3 entirely in the verse
+- a kick in a 3+3+2 cell across the bar, dry
 
 **Snare**
-- a big layered clap on two and four, wide
-- a snappy pitched-up snare with a snap stacked on top
-- a crisp dry snare with a short tail
-- a finger snap stacked on a clap, slightly out of sync
-- a clap stacked with a snap, loud and dry
-- a huge dry clap, a hair late
-- a snap and a clap layered a few milliseconds apart, bright
+- a crisp dry snare with a short tail, a hair early
+- a snappy pitched-up snare with a snap stacked on top, dry
+- a finger snap stacked on a dry snare, slightly out of sync
+- a dry snare on 2 and a snap on 4, never both
 - a short dry snare with a high ring, the tail cut on the next hat
-- a clap on 2 and 4 with one extra clap on the and of 4 every bar
+- a rimshot-style snare, tight, a hair early on the last beat of the hook
+- a snare that lands on the and of 4 instead of 4 every other pass
 - a tight snare tuned high, hit softer in the verse, hard in the hook
+- a dry snare with a quiet second tap a 16th after it
+- a snap on every 2 and a dead snare on every 4, dry
 
 **Hats**
-- tight closed hats in uneven 16ths, the accents bouncing
-- hats in triplets, played by hand
+- tight closed hats in uneven 16ths, the accents moving
+- hats in triplets against straight kicks, played by hand
 - hats that twitch into 32nds then stop dead
-- sparse 8th hats with one open hat per bar
-- a shaker bouncing on the off-beats instead of hats
+- sparse 8th hats with one open hat per bar, cut dead
+- a shaker in place of hats, the accents on the off-beats
 - clicky percussion in place of hats, tongue-click style
 - hats in 8ths with every fourth hat open and cut dead
-- two hat sounds trading 16ths, one bright, one dull
+- two hat sounds trading 16ths, one sharp, one dull
 - hats that fall to half speed for one bar, then snap back
 - a tight hat on every 8th and a pitched-up tick on every third 16th
+- hats in a 3+3+2 pattern against a straight kick
 
-**Exclude Styles:** vocals, humming, ad-libs, vocal chops, drum fills, snare rolls, risers, sweeps, transitions, dark trap, drill, lo-fi, EDM, dubstep, orchestral
+**Exclude Styles:** vocals, humming, ad-libs, vocal chops, drum fills, tom fills, snare rolls, hat rolls, drum rolls, transitions, transition fills, section transitions, risers, sweeps, filter sweeps, white noise sweeps, build-ups, breakdown FX, impacts, crash cymbals, reverse cymbals, DJ drops, DJ scratching, tape stop, K-pop, dance pop, EDM, club music, dubstep, orchestral, lo-fi
 
-**Guard:** allow none; deny \b(lo-?fi|dusty|vinyl|crackl\w*|cassette|tape|memphis|phonk|cowbell|distorted 808|dark trap|drill|boom bap|horror)\b (dark, dusty or lo-fi words kill the crisp pop mix this lane is built on).
+**Guard:** allow none; deny \b(pop|dance|club|party|festival|bright|sunny|playful|cheerful|feel-good|upbeat|bouncy claps|big claps|lo-?fi|dusty|vinyl|crackl\w*|cassette|tape|memphis|phonk|cowbell|distorted 808|drill|horror)\b (pop, dance and bright words turn this lane into a K-pop dance track; dusty or lo-fi words kill the dry crisp mix).
 
-## Lane `paak-pocket`: Live neo-soul funk hip hop, drums behind the beat
+## Lane `paak-pocket`: Soul boom bap, live pocket
 
-A live kit played behind the beat, tine piano and bass guitar, horn stabs, warm analog mix.
+Soul-record chops (pitched up until they chirp, or left warm) over a hard boom-bap kit played behind the beat, bass guitar, horn jabs recorded hot. No jazz, no funk pastiche.
 
-**Anchors** (sound-neutral when the lead is a guest: "live-band hip hop instrumental, drums played by hand, warm")
-- live-band hip hop, neo-soul keys, drums played by hand
-- funk-soul hip hop instrumental, live drums behind the beat
-- West Coast soul hip hop, bass guitar and tine piano
-- soul-sample hip hop, live kit, warm and loose
-- neo-soul hip hop instrumental, live pocket, bass guitar
+**Anchors** (sound-neutral when the lead is a guest: "soul boom bap instrumental, hard snare, drums played by hand")
+- soul-chop boom bap, hard snare, drums played by hand behind the beat
+- chipmunk soul hip hop, pitched-up record chops, knocking drums
+- soul-sample boom bap, live kit behind the beat, bass guitar
+- dusty soul hip hop, sliced record, hard snare, late pocket
+- boom bap instrumental, soul record chops, urgent horns, late snare
 
-**Mix tag:** warm analog mix, drums up front, natural dynamics (neutral: warm analog mix, drums up front)
+**Mix tag:** dusty warm mix, the snare on top, the kick and bass as one sound (neutral: dusty warm mix, the snare on top)
 
-**Tempo:** 86-98 or 98-106 BPM (half-time above 999). Major share 0.4, soul/Dorian loops 0.8, slur tag 0.6, low lead 0.5. Modes straight 65, loop 20, switch 15. Sliders Weirdness 45-55, Style Influence 75-85.
+**Tempo:** 86-98 or 98-106 BPM (half-time above 999). Major share 0.25, soul/Dorian loops 0.35, slur tag 0.6, low lead 0.5. Modes straight 55, loop 30, switch 15. Sliders Weirdness 45-55, Style Influence 75-85.
 
-**Families** (weights tine 5, horn 2, soulchop 2, guitar 1; guest share 0.1)
+**Families** (weights chipmunk 4, soulchop 3, tine 2, horn 2; guest share 0.1)
 
-**tine** (over a live kit played behind the beat)
+**chipmunk** (sliced off a soul record over a hard boom-bap kit)
 
 Sources (description | handle):
-- an electric piano with metal tines hit hard, the tremolo wobbling slow, played by hand | the tine piano
-- a reed electric piano with a bark on the attack, played in short stabs | the reed piano
-- a clavinet-style keyboard, muted and percussive, played in short jabs | the clav jabs
-- a drawbar organ with the percussion click on, played in short pushes | the drawbar organ
-- an upright piano recorded close, the hammer thud louder than the note, two chords per bar | the close piano
-- a soul record keys loop sliced to one bar, pitched down a step, warm | the sliced keys
-- a vibraphone-style patch with the motor tremolo slow, two notes per bar | the vibraphone patch
-- a tine piano run through a phase pedal, chords held long and let sag | the phased tines
+- a soul record pitched up a fourth and sliced to one bar, the horns and keys chirping, the room left in | the chipmunk soul chop
+- an old soul intro sped up until the strings and keys squeak, cut to two bars and looped off the one | the sped-up soul loop
+- a soul record keys-and-horns phrase pitched up a fifth, chopped into four one-beat stabs | the pitched soul stabs
+- a soul ballad intro sped up a step and a half, the piano chirping, the hiss left in | the chirping piano chop
+- a one-bar soul horn-and-keys hit pitched up until it sounds tiny and urgent, played on every downbeat | the tiny horn hit
+- a soul record sliced into half-bar pieces and rearranged so it stumbles, pitched up a third | the stumbling soul chop
+- a soul record keys loop at its own pitch, warm and dusty, the room and hiss left in, cut to two bars | the warm soul loop
 
 Processing characters:
-- played by hand with the sustain pedal half down
-- the chords voiced with ninths, the top note a hair late
+- pitched up until it chirps, the hiss rising with it
+- cut on the one, the tail chopped before the snare
+- the record hiss and room left in
+- filtered so the bass of the record is gone and the bass guitar takes it
+- resampled until the grain shows
+- sliced off the one so it stumbles
+- hard-clipped on every hit
+- warm, at its own pitch, dusty
+
+**tine** (over a hard boom-bap kit played behind the beat)
+
+Sources (description | handle):
+- an electric piano with metal tines hit hard, the tremolo wobbling slow, played by hand, dry | the tine piano
+- a reed electric piano with a bark on the attack, played in short stabs | the reed piano
+- an upright piano recorded close, the hammer thud louder than the note, two chords per bar | the close piano
+- a soul record keys loop sliced to one bar, pitched down a step, warm | the sliced keys
+- a drawbar organ with the percussion click on, one chord held, a second chord only at the turn | the drawbar organ
+
+Processing characters:
+- played by hand, plain triads, the top note a hair late
 - warm tube saturation on the attack
 - the key clicks left in
 - a little out of tune with itself, warm
 - compressed slow so the chords breathe
 - recorded through a small amp in a small room
-- the tremolo set slow and deep
 
-**horn** (recorded close over a live kit)
+**horn** (recorded hot to tape over a hard boom-bap kit)
 
 Sources (description | handle):
 - a trumpet and trombone stack playing short stabs, recorded close | the horn stabs
@@ -784,13 +810,14 @@ Processing characters:
 - spread wide across the stereo field
 - played behind the beat on purpose
 
-**soulchop** (sliced off an old record over a live kit)
+**soulchop** (sliced off an old soul record over a hard boom-bap kit)
 
 Sources (description | handle):
 - a soul record sliced into one-bar keys-and-horns pieces, pitched down a step, warm | the soul slice
-- a pitched-down string-free soul loop, the bass cut out, just the keys and room | the keys loop
+- a pitched-down soul loop, the bass cut out, just the keys and room | the keys loop
 - a one-bar guitar lick off a soul record, muted and warm, looped off the one | the soul lick
 - an old record intro sliced to two bars, the hiss left in, played under the drums | the record loop
+- a soul record drum-and-horn break sliced to four beats, each beat triggered by hand, dusty | the hand-triggered break
 
 Processing characters:
 - pitched down until it sounds heavy and warm
@@ -802,10 +829,10 @@ Processing characters:
 
 **Bass**
 - a fingerstyle electric bass guitar, round and muted, the string slides audible
-- a flatwound bass guitar played with the thumb, dull and thumpy
+- a flatwound bass guitar played with the thumb, dull and thumpy, the same two-bar figure start to finish
 - a bass guitar doubled by a quiet sine sub on the root
-- a fretless-style bass guitar sliding into every note late
-- a picked bass guitar with the tone rolled off, bouncing against the kick
+- a picked bass guitar with the tone rolled off, sitting a hair behind the kick
+- a bass guitar sample off the same soul record, pitched to the key, one note per bar
 
 Bass patterns:
 - landing a hair behind the kick
@@ -816,6 +843,7 @@ Bass patterns:
 - syncopated 16ths with long rests
 
 **Kick**
+- a hard boom-bap kick, dead and dry, hit a hair late
 - a live kick with the beater click audible, hit a hair late
 - a dead-tuned kick with a pillow in it, thumping
 - a soft round kick played with the heel down, behind the beat
@@ -827,6 +855,7 @@ Bass patterns:
 - a kick that waits for the bass and lands a hair after it
 
 **Snare**
+- a hard cracking boom-bap snare, dry, a hair late and hit harder for it
 - a snare with a wallet on the head, tuned low and dead, hit a hair late and hard for it
 - a fat live snare tuned low, hit off-center, a hair late
 - a cross-stick on 2 and 4 that opens to the full snare in the hook
@@ -849,9 +878,9 @@ Bass patterns:
 - hats played with the tip of the stick, quiet and uneven, the ride bell on beat 3
 - a shaker in one hand and a hat in the other, the two never quite together
 
-**Exclude Styles:** vocals, humming, ad-libs, vocal chops, drum fills, snare rolls, risers, transitions, trap hi-hats, 808, drum machine, smooth jazz, elevator music, EDM, lo-fi
+**Exclude Styles:** vocals, humming, ad-libs, vocal chops, drum fills, tom fills, snare rolls, hat rolls, drum rolls, transitions, transition fills, section transitions, risers, sweeps, filter sweeps, white noise sweeps, build-ups, breakdown FX, impacts, crash cymbals, reverse cymbals, DJ drops, DJ scratching, tape stop, jazz, smooth jazz, funk, disco, elevator music, trap hi-hats, 808, drum machine, EDM
 
-**Guard:** allow \b(funk\w*|neo-soul|soul)\b; deny \b(trap hats|808s?|drum machine|quantiz\w*|memphis|phonk|cowbell|lo-?fi|dusty|cassette|bitcrush\w*|study)\b (drum-machine, trap and lo-fi words erase the live pocket this lane is built on).
+**Guard:** allow \b(soul|dusty|chipmunk)\b; deny \b(funk\w*|jazz\w*|neo-soul|ninths?|elevenths?|thirteenths?|vibraphone|clav\w*|wah|disco|groove|trap hats|808s?|drum machine|quantiz\w*|memphis|phonk|cowbell|lo-?fi|cassette|bitcrush\w*|study)\b (funk, jazz and neo-soul words turn this lane into a funk or jazz pastiche; trap and drum-machine words erase the live pocket).
 
 ## Lane `jid-dark`: Dense dark boom-bap/trap hybrid
 
@@ -866,9 +895,9 @@ Sliced soul keys and pitched-down strings over hard knocking drums, busy twitchi
 
 **Mix tag:** dense dark mix, loud, the snare cutting through (neutral: dense dark mix, loud)
 
-**Tempo:** 140-152 or 86-94 BPM (half-time above 120). Major share 0.05, soul/Dorian loops 0.3, slur tag 0.6, low lead 0.75. Modes switch 50, straight 35, loop 15. Sliders Weirdness 45-55, Style Influence 75-85.
+**Tempo:** 140-152 or 86-94 BPM (half-time above 120). Major share 0.05, soul/Dorian loops 0.3, slur tag 0.6, low lead 0.75. Modes switch 40, straight 35, loop 25. Sliders Weirdness 45-55, Style Influence 75-85.
 
-**Families** (weights chop 5, strings 3, synth 1, organ 1; guest share 0.15)
+**Families** (weights chop 4, strings 2, chipmunk 2, synth 1, organ 1; guest share 0.15)
 
 **chop** (sliced and pitched over hard knocking drums)
 
@@ -909,6 +938,27 @@ Processing characters:
 - sliced short on every snare
 - spread wide with the lows summed to mono
 - resampled until the grain shows
+
+**chipmunk** (sliced off a soul record over hard knocking drums)
+
+Sources (description | handle):
+- a soul record pitched up a fourth and sliced to one bar, the horns and keys chirping, the room left in | the chipmunk soul chop
+- an old soul intro sped up until the strings and keys squeak, cut to two bars and looped off the one | the sped-up soul loop
+- a soul record keys-and-horns phrase pitched up a fifth, chopped into four one-beat stabs | the pitched soul stabs
+- a soul ballad intro sped up a step and a half, the piano chirping, the hiss left in | the chirping piano chop
+- a one-bar soul horn-and-keys hit pitched up until it sounds tiny and urgent, played on every downbeat | the tiny horn hit
+- a soul record sliced into half-bar pieces and rearranged so it stumbles, pitched up a third | the stumbling soul chop
+- a soul record keys loop at its own pitch, warm and dusty, the room and hiss left in, cut to two bars | the warm soul loop
+
+Processing characters:
+- pitched up until it chirps, the hiss rising with it
+- cut on the one, the tail chopped before the snare
+- the record hiss and room left in
+- filtered so the bass of the record is gone and the bass guitar takes it
+- resampled until the grain shows
+- sliced off the one so it stumbles
+- hard-clipped on every hit
+- warm, at its own pitch, dusty
 
 **Bass**
 - a distorted 808 with a long tail
@@ -959,38 +1009,38 @@ Bass patterns:
 - a hat pattern that doubles on the and of every beat, tight and dry
 - crunchy hats in 16ths with one 32nd burst at the end of each bar
 
-**Exclude Styles:** vocals, humming, ad-libs, vocal chops, choir, drum fills, snare rolls, risers, transitions, film score, cinematic, drill, lo-fi, EDM, smooth jazz
+**Exclude Styles:** vocals, humming, ad-libs, vocal chops, choir, drum fills, tom fills, snare rolls, hat rolls, drum rolls, transitions, transition fills, section transitions, risers, sweeps, filter sweeps, white noise sweeps, build-ups, breakdown FX, impacts, crash cymbals, reverse cymbals, DJ drops, DJ scratching, tape stop, film score, cinematic, drill, EDM, smooth jazz
 
 **Guard:** allow \b(strings?|string section|boom-bap|boom bap)\b; deny \b(drill|clean (modern|pop) mix|polished|bright|sunny|memphis|phonk|cowbell|chill)\b (film-score, drill and clean-pop words pull this lane out of its gritty hybrid).
 
 ## Lane `phonk-experimental`: Memphis-rooted original phonk
 
-Slowed and sliced samples, cassette grit, 808 cowbell knocks, a blown-out 808 and a slow dragging pocket. Not drift phonk.
+Dark Memphis instrumental: a slowed piano, organ or bell record, cassette grit, 808 cowbell knocks, a blown-out 808 and a slow dragging pocket. Instruments only, nothing screwed into gibberish. Not drift phonk.
 
-**Anchors** (sound-neutral when the lead is a guest: "Memphis phonk instrumental, cassette grit, distorted 808")
-- Memphis phonk instrumental, slowed samples, distorted 808
-- chopped and screwed hip hop, cassette grit, cowbell knocks
-- underground Memphis hip hop beat, slowed, dark
-- experimental phonk, sliced samples, blown-out 808
-- lo-fi Memphis hip hop, cassette hiss, 808 cowbell
+**Anchors** (sound-neutral when the lead is a guest: "dark Memphis phonk instrumental, cassette grit, distorted 808")
+- dark Memphis phonk instrumental, slowed piano record, distorted 808, cowbell knocks
+- underground Memphis hip hop beat, slowed and dark, cassette grit
+- experimental phonk, dark keys, blown-out 808, 808 cowbell
+- lo-fi Memphis hip hop, cassette hiss, cowbell knocks, dark bells
+- Memphis phonk instrumental, dusty organ record slowed, heavy 808
 
 **Mix tag:** murky lo-fi mix, the sub kept clean, loud and crunchy (neutral: murky lo-fi mix, the sub kept clean)
 
-**Tempo:** 132-146 or 66-74 BPM (half-time above 120). Major share 0, soul/Dorian loops 0.2, slur tag 0.75, low lead 0.7. Modes loop 40, straight 35, switch 25. Sliders Weirdness 50-60, Style Influence 70-80.
+**Tempo:** 132-146 or 66-74 BPM (half-time above 120). Major share 0, soul/Dorian loops 0.2, slur tag 0.75, low lead 0.7. Modes loop 45, straight 35, switch 20. Sliders Weirdness 50-60, Style Influence 70-80.
 
 **Families** (weights screwed 5, organ 2, synth 2, found 1; guest share 0.2)
 
-**screwed** (slowed and sliced over 808 drum-machine drums)
+**screwed** (slowed off a record over 808 drum-machine drums, instruments only)
 
 Sources (description | handle):
-- a soul record slowed to half speed, the pitch sagging, sliced into stabs | the screwed stabs
 - a piano record from the 70s slowed down until it drags, the hiss left in | the slowed piano
-- a pitched-down sample stab dropped two octaves until it sounds like a foghorn, used as the lead | the foghorn stab
-- a Memphis-style sample loop pitched down a fourth, cassette hiss left in | the cassette loop
 - an organ record slowed until the vibrato wobbles, sliced to one bar | the slowed organ
-- a sample stab formant-dropped until the words are gone, used like a horn | the dropped stab
 - a two-note keys sample slowed and looped off the one, murky | the murky keys
 - a bell-tone synth stab sampled to cassette and slowed, dark and wobbling | the cassette bell
+- a dark piano riff of three notes recorded to cassette, slowed a step, the hiss riding on it | the cassette piano
+- a slowed guitar record, one muted chord per bar, dark and warped | the slowed guitar
+- a tubular bell sample slowed and pitched down a fifth, one hit per bar, ringing dark | the dark bell
+- a string-free slowed record of just piano and room, two chords, murky | the murky piano loop
 
 Processing characters:
 - slowed until the pitch sags
@@ -1055,9 +1105,9 @@ Bass patterns:
 - an 808 cowbell ticking a sparse pattern under the hats, a hair late
 - a cowbell and a woodblock trading knocks on the and of 3
 
-**Exclude Styles:** lead vocals, humming, singing, rapping, drum fills, snare rolls, risers, transitions, drift phonk, Brazilian funk, EDM, house, cowbell melody, clean pop mix, dubstep
+**Exclude Styles:** vocals, vocal chops, chopped vocals, pitched vocals, humming, singing, rapping, drum fills, tom fills, snare rolls, hat rolls, drum rolls, transitions, transition fills, section transitions, risers, sweeps, filter sweeps, white noise sweeps, build-ups, breakdown FX, impacts, crash cymbals, reverse cymbals, DJ drops, DJ scratching, tape stop, drift phonk, Brazilian funk, EDM, house, cowbell melody, clean pop mix, dubstep
 
-**Guard:** allow \b(memphis|phonk|cowbell|tape|cassette|lo-?fi|dusty|vinyl|crackl\w*|chop\w*|screwed|dropped|12 bits)\b; deny \b(drift|gym|brazilian|baile|mandel\w*|clean (modern|pop) mix|polished|bright|sunny|cowbell (lead|melody)|melodic cowbell)\b (drift, gym and Brazilian words pull this toward the cowbell-melody TikTok style).
+**Guard:** allow \b(memphis|phonk|cowbell|tape|cassette|lo-?fi|dusty|vinyl|crackl\w*|12 bits)\b; deny \b(drift|gym|brazilian|baile|mandel\w*|clean (modern|pop) mix|polished|bright|sunny|cowbell (lead|melody)|melodic cowbell|screwed|chopped and screwed|sample stabs?|vocal stabs?)\b (drift, gym and Brazilian words pull this toward the cowbell-melody TikTok style; chopped-and-screwed and sample-stab words bring gibberish voices).
 
 ## Lane `hybrid`: Phonk drums + neo-soul pocket + trap-pop brightness
 
@@ -1069,88 +1119,85 @@ Cassette-grit 808 drums with cowbell knocks under a live tine-piano and bass-gui
 - lo-fi 808 drums with a live-band pocket and bright plucks
 - hybrid hip hop instrumental, cowbell knocks, tine piano, bright plucks
 
-**Mix tag:** clean loud master, cassette drums, bright top (neutral: clean loud master, cassette drums)
+**Mix tag:** loud dry master, cassette drums, the top end clear (neutral: loud dry master, cassette drums)
 
-**Tempo:** 136-148 or 88-98 BPM (half-time above 120). Major share 0.3, soul/Dorian loops 0.6, slur tag 0.7, low lead 0.5. Modes switch 40, straight 45, loop 15. Sliders Weirdness 50-60, Style Influence 70-80.
+**Tempo:** 136-148 or 88-98 BPM (half-time above 120). Major share 0.3, soul/Dorian loops 0.6, slur tag 0.7, low lead 0.5. Modes switch 35, straight 40, loop 25. Sliders Weirdness 50-60, Style Influence 70-80.
 
-**Families** (weights pluck 3, tine 3, bell 1, screwed 2; guest share 0.1)
+**Families** (weights pluck 3, chipmunk 3, tine 1, screwed 2; guest share 0.1)
 
-**pluck** (bright on top of cassette drums and a live pocket)
+**pluck** (dry on top of cassette drums and a live pocket)
 
 Sources (description | handle):
-- a bright plucked synth hook, two notes bouncing an octave, every hit cut short | the bouncing pluck
-- a nylon-string guitar sample pitched up and plucked in short stabs, bright and dry | the pitched guitar pluck
-- a rubbery pluck synth with a fast pitch envelope, boinging on every note | the rubber pluck
-- a chirping square-wave hook like a toy phone, mid register | the toy phone hook
-- a plucked synth boing lead bouncing on every beat | the boing lead
-- a short staccato synth stab, two chords per bar, bright and clipped | the stab chords
-- a sampled guitar stab pitched up, two hits per bar, bouncing | the guitar stab
-- a steel-string guitar harmonic sampled and looped as a hook, bright and short | the harmonic hook
-- a pizz-style synth pluck with a fast decay, hopping between two octaves | the hopping pluck
+- a dry plucked synth hook, two notes an octave apart, every hit cut dead before the next kick | the dry pluck
+- a nylon-string guitar sample plucked in short muted stabs, close and dry | the muted guitar pluck
+- a rubbery mono synth pluck with a fast pitch envelope, one note per kick, cut short | the rubber pluck
+- a wooden-bar patch hit with a hard mallet, the knock louder than the note, dry | the mallet knock
+- a plucked synth playing stabs only on the off-beats, silent on the downbeats | the off-beat pluck
+- a short staccato keys stab, two chords per bar, dry and clipped | the stab chords
+- a sampled guitar stab pitched down a step, one hit per bar on the and of 2 | the guitar stab
+- a steel-string guitar harmonic sampled and looped as a hook, short and dry | the harmonic hook
+- a tuned knock melody, wood on wood, hopping between two octaves | the knock melody
+- a muted thumb-piano pluck sample, dry, four notes that skip the one | the thumb pluck
 
 Processing characters:
-- bright and loud, up front
-- bouncy, every note cut short
+- dry and close, the knock audible
+- every note cut dead before the next kick
 - doubled an octave down, the low copy louder
 - hard-clipped so it pops on a phone speaker
-- dry and close, the knock audible
-- gated tight so it bounces off the clap
-- detuned a few cents so it grins
-- pitched up a step on the last hit of the hook
+- gated tight so it locks to the snare
+- detuned a few cents against itself
+- the attack clicky, the tail gone
+- played a 16th behind the kick on purpose
 
-**bell** (bright on top of cassette drums and a live pocket)
+**chipmunk** (sliced off a soul record over cassette 808 drums)
 
 Sources (description | handle):
-- a tuned wooden-bar patch hook, the mallet knock left in, bouncy | the mallet hook
-- a toy bell patch, plastic and bright, two notes answering the snare | the toy bells
-- a tubular bell sample pitched into the mids, short decay, playful | the tube bell
-- a bottle-blow patch tuned to the key, breathy and bouncy | the bottle hook
-- a tuned tongue-click melody, clicky and playful, two notes per bar | the click melody
-- an electric piano preset off a cheap home keyboard, bright and plasticky, staccato | the plastic keys
-- a bell-like FM patch with a glassy attack, four notes hopping around the root | the glass bells
+- a soul record pitched up a fourth and sliced to one bar, the horns and keys chirping, the room left in | the chipmunk soul chop
+- an old soul intro sped up until the strings and keys squeak, cut to two bars and looped off the one | the sped-up soul loop
+- a soul record keys-and-horns phrase pitched up a fifth, chopped into four one-beat stabs | the pitched soul stabs
+- a soul ballad intro sped up a step and a half, the piano chirping, the hiss left in | the chirping piano chop
+- a one-bar soul horn-and-keys hit pitched up until it sounds tiny and urgent, played on every downbeat | the tiny horn hit
+- a soul record sliced into half-bar pieces and rearranged so it stumbles, pitched up a third | the stumbling soul chop
+- a soul record keys loop at its own pitch, warm and dusty, the room and hiss left in, cut to two bars | the warm soul loop
 
 Processing characters:
-- bright and loud, up front
-- bouncy, every note cut short
-- dry and close, the knock audible
-- gated tight so it bounces off the clap
-- detuned a few cents so it grins
-- a quick slapback on the right only
-- the attack clicky, the tail cut before the next hit
+- pitched up until it chirps, the hiss rising with it
+- cut on the one, the tail chopped before the snare
+- the record hiss and room left in
+- filtered so the bass of the record is gone and the bass guitar takes it
+- resampled until the grain shows
+- sliced off the one so it stumbles
+- hard-clipped on every hit
+- warm, at its own pitch, dusty
 
-**tine** (under bright plucks, over cassette 808 drums)
+**tine** (under dry plucks, over cassette 808 drums)
 
 Sources (description | handle):
-- an electric piano with metal tines hit hard, the tremolo wobbling slow, played by hand | the tine piano
+- an electric piano with metal tines hit hard, the tremolo wobbling slow, played by hand, dry | the tine piano
 - a reed electric piano with a bark on the attack, played in short stabs | the reed piano
-- a clavinet-style keyboard, muted and percussive, played in short jabs | the clav jabs
-- a drawbar organ with the percussion click on, played in short pushes | the drawbar organ
 - an upright piano recorded close, the hammer thud louder than the note, two chords per bar | the close piano
 - a soul record keys loop sliced to one bar, pitched down a step, warm | the sliced keys
-- a vibraphone-style patch with the motor tremolo slow, two notes per bar | the vibraphone patch
-- a tine piano run through a phase pedal, chords held long and let sag | the phased tines
+- a drawbar organ with the percussion click on, one chord held, a second chord only at the turn | the drawbar organ
 
 Processing characters:
-- played by hand with the sustain pedal half down
-- the chords voiced with ninths, the top note a hair late
+- played by hand, plain triads, the top note a hair late
 - warm tube saturation on the attack
 - the key clicks left in
 - a little out of tune with itself, warm
 - compressed slow so the chords breathe
 - recorded through a small amp in a small room
-- the tremolo set slow and deep
 
-**screwed** (slowed under a live pocket and bright plucks)
+**screwed** (slowed under a live pocket and dry plucks)
 
 Sources (description | handle):
-- a soul record slowed to half speed, the pitch sagging, sliced into stabs | the screwed stabs
 - a piano record from the 70s slowed down until it drags, the hiss left in | the slowed piano
-- a pitched-down sample stab dropped two octaves until it sounds like a foghorn, used as the lead | the foghorn stab
-- a Memphis-style sample loop pitched down a fourth, cassette hiss left in | the cassette loop
 - an organ record slowed until the vibrato wobbles, sliced to one bar | the slowed organ
-- a sample stab formant-dropped until the words are gone, used like a horn | the dropped stab
 - a two-note keys sample slowed and looped off the one, murky | the murky keys
 - a bell-tone synth stab sampled to cassette and slowed, dark and wobbling | the cassette bell
+- a dark piano riff of three notes recorded to cassette, slowed a step, the hiss riding on it | the cassette piano
+- a slowed guitar record, one muted chord per bar, dark and warped | the slowed guitar
+- a tubular bell sample slowed and pitched down a fifth, one hit per bar, ringing dark | the dark bell
+- a string-free slowed record of just piano and room, two chords, murky | the murky piano loop
 
 Processing characters:
 - slowed until the pitch sags
@@ -1209,6 +1256,6 @@ Bass patterns:
 - a tambourine smacked on 2 and 4, never quite even
 - a cowbell knock answering the snare, three hits then nothing
 
-**Exclude Styles:** vocals, humming, ad-libs, vocal chops, drum fills, snare rolls, risers, transitions, drift phonk, Brazilian funk, EDM, cowbell melody, smooth jazz, cinematic
+**Exclude Styles:** vocals, humming, ad-libs, vocal chops, drum fills, tom fills, snare rolls, hat rolls, drum rolls, transitions, transition fills, section transitions, risers, sweeps, filter sweeps, white noise sweeps, build-ups, breakdown FX, impacts, crash cymbals, reverse cymbals, DJ drops, DJ scratching, tape stop, drift phonk, Brazilian funk, EDM, cowbell melody, jazz, funk, cinematic
 
-**Guard:** allow \b(memphis|phonk|cowbell|tape|cassette|lo-?fi|dusty|vinyl|crackl\w*|chop\w*|screwed|dropped|12 bits|funk\w*|neo-soul|soul)\b; deny \b(drift|gym|brazilian|baile|cowbell (lead|melody)|melodic cowbell|drill)\b (drift-phonk and film-score words pull the blend apart).
+**Guard:** allow \b(memphis|phonk|cowbell|tape|cassette|lo-?fi|dusty|vinyl|crackl\w*|12 bits|soul|chipmunk)\b; deny \b(drift|gym|brazilian|baile|cowbell (lead|melody)|melodic cowbell|drill|funk\w*|jazz\w*|screwed|sample stab)\b (drift-phonk, funk, jazz and screwed-voice words pull the blend apart).

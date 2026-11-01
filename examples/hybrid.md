@@ -17,65 +17,65 @@ Lane `hybrid` | 142 BPM (half-time feel) | F minor (i - bVI: Fm - Db) | layout: 
 - **Variety:** Off. Any setting above Off rewrites and expands the Style text before the model sees it (official FAQ: 'reduce the Variety slider to 0 to retain full control of your style tags'). Engineered prompts must run at Off.
 - **Persona:** NO. Voices (formerly Personas; Style Personas live inside the Voices menu): In-app text: 'Songs with Voices cannot be instrumental.' Not used in this workflow.
 - **Duration:** Custom 3:15 (estimated 3:03 from the layout at 142 BPM, plus a buffer rounded up to the next 5 s; [End] stops it early, Crop any tail). Never Auto: v6 runs long on Auto.
-- **Song Title:** Stolen Bouncing Pluck
+- **Song Title:** Stolen Dry Pluck
 
 ## 3. STYLE FIELD (992/1000 chars; head tags first, then lead / bass / drums / counter)
 ```text
-Memphis cowbell drums under a live soul pocket, bright plucks on top, 142 BPM, half-time, in F minor, instrumental, sunny and dark at once, snare early, 808 late, broken percussion loop, three-note stumble on beat 3, hard beat switch halfway, bright plucks on top, low register lead, the bouncing pluck doubled an octave down, clean loud master, cassette drums, bright top. lead: a bright plucked synth hook, two notes bouncing an octave, every hit cut short, doubled an octave down, the low copy louder, off-beat stabs on the and of 2 and 4, a five-note motif on a simple rise-and-fall shape, the second note always a sixteenth late, every pass. bass: a fretless-style bass guitar over a clean sine sub. drums: an 808 drum-machine kick, boomy and long, hit a hair late, a dry 808 snare with the noise cranked, late, hats in triplets that slur on beat 3, a cowbell knock answering the snare, three hits then nothing, beat 3 drags, beat 4 catches up, the hook is the verse with one more sound.
+hybrid hip hop instrumental, cowbell knocks, tine piano, bright plucks, 142 BPM, half-time, in F minor, instrumental, sunny and dark at once, off-beat 808 hits, nervous perc ticks between kicks, drunk 808 bounce, beat switch, key falls, same drums every section, bright plucks on top, lead tucked above the 808, the dry pluck, loud dry master, cassette drums, the top end clear. lead: a dry plucked synth hook, two notes an octave apart, every hit cut dead before the next kick, doubled an octave down, the low copy louder, a chest-level melody, felt as much as heard, off-beat stabs on the and of 2 and 4. bass: a fretless-style bass guitar over a clean sine sub. drums: an 808 drum-machine kick, boomy and long, hit a hair late, a crunchy sampled snare off a cassette, cracking, hats in triplets that slur on beat 3, an 808 cowbell knocking a two-note pattern between the kicks, never the melody, the pocket leans drunk on beat 3, sober on the one, every section identical except one sound.
 ```
 
-## 4. LYRICS FIELD (835/5000 chars; section tags only, no words)
+## 4. LYRICS FIELD (1001/5000 chars; section tags only, no words)
 ```text
 [Instrumental]
 
-[Intro | the bouncing pluck alone, 8 bars]
+[Intro | the dry pluck alone, 8 bars]
 
-[Hook | beat A, snare early, 808 late, the bouncing pluck up front, the hook is the verse with one more sound]
+[Hook | beat A straight in on beat 1, cold, off-beat 808 hits, the dry pluck up front, every section identical except one sound]
 
-[Verse | beat A, same drums, beat 3 drags, beat 4 catches up, stuttered kick retriggers retriggering at triple speed for one beat, around the 808 slides]
+[Verse | beat A, same drums, the pocket leans drunk on beat 3, sober on the one, a gated snare tail cut short triplets that stop dead, only in the gaps the lead leaves]
 
-[Hook | beat A, identical, the reed piano answering]
+[Hook | beat A, identical, the sped-up soul loop answering]
 
-[Beat Switch | everything strips to 808 and one snare, the lead pitched down an octave]
+[Beat Switch | key falls a minor third, the lead pitched down, same drums]
 
-[Hook | beat B, stripped to 808 and snare, the bouncing pluck up front]
+[Hook | beat B, in the lower key, the lead pitched down, the dry pluck up front, a gated snare tail cut short triplets that stop dead, only in the gaps the lead leaves]
 
-[Verse | beat B, stripped to 808 and snare, the reed piano answering, the snare landing late and heavy like a tired drummer]
+[Verse | beat B, in the lower key, the lead pitched down, the sped-up soul loop answering, the hats dragged a few milliseconds behind the kick]
 
-[Hook | beat B, stripped to 808 and snare, a second copy an octave down, louder in the hook]
+[Hook | beat B, in the lower key, the lead pitched down, a second copy an octave down, louder in the hook]
 
-[Outro | beat B, stripped to 808 and snare, stops dead on beat 1]
+[Outro | beat B, in the lower key, the lead pitched down, stops dead on beat 1]
 
 [End]
 ```
 
-## 5. EXCLUDE STYLES FIELD (157/1000 chars)
+## 5. EXCLUDE STYLES FIELD (374/1000 chars)
 ```text
-vocals, humming, ad-libs, vocal chops, drum fills, snare rolls, risers, transitions, drift phonk, Brazilian funk, EDM, cowbell melody, smooth jazz, cinematic
+vocals, humming, ad-libs, vocal chops, drum fills, tom fills, snare rolls, hat rolls, drum rolls, transitions, transition fills, section transitions, risers, sweeps, filter sweeps, white noise sweeps, build-ups, breakdown FX, impacts, crash cymbals, reverse cymbals, DJ drops, DJ scratching, tape stop, drift phonk, Brazilian funk, EDM, cowbell melody, jazz, funk, cinematic
 ```
 
 ## 6. SLIDERS
-- **Weirdness:** 59% — Phonk drums + neo-soul pocket + trap-pop brightness: the lane's tested range is 50-60; above 60 Suno starts drifting tempo and structure.
-- **Style Influence:** 73% — High so the physical descriptions are followed; 70-80 landed closest to the written prompt.
+- **Weirdness:** 53% — Phonk drums + neo-soul pocket + trap-pop brightness: the lane's tested range is 50-60; above 60 Suno starts drifting tempo and structure.
+- **Style Influence:** 75% — High so the physical descriptions are followed; 70-80 landed closest to the written prompt.
 - **Audio Influence:** Not used. No audio is uploaded in this workflow, so the slider does not appear; leave it alone.
 - **Variety:** Off (Exact style). Any setting above Off rewrites and expands the Style text before the model sees it (official FAQ: 'reduce the Variety slider to 0 to retain full control of your style tags'). Engineered prompts must run at Off.
 
 ## 7. VARIATIONS
-**A. Safer** (v6, Weirdness 49%, Style Influence 78%; 1000 chars). Sound-neutral anchor, no twitch or slur tags, no hint: the plainest reading of the same sounds.
+**A. Safer** (v6, Weirdness 43%, Style Influence 80%; 992 chars). Sound-neutral anchor, no twitch or slur tags, no hint: the plainest reading of the same sounds.
 ```text
-hybrid hip hop instrumental, cassette drums, live pocket, 142 BPM, half-time, in F minor, instrumental, sunny and dark at once, hard beat switch halfway, bright plucks on top, low register lead, the bouncing pluck doubled an octave down, clean loud master, cassette drums. lead: a bright plucked synth hook, two notes bouncing an octave, every hit cut short, doubled an octave down, the low copy louder, a chest-level melody, felt as much as heard, off-beat stabs on the and of 2 and 4, a five-note motif on a simple rise-and-fall shape, the second note always a sixteenth late, every pass, mono center, out of the kick's way. bass: a fretless-style bass guitar over a clean sine sub, following the kick exactly. drums: an 808 drum-machine kick, boomy and long, hit a hair late, a dry 808 snare with the noise cranked, late, hats in triplets that slur on beat 3, a cowbell knock answering the snare, three hits then nothing, beat 3 drags, beat 4 catches up, the hook is the verse with one more sound.
+hybrid hip hop instrumental, cassette drums, live pocket, 142 BPM, half-time, in F minor, instrumental, sunny and dark at once, beat switch, key falls, same drums every section, bright plucks on top, lead tucked above the 808, the dry pluck, loud dry master, cassette drums. lead: a dry plucked synth hook, two notes an octave apart, every hit cut dead before the next kick, doubled an octave down, the low copy louder, a chest-level melody, felt as much as heard, off-beat stabs on the and of 2 and 4, a five-note motif on a simple rise-and-fall shape, the second note always a sixteenth late, every pass. bass: a fretless-style bass guitar over a clean sine sub. drums: an 808 drum-machine kick, boomy and long, hit a hair late, a crunchy sampled snare off a cassette, cracking, hats in triplets that slur on beat 3, an 808 cowbell knocking a two-note pattern between the kicks, never the melody, the pocket leans drunk on beat 3, sober on the one, every section identical except one sound.
 ```
-**B. Weirder** (v6-wild, Weirdness 80%, Style Influence 64%; 987 chars). One wild tag added; run it on v6-wild.
+**B. Weirder** (v6-wild, Weirdness 74%, Style Influence 68%; 983 chars). One wild tag added; run it on v6-wild.
 ```text
-Memphis cowbell drums under a live soul pocket, bright plucks on top, 142 BPM, half-time, in F minor, instrumental, sunny and dark at once, snare early, 808 late, broken percussion loop, three-note stumble on beat 3, hard beat switch halfway, bright plucks on top, bit-mangled lead, low register lead, the bouncing pluck, clean loud master, cassette drums, bright top. lead: a bright plucked synth hook, two notes bouncing an octave, every hit cut short, doubled an octave down, the low copy louder, off-beat stabs on the and of 2 and 4, a five-note motif on a simple rise-and-fall shape, the second note always a sixteenth late, every pass. bass: a fretless-style bass guitar over a clean sine sub. drums: an 808 drum-machine kick, boomy and long, hit a hair late, a dry 808 snare with the noise cranked, late, hats in triplets that slur on beat 3, a cowbell knock answering the snare, three hits then nothing, beat 3 drags, beat 4 catches up, the hook is the verse with one more sound.
+hybrid hip hop instrumental, cowbell knocks, tine piano, bright plucks, 142 BPM, half-time, in F minor, instrumental, sunny and dark at once, off-beat 808 hits, nervous perc ticks between kicks, drunk 808 bounce, beat switch, key falls, same drums every section, bright plucks on top, the loop resampled until it smears, lead tucked above the 808, the dry pluck, loud dry master, cassette drums, the top end clear. lead: a dry plucked synth hook, two notes an octave apart, every hit cut dead before the next kick, doubled an octave down, the low copy louder, off-beat stabs on the and of 2 and 4. bass: a fretless-style bass guitar over a clean sine sub. drums: an 808 drum-machine kick, boomy and long, hit a hair late, a crunchy sampled snare off a cassette, cracking, hats in triplets that slur on beat 3, an 808 cowbell knocking a two-note pattern between the kicks, never the melody, the pocket leans drunk on beat 3, sober on the one, every section identical except one sound.
 ```
 
 ## 8. POST-GEN NOTES
-- Structure: the first full beat lands at about 0:14; the layout is "A then B, two beats one song" and runs about 3:03. The beat switch is one axis ("hard beat switch halfway"); its words repeat in the head tag and in every section after the switch so Suno cannot undo it.
+- Structure: the first full beat lands at about 0:14; the layout is "A then B, two beats one song" and runs about 3:03. The beat switch is one axis ("beat switch, key falls"); its words repeat in the head tag and in every section after the switch so Suno cannot undo it.
 - No hint on this roll; the hook device in the lead line ("a five-note motif on a simple rise-and-fall shape, the second note always a sixteenth late, every pass") carries the stickiness. Listen for it on the second pass.
 - All three elements must coexist: cassette cowbell drums, a live tine-and-bass pocket, bright plucks. If one is missing, the line that carried it got cut; shorten the counter and re-roll.
 - The drums should drag behind the grid; the kit descriptions say "late" and "dragging" and the slur tag sits in the head.
-- Plucks should stay bright on top of a murky drum bed; the mix tag says "bright top" for this reason.
+- Plucks should stay dry and on top of a murky drum bed; the mix tag keeps the top end clear for this reason.
 - Suno may hum over the tine piano; the Exclude list handles it.
 - Fills, risers or a roll at a section change mean a word slipped through: run the QA checker on the block, and keep the anti-transition phrase in the drums line (it is the positive form of "no fills").
 - Any hum, chant or sung syllable means a re-roll, not a fix: the Exclude list is already complete, so change the seed rather than adding words.

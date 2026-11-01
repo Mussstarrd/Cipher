@@ -2,7 +2,7 @@
 
 # suno-forge prompt block: Dense dark boom-bap/trap hybrid
 
-Lane `jid-dark` | 146 BPM (half-time feel) | G minor (i - iv: Gm - Cm) | layout: Half-time for the last third (switch) | about 2:54, full beat at 0:26 | seed 2026
+Lane `jid-dark` | 146 BPM (half-time feel) | G minor (i - iv: Gm - Cm) | layout: Half-time for the last third (switch) | about 2:44, full beat at 0:16 | seed 2026
 
 ## 1. MODEL
 **Pick:** v6
@@ -16,62 +16,62 @@ Lane `jid-dark` | 146 BPM (half-time feel) | G minor (i - iv: Gm - Cm) | layout:
 - **Max Mode:** ON. ON for any instrumental over ~2:00; OFF for 30-60 s palette tests (2x (20 per generation vs 10)). Max Mode also keeps silences silent on minimal rolls.
 - **Variety:** Off. Any setting above Off rewrites and expands the Style text before the model sees it (official FAQ: 'reduce the Variety slider to 0 to retain full control of your style tags'). Engineered prompts must run at Off.
 - **Persona:** NO. Voices (formerly Personas; Style Personas live inside the Voices menu): In-app text: 'Songs with Voices cannot be instrumental.' Not used in this workflow.
-- **Duration:** Custom 3:05 (estimated 2:54 from the layout at 146 BPM, plus a buffer rounded up to the next 5 s; [End] stops it early, Crop any tail). Never Auto: v6 runs long on Auto.
+- **Duration:** Custom 2:55 (estimated 2:44 from the layout at 146 BPM, plus a buffer rounded up to the next 5 s; [End] stops it early, Crop any tail). Never Auto: v6 runs long on Auto.
 - **Song Title:** Stolen Syrupy Synth
 
 ## 3. STYLE FIELD (992/1000 chars; head tags first, then lead / bass / drums / counter)
 ```text
-dark boom-bap trap hybrid, sliced soul keys, hard drums, 146 BPM, half-time, in G minor, instrumental, paranoid, snare dead on, kick early, shaky hat retriggers under the loop, beat switch, new drums, lead parked in the low mids, the syrupy synth hard-clipped on every transient, dense dark mix, loud, the snare cutting through. lead: a syrupy slowed-down synth lead with a pitch sag, hard-clipped on every transient, a deep lead parked an octave above the 808, playing a stubborn root note leaning on the flat sixth as 16th stutters that cut out in the verse, the last note of the hook lands a 16th early every time, bent into pitch by hand, never landing in tune twice. bass: an 808 pitched down until the tail buzzes, sliding, a triplet bounce against straight hats. drums: a dead kick with the beater buried, placed a 16th ahead of the 808, a hard sampled snare compressed until it cracks, a hair late, hats that drag on beat 3 then straighten, the beat stays frozen from start to finish.
+dark hip hop instrumental, sliced samples, knocking drums, 146 BPM, half-time, in G minor, instrumental, paranoid, snare early, 808 late, nervous perc ticks between kicks, hard beat switch halfway, same drums every section, lead an octave above the 808, the syrupy synth hard-clipped on every transient, dense dark mix, loud, the snare cutting through. lead: a syrupy slowed-down synth lead with a pitch sag, hard-clipped on every transient, playing a stubborn root note leaning on the flat sixth as 16th stutters that cut out in the verse, the last note of the hook lands a 16th early every time. bass: an 808 pitched down until the tail buzzes, sliding, root and flat second only. drums: a hard knocking kick with the low end cut so the 808 owns the sub, a hard sampled snare compressed until it cracks, a hair late, crunchy bitcrushed hats, half-open on the off-beats, stuttered kick retriggers retriggering at triple speed for one beat, around the 808 slides, the same loop the whole way.
 ```
 
-## 4. LYRICS FIELD (790/5000 chars; section tags only, no words)
+## 4. LYRICS FIELD (875/5000 chars; section tags only, no words)
 ```text
 [Instrumental]
 
-[Intro | the syrupy synth alone, 8 bars]
+[Intro | the syrupy synth alone, 2 bars]
 
-[Verse | 8 bars, full drums, snare dead on, kick early, clap layers a few milliseconds apart]
+[Verse | 8 bars, full drums, snare early, 808 late, the snare landing late and heavy like a tired drummer]
 
-[Hook | full beat, the syrupy synth up front, the pitched strings answering, the beat stays frozen from start to finish]
+[Hook | full beat straight in on beat 1, cold, the syrupy synth up front, the pitched strings answering, the same loop the whole way]
 
-[Verse | the syrupy synth thinner, clap layers a few milliseconds apart, a short noise burst in uneven pairs, long-short, only after the switch]
+[Verse | the syrupy synth thinner, the snare landing late and heavy like a tired drummer, stuttered kick retriggers retriggering at triple speed for one beat, around the 808 slides]
 
-[Break | drums cut dead, the new section starts on beat 2, not 1]
+[Break | drums cut dead, slowing down into it like the power got cut]
 
-[Beat Switch | new kick pattern, the 808 running straight 16ths, harder snare]
+[Beat Switch | everything strips to 808 and one snare, the lead pitched down an octave]
 
-[Hook | new drums, running 808, the notes get shorter as the song goes on]
+[Hook | stripped to 808 and snare, the notes get shorter as the song goes on]
 
-[Hook | new drums, running 808, identical, the pitched strings answering]
+[Hook | stripped to 808 and snare, identical, the pitched strings answering]
 
-[Outro | new drums, running 808, drums cut dead, ends on beat 1]
+[Outro | stripped to 808 and snare, drums cut dead, ends on beat 1]
 
 [End]
 ```
 
-## 5. EXCLUDE STYLES FIELD (145/1000 chars)
+## 5. EXCLUDE STYLES FIELD (356/1000 chars)
 ```text
-vocals, humming, ad-libs, vocal chops, choir, drum fills, snare rolls, risers, transitions, film score, cinematic, drill, lo-fi, EDM, smooth jazz
+vocals, humming, ad-libs, vocal chops, choir, drum fills, tom fills, snare rolls, hat rolls, drum rolls, transitions, transition fills, section transitions, risers, sweeps, filter sweeps, white noise sweeps, build-ups, breakdown FX, impacts, crash cymbals, reverse cymbals, DJ drops, DJ scratching, tape stop, film score, cinematic, drill, EDM, smooth jazz
 ```
 
 ## 6. SLIDERS
-- **Weirdness:** 47% — Dense dark boom-bap/trap hybrid: the lane's tested range is 45-55; above 60 Suno starts drifting tempo and structure.
-- **Style Influence:** 85% — High so the physical descriptions are followed; 75-85 landed closest to the written prompt.
+- **Weirdness:** 55% — Dense dark boom-bap/trap hybrid: the lane's tested range is 45-55; above 60 Suno starts drifting tempo and structure.
+- **Style Influence:** 84% — High so the physical descriptions are followed; 75-85 landed closest to the written prompt.
 - **Audio Influence:** Not used. No audio is uploaded in this workflow, so the slider does not appear; leave it alone.
 - **Variety:** Off (Exact style). Any setting above Off rewrites and expands the Style text before the model sees it (official FAQ: 'reduce the Variety slider to 0 to retain full control of your style tags'). Engineered prompts must run at Off.
 
 ## 7. VARIATIONS
-**A. Safer** (v6, Weirdness 37%, Style Influence 90%; 993 chars). Sound-neutral anchor, no twitch or slur tags, no hint: the plainest reading of the same sounds.
+**A. Safer** (v6, Weirdness 45%, Style Influence 89%; 997 chars). Sound-neutral anchor, no twitch or slur tags, no hint: the plainest reading of the same sounds.
 ```text
-dark hip hop instrumental, hard drums, heavy 808, 146 BPM, half-time, in G minor, instrumental, paranoid, beat switch, new drums, lead parked in the low mids, the syrupy synth hard-clipped on every transient, dense dark mix, loud. lead: a syrupy slowed-down synth lead with a pitch sag, hard-clipped on every transient, a deep lead parked an octave above the 808, playing a stubborn root note leaning on the flat sixth as 16th stutters that cut out in the verse, the last note of the hook lands a 16th early every time, bent into pitch by hand, never landing in tune twice, panned left with a short slapback on the right. bass: an 808 pitched down until the tail buzzes, sliding, a triplet bounce against straight hats. drums: a dead kick with the beater buried, placed a 16th ahead of the 808, a hard sampled snare compressed until it cracks, a hair late, hats that drag on beat 3 then straighten, a tambourine smacked on 2 and 4, never quite even, the beat stays frozen from start to finish.
+dark hip hop instrumental, hard drums, heavy 808, 146 BPM, half-time, in G minor, instrumental, paranoid, hard beat switch halfway, same drums every section, lead an octave above the 808, the syrupy synth hard-clipped on every transient, dense dark mix, loud. lead: a syrupy slowed-down synth lead with a pitch sag, hard-clipped on every transient, a deep lead parked an octave above the 808, playing a stubborn root note leaning on the flat sixth as 16th stutters that cut out in the verse, the last note of the hook lands a 16th early every time, bent into pitch by hand, never landing in tune twice. bass: an 808 pitched down until the tail buzzes, sliding, root and flat second only. drums: a hard knocking kick with the low end cut so the 808 owns the sub, a hard sampled snare compressed until it cracks, a hair late, crunchy bitcrushed hats, half-open on the off-beats, stuttered kick retriggers retriggering at triple speed for one beat, around the 808 slides, the same loop the whole way.
 ```
-**B. Weirder** (v6-wild, Weirdness 72%, Style Influence 57%; 997 chars). One wild tag added; run it on v6-wild.
+**B. Weirder** (v6-wild, Weirdness 67%, Style Influence 70%; 984 chars). One wild tag added; run it on v6-wild.
 ```text
-dark boom-bap trap hybrid, sliced soul keys, hard drums, 146 BPM, half-time, in G minor, instrumental, paranoid, snare dead on, kick early, shaky hat retriggers under the loop, beat switch, new drums, 808 blown out and clipped, lead parked in the low mids, the syrupy synth hard-clipped on every transient, dense dark mix, loud, the snare cutting through. lead: a syrupy slowed-down synth lead with a pitch sag, hard-clipped on every transient, a deep lead parked an octave above the 808, playing a stubborn root note leaning on the flat sixth as 16th stutters that cut out in the verse, the last note of the hook lands a 16th early every time. bass: an 808 pitched down until the tail buzzes, sliding, a triplet bounce against straight hats, landing a hair behind the kick. drums: a dead kick with the beater buried, placed a 16th ahead of the 808, a hard sampled snare compressed until it cracks, a hair late, hats that drag on beat 3 then straighten, the beat stays frozen from start to finish.
+dark hip hop instrumental, sliced samples, knocking drums, 146 BPM, half-time, in G minor, instrumental, paranoid, snare early, 808 late, nervous perc ticks between kicks, hard beat switch halfway, same drums every section, pitch-warped lead, lead an octave above the 808, the syrupy synth hard-clipped on every transient, dense dark mix, loud, the snare cutting through. lead: a syrupy slowed-down synth lead with a pitch sag, hard-clipped on every transient, playing a stubborn root note leaning on the flat sixth as 16th stutters that cut out in the verse, the last note of the hook lands a 16th early every time. bass: an 808 pitched down until the tail buzzes, sliding. drums: a hard knocking kick with the low end cut so the 808 owns the sub, a hard sampled snare compressed until it cracks, a hair late, crunchy bitcrushed hats, half-open on the off-beats, stuttered kick retriggers retriggering at triple speed for one beat, around the 808 slides, the same loop the whole way.
 ```
 
 ## 8. POST-GEN NOTES
-- Structure: the first full beat lands at about 0:26; the layout is "Half-time for the last third" and runs about 2:54. The beat switch is one axis ("beat switch, new drums"); its words repeat in the head tag and in every section after the switch so Suno cannot undo it.
+- Structure: the first full beat lands at about 0:16; the layout is "Half-time for the last third" and runs about 2:44. The beat switch is one axis ("hard beat switch halfway"); its words repeat in the head tag and in every section after the switch so Suno cannot undo it.
 - No hint on this roll; the hook device in the lead line ("the last note of the hook lands a 16th early every time") carries the stickiness. Listen for it on the second pass.
 - The sliced keys should sound like a cut-up record, not a played melody; if Suno plays it clean, pick a source with "sliced" or "reversed" in it and re-roll.
 - Hats should twitch and switch patterns; the twitch tag and the hats description carry this, keep both in the front 260 characters.
@@ -79,7 +79,7 @@ dark boom-bap trap hybrid, sliced soul keys, hard drums, 146 BPM, half-time, in 
 - Strings can take over and turn it into a trailer cue; "cinematic" and "film score" stay in the Exclude list for this reason.
 - Fills, risers or a roll at a section change mean a word slipped through: run the QA checker on the block, and keep the anti-transition phrase in the drums line (it is the positive form of "no fills").
 - Any hum, chant or sung syllable means a re-roll, not a fix: the Exclude list is already complete, so change the seed rather than adding words.
-- Ending: [End] should stop it near 2:54. If it runs on, Crop to the last downbeat. If it stops early, Extend from the last good section and paste only the remaining section tags.
+- Ending: [End] should stop it near 2:44. If it runs on, Crop to the last downbeat. If it stops early, Extend from the last good section and paste only the remaining section tags.
 - Extend when the first 60-90 s are keepers and only the back half drifts. Re-roll (or run the weirder variation on v6-wild) when the drums or the lead are wrong from the start.
 - Remaster: Remaster (Pro/Premier) renders subtle variations and runs on v6; use it on the keeper for a cleaner, louder master.
 - Stems: Get Stems (Pro/Premier): Auto Split up to 12 stems for 50 credits; Split from Mix 10 credits per stem; Advanced Split (choose from ~100 instruments) 10 credits per stem, Premier only.
@@ -89,14 +89,14 @@ dark boom-bap trap hybrid, sliced soul keys, hard drums, 146 BPM, half-time, in 
 
 | # | Section | Bars | Starts |
 |---|---------|------|--------|
-| 1 | Intro | 8 | 0:00 |
-| 2 | Verse | 8 | 0:13 |
-| 3 | Hook | 16 | 0:26 |
-| 4 | Verse | 16 | 0:53 |
-| 5 | Break | 4 | 1:19 |
-| 6 | Beat Switch | 2 | 1:25 |
-| 7 | Hook | 32 | 1:29 |
-| 8 | Hook | 16 | 2:21 |
-| 9 | Outro | 4 | 2:48 |
+| 1 | Intro | 2 | 0:00 |
+| 2 | Verse | 8 | 0:03 |
+| 3 | Hook | 16 | 0:16 |
+| 4 | Verse | 16 | 0:43 |
+| 5 | Break | 4 | 1:09 |
+| 6 | Beat Switch | 2 | 1:16 |
+| 7 | Hook | 32 | 1:19 |
+| 8 | Hook | 16 | 2:12 |
+| 9 | Outro | 4 | 2:38 |
 
 </details>

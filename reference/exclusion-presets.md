@@ -6,11 +6,11 @@ Rules: bare nouns, comma-separated, never negated ("vocals", not "no vocals"); t
 
 | Lane | Exclude Styles |
 |---|---|
-| `connor-price` | vocals, humming, ad-libs, vocal chops, drum fills, snare rolls, risers, sweeps, transitions, dark trap, drill, lo-fi, EDM, dubstep, orchestral |
-| `paak-pocket` | vocals, humming, ad-libs, vocal chops, drum fills, snare rolls, risers, transitions, trap hi-hats, 808, drum machine, smooth jazz, elevator music, EDM, lo-fi |
-| `jid-dark` | vocals, humming, ad-libs, vocal chops, choir, drum fills, snare rolls, risers, transitions, film score, cinematic, drill, lo-fi, EDM, smooth jazz |
-| `phonk-experimental` | lead vocals, humming, singing, rapping, drum fills, snare rolls, risers, transitions, drift phonk, Brazilian funk, EDM, house, cowbell melody, clean pop mix, dubstep |
-| `hybrid` | vocals, humming, ad-libs, vocal chops, drum fills, snare rolls, risers, transitions, drift phonk, Brazilian funk, EDM, cowbell melody, smooth jazz, cinematic |
+| `connor-price` | vocals, humming, ad-libs, vocal chops, drum fills, tom fills, snare rolls, hat rolls, drum rolls, transitions, transition fills, section transitions, risers, sweeps, filter sweeps, white noise sweeps, build-ups, breakdown FX, impacts, crash cymbals, reverse cymbals, DJ drops, DJ scratching, tape stop, K-pop, dance pop, EDM, club music, dubstep, orchestral, lo-fi |
+| `paak-pocket` | vocals, humming, ad-libs, vocal chops, drum fills, tom fills, snare rolls, hat rolls, drum rolls, transitions, transition fills, section transitions, risers, sweeps, filter sweeps, white noise sweeps, build-ups, breakdown FX, impacts, crash cymbals, reverse cymbals, DJ drops, DJ scratching, tape stop, jazz, smooth jazz, funk, disco, elevator music, trap hi-hats, 808, drum machine, EDM |
+| `jid-dark` | vocals, humming, ad-libs, vocal chops, choir, drum fills, tom fills, snare rolls, hat rolls, drum rolls, transitions, transition fills, section transitions, risers, sweeps, filter sweeps, white noise sweeps, build-ups, breakdown FX, impacts, crash cymbals, reverse cymbals, DJ drops, DJ scratching, tape stop, film score, cinematic, drill, EDM, smooth jazz |
+| `phonk-experimental` | vocals, vocal chops, chopped vocals, pitched vocals, humming, singing, rapping, drum fills, tom fills, snare rolls, hat rolls, drum rolls, transitions, transition fills, section transitions, risers, sweeps, filter sweeps, white noise sweeps, build-ups, breakdown FX, impacts, crash cymbals, reverse cymbals, DJ drops, DJ scratching, tape stop, drift phonk, Brazilian funk, EDM, house, cowbell melody, clean pop mix, dubstep |
+| `hybrid` | vocals, humming, ad-libs, vocal chops, drum fills, tom fills, snare rolls, hat rolls, drum rolls, transitions, transition fills, section transitions, risers, sweeps, filter sweeps, white noise sweeps, build-ups, breakdown FX, impacts, crash cymbals, reverse cymbals, DJ drops, DJ scratching, tape stop, drift phonk, Brazilian funk, EDM, cowbell melody, jazz, funk, cinematic |
 
 The phonk lane says "lead vocals, singing, rapping" instead of "vocals, vocal chops" so its sample-stab textures survive; "cowbell melody" is excluded there because the cowbell is a knock, never the lead.
 

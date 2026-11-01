@@ -77,7 +77,7 @@
       <div><label for="bpm">BPM (blank = lane)</label><input id="bpm" type="number" min="60" max="200"></div>
       <div><label for="key">Key (blank = lane)</label><input id="key" placeholder="F minor, D dorian, Eb major"></div>
       <div><label for="mood">Mood words</label><input id="mood" placeholder="dark, sun-soaked"></div>
-      <div><label for="mode">Mode</label><select id="mode"><option value="">layout decides</option><option value="straight">straight</option><option value="loop">loop</option><option value="switch">switch</option></select></div>
+      <div><label for="mode">Mode</label><select id="mode"><option value="">layout decides</option><option value="straight">straight</option><option value="loop">loop</option><option value="switch">switch</option><option value="minimal">bare minimum (lead, kick, 808, silence)</option></select></div>
       <div><label for="constraints">Must-have (guarded)</label><input id="constraints" placeholder="horn stabs up front"></div>
       <div><label for="exclude">Extra Exclude terms</label><input id="exclude" placeholder="siren, acoustic guitar"></div>
       <div><label for="seed">Seed (blank = random)</label><input id="seed" placeholder="42"></div>
@@ -127,7 +127,7 @@
 
   function readInput(forceSeed) {
     const v = (id) => $(id).value.trim();
-    const input = { lane: laneSel.value, bpm: v('bpm') ? Number(v('bpm')) : undefined, key: v('key') || undefined, mood: v('mood') || undefined, mode: v('mode') || undefined, constraints: v('constraints') || undefined, exclude: v('exclude') || undefined, wild: !!v('wild'), hint: v('hint') || undefined, avoidKeys: recentKeys };
+    const input = { lane: laneSel.value, bpm: v('bpm') ? Number(v('bpm')) : undefined, key: v('key') || undefined, mood: v('mood') || undefined, mode: v('mode') === 'minimal' ? undefined : (v('mode') || undefined), minimal: v('mode') === 'minimal', constraints: v('constraints') || undefined, exclude: v('exclude') || undefined, wild: !!v('wild'), hint: v('hint') || undefined, avoidKeys: recentKeys };
     if (forceSeed !== undefined) input.seed = forceSeed;
     return input;
   }
