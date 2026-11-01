@@ -17,20 +17,20 @@ Lane `phonk-experimental` | 138 BPM (half-time feel) | G minor (i - iv: Gm - Cm)
 - **Variety:** Off. Any setting above Off rewrites and expands the Style text before the model sees it (official FAQ: 'reduce the Variety slider to 0 to retain full control of your style tags'). Engineered prompts must run at Off.
 - **Persona:** NO. Voices (formerly Personas; Style Personas live inside the Voices menu): In-app text: 'Songs with Voices cannot be instrumental.' Not used in this workflow.
 - **Duration:** Custom 3:15 (estimated 3:04 from the layout at 138 BPM, plus a buffer rounded up to the next 5 s; [End] stops it early, Crop any tail). Never Auto: v6 runs long on Auto.
-- **Song Title:** Stolen Syrupy
+- **Song Title:** Stolen Syrupy Synth
 
-## 3. STYLE FIELD (995/1000 chars; head tags first, then lead / bass / drums / counter)
+## 3. STYLE FIELD (993/1000 chars; head tags first, then lead / bass / drums / counter)
 ```text
-Memphis phonk instrumental, slowed samples, distorted 808, 138 BPM, half-time, in G minor, instrumental, dark, snare dead on, kick early, shaky hat retriggers under the loop, hats dragging on beat 3, minimal, single loop, never changes, low register lead, the syrupy synth, a faint hint of the wah lament, murky lo-fi mix, the sub kept clean, loud and crunchy. lead: a syrupy slowed-down synth lead with a pitch sag, hard-clipped on every transient, playing a stubborn root note leaning on the flat sixth. bass: a long 808 that slides between every note like it is dragging. drums: a boomy kick with the low end cut so the 808 owns the sub, a dry 808 snare with the noise cranked, late, hats in triplets that slur on beat 3, an 808 cowbell on the off-beats, dry, pitched to the key, the hook is the verse with one more sound. hint: an electric guitar through a fuzz pedal and a half-open wah, one slow bend per bar, feedback swelling into the next, one long note before the last hook, then gone.
+Memphis phonk instrumental, slowed samples, distorted 808, 138 BPM, half-time, in G minor, instrumental, dark, snare dead on, kick early, shaky hat retriggers under the loop, hats dragging on beat 3, minimal, single loop, never changes, low register lead, the syrupy synth, a faint hint of the wah lament, murky lo-fi mix, the sub kept clean, loud and crunchy. lead: a syrupy slowed-down synth lead with a pitch sag, hard-clipped on every transient, playing a stubborn root note leaning on the flat sixth. bass: a long 808 that slides between every note like it is dragging. drums: a kick that hits late on 1 and early on 3, never straight, a dry 808 snare with the noise cranked, late, a shaker loop off a tape, wobbling, an 808 cowbell on the off-beats, dry, pitched to the key, the hook is the verse with one more sound. hint: an electric guitar through a fuzz pedal and a half-open wah, one slow bend per bar, feedback swelling into the next, one long note before the last hook, then gone.
 ```
 
-## 4. LYRICS FIELD (545/5000 chars; section tags only, no words)
+## 4. LYRICS FIELD (539/5000 chars; section tags only, no words)
 ```text
 [Instrumental]
 
 [Intro | the syrupy synth alone, 8 bars]
 
-[Loop | same two bars, the syrupy synth over boomy kick and 808 only, the hook is the verse with one more sound]
+[Loop | same two bars, the syrupy synth over kick and 808 only, the hook is the verse with one more sound]
 
 [Loop | same loop, identical, the 808 skids into beat 3 like a missed step]
 
@@ -55,13 +55,13 @@ lead vocals, humming, singing, rapping, drum fills, snare rolls, risers, transit
 - **Variety:** Off (Exact style). Any setting above Off rewrites and expands the Style text before the model sees it (official FAQ: 'reduce the Variety slider to 0 to retain full control of your style tags'). Engineered prompts must run at Off.
 
 ## 7. VARIATIONS
-**A. Safer** (v6, Weirdness 49%, Style Influence 78%; 995 chars). Sound-neutral anchor, no twitch or slur tags, no hint: the plainest reading of the same sounds.
+**A. Safer** (v6, Weirdness 49%, Style Influence 78%; 999 chars). Sound-neutral anchor, no twitch or slur tags, no hint: the plainest reading of the same sounds.
 ```text
-Memphis phonk instrumental, cassette grit, distorted 808, 138 BPM, half-time, in G minor, instrumental, dark, minimal, single loop, never changes, low register lead, the syrupy synth hard-clipped on every transient, murky lo-fi mix, the sub kept clean. lead: a syrupy slowed-down synth lead with a pitch sag, hard-clipped on every transient, a deep lead parked an octave above the 808, playing a stubborn root note leaning on the flat sixth as 16th stutters that cut out in the verse, the last note of the hook lands a 16th early every time, panned left with a short slapback on the right. bass: a long 808 that slides between every note like it is dragging, a triplet bounce against straight hats. drums: a boomy kick with the low end cut so the 808 owns the sub, a dry 808 snare with the noise cranked, late, hats in triplets that slur on beat 3, an 808 cowbell on the off-beats, dry, pitched to the key, the 808 skids into beat 3 like a missed step, the hook is the verse with one more sound.
+Memphis phonk instrumental, cassette grit, distorted 808, 138 BPM, half-time, in G minor, instrumental, dark, minimal, single loop, never changes, low register lead, the syrupy synth hard-clipped on every transient, murky lo-fi mix, the sub kept clean. lead: a syrupy slowed-down synth lead with a pitch sag, hard-clipped on every transient, a deep lead parked an octave above the 808, playing a stubborn root note leaning on the flat sixth as 16th stutters that cut out in the verse, the last note of the hook lands a 16th early every time, bent into pitch by hand, never landing in tune twice. bass: a long 808 that slides between every note like it is dragging, a triplet bounce against straight hats. drums: a kick that hits late on 1 and early on 3, never straight, a dry 808 snare with the noise cranked, late, a shaker loop off a tape, wobbling, an 808 cowbell on the off-beats, dry, pitched to the key, the 808 skids into beat 3 like a missed step, the hook is the verse with one more sound.
 ```
-**B. Weirder** (v6-wild, Weirdness 80%, Style Influence 64%; 998 chars). One wild tag added; run it on v6-wild.
+**B. Weirder** (v6-wild, Weirdness 80%, Style Influence 64%; 996 chars). One wild tag added; run it on v6-wild.
 ```text
-Memphis phonk instrumental, slowed samples, distorted 808, 138 BPM, half-time, in G minor, instrumental, dark, snare dead on, kick early, shaky hat retriggers under the loop, hats dragging on beat 3, minimal, single loop, never changes, bit-mangled lead, low register lead, the syrupy synth, a faint hint of the wah lament, murky lo-fi mix, the sub kept clean, loud and crunchy. lead: a syrupy slowed-down synth lead with a pitch sag, hard-clipped on every transient, playing a stubborn root note leaning on the flat sixth. bass: a long 808 that slides between every note like it is dragging, landing a hair behind the kick. drums: a boomy kick with the low end cut so the 808 owns the sub, a dry 808 snare with the noise cranked, late, hats in triplets that slur on beat 3, an 808 cowbell on the off-beats, dry, pitched to the key, the hook is the verse with one more sound. hint: an electric guitar through a fuzz pedal and a half-open wah, one slow bend per bar, feedback swelling into the next.
+Memphis phonk instrumental, slowed samples, distorted 808, 138 BPM, half-time, in G minor, instrumental, dark, snare dead on, kick early, shaky hat retriggers under the loop, hats dragging on beat 3, minimal, single loop, never changes, bit-mangled lead, low register lead, the syrupy synth, a faint hint of the wah lament, murky lo-fi mix, the sub kept clean, loud and crunchy. lead: a syrupy slowed-down synth lead with a pitch sag, hard-clipped on every transient, playing a stubborn root note leaning on the flat sixth. bass: a long 808 that slides between every note like it is dragging, landing a hair behind the kick. drums: a kick that hits late on 1 and early on 3, never straight, a dry 808 snare with the noise cranked, late, a shaker loop off a tape, wobbling, an 808 cowbell on the off-beats, dry, pitched to the key, the hook is the verse with one more sound. hint: an electric guitar through a fuzz pedal and a half-open wah, one slow bend per bar, feedback swelling into the next.
 ```
 
 ## 8. POST-GEN NOTES

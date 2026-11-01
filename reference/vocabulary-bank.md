@@ -694,6 +694,10 @@ Bass patterns:
 - a tight kick doubled before the clap
 - a clean thumpy kick, the low end left to the 808
 - a kick on beat 1 and the and of 3, nothing else
+- a round kick with the click filtered off, tucked under the 808
+- a kick that lands a 16th early on the last beat of every 2nd bar
+- two short kicks stacked on the one, the second a hair softer
+- a kick that skips beat 3 entirely in the verse
 
 **Snare**
 - a big layered clap on two and four, wide
@@ -702,6 +706,10 @@ Bass patterns:
 - a finger snap stacked on a clap, slightly out of sync
 - a clap stacked with a snap, loud and dry
 - a huge dry clap, a hair late
+- a snap and a clap layered a few milliseconds apart, bright
+- a short dry snare with a high ring, the tail cut on the next hat
+- a clap on 2 and 4 with one extra clap on the and of 4 every bar
+- a tight snare tuned high, hit softer in the verse, hard in the hook
 
 **Hats**
 - tight closed hats in uneven 16ths, the accents bouncing
@@ -710,6 +718,10 @@ Bass patterns:
 - sparse 8th hats with one open hat per bar
 - a shaker bouncing on the off-beats instead of hats
 - clicky percussion in place of hats, tongue-click style
+- hats in 8ths with every fourth hat open and cut dead
+- two hat sounds trading 16ths, one bright, one dull
+- hats that fall to half speed for one bar, then snap back
+- a tight hat on every 8th and a pitched-up tick on every third 16th
 
 **Exclude Styles:** vocals, humming, ad-libs, vocal chops, drum fills, snare rolls, risers, sweeps, transitions, dark trap, drill, lo-fi, EDM, dubstep, orchestral
 
@@ -810,6 +822,9 @@ Bass patterns:
 - a kick pushed slightly ahead on the and of 3, the rest late
 - a live kick doubled on the and of 1, loose
 - a kick a hair behind the bass so the pocket leans back, the hats dead straight
+- a boomy kick with the front head left on, resonant, played soft
+- a kick doubled on the and of 2 only in the hook, loose
+- a kick that waits for the bass and lands a hair after it
 
 **Snare**
 - a snare with a wallet on the head, tuned low and dead, hit a hair late and hard for it
@@ -819,6 +834,9 @@ Bass patterns:
 - a snare hit with the butt end of the stick, dry and cracking, behind the beat
 - a snare with a quick quiet extra tap before beat 4
 - a brushed snare on 2 and 4, soft and late
+- a snare rimshot on 2 and a full hit on 4, both a hair late
+- a snare played with a towel over the head, dead and dry, late
+- a snare tuned loose, the buzz ringing into the next kick
 
 **Hats**
 - hand-played hats, every hit a different pressure, dragging behind the kick
@@ -827,6 +845,9 @@ Bass patterns:
 - hats played soft with one loud accent per bar, pulled late
 - a shaker played by hand instead of hats, the accents wandering
 - closed hats in lazy 16ths, the off-beats late
+- a hat pattern that opens once per bar on the and of 4, wet and late
+- hats played with the tip of the stick, quiet and uneven, the ride bell on beat 3
+- a shaker in one hand and a hat in the other, the two never quite together
 
 **Exclude Styles:** vocals, humming, ad-libs, vocal chops, drum fills, snare rolls, risers, transitions, trap hi-hats, 808, drum machine, smooth jazz, elevator music, EDM, lo-fi
 
@@ -912,6 +933,9 @@ Bass patterns:
 - a syncopated double kick before the snare
 - a dry knocking kick placed slightly ahead of the grid
 - a kick that only hits twice per bar
+- a kick layered with a low tom hit, the tom tuned to the key
+- a kick that stutters twice before beat 3 then rests
+- a dead kick with the beater buried, placed a 16th ahead of the 808
 
 **Snare**
 - a hard sampled snare compressed until it cracks, a hair late
@@ -920,6 +944,9 @@ Bass patterns:
 - a snare with a quiet extra tap right before beat 4
 - a crisp dry snare with a heavy transient snap
 - a half-time snare on 3 only
+- a snare stacked with a clap and a rimshot, the rimshot a hair early
+- a crunchy sampled snare with two quiet taps after it, by hand
+- a snare pitched down a fourth and hit once per bar on 3, heavy
 
 **Hats**
 - trap hats in uneven 16ths that twitch into 32nds then stop dead
@@ -928,6 +955,9 @@ Bass patterns:
 - crunchy bitcrushed hats, half-open on the off-beats
 - one hat pattern that flips to double speed in the hook
 - trap hats pitched up a step on the last beat
+- hats that run straight for three bars and stop dead for the fourth
+- a hat pattern that doubles on the and of every beat, tight and dry
+- crunchy hats in 16ths with one 32nd burst at the end of each bar
 
 **Exclude Styles:** vocals, humming, ad-libs, vocal chops, choir, drum fills, snare rolls, risers, transitions, film score, cinematic, drill, lo-fi, EDM, smooth jazz
 
@@ -994,6 +1024,9 @@ Bass patterns:
 - a kick that skips the one and lands on the and, slow
 - an 808 kick doubled before the snare, dragging
 - a boomy kick with the low end cut so the 808 owns the sub
+- an 808 kick pitched down a step, long and sagging, late
+- a kick sampled off a damaged tape, wobbling, on 1 and the and of 2
+- a kick that hits late on 1 and early on 3, never straight
 
 **Snare**
 - a dry 808 snare with the noise cranked, late
@@ -1001,6 +1034,9 @@ Bass patterns:
 - a crunchy sampled snare off a cassette, cracking
 - a snare and clap stacked, pitched down, dragging behind the kick
 - a dry sampled snare that lands late and heavy
+- an 808 snare and a clap played a 32nd apart, smeared
+- a snare pitched down until it thuds, the noise tail cut short
+- a cassette-sampled snare with the hiss riding on it, late
 
 **Hats**
 - 808 closed hats in lazy 8ths dragging behind the kick
@@ -1008,6 +1044,9 @@ Bass patterns:
 - a shaker loop off a tape, wobbling
 - sparse hats that twitch into 32nds then stop dead
 - hand-played 808 hats, every hit a different velocity, late
+- 808 hats in 8ths that drag further behind the kick every bar, then reset
+- a hat pattern that sits out one bar in two, the cowbell holding time
+- closed 808 hats in triplets, lazy, with one open hat a hair late
 
 **Percussion colour**
 - an 808 cowbell knocking a two-note pattern between the kicks, never the melody
@@ -1141,6 +1180,9 @@ Bass patterns:
 - a sampled kick off a cassette, dull and dragging
 - a live kick with the beater click audible, hit a hair late
 - a kick that skips the one and lands on the and, slow
+- an 808 kick under a live kick, the live one a hair late
+- a kick that waits for the bass and lands a hair after it
+- a dead kick with the beater buried, placed a 16th ahead of the 808
 
 **Snare**
 - a dry 808 snare with the noise cranked, late
@@ -1148,12 +1190,18 @@ Bass patterns:
 - a crunchy sampled snare off a cassette, cracking
 - a snare with a quick quiet extra tap before beat 4
 - a big layered clap on two and four, wide
+- a snare with a wallet on the head, tuned low and dead, hit a hair late and hard for it
+- a snare rimshot on 2 and a full hit on 4, both a hair late
+- an 808 snare and a clap played a 32nd apart, smeared
 
 **Hats**
 - 808 closed hats in lazy 8ths dragging behind the kick
 - hand-played hats, every hit a different pressure, dragging behind the kick
 - hats in triplets that slur on beat 3
 - sparse hats that twitch into 32nds then stop dead
+- a shaker in one hand and a hat in the other, the two never quite together
+- 808 hats in 8ths that drag further behind the kick every bar, then reset
+- hats played with the tip of the stick, quiet and uneven, the ride bell on beat 3
 
 **Percussion colour**
 - an 808 cowbell knocking a two-note pattern between the kicks, never the melody
