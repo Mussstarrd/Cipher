@@ -130,3 +130,11 @@ The same actions exist as `python3 -m releaseline new|list|prompts|cut|assemble|
 feedback`; see README. Errors, including wrong or missing arguments, are one line starting
 with "Error:" and exit code 1; only unexpected failures exit 2. On a Python older than
 3.10 the only output is "ReleaseLine needs Python 3.10 or newer. You have X.Y."
+
+## From your phone
+
+Start the app on the computer with `python3 -m releaseline serve --host 0.0.0.0`. The
+terminal prints the address to type into the phone's browser (same Wi-Fi). Every screen
+works at phone width; the Upload stage stacks into blocks. Paths you type are paths on
+the computer. See README "Using it from your phone" for the Termux route if you want the
+whole app on an Android phone.

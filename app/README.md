@@ -32,8 +32,48 @@ python3 -m releaseline serve
 or `./run.sh` (macOS/Linux) or `run.bat` (Windows). A browser tab opens at
 `http://127.0.0.1:8477/`. Press Ctrl+C in the terminal to stop.
 
-Options: `--port 8500`, `--no-browser`. Environment: `RELEASELINE_PORT` (default 8477),
+Options: `--port 8500`, `--no-browser`, `--host 0.0.0.0` (see "Using it from your phone").
+Environment: `RELEASELINE_PORT` (default 8477), `RELEASELINE_HOST` (default 127.0.0.1),
 `RELEASELINE_DATA` (default `./data`).
+
+## Using it from your phone
+
+ReleaseLine is a small web app, so your phone just needs a browser. There are two ways.
+
+**A. Run it on the computer, open it on the phone (recommended).** Your tracks, FL
+Studio, and the downloaded files already live on the computer, so keep the app there and
+use the phone as a second screen for checklists, prompts, and upload links.
+
+1. Put the phone and the computer on the same Wi-Fi.
+2. Start the app so it accepts connections from the network:
+   ```
+   python3 -m releaseline serve --host 0.0.0.0
+   ```
+   (`run.bat --host 0.0.0.0` on Windows.) The terminal prints a line like
+   `On your phone (same Wi-Fi), open: http://192.168.1.23:8477/`.
+3. Type that address into the phone's browser. Add it to the home screen for an
+   app-like icon (Chrome: menu → *Add to Home screen*).
+4. Windows may ask once whether to allow Python through the firewall; allow it for
+   private networks only.
+
+While it runs with `--host 0.0.0.0`, anyone on that Wi-Fi can open the app. Stop it with
+Ctrl+C when you are done, or run without `--host` for computer-only use. File paths you
+type on the phone are paths *on the computer*, because that is where the app runs.
+
+**B. Run it on the phone itself (Android, Termux).** Fully offline and portable, but Cut
+and Assemble are slower and the audio and video files must be on the phone.
+
+1. Install [Termux](https://f-droid.org/packages/com.termux/) from F-Droid (the Play
+   Store build is outdated).
+2. In Termux: `pkg update && pkg install python ffmpeg git`
+3. `termux-setup-storage` once, so the app can read files in your phone's storage
+   (Downloads is `~/storage/downloads`).
+4. Get the code: `git clone <this repository> && cd <repo>/app`
+5. `python3 -m releaseline serve --no-browser`, then open `http://127.0.0.1:8477/` in
+   Chrome. Keep Termux open in the background while you use it (acquire a wake lock from
+   the Termux notification if Android keeps killing it).
+
+iPhones cannot run the Python server locally; use route A.
 
 ## Test (one command)
 

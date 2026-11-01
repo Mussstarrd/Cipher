@@ -448,13 +448,45 @@ def make_server(app: App, host: str = "127.0.0.1", port: int = 0) -> ThreadingHT
     return srv
 
 
-def serve(port: int, open_browser: bool = True, base: Path | None = None) -> None:
+def lan_addresses() -> list[str]:
+    """Best-effort list of this machine's non-loopback IPv4 addresses (for phone access)."""
+    import socket
+    found: list[str] = []
+    try:
+        for info in socket.getaddrinfo(socket.gethostname(), None, socket.AF_INET):
+            ip = info[4][0]
+            if not ip.startswith("127.") and ip not in found:
+                found.append(ip)
+    except OSError:
+        pass
+    if not found:
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+                s.connect(("10.255.255.255", 1))  # no packets are sent; picks the LAN interface
+                ip = s.getsockname()[0]
+                if not ip.startswith("127."):
+                    found.append(ip)
+        except OSError:
+            pass
+    return found
+
+
+def serve(port: int, open_browser: bool = True, base: Path | None = None,
+          host: str = "127.0.0.1") -> None:
     app = App(base)
     with app.db():  # fail early with a sentence if the database is unusable
         pass
-    srv = make_server(app, port=port)
-    url = f"http://127.0.0.1:{srv.server_address[1]}/"
+    srv = make_server(app, host=host, port=port)
+    real_port = srv.server_address[1]
+    url = f"http://127.0.0.1:{real_port}/"
     print(f"ReleaseLine is running at {url}")
+    if host not in ("127.0.0.1", "localhost"):
+        ips = lan_addresses()
+        if ips:
+            print("On your phone (same Wi-Fi), open: " + "  or  ".join(f"http://{ip}:{real_port}/" for ip in ips))
+        else:
+            print(f"On your phone (same Wi-Fi), open http://<this computer's IP>:{real_port}/")
+        print("Anyone on this network can open the app while it runs with --host. Stop it with Ctrl+C when done.")
     print(f"Data folder: {app.base}")
     print("Press Ctrl+C to stop.")
     if open_browser:

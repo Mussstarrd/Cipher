@@ -20,6 +20,33 @@ class CliTests(TempDataCase):
         self.assertEqual(code, 0, err)
         self.assertIn("No tracks yet", out)
 
+    def test_serve_host_flag_is_accepted_and_blank_host_is_refused(self):
+        code, out, err = self.run_cli("serve", "--host", "   ", "--no-browser", "--port", "8477")
+        self.assertEqual(code, 1)
+        self.assertIn("--host should be an address", err)
+        self.assertNotIn("Traceback", err)
+        # A real bind on all interfaces, port 0, then stop it quickly.
+        import socket
+        with socket.socket() as sock:
+            sock.bind(("127.0.0.1", 0))
+            free_port = sock.getsockname()[1]
+        env = dict(os.environ, RELEASELINE_DATA=str(self.data))
+        proc = subprocess.Popen([sys.executable, "-m", "releaseline", "serve", "--host", "0.0.0.0",
+                                 "--port", str(free_port), "--no-browser"], cwd=str(APP_DIR), env=env,
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        try:
+            import time
+            deadline = time.time() + 10
+            first = ""
+            while time.time() < deadline and not first:
+                first = proc.stdout.readline()
+            self.assertIn("ReleaseLine is running at", first)
+            phone_line = proc.stdout.readline()
+            self.assertIn("On your phone", phone_line)
+        finally:
+            proc.terminate()
+            proc.wait(timeout=10)
+
     def test_cut_on_missing_track_is_user_error(self):
         code, out, err = self.run_cli("cut", "nope", "--start", "0:10")
         self.assertEqual(code, 1)

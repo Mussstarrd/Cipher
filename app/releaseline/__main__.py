@@ -38,6 +38,9 @@ def build_parser() -> argparse.ArgumentParser:
     s = sub.add_parser("serve", help="start the local web app")
     s.add_argument("--port", type=int, default=None, help="port (default $RELEASELINE_PORT or 8477)")
     s.add_argument("--no-browser", action="store_true", help="do not open a browser tab")
+    s.add_argument("--host", default=None,
+                   help="address to listen on (default $RELEASELINE_HOST or 127.0.0.1; "
+                        "use 0.0.0.0 to open it to your phone on the same Wi-Fi)")
 
     n = sub.add_parser("new", help="create a track")
     n.add_argument("title")
@@ -113,7 +116,12 @@ def run_command(args) -> int:
                 raise UserError(f"RELEASELINE_PORT should be a number, not '{raw}'.")
         if not 1 <= port <= 65535:
             raise UserError("Port must be between 1 and 65535.")
-        serve(port, open_browser=not args.no_browser and not os.environ.get("RELEASELINE_NO_BROWSER"),
+        host = args.host or os.environ.get("RELEASELINE_HOST", "127.0.0.1")
+        if host == "lan":
+            host = "0.0.0.0"
+        if not host.strip():
+            raise UserError("--host should be an address like 127.0.0.1 or 0.0.0.0.")
+        serve(port, host=host, open_browser=not args.no_browser and not os.environ.get("RELEASELINE_NO_BROWSER"),
               base=base)
         return 0
 
