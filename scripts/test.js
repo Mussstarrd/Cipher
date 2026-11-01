@@ -10,6 +10,7 @@ const Guard = require('../lib/guard');
 const G = require('../lib/grammar');
 const { LANES } = require('../lib/lanes');
 const { LAYOUTS, estimate } = require('../lib/layouts');
+const HINTS = require('../lib/hints');
 const { generate, SPEC } = require('../lib/engine');
 const { checkBlock, parseMarkdownBlock } = require('../lib/qa');
 const { renderBlock } = require('../lib/render');
@@ -33,6 +34,7 @@ test('every grammar, lane and layout string passes the guard', () => {
   walk(G, 'grammar', null, null);
   for (const [id, l] of Object.entries(LANES)) walk({ anchors: l.anchors, neutralAnchor: l.neutralAnchor, FAMILIES: l.FAMILIES, bass: l.bass, bassPattern: l.bassPattern, drums: l.drums, color: l.color, mixTag: l.mixTag, neutralMixTag: l.neutralMixTag }, `lanes.${id}`, l.allow, l.deny);
   walk(LAYOUTS.map((l) => l.sections), 'layouts', null, null);
+  walk(HINTS, 'hints', null, null);
 });
 
 test('the guard catches the known drift words and names', () => {
@@ -128,11 +130,30 @@ test('phrase variety: no single kick, snare or hats phrase dominates a lane', ()
   }
 });
 
+test('hints: present on roughly half of rolls, every family appears, handle reaches head, style and lyrics; hook device in the lead line', () => {
+  const fams = {}; let withHint = 0, N = 0;
+  for (const lane of LANE_IDS) for (const seed of SEEDS.slice(0, 300)) {
+    const b = generate({ lane, seed }); N++;
+    assert.ok(b.style.includes(b.parts.lead.hook) || b.style.length >= 900, `${lane}/${seed}: hook device missing with room to spare`);
+    if (!b.parts.hint) continue;
+    withHint++; fams[b.parts.hint.family] = (fams[b.parts.hint.family] || 0) + 1;
+    assert.ok(b.style.slice(0, 380).includes(b.parts.hint.handle), `${lane}/${seed}: hint handle not in head: ${b.style}`);
+    assert.ok(b.style.includes('hint:'), `${lane}/${seed}: hint line lost`);
+    assert.ok(b.lyrics.includes(b.parts.hint.handle), `${lane}/${seed}: hint handle not in lyrics:\n${b.lyrics}`);
+    assert.ok(checkBlock(b).ok);
+  }
+  assert.ok(withHint > N * 0.45 && withHint < N * 0.7, `${withHint}/${N} rolls carry a hint`);
+  for (const f of Object.keys(HINTS.HINT_FAMILIES)) assert.ok(fams[f] > 20, `${f}: ${fams[f] || 0}`);
+  const forced = generate({ lane: 'paak-pocket', seed: 3, hint: 'machineglitch' });
+  assert.strictEqual(forced.parts.hint.family, 'machineglitch');
+  assert.strictEqual(generate({ lane: 'paak-pocket', seed: 3, hint: 'none' }).parts.hint, null);
+});
+
 test('user mood and must-have words are guarded', () => {
   const b = generate({ lane: 'paak-pocket', seed: 1, mood: 'sun-soaked, swung, late-night', constraints: 'a choir pad, horn stabs up front' });
   assert.ok(b.style.includes('sun-soaked') && b.style.includes('late-night') && b.style.includes('horn stabs up front'));
   assert.ok(!/\bswung\b|choir/.test(b.style));
-  assert.ok(b.warnings.length === 2, b.warnings.join(' | '));
+  assert.strictEqual(b.warnings.filter((w) => /dropped/.test(w)).length, 2, b.warnings.join(' | '));
   assert.ok(checkBlock(b).ok);
 });
 

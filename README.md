@@ -32,6 +32,10 @@ node forge.js lanes | layouts | spec
 | `phonk-experimental` | Memphis-rooted phonk: slowed and sliced samples, cassette grit, 808 cowbell knocks, blown-out 808, a slow dragging pocket. Not drift phonk | 132-146 half-time, or 66-74 |
 | `hybrid` | Cassette cowbell drums under a live tine-and-bass pocket with bright plucks on top | 136-148 half-time, or 88-98 |
 
+## What makes a roll one of one
+
+About half of rolls carry a **hint**: one strange ingredient in the counter's seat, described physically and named in the head tags and one Lyrics tag. A fuzz-and-wah guitar lament with tape echo trailing behind it; a machine glitch (a chord sliced into a skipping-disc stutter, a tuned machine-shop clank, ring-modulated stabs); a nervous horn twitch (three horn jabs then silence, guitar chucks, a tambourine in bursts, recorded hot to tape); or a piano or string **hit structure** ("struck in a 3+2 pattern, five hits per bar, the last damped by hand"). Every lead line also carries one **hook device** from earworm research (repeat four times with one note changed; stop one note short of the root; a full beat of silence right before the hook). Pick a hint on the page under More options, or `--hint fuzzlament|machineglitch|staxtwitch|hits|none`.
+
 ## How a roll is built
 
 1. **Lane, key, tempo, layout.** Keys avoid the last four; the live lane leans Dorian and major-7 loops, the dark lanes stay minor. The lyrics layout (three loop, five straight, three switch) is picked first and decides the mode.

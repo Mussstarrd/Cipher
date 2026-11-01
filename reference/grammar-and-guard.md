@@ -40,6 +40,19 @@ Every section change in Suno grows a fill, a riser or a fourth-bar roll unless y
 
 Syncopation, a drunken triplet slur on beat 3, twitchy percussion, and non-quantised feel, in hip hop language. The beat-3 slur is never "waltz", "lilt", "shuffle", "swing" or a time signature: those come back as carnival or jazz-club music. Say it physically: "the 808 stumbles into three on beat 3", "beat 3 trips, beat 4 straightens", "the pocket slips drunk on beat 3". Humanising words that work: "played by hand", "the second note always a hair late", "a few cents off, never corrected", "breath noise left in", "one take, the mistakes left in", "resampled until the grain shows". Modifiers "slight" and "subtle" keep imperfection from tipping into chaos. The slur tag appears on about 60% of rolls; a fingerprint on every roll becomes a rut.
 
+## 5b. Hints and hook devices: the anti-generic layer
+
+Random vocabulary makes random music; a lane makes radio music; a **hint** makes one of one. About half of rolls carry one strange ingredient in the counter's seat (`lib/hints.js`), named in the head ("a faint hint of the crying fuzz guitar"), described in a `hint:` line after the drums, and placed in one Lyrics tag by its handle. Four families, each physical:
+
+- **fuzz lament**: a fuzz-and-wah guitar wailing one bent note with tape echo trailing out of time, feedback swelling, played slow like a funeral, mixed under the drums.
+- **machine glitch**: a distorted chord sliced into a skipping-disc stutter, a machine-shop clank tuned to the key, bit-reduced hits, ring-modulated stabs, gated noise in uneven bursts.
+- **nervous horn twitch**: a trumpet-and-baritone stack jabbing three stabs then silence, clean guitar chucks on the and of 2 and 4, a tambourine in nervous bursts, organ stabs with the percussion click on; recorded hot to tape, a hair ahead.
+- **hit structures**: a piano or string hit described as a rhythmic cell and a way of striking and damping it: "a grand piano struck in a 3+2 pattern, five hits per bar, the last damped by hand", "a string section stab slammed on beat 1, then three quieter stabs falling by half steps", "a prepared piano cluster struck twice then muted with the palm".
+
+Each lane weights the families (the live lane leans horn twitch, the dark and phonk lanes lean glitch and lament, every lane likes hit structures). A hint never doubles the lead's family. The safer variation drops the hint; `--hint none` or `--hint hits` forces it.
+
+Every lead line also carries one **hook device** from earworm research (short contour, one unusual interval, repetition with one change, an ending left unresolved, a gap before the hook): "the hook repeats four times, the fourth time with one note changed", "the phrase stops one note short of the root, every time", "a full beat of silence right before the hook, then the hook". Sources and the numbers behind them: `research/06-addictive-sound-theory.md`.
+
 ## 6. The guard (`lib/guard.js`)
 
 Word classes that sent a rendered take somewhere the prompt did not intend. A regex guard runs over every finished prompt and, in the test suite, over every string in the grammar, lanes and layouts.

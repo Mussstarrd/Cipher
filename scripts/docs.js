@@ -5,6 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const G = require('../lib/grammar');
 const { LANES } = require('../lib/lanes');
+const HINTS = require('../lib/hints');
 const root = path.join(__dirname, '..');
 const bullets = (arr) => arr.map((x) => `- ${x}`).join('\n');
 const fam = (name, f) => `**${name}** (${f.frame})\n\nSources (description | handle):\n${bullets(f.sources.map((s) => s.replace('|', ' | ')))}\n\nProcessing characters:\n${bullets(f.character)}\n`;
@@ -35,6 +36,15 @@ Generated from \`lib/grammar.js\` and \`lib/lanes.js\` by \`node scripts/docs.js
 ## Guest families (experimental palette any lane may borrow for the lead)
 
 ${Object.entries(G.FAMILIES).map(([n, f]) => fam(n, f)).join('\n')}
+
+## Hints (one strange ingredient per roll, about half the time)
+
+A hint takes the counter's seat, gets "a <word> hint of <handle>" in the head tags, a \`hint:\` line after the drums line (it outlives the counter in the cut order), and its handle reaches one Lyrics tag. Families, with their roles:
+
+${Object.entries(HINTS.HINT_FAMILIES).map(([n, f]) => `${fam(n, f)}\nRoles:\n${bullets(f.roles)}\n`).join('\n')}
+## Hook devices (one in every lead line; from earworm research, see research/06-addictive-sound-theory.md)
+
+${bullets(HINTS.HOOK_DEVICES)}
 `;
 for (const [id, l] of Object.entries(LANES)) {
   md += `\n## Lane \`${id}\`: ${l.label}\n\n${l.blurb}\n\n**Anchors** (sound-neutral when the lead is a guest: "${l.neutralAnchor}")\n${bullets(l.anchors)}\n\n**Mix tag:** ${l.mixTag} (neutral: ${l.neutralMixTag})\n\n**Tempo:** ${l.tempo.map((t) => t.join('-')).filter((x, i, a) => a.indexOf(x) === i).join(' or ')} BPM (half-time above ${l.halfTimeAbove}). Major share ${l.majorShare}, soul/Dorian loops ${l.soulShare}, slur tag ${l.slurShare}, low lead ${l.lowShare}. Modes ${l.modes.map(([m, w]) => `${m} ${w}`).join(', ')}. Sliders Weirdness ${l.sliders.weirdness.join('-')}, Style Influence ${l.sliders.styleInfluence.join('-')}.\n\n`;

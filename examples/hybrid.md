@@ -2,7 +2,7 @@
 
 # suno-forge prompt block: Phonk drums + neo-soul pocket + trap-pop brightness
 
-Lane `hybrid` | 142 BPM (half-time feel) | F minor (i - bVI: Fm - Db) | layout: A then B, two beats one song (switch) | about 2:52, full beat at 0:03 | seed 2026
+Lane `hybrid` | 142 BPM (half-time feel) | F minor (i - bVI: Fm - Db) | layout: A then B, two beats one song (switch) | about 3:03, full beat at 0:14 | seed 2026
 
 ## 1. MODEL
 **Pick:** v6
@@ -16,35 +16,35 @@ Lane `hybrid` | 142 BPM (half-time feel) | F minor (i - bVI: Fm - Db) | layout: 
 - **Max Mode:** ON. ON for any instrumental over ~2:00; OFF for 30-60 s palette tests (2x (20 per generation vs 10)). Max Mode also keeps silences silent on minimal rolls.
 - **Variety:** Off. Any setting above Off rewrites and expands the Style text before the model sees it (official FAQ: 'reduce the Variety slider to 0 to retain full control of your style tags'). Engineered prompts must run at Off.
 - **Persona:** NO. Voices (formerly Personas; Style Personas live inside the Voices menu): In-app text: 'Songs with Voices cannot be instrumental.' Not used in this workflow.
-- **Duration:** Custom 3:05 (estimated 2:52 from the layout at 142 BPM, plus a buffer rounded up to the next 5 s; [End] stops it early, Crop any tail). Never Auto: v6 runs long on Auto.
-- **Song Title:** Cassette Alibi
+- **Duration:** Custom 3:15 (estimated 3:03 from the layout at 142 BPM, plus a buffer rounded up to the next 5 s; [End] stops it early, Crop any tail). Never Auto: v6 runs long on Auto.
+- **Song Title:** Static Porch
 
-## 3. STYLE FIELD (958/1000 chars; head tags first, then lead / bass / drums / counter)
+## 3. STYLE FIELD (986/1000 chars; head tags first, then lead / bass / drums / counter)
 ```text
-phonk drums, tine piano and bass guitar, bouncy bright hook, 142 BPM, half-time, in F minor, instrumental, sunny and dark at once, off-beat 808 hits, clipped hat bursts, beat switch, key falls, bright plucks on top, lead parked in the low mids, the bouncing pluck doubled an octave down, clean loud master, cassette drums, bright top. lead: a bright plucked synth hook, two notes bouncing an octave, every hit cut short, doubled an octave down, the low copy louder, off-beat stabs on the and of 2 and 4, bent into pitch by hand, never landing in tune twice, mono center, out of the kick's way. bass: a fretless-style bass guitar over a clean sine sub, following the kick exactly. drums: a sampled kick off a cassette, dull and dragging, a big layered clap on two and four, wide, hand-played hats, every hit a different pressure, dragging behind the kick, a cowbell knock answering the snare, three hits then nothing, the loop runs flat through every section.
+Memphis cowbell drums under a live soul pocket, bright plucks on top, 142 BPM, half-time, in F minor, instrumental, sunny and dark at once, snare early, 808 late, broken percussion loop, three-note stumble on beat 3, hard beat switch halfway, bright plucks on top, low register lead, the bouncing pluck doubled an octave down, clean loud master, cassette drums, bright top. lead: a bright plucked synth hook, two notes bouncing an octave, every hit cut short, doubled an octave down, the low copy louder, off-beat stabs on the and of 2 and 4, the hook is the lead's phrase with the middle note missing. bass: a fretless-style bass guitar over a clean sine sub. drums: an 808 drum-machine kick, boomy and long, hit a hair late, a dry 808 snare with the noise cranked, late, hand-played hats, every hit a different pressure, dragging behind the kick, a cowbell knock answering the snare, three hits then nothing, beat 3 drags, beat 4 catches up, the hook is the verse with one more sound.
 ```
 
-## 4. LYRICS FIELD (832/5000 chars; section tags only, no words)
+## 4. LYRICS FIELD (811/5000 chars; section tags only, no words)
 ```text
 [Instrumental]
 
-[Intro | the bouncing pluck alone, 2 bars]
+[Intro | the bouncing pluck alone, 8 bars]
 
-[Hook | beat A, off-beat 808 hits, the bouncing pluck up front, the loop runs flat through every section]
+[Hook | beat A, snare early, 808 late, the bouncing pluck up front, the hook is the verse with one more sound]
 
-[Verse | beat A, same drums, unquantized, snare a hair late, a bitcrushed clap fragment in a quick double hit right before the snare]
+[Verse | beat A, same drums, beat 3 drags, beat 4 catches up, stuttered kick retriggers retriggering at triple speed for one beat, around the 808 slides]
 
-[Hook | beat A, identical, the mallet hook answering]
+[Hook | beat A, identical, the reed piano answering]
 
-[Beat Switch | key falls a minor third, the lead pitched down, same drums]
+[Beat Switch | everything strips to 808 and one snare, the lead pitched down an octave]
 
-[Hook | beat B, in the lower key, the lead pitched down, the bouncing pluck up front]
+[Hook | beat B, stripped to 808 and snare, the bouncing pluck up front]
 
-[Verse | beat B, in the lower key, the lead pitched down, the mallet hook answering, unquantized, snare a hair late]
+[Verse | beat B, stripped to 808 and snare, the reed piano answering, a slight push into each snare]
 
-[Hook | beat B, in the lower key, the lead pitched down, a second copy an octave down, louder in the hook]
+[Hook | beat B, stripped to 808 and snare, a second copy an octave down, louder in the hook]
 
-[Outro | beat B, in the lower key, the lead pitched down, stops dead on beat 1]
+[Outro | beat B, stripped to 808 and snare, stops dead on beat 1]
 
 [End]
 ```
@@ -55,30 +55,31 @@ vocals, humming, ad-libs, vocal chops, drum fills, snare rolls, risers, transiti
 ```
 
 ## 6. SLIDERS
-- **Weirdness:** 60% — Phonk drums + neo-soul pocket + trap-pop brightness: the lane's tested range is 50-60; above 60 Suno starts drifting tempo and structure.
-- **Style Influence:** 72% — High so the physical descriptions are followed; 70-80 landed closest to the written prompt.
+- **Weirdness:** 59% — Phonk drums + neo-soul pocket + trap-pop brightness: the lane's tested range is 50-60; above 60 Suno starts drifting tempo and structure.
+- **Style Influence:** 73% — High so the physical descriptions are followed; 70-80 landed closest to the written prompt.
 - **Audio Influence:** Not used. No audio is uploaded in this workflow, so the slider does not appear; leave it alone.
 - **Variety:** Off (Exact style). Any setting above Off rewrites and expands the Style text before the model sees it (official FAQ: 'reduce the Variety slider to 0 to retain full control of your style tags'). Engineered prompts must run at Off.
 
 ## 7. VARIATIONS
-**A. Safer** (v6, Weirdness 50%, Style Influence 77%; 982 chars). Sound-neutral anchor, no twitch or slur tags: the plainest reading of the same sounds.
+**A. Safer** (v6, Weirdness 49%, Style Influence 78%; 958 chars). Sound-neutral anchor, no twitch or slur tags, no hint: the plainest reading of the same sounds.
 ```text
-hybrid hip hop instrumental, cassette drums, live pocket, 142 BPM, half-time, in F minor, instrumental, sunny and dark at once, beat switch, key falls, bright plucks on top, lead parked in the low mids, the bouncing pluck doubled an octave down, clean loud master, cassette drums. lead: a bright plucked synth hook, two notes bouncing an octave, every hit cut short, doubled an octave down, the low copy louder, off-beat stabs on the and of 2 and 4, bent into pitch by hand, never landing in tune twice. bass: a fretless-style bass guitar over a clean sine sub, following the kick exactly. drums: a sampled kick off a cassette, dull and dragging, a big layered clap on two and four, wide, hand-played hats, every hit a different pressure, dragging behind the kick, a cowbell knock answering the snare, three hits then nothing, the loop runs flat through every section. counter: a tuned wooden-bar patch hook, the mallet knock left in, bouncy, one long held note under the hook only.
+hybrid hip hop instrumental, cassette drums, live pocket, 142 BPM, half-time, in F minor, instrumental, sunny and dark at once, hard beat switch halfway, bright plucks on top, low register lead, the bouncing pluck doubled an octave down, clean loud master, cassette drums. lead: a bright plucked synth hook, two notes bouncing an octave, every hit cut short, doubled an octave down, the low copy louder, a chest-level melody, felt as much as heard, off-beat stabs on the and of 2 and 4, the hook is the lead's phrase with the middle note missing. bass: a fretless-style bass guitar over a clean sine sub, following the kick exactly. drums: an 808 drum-machine kick, boomy and long, hit a hair late, a dry 808 snare with the noise cranked, late, hand-played hats, every hit a different pressure, dragging behind the kick, a cowbell knock answering the snare, three hits then nothing, beat 3 drags, beat 4 catches up, the hook is the verse with one more sound.
 ```
-**B. Weirder** (v6-wild, Weirdness 67%, Style Influence 70%; 977 chars). One wild tag added; run it on v6-wild.
+**B. Weirder** (v6-wild, Weirdness 78%, Style Influence 67%; 990 chars). One wild tag added; run it on v6-wild.
 ```text
-phonk drums, tine piano and bass guitar, bouncy bright hook, 142 BPM, half-time, in F minor, instrumental, sunny and dark at once, off-beat 808 hits, clipped hat bursts, beat switch, key falls, bright plucks on top, pitch-warped lead, lead parked in the low mids, the bouncing pluck doubled an octave down, clean loud master, cassette drums, bright top. lead: a bright plucked synth hook, two notes bouncing an octave, every hit cut short, doubled an octave down, the low copy louder, off-beat stabs on the and of 2 and 4, bent into pitch by hand, never landing in tune twice, mono center, out of the kick's way. bass: a fretless-style bass guitar over a clean sine sub, following the kick exactly. drums: a sampled kick off a cassette, dull and dragging, a big layered clap on two and four, wide, hand-played hats, every hit a different pressure, dragging behind the kick, a cowbell knock answering the snare, three hits then nothing, the loop runs flat through every section.
+Memphis cowbell drums under a live soul pocket, bright plucks on top, 142 BPM, half-time, in F minor, instrumental, sunny and dark at once, snare early, 808 late, broken percussion loop, three-note stumble on beat 3, hard beat switch halfway, bright plucks on top, drums pitched down a step, low register lead, the bouncing pluck, clean loud master, cassette drums, bright top. lead: a bright plucked synth hook, two notes bouncing an octave, every hit cut short, doubled an octave down, the low copy louder, off-beat stabs on the and of 2 and 4, the hook is the lead's phrase with the middle note missing. bass: a fretless-style bass guitar over a clean sine sub. drums: an 808 drum-machine kick, boomy and long, hit a hair late, a dry 808 snare with the noise cranked, late, hand-played hats, every hit a different pressure, dragging behind the kick, a cowbell knock answering the snare, three hits then nothing, beat 3 drags, beat 4 catches up, the hook is the verse with one more sound.
 ```
 
 ## 8. POST-GEN NOTES
-- Structure: the first full beat lands at about 0:03; the layout is "A then B, two beats one song" and runs about 2:52. The beat switch is one axis ("beat switch, key falls"); its words repeat in the head tag and in every section after the switch so Suno cannot undo it.
+- Structure: the first full beat lands at about 0:14; the layout is "A then B, two beats one song" and runs about 3:03. The beat switch is one axis ("hard beat switch halfway"); its words repeat in the head tag and in every section after the switch so Suno cannot undo it.
+- No hint on this roll; the hook device in the lead line ("the hook is the lead's phrase with the middle note missing") carries the stickiness. Listen for it on the second pass.
 - All three elements must coexist: cassette cowbell drums, a live tine-and-bass pocket, bright plucks. If one is missing, the line that carried it got cut; shorten the counter and re-roll.
 - The drums should drag behind the grid; the kit descriptions say "late" and "dragging" and the slur tag sits in the head.
 - Plucks should stay bright on top of a murky drum bed; the mix tag says "bright top" for this reason.
 - Suno may hum over the tine piano; the Exclude list handles it.
 - Fills, risers or a roll at a section change mean a word slipped through: run the QA checker on the block, and keep the anti-transition phrase in the drums line (it is the positive form of "no fills").
 - Any hum, chant or sung syllable means a re-roll, not a fix: the Exclude list is already complete, so change the seed rather than adding words.
-- Ending: [End] should stop it near 2:52. If it runs on, Crop to the last downbeat. If it stops early, Extend from the last good section and paste only the remaining section tags.
+- Ending: [End] should stop it near 3:03. If it runs on, Crop to the last downbeat. If it stops early, Extend from the last good section and paste only the remaining section tags.
 - Extend when the first 60-90 s are keepers and only the back half drifts. Re-roll (or run the weirder variation on v6-wild) when the drums or the lead are wrong from the start.
 - Remaster: Remaster (Pro/Premier) renders subtle variations and runs on v6; use it on the keeper for a cleaner, louder master.
 - Stems: Get Stems (Pro/Premier): Auto Split up to 12 stems for 50 credits; Split from Mix 10 credits per stem; Advanced Split (choose from ~100 instruments) 10 credits per stem, Premier only.
@@ -88,14 +89,14 @@ phonk drums, tine piano and bass guitar, bouncy bright hook, 142 BPM, half-time,
 
 | # | Section | Bars | Starts |
 |---|---------|------|--------|
-| 1 | Intro | 2 | 0:00 |
-| 2 | Hook | 16 | 0:03 |
-| 3 | Verse | 16 | 0:30 |
-| 4 | Hook | 16 | 0:57 |
-| 5 | Beat Switch | 2 | 1:25 |
-| 6 | Hook | 16 | 1:28 |
-| 7 | Verse | 16 | 1:55 |
-| 8 | Hook | 16 | 2:22 |
-| 9 | Outro | 2 | 2:49 |
+| 1 | Intro | 8 | 0:00 |
+| 2 | Hook | 16 | 0:14 |
+| 3 | Verse | 16 | 0:41 |
+| 4 | Hook | 16 | 1:08 |
+| 5 | Beat Switch | 2 | 1:35 |
+| 6 | Hook | 16 | 1:38 |
+| 7 | Verse | 16 | 2:05 |
+| 8 | Hook | 16 | 2:32 |
+| 9 | Outro | 2 | 2:59 |
 
 </details>

@@ -17,34 +17,34 @@ Lane `paak-pocket` | 94 BPM | D minor (i7 - IV7 (Dorian): Dm7 - G7) | layout: Ha
 - **Variety:** Off. Any setting above Off rewrites and expands the Style text before the model sees it (official FAQ: 'reduce the Variety slider to 0 to retain full control of your style tags'). Engineered prompts must run at Off.
 - **Persona:** NO. Voices (formerly Personas; Style Personas live inside the Voices menu): In-app text: 'Songs with Voices cannot be instrumental.' Not used in this workflow.
 - **Duration:** Custom 3:05 (estimated 2:54 from the layout at 94 BPM, plus a buffer rounded up to the next 5 s; [End] stops it early, Crop any tail). Never Auto: v6 runs long on Auto.
-- **Song Title:** Chrome Alibi
+- **Song Title:** Loose Pulse
 
-## 3. STYLE FIELD (977/1000 chars; head tags first, then lead / bass / drums / counter)
+## 3. STYLE FIELD (968/1000 chars; head tags first, then lead / bass / drums / counter)
 ```text
-funk-soul hip hop instrumental, live drums behind the beat, 94 BPM, in D minor, instrumental, sun-soaked, late-night, syncopated double kicks, clipped hat bursts, beat switch, key falls, lead parked in the low mids, the tine piano warm tube saturation on the attack, warm analog mix, drums up front, natural dynamics. lead: an electric piano with metal tines hit hard, the tremolo wobbling slow, played by hand, warm tube saturation on the attack, playing a nervous half-step shake turned into a riff as off-beat stabs on the and of 2 and 4, bent into pitch by hand, never landing in tune twice, wide stereo with the lows summed to mono. bass: a fretless-style bass guitar sliding into every note late, syncopated 16ths with long rests. drums: a dead-tuned kick with a pillow in it, thumping, a brushed snare on 2 and 4, soft and late, half-open hats that bark on the and of 2, congas played with the palms, two hits before each snare, the loop runs flat through every section.
+neo-soul hip hop instrumental, live pocket, bass guitar, 94 BPM, in D minor, instrumental, sun-soaked, late-night, kick a 16th ahead of one, broken percussion loop, beat flips at the midpoint, lead under the snare, the tine piano warm tube saturation on the attack, warm analog mix, drums up front, natural dynamics. lead: an electric piano with metal tines hit hard, the tremolo wobbling slow, played by hand, warm tube saturation on the attack, the melody tuned down an octave, thick and dark, playing a nervous half-step shake turned into a riff as off-beat stabs on the and of 2 and 4, the hook is the lead's phrase with the middle note missing. bass: a picked bass guitar with the tone rolled off, bouncing against the kick, a two-bar line that pushes into beat 1 early. drums: a live kick with the beater click audible, hit a hair late, a fat live snare tuned low, hit off-center, a hair late, a ride cymbal bell ticking uneven 8ths, the same loop the whole way.
 ```
 
-## 4. LYRICS FIELD (812/5000 chars; section tags only, no words)
+## 4. LYRICS FIELD (801/5000 chars; section tags only, no words)
 ```text
 [Instrumental]
 
 [Intro | the tine piano alone, 2 bars]
 
-[Verse | 8 bars, full drums, syncopated double kicks, unquantized, snare a hair late]
+[Verse | 8 bars, full drums, kick a 16th ahead of one, a slight push into each snare]
 
-[Hook | full beat, the tine piano up front, the soul slice answering, the loop runs flat through every section]
+[Hook | full beat, the tine piano up front, the muted trumpet answering, the same loop the whole way]
 
-[Verse | the tine piano thinner, unquantized, snare a hair late, stuttered kick retriggers in a quick double hit right before the snare]
+[Verse | the tine piano thinner, a slight push into each snare, stuttered kick retriggers retriggering at triple speed for one beat, on beat 3]
 
-[Break | drums cut dead, the new section starts on beat 2, not 1]
+[Break | drums cut dead, slowing down into it like the power got cut]
 
-[Beat Switch | key falls a minor third, the lead pitched down, same drums]
+[Beat Switch | the kick pattern flips to the off-beats, the lead stutters and slices itself up]
 
-[Hook | in the lower key, the lead pitched down, a second copy an octave down, louder in the hook]
+[Hook | off-beat kicks, sliced lead, a second copy an octave down, louder in the hook]
 
-[Hook | in the lower key, the lead pitched down, identical, the soul slice answering]
+[Hook | off-beat kicks, sliced lead, identical, the muted trumpet answering]
 
-[Outro | in the lower key, the lead pitched down, drums cut dead, ends on beat 1]
+[Outro | off-beat kicks, sliced lead, drums cut dead, ends on beat 1]
 
 [End]
 ```
@@ -56,22 +56,23 @@ vocals, humming, ad-libs, vocal chops, drum fills, snare rolls, risers, transiti
 
 ## 6. SLIDERS
 - **Weirdness:** 55% — Live neo-soul funk hip hop, drums behind the beat: the lane's tested range is 45-55; above 60 Suno starts drifting tempo and structure.
-- **Style Influence:** 77% — High so the physical descriptions are followed; 75-85 landed closest to the written prompt.
+- **Style Influence:** 84% — High so the physical descriptions are followed; 75-85 landed closest to the written prompt.
 - **Audio Influence:** Not used. No audio is uploaded in this workflow, so the slider does not appear; leave it alone.
 - **Variety:** Off (Exact style). Any setting above Off rewrites and expands the Style text before the model sees it (official FAQ: 'reduce the Variety slider to 0 to retain full control of your style tags'). Engineered prompts must run at Off.
 
 ## 7. VARIATIONS
-**A. Safer** (v6, Weirdness 45%, Style Influence 82%; 914 chars). Sound-neutral anchor, no twitch or slur tags: the plainest reading of the same sounds.
+**A. Safer** (v6, Weirdness 45%, Style Influence 89%; 960 chars). Sound-neutral anchor, no twitch or slur tags, no hint: the plainest reading of the same sounds.
 ```text
-live-band hip hop instrumental, drums played by hand, warm, 94 BPM, in D minor, instrumental, sun-soaked, late-night, beat switch, key falls, lead parked in the low mids, the tine piano warm tube saturation on the attack, warm analog mix, drums up front. lead: an electric piano with metal tines hit hard, the tremolo wobbling slow, played by hand, warm tube saturation on the attack, playing a nervous half-step shake turned into a riff as off-beat stabs on the and of 2 and 4, bent into pitch by hand, never landing in tune twice, wide stereo with the lows summed to mono. bass: a fretless-style bass guitar sliding into every note late, syncopated 16ths with long rests. drums: a dead-tuned kick with a pillow in it, thumping, a brushed snare on 2 and 4, soft and late, half-open hats that bark on the and of 2, congas played with the palms, two hits before each snare, the loop runs flat through every section.
+live-band hip hop instrumental, drums played by hand, warm, 94 BPM, in D minor, instrumental, sun-soaked, late-night, beat flips at the midpoint, lead under the snare, the tine piano warm tube saturation on the attack, warm analog mix, drums up front. lead: an electric piano with metal tines hit hard, the tremolo wobbling slow, played by hand, warm tube saturation on the attack, the melody tuned down an octave, thick and dark, playing a nervous half-step shake turned into a riff as off-beat stabs on the and of 2 and 4, the hook is the lead's phrase with the middle note missing, pressure swelling and fading unevenly under the fingers. bass: a picked bass guitar with the tone rolled off, bouncing against the kick, a two-bar line that pushes into beat 1 early. drums: a live kick with the beater click audible, hit a hair late, a fat live snare tuned low, hit off-center, a hair late, a ride cymbal bell ticking uneven 8ths, the same loop the whole way.
 ```
-**B. Weirder** (v6-wild, Weirdness 67%, Style Influence 70%; 946 chars). One wild tag added; run it on v6-wild.
+**B. Weirder** (v6-wild, Weirdness 74%, Style Influence 68%; 958 chars). One wild tag added; run it on v6-wild.
 ```text
-funk-soul hip hop instrumental, live drums behind the beat, 94 BPM, in D minor, instrumental, sun-soaked, late-night, syncopated double kicks, clipped hat bursts, beat switch, key falls, drums pitched down a step, lead parked in the low mids, the tine piano warm tube saturation on the attack, warm analog mix, drums up front, natural dynamics. lead: an electric piano with metal tines hit hard, the tremolo wobbling slow, played by hand, warm tube saturation on the attack, playing a nervous half-step shake turned into a riff as off-beat stabs on the and of 2 and 4, bent into pitch by hand, never landing in tune twice, wide stereo with the lows summed to mono. bass: a fretless-style bass guitar sliding into every note late, syncopated 16ths with long rests. drums: a dead-tuned kick with a pillow in it, thumping, a brushed snare on 2 and 4, soft and late, half-open hats that bark on the and of 2, the loop runs flat through every section.
+neo-soul hip hop instrumental, live pocket, bass guitar, 94 BPM, in D minor, instrumental, sun-soaked, late-night, kick a 16th ahead of one, broken percussion loop, beat flips at the midpoint, the loop resampled until it smears, lead under the snare, the tine piano warm tube saturation on the attack, warm analog mix, drums up front, natural dynamics. lead: an electric piano with metal tines hit hard, the tremolo wobbling slow, played by hand, warm tube saturation on the attack, the melody tuned down an octave, thick and dark, playing a nervous half-step shake turned into a riff as off-beat stabs on the and of 2 and 4, the hook is the lead's phrase with the middle note missing. bass: a picked bass guitar with the tone rolled off, bouncing against the kick. drums: a live kick with the beater click audible, hit a hair late, a fat live snare tuned low, hit off-center, a hair late, a ride cymbal bell ticking uneven 8ths, the same loop the whole way.
 ```
 
 ## 8. POST-GEN NOTES
-- Structure: the first full beat lands at about 0:26; the layout is "Half-time for the last third" and runs about 2:54. The beat switch is one axis ("beat switch, key falls"); its words repeat in the head tag and in every section after the switch so Suno cannot undo it.
+- Structure: the first full beat lands at about 0:26; the layout is "Half-time for the last third" and runs about 2:54. The beat switch is one axis ("beat flips at the midpoint"); its words repeat in the head tag and in every section after the switch so Suno cannot undo it.
+- No hint on this roll; the hook device in the lead line ("the hook is the lead's phrase with the middle note missing") carries the stickiness. Listen for it on the second pass.
 - The kick and snare should sit behind the grid; if the drums sound programmed, re-roll (the kit descriptions already say late and by hand) and raise Weirdness five points.
 - The tine piano should sound like a real electric piano, not a pad; if it is a pad, the lead line got cut, so shorten the counter and re-roll.
 - Bass should be a bass guitar, not a sub; "808" and "drum machine" are in the Exclude list for this reason.

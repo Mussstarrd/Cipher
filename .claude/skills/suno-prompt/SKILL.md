@@ -19,16 +19,17 @@ Produce ONE copy-ready block with eight labeled sections. The engine does the wr
 | layout | one of `node forge.js layouts` | weighted by lane |
 | constraints | must-have descriptors, comma (guarded; go into the head tags) | none |
 | exclude | extra Exclude Styles terms | none |
+| hint | `fuzzlament` / `machineglitch` / `staxtwitch` / `hits` / `none` (the strange ingredient) | random, about half of rolls |
 | wild | pick v6-wild for this block | off |
 | seed | number or string | random |
 
-Mapping free text: "bouncy, bright, playful, claps" -> connor-price. "Live drums, keys, pocket, bass guitar, warm" -> paak-pocket. "Dark, dense, chops, strings, switch-up" -> jid-dark. "Memphis, cowbell, cassette, slowed, screwed" -> phonk-experimental. Two or more -> hybrid. Nothing specific -> any.
+Mapping free text: "a hint of a mournful fuzz guitar" -> `--hint fuzzlament`; "industrial, glitchy, mechanical" -> `--hint machineglitch`; "urgent horn stabs, Stax-style nerves" -> `--hint staxtwitch`; "a piano/string hit pattern" -> `--hint hits`. "bouncy, bright, playful, claps" -> connor-price. "Live drums, keys, pocket, bass guitar, warm" -> paak-pocket. "Dark, dense, chops, strings, switch-up" -> jid-dark. "Memphis, cowbell, cassette, slowed, screwed" -> phonk-experimental. Two or more -> hybrid. Nothing specific -> any.
 
 ## Procedure
 
 1. Run the generator (it is the source of truth):
    ```bash
-   node forge.js --lane <lane> [--bpm n] [--key "..."] [--mood "..."] [--mode loop|straight|switch] [--constraints "..."] [--exclude "..."] [--seed n] [--wild] --qa
+   node forge.js --lane <lane> [--bpm n] [--key "..."] [--mood "..."] [--mode loop|straight|switch] [--hint hits|fuzzlament|machineglitch|staxtwitch|none] [--constraints "..."] [--exclude "..."] [--seed n] [--wild] --qa
    ```
    Always pass `--seed` (or report the seed the block shows) so the roll can be reproduced.
 2. Read the GENERATOR NOTES and QA footer. A dropped mood word is normal (the guard refused it); explain in one line which word was dropped and why. If QA says FAIL, change the input, never hand-edit around a limit.

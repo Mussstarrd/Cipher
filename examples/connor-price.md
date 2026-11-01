@@ -17,24 +17,24 @@ Lane `connor-price` | 140 BPM (half-time feel) | G minor (i - iv: Gm - Cm) | lay
 - **Variety:** Off. Any setting above Off rewrites and expands the Style text before the model sees it (official FAQ: 'reduce the Variety slider to 0 to retain full control of your style tags'). Engineered prompts must run at Off.
 - **Persona:** NO. Voices (formerly Personas; Style Personas live inside the Voices menu): In-app text: 'Songs with Voices cannot be instrumental.' Not used in this workflow.
 - **Duration:** Custom 3:05 (estimated 2:51 from the layout at 140 BPM, plus a buffer rounded up to the next 5 s; [End] stops it early, Crop any tail). Never Auto: v6 runs long on Auto.
-- **Song Title:** Crooked Ledger
+- **Song Title:** Loose Pulse
 
-## 3. STYLE FIELD (959/1000 chars; head tags first, then lead / bass / drums / counter)
+## 3. STYLE FIELD (963/1000 chars; head tags first, then lead / bass / drums / counter)
 ```text
-bouncy pop hip hop instrumental, bright plucks, big claps, 140 BPM, half-time, in G minor, instrumental, sunny, kick landing on the and, broken percussion loop, beat 3 trips, beat 4 straightens, the beat never lets up, lead parked in the low mids, the syrupy synth hard-clipped on every transient, crisp clean radio mix, bright top, tight low end. lead: a syrupy slowed-down synth lead with a pitch sag, hard-clipped on every transient, playing a four-note minor figure ending on the flat second as 16th stutters that cut out in the verse, notes overlapping a little, like a player who holds too long, panned left with a short slapback on the right. bass: a short punchy 808 following the kick, three notes then nothing. drums: a kick on beat 1 and the and of 3, nothing else, a snappy pitched-up snare with a snap stacked on top, a shaker bouncing on the off-beats instead of hats, beat 3 drags, beat 4 catches up, the beat stays frozen from start to finish.
+bouncy pop hip hop beat, big claps, bright keys, 140 BPM, half-time, in G minor, instrumental, sunny, snare dead on, kick early, shaky hat retriggers under the loop, the beat never lets up, lead an octave above the 808, the syrupy synth hard-clipped on every transient, crisp clean radio mix, bright top, tight low end. lead: a syrupy slowed-down synth lead with a pitch sag, hard-clipped on every transient, a deep lead parked an octave above the 808, playing a four-note minor figure ending on the flat second as 16th stutters that cut out in the verse, one unusual leap in the middle of a plain contour, the leap never resolved, bent into pitch by hand, never landing in tune twice. bass: a bouncy mono synth bass with a fast pitch envelope, playing the riff, bouncing on the one and the and of two. drums: a kick on beat 1 and the and of 3, nothing else, a big layered clap on two and four, wide, hats in triplets, played by hand, the same loop the whole way.
 ```
 
-## 4. LYRICS FIELD (641/5000 chars; section tags only, no words)
+## 4. LYRICS FIELD (649/5000 chars; section tags only, no words)
 ```text
 [Instrumental]
 
-[Hook | full beat from beat 1, the syrupy synth up front, the beat stays frozen from start to finish]
+[Hook | full beat from beat 1, the syrupy synth up front, the same loop the whole way]
 
-[Verse | same drums, kick landing on the and, beat 3 drags, beat 4 catches up, a bitcrushed clap fragment in uneven pairs, long-short, answering the snare]
+[Verse | same drums, snare dead on, kick early, a loose pocket, played in, never snapped, a short noise burst in uneven pairs, long-short, quietly through the verse]
 
 [Hook | identical to the first hook, the syrupy synth up front]
 
-[Verse | same drums, the door buzzer alone, the syrupy synth out, hats rushing slightly ahead]
+[Verse | same drums, the mallet hook alone, the syrupy synth out, a loose pocket, played in, never snapped]
 
 [Hook | identical, the notes get shorter as the song goes on]
 
@@ -51,23 +51,24 @@ vocals, humming, ad-libs, vocal chops, drum fills, snare rolls, risers, sweeps, 
 ```
 
 ## 6. SLIDERS
-- **Weirdness:** 42% — Bouncy playful trap-pop: the lane's tested range is 40-50; above 60 Suno starts drifting tempo and structure.
-- **Style Influence:** 85% — High so the physical descriptions are followed; 75-85 landed closest to the written prompt.
+- **Weirdness:** 50% — Bouncy playful trap-pop: the lane's tested range is 40-50; above 60 Suno starts drifting tempo and structure.
+- **Style Influence:** 84% — High so the physical descriptions are followed; 75-85 landed closest to the written prompt.
 - **Audio Influence:** Not used. No audio is uploaded in this workflow, so the slider does not appear; leave it alone.
 - **Variety:** Off (Exact style). Any setting above Off rewrites and expands the Style text before the model sees it (official FAQ: 'reduce the Variety slider to 0 to retain full control of your style tags'). Engineered prompts must run at Off.
 
 ## 7. VARIATIONS
-**A. Safer** (v6, Weirdness 32%, Style Influence 90%; 962 chars). Sound-neutral anchor, no twitch or slur tags: the plainest reading of the same sounds.
+**A. Safer** (v6, Weirdness 40%, Style Influence 89%; 946 chars). Sound-neutral anchor, no twitch or slur tags, no hint: the plainest reading of the same sounds.
 ```text
-bouncy pop hip hop instrumental, tight drums, big claps, 140 BPM, half-time, in G minor, instrumental, sunny, the beat never lets up, lead parked in the low mids, the syrupy synth hard-clipped on every transient, crisp clean radio mix, tight low end. lead: a syrupy slowed-down synth lead with a pitch sag, hard-clipped on every transient, playing a four-note minor figure ending on the flat second as 16th stutters that cut out in the verse, notes overlapping a little, like a player who holds too long. bass: a short punchy 808 following the kick, three notes then nothing. drums: a kick on beat 1 and the and of 3, nothing else, a snappy pitched-up snare with a snap stacked on top, a shaker bouncing on the off-beats instead of hats, a shaker played live, the accents wandering, beat 3 drags, beat 4 catches up, the beat stays frozen from start to finish. counter: a door buzzer pitched down and played as notes, answering the lead at the end of each phrase.
+bouncy pop hip hop instrumental, tight drums, big claps, 140 BPM, half-time, in G minor, instrumental, sunny, the beat never lets up, lead an octave above the 808, the syrupy synth hard-clipped on every transient, crisp clean radio mix, tight low end. lead: a syrupy slowed-down synth lead with a pitch sag, hard-clipped on every transient, a deep lead parked an octave above the 808, playing a four-note minor figure ending on the flat second as 16th stutters that cut out in the verse, one unusual leap in the middle of a plain contour, the leap never resolved, bent into pitch by hand, never landing in tune twice. bass: a bouncy mono synth bass with a fast pitch envelope, playing the riff, bouncing on the one and the and of two. drums: a kick on beat 1 and the and of 3, nothing else, a big layered clap on two and four, wide, hats in triplets, played by hand, a tambourine smacked on 2 and 4, never quite even, the same loop the whole way.
 ```
-**B. Weirder** (v6-wild, Weirdness 80%, Style Influence 64%; 977 chars). One wild tag added; run it on v6-wild.
+**B. Weirder** (v6-wild, Weirdness 74%, Style Influence 68%; 999 chars). One wild tag added; run it on v6-wild.
 ```text
-bouncy pop hip hop instrumental, bright plucks, big claps, 140 BPM, half-time, in G minor, instrumental, sunny, kick landing on the and, broken percussion loop, beat 3 trips, beat 4 straightens, the beat never lets up, bit-mangled lead, lead parked in the low mids, the syrupy synth hard-clipped on every transient, crisp clean radio mix, bright top, tight low end. lead: a syrupy slowed-down synth lead with a pitch sag, hard-clipped on every transient, playing a four-note minor figure ending on the flat second as 16th stutters that cut out in the verse, notes overlapping a little, like a player who holds too long, panned left with a short slapback on the right. bass: a short punchy 808 following the kick, three notes then nothing. drums: a kick on beat 1 and the and of 3, nothing else, a snappy pitched-up snare with a snap stacked on top, a shaker bouncing on the off-beats instead of hats, beat 3 drags, beat 4 catches up, the beat stays frozen from start to finish.
+bouncy pop hip hop beat, big claps, bright keys, 140 BPM, half-time, in G minor, instrumental, sunny, snare dead on, kick early, shaky hat retriggers under the loop, the beat never lets up, the loop resampled until it smears, lead an octave above the 808, the syrupy synth hard-clipped on every transient, crisp clean radio mix, bright top, tight low end. lead: a syrupy slowed-down synth lead with a pitch sag, hard-clipped on every transient, a deep lead parked an octave above the 808, playing a four-note minor figure ending on the flat second as 16th stutters that cut out in the verse, one unusual leap in the middle of a plain contour, the leap never resolved, bent into pitch by hand, never landing in tune twice. bass: a bouncy mono synth bass with a fast pitch envelope, playing the riff, bouncing on the one and the and of two. drums: a kick on beat 1 and the and of 3, nothing else, a big layered clap on two and four, wide, hats in triplets, played by hand, the same loop the whole way.
 ```
 
 ## 8. POST-GEN NOTES
 - Structure: the first full beat lands at about 0:00; the layout is "Hook first" and runs about 2:51. Straight mode: the same drums in every section, hard cuts only.
+- No hint on this roll; the hook device in the lead line ("one unusual leap in the middle of a plain contour, the leap never resolved") carries the stickiness. Listen for it on the second pass.
 - The mutes must be real silences: if Suno smooths over the stop-start cuts, pick the lead_out_middle layout and keep "hard cuts only" in the drums line.
 - Plucks should be bright and forward; a dull lead means the mix tag got cut for length, so shorten the lead line and re-roll.
 - Hats should bounce and twitch, not run as a flat 16th grid; the twitch tag and the hats description do this, so keep both in the front 260 characters.
