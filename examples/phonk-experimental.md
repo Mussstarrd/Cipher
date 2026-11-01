@@ -24,7 +24,7 @@ Lane `phonk-experimental` | 138 BPM (half-time feel) | G minor (i - iv: Gm - Cm)
 Memphis phonk instrumental, slowed samples, distorted 808, 138 BPM, half-time, in G minor, instrumental, dark, snare dead on, kick early, shaky hat retriggers under the loop, hats dragging on beat 3, minimal, single loop, never changes, low register lead, the syrupy synth, a faint hint of the wah lament, murky lo-fi mix, the sub kept clean, loud and crunchy. lead: a syrupy slowed-down synth lead with a pitch sag, hard-clipped on every transient, playing a stubborn root note leaning on the flat sixth. bass: a long 808 that slides between every note like it is dragging. drums: a boomy kick with the low end cut so the 808 owns the sub, a dry 808 snare with the noise cranked, late, hats in triplets that slur on beat 3, an 808 cowbell on the off-beats, dry, pitched to the key, the hook is the verse with one more sound. hint: an electric guitar through a fuzz pedal and a half-open wah, one slow bend per bar, feedback swelling into the next, one long note before the last hook, then gone.
 ```
 
-## 4. LYRICS FIELD (549/5000 chars; section tags only, no words)
+## 4. LYRICS FIELD (545/5000 chars; section tags only, no words)
 ```text
 [Instrumental]
 
@@ -36,7 +36,7 @@ Memphis phonk instrumental, slowed samples, distorted 808, 138 BPM, half-time, i
 
 [Loop | same loop, identical, a short noise burst in uneven pairs, long-short, quietly through the verse]
 
-[Loop | same loop, identical, a loose pocket, played in, never snapped, the wah lament one long note before the last hook, then gone]
+[Loop | same loop, identical, clap layers a few milliseconds apart, the wah lament one long note before the last hook, then gone]
 
 [Outro | the loop stops dead on beat 1, about 3:04]
 
@@ -55,9 +55,9 @@ lead vocals, humming, singing, rapping, drum fills, snare rolls, risers, transit
 - **Variety:** Off (Exact style). Any setting above Off rewrites and expands the Style text before the model sees it (official FAQ: 'reduce the Variety slider to 0 to retain full control of your style tags'). Engineered prompts must run at Off.
 
 ## 7. VARIATIONS
-**A. Safer** (v6, Weirdness 49%, Style Influence 78%; 966 chars). Sound-neutral anchor, no twitch or slur tags, no hint: the plainest reading of the same sounds.
+**A. Safer** (v6, Weirdness 49%, Style Influence 78%; 947 chars). Sound-neutral anchor, no twitch or slur tags, no hint: the plainest reading of the same sounds.
 ```text
-Memphis phonk instrumental, cassette grit, distorted 808, 138 BPM, half-time, in G minor, instrumental, dark, minimal, single loop, never changes, low register lead, the syrupy synth hard-clipped on every transient, murky lo-fi mix, the sub kept clean. lead: a syrupy slowed-down synth lead with a pitch sag, hard-clipped on every transient, a deep lead parked an octave above the 808, playing a stubborn root note leaning on the flat sixth as 16th stutters that cut out in the verse, one unusual leap in the middle of a plain contour, the leap never resolved. bass: a long 808 that slides between every note like it is dragging, a triplet bounce against straight hats. drums: a boomy kick with the low end cut so the 808 owns the sub, a dry 808 snare with the noise cranked, late, hats in triplets that slur on beat 3, an 808 cowbell on the off-beats, dry, pitched to the key, the 808 skids into beat 3 like a missed step, the hook is the verse with one more sound.
+Memphis phonk instrumental, cassette grit, distorted 808, 138 BPM, half-time, in G minor, instrumental, dark, minimal, single loop, never changes, low register lead, the syrupy synth hard-clipped on every transient, murky lo-fi mix, the sub kept clean. lead: a syrupy slowed-down synth lead with a pitch sag, hard-clipped on every transient, a deep lead parked an octave above the 808, playing a stubborn root note leaning on the flat sixth as 16th stutters that cut out in the verse, the last note of the hook lands a 16th early every time. bass: a long 808 that slides between every note like it is dragging, a triplet bounce against straight hats. drums: a boomy kick with the low end cut so the 808 owns the sub, a dry 808 snare with the noise cranked, late, hats in triplets that slur on beat 3, an 808 cowbell on the off-beats, dry, pitched to the key, the 808 skids into beat 3 like a missed step, the hook is the verse with one more sound.
 ```
 **B. Weirder** (v6-wild, Weirdness 78%, Style Influence 67%; 975 chars). One wild tag added; run it on v6-wild.
 ```text
@@ -66,7 +66,7 @@ Memphis phonk instrumental, slowed samples, distorted 808, 138 BPM, half-time, i
 
 ## 8. POST-GEN NOTES
 - Structure: the first full beat lands at about 0:14; the layout is "Two-bar loop, nothing changes" and runs about 3:04. Loop mode: every [Loop] tag says identical on purpose; if Suno adds changes anyway, raise Style Influence five points.
-- The hint (the wah lament) is one ingredient, one long note before the last hook, then gone. If it takes over the record, run the safer variation (no hint) or re-roll; if it is inaudible, raise Style Influence five points. The hook device in the lead line ("one unusual leap in the middle of a plain contour, the leap never resolved") is what makes the lead stick; listen for it on the second pass.
+- The hint (the wah lament) is one ingredient, one long note before the last hook, then gone. If it takes over the record, run the safer variation (no hint) or re-roll; if it is inaudible, raise Style Influence five points. The hook device in the lead line ("the last note of the hook lands a 16th early every time") is what makes the lead stick; listen for it on the second pass.
 - The cowbell must stay a rhythmic knock in the drums, never the melody; the color line says "never the melody" and "cowbell melody" is in the Exclude list.
 - The 808 should be distorted but readable; if it is a clean sine, the bass line got cut for length, so shorten the counter and re-roll.
 - The samples should drag and sag; if the lead sounds played clean, pick a source with "slowed" or "screwed" in it.

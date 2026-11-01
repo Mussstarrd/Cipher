@@ -215,6 +215,9 @@ Generated from `lib/grammar.js` and `lib/lanes.js` by `node scripts/docs.js` (ed
 - a slight push into each snare
 - the hats dragged a few milliseconds behind the kick
 - the snare landing late and heavy like a tired drummer
+- the snare a hair late and hit harder for it, its ring left to decay
+- hats dead straight on the grid, the kick leaning late behind them, the snare a hair early so the pocket feels pulled two ways
+- played by hand against the bass, the second hit always a hair late
 
 **Groove: the beat-3 slur (never "waltz", "shuffle" or "swing")**
 - the 808 slurs into a triplet on beat 3
@@ -464,6 +467,8 @@ Sources (description | handle):
 - a guitar bend held until it breaks into feedback, then let fall, tape echo smearing the fall | the feedback fall
 - a fuzz guitar playing two notes a minor third apart, each held for a bar and bent flat at the end | the two-note lament
 - a phased fuzz guitar hanging one note over the whole hook, the phase moving slower than the bar | the hanging fuzz note
+- a fuzz guitar with tape echo regenerating so each phrase overlaps the last, the echo darker than the dry note | the regenerating echo guitar
+- a wah rocked slowly across one held fuzz note so the tone opens and closes once per bar | the breathing wah note
 
 Processing characters:
 - tape echo set long, the repeats decaying out of time
@@ -474,6 +479,8 @@ Processing characters:
 - mixed under the drums, the echo louder than the note
 - one take, the string squeaks and amp buzz left in
 - pitched down a whole step so it sounds heavy and sad
+- the fuzz set thick enough that two notes together turn to grit, so the line is single notes only
+- leaning on the flat seventh and the fourth, slow and mournful
 
 Roles:
 - a faint hint under the hook only
@@ -493,6 +500,11 @@ Sources (description | handle):
 - a pitch-dropped sample stab mangled through a ring modulator, metallic and wrong | the ring-mod stab
 - a drum loop resampled through a broken converter, the bits splintering on the snare | the splintered loop
 - a hydraulic hiss and a steel door slam sampled and placed as percussion, tuned down | the steel door
+- metal-on-metal hits and machine noise used as percussion, each one tuned to the key | the tuned metal hits
+- a two-bar loop cut into pieces and reassembled out of order so it skips on beat 3 every bar, the skip identical every time | the skipping loop
+- gated noise bursts that open with the snare and shut with it, the length of a sixteenth | the snare-gated noise
+- one piano chord cut into a digital stutter, repeating in sixteenths for half a bar then stopping dead | the stuttered chord
+- tape-warped keys, the pitch sagging a quarter tone at the end of each chord | the warped keys
 
 Processing characters:
 - bit-reduced until the edges splinter
@@ -522,6 +534,10 @@ Sources (description | handle):
 - a horn section swelling in one breath then cut off dead on beat 3 | the horn swell
 - a trumpet playing one urgent stabbed note, repeated three times, each a hair earlier | the urgent trumpet
 - a clean guitar lick of four notes sliding up to the root, played once per 8 bars | the guitar lick
+- a horn stack of trumpet over baritone, two-note stabs that answer the lead a beat after it stops | the answering horns
+- the horns stabbing three times fast then holding once, the figure identical every pass | the three-stab horns
+- a spinet drawbar organ holding one chord under everything, a second chord only at the turn of the two bars | the spinet organ
+- a bright single-coil guitar doubling the bass line note for note, then chopping one muted chord on beats 2 and 4 | the doubling guitar
 
 Processing characters:
 - recorded hot to tape, the horns rasping
@@ -552,6 +568,13 @@ Sources (description | handle):
 - a low piano note struck hard on 2 and 4 with the snare, the hammer thud louder than the pitch | the piano thud
 - a string stab pitched down an octave and struck in a 2+3 pattern, the tail cut on the snare | the low string stab
 - a single piano hit, high and sour, placed on the and of 4 every bar, damped before the one | the sour hit
+- a grand piano struck in short damped hits, the sustain pedal off, every note cut by the hand | the damped piano hits
+- piano hits on a 3+3+2 cell across one bar of sixteenths, the same cell every bar, the last hit a sixteenth late | the 3+3+2 piano
+- piano hits damped by the palm on the strings inside the lid, more thud than tone | the lid-damped piano
+- one piano chord with the sustain pedal stamped down on beat 4 and released on beat 1, blooming and cut | the stamped chord
+- chord stabs played from drum pads like a drum part, each stab the length of a sixteenth, three per bar | the pad stabs
+- a prepared piano with felt on the hammers, two notes stabbed in 3+2 across the first half of the bar | the felt piano stabs
+- a sampled whole-band chord hit, one slam, pitched to the key and placed on beat 1 only | the sampled slam
 
 Processing characters:
 - every hit a different force, by hand
@@ -584,6 +607,11 @@ Roles:
 - the hook is two notes, the second held until the snare cuts it
 - the melody circles the fifth and never lands on the root until the last bar
 - the hook is the lead's phrase with the middle note missing
+- a four-note motif that climbs then falls, the third note a tritone leap the ear does not expect, the same four notes every pass
+- one note struck on every eighth for two bars, the same pitch, then one note a half step down on the last eighth
+- the lead moves in sixteenths while the drums sit half-time, so the motif feels quick and the pocket feels heavy
+- a five-note motif on a simple rise-and-fall shape, the second note always a sixteenth late, every pass
+- the motif plays four times, on the fourth pass one note a half step lower and the rest identical
 
 ## Lane `connor-price`: Bouncy playful trap-pop
 
@@ -781,8 +809,10 @@ Bass patterns:
 - a soft round kick played with the heel down, behind the beat
 - a kick pushed slightly ahead on the and of 3, the rest late
 - a live kick doubled on the and of 1, loose
+- a kick a hair behind the bass so the pocket leans back, the hats dead straight
 
 **Snare**
+- a snare with a wallet on the head, tuned low and dead, hit a hair late and hard for it
 - a fat live snare tuned low, hit off-center, a hair late
 - a cross-stick on 2 and 4 that opens to the full snare in the hook
 - a snare with the wires loose, buzzing, played late

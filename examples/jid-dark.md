@@ -19,22 +19,22 @@ Lane `jid-dark` | 146 BPM (half-time feel) | G minor (i - iv: Gm - Cm) | layout:
 - **Duration:** Custom 3:05 (estimated 2:54 from the layout at 146 BPM, plus a buffer rounded up to the next 5 s; [End] stops it early, Crop any tail). Never Auto: v6 runs long on Auto.
 - **Song Title:** Crooked Ledger
 
-## 3. STYLE FIELD (949/1000 chars; head tags first, then lead / bass / drums / counter)
+## 3. STYLE FIELD (984/1000 chars; head tags first, then lead / bass / drums / counter)
 ```text
-dark boom-bap trap hybrid, sliced soul keys, hard drums, 146 BPM, half-time, in G minor, instrumental, paranoid, snare dead on, kick early, shaky hat retriggers under the loop, beat switch, new drums, lead parked in the low mids, the syrupy synth hard-clipped on every transient, dense dark mix, loud, the snare cutting through. lead: a syrupy slowed-down synth lead with a pitch sag, hard-clipped on every transient, a deep lead parked an octave above the 808, playing a stubborn root note leaning on the flat sixth as 16th stutters that cut out in the verse, one unusual leap in the middle of a plain contour, the leap never resolved. bass: an 808 pitched down until the tail buzzes, sliding, a triplet bounce against straight hats. drums: a kick that only hits twice per bar, a hard sampled snare compressed until it cracks, a hair late, hats in triplets played by hand, every hit a different velocity, the beat stays frozen from start to finish.
+dark boom-bap trap hybrid, sliced soul keys, hard drums, 146 BPM, half-time, in G minor, instrumental, paranoid, snare dead on, kick early, shaky hat retriggers under the loop, beat switch, new drums, lead parked in the low mids, the syrupy synth hard-clipped on every transient, dense dark mix, loud, the snare cutting through. lead: a syrupy slowed-down synth lead with a pitch sag, hard-clipped on every transient, a deep lead parked an octave above the 808, playing a stubborn root note leaning on the flat sixth as 16th stutters that cut out in the verse, the last note of the hook lands a 16th early every time, bent into pitch by hand, never landing in tune twice. bass: an 808 pitched down until the tail buzzes, sliding, a triplet bounce against straight hats. drums: a kick that only hits twice per bar, a hard sampled snare compressed until it cracks, a hair late, hats in triplets played by hand, every hit a different velocity, the beat stays frozen from start to finish.
 ```
 
-## 4. LYRICS FIELD (798/5000 chars; section tags only, no words)
+## 4. LYRICS FIELD (790/5000 chars; section tags only, no words)
 ```text
 [Instrumental]
 
 [Intro | the syrupy synth alone, 8 bars]
 
-[Verse | 8 bars, full drums, snare dead on, kick early, a loose pocket, played in, never snapped]
+[Verse | 8 bars, full drums, snare dead on, kick early, clap layers a few milliseconds apart]
 
 [Hook | full beat, the syrupy synth up front, the pitched strings answering, the beat stays frozen from start to finish]
 
-[Verse | the syrupy synth thinner, a loose pocket, played in, never snapped, a short noise burst in uneven pairs, long-short, only after the switch]
+[Verse | the syrupy synth thinner, clap layers a few milliseconds apart, a short noise burst in uneven pairs, long-short, only after the switch]
 
 [Break | drums cut dead, the new section starts on beat 2, not 1]
 
@@ -61,18 +61,18 @@ vocals, humming, ad-libs, vocal chops, choir, drum fills, snare rolls, risers, t
 - **Variety:** Off (Exact style). Any setting above Off rewrites and expands the Style text before the model sees it (official FAQ: 'reduce the Variety slider to 0 to retain full control of your style tags'). Engineered prompts must run at Off.
 
 ## 7. VARIATIONS
-**A. Safer** (v6, Weirdness 37%, Style Influence 90%; 956 chars). Sound-neutral anchor, no twitch or slur tags, no hint: the plainest reading of the same sounds.
+**A. Safer** (v6, Weirdness 37%, Style Influence 90%; 937 chars). Sound-neutral anchor, no twitch or slur tags, no hint: the plainest reading of the same sounds.
 ```text
-dark hip hop instrumental, hard drums, heavy 808, 146 BPM, half-time, in G minor, instrumental, paranoid, beat switch, new drums, lead parked in the low mids, the syrupy synth hard-clipped on every transient, dense dark mix, loud. lead: a syrupy slowed-down synth lead with a pitch sag, hard-clipped on every transient, a deep lead parked an octave above the 808, playing a stubborn root note leaning on the flat sixth as 16th stutters that cut out in the verse, one unusual leap in the middle of a plain contour, the leap never resolved, bent into pitch by hand, never landing in tune twice. bass: an 808 pitched down until the tail buzzes, sliding, a triplet bounce against straight hats. drums: a kick that only hits twice per bar, a hard sampled snare compressed until it cracks, a hair late, hats in triplets played by hand, every hit a different velocity, a tambourine smacked on 2 and 4, never quite even, the beat stays frozen from start to finish.
+dark hip hop instrumental, hard drums, heavy 808, 146 BPM, half-time, in G minor, instrumental, paranoid, beat switch, new drums, lead parked in the low mids, the syrupy synth hard-clipped on every transient, dense dark mix, loud. lead: a syrupy slowed-down synth lead with a pitch sag, hard-clipped on every transient, a deep lead parked an octave above the 808, playing a stubborn root note leaning on the flat sixth as 16th stutters that cut out in the verse, the last note of the hook lands a 16th early every time, bent into pitch by hand, never landing in tune twice. bass: an 808 pitched down until the tail buzzes, sliding, a triplet bounce against straight hats. drums: a kick that only hits twice per bar, a hard sampled snare compressed until it cracks, a hair late, hats in triplets played by hand, every hit a different velocity, a tambourine smacked on 2 and 4, never quite even, the beat stays frozen from start to finish.
 ```
-**B. Weirder** (v6-wild, Weirdness 80%, Style Influence 64%; 967 chars). One wild tag added; run it on v6-wild.
+**B. Weirder** (v6-wild, Weirdness 80%, Style Influence 64%; 948 chars). One wild tag added; run it on v6-wild.
 ```text
-dark boom-bap trap hybrid, sliced soul keys, hard drums, 146 BPM, half-time, in G minor, instrumental, paranoid, snare dead on, kick early, shaky hat retriggers under the loop, beat switch, new drums, bit-mangled lead, lead parked in the low mids, the syrupy synth hard-clipped on every transient, dense dark mix, loud, the snare cutting through. lead: a syrupy slowed-down synth lead with a pitch sag, hard-clipped on every transient, a deep lead parked an octave above the 808, playing a stubborn root note leaning on the flat sixth as 16th stutters that cut out in the verse, one unusual leap in the middle of a plain contour, the leap never resolved. bass: an 808 pitched down until the tail buzzes, sliding, a triplet bounce against straight hats. drums: a kick that only hits twice per bar, a hard sampled snare compressed until it cracks, a hair late, hats in triplets played by hand, every hit a different velocity, the beat stays frozen from start to finish.
+dark boom-bap trap hybrid, sliced soul keys, hard drums, 146 BPM, half-time, in G minor, instrumental, paranoid, snare dead on, kick early, shaky hat retriggers under the loop, beat switch, new drums, bit-mangled lead, lead parked in the low mids, the syrupy synth hard-clipped on every transient, dense dark mix, loud, the snare cutting through. lead: a syrupy slowed-down synth lead with a pitch sag, hard-clipped on every transient, a deep lead parked an octave above the 808, playing a stubborn root note leaning on the flat sixth as 16th stutters that cut out in the verse, the last note of the hook lands a 16th early every time. bass: an 808 pitched down until the tail buzzes, sliding, a triplet bounce against straight hats. drums: a kick that only hits twice per bar, a hard sampled snare compressed until it cracks, a hair late, hats in triplets played by hand, every hit a different velocity, the beat stays frozen from start to finish.
 ```
 
 ## 8. POST-GEN NOTES
 - Structure: the first full beat lands at about 0:26; the layout is "Half-time for the last third" and runs about 2:54. The beat switch is one axis ("beat switch, new drums"); its words repeat in the head tag and in every section after the switch so Suno cannot undo it.
-- No hint on this roll; the hook device in the lead line ("one unusual leap in the middle of a plain contour, the leap never resolved") carries the stickiness. Listen for it on the second pass.
+- No hint on this roll; the hook device in the lead line ("the last note of the hook lands a 16th early every time") carries the stickiness. Listen for it on the second pass.
 - The sliced keys should sound like a cut-up record, not a played melody; if Suno plays it clean, pick a source with "sliced" or "reversed" in it and re-roll.
 - Hats should twitch and switch patterns; the twitch tag and the hats description carry this, keep both in the front 260 characters.
 - The beat switch must be audible as one axis (half-time, key falls, new drums); its words repeat in the head tag and in every section after the switch, so never edit them out.
