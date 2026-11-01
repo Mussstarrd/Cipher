@@ -122,6 +122,16 @@ test('rolls are one of one and lanes keep their identity', () => {
   assert.ok(jidSwitch > jidN * 0.35, `jid switch ${jidSwitch}/${jidN}`);
 });
 
+test('titles come from the roll and rarely repeat; salting yields a new one', () => {
+  const titles = SEEDS.map((seed) => generate({ lane: 'any', seed }).meta.title);
+  const distinct = new Set(titles).size;
+  assert.ok(distinct > titles.length * 0.9, `${distinct} distinct titles of ${titles.length}`);
+  for (const t of titles.slice(0, 200)) { assert.ok(t.length <= 80 && /^[A-Z]/.test(t) && !/\b(\w+) \1\b/i.test(t), t); assert.deepStrictEqual(Guard.check(t), [], t); }
+  const b = generate({ lane: 'jid-dark', seed: 11 });
+  const { makeTitle } = require('../lib/engine');
+  assert.notStrictEqual(makeTitle(b.meta.seed, b.parts, 1), b.meta.title);
+});
+
 test('phrase variety: no single kick, snare or hats phrase dominates a lane', () => {
   for (const lane of LANE_IDS) {
     const counts = { kick: {}, snare: {}, hats: {} };

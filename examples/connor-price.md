@@ -17,7 +17,7 @@ Lane `connor-price` | 140 BPM (half-time feel) | G minor (i - iv: Gm - Cm) | lay
 - **Variety:** Off. Any setting above Off rewrites and expands the Style text before the model sees it (official FAQ: 'reduce the Variety slider to 0 to retain full control of your style tags'). Engineered prompts must run at Off.
 - **Persona:** NO. Voices (formerly Personas; Style Personas live inside the Voices menu): In-app text: 'Songs with Voices cannot be instrumental.' Not used in this workflow.
 - **Duration:** Custom 3:05 (estimated 2:51 from the layout at 140 BPM, plus a buffer rounded up to the next 5 s; [End] stops it early, Crop any tail). Never Auto: v6 runs long on Auto.
-- **Song Title:** Loose Pulse
+- **Song Title:** Stolen Syrupy
 
 ## 3. STYLE FIELD (995/1000 chars; head tags first, then lead / bass / drums / counter)
 ```text
@@ -61,9 +61,9 @@ vocals, humming, ad-libs, vocal chops, drum fills, snare rolls, risers, sweeps, 
 ```text
 bouncy pop hip hop instrumental, tight drums, big claps, 140 BPM, half-time, in G minor, instrumental, sunny, the beat never lets up, lead an octave above the 808, the syrupy synth hard-clipped on every transient, crisp clean radio mix, tight low end. lead: a syrupy slowed-down synth lead with a pitch sag, hard-clipped on every transient, a deep lead parked an octave above the 808, playing a four-note minor figure ending on the flat second as 16th stutters that cut out in the verse, the last note of the hook lands a 16th early every time, bent into pitch by hand, never landing in tune twice, panned left with a short slapback on the right. bass: a bouncy mono synth bass with a fast pitch envelope, playing the riff, bouncing on the one and the and of two. drums: a kick on beat 1 and the and of 3, nothing else, a big layered clap on two and four, wide, hats in triplets, played by hand, a tambourine smacked on 2 and 4, never quite even, the same loop the whole way.
 ```
-**B. Weirder** (v6-wild, Weirdness 74%, Style Influence 68%; 980 chars). One wild tag added; run it on v6-wild.
+**B. Weirder** (v6-wild, Weirdness 67%, Style Influence 70%; 995 chars). One wild tag added; run it on v6-wild.
 ```text
-bouncy pop hip hop beat, big claps, bright keys, 140 BPM, half-time, in G minor, instrumental, sunny, snare dead on, kick early, shaky hat retriggers under the loop, the beat never lets up, the loop resampled until it smears, lead an octave above the 808, the syrupy synth hard-clipped on every transient, crisp clean radio mix, bright top, tight low end. lead: a syrupy slowed-down synth lead with a pitch sag, hard-clipped on every transient, a deep lead parked an octave above the 808, playing a four-note minor figure ending on the flat second as 16th stutters that cut out in the verse, the last note of the hook lands a 16th early every time, bent into pitch by hand, never landing in tune twice. bass: a bouncy mono synth bass with a fast pitch envelope, playing the riff, bouncing on the one and the and of two. drums: a kick on beat 1 and the and of 3, nothing else, a big layered clap on two and four, wide, hats in triplets, played by hand, the same loop the whole way.
+bouncy pop hip hop beat, big claps, bright keys, 140 BPM, half-time, in G minor, instrumental, sunny, snare dead on, kick early, shaky hat retriggers under the loop, the beat never lets up, pitch-warped lead, lead an octave above the 808, the syrupy synth hard-clipped on every transient, crisp clean radio mix, bright top, tight low end. lead: a syrupy slowed-down synth lead with a pitch sag, hard-clipped on every transient, a deep lead parked an octave above the 808, playing a four-note minor figure ending on the flat second as 16th stutters that cut out in the verse, the last note of the hook lands a 16th early every time, bent into pitch by hand, never landing in tune twice. bass: a bouncy mono synth bass with a fast pitch envelope, playing the riff, bouncing on the one and the and of two, landing a hair behind the kick. drums: a kick on beat 1 and the and of 3, nothing else, a big layered clap on two and four, wide, hats in triplets, played by hand, the same loop the whole way.
 ```
 
 ## 8. POST-GEN NOTES

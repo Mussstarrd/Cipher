@@ -813,9 +813,11 @@ const ANTI_TRANSITION = [
   'the hook is the verse with one more sound',
 ];
 
+/** Title words. Titles are built from the roll's own sounds (lead handle, hint, key, motion) plus these, and the page never repeats one. */
 const TITLE = {
-  a: ['Glass', 'Rubber', 'Copper', 'Static', 'Velvet', 'Crooked', 'Paper', 'Neon', 'Iron', 'Loose', 'Hollow', 'Quiet', 'Gold', 'Bent', 'Midnight', 'Chrome', 'Cassette', 'Backseat', 'Sunday', 'Low'],
-  b: ['Jaw', 'Halo', 'Receipt', 'Pulse', 'Lantern', 'Alibi', 'Engine', 'Teeth', 'Mirror', 'Ledger', 'Fuse', 'Orbit', 'Hinge', 'Tab', 'Signal', 'Crown', 'Ceiling', 'Pocket', 'Window', 'Porch'],
+  a: ['Glass', 'Rubber', 'Copper', 'Static', 'Velvet', 'Crooked', 'Paper', 'Neon', 'Iron', 'Loose', 'Hollow', 'Quiet', 'Gold', 'Bent', 'Midnight', 'Chrome', 'Backseat', 'Sunday', 'Low', 'Sour', 'Late', 'Drunk', 'Cold', 'Warm', 'Dead', 'Wet', 'Dry', 'Borrowed', 'Broken', 'Second', 'Last', 'Half', 'Slow', 'Heavy', 'Thin', 'Rusted', 'Burnt', 'Pale', 'Loud', 'Small', 'Blue', 'Grey', 'Velour', 'Tin', 'Brass', 'Nylon', 'Felt', 'Cheap', 'Stolen', 'Borrowed', 'Idle', 'Crooked', 'Patient', 'Nervous', 'Sideways', 'Upstairs', 'Lefthand', 'Evening', 'Early', 'Overdue'],
+  b: ['Jaw', 'Halo', 'Receipt', 'Pulse', 'Lantern', 'Alibi', 'Engine', 'Teeth', 'Mirror', 'Ledger', 'Fuse', 'Orbit', 'Hinge', 'Tab', 'Signal', 'Crown', 'Ceiling', 'Pocket', 'Window', 'Porch', 'Motor', 'Hallway', 'Parade', 'Kitchen', 'Deposit', 'Weather', 'Elbow', 'Static', 'Ladder', 'Thermostat', 'Curfew', 'Sermon', 'Mileage', 'Stairwell', 'Sidewalk', 'Lamplight', 'Dial', 'Voltage', 'Tollbooth', 'Hangover', 'Invoice', 'Basement', 'Driveway', 'Weekday', 'Pavement', 'Rearview', 'Pillow', 'Ashtray', 'Doorframe', 'Umbrella', 'Napkin', 'Satellite', 'Interstate', 'Lullaby', 'Verdict', 'Gravel', 'Postcard', 'Freezer', 'Stopwatch', 'Oxygen'],
+  shapes: ['AB', 'AB', 'AB', 'HB', 'AH', 'HH', 'ABB', 'KB'],
 };
 
 /** Shared instrument families any lane may borrow as a guest lead (experimental palette). */
@@ -2027,6 +2029,22 @@ function lyricsField(p) {
   return out;
 }
 
+/** A title built from the roll's own sounds, salted so the page can ask for another one when it has seen it. */
+const STOP = new Set(['the', 'a', 'an', 'of', 'and', 'with', 'on', 'in', 'hit', 'hits', 'lead', 'note', 'sample', 'patch', 'synth', 'guitar', 'piano', 'stab', 'stabs', 'loop', 'hook', 'melody', 'pair', 'stack', 'section', 'kick', 'snare', 'hats', 'bass', 'drums', 'keys']);
+const cap = (w) => w.charAt(0).toUpperCase() + w.slice(1);
+function makeTitle(seed, parts, salt = 0) {
+  const r = mulberry32((seed ^ 0x9e3779b9) + salt * 7919 >>> 0);
+  const words = (t) => (t || '').replace(/[^a-z0-9\- ]/gi, ' ').split(/\s+/).filter((w) => w.length > 2 && !STOP.has(w.toLowerCase()));
+  const handleWords = [...words(parts.lead.handle), ...(parts.hint ? words(parts.hint.handle) : []), ...(parts.counter ? words(parts.counter.handle) : [])].map(cap);
+  const keyWord = cap(parts.harmony.key.split(' ')[0].replace('#', ' Sharp').replace(/^(\w)b$/, '$1 Flat'));
+  const H = () => handleWords.length ? pick(handleWords, r) : pick(G.TITLE.b, r);
+  const A = () => pick(G.TITLE.a, r);
+  const B = () => pick(G.TITLE.b, r);
+  const shape = pick(G.TITLE.shapes, r);
+  const out = { AB: () => `${A()} ${B()}`, HB: () => `${H()} ${B()}`, AH: () => `${A()} ${H()}`, HH: () => { const a = H(), b = H(); return a === b ? `${a} ${B()}` : `${a} ${b}`; }, ABB: () => `${A()} ${B()} ${B()}`, KB: () => `${keyWord} ${B()}` }[shape]();
+  return out.replace(/\b(\w+) \1\b/i, '$1').slice(0, SPEC.fields.title.limit);
+}
+
 const WILD_TAGS = ['drums slowed and slammed', 'bit-mangled lead', '808 blown out and clipped', 'pitch-warped lead', 'drums pitched down a step', 'sliced sample stabs off the grid', 'hats crushed to grit', 'the loop resampled until it smears'];
 
 function splitList(s) { return String(s || '').split(/[,;]+/).map((x) => x.trim()).filter(Boolean); }
@@ -2095,7 +2113,7 @@ function generate(input = {}) {
   const wildS = lane.wildSliders || { weirdness: [65, 80], styleInfluence: [55, 70] };
   const wildSuggested = !!input.wild || r() < lane.wildShare;
   const modelPick = input.wild ? SPEC.models.wild : SPEC.models.default;
-  const title = input.title || `${pick(lanePool(G.TITLE.a), r)} ${pick(lanePool(G.TITLE.b), r)}`;
+  const title = input.title || makeTitle(seed, { lead, hint, counter, harmony }, input.titleSalt || 0);
 
   const safer = styleField({ ...p, moods, extraTags }, lane, { anchor: lane.neutralAnchor, plain: true, mixTag: lane.neutralMixTag }).text;
   const weirder = styleField(p, lane, { wildTag: pick(lanePool(WILD_TAGS), r) }).text;
@@ -2169,7 +2187,7 @@ function postGen(lane, p, totalFormatted) {
   ];
 }
 
-module.exports = { generate, LANES, LANE_WEIGHTS, LAYOUTS, SPEC, RADIO, splitList, styleField };
+module.exports = { generate, makeTitle, LANES, LANE_WEIGHTS, LAYOUTS, SPEC, RADIO, splitList, styleField };
 
   };
   __defs["./qa"] = function (module, exports, require, __dirname) {
@@ -2456,6 +2474,10 @@ module.exports = { renderBlock, renderBatchTable };
   try { seen = new Set(JSON.parse(localStorage.getItem(STORE) || '[]')); } catch (e) {}
   const remember = (fp) => { seen.add(fp); try { localStorage.setItem(STORE, JSON.stringify([...seen].slice(-5000))); } catch (e) {} };
   const recentKeys = [], recentSounds = [];
+  const TITLES = 'suno-forge:titles.v1';
+  let seenTitles = new Set();
+  try { seenTitles = new Set(JSON.parse(localStorage.getItem(TITLES) || '[]')); } catch (e) {}
+  const rememberTitle = (t) => { seenTitles.add(t); try { localStorage.setItem(TITLES, JSON.stringify([...seenTitles].slice(-5000))); } catch (e) {} };
 
   function readInput(forceSeed) {
     const v = (id) => $(id).value.trim();
@@ -2478,6 +2500,9 @@ module.exports = { renderBlock, renderBatchTable };
         }
       }
     } catch (e) { $('out').innerHTML = `<div class="card"><h2>Could not generate</h2><div class="qa">${esc(e.message)}</div></div>`; return; }
+    // A title the page has already handed out gets re-salted until it is new.
+    for (let salt = 1; salt < 40 && seenTitles.has(pkg.meta.title); salt++) { const t = F.makeTitle(pkg.meta.seed, pkg.parts, salt); pkg.meta.title = t; pkg.toggles.title = t; }
+    rememberTitle(pkg.meta.title);
     const d = pkg.parts.drums;
     recentSounds.push({ fam: pkg.parts.lead.family, bass: pkg.parts.bass.source, kick: d.kick, snare: d.snare, hats: d.hats });
     if (recentSounds.length > 3) recentSounds.shift();

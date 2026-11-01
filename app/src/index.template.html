@@ -120,6 +120,10 @@
   try { seen = new Set(JSON.parse(localStorage.getItem(STORE) || '[]')); } catch (e) {}
   const remember = (fp) => { seen.add(fp); try { localStorage.setItem(STORE, JSON.stringify([...seen].slice(-5000))); } catch (e) {} };
   const recentKeys = [], recentSounds = [];
+  const TITLES = 'suno-forge:titles.v1';
+  let seenTitles = new Set();
+  try { seenTitles = new Set(JSON.parse(localStorage.getItem(TITLES) || '[]')); } catch (e) {}
+  const rememberTitle = (t) => { seenTitles.add(t); try { localStorage.setItem(TITLES, JSON.stringify([...seenTitles].slice(-5000))); } catch (e) {} };
 
   function readInput(forceSeed) {
     const v = (id) => $(id).value.trim();
@@ -142,6 +146,9 @@
         }
       }
     } catch (e) { $('out').innerHTML = `<div class="card"><h2>Could not generate</h2><div class="qa">${esc(e.message)}</div></div>`; return; }
+    // A title the page has already handed out gets re-salted until it is new.
+    for (let salt = 1; salt < 40 && seenTitles.has(pkg.meta.title); salt++) { const t = F.makeTitle(pkg.meta.seed, pkg.parts, salt); pkg.meta.title = t; pkg.toggles.title = t; }
+    rememberTitle(pkg.meta.title);
     const d = pkg.parts.drums;
     recentSounds.push({ fam: pkg.parts.lead.family, bass: pkg.parts.bass.source, kick: d.kick, snare: d.snare, hats: d.hats });
     if (recentSounds.length > 3) recentSounds.shift();
