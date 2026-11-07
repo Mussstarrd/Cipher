@@ -2,7 +2,7 @@
 
 # suno-forge prompt block: Technical syncopated bounce
 
-Lane `connor-price` | 140 BPM (half-time feel) | G minor (i - iv: Gm - Cm) | layout: One sound added, one sound removed (loop) | about 2:58, full beat at 0:07 | seed 2026
+Lane `connor-price` | 140 BPM (half-time feel) | G minor (i - iv: Gm - Cm) | layout: Stripped to kick and lead (loop) | about 2:55, full beat at 0:07 | seed 2026
 
 ## 1. MODEL
 **Pick:** v6
@@ -16,31 +16,29 @@ Lane `connor-price` | 140 BPM (half-time feel) | G minor (i - iv: Gm - Cm) | lay
 - **Max Mode:** ON. ON for any instrumental over ~2:00; OFF for 30-60 s palette tests (2x (20 per generation vs 10)). Max Mode also keeps silences silent on minimal rolls.
 - **Variety:** Off. Any setting above Off rewrites and expands the Style text before the model sees it (official FAQ: 'reduce the Variety slider to 0 to retain full control of your style tags'). Engineered prompts must run at Off.
 - **Persona:** NO. Voices (formerly Personas; Style Personas live inside the Voices menu): In-app text: 'Songs with Voices cannot be instrumental.' Not used in this workflow.
-- **Duration:** Custom 3:10 (estimated 2:58 from the layout at 140 BPM, plus a buffer rounded up to the next 5 s; [End] stops it early, Crop any tail). Never Auto: v6 runs long on Auto.
+- **Duration:** Custom 3:05 (estimated 2:55 from the layout at 140 BPM, plus a buffer rounded up to the next 5 s; [End] stops it early, Crop any tail). Never Auto: v6 runs long on Auto.
 - **Song Title:** Stolen Syrupy Synth
 
-## 3. STYLE FIELD (979/1000 chars; head tags first, then lead / bass / drums / counter)
+## 3. STYLE FIELD (999/1000 chars; head tags first, then lead / bass / drums / counter)
 ```text
-clever bounce hip hop, broken kick pattern, dry snaps, 140 BPM, half-time, in G minor, instrumental, snare dead on, kick early, twitchy off-grid clicks, minimal, single loop, never changes, hard cuts only, lead tucked above the 808, the syrupy synth hard-clipped on every transient, crisp dry mix, tight low end, nothing padded. lead: a syrupy slowed-down synth lead with a pitch sag, hard-clipped on every transient, a deep lead parked an octave above the 808, playing a stubborn root note leaning on the flat sixth as 16th stutters that cut out in the verse, the last note of the hook lands a 16th early every time. bass: a short punchy 808 following the kick. drums: a kick pattern that changes every two bars and never repeats twice in a row, a dry snare with a quiet second tap a 16th after it, hats in a 3+3+2 pattern against a straight kick, a tiny pitched perc ping in uneven pairs, long-short, only in the gaps the lead leaves, drums stop dead on beat 4, back on beat 1.
+tight kick, tight snare, two hat, 140 BPM, half-time, in G minor, tight syncopated bounce beat, instrumental, syncopated double kicks, jittery metallic ticks, beat 3 trips, beat 4 straightens, minimal, minimal one-loop beat, the beat stays frozen, lead tucked above the 808, the syrupy synth, a hand-struck hint of the octave hit, crisp dry mix, tight low end, nothing padded. lead: a syrupy slowed-down synth lead with a pitch sag, hard-clipped on every transient, playing a stubborn root note leaning on the flat sixth as 16th stutters that cut out in the verse. bass: a short punchy 808 following the kick. drums: a tight kick doubled before the snare, the second hit softer, a tight snare tuned high, hit softer in the verse, hard in the hook, two hat sounds trading 16ths, one sharp, one dull, the 808 slurs into a triplet on beat 3, the hook is the verse with one more sound. hint: a piano octave hit on the e of 1, cut dead, answered by one low note on 4, in the hook only, out for the verse.
 ```
 
-## 4. LYRICS FIELD (656/5000 chars; section tags only, no words)
+## 4. LYRICS FIELD (550/5000 chars; section tags only, no words)
 ```text
 [Instrumental]
 
-[Intro | kick and 808 only, 4 bars]
+[Intro | the syrupy synth alone, 4 bars]
 
-[Loop | same loop, the syrupy synth added, everything else identical, drums stop dead on beat 4, back on beat 1]
+[Loop | tight kick and the syrupy synth only, same two-bar loop, the hook is the verse with one more sound]
 
-[Loop | same loop, hats added, identical, a tiny pitched perc ping in uneven pairs, long-short, only in the gaps the lead leaves]
+[Loop | same loop, identical, the 808 slurs into a triplet on beat 3]
 
-[Loop | same loop, hats out, the syrupy synth and 808 identical, hats dead straight on the grid]
+[Loop | same loop, identical, a reversed hat one-shot in uneven pairs, long-short, under the hats, barely there]
 
-[Loop | same loop, the syrupy synth out, drums and 808 alone, hats dead straight on the grid]
+[Loop | same loop, the notes get shorter as the song goes on, kick identical, the octave hit in the hook only, out for the verse]
 
-[Loop | same loop, the syrupy synth back, identical, the notes get shorter as the song goes on]
-
-[Outro | kick and 808 only, stops dead on beat 1, about 2:58]
+[Outro | tight kick alone, stops dead on beat 1, about 2:55]
 
 [End]
 ```
@@ -51,31 +49,31 @@ vocals, humming, ad-libs, vocal chops, drum fills, tom fills, snare rolls, hat r
 ```
 
 ## 6. SLIDERS
-- **Weirdness:** 40% — Technical syncopated bounce: the lane's tested range is 40-50; above 60 Suno starts drifting tempo and structure.
+- **Weirdness:** 41% — Technical syncopated bounce: the lane's tested range is 40-50; above 60 Suno starts drifting tempo and structure.
 - **Style Influence:** 85% — High so the physical descriptions are followed; 75-85 landed closest to the written prompt.
 - **Audio Influence:** Not used. No audio is uploaded in this workflow, so the slider does not appear; leave it alone.
 - **Variety:** Off (Exact style). Any setting above Off rewrites and expands the Style text before the model sees it (official FAQ: 'reduce the Variety slider to 0 to retain full control of your style tags'). Engineered prompts must run at Off.
 
 ## 7. VARIATIONS
-**A. Safer** (v6, Weirdness 30%, Style Influence 90%; 1000 chars). Sound-neutral anchor, no twitch or slur tags, no hint: the plainest reading of the same sounds.
+**A. Safer** (v6, Weirdness 31%, Style Influence 90%; 994 chars). Sound-neutral anchor, no twitch or slur tags, no hint: the plainest reading of the same sounds.
 ```text
-syncopated hip hop bounce, tight dry drums, hard cuts, 140 BPM, half-time, in G minor, instrumental, minimal, single loop, never changes, hard cuts only, lead tucked above the 808, the syrupy synth hard-clipped on every transient, crisp dry mix, tight low end. lead: a syrupy slowed-down synth lead with a pitch sag, hard-clipped on every transient, a deep lead parked an octave above the 808, playing a stubborn root note leaning on the flat sixth as 16th stutters that cut out in the verse, the last note of the hook lands a 16th early every time. bass: a short punchy 808 following the kick, a slight pitch fall at the end of every note, playing off the kick, landing in its gaps. drums: a kick pattern that changes every two bars and never repeats twice in a row, a dry snare with a quiet second tap a 16th after it, hats in a 3+3+2 pattern against a straight kick, a tiny pitched perc ping in uneven pairs, long-short, only in the gaps the lead leaves, drums stop dead on beat 4, back on beat 1.
+syncopated hip hop bounce, tight dry drums, hard cuts, 140 BPM, half-time, in G minor, instrumental, minimal, minimal one-loop beat, the beat stays frozen, lead tucked above the 808, the syrupy synth hard-clipped on every transient, crisp dry mix, tight low end. lead: a syrupy slowed-down synth lead with a pitch sag, hard-clipped on every transient, a deep lead parked an octave above the 808, playing a stubborn root note leaning on the flat sixth as 16th stutters that cut out in the verse, the last note of the hook lands a 16th early every time. bass: a short punchy 808 following the kick, playing off the kick, landing in its gaps. drums: a tight kick doubled before the snare, the second hit softer, a tight snare tuned high, hit softer in the verse, hard in the hook, two hat sounds trading 16ths, one sharp, one dull, a reversed hat one-shot in uneven pairs, long-short, under the hats, barely there, the 808 slurs into a triplet on beat 3, the hook is the verse with one more sound.
 ```
-**B. Weirder** (v6-wild, Weirdness 78%, Style Influence 59%; 971 chars). One wild tag added; run it on v6-wild.
+**B. Weirder** (v6-wild, Weirdness 77%, Style Influence 64%; 981 chars). One wild tag added; run it on v6-wild.
 ```text
-clever bounce hip hop, broken kick pattern, dry snaps, 140 BPM, half-time, in G minor, instrumental, snare dead on, kick early, twitchy off-grid clicks, minimal, single loop, never changes, hard cuts only, the loop resampled until it smears, lead tucked above the 808, the syrupy synth hard-clipped on every transient, crisp dry mix, tight low end, nothing padded. lead: a syrupy slowed-down synth lead with a pitch sag, hard-clipped on every transient, playing a stubborn root note leaning on the flat sixth as 16th stutters that cut out in the verse, the last note of the hook lands a 16th early every time. bass: a short punchy 808 following the kick. drums: a kick pattern that changes every two bars and never repeats twice in a row, a dry snare with a quiet second tap a 16th after it, hats in a 3+3+2 pattern against a straight kick, a tiny pitched perc ping in uneven pairs, long-short, only in the gaps the lead leaves, drums stop dead on beat 4, back on beat 1.
+tight kick, tight snare, two hat, 140 BPM, half-time, in G minor, tight syncopated bounce beat, instrumental, syncopated double kicks, jittery metallic ticks, beat 3 trips, beat 4 straightens, minimal, minimal one-loop beat, the beat stays frozen, hats crushed to grit, lead tucked above the 808, the syrupy synth, a hand-struck hint of the octave hit, crisp dry mix, tight low end, nothing padded. lead: a syrupy slowed-down synth lead with a pitch sag, hard-clipped on every transient, playing a stubborn root note leaning on the flat sixth as 16th stutters that cut out in the verse. bass: a short punchy 808 following the kick. drums: a tight kick doubled before the snare, the second hit softer, a tight snare tuned high, hit softer in the verse, hard in the hook, two hat sounds trading 16ths, one sharp, one dull, the hook is the verse with one more sound. hint: a piano octave hit on the e of 1, cut dead, answered by one low note on 4, in the hook only, out for the verse.
 ```
 
 ## 8. POST-GEN NOTES
-- Structure: the first full beat lands at about 0:07; the layout is "One sound added, one sound removed" and runs about 2:58. Loop mode: every [Loop] tag says identical on purpose; if Suno adds changes anyway, raise Style Influence five points.
-- No hint on this roll; the hook device in the lead line ("the last note of the hook lands a 16th early every time") carries the stickiness. Listen for it on the second pass.
+- Structure: the first full beat lands at about 0:07; the layout is "Stripped to kick and lead" and runs about 2:55. Loop mode: every [Loop] tag says identical on purpose; if Suno adds changes anyway, raise Style Influence five points.
+- The hint (the octave hit) is one ingredient, in the hook only, out for the verse. If it takes over the record, run the safer variation (no hint) or re-roll; if it is inaudible, raise Style Influence five points. The hook device in the lead line ("the last note of the hook lands a 16th early every time") is what makes the lead stick; listen for it on the second pass.
 - This lane is about the drums: the kick pattern should be clever and off-grid, the mutes real silences. If it comes back as a dance beat, the anchor or a mood word said pop; the guard denies those now, so re-roll.
 - The mutes must be real silences: if Suno smooths over the stop-start cuts, pick the lead_out_middle or bare_minimum layout; "hard cuts only" sits in the head tags.
 - Plucks and knocks should be dry and close, never shiny; a shiny lead means a bright word got in, re-roll.
 - Hats should twitch, not run as a flat 16th grid; the twitch clause in the drums line and the hats description do this.
 - Fills, risers or a roll at a section change mean a word slipped through: run the QA checker on the block, and keep the anti-transition phrase in the drums line (it is the positive form of "no fills").
 - Any hum, chant or sung syllable means a re-roll, not a fix: the Exclude list is already complete, so change the seed rather than adding words.
-- Ending: [End] should stop it near 2:58. If it runs on, Crop to the last downbeat. If it stops early, Extend from the last good section and paste only the remaining section tags.
+- Ending: [End] should stop it near 2:55. If it runs on, Crop to the last downbeat. If it stops early, Extend from the last good section and paste only the remaining section tags.
 - Extend when the first 60-90 s are keepers and only the back half drifts. Re-roll (or run the weirder variation on v6-wild) when the drums or the lead are wrong from the start.
 - Remaster: Remaster (Pro/Premier) renders subtle variations and runs on v6; use it on the keeper for a cleaner, louder master.
 - Stems: Get Stems (Pro/Premier): Auto Split up to 12 stems for 50 credits; Split from Mix 10 credits per stem; Advanced Split (choose from ~100 instruments) 10 credits per stem, Premier only.
@@ -88,9 +86,8 @@ clever bounce hip hop, broken kick pattern, dry snaps, 140 BPM, half-time, in G 
 | 1 | Intro | 4 | 0:00 |
 | 2 | Loop | 24 | 0:07 |
 | 3 | Loop | 24 | 0:48 |
-| 4 | Loop | 12 | 1:29 |
-| 5 | Loop | 12 | 1:50 |
-| 6 | Loop | 24 | 2:10 |
-| 7 | Outro | 4 | 2:51 |
+| 4 | Loop | 24 | 1:29 |
+| 5 | Loop | 24 | 2:10 |
+| 6 | Outro | 2 | 2:51 |
 
 </details>
