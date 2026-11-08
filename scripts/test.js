@@ -62,7 +62,7 @@ test('every roll is guard-clean, inside the limits, and passes QA', () => {
 test('the head carries the identity in the front 300 chars and the drums line always survives', () => {
   for (const lane of LANE_IDS) for (const seed of SEEDS.slice(0, 400)) {
     const b = generate({ lane, seed });
-    const head = b.style.slice(0, 460);
+    const head = b.style.slice(0, 480);
     const R = b.parts.rhythm;
     for (const slot of ['sync', 'twitch', 'mode', 'slur', 'low']) if (R[slot]) assert.ok(head.includes(R[slot]), `${lane}/${seed}: ${slot} not in head: ${b.style}`);
     assert.ok(head.includes(b.parts.lead.handle), `${lane}/${seed}: handle not in head`);
@@ -116,9 +116,9 @@ test('rolls are one of one and lanes keep their identity', () => {
     const cp = generate({ lane: 'connor-price', seed }); connorN++; if (/major/.test(cp.meta.key)) connorMajor++;
     const jd = generate({ lane: 'jid-dark', seed }); jidN++; if (jd.meta.mode === 'switch') jidSwitch++;
   }
-  assert.ok(phonkCowbell > 350, `phonk cowbell ${phonkCowbell}/500`);
+  assert.ok(phonkCowbell > 330, `phonk cowbell ${phonkCowbell}/500`);
   assert.ok(paakBassGuitar > 400, `paak bass guitar ${paakBassGuitar}/500`);
-  assert.ok(connorMajor > connorN * 0.05 && connorMajor < connorN * 0.3, `connor major ${connorMajor}/${connorN}`);
+  assert.ok(connorMajor > connorN * 0.1 && connorMajor < connorN * 0.5, `connor major ${connorMajor}/${connorN}`);
   assert.ok(jidSwitch > jidN * 0.22, `jid switch ${jidSwitch}/${jidN}`);
 });
 
@@ -170,7 +170,7 @@ test('hints: present on roughly half of rolls, every family appears, handle reac
     assert.ok(b.style.includes(b.parts.lead.hook) || b.style.length >= 900, `${lane}/${seed}: hook device missing with room to spare`);
     if (!b.parts.hint) continue;
     withHint++; fams[b.parts.hint.family] = (fams[b.parts.hint.family] || 0) + 1;
-    assert.ok(b.style.slice(0, 460).includes(b.parts.hint.handle), `${lane}/${seed}: hint handle not in head: ${b.style}`);
+    assert.ok(b.style.slice(0, 480).includes(b.parts.hint.handle), `${lane}/${seed}: hint handle not in head: ${b.style}`);
     assert.ok(b.style.includes('hint:'), `${lane}/${seed}: hint line lost`);
     assert.ok(b.lyrics.includes(b.parts.hint.handle), `${lane}/${seed}: hint handle not in lyrics:\n${b.lyrics}`);
     assert.ok(checkBlock(b).ok);
@@ -199,6 +199,25 @@ test('mystery ingredients: a sprinkle on about a third of rolls, placed in one s
   assert.ok(heads.anchor > N * 0.4 && heads.leadfirst > N * 0.2 && heads.drumsfirst > N * 0.08, JSON.stringify(heads));
   const forced = generate({ lane: 'jid-dark', seed: 4, sprinkle: true }); assert.ok(forced.parts.sprinkle);
   assert.strictEqual(generate({ lane: 'jid-dark', seed: 4, sprinkle: false }).parts.sprinkle, null);
+});
+
+test('attitude: strut rolls carry no sad or dragging words, lean major, and are common; forcing works', () => {
+  const SAD = G.ATTITUDE.strut.sad;
+  let strut = 0, major = 0, N = 0;
+  for (const lane of LANE_IDS) for (const seed of SEEDS.slice(0, 300)) {
+    const b = generate({ lane, seed }); N++;
+    assert.ok(['strut', 'cold', 'low', 'wild'].includes(b.meta.attitude));
+    assert.ok(b.style.includes(b.parts.attitudeTag) || (b.meta.attitude !== 'strut' && b.style.length >= 950), `${lane}/${seed}: attitude tag missing`);
+    if (b.meta.attitude !== 'strut') continue;
+    strut++; if (/major/.test(b.meta.key)) major++;
+    const m = (b.style + '\n' + b.lyrics).match(SAD);
+    assert.ok(!m, `${lane}/${seed}: sad word in a strut roll: "${m && m[0]}"\n${b.style}\n${b.lyrics}`);
+    assert.ok(checkBlock(b).ok, checkBlock(b).errors.join(' | '));
+  }
+  assert.ok(strut > N * 0.3 && strut < N * 0.55, `${strut}/${N} strut`);
+  assert.ok(major > strut * 0.4, `${major}/${strut} strut rolls in major`);
+  assert.strictEqual(generate({ lane: 'paak-pocket', seed: 2, attitude: 'strut' }).meta.attitude, 'strut');
+  assert.strictEqual(generate({ lane: 'paak-pocket', seed: 2, attitude: 'cold' }).meta.attitude, 'cold');
 });
 
 test('user mood and must-have words are guarded', () => {

@@ -2,7 +2,7 @@
 
 # suno-forge prompt block: Dark slowed cassette hip hop
 
-Lane `phonk-experimental` | 138 BPM (half-time feel) | G minor (i - iv: Gm - Cm) | layout: Bare minimum: the lead, one kick, one 808, silence (loop) | about 2:54, full beat at 0:03 | seed 2026
+Lane `phonk-experimental` | 138 BPM (half-time feel) | C# minor (i7 - IV7 (Dorian): C#m7 - F#7) | layout: One sound added, one sound removed (loop) | about 3:01, full beat at 0:07 | seed 2026
 
 ## 1. MODEL
 **Pick:** v6
@@ -16,29 +16,31 @@ Lane `phonk-experimental` | 138 BPM (half-time feel) | G minor (i - iv: Gm - Cm)
 - **Max Mode:** ON. ON for any instrumental over ~2:00; OFF for 30-60 s palette tests (2x (20 per generation vs 10)). Max Mode also keeps silences silent on minimal rolls.
 - **Variety:** Off. Any setting above Off rewrites and expands the Style text before the model sees it (official FAQ: 'reduce the Variety slider to 0 to retain full control of your style tags'). Engineered prompts must run at Off.
 - **Persona:** NO. Voices (formerly Personas; Style Personas live inside the Voices menu): In-app text: 'Songs with Voices cannot be instrumental.' Not used in this workflow.
-- **Duration:** Custom 3:05 (estimated 2:54 from the layout at 138 BPM, plus a buffer rounded up to the next 5 s; [End] stops it early, Crop any tail). Never Auto: v6 runs long on Auto.
-- **Song Title:** Stolen Syrupy Synth
+- **Duration:** Custom 3:15 (estimated 3:01 from the layout at 138 BPM, plus a buffer rounded up to the next 5 s; [End] stops it early, Crop any tail). Never Auto: v6 runs long on Auto.
+- **Song Title:** Stolen Slowed Piano
 
-## 3. STYLE FIELD (991/1000 chars; head tags first, then lead / bass / drums / counter)
+## 3. STYLE FIELD (988/1000 chars; head tags first, then lead / bass / drums / counter)
 ```text
-a syrupy slowed-down synth lead with a pitch sag over 808 kick and snare, 138 BPM, half-time, in G minor, dark 808 drum-machine hip hop, instrumental, dark, snare dead on, kick early, twitchy off-grid clicks, three-note stumble on beat 3, bare minimum, nothing else, stripped minimal loop, hard cuts only, lead parked in the low mids, the syrupy synth, murky lo-fi mix, the sub kept clean, loud and crunchy. lead: a syrupy slowed-down synth lead with a pitch sag, hard-clipped on every transient, playing a stubborn root note leaning on the flat sixth as 16th stutters that cut out in the verse. bass: an 808 pitched down until the tail buzzes, sliding. drums: an 808 kick pitched down a step, long and sagging, late, a snare pitched down until it thuds, the noise tail cut short, closed 808 hats in triplets, lazy, with one open hat a hair late, a drunk triplet 808 bounce on the third beat, one sound in, one sound out, drums identical, nothing else in the drums, silence between the hits.
+dark slowed instrumental, a piano record dragged down, blown-out 808, cowbell knocks, 138 BPM, half-time, in C# minor, instrumental, dark, off-grid kick pattern, twitching kick retriggers, beat 3 trips, beat 4 straightens, minimal, two-bar loop, hypnotic, every section starts cold on beat 1, lead under the snare, the slowed piano, a lurching hint of the disc skip, murky lo-fi mix, the sub kept clean, loud and crunchy. lead: a piano record from the 70s slowed down until it drags, the hiss left in, low-passed so it sits behind the drums. bass: a square sub with a slow pitch dive on each note, dark, one note per bar. drums: an 808 kick pitched down a step, long and sagging, late, a snare and clap stacked, pitched down, dragging behind the kick, a shaker loop off a tape, wobbling, an 808 cowbell ticking a sparse pattern under the hats, a hair late, sections change on a hard cut, nothing in between. hint: the whole loop stuttering like a skipping disc for half a bar, then clean.
 ```
 
-## 4. LYRICS FIELD (556/5000 chars; section tags only, no words)
+## 4. LYRICS FIELD (753/5000 chars; section tags only, no words)
 ```text
 [Instrumental]
 
-[Intro | the syrupy synth alone, 2 bars, silence around it]
+[Intro | 808 kick and 808 only, 4 bars]
 
-[Loop | the syrupy synth, 808 kick and 808 only, nothing else, the rest of the bar is silence]
+[Loop | same loop, the slowed piano added, everything else identical, sections change on a hard cut, nothing in between]
 
-[Loop | same loop, identical, a drunk triplet 808 bounce on the third beat, nothing added]
+[Loop | same loop, shaker added, identical, a rimshot tick in 5-hit bursts that skip the grid, between the kick and snare]
 
-[Loop | same loop, identical, a tiny pitched perc ping in uneven pairs, long-short, only in the gaps the lead leaves, nothing else added]
+[Loop | same loop, hats out, the slowed piano and 808 identical, the hats slur into threes on beat 3, then straighten]
 
-[Loop | same loop, identical, hats dead straight on the grid, still nothing else]
+[Loop | same loop, the slowed piano out, drums and 808 alone, a slight push into each snare]
 
-[Outro | 808 kick alone for one bar, then silence, about 2:54]
+[Loop | same loop, the slowed piano back, identical, a second copy an octave down, louder in the hook, the disc skip at the end of the song, the last thing heard]
+
+[Outro | 808 kick and 808 only, stops dead on beat 1, about 3:01]
 
 [End]
 ```
@@ -49,25 +51,25 @@ vocals, vocal samples, vocal chops, chopped vocals, pitched vocals, screwed voca
 ```
 
 ## 6. SLIDERS
-- **Weirdness:** 60% — Dark slowed cassette hip hop: the lane's tested range is 50-60; above 60 Suno starts drifting tempo and structure.
-- **Style Influence:** 72% — High so the physical descriptions are followed; 70-80 landed closest to the written prompt.
+- **Weirdness:** 59% — Dark slowed cassette hip hop: the lane's tested range is 50-60; above 60 Suno starts drifting tempo and structure.
+- **Style Influence:** 78% — High so the physical descriptions are followed; 70-80 landed closest to the written prompt.
 - **Audio Influence:** Not used. No audio is uploaded in this workflow, so the slider does not appear; leave it alone.
 - **Variety:** Off (Exact style). Any setting above Off rewrites and expands the Style text before the model sees it (official FAQ: 'reduce the Variety slider to 0 to retain full control of your style tags'). Engineered prompts must run at Off.
 
 ## 7. VARIATIONS
-**A. Safer** (v6, Weirdness 50%, Style Influence 77%; 995 chars). Sound-neutral anchor, no twitch or slur tags, no hint: the plainest reading of the same sounds.
+**A. Safer** (v6, Weirdness 49%, Style Influence 83%; 985 chars). Sound-neutral anchor, no twitch or slur tags, no hint: the plainest reading of the same sounds.
 ```text
-dark slowed hip hop instrumental, cassette grit, distorted 808, 138 BPM, half-time, in G minor, instrumental, dark, bare minimum, nothing else, stripped minimal loop, hard cuts only, lead parked in the low mids, the syrupy synth, murky lo-fi mix, the sub kept clean. lead: a syrupy slowed-down synth lead with a pitch sag, hard-clipped on every transient, playing a stubborn root note leaning on the flat sixth as 16th stutters that cut out in the verse, the last note of the hook lands a 16th early every time. bass: an 808 pitched down until the tail buzzes, sliding. drums: an 808 kick pitched down a step, long and sagging, late, a snare pitched down until it thuds, the noise tail cut short, closed 808 hats in triplets, lazy, with one open hat a hair late, a tiny pitched perc ping in uneven pairs, long-short, only in the gaps the lead leaves, a drunk triplet 808 bounce on the third beat, one sound in, one sound out, drums identical, nothing else in the drums, silence between the hits.
+dark slowed hip hop instrumental, cassette grit, distorted 808, 138 BPM, half-time, in C# minor, instrumental, cold and still, the 808 doing the talking, dark, minimal, two-bar loop, hypnotic, every section starts cold on beat 1, lead under the snare, the slowed piano, murky lo-fi mix, the sub kept clean. lead: a piano record from the 70s slowed down until it drags, the hiss left in, low-passed so it sits behind the drums, a chest-level melody, felt as much as heard, playing a nervous half-step shake turned into a riff as off-beat stabs on the and of 2 and 4. bass: a square sub with a slow pitch dive on each note, dark, one note per bar. drums: an 808 kick pitched down a step, long and sagging, late, a snare and clap stacked, pitched down, dragging behind the kick, a shaker loop off a tape, wobbling, an 808 cowbell ticking a sparse pattern under the hats, a hair late, the hats slur into threes on beat 3, then straighten, sections change on a hard cut, nothing in between.
 ```
-**B. Weirder** (v6-wild, Weirdness 69%, Style Influence 62%; 985 chars). One wild tag added; run it on v6-wild.
+**B. Weirder** (v6-wild, Weirdness 73%, Style Influence 67%; 989 chars). One wild tag added; run it on v6-wild.
 ```text
-a syrupy slowed-down synth lead with a pitch sag over 808 kick and snare, 138 BPM, half-time, in G minor, dark 808 drum-machine hip hop, instrumental, dark, snare dead on, kick early, twitchy off-grid clicks, three-note stumble on beat 3, bare minimum, nothing else, stripped minimal loop, hard cuts only, hats crushed to grit, lead parked in the low mids, the syrupy synth, murky lo-fi mix, the sub kept clean, loud and crunchy. lead: a syrupy slowed-down synth lead with a pitch sag, hard-clipped on every transient, playing a stubborn root note leaning on the flat sixth as 16th stutters that cut out in the verse. bass: an 808 pitched down until the tail buzzes, sliding, one note per bar. drums: an 808 kick pitched down a step, long and sagging, late, a snare pitched down until it thuds, the noise tail cut short, closed 808 hats in triplets, lazy, with one open hat a hair late, one sound in, one sound out, drums identical, nothing else in the drums, silence between the hits.
+dark slowed instrumental, a piano record dragged down, blown-out 808, cowbell knocks, 138 BPM, half-time, in C# minor, instrumental, dark, off-grid kick pattern, twitching kick retriggers, beat 3 trips, beat 4 straightens, minimal, two-bar loop, hypnotic, every section starts cold on beat 1, pitch-warped lead, lead under the snare, the slowed piano, a lurching hint of the disc skip, murky lo-fi mix, the sub kept clean, loud and crunchy. lead: a piano record from the 70s slowed down until it drags, the hiss left in, low-passed so it sits behind the drums. bass: a square sub with a slow pitch dive on each note, dark. drums: an 808 kick pitched down a step, long and sagging, late, a snare and clap stacked, pitched down, dragging behind the kick, a shaker loop off a tape, wobbling, an 808 cowbell ticking a sparse pattern under the hats, a hair late, sections change on a hard cut, nothing in between. hint: the whole loop stuttering like a skipping disc for half a bar, then clean.
 ```
 
 ## 8. POST-GEN NOTES
-- Bare mode: the lead, one kick, one bass and silence; no counter, no hint, no percussion colour. If Suno adds anything, raise Style Influence five points and keep "bare minimum, nothing else" in the head.
-- Structure: the first full beat lands at about 0:03; the layout is "Bare minimum: the lead, one kick, one 808, silence" and runs about 2:54. Loop mode: every [Loop] tag says identical on purpose; if Suno adds changes anyway, raise Style Influence five points.
-- No hint on this roll; the hook device in the lead line ("the last note of the hook lands a 16th early every time") carries the stickiness. Listen for it on the second pass.
+- Structure: the first full beat lands at about 0:07; the layout is "One sound added, one sound removed" and runs about 3:01. Loop mode: every [Loop] tag says identical on purpose; if Suno adds changes anyway, raise Style Influence five points.
+- Attitude: cold ("cold and still, the 808 doing the talking"). Menace without sadness: patient, even, nothing rushed.
+- The hint (the disc skip) is one ingredient, at the end of the song, the last thing heard. If it takes over the record, run the safer variation (no hint) or re-roll; if it is inaudible, raise Style Influence five points. The hook device in the lead line ("a five-note motif on a simple rise-and-fall shape, the second note always a sixteenth late, every pass") is what makes the lead stick; listen for it on the second pass.
 - The genre names are never written: "phonk" and "Memphis" summon chopped vocal samples in Suno, so the lane is described as dark slowed cassette hip hop with cowbell knocks. If gibberish voices still appear, re-roll; the Exclude list carries vocal samples, chopped vocals and screwed vocals.
 - The cowbell must stay a rhythmic knock in the drums, never the melody; the colour line says "never the melody" and "cowbell melody" is in the Exclude list.
 - The 808 should be distorted but readable; if it is a clean sine, the bass line got cut for length, so shorten the counter and re-roll.
@@ -75,7 +77,7 @@ a syrupy slowed-down synth lead with a pitch sag over 808 kick and snare, 138 BP
 - This lane benefits most from v6-wild: when v6 comes back too tidy, run the same prompt on v6-wild at the listed wild sliders.
 - Fills, risers or a roll at a section change mean a word slipped through: run the QA checker on the block, and keep the anti-transition phrase in the drums line (it is the positive form of "no fills").
 - Any hum, chant or sung syllable means a re-roll, not a fix: the Exclude list is already complete, so change the seed rather than adding words.
-- Ending: [End] should stop it near 2:54. If it runs on, Crop to the last downbeat. If it stops early, Extend from the last good section and paste only the remaining section tags.
+- Ending: [End] should stop it near 3:01. If it runs on, Crop to the last downbeat. If it stops early, Extend from the last good section and paste only the remaining section tags.
 - Extend when the first 60-90 s are keepers and only the back half drifts. Re-roll (or run the weirder variation on v6-wild) when the drums or the lead are wrong from the start.
 - Remaster: Remaster (Pro/Premier) renders subtle variations and runs on v6; use it on the keeper for a cleaner, louder master.
 - Stems: Get Stems (Pro/Premier): Auto Split up to 12 stems for 50 credits; Split from Mix 10 credits per stem; Advanced Split (choose from ~100 instruments) 10 credits per stem, Premier only.
@@ -85,11 +87,12 @@ a syrupy slowed-down synth lead with a pitch sag over 808 kick and snare, 138 BP
 
 | # | Section | Bars | Starts |
 |---|---------|------|--------|
-| 1 | Intro | 2 | 0:00 |
-| 2 | Loop | 24 | 0:03 |
-| 3 | Loop | 24 | 0:45 |
-| 4 | Loop | 24 | 1:27 |
-| 5 | Loop | 24 | 2:09 |
-| 6 | Outro | 2 | 2:50 |
+| 1 | Intro | 4 | 0:00 |
+| 2 | Loop | 24 | 0:07 |
+| 3 | Loop | 24 | 0:49 |
+| 4 | Loop | 12 | 1:30 |
+| 5 | Loop | 12 | 1:51 |
+| 6 | Loop | 24 | 2:12 |
+| 7 | Outro | 4 | 2:54 |
 
 </details>
