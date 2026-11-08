@@ -19,32 +19,32 @@ Lane `hybrid` | 142 BPM (half-time feel) | F minor (i - bII: Fm - Gb) | layout: 
 - **Duration:** Custom 3:10 (estimated 2:56 from the layout at 142 BPM, plus a buffer rounded up to the next 5 s; [End] stops it early, Crop any tail). Never Auto: v6 runs long on Auto.
 - **Song Title:** Stolen Dry Pluck
 
-## 3. STYLE FIELD (985/1000 chars; head tags first, then lead / bass / drums / counter)
+## 3. STYLE FIELD (973/1000 chars; head tags first, then lead / bass / drums / counter)
 ```text
-a dry plucked synth hook over live kick and dry 808 snare, 142 BPM, half-time, in F minor, cowbell drums and a warm soul record, instrumental, sunny and dark at once, broken kick pattern, flamming perc hits, beat 3 trips, beat 4 straightens, beat flips at the midpoint, every section starts cold on beat 1, bright plucks on top, lead parked in the low mids, the dry pluck, a faint hint of the reversed fuzz swell, loud dry master, cassette drums, the top end clear. lead: a dry plucked synth hook, two notes an octave apart, every hit cut dead before the next kick, doubled an octave down, the low copy louder. bass: a fretless-style bass guitar over a clean sine sub. drums: a live kick with the beater click audible, hit a hair late, a dry 808 snare with the noise cranked, late, a tambourine smacked on 2 and 4, never quite even, every section starts cold on beat 1, nothing leads into it. hint: a reversed fuzz-guitar swell that blooms into each downbeat and dies before the snare.
+a dry plucked synth hook over 808 kick and crunchy sampled snare, 142 BPM, half-time, in F minor, skeletal hybrid hip hop, instrumental, sunny and dark at once, kick landing on the and, clipped hat bursts, a stumble on beat 3, second half double-time, sections cut dead, nothing between, bright plucks on top, lead tucked above the 808, the dry pluck, a faint hint of the reversed fuzz swell, loud dry master, cassette drums, the top end clear. lead: a dry plucked synth hook, two notes an octave apart, every hit cut dead before the next kick, doubled an octave down, the low copy louder. bass: a bass guitar played with the thumb, a blown-out 808 under it on the one. drums: an 808 kick under a live kick, the live one a hair late, a crunchy sampled snare off a cassette, cracking, a tambourine smacked on 2 and 4, never quite even, one sound in, one sound out, drums identical. hint: a reversed fuzz-guitar swell that blooms into each downbeat and dies before the snare.
 ```
 
-## 4. LYRICS FIELD (1004/5000 chars; section tags only, no words)
+## 4. LYRICS FIELD (957/5000 chars; section tags only, no words)
 ```text
 [Instrumental]
 
 [Intro | the dry pluck alone, 4 bars]
 
-[Hook | beat A straight in on beat 1, cold, broken kick pattern, the dry pluck up front, every section starts cold on beat 1]
+[Hook | beat A straight in on beat 1, cold, kick landing on the and, the dry pluck up front, one sound in, one sound out, drums identical]
 
-[Verse | beat A, same drums, the loop stumbles on 3 and lands the one hard, a tiny pitched perc ping in a quick double hit right before the snare, under the hats]
+[Verse | beat A, same drums, the pocket leans drunk on beat 3, sober on the one, a tiny pitched perc ping stop-start, 3 on, 2 off, answering the snare]
 
 [Hook | beat A, identical, the wedding-band chop answering]
 
-[Beat Switch | the kick pattern flips to the off-beats, the lead stutters and slices itself up]
+[Beat Switch | double-time drums, hats double, kick pattern doubles]
 
-[Hook | beat B, off-beat kicks, sliced lead, the dry pluck up front, a tiny pitched perc ping in a quick double hit right before the snare, under the hats]
+[Hook | beat B, double-time, hats doubled, the dry pluck up front, a tiny pitched perc ping stop-start, 3 on, 2 off, answering the snare]
 
-[Verse | beat B, off-beat kicks, sliced lead, the wedding-band chop answering, kick drifting behind the grid]
+[Verse | beat B, double-time, hats doubled, the wedding-band chop answering, played by hand against the bass]
 
-[Hook | beat B, off-beat kicks, sliced lead, it stays frozen and identical while the drums move, the reversed fuzz swell crying in the gaps the lead leaves]
+[Hook | beat B, double-time, hats doubled, it stays frozen and identical while the drums move, the reversed fuzz swell crying in the gaps the lead leaves]
 
-[Outro | beat B, off-beat kicks, sliced lead, stops dead on beat 1]
+[Outro | beat B, double-time, hats doubled, stops dead on beat 1]
 
 [End]
 ```
@@ -61,18 +61,18 @@ vocals, humming, ad-libs, vocal chops, drum fills, tom fills, snare rolls, hat r
 - **Variety:** Off (Exact style). Any setting above Off rewrites and expands the Style text before the model sees it (official FAQ: 'reduce the Variety slider to 0 to retain full control of your style tags'). Engineered prompts must run at Off.
 
 ## 7. VARIATIONS
-**A. Safer** (v6, Weirdness 45%, Style Influence 83%; 987 chars). Sound-neutral anchor, no twitch or slur tags, no hint: the plainest reading of the same sounds.
+**A. Safer** (v6, Weirdness 45%, Style Influence 83%; 991 chars). Sound-neutral anchor, no twitch or slur tags, no hint: the plainest reading of the same sounds.
 ```text
-hybrid hip hop instrumental, cassette drums, live pocket, 142 BPM, half-time, in F minor, instrumental, threatening, the drums like footsteps, sunny and dark at once, beat flips at the midpoint, every section starts cold on beat 1, bright plucks on top, lead parked in the low mids, the dry pluck, loud dry master, cassette drums. lead: a dry plucked synth hook, two notes an octave apart, every hit cut dead before the next kick, doubled an octave down, the low copy louder, one held note per bar, cut before the snare, the hook is two notes, the second held until the snare cuts it. bass: a fretless-style bass guitar over a clean sine sub. drums: a live kick with the beater click audible, hit a hair late, a dry 808 snare with the noise cranked, late, 808 hats in 8ths that drag further behind the kick every bar, then reset, a tambourine smacked on 2 and 4, never quite even, the loop stumbles on 3 and lands the one hard, every section starts cold on beat 1, nothing leads into it.
+hybrid hip hop instrumental, cassette drums, live pocket, 142 BPM, half-time, in F minor, instrumental, cold and still, the 808 doing the talking, sunny and dark at once, second half double-time, sections cut dead, nothing between, bright plucks on top, lead tucked above the 808, the dry pluck, loud dry master, cassette drums. lead: a dry plucked synth hook, two notes an octave apart, every hit cut dead before the next kick, doubled an octave down, the low copy louder, one held note per bar, cut before the snare, the hook is two notes, the second held until the snare cuts it. bass: a bass guitar played with the thumb, a blown-out 808 under it on the one, following the kick exactly. drums: an 808 kick under a live kick, the live one a hair late, a crunchy sampled snare off a cassette, cracking, hats in triplets that slur on beat 3, a tambourine smacked on 2 and 4, never quite even, the pocket leans drunk on beat 3, sober on the one, one sound in, one sound out, drums identical.
 ```
-**B. Weirder** (v6-wild, Weirdness 75%, Style Influence 70%; 999 chars). One wild tag added; run it on v6-wild.
+**B. Weirder** (v6-wild, Weirdness 75%, Style Influence 70%; 1000 chars). One wild tag added; run it on v6-wild.
 ```text
-a dry plucked synth hook over live kick and dry 808 snare, 142 BPM, half-time, in F minor, cowbell drums and a warm soul record, instrumental, sunny and dark at once, broken kick pattern, flamming perc hits, beat 3 trips, beat 4 straightens, beat flips at the midpoint, every section starts cold on beat 1, bright plucks on top, drums pitched down a step, lead parked in the low mids, the dry pluck, a faint hint of the reversed fuzz swell, loud dry master, cassette drums, the top end clear. lead: a dry plucked synth hook, two notes an octave apart, every hit cut dead before the next kick. bass: a fretless-style bass guitar over a clean sine sub, landing a hair behind the kick. drums: a live kick with the beater click audible, hit a hair late, a dry 808 snare with the noise cranked, late, a tambourine smacked on 2 and 4, never quite even, every section starts cold on beat 1, nothing leads into it. hint: a reversed fuzz-guitar swell that blooms into each downbeat and dies before the snare.
+a dry plucked synth hook over 808 kick and crunchy sampled snare, 142 BPM, half-time, in F minor, skeletal hybrid hip hop, instrumental, sunny and dark at once, kick landing on the and, clipped hat bursts, a stumble on beat 3, second half double-time, sections cut dead, nothing between, bright plucks on top, drums pitched down a step, lead tucked above the 808, the dry pluck, a faint hint of the reversed fuzz swell, loud dry master, cassette drums, the top end clear. lead: a dry plucked synth hook, two notes an octave apart, every hit cut dead before the next kick, doubled an octave down, the low copy louder. bass: a bass guitar played with the thumb, a blown-out 808 under it on the one. drums: an 808 kick under a live kick, the live one a hair late, a crunchy sampled snare off a cassette, cracking, a tambourine smacked on 2 and 4, never quite even, one sound in, one sound out, drums identical. hint: a reversed fuzz-guitar swell that blooms into each downbeat and dies before the snare.
 ```
 
 ## 8. POST-GEN NOTES
-- Structure: the first full beat lands at about 0:07; the layout is "A then B, two beats one song" and runs about 2:56. The beat switch is one axis ("beat flips at the midpoint"); its words repeat in the head tag and in every section after the switch so Suno cannot undo it.
-- Attitude: cold ("threatening, the drums like footsteps"). Menace without sadness: patient, even, nothing rushed.
+- Structure: the first full beat lands at about 0:07; the layout is "A then B, two beats one song" and runs about 2:56. The beat switch is one axis ("second half double-time"); its words repeat in the head tag and in every section after the switch so Suno cannot undo it.
+- Attitude: cold ("cold and still, the 808 doing the talking"). Menace without sadness: patient, even, nothing rushed.
 - The hint (the reversed fuzz swell) is one ingredient, crying in the gaps the lead leaves. If it takes over the record, run the safer variation (no hint) or re-roll; if it is inaudible, raise Style Influence five points. The hook device in the lead line ("the hook is two notes, the second held until the snare cuts it") is what makes the lead stick; listen for it on the second pass.
 - All three elements must coexist: cassette cowbell drums, a live tine-and-bass pocket, bright plucks. If one is missing, the line that carried it got cut; shorten the counter and re-roll.
 - The drums should drag behind the grid; the kit descriptions say "late" and "dragging" and the slur tag sits in the head.

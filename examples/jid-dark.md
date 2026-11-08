@@ -2,7 +2,7 @@
 
 # suno-forge prompt block: Dense dark boom-bap/trap hybrid
 
-Lane `jid-dark` | 146 BPM (half-time feel) | C# minor (i7 - IV7 (Dorian): C#m7 - F#7) | layout: Drums cut, lead alone, then beat B is simply there (switch) | about 2:51, full beat at 0:26 | seed 2026
+Lane `jid-dark` | 146 BPM (half-time feel) | C# minor (i7 - IV7 (Dorian): C#m7 - F#7) | layout: Drums cut, lead alone, then beat B is simply there (switch) | about 2:41, full beat at 0:16 | seed 2026
 
 ## 1. MODEL
 **Pick:** v6
@@ -16,37 +16,37 @@ Lane `jid-dark` | 146 BPM (half-time feel) | C# minor (i7 - IV7 (Dorian): C#m7 -
 - **Max Mode:** ON. ON for any instrumental over ~2:00; OFF for 30-60 s palette tests (2x (20 per generation vs 10)). Max Mode also keeps silences silent on minimal rolls.
 - **Variety:** Off. Any setting above Off rewrites and expands the Style text before the model sees it (official FAQ: 'reduce the Variety slider to 0 to retain full control of your style tags'). Engineered prompts must run at Off.
 - **Persona:** NO. Voices (formerly Personas; Style Personas live inside the Voices menu): In-app text: 'Songs with Voices cannot be instrumental.' Not used in this workflow.
-- **Duration:** Custom 3:05 (estimated 2:51 from the layout at 146 BPM, plus a buffer rounded up to the next 5 s; [End] stops it early, Crop any tail). Never Auto: v6 runs long on Auto.
+- **Duration:** Custom 2:55 (estimated 2:41 from the layout at 146 BPM, plus a buffer rounded up to the next 5 s; [End] stops it early, Crop any tail). Never Auto: v6 runs long on Auto.
 - **Song Title:** Stolen Soul Keys
 
-## 3. STYLE FIELD (989/1000 chars; head tags first, then lead / bass / drums / counter)
+## 3. STYLE FIELD (993/1000 chars; head tags first, then lead / bass / drums / counter)
 ```text
-dark half-time hip hop, one string stab, heavy 808, hard snare, 146 BPM, half-time, in C# minor, instrumental, cold, menacing, unhurried, paranoid, off-grid kick pattern, twitching kick retriggers, beat 3 trips, beat 4 straightens, beat switch, new drums, every section starts cold on beat 1, lead below the hats, the sliced soul keys, dense dark mix, loud, the snare cutting through. lead: a soul record keys stab sliced into one-beat pieces and pitched down, dark, resampled until the grain shows, a chest-level melody, felt as much as heard, off-beat stabs on the and of 2 and 4, a five-note motif on a simple rise-and-fall shape, the second note always a sixteenth late, every pass. bass: a sliding 808 doubled by a sine sub. drums: a kick layered with a low tom hit, the tom tuned to the key, a snare with a quiet extra tap right before beat 4, hats that drag on beat 3 then straighten, the hats slur into threes on beat 3, then straighten, the beat stays frozen from start to finish.
+skeletal dark hip hop, one chop, one 808, one snare, 146 BPM, half-time, in C# minor, instrumental, dead-eyed, heavy, patient, paranoid, snare dead on, kick early, twitchy percussion, hard beat switch halfway, sections cut dead, nothing between, deep low-mid lead, the sliced soul keys, dense dark mix, loud, the snare cutting through. lead: a soul record keys stab sliced into one-beat pieces and pitched down, dark, resampled until the grain shows, a chest-level melody, felt as much as heard, off-beat stabs on the and of 2 and 4, a five-note motif on a simple rise-and-fall shape, the second note always a sixteenth late, every pass. bass: an 808 with a hard knock on top, sliding into the downbeat, one octave slide into the hook. drums: a kick layered with a low tom hit, the tom tuned to the key, a snare stacked with a clap and a rimshot, the rimshot a hair early, a hat pattern that doubles on the and of every beat, tight and dry, the drums never announce a change, they just change.
 ```
 
-## 4. LYRICS FIELD (922/5000 chars; section tags only, no words)
+## 4. LYRICS FIELD (914/5000 chars; section tags only, no words)
 ```text
 [Instrumental]
 
-[Intro | kick and 808 only, 8 bars]
+[Intro | kick and 808 only, 2 bars]
 
-[Verse | 8 bars, full drums, off-grid kick pattern, the sliced soul keys low]
+[Verse | 8 bars, full drums, snare dead on, kick early, the sliced soul keys low]
 
-[Hook | full beat straight in on beat 1, cold, the sliced soul keys up front, the hats slur into threes on beat 3, then straighten, the beat stays frozen from start to finish]
+[Hook | full beat straight in on beat 1, cold, the sliced soul keys up front, played by hand against the bass, the drums never announce a change, they just change]
 
-[Verse | same drums, the sliced soul keys thinner, a slight push into each snare]
+[Verse | same drums, the sliced soul keys thinner, played by hand against the bass]
 
-[Break | the sliced soul keys alone, slowing down into it like the power got cut]
+[Break | the sliced soul keys alone, the new section starts on beat 2, not 1]
 
-[Beat Switch | new kick pattern, the 808 running straight 16ths, harder snare]
+[Beat Switch | everything strips to 808 and one snare, the lead pitched down an octave]
 
-[Verse | new drums, running 808, the string stabs answering, a rimshot tick in 5-hit bursts that skip the grid, on the last beat of every 2nd bar]
+[Verse | stripped to 808 and snare, the string stabs answering, stuttered kick retriggers in a burst that slows down as it decays]
 
-[Hook | new drums, running 808, a second copy an octave down, louder in the hook]
+[Hook | stripped to 808 and snare, a second copy an octave down, louder in the hook]
 
-[Hook | new drums, running 808, identical, the sliced soul keys up front]
+[Hook | stripped to 808 and snare, identical, the sliced soul keys up front]
 
-[Outro | new drums, running 808, stops dead on beat 1]
+[Outro | stripped to 808 and snare, stops dead on beat 1]
 
 [End]
 ```
@@ -57,24 +57,24 @@ vocals, humming, ad-libs, vocal chops, choir, drum fills, tom fills, snare rolls
 ```
 
 ## 6. SLIDERS
-- **Weirdness:** 51% — Dense dark boom-bap/trap hybrid: the lane's tested range is 45-55; above 60 Suno starts drifting tempo and structure.
-- **Style Influence:** 84% — High so the physical descriptions are followed; 75-85 landed closest to the written prompt.
+- **Weirdness:** 55% — Dense dark boom-bap/trap hybrid: the lane's tested range is 45-55; above 60 Suno starts drifting tempo and structure.
+- **Style Influence:** 81% — High so the physical descriptions are followed; 75-85 landed closest to the written prompt.
 - **Audio Influence:** Not used. No audio is uploaded in this workflow, so the slider does not appear; leave it alone.
 - **Variety:** Off (Exact style). Any setting above Off rewrites and expands the Style text before the model sees it (official FAQ: 'reduce the Variety slider to 0 to retain full control of your style tags'). Engineered prompts must run at Off.
 
 ## 7. VARIATIONS
-**A. Safer** (v6, Weirdness 41%, Style Influence 89%; 982 chars). Sound-neutral anchor, no twitch or slur tags, no hint: the plainest reading of the same sounds.
+**A. Safer** (v6, Weirdness 45%, Style Influence 86%; 999 chars). Sound-neutral anchor, no twitch or slur tags, no hint: the plainest reading of the same sounds.
 ```text
-dark hip hop instrumental, hard drums, heavy 808, 146 BPM, half-time, in C# minor, instrumental, cold, menacing, unhurried, paranoid, beat switch, new drums, every section starts cold on beat 1, lead below the hats, the sliced soul keys resampled until the grain shows, dense dark mix, loud. lead: a soul record keys stab sliced into one-beat pieces and pitched down, dark, resampled until the grain shows, a chest-level melody, felt as much as heard, off-beat stabs on the and of 2 and 4, a five-note motif on a simple rise-and-fall shape, the second note always a sixteenth late, every pass. bass: a sliding 808 doubled by a sine sub. drums: a kick layered with a low tom hit, the tom tuned to the key, a snare with a quiet extra tap right before beat 4, hats that drag on beat 3 then straighten, a rimshot tick in 5-hit bursts that skip the grid, on the last beat of every 2nd bar, the hats slur into threes on beat 3, then straighten, the beat stays frozen from start to finish.
+dark hip hop instrumental, hard drums, heavy 808, 146 BPM, half-time, in C# minor, instrumental, dead-eyed, heavy, patient, paranoid, hard beat switch halfway, sections cut dead, nothing between, deep low-mid lead, the sliced soul keys resampled until the grain shows, dense dark mix, loud. lead: a soul record keys stab sliced into one-beat pieces and pitched down, dark, resampled until the grain shows, off-beat stabs on the and of 2 and 4, a five-note motif on a simple rise-and-fall shape, the second note always a sixteenth late, every pass. bass: an 808 with a hard knock on top, sliding into the downbeat, glide between every note. drums: a kick layered with a low tom hit, the tom tuned to the key, a snare stacked with a clap and a rimshot, the rimshot a hair early, a hat pattern that doubles on the and of every beat, tight and dry, stuttered kick retriggers in a burst that slows down as it decays, on the last beat of every 2nd bar, the drums never announce a change, they just change.
 ```
-**B. Weirder** (v6-wild, Weirdness 72%, Style Influence 63%; 994 chars). One wild tag added; run it on v6-wild.
+**B. Weirder** (v6-wild, Weirdness 74%, Style Influence 62%; 983 chars). One wild tag added; run it on v6-wild.
 ```text
-dark half-time hip hop, one string stab, heavy 808, hard snare, 146 BPM, half-time, in C# minor, instrumental, cold, menacing, unhurried, paranoid, off-grid kick pattern, twitching kick retriggers, beat 3 trips, beat 4 straightens, beat switch, new drums, every section starts cold on beat 1, drums pitched down a step, lead below the hats, the sliced soul keys, dense dark mix, loud, the snare cutting through. lead: a soul record keys stab sliced into one-beat pieces and pitched down, dark, resampled until the grain shows, off-beat stabs on the and of 2 and 4, a five-note motif on a simple rise-and-fall shape, the second note always a sixteenth late, every pass. bass: a sliding 808 doubled by a sine sub, a click on the attack. drums: a kick layered with a low tom hit, the tom tuned to the key, a snare with a quiet extra tap right before beat 4, hats that drag on beat 3 then straighten, the hats slur into threes on beat 3, then straighten, the beat stays frozen from start to finish.
+skeletal dark hip hop, one chop, one 808, one snare, 146 BPM, half-time, in C# minor, instrumental, dead-eyed, heavy, patient, paranoid, snare dead on, kick early, twitchy percussion, hard beat switch halfway, sections cut dead, nothing between, hats crushed to grit, deep low-mid lead, the sliced soul keys, dense dark mix, loud, the snare cutting through. lead: a soul record keys stab sliced into one-beat pieces and pitched down, dark, resampled until the grain shows, a chest-level melody, felt as much as heard, off-beat stabs on the and of 2 and 4, a five-note motif on a simple rise-and-fall shape, the second note always a sixteenth late, every pass. bass: an 808 with a hard knock on top, sliding into the downbeat. drums: a kick layered with a low tom hit, the tom tuned to the key, a snare stacked with a clap and a rimshot, the rimshot a hair early, a hat pattern that doubles on the and of every beat, tight and dry, the drums never announce a change, they just change.
 ```
 
 ## 8. POST-GEN NOTES
-- Structure: the first full beat lands at about 0:26; the layout is "Drums cut, lead alone, then beat B is simply there" and runs about 2:51. The beat switch is one axis ("beat switch, new drums"); its words repeat in the head tag and in every section after the switch so Suno cannot undo it.
-- Attitude: cold ("cold, menacing, unhurried"). Menace without sadness: patient, even, nothing rushed.
+- Structure: the first full beat lands at about 0:16; the layout is "Drums cut, lead alone, then beat B is simply there" and runs about 2:41. The beat switch is one axis ("hard beat switch halfway"); its words repeat in the head tag and in every section after the switch so Suno cannot undo it.
+- Attitude: cold ("dead-eyed, heavy, patient"). Menace without sadness: patient, even, nothing rushed.
 - No hint on this roll; the hook device in the lead line ("a five-note motif on a simple rise-and-fall shape, the second note always a sixteenth late, every pass") carries the stickiness. Listen for it on the second pass.
 - The sliced keys should sound like a cut-up record, not a played melody; if Suno plays it clean, pick a source with "sliced" or "reversed" in it and re-roll.
 - Hats should twitch and switch patterns; the twitch tag and the hats description carry this, keep both in the front 260 characters.
@@ -82,7 +82,7 @@ dark half-time hip hop, one string stab, heavy 808, hard snare, 146 BPM, half-ti
 - Strings can take over and turn it into a trailer cue; "cinematic" and "film score" stay in the Exclude list for this reason.
 - Fills, risers or a roll at a section change mean a word slipped through: run the QA checker on the block, and keep the anti-transition phrase in the drums line (it is the positive form of "no fills").
 - Any hum, chant or sung syllable means a re-roll, not a fix: the Exclude list is already complete, so change the seed rather than adding words.
-- Ending: [End] should stop it near 2:51. If it runs on, Crop to the last downbeat. If it stops early, Extend from the last good section and paste only the remaining section tags.
+- Ending: [End] should stop it near 2:41. If it runs on, Crop to the last downbeat. If it stops early, Extend from the last good section and paste only the remaining section tags.
 - Extend when the first 60-90 s are keepers and only the back half drifts. Re-roll (or run the weirder variation on v6-wild) when the drums or the lead are wrong from the start.
 - Remaster: Remaster (Pro/Premier) renders subtle variations and runs on v6; use it on the keeper for a cleaner, louder master.
 - Stems: Get Stems (Pro/Premier): Auto Split up to 12 stems for 50 credits; Split from Mix 10 credits per stem; Advanced Split (choose from ~100 instruments) 10 credits per stem, Premier only.
@@ -92,15 +92,15 @@ dark half-time hip hop, one string stab, heavy 808, hard snare, 146 BPM, half-ti
 
 | # | Section | Bars | Starts |
 |---|---------|------|--------|
-| 1 | Intro | 8 | 0:00 |
-| 2 | Verse | 8 | 0:13 |
-| 3 | Hook | 16 | 0:26 |
-| 4 | Verse | 16 | 0:53 |
-| 5 | Break | 4 | 1:19 |
-| 6 | Beat Switch | 2 | 1:25 |
-| 7 | Verse | 16 | 1:29 |
-| 8 | Hook | 16 | 1:55 |
-| 9 | Hook | 16 | 2:21 |
-| 10 | Outro | 2 | 2:48 |
+| 1 | Intro | 2 | 0:00 |
+| 2 | Verse | 8 | 0:03 |
+| 3 | Hook | 16 | 0:16 |
+| 4 | Verse | 16 | 0:43 |
+| 5 | Break | 4 | 1:09 |
+| 6 | Beat Switch | 2 | 1:16 |
+| 7 | Verse | 16 | 1:19 |
+| 8 | Hook | 16 | 1:45 |
+| 9 | Hook | 16 | 2:12 |
+| 10 | Outro | 2 | 2:38 |
 
 </details>

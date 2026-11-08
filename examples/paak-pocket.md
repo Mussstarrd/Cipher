@@ -19,20 +19,20 @@ Lane `paak-pocket` | 94 BPM | D minor (i7 - IV7 (Dorian): Dm7 - G7) | layout: Fo
 - **Duration:** Custom 3:20 (estimated 3:09 from the layout at 94 BPM, plus a buffer rounded up to the next 5 s; [End] stops it early, Crop any tail). Never Auto: v6 runs long on Auto.
 - **Song Title:** Stolen Soul Chop
 
-## 3. STYLE FIELD (993/1000 chars; head tags first, then lead / bass / drums / counter)
+## 3. STYLE FIELD (977/1000 chars; head tags first, then lead / bass / drums / counter)
 ```text
-a soul record pitched up a fourth and cut to one bar over soft round kick and hard cracking boom-bap snare, 94 BPM, in D minor, late-pocket boom bap, instrumental, sun-soaked, late-night, kick skipping the downbeat, flamming perc hits, beat 3 trips, beat 4 straightens, the beat never lets up, every section starts cold on beat 1, deep baritone melody, the chipmunk soul chop, a hand-struck hint of the palm-muted cluster, dusty warm mix, the snare on top, the kick and bass as one sound. lead: a soul record pitched up a fourth and cut to one bar, the horns and keys chirping, the room left in. bass: a bass guitar sample off the same soul record, pitched to the key, one note per bar, landing a hair behind the kick. drums: a soft round kick played with the heel down, behind the beat, a hard cracking boom-bap snare, dry, a hair late and hit harder for it, the hook is the verse with one more sound. hint: a prepared piano cluster struck twice then muted with the palm, the strings buzzing.
+a soul record pitched up a fourth and cut to one bar over kick and snare, 94 BPM, in D minor, dusty library-record boom bap, instrumental, sun-soaked, late-night, kick landing on the and, clipped hat bursts, a stumble on beat 3, same drums every section, hard cuts only, sections cut dead, nothing between, low-mid lead, top cut off, the chipmunk soul chop, a hand-struck hint of the palm-muted cluster, dusty warm mix, the snare on top, the kick and bass as one sound. lead: a soul record pitched up a fourth and cut to one bar, the horns and keys chirping, the room left in. bass: a flatwound bass guitar played with the thumb, dull and thumpy, the same two-bar figure start to finish. drums: a kick a hair behind the bass so the pocket leans back, the hats dead straight, a snare with the wires loose, buzzing, played late, every section starts cold on beat 1, nothing leads into it. hint: a prepared piano cluster struck twice then muted with the palm, the strings buzzing.
 ```
 
-## 4. LYRICS FIELD (792/5000 chars; section tags only, no words)
+## 4. LYRICS FIELD (773/5000 chars; section tags only, no words)
 ```text
 [Instrumental]
 
 [Intro | the chipmunk soul chop alone, 4 bars]
 
-[Hook | full beat straight in on beat 1, cold, the chipmunk soul chop up front, the hook is the verse with one more sound]
+[Hook | full beat straight in on beat 1, cold, the chipmunk soul chop up front, every section starts cold on beat 1]
 
-[Verse | same drums, kick skipping the downbeat, the loop stumbles on 3 and lands the one hard, a tiny pitched perc ping in a quick double hit right before the snare, under the hats]
+[Verse | same drums, kick landing on the and, the pocket leans drunk on beat 3, sober on the one, a reversed hat one-shot stop-start, 3 on, 2 off, answering the snare]
 
 [Hook | identical, the palm-muted cluster answering the lead with one hit per phrase]
 
@@ -40,7 +40,7 @@ a soul record pitched up a fourth and cut to one bar over soft round kick and ha
 
 [Hook | the full beat straight back in on beat 1 as if nothing happened, identical]
 
-[Verse | same drums, the chipmunk soul chop thinner, kick drifting behind the grid]
+[Verse | same drums, the chipmunk soul chop thinner, played by hand against the bass]
 
 [Hook | identical, it stays frozen and identical while the drums move]
 
@@ -61,13 +61,13 @@ vocals, humming, ad-libs, vocal chops, drum fills, tom fills, snare rolls, hat r
 - **Variety:** Off (Exact style). Any setting above Off rewrites and expands the Style text before the model sees it (official FAQ: 'reduce the Variety slider to 0 to retain full control of your style tags'). Engineered prompts must run at Off.
 
 ## 7. VARIATIONS
-**A. Safer** (v6, Weirdness 43%, Style Influence 88%; 989 chars). Sound-neutral anchor, no twitch or slur tags, no hint: the plainest reading of the same sounds.
+**A. Safer** (v6, Weirdness 43%, Style Influence 88%; 985 chars). Sound-neutral anchor, no twitch or slur tags, no hint: the plainest reading of the same sounds.
 ```text
-soul boom bap instrumental, hard snare, drums played by hand, 94 BPM, in D minor, instrumental, dead-eyed, heavy, patient, sun-soaked, late-night, the beat never lets up, every section starts cold on beat 1, deep baritone melody, the chipmunk soul chop, dusty warm mix, the snare on top. lead: a soul record pitched up a fourth and cut to one bar, the horns and keys chirping, the room left in, filtered so the bass of the record is gone and the bass guitar takes it, playing a three-note cell: root, flat second, root as one held note per bar, cut before the snare. bass: a bass guitar sample off the same soul record, pitched to the key, one note per bar, landing a hair behind the kick. drums: a soft round kick played with the heel down, behind the beat, a hard cracking boom-bap snare, dry, a hair late and hit harder for it, a hat pattern that opens once per bar on the and of 4, wet and late, the loop stumbles on 3 and lands the one hard, the hook is the verse with one more sound.
+soul boom bap instrumental, hard snare, drums played by hand, 94 BPM, in D minor, instrumental, dead-eyed, heavy, patient, sun-soaked, late-night, same drums every section, hard cuts only, sections cut dead, nothing between, low-mid lead, top cut off, the chipmunk soul chop, dusty warm mix, the snare on top. lead: a soul record pitched up a fourth and cut to one bar, the horns and keys chirping, the room left in, filtered so the bass of the record is gone and the bass guitar takes it, playing a two-note motif bouncing a tritone as one held note per bar, cut before the snare. bass: a flatwound bass guitar played with the thumb, dull and thumpy, the same two-bar figure start to finish, syncopated 16ths with long rests. drums: a kick a hair behind the bass so the pocket leans back, the hats dead straight, a snare with the wires loose, buzzing, played late, hats played soft with one loud accent per bar, pulled late, every section starts cold on beat 1, nothing leads into it.
 ```
-**B. Weirder** (v6-wild, Weirdness 80%, Style Influence 60%; 995 chars). One wild tag added; run it on v6-wild.
+**B. Weirder** (v6-wild, Weirdness 80%, Style Influence 60%; 993 chars). One wild tag added; run it on v6-wild.
 ```text
-a soul record pitched up a fourth and cut to one bar over soft round kick and hard cracking boom-bap snare, 94 BPM, in D minor, late-pocket boom bap, instrumental, sun-soaked, late-night, kick skipping the downbeat, flamming perc hits, beat 3 trips, beat 4 straightens, the beat never lets up, every section starts cold on beat 1, sliced sample stabs off the grid, deep baritone melody, the chipmunk soul chop, a hand-struck hint of the palm-muted cluster, dusty warm mix, the snare on top, the kick and bass as one sound. lead: a soul record pitched up a fourth and cut to one bar, the horns and keys chirping, the room left in. bass: a bass guitar sample off the same soul record, pitched to the key, one note per bar. drums: a soft round kick played with the heel down, behind the beat, a hard cracking boom-bap snare, dry, a hair late and hit harder for it, the hook is the verse with one more sound. hint: a prepared piano cluster struck twice then muted with the palm, the strings buzzing.
+a soul record pitched up a fourth and cut to one bar over kick and snare, 94 BPM, in D minor, dusty library-record boom bap, instrumental, sun-soaked, late-night, kick landing on the and, clipped hat bursts, a stumble on beat 3, same drums every section, hard cuts only, sections cut dead, nothing between, sliced sample stabs off the grid, low-mid lead, top cut off, the chipmunk soul chop, a hand-struck hint of the palm-muted cluster, dusty warm mix, the snare on top, the kick and bass as one sound. lead: a soul record pitched up a fourth and cut to one bar, the horns and keys chirping, the room left in, filtered so the bass of the record is gone and the bass guitar takes it. bass: a flatwound bass guitar played with the thumb, dull and thumpy, the same two-bar figure start to finish. drums: a kick a hair behind the bass so the pocket leans back, the hats dead straight, a snare with the wires loose, buzzing, played late, every section starts cold on beat 1, nothing leads into it.
 ```
 
 ## 8. POST-GEN NOTES
