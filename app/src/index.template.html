@@ -177,7 +177,7 @@
     const dur = (b.toggles.duration.match(/Custom (\d+:\d\d)/) || [])[1] || b.plan.durationSetting;
     $('vibe').innerHTML = `<em>${esc(b.meta.title)}</em> · ${esc(b.meta.attitude)} · ${esc(b.meta.laneLabel)} · ${esc(b.meta.layoutLabel)} · ${b.meta.bpm} BPM${b.meta.halfTime ? ' half-time' : ''} · ${esc(b.meta.key)}${b.meta.hint ? ` · hint: ${esc(b.meta.hint.handle)}` : ''}${b.meta.sprinkle ? ` · once: ${esc(b.meta.sprinkle.handle)}` : ''} · #${b.meta.seed.toString(36).toUpperCase()}`;
     let html = fieldCard('lyrics', '1', 'Lyrics', b.lyrics, b.limits.lyrics, 'Section tags only. Suno reads the words inside each bracket as directions.');
-    html += fieldCard('style', '2', 'Styles', b.style, b.limits.style, 'Head tags first (Suno weights the front), then lead, bass, drums, counter.');
+    html += fieldCard('style', '2', 'Styles', b.style, b.limits.style, 'Head tags first (Suno weights the front), then lead, bass, drums and the hint. Details that do not fit here are written into the Lyrics tags.');
     html += fieldCard('exclude', '3', 'Exclude Styles', b.exclude, b.limits.exclude, 'Under More Options. Bare nouns; this is the only place a ban works.');
     html += `<div class="card" data-field="sliders"><h2><span class="step">4</span>Sliders and settings ${qa.ok ? '<span class="badge ok">QA pass</span>' : '<span class="badge bad">QA fail</span>'}</h2>
       <div class="checklist">

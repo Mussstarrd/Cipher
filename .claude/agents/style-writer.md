@@ -9,13 +9,13 @@ You write the text that steers Suno's sound. Read `reference/grammar-and-guard.m
 
 ## The Styles field, line by line
 
-1. **Head tags** (comma list, ~260 chars, never cut): anchor (lane sub-genre and the two or three sounds that define it; sound-neutral if the lead is a guest), `<BPM> BPM` (+ `half-time` when written 120+), `in <key>`, `instrumental`, mood words, one syncopation tag, one twitch tag, the beat-3 slur tag (about 60% of rolls), `minimal` on minimal layouts, the mode tag (switch axis / loop tag / "steady pocket start to finish"), must-haves, the low-lead tag, the lead handle plus a short timbre clause, the mix tag.
-2. **lead:** source (physical, with its handle), processing character from the same family, register (low or low-mid), the figure it plays as an articulation, the human-timing clause, the stereo placement.
-3. **bass:** source, tone, pattern, human clause.
-4. **drums:** kick, snare, hats, one percussion colour, the slur phrase, and one anti-transition phrase ("hard cuts only, straight in on beat 1").
-5. **counter:** a second instrument from another family, its character, a sparse role. Dropped in loop mode.
+1. **Head tags** (comma list, never cut): the opening (lane anchor, or the lead over the drums, or the drums first; it only promises sounds the roll carries), `<BPM> BPM` (+ `half-time` when written 120+), `in <key>`, `instrumental`, the attitude tag, mood words, the lead handle, the hook tag (the short form of the hook device), one syncopation tag, one twitch tag, the beat-3 slur tag, `minimal` on minimal layouts, the switch axis or loop tag, the anti-transition tag, the hint tag, the low-lead tag, must-haves, the sprinkle tag, the mix tag.
+2. **lead:** source (physical, with its handle), processing character from the same family, the hook device, the human-timing clause; motif, articulation and placement only while there is room.
+3. **bass:** source, pattern; tone and human clause only while there is room.
+4. **drums:** kick, snare, hats, the twitch clause, one percussion colour, the slur phrase, and one anti-transition phrase ("hard cuts only, straight in on beat 1").
+5. **hint:** the one strange ingredient, physical. **counter:** a second instrument from another family, only when there is no hint; dropped in loop mode.
 
-Cut order when over 1000: counter detail, bass tone, lead placement, lead human, lead register, the lead's timbre clause in the head. Never lose the head, the lead line or the drums line.
+Every optional part has a rank (`styleField` in `lib/engine.js`). Over 1000 characters the lowest rank goes first, and a part with a short form shrinks before it goes: counter, lead placement, hint detail, bass human and tone, articulation, the mix tag (to its first clause), the slur phrase, hats (to a short form), bass pattern, the anchor (to its first clause), motif, the twitch clause (to its short form), hats, the hook device in full (its tag stays in the head), human timing, twitch, the hint. A restore pass then puts back whatever fits. Never cut: the head tags, the lead source and processing, the bass source, kick, snare and the anti-transition phrase. Whatever the Style field could not hold in full (hook device, motif, hats, human timing, bass pattern) is written into the Lyrics tags, one detail per section, so nothing rolled is lost. `node scripts/selfaudit.js` measures all of it.
 
 ## Vocabulary rules
 

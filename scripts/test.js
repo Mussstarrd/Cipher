@@ -144,7 +144,7 @@ test('lane identity after the listening pass: no funk/jazz in the soul lane, no 
     assert.ok(!/\b(screwed|sample stab|foghorn|formant|phonk|memphis|chopped|chop|chops|sliced)\b/i.test(ph.style + ph.lyrics), ph.style);
     assert.ok(/vocal chops/.test(ph.exclude));
     const any = generate({ lane: 'any', seed });
-    assert.ok(any.style.slice(0, 400).includes(any.parts.antiTag), `anti tag missing from head: ${any.style}`);
+    assert.ok(any.meta.mode === 'loop' ? !any.parts.antiTag : any.style.slice(0, 420).includes(any.parts.antiTag), `anti tag missing from head: ${any.style}`);
     assert.ok(any.style.includes(any.parts.drums.twitch.sound) || any.style.length >= 900, `twitch clause missing: ${any.style}`);
     assert.ok(/tape stop/.test(any.exclude) && /crash cymbals/.test(any.exclude), any.exclude);
     if (/straight in on beat 1, cold|nothing leading into it/.test(any.lyrics)) cold++;
@@ -218,6 +218,25 @@ test('attitude: strut rolls carry no sad or dragging words, lean major, and are 
   assert.ok(major > strut * 0.4, `${major}/${strut} strut rolls in major`);
   assert.strictEqual(generate({ lane: 'paak-pocket', seed: 2, attitude: 'strut' }).meta.attitude, 'strut');
   assert.strictEqual(generate({ lane: 'paak-pocket', seed: 2, attitude: 'cold' }).meta.attitude, 'cold');
+});
+
+test('self-audit: what makes a roll one of one reaches Suno, the opening never lies, loops never name a hook', () => {
+  const A = JSON.parse(require('child_process').execFileSync('node', [path.join(__dirname, 'selfaudit.js'), '1200', '--json'], { encoding: 'utf8' }));
+  const S = A.survival;
+  assert.strictEqual(S['lead.hook device (tag in head)'], 1, 'the hook tag is always in the head');
+  assert.strictEqual(S['attitude tag'], 1, 'the attitude tag is never cut');
+  assert.ok(S['lead.character'] >= 0.98, `lead processing survives: ${S['lead.character']}`);
+  assert.ok(S['lead.human'] >= 0.85, `human timing survives: ${S['lead.human']}`);
+  assert.ok(S['drums.twitch clause'] >= 0.9, `twitch clause survives: ${S['drums.twitch clause']}`);
+  assert.ok(S['lead.hook device (full line)'] >= 0.6, `hook device in full: ${S['lead.hook device (full line)']}`);
+  for (const [k, v] of Object.entries(A.anywhere)) assert.ok(v >= 0.99, `${k} must reach the Style or the Lyrics field: ${v}`);
+  assert.strictEqual(A.contradictions, 0, 'the opening promised a sound the roll does not carry');
+  assert.strictEqual(A.loopContext, 0, 'a loop layout named a hook or a verse');
+  assert.strictEqual(A.bareHats, 0, 'bare mode described hats');
+  assert.ok(A.repeatedCue <= 0.02, `a feel cue repeats inside one lyric: ${A.repeatedCue}`);
+  assert.ok(A.headMedian <= 380, `head too long: ${A.headMedian}`);
+  const V = A.variety;
+  assert.ok(V['sync tag'] >= 24 && V['twitch tag'] >= 20 && V['hook device'] >= 30 && V['twitch sound'] >= 20 && V['twitch rhythm'] >= 18 && V['lead human'] >= 28 && V['anti phrase'] >= 15 && V['attitude tag'] >= 30, JSON.stringify(V));
 });
 
 test('user mood and must-have words are guarded', () => {

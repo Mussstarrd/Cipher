@@ -74,6 +74,14 @@ Generated from `lib/grammar.js` and `lib/lanes.js` by `node scripts/docs.js` (ed
 - released early on the off-beats, so the gaps breathe
 - bent into pitch by hand, never landing in tune twice
 - played like someone tapping it out on a car dashboard
+- two takes layered a few milliseconds apart
+- the hard notes hit hard and the soft ones barely touched
+- played with one finger, stiff and stubborn
+- the first note of each phrase a touch early, like someone eager
+- a tiny pause before the last note, every time
+- pressed harder as the phrase goes on
+- played a little faster than it should be, then caught
+- each repeat played again by hand, so two passes are never alike
 
 **Motion across the song**
 - it gets a little brighter each time the hook comes back
@@ -89,6 +97,13 @@ Generated from `lib/grammar.js` and `lib/lanes.js` by `node scripts/docs.js` (ed
 - it drifts up a few cents over 16 bars, then snaps back
 - hit softer, then suddenly hard on the last pass
 - it stays frozen and identical while the drums move
+- each pass one note is muted, a different one each time
+- it loses its first note halfway through the song
+- the echo on its last note gets longer each section
+- it moves an octave down for one section, then back
+- it plays twice as dry in the second half of the song
+- its last note is held a beat longer each time around
+- it starts dark and muffled and clears a little each section
 
 **Placement**
 - bone-dry, center, tucked right above the 808
@@ -161,6 +176,16 @@ Generated from `lib/grammar.js` and `lib/lanes.js` by `node scripts/docs.js` (ed
 - a reversed hat one-shot
 - a rimshot tick
 - a tongue-click sample
+- a coin spun on a table and cut short
+- a lighter flick
+- a snapped rubber band
+- a pen tapped on a desk
+- a typewriter key strike
+- a camera shutter click
+- a tight closed-hat chick
+- a bottle-cap rattle
+- a knuckle knock on a door
+- a dry stick click
 
 - in 5-hit bursts that skip the grid
 - stuttering 32nds for half a beat
@@ -171,9 +196,19 @@ Generated from `lib/grammar.js` and `lib/lanes.js` by `node scripts/docs.js` (ed
 - in single hits that land in random 16th slots
 - retriggering at triple speed for one beat
 - flamming against the hats
-- stop-start, 3 on, 2 off
-- triplets that stop dead
+- in a stop-start pattern, 3 hits then 2 rests
+- in triplets that stop dead
 - in a burst that slows down as it decays
+- in a quick three-hit flurry
+- in two fast hits and one late one
+- doubling up for one beat then vanishing
+- in one hit, a gap, then four fast ones
+- ratcheting faster across one beat
+- in a rapid burst cut off mid-beat
+- in a lopsided long-short-short pattern
+- echoing itself twice, each echo quieter
+- in pairs that land just off the 16th grid
+- in a 16th run that skips its last hit
 
 - on the last beat of every 2nd bar
 - between the kick and snare
@@ -186,6 +221,13 @@ Generated from `lib/grammar.js` and `lib/lanes.js` by `node scripts/docs.js` (ed
 - on beat 3, never the same way twice
 - around the 808 slides
 - under the hats, barely there
+- in the hole after the snare
+- on the and of 4
+- in the last half-beat of the bar
+- only when the lead rests
+- tucked behind the snare
+- in the silence after the kick
+- halfway between beats 2 and 3
 
 **Groove: syncopation**
 - kicks pushed off the beat, snare dead on
@@ -200,6 +242,14 @@ Generated from `lib/grammar.js` and `lib/lanes.js` by `node scripts/docs.js` (ed
 - a gap on beat 1 so the downbeat hits harder
 - off-beat everything except the snare
 - a full stop on beat 4 every 8 bars
+- the kick lands on the and of 4 and leaves beat 1 empty
+- two kicks jammed into the last 16ths before the snare
+- the kick answers the snare instead of leading it
+- the 808 hits alone where the kick should be
+- the kick pattern is three hits long and restarts wherever it lands
+- beat 3 has nothing on it, so beat 4 hits twice as hard
+- the kick doubles only when the lead rests
+- the snare stays put while the kick lands somewhere new each bar
 
 **Groove: human feel**
 - unquantized, snare a hair late
@@ -218,6 +268,14 @@ Generated from `lib/grammar.js` and `lib/lanes.js` by `node scripts/docs.js` (ed
 - the snare a hair late and hit harder for it, its ring left to decay
 - hats dead straight on the grid, the kick leaning late behind them, the snare a hair early so the pocket feels pulled two ways
 - played by hand against the bass, the second hit always a hair late
+- the kick dead on the grid and everything else a hair loose around it
+- each hat hit a different loudness, like a hand that tires
+- the clap a few milliseconds ahead of the snare under it
+- ghost notes on the snare so quiet they are felt more than heard
+- the kick played by hand, the second of each pair softer
+- hats that speed up a hair into the snare and settle back
+- one snare hit per phrase noticeably harder than the rest
+- the kick and the bass struck as one sound, the snare free of both
 
 **Groove: the beat-3 slur (never "waltz", "shuffle" or "swing")**
 - the 808 slurs into a triplet on beat 3
@@ -246,6 +304,22 @@ Generated from `lib/grammar.js` and `lib/lanes.js` by `node scripts/docs.js` (ed
 - kick landing on the and
 - kick a 16th ahead of one
 - snare early, 808 late
+- kick late into beat 3
+- double kick before the snare
+- kick on the and of 2
+- 808 landing between the kicks
+- snare pushed a 16th early
+- ghost kicks before the one
+- kick missing from beat 3
+- stop-start kick pattern
+- kick answering the snare
+- three kicks crammed into beat 4
+- kick and 808 never together
+- lopsided kick pattern
+- downbeat left empty
+- late clap on beat 4
+- kick doubled on the and of 4
+- kick pattern three hits long
 
 - twitchy percussion
 - stuttering 32nd perc hits
@@ -263,6 +337,14 @@ Generated from `lib/grammar.js` and `lib/lanes.js` by `node scripts/docs.js` (ed
 - nervous stop-start ticks
 - jittery 32nd knock bursts
 - twitching kick retriggers
+- ticking perc in odd bursts
+- perc hiccups between snares
+- glitchy hat stutters
+- skittering rim clicks
+- perc flams off the grid
+- spitting hat retriggers
+- jumpy knock bursts
+- restless ticking percussion
 
 - drunk 808 bounce
 - slurred triplet bounce
@@ -316,6 +398,12 @@ Generated from `lib/grammar.js` and `lib/lanes.js` by `node scripts/docs.js` (ed
 - the hook is the verse with one more sound
 - every section starts cold on beat 1, nothing leads into it
 - the drums never announce a change, they just change
+- the drums stay the same from the first bar to the last
+- when something changes it changes on the one, cold
+- the last bar of every section is the same as its first
+- the kick and snare keep one pattern for the whole song
+- each new section is just there, already playing
+- sections butt straight against each other, the kick never pausing
 
 **Beat-switch axes (tag / cue / after-words)**
 - beat switch to half-time / half-time drums, tempo halves, slow heavy kick, long 808 slides / half-time, slow heavy kick
@@ -461,7 +549,7 @@ Processing characters:
 
 ## Hints (one strange ingredient per roll, about half the time)
 
-A hint takes the counter's seat, gets "a <word> hint of <handle>" in the head tags, a `hint:` line after the drums line (it outlives the counter in the cut order), and its handle reaches one Lyrics tag. Families, with their roles:
+A hint takes the counter's seat, gets "a <word> hint of <handle>" in the head tags, a `hint:` line after the drums line (the counter only speaks when there is no hint), and its handle and role reach one Lyrics tag. Families, with their roles:
 
 **fuzzlament** (a slow guitar lament over the beat)
 
@@ -623,7 +711,8 @@ Roles:
 - twice only, once per verse
 - in the last hook only
 - once, right before the last hook
-- in the eighth bar of every section
+- once, near the end, then gone
+- twice only, far apart
 
 **foundsound** (a real object recorded close and placed as an instrument)
 
@@ -702,6 +791,7 @@ Roles:
 - in the last hook only
 - once, in the second verse
 - at the end of the song, the last thing heard
+- once, about halfway through, then gone
 
 **reversebloom** (something played backwards into the beat)
 
@@ -726,6 +816,7 @@ Roles:
 - twice only, in the second verse
 - barely there, under the whole hook
 - the last sound in the song
+- once, about halfway through, then gone
 
 **lowbrass** (one low horn note)
 
@@ -752,23 +843,44 @@ Roles:
 
 ## Hook devices (one in every lead line; from earworm research, see research/06-addictive-sound-theory.md)
 
-- the hook is three notes and a rest, and the rest is the hook
-- the hook repeats four times, the fourth time with one note changed
-- the phrase stops one note short of the root, every time
-- a full beat of silence right before the hook, then the hook
-- one unusual leap in the middle of a plain contour, the leap never resolved
-- the hook answers itself an octave down on the repeat
-- the last note of the hook lands a 16th early every time
-- the hook starts on the and of 4, a beat before you expect it
-- the same two bars, the second time one note sour
-- the hook is two notes, the second held until the snare cuts it
-- the melody circles the fifth and never lands on the root until the last bar
-- the hook is the lead's phrase with the middle note missing
-- a four-note motif that climbs then falls, the third note a tritone leap the ear does not expect, the same four notes every pass
-- one note struck on every eighth for two bars, the same pitch, then one note a half step down on the last eighth
-- the lead moves in sixteenths while the drums sit half-time, so the motif feels quick and the pocket feels heavy
-- a five-note motif on a simple rise-and-fall shape, the second note always a sixteenth late, every pass
-- the motif plays four times, on the fourth pass one note a half step lower and the rest identical
+- three notes and a rest, the rest being the part that sticks|three notes and a rest
+- the riff repeats four times, the fourth time with one note changed|fourth repeat changes one note
+- the phrase stops one note short of the root, every time|riff stops short of the root
+- a full beat of silence right before the riff lands, then the riff|a beat of silence before the riff
+- a plain rise and fall with one wide leap in the middle, left hanging|one wide leap mid-riff
+- the riff answers itself an octave down on the repeat|riff answered an octave down
+- the last note of the riff lands a 16th early every time|last note lands early
+- the riff starts on the and of 4, a beat before the ear expects it|riff starts on the and of 4
+- the same two bars twice, the second time with one note sour|second pass one sour note
+- the riff is two notes, the second held until the snare cuts it|two notes, cut by the snare
+- the melody circles the fifth and lands on the root only at the end|riff circling the fifth
+- the riff with its middle note missing, the gap louder than the notes|middle note missing
+- four notes up then down, the third a tritone leap, identical each time|tritone leap on the third note
+- one pitch on every 8th for two bars, the last 8th a half step down|one note hammered, then a half step down
+- the lead moves in 16ths over half-time drums, quick riff, heavy pocket|quick riff over a heavy pocket
+- five notes rising and falling, the second one a 16th behind each time|second note a 16th behind
+- the motif plays four times, the fourth with one note a half step lower|fourth pass a half step lower
+- the riff copies the kick rhythm note for note, so it hits like a drum|riff locked to the kick
+- the lead plays and stops, the bass answers in the gap, trading all song|lead and bass trading
+- a three-16th figure looping across the bar line, the accent always moving|three-16th figure crossing the bar line
+- the riff once loud, once at half volume, an echo played by hand|loud riff, quiet echo
+- each phrase ends on a note bent up a half step at the last moment|last note bent up
+- the first note stuttered three times, then the phrase played plain|stuttered first note
+- a long note for two bars, then four quick ones in the last beat|long note, then four quick ones
+- each note just ahead of the beat except the last, dead on the one|ahead of the beat, last note on the one
+- the top note hit once per phrase, the loudest thing in the bar|one loud top note
+- three steps down, then an octave jump back up on the and of 3|octave jump on the and of 3
+- a note twice, a rest, then twice a half step up, simple as a doorbell|doorbell riff, two notes twice
+- the riff silent on 2 and 4, loud everywhere the snare is not|riff dodging the snare
+- three short notes answered by one long one, the answer a little flat|three short notes, one long reply
+- the phrase begins and ends mid-bar, never starting on the one|riff never starts on the one
+- repeated so exactly it turns into rhythm, then one note goes missing|exact repeats, one note missing
+- two notes a half step apart, rocking, the rhythm doing all the work|half-step rocking riff
+- the riff staccato three times and legato once, the long one last|short, short, short, long
+- the riff leans hard on the flat seventh and leaves it hanging|leaning on the flat seventh
+- the riff sits in the gaps of the kick, melody and drums interlocked|riff in the gaps of the kick
+- a quick grace note flicked off the last pitch, like a finger slipping|grace-note flick ending
+- four notes over a three-beat cycle, starting somewhere new each time|four-note riff over a three-beat cycle
 
 ## Lane `connor-price`: Technical syncopated bounce
 
@@ -896,7 +1008,7 @@ Bass patterns:
 
 **Exclude Styles:** vocals, humming, ad-libs, vocal chops, drum fills, tom fills, snare rolls, hat rolls, drum rolls, transitions, transition fills, section transitions, risers, sweeps, filter sweeps, white noise sweeps, build-ups, breakdown FX, impacts, crash cymbals, reverse cymbals, DJ drops, DJ scratching, tape stop, K-pop, dance pop, EDM, club music, dubstep, orchestral, lo-fi
 
-**Guard:** allow none; deny \b(pop|dance|club|party|festival|bright|sunny|playful|cheerful|feel-good|upbeat|bouncy claps|big claps|lo-?fi|dusty|vinyl|crackl\w*|cassette|tape|memphis|phonk|cowbell|distorted 808|drill|horror)\b (pop, dance and bright words turn this lane into a K-pop dance track; dusty or lo-fi words kill the dry crisp mix).
+**Guard:** allow none; deny \b(pop|dance|club|party|festival|bright\w*|sunny|playful|cheerful|feel-good|upbeat|bouncy claps|big claps|lo-?fi|dusty|vinyl|crackl\w*|cassette|tape|memphis|phonk|cowbell|distorted 808|drill|horror)\b (pop, dance and bright words turn this lane into a K-pop dance track; dusty or lo-fi words kill the dry crisp mix).
 
 ## Lane `paak-pocket`: Soul boom bap, live pocket
 
@@ -1209,7 +1321,7 @@ Bass patterns:
 
 **Exclude Styles:** vocals, humming, ad-libs, vocal chops, choir, drum fills, tom fills, snare rolls, hat rolls, drum rolls, transitions, transition fills, section transitions, risers, sweeps, filter sweeps, white noise sweeps, build-ups, breakdown FX, impacts, crash cymbals, reverse cymbals, DJ drops, DJ scratching, tape stop, film score, cinematic, drill, EDM, smooth jazz
 
-**Guard:** allow \b(strings?|string section|boom-bap|boom bap)\b; deny \b(drill|clean (modern|pop) mix|polished|bright|sunny|memphis|phonk|cowbell|chill)\b (film-score, drill and clean-pop words pull this lane out of its gritty hybrid).
+**Guard:** allow \b(strings?|string section|boom-bap|boom bap)\b; deny \b(drill|clean (modern|pop) mix|polished|bright\w*|sunny|memphis|phonk|cowbell|chill)\b (film-score, drill and clean-pop words pull this lane out of its gritty hybrid).
 
 ## Lane `phonk-experimental`: Dark slowed cassette hip hop
 
@@ -1314,7 +1426,7 @@ Bass patterns:
 
 **Exclude Styles:** vocals, vocal samples, vocal chops, chopped vocals, pitched vocals, screwed vocals, humming, singing, rapping, drum fills, tom fills, snare rolls, hat rolls, drum rolls, transitions, transition fills, section transitions, risers, sweeps, filter sweeps, white noise sweeps, build-ups, breakdown FX, impacts, crash cymbals, reverse cymbals, DJ drops, DJ scratching, tape stop, drift phonk, Brazilian funk, EDM, house, cowbell melody, clean pop mix, dubstep
 
-**Guard:** allow \b(cowbell|tape|cassette|lo-?fi|dusty|vinyl|crackl\w*|12 bits)\b; deny \b(phonk|memphis|chopped|screwed|chop|chops|sliced|drift|gym|brazilian|baile|mandel\w*|clean (modern|pop) mix|polished|bright|sunny|cowbell (lead|melody)|melodic cowbell|sample stabs?|vocal stabs?)\b (the genre names themselves summon chopped vocal samples (that is what the genre means to Suno); drift, gym and Brazilian words pull toward the cowbell-melody style).
+**Guard:** allow \b(cowbell|tape|cassette|lo-?fi|dusty|vinyl|crackl\w*|12 bits)\b; deny \b(phonk|memphis|chopped|screwed|chop|chops|sliced|drift|gym|brazilian|baile|mandel\w*|clean (modern|pop) mix|polished|bright\w*|sunny|cowbell (lead|melody)|melodic cowbell|sample stabs?|vocal stabs?)\b (the genre names themselves summon chopped vocal samples (that is what the genre means to Suno); drift, gym and Brazilian words pull toward the cowbell-melody style).
 
 ## Lane `hybrid`: Cassette drums + soul pocket + dry bounce
 

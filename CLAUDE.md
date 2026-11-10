@@ -6,7 +6,7 @@ Suno prompt generator for radio-ready hip hop **instrumentals**. A reusable tool
 
 1. **Never use real artist names in generated prompts.** Lane ids (`connor-price`, `paak-pocket`, `jid-dark`, `phonk-experimental`, `hybrid`) are internal labels; the records behind them are named only in README and research. Suno silently rewrites a prompt with a name and you lose the whole field. `lib/guard.js` holds the names list and bans "type beat", "in the style of" and comparisons to a capitalised name.
 2. **Always output copy-ready blocks.** One block, eight labeled sections (MODEL, MODE/TOGGLES, STYLE FIELD, LYRICS FIELD, EXCLUDE STYLES FIELD, SLIDERS, VARIATIONS, POST-GEN NOTES); the three Suno fields in their own fenced code blocks. The page shows the fields in Suno's order (Lyrics, Styles, Exclude Styles, sliders) with a Copy button each.
-3. **Respect verified limits and front-load.** Style 1000, Lyrics 5000, Exclude Styles 1000, title 80 (community-measured on v6; Suno publishes none). The Style head tags (~260 chars) carry the identity and are never cut; the lead and drums lines always survive the cut order.
+3. **Respect verified limits and front-load.** Style 1000, Lyrics 5000, Exclude Styles 1000, title 80 (community-measured on v6; Suno publishes none). The Style head tags carry the identity and are never cut (attitude, lead handle and hook tag sit in the first ~200 chars); every other part has a rank, the lead source, processing, kick, snare and anti-transition phrase always survive, and whatever does not fit in full is written into the Lyrics tags. `node scripts/selfaudit.js` measures survival; `npm test` enforces it.
 4. **Default to instrumental.** Custom (Advanced) mode, Instrumental ON, Variety OFF, Max Mode ON, `[Instrumental]` first line, `[End]` last, bracket tags only, zero parentheses (Suno sings them), "instrumental" in the head tags, Exclude Styles starts with vocals and lists humming.
 5. **Negatives go in the Exclude Styles field, never inline.** "no X" plants X. Say the positive ("dry", "hard cuts only, straight in on beat 1") and put the ban in Exclude as bare nouns.
 6. **No audio references, ever.** No uploads, Audio Influence, Cover, Add Vocals/Add Instrumental or reference clips anywhere. All steering is the Style, Lyrics and Exclude fields plus Weirdness, Style Influence and Variety. The QA checker rejects any copy-field mention and any prose that recommends them; the only allowed form is a statement that Audio Influence is not used.
@@ -26,7 +26,7 @@ Suno prompt generator for radio-ready hip hop **instrumentals**. A reusable tool
 | `lib/lanes.js` | The five lanes: anchors, families (physical sources with handles), drums, bass, tempo, key colour, layout weights, sliders, exclude, allow/deny |
 | `lib/layouts.js` | Lyrics layouts with placeholders, limits, fallbacks, nominal bars, runtime estimate |
 | `lib/theory.js` | Keys and chord loops (minor-heavy; Dorian/soul loops for the live lane) |
-| `lib/engine.js` | Seeded roll: builds lead/counter/bass/drums/switch/rhythm, Style field with cut order, lyrics fill, variations, fingerprint, warnings |
+| `lib/engine.js` | Seeded roll: builds lead/counter/hint/sprinkle/bass/drums/switch/rhythm, ranked Style field (anchor fit, shrink, restore), lyrics fill with displaced details, variations, fingerprint, warnings |
 | `lib/qa.js` | QA checker (limits, guard, audio refs, instrumental, structure, EVERY cap, switch axis, sliders, models) + markdown parser |
 | `lib/render.js`, `lib/arrange.js` | Block/batch renderers; bars-to-seconds helpers |
 | `lib/spec.json` | Verified Suno facts (models, limits, controls, features, audio-ref terms) |
@@ -35,7 +35,7 @@ Suno prompt generator for radio-ready hip hop **instrumentals**. A reusable tool
 | `examples/` | One QA-passed block per lane plus the hybrid; JSON configs |
 | `.claude/skills/` | `suno-prompt`, `suno-critique`, `suno-batch` |
 | `.claude/agents/` | `suno-researcher`, `groove-designer`, `style-writer`, `qa-checker` |
-| `scripts/` | `build-examples.js`, `build-app.js`, `audit.js`, `test.js` |
+| `scripts/` | `build-examples.js`, `build-app.js`, `audit.js`, `selfaudit.js` (what reaches Suno after the cut), `docs.js`, `test.js` |
 
 ## Workflow
 
@@ -45,6 +45,7 @@ node forge.js qa examples/*.md                  # validate blocks
 node scripts/build-examples.js                  # regenerate examples/ (deterministic seeds)
 node scripts/build-app.js                       # rebuild app/index.html after any lib/ change
 node scripts/audit.js                           # phrase shares, length histograms, filler scan
+node scripts/selfaudit.js 2000                  # slot survival after the 1000-char cut, contradictions, pool variety
 npm test                                        # guard walk + thousands of seeds
 ```
 
@@ -55,6 +56,8 @@ Generate -> paste into Suno (Lyrics, Styles, Exclude Styles, sliders) -> listen 
 - Add vocabulary as physical descriptions with handles, in the right family, with that family's processing words. Never add a one-phrase label.
 - Every new string must pass `npm test` (the guard walk). If a word is needed by one lane only, add it to that lane's ALLOW; if a word hurts one lane only, add it to that lane's DENY.
 - Never add a phrase with fill/roll/riser/sweep/build/drop/transition/enters/comes in/bar 4; never waltz/shuffle/swing/swung; never a negation; never a vocal-implying word.
+- A loop layout has no hook and no verse: vocabulary that names one is filtered out of loop rolls, so write hook devices and motion phrases with "riff", "phrase" or "section" where you can.
+- An anchor may only name sounds the roll carries (`PROMISES` in `lib/engine.js`); a new anchor word that names an instrument needs a row there.
 - When the ear finds a problem in a rendered take, turn it into a guard rule, a clash rule or a vocabulary change, and add a test.
 - Any change to `lib/spec.json` must cite a source in `research/01-suno-platform.md` and be mirrored in `reference/suno-field-spec.md`.
 - Run `npm test` and `node forge.js qa examples/*.md` before committing. Regenerate examples and the app if anything in `lib/` changed.

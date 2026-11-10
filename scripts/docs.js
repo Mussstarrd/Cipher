@@ -39,7 +39,7 @@ ${Object.entries(G.FAMILIES).map(([n, f]) => fam(n, f)).join('\n')}
 
 ## Hints (one strange ingredient per roll, about half the time)
 
-A hint takes the counter's seat, gets "a <word> hint of <handle>" in the head tags, a \`hint:\` line after the drums line (it outlives the counter in the cut order), and its handle reaches one Lyrics tag. Families, with their roles:
+A hint takes the counter's seat, gets "a <word> hint of <handle>" in the head tags, a \`hint:\` line after the drums line (the counter only speaks when there is no hint), and its handle and role reach one Lyrics tag. Families, with their roles:
 
 ${Object.entries(HINTS.HINT_FAMILIES).map(([n, f]) => `${fam(n, f)}\nRoles:\n${bullets(f.roles)}\n`).join('\n')}
 ## Hook devices (one in every lead line; from earworm research, see research/06-addictive-sound-theory.md)

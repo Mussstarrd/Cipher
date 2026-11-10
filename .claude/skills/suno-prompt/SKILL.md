@@ -39,7 +39,7 @@ Mapping free text: "a hint of a mournful fuzz guitar" -> `--hint fuzzlament`; "i
 
 1. **MODEL**: v6 by default and why; when to run v6-wild (and its slider ranges); v6-mini as the Free fallback. Never a retired model.
 2. **MODE/TOGGLES**: Custom (Advanced) ON, Instrumental ON, Max Mode ON, Variety Off, Voice NO, Duration Custom (estimate + buffer), title.
-3. **STYLE FIELD**: head tags (anchor, BPM, key, instrumental, mood, syncopation, twitch, slur, mode tag, low lead, lead handle, mix tag) then `lead:` `bass:` `drums:` `counter:`; under 1000 chars; no names, no negatives, no swing/fill/EDM words.
+3. **STYLE FIELD**: head tags (opening, BPM, key, instrumental, attitude, mood, lead handle, hook tag, syncopation, twitch, slur, mode and anti-transition tags, hint tag, low lead, mix tag) then `lead:` `bass:` `drums:` `hint:` (or `counter:`); under 1000 chars; no names, no negatives, no swing/fill/EDM words.
 4. **LYRICS FIELD**: `[Instrumental]` first, layout tags with the same handles, `[End]` last, no parentheses, first full beat by 0:45.
 5. **EXCLUDE STYLES FIELD**: the lane list (vocal guards + transition guards + lane drift guards) plus extras; bare nouns.
 6. **SLIDERS**: Weirdness and Style Influence with rationale; Variety Off; Audio Influence "not used, nothing is uploaded".
