@@ -4,13 +4,13 @@ Built from `research/02-metatag-grammar.md` (community-tested on v4.5 through v6
 
 ## Grammar (as suno-forge writes it)
 
-- One tag per line, square brackets: `[Hook | full beat from beat 1, the tine piano up front, hard cuts only]`. The tag name, a pipe, then plain directions. Suno reads the words inside the bracket as arrangement and performance cues (render-tested; see `research/handoff/`).
+- One tag per line, square brackets: `[Hook | the whole beat from the first second, the tine piano up front]`. The tag name, a pipe, then plain directions. Suno reads the words inside the bracket as arrangement and performance cues (render-tested; see `research/handoff/`).
 - **Never use parentheses.** Parenthesized text is reliably sung as backing voices.
 - No bare text lines. Anything outside brackets may be sung.
 - Refer to sounds by the same **handle** the Style field used ("the sliced soul keys", "the cassette loop"), so the tags and the Style field describe one record.
 - Bar counts are approximate hints only; the generator writes them on intros and bare verses and sets the Duration control from its own estimate.
 - Start with `[Instrumental]` and end with `[End]`; one `[End]` only.
-- Never write fill, roll, riser, sweep, build, drop, transition, "comes in", "enters", "returns", "every 4 bars" inside a tag. Say the positive: "drums cut dead, then slam back on the one", "same drums, identical", "stops dead on beat 1".
+- Never write fill, roll, riser, sweep, build, drop, transition, "comes in", "enters", "returns", "every 4 bars" inside a tag. Say the steady state: "same drums", "identical". Never describe the drums stopping, cutting or coming back: Suno stages a lead-in at every boundary it is told about.
 - Mix-operation words work as descriptions inside a tag but not as standalone tags (`[Tape Stop]` alone is unreliable, and "tape stop" is banned here anyway as a transition word).
 - Loop mode: every `[Loop | ...]` tag says identical. Switch mode: one axis, its words in the head tag, the `[Beat Switch | ...]` cue and every section after it.
 
@@ -45,16 +45,16 @@ Built from `research/02-metatag-grammar.md` (community-tested on v4.5 through v6
 
 ```
 [Verse | 8 bars, live kick and bass only, beats 1 and 2 straight, beat 3 slurred into three]
-[Hook | full drums, hand-played hats, the tine piano up front, hard cuts only, straight in on beat 1]
-[Break | the tine piano out, drums and bass alone, 8 bars, a dry wooden click in uneven pairs, between the kick and snare]
-[Hook | the tine piano slams back on the one, identical to the first hook]
+[Hook | the whole beat from the first second, the tine piano up front]
+[Verse | same drums, the muted trumpet in place of the tine piano, a dry wooden click in uneven pairs]
+[Hook | identical to the first hook]
 ```
 
-Describe what plays, what is out, and one timing-feel cue. Contrast sells the arrangement: a bare verse into a full hook, or the lead out for 8 bars then slamming back, with no fill between.
+Describe what the melodic sounds do and one timing-feel cue. Contrast comes from the lead (half as many notes, an octave lower, resting while the bass carries it, trading with the counter), never from the drums leaving and coming back.
 
 ## Ending and length control
 
-- Last two lines: `[Outro - 4 bars: ...]` then `[End]`.
+- Last line: `[End]`, straight after the final section. This toolkit writes no intro, break or outro: each is a boundary Suno decorates.
 - Set Duration (Custom) to planned runtime + ~10 s; Suno hard-cuts there if `[End]` is ignored. Never Auto on v6 (runs long).
 - Too short: Extend from the last good section and paste only the remaining tags.
 - Too long: Crop to the last downbeat.
@@ -69,7 +69,7 @@ No source has measured swing in Suno output; this is practitioner consensus (3+ 
 
 **Words reported to backfire:** "complex drums" (chaos), "aggressive" / "hard" (pulls to generic trap), "realistic", "crescendo", "ethereal", "lush", "shimmering". **"MPC swing 58%"**-style percentages: no evidence Suno maps them. **Producer names** ("Dilla-style"): banned here regardless; Suno rewrites some names.
 
-**Lyrics field moves:** `[Drum Break]` to expose the groove; `[Break]`/`[Breakdown]` for stop-start; `[Build]` -> `[Drop]` for a mute-then-slam; sparse-verse / full-hook contrast; "full stop on the last beat of every 4th bar" cue text for mutes.
+**Lyrics field moves (general Suno, not used by this toolkit):** `[Drum Break]`, `[Break]`/`[Breakdown]`, `[Build]` -> `[Drop]`. Each one is a boundary, and in listening tests every boundary came back with a reversed kick or a lead-in, so the layouts here use none of them.
 
 **Sliders:** hip hop Weirdness 20-40 (commercial) to 55 (experimental); above 60 tempo and structure drift. Style Influence 50-70 for engineered prompts. Variety **Off** on v6. No slider humanizes drums by itself.
 

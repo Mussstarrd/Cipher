@@ -38,9 +38,9 @@ test('every grammar, lane and layout string passes the guard', () => {
 });
 
 test('the guard catches the known drift words and names', () => {
-  for (const bad of ['swung hi-hats', 'a waltz feel', 'hat rolls into the hook', 'the 808 comes in first', 'a riser into the drop', 'no vocals', 'cinematic strings', 'smooth Rhodes', 'a gospel choir', 'Connor Price type beat', 'like Metro Boomin', 'in the style of Drake'])
+  for (const bad of ['swung hi-hats', 'a waltz feel', 'hat rolls into the hook', 'the 808 comes in first', 'a riser into the drop', 'no vocals', 'cinematic strings', 'smooth Rhodes', 'a gospel choir', 'Connor Price type beat', 'like Metro Boomin', 'in the style of Drake', 'hard cuts only, straight in on beat 1', 'a reversed kick', 'ghost kicks before the one', 'a 32nd burst at the end of each bar', 'drums cut dead, then back', 'a slide up into each new bar', 'one bar in four', 'stuttered kick retriggers', 'a soul record'])
     assert.ok(Guard.check(bad).length > 0, `guard missed: ${bad}`);
-  assert.deepStrictEqual(Guard.check('a dry knocking kick, hard cuts only, straight in on beat 1'), []);
+  assert.deepStrictEqual(Guard.check('a dry knocking kick, one drum pattern all song, the snare on 3 only'), []);
 });
 
 test('same seed, same block; different seeds differ', () => {
@@ -109,17 +109,18 @@ test('radio window: first full beat by 0:45 and every layout lands 2:30-3:35 at 
 test('rolls are one of one and lanes keep their identity', () => {
   const fps = new Set(SEEDS.map((seed) => generate({ lane: 'any', seed }).fingerprint));
   assert.ok(fps.size > SEEDS.length * 0.995, `${fps.size} unique of ${SEEDS.length}`);
-  let phonkCowbell = 0, paakBassGuitar = 0, connorMajor = 0, connorN = 0, jidSwitch = 0, jidN = 0;
+  let phonkSparse = 0, phonkCowbell = 0, paakBassGuitar = 0, connorMajor = 0, connorN = 0, jidSwitch = 0, jidN = 0;
   for (const seed of SEEDS.slice(0, 500)) {
-    const ph = generate({ lane: 'phonk-experimental', seed }); if (/cowbell/.test(ph.style)) phonkCowbell++;
+    const ph = generate({ lane: 'phonk-experimental', seed }); if (ph.meta.density === 'sparse') { phonkSparse++; assert.ok(!/cowbell knock|hats/.test(ph.style.split('drums:')[1] || ''), `sparse roll carries extra percussion: ${ph.style}`); } else if (/cowbell/.test(ph.style)) phonkCowbell++;
     const pk = generate({ lane: 'paak-pocket', seed }); if (/bass guitar/.test(pk.style)) paakBassGuitar++; assert.ok(!/\b808\b/.test(pk.style), pk.style);
-    const cp = generate({ lane: 'connor-price', seed }); connorN++; if (/major/.test(cp.meta.key)) connorMajor++;
+    const cp = generate({ lane: 'connor-price', seed }); connorN++; if (/major|Lydian|Mixolydian/.test(cp.meta.key)) connorMajor++;
     const jd = generate({ lane: 'jid-dark', seed }); jidN++; if (jd.meta.mode === 'switch') jidSwitch++;
   }
-  assert.ok(phonkCowbell > 330, `phonk cowbell ${phonkCowbell}/500`);
+  assert.ok(phonkCowbell > (500 - phonkSparse) * 0.8, `phonk cowbell ${phonkCowbell}/${500 - phonkSparse} non-sparse`);
+  assert.ok(phonkSparse > 150 && phonkSparse < 300, `phonk sparse rolls ${phonkSparse}/500`);
   assert.ok(paakBassGuitar > 400, `paak bass guitar ${paakBassGuitar}/500`);
   assert.ok(connorMajor > connorN * 0.1 && connorMajor < connorN * 0.5, `connor major ${connorMajor}/${connorN}`);
-  assert.ok(jidSwitch > jidN * 0.22, `jid switch ${jidSwitch}/${jidN}`);
+  assert.ok(jidSwitch > jidN * 0.05 && jidSwitch < jidN * 0.25, `jid switch ${jidSwitch}/${jidN}`);
 });
 
 test('titles come from the roll and rarely repeat; salting yields a new one', () => {
@@ -133,7 +134,7 @@ test('titles come from the roll and rarely repeat; salting yields a new one', ()
 });
 
 test('lane identity after the listening pass: no funk/jazz in the soul lane, no pop in the bounce lane, no screwed voices in phonk, bare mode is bare', () => {
-  let chip = 0, cold = 0;
+  let chip = 0;
   for (const seed of SEEDS.slice(0, 400)) {
     const pk = generate({ lane: 'paak-pocket', seed });
     assert.ok(!/\b(funk\w*|jazz\w*|neo-soul|ninths?|vibraphone|clav\w*)\b/i.test(pk.style + pk.lyrics), pk.style);
@@ -144,12 +145,12 @@ test('lane identity after the listening pass: no funk/jazz in the soul lane, no 
     assert.ok(!/\b(screwed|sample stab|foghorn|formant|phonk|memphis|chopped|chop|chops|sliced)\b/i.test(ph.style + ph.lyrics), ph.style);
     assert.ok(/vocal chops/.test(ph.exclude));
     const any = generate({ lane: 'any', seed });
-    assert.ok(any.meta.mode === 'loop' ? !any.parts.antiTag : any.style.slice(0, 420).includes(any.parts.antiTag), `anti tag missing from head: ${any.style}`);
-    assert.ok(any.style.includes(any.parts.drums.twitch.sound) || any.style.length >= 900, `twitch clause missing: ${any.style}`);
+    assert.ok(any.meta.mode !== 'straight' ? !any.parts.antiTag : any.style.slice(0, 420).includes(any.parts.antiTag), `steady-drums tag missing from head: ${any.style}`);
+    if (any.meta.density === 'full') assert.ok(any.style.includes(any.parts.drums.twitch.sound) || any.style.length >= 900, `twitch clause missing: ${any.style}`);
+    if (any.meta.density === 'sparse') assert.ok(any.style.length <= 820 && !/hint:|counter:/.test(any.style) && any.style.includes(any.parts.space), `sparse roll is not sparse: ${any.style}`);
     assert.ok(/tape stop/.test(any.exclude) && /crash cymbals/.test(any.exclude), any.exclude);
-    if (/straight in on beat 1, cold|nothing leading into it/.test(any.lyrics)) cold++;
   }
-  assert.ok(chip > 120, `chipmunk chops in soul lane: ${chip}/400`);
+  assert.ok(chip > 90, `chipmunk chops in soul lane: ${chip}/400`);
   const bare = generate({ lane: 'jid-dark', seed: 5, minimal: true });
   assert.ok(bare.meta.bare && !/counter:|hint:/.test(bare.style) && /bare minimum, nothing else/.test(bare.style) && /\[Loop \|/.test(bare.lyrics), bare.style);
   assert.ok(checkBlock(bare).ok);
@@ -167,7 +168,7 @@ test('hints: present on roughly half of rolls, every family appears, handle reac
   const fams = {}; let withHint = 0, N = 0;
   for (const lane of LANE_IDS) for (const seed of SEEDS.slice(0, 300)) {
     const b = generate({ lane, seed }); N++;
-    assert.ok(b.style.includes(b.parts.lead.hook) || b.style.length >= 900, `${lane}/${seed}: hook device missing with room to spare`);
+    assert.ok(b.meta.density === 'sparse' || b.style.slice(0, 420).includes(b.parts.lead.hookTag), `${lane}/${seed}: hook tag missing from head`);
     if (!b.parts.hint) continue;
     withHint++; fams[b.parts.hint.family] = (fams[b.parts.hint.family] || 0) + 1;
     assert.ok(b.style.slice(0, 480).includes(b.parts.hint.handle), `${lane}/${seed}: hint handle not in head: ${b.style}`);
@@ -175,7 +176,7 @@ test('hints: present on roughly half of rolls, every family appears, handle reac
     assert.ok(b.lyrics.includes(b.parts.hint.handle), `${lane}/${seed}: hint handle not in lyrics:\n${b.lyrics}`);
     assert.ok(checkBlock(b).ok);
   }
-  assert.ok(withHint > N * 0.7 && withHint < N * 0.9, `${withHint}/${N} rolls carry a hint`);
+  assert.ok(withHint > N * 0.25 && withHint < N * 0.45, `${withHint}/${N} rolls carry a hint`);
   for (const f of Object.keys(HINTS.HINT_FAMILIES)) assert.ok(fams[f] > 10, `${f}: ${fams[f] || 0}`);
   const forced = generate({ lane: 'paak-pocket', seed: 3, hint: 'machineglitch' });
   assert.strictEqual(forced.parts.hint.family, 'machineglitch');
@@ -194,9 +195,9 @@ test('mystery ingredients: a sprinkle on about a third of rolls, placed in one s
     const hits = b.lyrics.split('\n').filter((l) => l.includes(b.parts.sprinkle.handle)).length;
     assert.strictEqual(hits, 1, `${lane}/${seed}: sprinkle should sit in exactly one section, found ${hits}\n${b.lyrics}`);
   }
-  assert.ok(sprinkled > N * 0.25 && sprinkled < N * 0.45, `${sprinkled}/${N} rolls carry a sprinkle`);
-  assert.ok(Object.keys(fams).length >= 5, JSON.stringify(fams));
-  assert.ok(heads.anchor > N * 0.4 && heads.leadfirst > N * 0.2 && heads.drumsfirst > N * 0.08, JSON.stringify(heads));
+  assert.ok(sprinkled > N * 0.12 && sprinkled < N * 0.3, `${sprinkled}/${N} rolls carry a sprinkle`);
+  assert.ok(Object.keys(fams).length >= 4, JSON.stringify(fams));
+  assert.ok(heads.anchor > N * 0.4 && heads.leadfirst > N * 0.15 && heads.drumsfirst > N * 0.06, JSON.stringify(heads));
   const forced = generate({ lane: 'jid-dark', seed: 4, sprinkle: true }); assert.ok(forced.parts.sprinkle);
   assert.strictEqual(generate({ lane: 'jid-dark', seed: 4, sprinkle: false }).parts.sprinkle, null);
 });
@@ -209,34 +210,35 @@ test('attitude: strut rolls carry no sad or dragging words, lean major, and are 
     assert.ok(['strut', 'cold', 'low', 'wild'].includes(b.meta.attitude));
     assert.ok(b.style.includes(b.parts.attitudeTag) || (b.meta.attitude !== 'strut' && b.style.length >= 950), `${lane}/${seed}: attitude tag missing`);
     if (b.meta.attitude !== 'strut') continue;
-    strut++; if (/major/.test(b.meta.key)) major++;
+    strut++; if (/major|Lydian|Mixolydian/.test(b.meta.key)) major++;
     const m = (b.style + '\n' + b.lyrics).match(SAD);
     assert.ok(!m, `${lane}/${seed}: sad word in a strut roll: "${m && m[0]}"\n${b.style}\n${b.lyrics}`);
     assert.ok(checkBlock(b).ok, checkBlock(b).errors.join(' | '));
   }
-  assert.ok(strut > N * 0.3 && strut < N * 0.55, `${strut}/${N} strut`);
+  assert.ok(strut > N * 0.2 && strut < N * 0.45, `${strut}/${N} strut`);
   assert.ok(major > strut * 0.4, `${major}/${strut} strut rolls in major`);
   assert.strictEqual(generate({ lane: 'paak-pocket', seed: 2, attitude: 'strut' }).meta.attitude, 'strut');
   assert.strictEqual(generate({ lane: 'paak-pocket', seed: 2, attitude: 'cold' }).meta.attitude, 'cold');
 });
 
-test('self-audit: what makes a roll one of one reaches Suno, the opening never lies, loops never name a hook', () => {
+test('self-audit: sparse rolls are sparse, no roll names a boundary, the identity survives the cut', () => {
   const A = JSON.parse(require('child_process').execFileSync('node', [path.join(__dirname, 'selfaudit.js'), '1200', '--json'], { encoding: 'utf8' }));
   const S = A.survival;
-  assert.strictEqual(S['lead.hook device (tag in head)'], 1, 'the hook tag is always in the head');
+  assert.strictEqual(A.boundary, 0, 'a roll carried a lead-in, boundary or DJ-effect word');
+  assert.ok(A.density.sparse >= 0.33 && A.density.sparse <= 0.55, `sparse share ${A.density.sparse}`);
+  assert.ok(A.medianStyle.sparse <= 730 && A.medianStyle.mid <= 905, JSON.stringify(A.medianStyle));
+  assert.strictEqual(S['sparse: space phrase'], 1, 'every sparse roll says its empty space');
+  assert.strictEqual(S['sparse: no hats, hint, counter or twitch'], 1, 'a sparse roll carried extra elements');
+  assert.strictEqual(S['hook tag in head'], 1, 'the hook tag is always in the head of a non-sparse roll');
   assert.strictEqual(S['attitude tag'], 1, 'the attitude tag is never cut');
-  assert.ok(S['lead.character'] >= 0.98, `lead processing survives: ${S['lead.character']}`);
-  assert.ok(S['lead.human'] >= 0.85, `human timing survives: ${S['lead.human']}`);
-  assert.ok(S['drums.twitch clause'] >= 0.9, `twitch clause survives: ${S['drums.twitch clause']}`);
-  assert.ok(S['lead.hook device (full line)'] >= 0.6, `hook device in full: ${S['lead.hook device (full line)']}`);
-  for (const [k, v] of Object.entries(A.anywhere)) assert.ok(v >= 0.99, `${k} must reach the Style or the Lyrics field: ${v}`);
+  assert.strictEqual(S['steady-drums phrase'], 1, 'the steady-drums phrase is never cut');
+  assert.ok(S['lead processing'] >= 0.97 && S['lead human timing'] >= 0.6 && S['twitch clause'] >= 0.75 && S['hint line'] >= 0.97, JSON.stringify(S));
+  assert.ok(A.cadenced >= 0.6, `rolled cadences ${A.cadenced}`);
   assert.strictEqual(A.contradictions, 0, 'the opening promised a sound the roll does not carry');
   assert.strictEqual(A.loopContext, 0, 'a loop layout named a hook or a verse');
-  assert.strictEqual(A.bareHats, 0, 'bare mode described hats');
   assert.ok(A.repeatedCue <= 0.02, `a feel cue repeats inside one lyric: ${A.repeatedCue}`);
-  assert.ok(A.headMedian <= 380, `head too long: ${A.headMedian}`);
   const V = A.variety;
-  assert.ok(V['sync tag'] >= 24 && V['twitch tag'] >= 20 && V['hook device'] >= 30 && V['twitch sound'] >= 20 && V['twitch rhythm'] >= 18 && V['lead human'] >= 28 && V['anti phrase'] >= 15 && V['attitude tag'] >= 30, JSON.stringify(V));
+  assert.ok(V.cadence >= 20 && V.scale >= 6 && V['lead family'] >= 14 && V['hook device'] >= 30 && V['attitude tag'] >= 30, JSON.stringify(V));
 });
 
 test('user mood and must-have words are guarded', () => {

@@ -20,34 +20,34 @@ Every optional part has a rank (`styleField` in `lib/engine.js`). Over 1000 char
 
 ## 3. The Lyrics field is directions
 
-`[Hook | full beat from beat 1, the sliced soul keys up front, hard cuts only]` is followed as arrangement and performance cues. Structure lives here, never in the Style field (bar-level instructions in Styles are ignored). Each roll picks a **layout** before it picks sounds (`lib/layouts.js`): three loop layouts (nothing changes; the hypnotic minimal third of rolls), five straight layouts (hook first, verse bare / hook full, slow burn, call and reply, lead out then slams back), three switch layouts (half-time last third, A then B, drums cut then B slams in). Placeholders (`{LEAD}`, `{KICK}`, `{SLUR}`, `{CUE}`, ...) are filled with the roll's handles and phrases; a value that does not fit its limit is dropped whole, never cut mid-word.
+`[Hook | the whole beat from the first second, the sliced soul keys up front]` is followed as arrangement and performance cues. Structure lives here, never in the Style field (bar-level instructions in Styles are ignored). Each roll picks a **layout** before it picks sounds (`lib/layouts.js`): four sparse loop layouts (the same two bars all song; about four rolls in ten), five straight layouts (hook first, two leads trading, verses mostly air, a motif that grows, the drums alone first) and two switch layouts (two drum patterns in one song). Placeholders (`{LEAD}`, `{KICK}`, `{SPACE}`, `{CUE}`, ...) are filled with the roll's handles and phrases; a value that does not fit its limit is dropped whole, never cut mid-word. A feel or motion cue is never said twice in one lyric.
 
-Rules: `[Instrumental]` first, `[End]` last, no parentheses (sung as backing voices), no bare lines. Intros are 2, 4 or 8 bars. The first full beat lands by 0:45 and every layout runs 2:30-3:30 at its lane tempos (estimated from nominal bars; the Duration control is set to the estimate plus a buffer and `[End]` stops it early).
+Rules: `[Instrumental]` first, `[End]` last, no parentheses (sung as backing voices), no bare lines. There is no intro, break or outro: the drums play from the first second and the song ends on `[End]`. The first full beat lands by 0:45 and every layout runs 2:30-3:30 at its lane tempos (estimated from nominal bars; the Duration control is set to the estimate plus a buffer). Tags stay short: every extra instruction on a section line is something Suno stages at that boundary.
 
-**Switch mode** has one axis (half-time, double-time, key falls, new drums, strip to 808 and snare, flip to off-beats). Its words appear in the head tag, in the `[Beat Switch | ...]` cue and in every section after it, so nothing ever "returns" to beat A. **Loop mode**: every `[Loop | ...]` tag says identical, the counter is dropped, and no "every N bars" phrase is allowed.
+**Switch mode** has one axis (half-time, double-time, key falls, new drums, strip to 808 and snare, flip to off-beats). Its words appear in the head tag, in the `[Beat Switch | ...]` cue and in every section after it, so nothing ever goes back to pattern A. **Loop mode**: every `[Loop | ...]` tag says identical and the counter is dropped.
 
-## 4. No transitions, no fillers, ever
+## 4. No transitions, no boundaries, ever
 
-Every section change in Suno grows a fill, a riser or a fourth-bar roll unless you prevent it three ways at once:
+Suno decorates every boundary it is told about. Listening tests (2026-11) came back with a reversed kick leading into every fourth bar and every "drop", and with DJ scratches, from prompts that said "hard cuts only, straight in on beat 1", "drums cut dead", "a 32nd burst at the end of each bar", "a slide up into each new bar" and "a soul record". Describing a boundary in order to forbid a transition still names the boundary. So:
 
-1. **Vocabulary.** fill, roll, riser, sweep, build, transition, lead-in, pickup, "comes in", "enters", "every other bar", "bar 4", "4th bar" never appear in the grammar. The guard enforces it over every string.
-2. **Positive instruction.** The drums line always carries an anti-transition phrase: "hard cuts only, straight in on beat 1", "the same loop the whole way", "drums cut dead, then slam back on the one". Beat switches land "on a hard cut", never "after one bar of silence" or "the 808 comes in first".
-3. **The Exclude box.** `drum fills, snare rolls, risers, sweeps, transitions` in every lane's list.
+1. **Vocabulary.** The guard bans, over every string: fill, roll, riser, sweep, build, transition, lead-in, pickup, "comes in", "enters"; any section starting, stopping, cutting or returning ("hard cuts", "stops dead", "straight in", "drums out", "back"); any hit placed against the end of a bar ("before the downbeat", "last beat", "into the next bar", "beat 4", "the and of 4", turnaround, anticipate); any periodic event ("every 4 bars", "one bar in eight", "every other pass"); and reverse, record, retrigger, stutter, lurch and skipping words.
+2. **Steady state.** The drums line always carries a steady-drums phrase: "every bar of drums identical", "one drum pattern from the first second to the final one". The drum pattern itself is rolled from `CADENCE` (where the kick and snare land, one fixed bar or two) so the bar is not the genre default.
+3. **Layouts.** The drums play from the first second and never leave. Verses and hooks differ only in what the melodic sounds do.
+4. **The Exclude box.** `drum fills, snare rolls, risers, sweeps, transitions, reverse kick, lead-in fills, beat drops, turntable scratches, stutter edits` in every lane's list.
 
-"Every N bars" phrases are budgeted to one per roll and zero in loop mode: a motif that changes every 4 bars plus hats that cut every 8 produces exactly the four-bar-filler feel.
+## 4b. Space and density
+
+A long prompt reads as a busy record. Sparse rolls carry lead, bass, kick, snare and one `SPACE` phrase ("half of every bar left empty", "the gaps as loud as the hits") in a Style of about 650-720 characters, with a space tag in the head and no hats, twitch, hint or counter. Mid rolls carry the full kit; full rolls add a hint or a sprinkle.
 
 ## 5. Rhythm vocabulary: the fingerprint
 
-Syncopation, a drunken triplet slur on beat 3, twitchy percussion, and non-quantised feel, in hip hop language. The beat-3 slur is never "waltz", "lilt", "shuffle", "swing" or a time signature: those come back as carnival or jazz-club music. Say it physically: "the 808 stumbles into three on beat 3", "beat 3 trips, beat 4 straightens", "the pocket slips drunk on beat 3". Humanising words that work: "played by hand", "the second note always a hair late", "a few cents off, never corrected", "breath noise left in", "one take, the mistakes left in", "resampled until the grain shows". Modifiers "slight" and "subtle" keep imperfection from tipping into chaos. The slur tag appears on about 60% of rolls; a fingerprint on every roll becomes a rut.
+Syncopation, a drunken triplet slur on beat 3, twitchy percussion, and non-quantised feel, in hip hop language. The beat-3 slur is never "waltz", "lilt", "shuffle", "swing" or a time signature: those come back as carnival or jazz-club music. Say it physically: "the 808 stumbles into three on beat 3", "the pocket slips drunk on beat 3". Humanising words that work: "played by hand", "the second note always a hair late", "a few cents off, never corrected", "breath noise left in", "one take, the mistakes left in", "resampled until the grain shows". Modifiers "slight" and "subtle" keep imperfection from tipping into chaos. The slur tag appears on about 60% of rolls; a fingerprint on every roll becomes a rut.
 
 ## 5b. Hints and hook devices: the anti-generic layer
 
-Random vocabulary makes random music; a lane makes radio music; a **hint** makes one of one. About half of rolls carry one strange ingredient in the counter's seat (`lib/hints.js`), named in the head ("a faint hint of the crying fuzz guitar"), described in a `hint:` line after the drums, and placed in one Lyrics tag by its handle. Four families, each physical:
+Random vocabulary makes random music; a lane makes radio music; a **hint** makes one of one. About a third of rolls (the full-density ones) carry one strange ingredient (`lib/hints.js`), named in the head ("a faint hint of the crying fuzz guitar"), described in a `hint:` line after the drums, and placed in one Lyrics tag by its handle. Six families, each physical: **fuzz lament**, **machine glitch**, **nervous horn twitch**, **hit structures** (a piano or string hit described as a rhythmic cell and a way of striking and damping it), **found sound** and **low brass**. The tape-lurch, reverse-bloom, radio-static and dropped-beat families were removed in 2026-11: they are transition effects by construction and came back as DJ effects and beat drops.
 
-- **fuzz lament**: a fuzz-and-wah guitar wailing one bent note with tape echo trailing out of time, feedback swelling, played slow like a funeral, mixed under the drums.
-- **machine glitch**: a distorted chord sliced into a skipping-disc stutter, a machine-shop clank tuned to the key, bit-reduced hits, ring-modulated stabs, gated noise in uneven bursts.
-- **nervous horn twitch**: a trumpet-and-baritone stack jabbing three stabs then silence, clean guitar chucks on the and of 2 and 4, a tambourine in nervous bursts, organ stabs with the percussion click on; recorded hot to tape, a hair ahead.
-- **hit structures**: a piano or string hit described as a rhythmic cell and a way of striking and damping it: "a grand piano struck in a 3+2 pattern, five hits per bar, the last damped by hand", "a string section stab slammed on beat 1, then three quieter stabs falling by half steps", "a prepared piano cluster struck twice then muted with the palm".
+About three leads in ten come from a guest family outside the lane (`FAMILIES` in `lib/grammar.js`): found objects, synths, organs, guitars, winds, **world** (koto, oud, sitar, banjo, dulcimer, steel pan, accordion, pipe drone) and **machine** (printer, modem, sewing motor, sonar, typewriter, engine).
 
 Each lane weights the families (the live lane leans horn twitch, the dark and phonk lanes lean glitch and lament, every lane likes hit structures). A hint never doubles the lead's family. The safer variation drops the hint; `--hint none` or `--hint hits` forces it.
 
@@ -74,7 +74,7 @@ Keep the names list clean: common words in it block ordinary phrases.
 
 ## 7. Sliders and models
 
-v6: Weirdness 40-55 and Style Influence 75-85 landed closest to the written prompt. Above Weirdness 60 on v6, tempo and structure drift. v6-wild at Weirdness 65-80 and Style Influence 55-70 is where the strange, great accidents happen; the phonk and dark-hybrid lanes suggest it most often, and the weirder variation always targets it. Variety Off (it rewrites the Style text), Max Mode On (it also keeps silences silent on minimal rolls).
+v6: Weirdness 40-55 and Style Influence 75-85 landed closest to the written prompt in the first listening tests; the lanes now run 48-65 (raised 2026-11-11 for less conventional takes). Above Weirdness 60 on v6, tempo and structure drift. v6-wild at Weirdness 65-80 and Style Influence 55-70 is where the strange, great accidents happen; the phonk and dark-hybrid lanes suggest it most often, and the weirder variation always targets it. Variety Off (it rewrites the Style text), Max Mode On (it also keeps silences silent on minimal rolls).
 
 ## 8. Measuring, not guessing
 

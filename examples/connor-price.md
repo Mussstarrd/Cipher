@@ -2,7 +2,7 @@
 
 # suno-forge prompt block: Technical syncopated bounce
 
-Lane `connor-price` | 140 BPM (half-time feel) | Db major (I7 - IV7 (dominant stomp): Db7 - Gb7) | layout: Lead out for 8 bars, then simply back (straight) | about 3:05, full beat at 0:27 | seed 2026
+Lane `connor-price` | 140 BPM (half-time feel) | C# Dorian (i9 - bVImaj7: C#m9 - Amaj7) | layout: Verses mostly air, hooks every bar, same drums (straight) | about 2:58, full beat at 0:14 | seed 2026
 
 ## 1. MODEL
 **Pick:** v6
@@ -16,71 +16,67 @@ Lane `connor-price` | 140 BPM (half-time feel) | Db major (I7 - IV7 (dominant st
 - **Max Mode:** ON. ON for any instrumental over ~2:00; OFF for 30-60 s palette tests (2x (20 per generation vs 10)). Max Mode also keeps silences silent on minimal rolls.
 - **Variety:** Off. Any setting above Off rewrites and expands the Style text before the model sees it (official FAQ: 'reduce the Variety slider to 0 to retain full control of your style tags'). Engineered prompts must run at Off.
 - **Persona:** NO. Voices (formerly Personas; Style Personas live inside the Voices menu): In-app text: 'Songs with Voices cannot be instrumental.' Not used in this workflow.
-- **Duration:** Custom 3:20 (estimated 3:05 from the layout at 140 BPM, plus a buffer rounded up to the next 5 s; [End] stops it early, Crop any tail). Never Auto: v6 runs long on Auto.
-- **Song Title:** Stolen Dry Pluck
+- **Duration:** Custom 3:10 (estimated 2:58 from the layout at 140 BPM, plus a buffer rounded up to the next 5 s; [End] stops it early, Crop any tail). Never Auto: v6 runs long on Auto.
+- **Song Title:** Stolen Car Horn
 
-## 3. STYLE FIELD (976/1000 chars; head tags first, then lead / bass / drums / counter)
+## 3. STYLE FIELD (998/1000 chars; head tags first, then lead / bass / drums / counter)
 ```text
-big confident bounce, 140 BPM, half-time, in Db major, instrumental, takes its time because it can, the dry pluck, last note bent up, kick pattern three hits long, jittery 32nd knock bursts, drums identical in every section, a glitching hint of the skipping-disc hit, low-mid lead, top cut off, loud and sure. lead: a dry plucked synth hook, two notes an octave apart, every hit cut dead before the next kick, doubled an octave down, the low copy louder, each phrase ends on a note bent up a half step at the last moment, played like someone who knows it is good. bass: a bass playing root and fifth, square, heavy. drums: a kick on the one and the and of two, nothing on 3, a snap on every 2 and a dead snare on every 4, dry, hats in a 3+3+2 pattern against a straight kick, a snapped rubber band doubling up for one beat then vanishing, drums stop dead on beat 4, back on beat 1. hint: a bit-reduced industrial hit that repeats like a damaged disc, three skips then silence.
+a sampled car horn tuned to the key over tight dry kick and crisp dry snare, 140 BPM, half-time, in C# Dorian, dry knock hip hop, instrumental, cold and still, the 808 doing the talking, the car horn, last note bent up, kick shadows the lead, loose human timing, twitchy off-grid clicks, the pocket slips drunk on beat 3, steady unchanging drums, lead below the hats, the lighter click once only, crisp dry mix. lead: a sampled car horn tuned to the key, honking the riff in short blasts, gated so each note is short, each phrase ends on a note bent up a half step at the last moment, every hit placed and left there, unhurried. bass: a dry 808 that skips the one and lands on the and. drums: a tight dry kick, all knock and little sub, a crisp dry snare with a short tail, a hair early, the kick copies the rhythm of the lead note for note, the snare keeping time by itself, a typewriter key strike in a burst that slows down as it decays, steady drums, the same hits in the same places every bar.
 ```
 
-## 4. LYRICS FIELD (954/5000 chars; section tags only, no words)
+## 4. LYRICS FIELD (698/5000 chars; section tags only, no words)
 ```text
 [Instrumental]
 
-[Intro | full drums from beat 1, kick, hats, 8 bars]
+[Verse | 8 bars, tight dry kick, crisp dry snare and 808 from the first second, the car horn one phrase then two bars of rest, wide open, unhurried, mostly air]
 
-[Verse | 8 bars, full drums, the dry pluck low, the snare left to ring a little longer]
+[Hook | same drums, the car horn every bar, the lead doubled an octave up, quiet, last note bent up]
 
-[Hook | full beat straight in on beat 1, cold, the dry pluck up front, drums stop dead on beat 4, back on beat 1, last note bent up]
+[Verse | same drums, the car horn one phrase then two bars of rest, one note of the lead left unplayed]
 
-[Break | the dry pluck out, drums and bass alone, 8 bars, a snapped rubber band doubling up for one beat then vanishing, quietly through the verse]
+[Hook | identical to the first hook]
 
-[Hook | the dry pluck back on the one with nothing leading into it, identical to the first hook, the bass, following the kick exactly]
+[Verse | same drums, the harmonic hook one phrase then two bars of rest]
 
-[Verse | same drums, the dry pluck thinner, the lead answered by a quiet echo of itself]
-
-[Hook | identical, its last note is held a beat longer each time around, the skipping-disc hit twitching in and out under the hook, never on the one]
-
-[Hook | identical again, the dry pluck up front, drums identical]
-
-[Outro | drums cut dead, the dry pluck alone, ends on beat 1]
+[Hook | identical, its last note is held a beat longer each time around, the lighter click barely there, under the hats, the whole way, a zippo lighter clicking open and shut as percussion, dry]
 
 [End]
 ```
 
-## 5. EXCLUDE STYLES FIELD (364/1000 chars)
+## 5. EXCLUDE STYLES FIELD (523/1000 chars)
 ```text
-vocals, humming, ad-libs, vocal chops, drum fills, tom fills, snare rolls, hat rolls, drum rolls, transitions, transition fills, section transitions, risers, sweeps, filter sweeps, white noise sweeps, build-ups, breakdown FX, impacts, crash cymbals, reverse cymbals, DJ drops, DJ scratching, tape stop, K-pop, dance pop, EDM, club music, dubstep, orchestral, lo-fi
+vocals, humming, ad-libs, vocal chops, drum fills, tom fills, snare rolls, hat rolls, drum rolls, transitions, transition fills, section transitions, risers, sweeps, filter sweeps, white noise sweeps, build-ups, breakdown FX, impacts, crash cymbals, reverse cymbals, DJ drops, DJ scratching, turntable scratches, tape stop, reverse kick, reversed drums, reverse swells, lead-in fills, kick rolls, beat drops, breakdowns, stutter edits, glitch edits, DJ effects, K-pop, dance pop, EDM, club music, dubstep, orchestral, lo-fi
 ```
 
 ## 6. SLIDERS
-- **Weirdness:** 42% — Technical syncopated bounce: the lane's tested range is 40-50; above 60 Suno starts drifting tempo and structure.
-- **Style Influence:** 81% — High so the physical descriptions are followed; 75-85 landed closest to the written prompt.
+- **Weirdness:** 59% — Technical syncopated bounce: the lane's tested range is 48-60; above 60 Suno starts drifting tempo and structure.
+- **Style Influence:** 75% — High so the physical descriptions are followed; 75-85 landed closest to the written prompt.
 - **Audio Influence:** Not used. No audio is uploaded in this workflow, so the slider does not appear; leave it alone.
 - **Variety:** Off (Exact style). Any setting above Off rewrites and expands the Style text before the model sees it (official FAQ: 'reduce the Variety slider to 0 to retain full control of your style tags'). Engineered prompts must run at Off.
 
 ## 7. VARIATIONS
-**A. Safer** (v6, Weirdness 32%, Style Influence 86%; 999 chars). Sound-neutral anchor, no twitch or slur tags, no hint: the plainest reading of the same sounds.
+**A. Safer** (v6, Weirdness 49%, Style Influence 80%; 985 chars). Sound-neutral anchor, no twitch or slur tags, no hint: the plainest reading of the same sounds.
 ```text
-syncopated hip hop bounce, tight dry drums, hard cuts, 140 BPM, half-time, in Db major, instrumental, takes its time because it can, the dry pluck, drums identical in every section, low-mid lead, top cut off, crisp dry mix, tight low end. lead: a dry plucked synth hook, two notes an octave apart, every hit cut dead before the next kick, doubled an octave down, the low copy louder, each phrase ends on a note bent up a half step at the last moment, played like someone who knows it is good, off-beat stabs on the and of 2 and 4. bass: a bass playing root and fifth, square, heavy, following the kick exactly, tube saturation so it shows up on phone speakers. drums: a kick on the one and the and of two, nothing on 3, a snap on every 2 and a dead snare on every 4, dry, hats in a 3+3+2 pattern against a straight kick, a bottle tapped with a stick on the and of 3, a snapped rubber band doubling up for one beat then vanishing, quietly through the verse, drums stop dead on beat 4, back on beat 1.
+syncopated hip hop bounce, tight dry drums, 140 BPM, half-time, in C# Dorian, instrumental, cold and still, the 808 doing the talking, the car horn, steady unchanging drums, lead below the hats, crisp dry mix, tight low end. lead: a sampled car horn tuned to the key, honking the riff in short blasts, gated so each note is short, each phrase ends on a note bent up a half step at the last moment, every hit placed and left there, unhurried, off-beat stabs on the and of 2 and 4. bass: a dry 808 that skips the one and lands on the and, playing off the kick, landing in its gaps. drums: a tight dry kick, all knock and little sub, a crisp dry snare with a short tail, a hair early, hats that fall to half speed for one bar, then snap back, a shaker played live, the accents wandering, a typewriter key strike in a burst that slows down as it decays, halfway between beats 2 and 3, the loop stumbles on 3 and lands the one hard, steady drums, the same hits in the same places every bar.
 ```
-**B. Weirder** (v6-wild, Weirdness 79%, Style Influence 68%; 986 chars). One wild tag added; run it on v6-wild.
+**B. Weirder** (v6-wild, Weirdness 79%, Style Influence 58%; 993 chars). One wild tag added; run it on v6-wild.
 ```text
-big confident bounce, dry plucks, hard snaps, head up, 140 BPM, half-time, in Db major, instrumental, takes its time because it can, the dry pluck, last note bent up, kick pattern three hits long, jittery 32nd knock bursts, drums identical in every section, a glitching hint of the skipping-disc hit, low-mid lead, top cut off, drums slowed and slammed, loud and sure. lead: a dry plucked synth hook, two notes an octave apart, every hit cut dead before the next kick, doubled an octave down, the low copy louder, each phrase ends on a note bent up a half step at the last moment, played like someone who knows it is good. bass: a bass playing root and fifth, square, heavy. drums: a kick on the one and the and of two, nothing on 3, a snap on every 2 and a dead snare on every 4, dry, a snapped rubber band doubling up for one beat then vanishing, drums stop dead on beat 4, back on beat 1. hint: a bit-reduced industrial hit that repeats like a damaged disc, three skips then silence.
+a sampled car horn tuned to the key over tight dry kick and crisp dry snare, 140 BPM, half-time, in C# Dorian, dry knock hip hop, instrumental, cold and still, the 808 doing the talking, the car horn, last note bent up, kick shadows the lead, loose human timing, twitchy off-grid clicks, the pocket slips drunk on beat 3, steady unchanging drums, lead below the hats, drums pitched down a step, the lighter click once only, crisp dry mix, tight low end. lead: a sampled car horn tuned to the key, honking the riff in short blasts, gated so each note is short, every hit placed and left there, unhurried. bass: a dry 808 that skips the one and lands on the and, a short gated tail. drums: a tight dry kick, all knock and little sub, a crisp dry snare with a short tail, a hair early, the kick copies the rhythm of the lead note for note, the snare keeping time by itself, a typewriter key strike in a burst that slows down as it decays, steady drums, the same hits in the same places every bar.
 ```
 
 ## 8. POST-GEN NOTES
-- Structure: the first full beat lands at about 0:27; the layout is "Lead out for 8 bars, then simply back" and runs about 3:05. Straight mode: the same drums in every section, hard cuts only.
-- Attitude: strut ("takes its time because it can"). Every sad, dragging or mournful phrase was stripped from the pools for this roll, the keys lean major or Mixolydian, the kick stomps on the one and the timing is placed, not late. If it still comes back heavy-lidded, re-roll with --attitude strut and a major key.
-- The hint (the skipping-disc hit) is one ingredient, twitching in and out under the hook, never on the one. If it takes over the record, run the safer variation (no hint) or re-roll; if it is inaudible, raise Style Influence five points. The hook device in the lead line ("each phrase ends on a note bent up a half step at the last moment") is what makes the lead stick; listen for it on the second pass.
+- Structure: the layout is "Verses mostly air, hooks every bar, same drums", about 2:58, with the full beat at 0:14. The drums play one pattern from the first second; nothing in this prompt describes a section starting, stopping or returning, because Suno decorates every boundary it is told about. The verses and hooks differ only in what the melodic sounds do. A reversed kick or a lead-in every four bars is Suno's default drum programming leaking through: change the seed first, then raise Style Influence five points.
+- Cadence: "kick shadows the lead". The kick and snare placement was rolled for this take rather than left to the genre default; the same pattern is meant to play every bar. Timing: "loose human timing".
+- Attitude: cold ("cold and still, the 808 doing the talking"). Menace without sadness: patient, even, nothing rushed.
+- The mystery ingredient (the lighter click) appears barely there, under the hats, the whole way: it is meant to be barely there and to send the track over the edge once. If Suno makes it constant, lower Style Influence five points; if it is missing, that is acceptable on a first take.
+- No hint on this roll; the hook device ("last note bent up") carries the stickiness. Listen for it on the second pass.
 - This lane is about the drums: the kick pattern should be clever and off-grid, the mutes real silences. If it comes back as a dance beat, the anchor or a mood word said pop; the guard denies those now, so re-roll.
-- The mutes must be real silences: if Suno smooths over the stop-start cuts, pick the lead_out_middle or bare_minimum layout; "hard cuts only" sits in the head tags.
+- The mutes must be real silences: if Suno smooths over the stop-start cuts, pick the lead_out_middle or bare_minimum layout; sits in the head tags.
 - Plucks and knocks should be dry and close, never shiny; a shiny lead means a bright word got in, re-roll.
 - Hats should twitch, not run as a flat 16th grid; the twitch clause in the drums line and the hats description do this.
-- Fills, risers or a roll at a section change mean a word slipped through: run the QA checker on the block, and keep the anti-transition phrase in the drums line (it is the positive form of "no fills").
+- Fills, risers, scratches or a roll at a section change mean a word slipped through: run the QA checker on the block, and keep the steady-drums phrase in the drums line (it is the positive form of "no fills").
 - Any hum, chant or sung syllable means a re-roll, not a fix: the Exclude list is already complete, so change the seed rather than adding words.
-- Ending: [End] should stop it near 3:05. If it runs on, Crop to the last downbeat. If it stops early, Extend from the last good section and paste only the remaining section tags.
+- Ending: [End] should stop it near 2:58. If it runs on, Crop to the last downbeat. If it stops early, Extend from the last good section and paste only the remaining section tags.
 - Extend when the first 60-90 s are keepers and only the back half drifts. Re-roll (or run the weirder variation on v6-wild) when the drums or the lead are wrong from the start.
 - Remaster: Remaster (Pro/Premier) renders subtle variations and runs on v6; use it on the keeper for a cleaner, louder master.
 - Stems: Get Stems (Pro/Premier): Auto Split up to 12 stems for 50 credits; Split from Mix 10 credits per stem; Advanced Split (choose from ~100 instruments) 10 credits per stem, Premier only.
@@ -90,14 +86,11 @@ big confident bounce, dry plucks, hard snaps, head up, 140 BPM, half-time, in Db
 
 | # | Section | Bars | Starts |
 |---|---------|------|--------|
-| 1 | Intro | 8 | 0:00 |
-| 2 | Verse | 8 | 0:14 |
-| 3 | Hook | 16 | 0:27 |
-| 4 | Break | 8 | 0:55 |
-| 5 | Hook | 16 | 1:09 |
-| 6 | Verse | 16 | 1:36 |
-| 7 | Hook | 16 | 2:03 |
-| 8 | Hook | 16 | 2:31 |
-| 9 | Outro | 4 | 2:58 |
+| 1 | Verse | 8 | 0:00 |
+| 2 | Hook | 16 | 0:14 |
+| 3 | Verse | 16 | 0:41 |
+| 4 | Hook | 16 | 1:09 |
+| 5 | Verse | 16 | 1:36 |
+| 6 | Hook | 32 | 2:03 |
 
 </details>

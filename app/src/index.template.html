@@ -70,6 +70,7 @@
     <button class="primary" id="go">Generate</button>
     <button id="again" hidden>Roll again</button>
     <button id="strut" title="Head up, absolute confidence">Strut</button>
+    <button id="sparse" title="Four sounds and empty space">Sparse</button>
     <span class="vibe" id="vibe"></span>
   </div>
   <details class="more">
@@ -78,14 +79,14 @@
       <div><label for="bpm">BPM (blank = lane)</label><input id="bpm" type="number" min="60" max="200"></div>
       <div><label for="key">Key (blank = lane)</label><input id="key" placeholder="F minor, D dorian, Eb major"></div>
       <div><label for="mood">Mood words</label><input id="mood" placeholder="dark, sun-soaked"></div>
-      <div><label for="mode">Mode</label><select id="mode"><option value="">layout decides</option><option value="straight">straight</option><option value="loop">loop</option><option value="switch">switch</option><option value="minimal">bare minimum (lead, kick, 808, silence)</option></select></div>
+      <div><label for="mode">Mode</label><select id="mode"><option value="">layout decides</option><option value="straight">straight</option><option value="loop">loop</option><option value="switch">switch</option><option value="minimal">sparse (lead, kick, snare, bass, air)</option></select></div>
       <div><label for="constraints">Must-have (guarded)</label><input id="constraints" placeholder="horn stabs up front"></div>
       <div><label for="exclude">Extra Exclude terms</label><input id="exclude" placeholder="siren, acoustic guitar"></div>
       <div><label for="seed">Seed (blank = random)</label><input id="seed" placeholder="42"></div>
       <div><label for="wild">Model</label><select id="wild"><option value="">v6 (follows the prompt)</option><option value="1">v6-wild (strange accidents)</option></select></div>
       <div><label for="attitude">Attitude</label><select id="attitude"><option value="">lane decides</option><option value="strut">strut: head up, absolute confidence</option><option value="cold">cold: menace, patient</option><option value="low">low: reflective, inward</option><option value="wild">wild: off the leash</option></select></div>
-      <div><label for="sprinkle">Mystery ingredient (once or twice)</label><select id="sprinkle"><option value="">random, about a third of rolls</option><option value="1">always</option><option value="0">never</option></select></div>
-      <div><label for="hint">Hint (the strange ingredient)</label><select id="hint"><option value="">random, about half the time</option><option value="hits">piano / string hit structure</option><option value="fuzzlament">fuzz guitar lament</option><option value="machineglitch">machine glitch</option><option value="staxtwitch">nervous horn twitch</option><option value="none">none</option></select></div>
+      <div><label for="sprinkle">Mystery ingredient (once or twice)</label><select id="sprinkle"><option value="">random, about one roll in five</option><option value="1">always</option><option value="0">never</option></select></div>
+      <div><label for="hint">Hint (the strange ingredient)</label><select id="hint"><option value="">random, about a third of rolls</option><option value="hits">piano / string hit structure</option><option value="fuzzlament">fuzz guitar lament</option><option value="machineglitch">machine glitch</option><option value="staxtwitch">nervous horn twitch</option><option value="foundsound">found sound</option><option value="lowbrass">low brass</option><option value="none">none</option></select></div>
     </div>
   </details>
   <section id="out"><div class="empty">Pick a lane (or leave it on <b>any lane</b>) and press <b>Generate</b>. Then use the bar at the bottom: tap, switch to Suno, paste, come back, tap.</div></section>
@@ -272,6 +273,7 @@
   $('go').addEventListener('click', () => roll(false));
   $('again').addEventListener('click', () => roll(true));
   $('strut').addEventListener('click', () => { $('attitude').value = 'strut'; roll(true); });
+  $('sparse').addEventListener('click', () => { $('mode').value = 'minimal'; roll(true); });
 })();
 </script>
 </body>

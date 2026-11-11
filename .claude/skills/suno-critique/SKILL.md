@@ -15,13 +15,13 @@ Input: the fields that were used (Styles, Lyrics, Exclude, sliders, model, toggl
    | Symptom | First suspects | Fix |
    |---|---|---|
    | Humming, "ooh" pads, chants, a sung hook | a voice-class word (soulful, choir, chant, gospel, anthem, crowd, call and response, vocal chops); Variety above Off; a long empty intro | strip the word (the guard names it); Variety Off; re-roll with a new seed; Replace Section on the leak |
-   | Fills, risers, a roll at every section change | fill/roll/riser/sweep/build/drop/transition/"comes in"/"enters"/"bar 4"/"every 4 bars" anywhere; two "every N bars" phrases | remove the words; keep the anti-transition phrase in the drums line; Exclude has drum fills, snare rolls, risers, sweeps, transitions |
+   | Fills, risers, a reversed kick or lead-in at every section change or every fourth bar, DJ scratches | any word that names a boundary ("hard cuts", "stops dead", "straight in", "drums out", "back"), places a hit against the end of a bar ("before the downbeat", "last beat", "into the next bar"), repeats on a cycle ("every 4 bars"), or says reverse, record, retrigger or stutter; an intro, break or outro tag | delete the phrase; one steady-drums phrase in the drums line ("every bar of drums identical"); drums from the first second; a rolled cadence; Exclude carries the nouns |
    | Carnival, oom-pah, jazz-club feel | waltz, lilt, shuffle, swing, swung, a time signature | say the slur physically ("the 808 stumbles into three on beat 3"); the generator never uses those words |
    | Rigid, quantized grid | no human-timing clauses; a label instead of a physical description; Weirdness under 40 | re-roll (every lead carries a "played by hand" clause); Weirdness 45-55; v6-wild for the weird lane |
    | Generic trap / stock preset | the drums line got cut, or the lead was a one-phrase label | shorten the counter, keep `drums:` and `lead:` lines; physical descriptions with handles |
    | EDM drop, trailer music, elevator jazz | drop, riser, sidechain, cinematic, epic, orchestral, strings, pads, smooth, Rhodes, sax, mellow | remove; the lane's deny list and Exclude handle it |
    | Beat "returns" after the switch | the switch had no single axis or its words were not repeated | one axis; its words in the head tag, the cue and every later section |
-   | Long intro, late hook | bare `[Intro]`; a 16-bar verse before the first hook | `[Intro \| the lead alone, 2 bars]`; hook_first or verse_bare_hook_full layout |
+   | Long intro, late hook | bare `[Intro]`; a 16-bar verse before the first hook | no intro tag at all; hook_first or space_verses layout |
    | Stopped early / ran long | `[End]` ignored; Duration Auto | Duration Custom at estimate + buffer; Crop or Extend |
    | Muffled after ~2:30 | v6 standard mode | Max Mode ON |
 

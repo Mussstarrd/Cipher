@@ -67,22 +67,21 @@ Each roll picks a layout first; the layout decides the mode. Nominal bars estima
 
 | Layout | Mode | 88 BPM | 96 | 106 | 132 half | 140 half | 152 half |
 |---|---|---|---|---|---|---|---|
-| `bare_loop` Two-bar loop, nothing changes | loop | 3:11 (11s) | 2:55 (10s) | 2:38 (9s) | 3:05 (7s) | 2:55 (7s) | 2:41 (6s) |
-| `one_in_one_out` One sound added, one sound removed | loop | 3:16 (11s) | 3:00 (10s) | 2:43 (9s) | 3:09 (7s) | 2:58 (7s) | 2:44 (6s) |
-| `kick_and_lead` Stripped to kick and lead | loop | 3:11 (11s) | 2:55 (10s) | 2:38 (9s) | 3:05 (7s) | 2:55 (7s) | 2:41 (6s) |
-| `hook_first` Hook first | straight | 3:05 (0s) | 2:50 (0s) | 2:34 (0s) | 3:02 (0s) | 2:51 (0s) | 2:38 (0s) |
-| `verse_bare_hook_full` Verse bare, hook full | straight | 3:16 (33s) | 3:00 (30s) | 2:43 (27s) | 2:55 (22s) | 2:45 (21s) | 2:32 (19s) |
-| `slow_motif` Slow burn: long intro on the lead, the motif grows | straight | 3:05 (33s) | 2:50 (30s) | 2:34 (27s) | 3:02 (22s) | 2:51 (21s) | 2:38 (19s) |
-| `halftime_last_third` Half-time for the last third | switch | 3:11 (33s) | 2:55 (30s) | 2:38 (27s) | 3:05 (22s) | 2:55 (21s) | 2:41 (19s) |
-| `a_then_b` A then B, two beats one song | switch | 3:16 (11s) | 3:00 (10s) | 2:43 (9s) | 3:09 (7s) | 2:58 (7s) | 2:44 (6s) |
-| `call_response` Call and reply, two-bar phrases | straight | 3:16 (33s) | 3:00 (30s) | 2:43 (27s) | 2:55 (22s) | 2:45 (21s) | 2:32 (19s) |
-| `lead_out_middle` Lead out for 8 bars, slams back | straight | 3:16 (33s) | 3:00 (30s) | 2:43 (27s) | 3:09 (22s) | 2:58 (21s) | 2:44 (19s) |
-| `switch_strip` Drums cut, lead alone, then beat B slams in | switch | 3:27 (33s) | 3:10 (30s) | 2:52 (27s) | 3:02 (22s) | 2:51 (21s) | 2:38 (19s) |
+| `bare_minimum` Bare minimum: the lead, a kick, a snare, a bass, air | loop | 3:16 (0s) | 3:00 (0s) | 2:43 (0s) | 3:16 (0s) | 3:05 (0s) | 2:51 (0s) |
+| `bare_loop` One two-bar loop, the same all song | loop | 3:16 (0s) | 3:00 (0s) | 2:43 (0s) | 3:16 (0s) | 3:05 (0s) | 2:51 (0s) |
+| `kick_and_lead` Kick, snare and lead, the bass arriving later | loop | 3:16 (0s) | 3:00 (0s) | 2:43 (0s) | 3:16 (0s) | 3:05 (0s) | 2:51 (0s) |
+| `one_voice_changes` Same drums all song, one melodic voice changes | loop | 3:16 (0s) | 3:00 (0s) | 2:43 (0s) | 3:16 (0s) | 3:05 (0s) | 2:51 (0s) |
+| `hook_first` Hook first, same drums throughout | straight | 3:16 (0s) | 3:00 (0s) | 2:43 (0s) | 3:24 (0s) | 3:12 (0s) | 2:57 (0s) |
+| `lead_swap` Two leads trading two bars each | straight | 3:16 (0s) | 3:00 (0s) | 2:43 (0s) | 3:24 (0s) | 3:12 (0s) | 2:57 (0s) |
+| `space_verses` Verses mostly air, hooks every bar, same drums | straight | 3:16 (22s) | 3:00 (20s) | 2:43 (18s) | 3:09 (15s) | 2:58 (14s) | 2:44 (13s) |
+| `slow_motif` The motif grows a note at a time over the same drums | straight | 3:16 (22s) | 3:00 (20s) | 2:43 (18s) | 3:24 (15s) | 3:12 (14s) | 2:57 (13s) |
+| `drums_alone_first` The drums alone first, the lead laid over them | straight | 3:16 (22s) | 3:00 (20s) | 2:43 (18s) | 3:24 (15s) | 3:12 (14s) | 2:57 (13s) |
+| `two_patterns` Two drum patterns, one song | switch | 3:22 (0s) | 3:05 (0s) | 2:48 (0s) | 3:27 (0s) | 3:15 (0s) | 3:00 (0s) |
+| `halftime_last_third` A second pattern for the last third | switch | 3:22 (0s) | 3:05 (0s) | 2:48 (0s) | 3:27 (0s) | 3:15 (0s) | 3:00 (0s) |
 
 | Use case | Layouts |
 |---|---|
-| Radio | hook_first, verse_bare_hook_full, lead_out_middle; cold ending |
-| Playlist / algorithmic | hook_first, a_then_b |
-| Hypnotic / minimal (a third of rolls) | bare_loop, one_in_one_out, kick_and_lead |
-| Sync / underscore | slow_motif, kick_and_lead |
-| Album-style | a_then_b, halftime_last_third, switch_strip |
+| Radio | hook_first, space_verses, lead_swap |
+| Sparse / hypnotic (about four rolls in ten) | bare_minimum, bare_loop, kick_and_lead, one_voice_changes |
+| Sync / underscore | slow_motif, drums_alone_first |
+| Album-style | two_patterns, halftime_last_third |
