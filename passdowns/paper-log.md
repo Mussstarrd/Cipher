@@ -10,15 +10,17 @@ holdings held unchanged. Every brief adds one row, including "no trade" days.
 | 2 | 2026-11-12 | No trade | NVDA -8.5% pre-market after a Nov 11 NYT report on CEO Huang and reports the board is weighing his future; SMH -3.1%, AMD +2.1%. Company-news shock with an unknown outcome, no tested setup, no fact pattern supporting a specific trade | n/a | n/a | n/a | $0 | n/a | not run | n/a | $0 |
 | 3 | 2026-11-13 | No trade (brief delivered late, 10:29 am, market open) | SMH -4.2%, AMD -8.6%, NVDA -3.5% intraday; Oct PPI 0.3% vs 0.4% forecast; one outlet reports Nvidia CEO Huang resigned (not confirmed by a second source). No tested setup, no fact pattern supporting a specific trade | n/a | n/a | n/a | $0 | n/a | not run | n/a | $0 |
 | 4 | 2026-11-16 | No trade | SMH -3.9%, AMD -6.0%, NVDA -3.4% pre-market; NVDA reports Nov 17 after the close with the CEO seat open (Huang stepped down Nov 12; FT says he may return). Rule 6 bars options through own earnings and there is no tested setup | n/a | n/a | n/a | $0 | n/a | not run | n/a | $0 |
+| 5 | 2026-11-17 | No trade | NVDA reports after the close (EPS est $2.47, revenue est $109.15B, interim CEO Kress); pre-market moves under 2% across the watchlist. Rule 6 bars options through own earnings; no tested setup | n/a | n/a | n/a | $0 | n/a | not run | n/a | $0 |
 
 ## Running totals
-- Recommendations: 4. Trades: 0. No-trade days: 4. Vetoes: 0.
+- Recommendations: 5. Trades: 0. No-trade days: 5. Vetoes: 0.
 - Paper P&L: $0. Open paper risk: $0.
 - Benchmarks (start = Nov 10 close): SPY 749.92. Holdings 14.890133 NVDA @ 168.89 + 24.613125 SPCX @ 143.09 = $6,036.68.
 - Nov 11 8:47 am (pre-market): SPY 756.91 (+0.93%). Holdings $6,126.70 (+1.49%). Paper 0.00%.
 - Nov 12 8:47 am (pre-market): SPY 754.43 (+0.60%). Holdings $5,768.33 (-4.45%). Paper 0.00%.
 - Nov 13 10:29 am (intraday): SPY 750.05 (+0.02%). Holdings $5,780.16 (-4.25%). Paper 0.00%.
 - Nov 16 8:48 am (pre-market): SPY 749.21 (-0.09%). Holdings $5,754.94 (-4.67%). Paper 0.00%.
+- Nov 17 8:47 am (pre-market): SPY 738.82 (-1.48%). Holdings $5,740.70 (-4.90%). Paper 0.00%.
 
 ## Notes
 - 2026-11-10 2:07 pm: Jeffery bought 2x CRWV Nov 27 $90C at $0.12 in 731123444 (real, off-system, before CRWV's earnings that evening). Not a paper position.
@@ -36,4 +38,4 @@ holdings held unchanged. Every brief adds one row, including "no trade" days.
 - Both analysts flagged: NVDA + SPCX shares are 95.5% of the account, and NVDA earnings and the (unconfirmed) SPCX unlock both fall on Nov 17.
 - Checker: all values recomputed from quotes; no mismatch over 2%. The Bear's $6,119 vs $6,027 gap is Friday closes vs pre-market prices, not an error.
 - Outcome to grade at the Nov 23 review: NVDA and SPCX closes, and the Dec $170C bid, vs today's.
-
+- Interim check 2026-11-17: SPCX Dec $170C bid fell from $1.70 (Nov 16 review, lean sell) to $1.20 at the Nov 16 close; position still held. CRWV $90C has no bid.
