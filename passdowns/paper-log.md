@@ -13,9 +13,10 @@ holdings held unchanged. Every brief adds one row, including "no trade" days.
 | 5 | 2026-11-17 | No trade | NVDA reports after the close (EPS est $2.47, revenue est $109.15B, interim CEO Kress); pre-market moves under 2% across the watchlist. Rule 6 bars options through own earnings; no tested setup | n/a | n/a | n/a | $0 | n/a | not run | n/a | $0 |
 | 6 | 2026-11-18 | No trade | NVDA Q3: EPS $2.68 vs $2.47 est, revenue ~$115.8B vs ~$109.1B, Q4 guide $130B vs $125.1B consensus; NVDA +2.9%, SMH +2.2% pre-market. No tested setup for buying a post-earnings gap. Miss: no position on for the move | n/a | n/a | n/a | $0 | n/a | not run | n/a | $0 |
 | 7 | 2026-11-19 | No trade | Nasdaq-100 futures ~+2% after Anthropic priced its IPO; MU +4.2%, INTC +4.0%, SMH +2.6% pre-market; jobless claims 203K vs 198K est; Fed minutes hawkish. No entry setup defined in v1 (gap-up hypothesis proposed Nov 18, awaiting Jeffery) | n/a | n/a | n/a | $0 | n/a | not run | n/a | $0 |
+| 8 | 2026-11-20 | No trade | Broad sell-off pre-market: SPCX -6.9%, AMD -6.0%, TSM -5.9%, NVDA -3.3%, SMH -3.2%; VIX at 30; Anthropic down 8-10% after its debut. No entry setup defined in v1 | n/a | n/a | n/a | $0 | n/a | not run | n/a | $0 |
 
 ## Running totals
-- Recommendations: 7. Trades: 0. No-trade days: 7. Vetoes: 0.
+- Recommendations: 8. Trades: 0. No-trade days: 8. Vetoes: 0.
 - Paper P&L: $0. Open paper risk: $0.
 - Benchmarks (start = Nov 10 close): SPY 749.92. Holdings 14.890133 NVDA @ 168.89 + 24.613125 SPCX @ 143.09 = $6,036.68.
 - Nov 11 8:47 am (pre-market): SPY 756.91 (+0.93%). Holdings $6,126.70 (+1.49%). Paper 0.00%.
@@ -25,6 +26,7 @@ holdings held unchanged. Every brief adds one row, including "no trade" days.
 - Nov 17 8:47 am (pre-market): SPY 738.82 (-1.48%). Holdings $5,740.70 (-4.90%). Paper 0.00%.
 - Nov 18 8:47 am (pre-market): SPY 735.03 (-1.99%). Holdings $5,889.83 (-2.43%). Paper 0.00%.
 - Nov 19 8:47 am (pre-market): SPY 737.61 (-1.64%). Holdings $5,842.29 (-3.22%). Paper 0.00%.
+- Nov 20 8:47 am (pre-market): SPY 708.87 (-5.47%). Holdings $5,273.48 (-12.64%). Paper 0.00%.
 
 ## Notes
 - 2026-11-10 2:07 pm: Jeffery bought 2x CRWV Nov 27 $90C at $0.12 in 731123444 (real, off-system, before CRWV's earnings that evening). Not a paper position.
@@ -45,3 +47,4 @@ holdings held unchanged. Every brief adds one row, including "no trade" days.
 - Interim check 2026-11-17: SPCX Dec $170C bid fell from $1.70 (Nov 16 review, lean sell) to $1.20 at the Nov 16 close; position still held. CRWV $90C has no bid.
 - Interim check 2026-11-18: SPCX Dec $170C bid $1.53 at the Nov 17 close (review bid $1.70). NVDA print on Nov 17 was a beat; NVDA +2.9% pre-market vs the review's coin-flip call. Design gap flagged to Jeffery: six straight no-trade days because v1 defines no entry setups to test.
 - Correction 2026-11-19: the Nov 18 row called the NVDA post-earnings gap a miss. NVDA closed Nov 18 at $150.96, down 2.9% on the day after a +2.9% pre-market; buying that gap would have lost. Not a miss.
+- Interim check 2026-11-20: SPCX Dec $170C bid $0.94 at the Nov 19 close vs $1.70 at the Nov 16 review (lean sell); still held, about $76 lower.
