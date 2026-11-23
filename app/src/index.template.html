@@ -150,14 +150,17 @@
     return input;
   }
 
+  // every generate call keeps its exact input, so the same roll can be rewritten by the other prompt writer
+  const gen = (seed) => { const inp = readInput(seed); inp.avoidKeys = [...(inp.avoidKeys || [])]; const out = F.generate(inp); out._input = inp; return out; };
+  function rewrite(style) { if (!pkg) return; const inp = { ...pkg._input, style, title: pkg.meta.title }; pkg = F.generate(inp); pkg._input = inp; render(); resetSequence(); }
   function roll(newSeed) {
     const typed = $('seed').value.trim();
     const fixedSeed = !newSeed && typed ? (/^\d+$/.test(typed) ? Number(typed) : typed) : undefined;
     try {
-      if (fixedSeed !== undefined) pkg = F.generate(readInput(fixedSeed));
+      if (fixedSeed !== undefined) pkg = gen(fixedSeed);
       else {
         for (let i = 0; i < 60; i++) {
-          pkg = F.generate(readInput(Math.floor(Math.random() * 4294967295)));
+          pkg = gen(Math.floor(Math.random() * 4294967295));
           const d = pkg.parts.drums, fam = pkg.parts.lead.family, bass = pkg.parts.bass.source;
           const clash = recentSounds.some((s) => s.fam === fam || s.bass === bass || s.kick === d.kick || s.snare === d.snare || s.hats === d.hats);
           if (!seen.has(pkg.fingerprint) && (!clash || i > 40)) break;
@@ -288,7 +291,7 @@
   $('again').addEventListener('click', () => roll(true));
   $('strut').addEventListener('click', () => { $('attitude').value = 'strut'; roll(true); });
   // same roll, other writer: the seed is kept so the two prompts describe the same sounds
-  $('detail').addEventListener('click', () => { const sel = $('pstyle'); sel.value = sel.value === 'detailed' ? '' : 'detailed'; $('detail').textContent = sel.value === 'detailed' ? 'Tight' : 'Detailed'; if (pkg) { $('seed').value = String(pkg.meta.seed); roll(false); $('seed').value = ''; } });
+  $('detail').addEventListener('click', () => { const sel = $('pstyle'); sel.value = sel.value === 'detailed' ? '' : 'detailed'; $('detail').textContent = sel.value === 'detailed' ? 'Tight' : 'Detailed'; rewrite(sel.value || 'tight'); });
 })();
 </script>
 </body>
