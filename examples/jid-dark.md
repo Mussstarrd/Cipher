@@ -17,30 +17,30 @@ Lane `jid-dark` | 146 BPM (half-time feel) | C# Dorian (i9 - bVImaj7: C#m9 - Ama
 - **Variety:** Off. Any setting above Off rewrites and expands the Style text before the model sees it (official FAQ: 'reduce the Variety slider to 0 to retain full control of your style tags'). Engineered prompts must run at Off.
 - **Persona:** NO. Voices (formerly Personas; Style Personas live inside the Voices menu): In-app text: 'Songs with Voices cannot be instrumental.' Not used in this workflow.
 - **Duration:** Custom 3:20 (estimated 3:07 from the layout at 146 BPM, plus a buffer rounded up to the next 5 s; [End] stops it early, Crop any tail). Never Auto: v6 runs long on Auto.
-- **Song Title:** Stolen Car Horn
+- **Song Title:** Stolen Glass Tone
 
-## 3. STYLE FIELD (985/1000 chars; head tags first, then lead / bass / drums / counter)
+## 3. STYLE FIELD (992/1000 chars; head tags first, then lead / bass / drums / counter)
 ```text
-a sampled car horn tuned to the key over dry punchy kick and hard sampled snare, 146 BPM, half-time, in C# Dorian, dark trap, instrumental, ice calm, the drums doing the threatening, paranoid, the car horn, last note bent up, kick shadows the lead, wobbly human pocket, twitchy off-grid clicks, the pocket slips drunk on beat 3, beat flips at the midpoint, lead parked in the low mids, the lighter click once only, dense dark mix, loud. lead: a sampled car horn tuned to the key, honking the riff in short blasts, gated so each note is short, every hit placed and left there, unhurried. bass: an 808 pitched down until the tail buzzes, sliding. drums: a dry punchy kick, hard-clipped, a hard sampled snare compressed until it cracks, a hair late, the kick copies the rhythm of the lead note for note, the snare keeping time by itself, one open hat, a typewriter key strike in a burst that slows down as it decays, the drums hold one pattern, then hold another, and that is all they do.
+short distorted kick, crunchy sampled snare, one open hat, 146 BPM, half-time, in C# Dorian, dark trap, instrumental, the empty second bar as the signature, ice calm, the drums doing the threatening, paranoid, the glass tone, last note bent up, cumbia lope, hard beat switch halfway, wobbly human pocket, dense dark mix. signature: the lead and the bass both rest for the whole second bar of the loop, the drums carrying that bar by themselves, each time around. lead: a glassy ringing tone with a slow waver, each note arriving a little late, pitched down until it sounds heavy, every hit placed and left there, unhurried. bass: an 808 with a hard knock on top, sliding between notes. drums: a short distorted kick with a clicky top, a crunchy sampled snare with two quiet taps after it, by hand, a cumbia lope, a scraper and a kick trading off-beats, a gated snare tail cut short in a 16th run that skips its last hit, the drums hold one pattern, then hold another, and that is all they do.
 ```
 
-## 4. LYRICS FIELD (741/5000 chars; section tags only, no words)
+## 4. LYRICS FIELD (704/5000 chars; section tags only, no words)
 ```text
 [Instrumental]
 
-[Hook | the whole beat from the first second, the car horn up front, the lead more clipped, last note bent up]
+[Hook | the whole beat from the first second, the glass tone up front, the lead more clipped, last note bent up]
 
-[Verse | same drums, the car horn half as many notes, the snare drier and closer]
+[Verse | same drums, the glass tone half as many notes, the snare drier and closer]
 
 [Hook | identical to the first hook, the sliced organ answering]
 
-[Verse | same drums, a typewriter key strike in a burst that slows down as it decays]
+[Verse | same drums, a gated snare tail cut short in a 16th run that skips its last hit, the empty second bar in every pass of the loop, the same place each time]
 
-[Beat Switch | the kick pattern flips to the off-beats, the lead an octave lower]
+[Beat Switch | everything strips to 808 and one snare, the lead pitched down an octave]
 
-[Hook | off-beat kicks, lower lead, its last note is held a beat longer each time around]
+[Hook | stripped to 808 and snare, its last note is held a beat longer each time around]
 
-[Hook | off-beat kicks, lower lead, identical, the sliced organ answering, the lighter click barely there, under the hats, the whole way, a zippo lighter clicking open and shut as percussion, dry]
+[Hook | stripped to 808 and snare, identical, the sliced organ answering]
 
 [End]
 ```
@@ -57,21 +57,21 @@ vocals, humming, ad-libs, vocal chops, choir, drum fills, tom fills, snare rolls
 - **Variety:** Off (Exact style). Any setting above Off rewrites and expands the Style text before the model sees it (official FAQ: 'reduce the Variety slider to 0 to retain full control of your style tags'). Engineered prompts must run at Off.
 
 ## 7. VARIATIONS
-**A. Safer** (v6, Weirdness 52%, Style Influence 89%; 999 chars). Sound-neutral anchor, no twitch or slur tags, no hint: the plainest reading of the same sounds.
+**A. Safer** (v6, Weirdness 52%, Style Influence 89%; 992 chars). Sound-neutral anchor, no twitch or slur tags, no hint: the plainest reading of the same sounds.
 ```text
-dark hip hop instrumental, hard drums, heavy 808, 146 BPM, half-time, in C# Dorian, instrumental, ice calm, the drums doing the threatening, paranoid, the car horn, beat flips at the midpoint, lead parked in the low mids, dense dark mix, loud. lead: a sampled car horn tuned to the key, honking the riff in short blasts, gated so each note is short, each phrase ends on a note bent up a half step at the last moment, every hit placed and left there, unhurried. bass: an 808 pitched down until the tail buzzes, sliding, playing off the kick, landing in its gaps, a short gated tail. drums: a dry punchy kick, hard-clipped, a hard sampled snare compressed until it cracks, a hair late, one hat pattern that flips to double speed in the hook, a shaker played live, the accents wandering, a typewriter key strike in a burst that slows down as it decays, halfway between beats 2 and 3, the loop stumbles on 3 and lands the one hard, the drums hold one pattern, then hold another, and that is all they do.
+dark hip hop instrumental, hard drums, heavy 808, 146 BPM, half-time, in C# Dorian, instrumental, ice calm, the drums doing the threatening, paranoid, the glass tone, hard beat switch halfway, dense dark mix. lead: a glassy ringing tone with a slow waver, each note arriving a little late, pitched down until it sounds heavy, each phrase ends on a note bent up a half step at the last moment, every hit placed and left there, unhurried, playing a two-note motif bouncing a tritone, off-beat stabs on the and of 2 and 4. bass: an 808 with a hard knock on top, sliding between notes, a triplet bounce against straight hats. drums: a short distorted kick with a clicky top, a crunchy sampled snare with two quiet taps after it, by hand, one hat pattern that flips to double speed in the hook, finger snaps landing a hair late, a gated snare tail cut short in a 16th run that skips its last hit, in the hole after the snare, the drums hold one pattern, then hold another, and that is all they do.
 ```
-**B. Weirder** (v6-wild, Weirdness 74%, Style Influence 69%; 994 chars). One wild tag added; run it on v6-wild.
+**B. Weirder** (v6-wild, Weirdness 74%, Style Influence 69%; 998 chars). One wild tag added; run it on v6-wild.
 ```text
-a sampled car horn tuned to the key over dry punchy kick and hard sampled snare, 146 BPM, half-time, in C# Dorian, dark trap, instrumental, ice calm, the drums doing the threatening, paranoid, the car horn, last note bent up, kick shadows the lead, wobbly human pocket, twitchy off-grid clicks, the pocket slips drunk on beat 3, beat flips at the midpoint, lead parked in the low mids, the loop resampled until it smears, the lighter click once only, dense dark mix, loud. lead: a sampled car horn tuned to the key, honking the riff in short blasts, gated so each note is short. bass: an 808 pitched down until the tail buzzes, sliding. drums: a dry punchy kick, hard-clipped, a hard sampled snare compressed until it cracks, a hair late, the kick copies the rhythm of the lead note for note, the snare keeping time by itself, a typewriter key strike in a burst that slows down as it decays, halfway between beats 2 and 3, the drums hold one pattern, then hold another, and that is all they do.
+short distorted kick, crunchy sampled snare, one open hat, 146 BPM, half-time, in C# Dorian, dark trap, instrumental, the empty second bar as the signature, ice calm, the drums doing the threatening, paranoid, the glass tone, last note bent up, cumbia lope, hard beat switch halfway, wobbly human pocket, the loop resampled until it smears, dense dark mix. signature: the lead and the bass both rest for the whole second bar of the loop, the drums carrying that bar by themselves, each time around. lead: a glassy ringing tone with a slow waver, each note arriving a little late, pitched down until it sounds heavy. bass: an 808 with a hard knock on top, sliding between notes. drums: a short distorted kick with a clicky top, a crunchy sampled snare with two quiet taps after it, by hand, a cumbia lope, a scraper and a kick trading off-beats, one open hat, a gated snare tail cut short in a 16th run that skips its last hit, the drums hold one pattern, then hold another, and that is all they do.
 ```
 
 ## 8. POST-GEN NOTES
-- Structure: the layout is "A second pattern for the last third", about 3:07, with the full beat at 0:00. The drums play one pattern from the first second; nothing in this prompt describes a section starting, stopping or returning, because Suno decorates every boundary it is told about. This roll has two drum patterns ("beat flips at the midpoint"); the second pattern's words repeat in every section after the switch so Suno cannot undo it. A reversed kick or a lead-in every four bars is Suno's default drum programming leaking through: change the seed first, then raise Style Influence five points.
-- Cadence: "kick shadows the lead". The kick and snare placement was rolled for this take rather than left to the genre default; the same pattern is meant to play every bar. Timing: "wobbly human pocket".
+- Structure: the layout is "A second pattern for the last third", about 3:07, with the full beat at 0:00. The drums play one pattern from the first second; nothing in this prompt describes a section starting, stopping or returning, because Suno decorates every boundary it is told about. This roll has two drum patterns ("hard beat switch halfway"); the second pattern's words repeat in every section after the switch so Suno cannot undo it. A reversed kick or a lead-in every four bars is Suno's default drum programming leaking through: change the seed first, then raise Style Influence five points.
+- Cadence: "cumbia lope". The kick and snare placement was rolled for this take rather than left to the genre default; the same pattern is meant to play every bar. Timing: "wobbly human pocket".
 - Attitude: cold ("ice calm, the drums doing the threatening"). Menace without sadness: patient, even, nothing rushed.
-- The mystery ingredient (the lighter click) appears barely there, under the hats, the whole way: it is meant to be barely there and to send the track over the edge once. If Suno makes it constant, lower Style Influence five points; if it is missing, that is acceptable on a first take.
-- No hint on this roll; the hook device ("last note bent up") carries the stickiness. Listen for it on the second pass.
+- Signature: the empty second bar, in every pass of the loop, the same place each time. It is the defining ingredient of this take: named second in the head and described before the lead. The silence is part of the loop, the same place each time. If Suno fills the gap or leads into what follows with a reversed sound, change the seed first.
+- Hook device: "last note bent up". Listen for it on the second pass.
 - The sliced keys should sound like a cut-up sample, not a played melody; if Suno plays it clean, pick a source with "sliced" or "reversed" in it and re-roll.
 - Hats should twitch and switch patterns; the twitch tag and the hats description carry this, keep both in the front 260 characters.
 - The beat switch must be audible as one axis (half-time, key falls, new drums); its words repeat in the head tag and in every section after the switch, so never edit them out.

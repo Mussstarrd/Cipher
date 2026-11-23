@@ -17,28 +17,28 @@ Lane `connor-price` | 140 BPM (half-time feel) | C# Dorian (i9 - bVImaj7: C#m9 -
 - **Variety:** Off. Any setting above Off rewrites and expands the Style text before the model sees it (official FAQ: 'reduce the Variety slider to 0 to retain full control of your style tags'). Engineered prompts must run at Off.
 - **Persona:** NO. Voices (formerly Personas; Style Personas live inside the Voices menu): In-app text: 'Songs with Voices cannot be instrumental.' Not used in this workflow.
 - **Duration:** Custom 3:10 (estimated 2:58 from the layout at 140 BPM, plus a buffer rounded up to the next 5 s; [End] stops it early, Crop any tail). Never Auto: v6 runs long on Auto.
-- **Song Title:** Stolen Car Horn
+- **Song Title:** Stolen Glass Tone
 
-## 3. STYLE FIELD (998/1000 chars; head tags first, then lead / bass / drums / counter)
+## 3. STYLE FIELD (996/1000 chars; head tags first, then lead / bass / drums / counter)
 ```text
-a sampled car horn tuned to the key over tight dry kick and crisp dry snare, 140 BPM, half-time, in C# Dorian, dry knock hip hop, instrumental, cold and still, the 808 doing the talking, the car horn, last note bent up, kick shadows the lead, loose human timing, twitchy off-grid clicks, the pocket slips drunk on beat 3, steady unchanging drums, lead below the hats, the lighter click once only, crisp dry mix. lead: a sampled car horn tuned to the key, honking the riff in short blasts, gated so each note is short, each phrase ends on a note bent up a half step at the last moment, every hit placed and left there, unhurried. bass: a dry 808 that skips the one and lands on the and. drums: a tight dry kick, all knock and little sub, a crisp dry snare with a short tail, a hair early, the kick copies the rhythm of the lead note for note, the snare keeping time by itself, a typewriter key strike in a burst that slows down as it decays, steady drums, the same hits in the same places every bar.
+dry kick, crisp dry snare, shaker, 140 BPM, half-time, in C# Dorian, minimal bounce hip hop, instrumental, the empty second bar as the signature, ice calm, the drums doing the threatening, slow, wide, patient, the glass tone, last note bent up, cumbia lope, drums playing from the first second, drummer a little ahead, bass a little behind, crisp dry mix. signature: the lead and the bass both rest for the whole second bar of the loop, the drums carrying that bar by themselves, each time around. lead: a glassy ringing tone with a slow waver, each note arriving a little late, pitched down until it sounds heavy, every hit placed and left there, unhurried. bass: a short punchy 808 following the kick. drums: a dry kick, the low end left to the 808, syncopated against the hats, a crisp dry snare with a short tail, a hair early, a cumbia lope, a scraper and a kick trading off-beats, a dry stick click ratcheting faster across one beat, kick and snare locked in one pattern for the whole song.
 ```
 
-## 4. LYRICS FIELD (698/5000 chars; section tags only, no words)
+## 4. LYRICS FIELD (645/5000 chars; section tags only, no words)
 ```text
 [Instrumental]
 
-[Verse | 8 bars, tight dry kick, crisp dry snare and 808 from the first second, the car horn one phrase then two bars of rest, wide open, unhurried, mostly air]
+[Verse | 8 bars, dry kick, crisp dry snare and 808 from the first second, the glass tone one phrase then two bars of rest, sparse enough to count every hit]
 
-[Hook | same drums, the car horn every bar, the lead doubled an octave up, quiet, last note bent up]
+[Hook | same drums, the glass tone every bar, the lead more clipped, last note bent up]
 
-[Verse | same drums, the car horn one phrase then two bars of rest, one note of the lead left unplayed]
+[Verse | same drums, the glass tone one phrase then two bars of rest, the bass up front, the lead tucked behind it]
 
-[Hook | identical to the first hook]
+[Hook | identical to the first hook, the empty second bar in every pass of the loop, the same place each time]
 
 [Verse | same drums, the harmonic hook one phrase then two bars of rest]
 
-[Hook | identical, its last note is held a beat longer each time around, the lighter click barely there, under the hats, the whole way, a zippo lighter clicking open and shut as percussion, dry]
+[Hook | identical, its last note is held a beat longer each time around]
 
 [End]
 ```
@@ -49,27 +49,27 @@ vocals, humming, ad-libs, vocal chops, drum fills, tom fills, snare rolls, hat r
 ```
 
 ## 6. SLIDERS
-- **Weirdness:** 59% — Technical syncopated bounce: the lane's tested range is 48-60; above 60 Suno starts drifting tempo and structure.
-- **Style Influence:** 75% — High so the physical descriptions are followed; 75-85 landed closest to the written prompt.
+- **Weirdness:** 48% — Technical syncopated bounce: the lane's tested range is 48-60; above 60 Suno starts drifting tempo and structure.
+- **Style Influence:** 85% — High so the physical descriptions are followed; 75-85 landed closest to the written prompt.
 - **Audio Influence:** Not used. No audio is uploaded in this workflow, so the slider does not appear; leave it alone.
 - **Variety:** Off (Exact style). Any setting above Off rewrites and expands the Style text before the model sees it (official FAQ: 'reduce the Variety slider to 0 to retain full control of your style tags'). Engineered prompts must run at Off.
 
 ## 7. VARIATIONS
-**A. Safer** (v6, Weirdness 49%, Style Influence 80%; 985 chars). Sound-neutral anchor, no twitch or slur tags, no hint: the plainest reading of the same sounds.
+**A. Safer** (v6, Weirdness 38%, Style Influence 90%; 981 chars). Sound-neutral anchor, no twitch or slur tags, no hint: the plainest reading of the same sounds.
 ```text
-syncopated hip hop bounce, tight dry drums, 140 BPM, half-time, in C# Dorian, instrumental, cold and still, the 808 doing the talking, the car horn, steady unchanging drums, lead below the hats, crisp dry mix, tight low end. lead: a sampled car horn tuned to the key, honking the riff in short blasts, gated so each note is short, each phrase ends on a note bent up a half step at the last moment, every hit placed and left there, unhurried, off-beat stabs on the and of 2 and 4. bass: a dry 808 that skips the one and lands on the and, playing off the kick, landing in its gaps. drums: a tight dry kick, all knock and little sub, a crisp dry snare with a short tail, a hair early, hats that fall to half speed for one bar, then snap back, a shaker played live, the accents wandering, a typewriter key strike in a burst that slows down as it decays, halfway between beats 2 and 3, the loop stumbles on 3 and lands the one hard, steady drums, the same hits in the same places every bar.
+syncopated hip hop bounce, tight dry drums, 140 BPM, half-time, in C# Dorian, instrumental, ice calm, the drums doing the threatening, the glass tone, drums playing from the first second, crisp dry mix. lead: a glassy ringing tone with a slow waver, each note arriving a little late, pitched down until it sounds heavy, each phrase ends on a note bent up a half step at the last moment, every hit placed and left there, unhurried, playing a two-note motif bouncing a tritone, off-beat stabs on the and of 2 and 4. bass: a short punchy 808 following the kick, syncopated 16ths with long rests. drums: a dry kick, the low end left to the 808, syncopated against the hats, a crisp dry snare with a short tail, a hair early, a shaker in place of hats, the accents on the off-beats, maracas shaken by hand under the hats, a little behind the beat, a dry stick click ratcheting faster across one beat, in the hole after the snare, kick and snare locked in one pattern for the whole song.
 ```
-**B. Weirder** (v6-wild, Weirdness 79%, Style Influence 58%; 993 chars). One wild tag added; run it on v6-wild.
+**B. Weirder** (v6-wild, Weirdness 68%, Style Influence 64%; 988 chars). One wild tag added; run it on v6-wild.
 ```text
-a sampled car horn tuned to the key over tight dry kick and crisp dry snare, 140 BPM, half-time, in C# Dorian, dry knock hip hop, instrumental, cold and still, the 808 doing the talking, the car horn, last note bent up, kick shadows the lead, loose human timing, twitchy off-grid clicks, the pocket slips drunk on beat 3, steady unchanging drums, lead below the hats, drums pitched down a step, the lighter click once only, crisp dry mix, tight low end. lead: a sampled car horn tuned to the key, honking the riff in short blasts, gated so each note is short, every hit placed and left there, unhurried. bass: a dry 808 that skips the one and lands on the and, a short gated tail. drums: a tight dry kick, all knock and little sub, a crisp dry snare with a short tail, a hair early, the kick copies the rhythm of the lead note for note, the snare keeping time by itself, a typewriter key strike in a burst that slows down as it decays, steady drums, the same hits in the same places every bar.
+dry kick, crisp dry snare, shaker, 140 BPM, half-time, in C# Dorian, minimal bounce hip hop, instrumental, the empty second bar as the signature, ice calm, the drums doing the threatening, slow, wide, patient, the glass tone, last note bent up, cumbia lope, drums playing from the first second, drummer a little ahead, bass a little behind, the loop resampled until it smears, crisp dry mix. signature: the lead and the bass both rest for the whole second bar of the loop, the drums carrying that bar by themselves, each time around. lead: a glassy ringing tone with a slow waver, each note arriving a little late, pitched down until it sounds heavy. bass: a short punchy 808 following the kick. drums: a dry kick, the low end left to the 808, syncopated against the hats, a crisp dry snare with a short tail, a hair early, a cumbia lope, a scraper and a kick trading off-beats, a dry stick click ratcheting faster across one beat, kick and snare locked in one pattern for the whole song.
 ```
 
 ## 8. POST-GEN NOTES
 - Structure: the layout is "Verses mostly air, hooks every bar, same drums", about 2:58, with the full beat at 0:14. The drums play one pattern from the first second; nothing in this prompt describes a section starting, stopping or returning, because Suno decorates every boundary it is told about. The verses and hooks differ only in what the melodic sounds do. A reversed kick or a lead-in every four bars is Suno's default drum programming leaking through: change the seed first, then raise Style Influence five points.
-- Cadence: "kick shadows the lead". The kick and snare placement was rolled for this take rather than left to the genre default; the same pattern is meant to play every bar. Timing: "loose human timing".
-- Attitude: cold ("cold and still, the 808 doing the talking"). Menace without sadness: patient, even, nothing rushed.
-- The mystery ingredient (the lighter click) appears barely there, under the hats, the whole way: it is meant to be barely there and to send the track over the edge once. If Suno makes it constant, lower Style Influence five points; if it is missing, that is acceptable on a first take.
-- No hint on this roll; the hook device ("last note bent up") carries the stickiness. Listen for it on the second pass.
+- Cadence: "cumbia lope". The kick and snare placement was rolled for this take rather than left to the genre default; the same pattern is meant to play every bar. Timing: "drummer a little ahead, bass a little behind".
+- Attitude: cold ("ice calm, the drums doing the threatening"). Menace without sadness: patient, even, nothing rushed.
+- Signature: the empty second bar, in every pass of the loop, the same place each time. It is the defining ingredient of this take: named second in the head and described before the lead. The silence is part of the loop, the same place each time. If Suno fills the gap or leads into what follows with a reversed sound, change the seed first.
+- Hook device: "last note bent up". Listen for it on the second pass.
 - This lane is about the drums: the kick pattern should be clever and off-grid, the mutes real silences. If it comes back as a dance beat, the anchor or a mood word said pop; the guard denies those now, so re-roll.
 - The mutes must be real silences: if Suno smooths over the stop-start cuts, pick the lead_out_middle or bare_minimum layout; sits in the head tags.
 - Plucks and knocks should be dry and close, never shiny; a shiny lead means a bright word got in, re-roll.

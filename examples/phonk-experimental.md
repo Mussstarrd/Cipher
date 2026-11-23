@@ -7,7 +7,7 @@ Lane `phonk-experimental` | 138 BPM (half-time feel) | C# Dorian (i9 - bVImaj7: 
 ## 1. MODEL
 **Pick:** v6
 **Why:** v6 follows the written prompt most closely (Weirdness 40-55, Style Influence 75-85 landed nearest the text in listening tests). Flagship (Pro/Premier). Best prompt adherence and structure-tag following; cleanest, most polished mix. Reported slightly narrower stereo than the previous generation and mixes that can go muffled after ~2:30 in standard mode, so run Max Mode for full-length beats.
-**Wild/experimental variant:** This roll is a good candidate for v6-wild: run the same fields on v6-wild at Weirdness 65-80 and Style Influence 55-70; that is where the strange, great accidents happen. Exploration checkpoint (Pro/Premier). Deliberately drifts from the prompt, more genre-blending and texture, unpredictable length. Defaults Variety to Off. Not the same as high Weirdness.
+**Wild/experimental variant:** Try v6-wild when v6 comes back too tidy or too quantized: run the same fields on v6-wild at Weirdness 65-80 and Style Influence 55-70; that is where the strange, great accidents happen. Exploration checkpoint (Pro/Premier). Deliberately drifts from the prompt, more genre-blending and texture, unpredictable length. Defaults Variety to Off. Not the same as high Weirdness.
 **Free-plan fallback:** v6-mini: Faster, lighter, available on Free. Closer to v6 than to wild, a little flatter with more artifacts. Use for cheap palette tests or if you are on the Free plan.
 
 ## 2. MODE/TOGGLES
@@ -17,24 +17,24 @@ Lane `phonk-experimental` | 138 BPM (half-time feel) | C# Dorian (i9 - bVImaj7: 
 - **Variety:** Off. Any setting above Off rewrites and expands the Style text before the model sees it (official FAQ: 'reduce the Variety slider to 0 to retain full control of your style tags'). Engineered prompts must run at Off.
 - **Persona:** NO. Voices (formerly Personas; Style Personas live inside the Voices menu): In-app text: 'Songs with Voices cannot be instrumental.' Not used in this workflow.
 - **Duration:** Custom 3:20 (estimated 3:08 from the layout at 138 BPM, plus a buffer rounded up to the next 5 s; [End] stops it early, Crop any tail). Never Auto: v6 runs long on Auto.
-- **Song Title:** Stolen Car Horn
+- **Song Title:** Stolen Glass Tone
 
-## 3. STYLE FIELD (695/1000 chars; head tags first, then lead / bass / drums / counter)
+## 3. STYLE FIELD (792/1000 chars; head tags first, then lead / bass / drums / counter)
 ```text
-underground southern hip hop, slowed and dark, cassette hiss, 138 BPM, half-time, in C# Dorian, instrumental, stone-faced and loud, dark, the car horn, stop-start kick pattern, drums tapped out by hand, minimal, long rests, same two bars all song, murky lo-fi mix, the sub kept clean. lead: a sampled car horn tuned to the key, honking the riff in short blasts, gated so each note is short, every hit placed and left there, unhurried. bass: an 808 pitched down until the tail buzzes, sliding. drums: an 808 drum-machine kick, boomy and long, hit a hair late, a cassette-sampled snare with the hiss riding on it, late, wide open, unhurried, mostly air, the beat stays frozen from start to finish.
+underground southern hip hop, 138 BPM, half-time, in C# Dorian, instrumental, the far train as the signature, stone-faced and loud, slow crawl, dark, the glass tone, kicks first half, snares second, two-bar loop, hypnotic, wide open, lots of air, murky lo-fi mix. signature: a train far off, its horn bending down through the key once per phrase, left raw. lead: a glassy ringing tone with a slow waver, each note arriving a little late, pitched down until it sounds heavy. bass: an 808 pitched down until the tail buzzes, sliding. drums: a dead thuddy kick, dry, a cassette-sampled snare with the hiss riding on it, late, kicks only in the first half of the bar, snares only in the second half, wide open, unhurried, mostly air, the drums a machine loop, bar one the same as bar one hundred.
 ```
 
-## 4. LYRICS FIELD (447/5000 chars; section tags only, no words)
+## 4. LYRICS FIELD (504/5000 chars; section tags only, no words)
 ```text
 [Instrumental]
 
-[Loop | 808 drum-machine kick, cassette-sampled snare and 808 in one pattern all song, the car horn on top, wide open, unhurried, mostly air]
+[Loop | dead thuddy kick, cassette-sampled snare and 808 in one pattern all song, the glass tone on top, wide open, unhurried, mostly air, the far train in each bar, the same place each time]
 
-[Loop | identical drums, the car horn an octave lower]
+[Loop | identical drums, the glass tone an octave lower]
 
-[Loop | identical drums, the car horn resting, 808 carrying it, unquantized, snare a hair late]
+[Loop | identical drums, the glass tone resting, 808 carrying it, played by hand against the bass]
 
-[Loop | identical drums, the car horn as at the start, its last note is held a beat longer each time around]
+[Loop | identical drums, the glass tone as at the start, its last note is held a beat longer each time around]
 
 [Loop | identical]
 
@@ -47,26 +47,27 @@ vocals, vocal samples, vocal chops, chopped vocals, pitched vocals, screwed voca
 ```
 
 ## 6. SLIDERS
-- **Weirdness:** 55% — Dark slowed cassette hip hop: the lane's tested range is 55-65; above 60 Suno starts drifting tempo and structure.
-- **Style Influence:** 71% — High so the physical descriptions are followed; 70-80 landed closest to the written prompt.
+- **Weirdness:** 56% — Dark slowed cassette hip hop: the lane's tested range is 55-65; above 60 Suno starts drifting tempo and structure.
+- **Style Influence:** 75% — High so the physical descriptions are followed; 70-80 landed closest to the written prompt.
 - **Audio Influence:** Not used. No audio is uploaded in this workflow, so the slider does not appear; leave it alone.
 - **Variety:** Off (Exact style). Any setting above Off rewrites and expands the Style text before the model sees it (official FAQ: 'reduce the Variety slider to 0 to retain full control of your style tags'). Engineered prompts must run at Off.
 
 ## 7. VARIATIONS
-**A. Safer** (v6, Weirdness 45%, Style Influence 76%; 612 chars). Sound-neutral anchor, no twitch or slur tags, no hint: the plainest reading of the same sounds.
+**A. Safer** (v6, Weirdness 46%, Style Influence 80%; 593 chars). Sound-neutral anchor, no twitch or slur tags, no hint: the plainest reading of the same sounds.
 ```text
-dark slowed hip hop instrumental, cassette grit, distorted 808, 138 BPM, half-time, in C# Dorian, instrumental, stone-faced and loud, dark, the car horn, minimal, long rests, same two bars all song, murky lo-fi mix, the sub kept clean. lead: a sampled car horn tuned to the key, honking the riff in short blasts, gated so each note is short, every hit placed and left there, unhurried. bass: an 808 pitched down until the tail buzzes, sliding. drums: an 808 drum-machine kick, boomy and long, hit a hair late, a cassette-sampled snare with the hiss riding on it, late, the beat stays frozen from start to finish.
+dark slowed hip hop instrumental, cassette grit, distorted 808, 138 BPM, half-time, in C# Dorian, instrumental, stone-faced and loud, dark, the glass tone, two-bar loop, hypnotic, wide open, lots of air, murky lo-fi mix. lead: a glassy ringing tone with a slow waver, each note arriving a little late, pitched down until it sounds heavy, every hit placed and left there, unhurried. bass: an 808 pitched down until the tail buzzes, sliding. drums: a dead thuddy kick, dry, a cassette-sampled snare with the hiss riding on it, late, the drums a machine loop, bar one the same as bar one hundred.
 ```
-**B. Weirder** (v6-wild, Weirdness 79%, Style Influence 57%; 711 chars). One wild tag added; run it on v6-wild.
+**B. Weirder** (v6-wild, Weirdness 80%, Style Influence 69%; 778 chars). One wild tag added; run it on v6-wild.
 ```text
-underground southern hip hop, slowed and dark, cassette hiss, 138 BPM, half-time, in C# Dorian, instrumental, stone-faced and loud, dark, the car horn, stop-start kick pattern, drums tapped out by hand, minimal, long rests, same two bars all song, the loop resampled until it smears, murky lo-fi mix. lead: a sampled car horn tuned to the key, honking the riff in short blasts, gated so each note is short, every hit placed and left there, unhurried. bass: an 808 pitched down until the tail buzzes, sliding. drums: an 808 drum-machine kick, boomy and long, hit a hair late, a cassette-sampled snare with the hiss riding on it, late, wide open, unhurried, mostly air, the beat stays frozen from start to finish.
+underground southern hip hop, slowed and dark, cassette hiss, 138 BPM, half-time, in C# Dorian, instrumental, the far train as the signature, stone-faced and loud, slow crawl, dark, the glass tone, kicks first half, snares second, two-bar loop, hypnotic, wide open, lots of air, 808 blown out and clipped, murky lo-fi mix. signature: a train far off, its horn bending down through the key once per phrase, left raw. lead: a glassy ringing tone with a slow waver, each note arriving a little late, pitched down until it sounds heavy. bass: an 808 pitched down until the tail buzzes, sliding. drums: a dead thuddy kick, dry, a cassette-sampled snare with the hiss riding on it, late, wide open, unhurried, mostly air, the drums a machine loop, bar one the same as bar one hundred.
 ```
 
 ## 8. POST-GEN NOTES
-- Sparse roll: lead, bass, kick, snare and air. The Style field is short on purpose (a long prompt reads as a busy record) and carries no hats, twitch, hint or counter. If Suno adds layers anyway, raise Style Influence five points.
+- Sparse roll: lead, bass, kick, snare and air (plus the signature, if this roll has one). The Style field is short on purpose (a long prompt reads as a busy record) and carries no hats, twitch or counter. If Suno adds layers anyway, raise Style Influence five points.
 - Structure: the layout is "Same drums all song, one melodic voice changes", about 3:08, with the full beat at 0:00. The drums play one pattern from the first second; nothing in this prompt describes a section starting, stopping or returning, because Suno decorates every boundary it is told about. Loop mode: every [Loop] tag says identical on purpose. A reversed kick or a lead-in every four bars is Suno's default drum programming leaking through: change the seed first, then raise Style Influence five points.
+- Cadence: "kicks first half, snares second". The kick and snare placement was rolled for this take rather than left to the genre default; the same pattern is meant to play every bar. Timing: placed square, on purpose.
 - Attitude: cold ("stone-faced and loud"). Menace without sadness: patient, even, nothing rushed.
-- No hint on this roll, and no hook tag either: the space is the hook.
+- Signature: the far train, in each bar, the same place each time. It is the defining ingredient of this take: named second in the head and described before the lead. If it takes over the track, run the safer variation; if it is inaudible, raise Style Influence five points.
 - The genre names are never written: "phonk" and "Memphis" summon chopped vocal samples in Suno, so the lane is described as dark slowed cassette hip hop with cowbell knocks. If gibberish voices still appear, re-roll; the Exclude list carries vocal samples, chopped vocals and screwed vocals.
 - The cowbell must stay a rhythmic knock in the drums, never the melody; the colour line says "never the melody" and "cowbell melody" is in the Exclude list.
 - The 808 should be distorted but readable; if it is a clean sine, the bass line got cut for length, so shorten the counter and re-roll.

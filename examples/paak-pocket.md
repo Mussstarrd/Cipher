@@ -17,26 +17,26 @@ Lane `paak-pocket` | 94 BPM | D Dorian (i7 - IV7 (Dorian): Dm7 - G7) | layout: T
 - **Variety:** Off. Any setting above Off rewrites and expands the Style text before the model sees it (official FAQ: 'reduce the Variety slider to 0 to retain full control of your style tags'). Engineered prompts must run at Off.
 - **Persona:** NO. Voices (formerly Personas; Style Personas live inside the Voices menu): In-app text: 'Songs with Voices cannot be instrumental.' Not used in this workflow.
 - **Duration:** Custom 3:15 (estimated 3:04 from the layout at 94 BPM, plus a buffer rounded up to the next 5 s; [End] stops it early, Crop any tail). Never Auto: v6 runs long on Auto.
-- **Song Title:** Stolen Car Horn
+- **Song Title:** Stolen Glass Tone
 
-## 3. STYLE FIELD (898/1000 chars; head tags first, then lead / bass / drums / counter)
+## 3. STYLE FIELD (893/1000 chars; head tags first, then lead / bass / drums / counter)
 ```text
-dusty soul hip hop, 94 BPM, in D Dorian, instrumental, eyes down, steady hands, sun-soaked, late-night, the car horn, last note bent up, off-grid kick pattern, restless ticking percussion, the pocket slips drunk on beat 3, steady unchanging drums, lead under the snare, dusty warm mix. lead: a sampled car horn tuned to the key, honking the riff in short blasts, gated so each note is short, each phrase ends on a note bent up a half step at the last moment, played by hand, never snapped to the grid. bass: a flatwound bass guitar played with the thumb, dull and thumpy, the same two-bar figure start to finish. drums: a kick a hair behind the bass so the pocket leans back, the hats dead straight, a cross-stick on 2 and 4 the full snare saved for the loud sections, a knuckle knock on a door repeating every 3 16ths against the bar, the drums a machine loop, bar one the same as bar one hundred.
+soul boom bap instrumental, hard snare, drums played by hand, 94 BPM, in D Dorian, instrumental, quiet and sure, nothing to prove, sun-soaked, late-night, the glass tone, last note bent up, off-grid kick pattern, the drum loop never varies, drummer a little ahead, bass a little behind, the pocket slips drunk on beat 3, dusty warm mix. lead: a glassy ringing tone with a slow waver, each note arriving a little late, pitched down until it sounds heavy, played by hand, never snapped to the grid. bass: a flatwound bass guitar played with the thumb, dull and thumpy, the same two-bar figure start to finish. drums: a kick a hair behind the bass so the pocket leans back, the hats dead straight, a cross-stick on 2 and 4 the full snare saved for the loud sections, a knuckle knock on a door repeating every 3 16ths against the bar, the drums a machine loop, bar one the same as bar one hundred.
 ```
 
-## 4. LYRICS FIELD (609/5000 chars; section tags only, no words)
+## 4. LYRICS FIELD (614/5000 chars; section tags only, no words)
 ```text
 [Instrumental]
 
-[Verse | 8 bars, kick, cross-stick and bass from the first second, the car horn three notes only, wide open, unhurried, mostly air]
+[Verse | 8 bars, kick, cross-stick and bass from the first second, the glass tone three notes only, wide open, unhurried, mostly air]
 
-[Hook | same drums, the motif five notes long, the car horn still low, last note bent up]
+[Hook | same drums, the motif five notes long, the glass tone still low, last note bent up]
 
-[Verse | same drums, the motif one note longer, the bass up front, the lead tucked behind it]
+[Verse | same drums, the motif one note longer, the lead answered by a quiet echo of itself]
 
 [Hook | same drums, the whole motif, its last note is held a beat longer each time around]
 
-[Verse | 8 bars, same drums, the car horn three notes only, a knuckle knock on a door repeating every 3 16ths against the bar]
+[Verse | 8 bars, same drums, the glass tone three notes only, a knuckle knock on a door repeating every 3 16ths against the bar]
 
 [Hook | identical, the tiny horn hit answering]
 
@@ -55,19 +55,20 @@ vocals, humming, ad-libs, vocal chops, drum fills, tom fills, snare rolls, hat r
 - **Variety:** Off (Exact style). Any setting above Off rewrites and expands the Style text before the model sees it (official FAQ: 'reduce the Variety slider to 0 to retain full control of your style tags'). Engineered prompts must run at Off.
 
 ## 7. VARIATIONS
-**A. Safer** (v6, Weirdness 40%, Style Influence 81%; 887 chars). Sound-neutral anchor, no twitch or slur tags, no hint: the plainest reading of the same sounds.
+**A. Safer** (v6, Weirdness 40%, Style Influence 81%; 892 chars). Sound-neutral anchor, no twitch or slur tags, no hint: the plainest reading of the same sounds.
 ```text
-soul boom bap instrumental, 94 BPM, in D Dorian, instrumental, eyes down, steady hands, sun-soaked, late-night, the car horn, steady unchanging drums, lead under the snare, dusty warm mix, the snare on top. lead: a sampled car horn tuned to the key, honking the riff in short blasts, gated so each note is short, each phrase ends on a note bent up a half step at the last moment, played by hand, never snapped to the grid. bass: a flatwound bass guitar played with the thumb, dull and thumpy, the same two-bar figure start to finish. drums: a kick a hair behind the bass so the pocket leans back, the hats dead straight, a cross-stick on 2 and 4 the full snare saved for the loud sections, a ride cymbal bell ticking uneven 8ths, a knuckle knock on a door repeating every 3 16ths against the bar, between the kick and snare, the drums a machine loop, bar one the same as bar one hundred.
+soul boom bap instrumental, 94 BPM, in D Dorian, instrumental, quiet and sure, nothing to prove, sun-soaked, late-night, the glass tone, the drum loop never varies, dusty warm mix. lead: a glassy ringing tone with a slow waver, each note arriving a little late, pitched down until it sounds heavy, each phrase ends on a note bent up a half step at the last moment, played by hand, never snapped to the grid. bass: a flatwound bass guitar played with the thumb, dull and thumpy, the same two-bar figure start to finish, a clean round body. drums: a kick a hair behind the bass so the pocket leans back, the hats dead straight, a cross-stick on 2 and 4 the full snare saved for the loud sections, a ride cymbal bell ticking uneven 8ths, a knuckle knock on a door repeating every 3 16ths against the bar, between the kick and snare, the drums a machine loop, bar one the same as bar one hundred.
 ```
-**B. Weirder** (v6-wild, Weirdness 69%, Style Influence 70%; 883 chars). One wild tag added; run it on v6-wild.
+**B. Weirder** (v6-wild, Weirdness 69%, Style Influence 70%; 893 chars). One wild tag added; run it on v6-wild.
 ```text
-dusty soul hip hop, 94 BPM, in D Dorian, instrumental, eyes down, steady hands, sun-soaked, late-night, the car horn, last note bent up, off-grid kick pattern, restless ticking percussion, the pocket slips drunk on beat 3, steady unchanging drums, lead under the snare, sliced sample stabs off the grid, dusty warm mix, the snare on top. lead: a sampled car horn tuned to the key, honking the riff in short blasts, gated so each note is short, played by hand, never snapped to the grid. bass: a flatwound bass guitar played with the thumb, dull and thumpy, the same two-bar figure start to finish. drums: a kick a hair behind the bass so the pocket leans back, the hats dead straight, a cross-stick on 2 and 4 the full snare saved for the loud sections, a knuckle knock on a door repeating every 3 16ths against the bar, the drums a machine loop, bar one the same as bar one hundred.
+soul boom bap instrumental, 94 BPM, in D Dorian, instrumental, quiet and sure, nothing to prove, sun-soaked, late-night, the glass tone, last note bent up, off-grid kick pattern, the drum loop never varies, drummer a little ahead, bass a little behind, the pocket slips drunk on beat 3, sliced sample stabs off the grid, dusty warm mix. lead: a glassy ringing tone with a slow waver, each note arriving a little late, pitched down until it sounds heavy, played by hand, never snapped to the grid. bass: a flatwound bass guitar played with the thumb, dull and thumpy, the same two-bar figure start to finish. drums: a kick a hair behind the bass so the pocket leans back, the hats dead straight, a cross-stick on 2 and 4 the full snare saved for the loud sections, a knuckle knock on a door repeating every 3 16ths against the bar, the drums a machine loop, bar one the same as bar one hundred.
 ```
 
 ## 8. POST-GEN NOTES
 - Structure: the layout is "The motif grows a note at a time over the same drums", about 3:04, with the full beat at 0:20. The drums play one pattern from the first second; nothing in this prompt describes a section starting, stopping or returning, because Suno decorates every boundary it is told about. The verses and hooks differ only in what the melodic sounds do. A reversed kick or a lead-in every four bars is Suno's default drum programming leaking through: change the seed first, then raise Style Influence five points.
-- Attitude: low ("eyes down, steady hands"). Reflective and inward; the slur and the late snare are allowed here.
-- No hint on this roll; the hook device ("last note bent up") carries the stickiness. Listen for it on the second pass.
+- Attitude: low ("quiet and sure, nothing to prove"). Reflective and inward; the slur and the late snare are allowed here.
+- No signature on this roll.
+- Hook device: "last note bent up". Listen for it on the second pass.
 - The chop should sound like a pitched-up sample (chirping horns and keys, hiss rising with it), the snare hard and late. If it comes back as a jazz or funk band, a word slipped through: the guard now denies funk, jazz, neo-soul and extended-chord words in this lane.
 - The kick and snare should sit behind the grid and crack; if the drums sound programmed or soft, re-roll.
 - Bass should be a bass guitar, not a sub; "808" and "drum machine" are in the Exclude list for this reason.

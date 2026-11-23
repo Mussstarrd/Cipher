@@ -34,7 +34,8 @@ test('every grammar, lane and layout string passes the guard', () => {
   walk(G, 'grammar', null, null);
   for (const [id, l] of Object.entries(LANES)) walk({ anchors: l.anchors, neutralAnchor: l.neutralAnchor, FAMILIES: l.FAMILIES, bass: l.bass, bassPattern: l.bassPattern, drums: l.drums, color: l.color, mixTag: l.mixTag, neutralMixTag: l.neutralMixTag }, `lanes.${id}`, l.allow, l.deny);
   walk(LAYOUTS.map((l) => l.sections), 'layouts', null, null);
-  walk(HINTS, 'hints', null, null);
+  for (const [id, F] of Object.entries(HINTS.HINT_FAMILIES)) walk({ frame: F.frame, sources: F.sources, character: F.character, roles: F.roles }, `hints.${id}`, F.allow || null, null);
+  walk(HINTS.HOOK_DEVICES, 'hints.HOOK_DEVICES', null, null);
 });
 
 test('the guard catches the known drift words and names', () => {
@@ -147,12 +148,12 @@ test('lane identity after the listening pass: no funk/jazz in the soul lane, no 
     const any = generate({ lane: 'any', seed });
     assert.ok(any.meta.mode !== 'straight' ? !any.parts.antiTag : any.style.slice(0, 420).includes(any.parts.antiTag), `steady-drums tag missing from head: ${any.style}`);
     if (any.meta.density === 'full') assert.ok(any.style.includes(any.parts.drums.twitch.sound) || any.style.length >= 900, `twitch clause missing: ${any.style}`);
-    if (any.meta.density === 'sparse') assert.ok(any.style.length <= 820 && !/hint:|counter:/.test(any.style) && any.style.includes(any.parts.space), `sparse roll is not sparse: ${any.style}`);
+    if (any.meta.density === 'sparse') assert.ok(any.style.length <= 900 && !/counter:/.test(any.style) && any.style.includes(any.parts.space), `sparse roll is not sparse: ${any.style}`);
     assert.ok(/tape stop/.test(any.exclude) && /crash cymbals/.test(any.exclude), any.exclude);
   }
   assert.ok(chip > 90, `chipmunk chops in soul lane: ${chip}/400`);
   const bare = generate({ lane: 'jid-dark', seed: 5, minimal: true });
-  assert.ok(bare.meta.bare && !/counter:|hint:/.test(bare.style) && /bare minimum, nothing else/.test(bare.style) && /\[Loop \|/.test(bare.lyrics), bare.style);
+  assert.ok(bare.meta.bare && !/counter:/.test(bare.style) && /bare minimum, nothing else/.test(bare.style) && /\[Loop \|/.test(bare.lyrics), bare.style);
   assert.ok(checkBlock(bare).ok);
 });
 
@@ -165,19 +166,24 @@ test('phrase variety: no single kick, snare or hats phrase dominates a lane', ()
 });
 
 test('hints: present on roughly half of rolls, every family appears, handle reaches head, style and lyrics; hook device in the lead line', () => {
-  const fams = {}; let withHint = 0, N = 0;
+  const fams = {}; let withHint = 0, N = 0, vocal = 0;
   for (const lane of LANE_IDS) for (const seed of SEEDS.slice(0, 300)) {
     const b = generate({ lane, seed }); N++;
     assert.ok(b.meta.density === 'sparse' || b.style.slice(0, 420).includes(b.parts.lead.hookTag), `${lane}/${seed}: hook tag missing from head`);
     if (!b.parts.hint) continue;
     withHint++; fams[b.parts.hint.family] = (fams[b.parts.hint.family] || 0) + 1;
     assert.ok(b.style.slice(0, 480).includes(b.parts.hint.handle), `${lane}/${seed}: hint handle not in head: ${b.style}`);
-    assert.ok(b.style.includes('hint:'), `${lane}/${seed}: hint line lost`);
+    assert.ok(b.style.includes('signature:') && b.style.indexOf('signature:') < b.style.indexOf('lead:'), `${lane}/${seed}: the signature line must come before the lead`);
+    assert.ok(b.style.slice(0, 260).includes(`${b.parts.hint.handle} as the signature`), `${lane}/${seed}: signature tag must sit near the front of the head: ${b.style.slice(0, 300)}`);
+    if (b.parts.hint.vocal) { assert.ok(/^lead vocals, rapping, singing, lyrics/.test(b.exclude), b.exclude); assert.ok(!/(^|, )vocals(,|$)/.test(b.exclude), b.exclude); vocal++; }
+    else assert.ok(/(^|, )vocals(,|$)/.test(b.exclude) && /humming/.test(b.exclude), b.exclude);
     assert.ok(b.lyrics.includes(b.parts.hint.handle), `${lane}/${seed}: hint handle not in lyrics:\n${b.lyrics}`);
     assert.ok(checkBlock(b).ok);
   }
-  assert.ok(withHint > N * 0.25 && withHint < N * 0.45, `${withHint}/${N} rolls carry a hint`);
+  assert.ok(withHint > N * 0.8, `${withHint}/${N} rolls carry a signature`);
+  assert.ok(vocal > N * 0.1 && vocal < N * 0.35, `${vocal}/${N} rolls carry a vocal signature`);
   for (const f of Object.keys(HINTS.HINT_FAMILIES)) assert.ok(fams[f] > 10, `${f}: ${fams[f] || 0}`);
+  const top = Math.max(...Object.values(fams)); assert.ok(top < withHint * 0.2, `one signature family dominates: ${JSON.stringify(fams)}`);
   const forced = generate({ lane: 'paak-pocket', seed: 3, hint: 'machineglitch' });
   assert.strictEqual(forced.parts.hint.family, 'machineglitch');
   assert.strictEqual(generate({ lane: 'paak-pocket', seed: 3, hint: 'none' }).parts.hint, null);
@@ -195,7 +201,7 @@ test('mystery ingredients: a sprinkle on about a third of rolls, placed in one s
     const hits = b.lyrics.split('\n').filter((l) => l.includes(b.parts.sprinkle.handle)).length;
     assert.strictEqual(hits, 1, `${lane}/${seed}: sprinkle should sit in exactly one section, found ${hits}\n${b.lyrics}`);
   }
-  assert.ok(sprinkled > N * 0.12 && sprinkled < N * 0.3, `${sprinkled}/${N} rolls carry a sprinkle`);
+  assert.ok(sprinkled > N * 0.04 && sprinkled < N * 0.16, `${sprinkled}/${N} rolls carry a sprinkle`);
   assert.ok(Object.keys(fams).length >= 4, JSON.stringify(fams));
   assert.ok(heads.anchor > N * 0.4 && heads.leadfirst > N * 0.15 && heads.drumsfirst > N * 0.06, JSON.stringify(heads));
   const forced = generate({ lane: 'jid-dark', seed: 4, sprinkle: true }); assert.ok(forced.parts.sprinkle);
@@ -226,7 +232,7 @@ test('self-audit: sparse rolls are sparse, no roll names a boundary, the identit
   const S = A.survival;
   assert.strictEqual(A.boundary, 0, 'a roll carried a lead-in, boundary or DJ-effect word');
   assert.ok(A.density.sparse >= 0.33 && A.density.sparse <= 0.55, `sparse share ${A.density.sparse}`);
-  assert.ok(A.medianStyle.sparse <= 730 && A.medianStyle.mid <= 905, JSON.stringify(A.medianStyle));
+  assert.ok(A.medianStyle.sparse <= 810 && A.medianStyle.mid <= 905, JSON.stringify(A.medianStyle));
   assert.strictEqual(S['sparse: space phrase'], 1, 'every sparse roll says its empty space');
   assert.strictEqual(S['sparse: no hats, hint, counter or twitch'], 1, 'a sparse roll carried extra elements');
   assert.strictEqual(S['hook tag in head'], 1, 'the hook tag is always in the head of a non-sparse roll');

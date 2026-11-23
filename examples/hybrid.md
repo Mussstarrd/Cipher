@@ -7,7 +7,7 @@ Lane `hybrid` | 142 BPM (half-time feel) | F minor (i (pedal): Fm) | layout: A s
 ## 1. MODEL
 **Pick:** v6
 **Why:** v6 follows the written prompt most closely (Weirdness 40-55, Style Influence 75-85 landed nearest the text in listening tests). Flagship (Pro/Premier). Best prompt adherence and structure-tag following; cleanest, most polished mix. Reported slightly narrower stereo than the previous generation and mixes that can go muffled after ~2:30 in standard mode, so run Max Mode for full-length beats.
-**Wild/experimental variant:** This roll is a good candidate for v6-wild: run the same fields on v6-wild at Weirdness 65-80 and Style Influence 55-70; that is where the strange, great accidents happen. Exploration checkpoint (Pro/Premier). Deliberately drifts from the prompt, more genre-blending and texture, unpredictable length. Defaults Variety to Off. Not the same as high Weirdness.
+**Wild/experimental variant:** Try v6-wild when v6 comes back too tidy or too quantized: run the same fields on v6-wild at Weirdness 65-80 and Style Influence 55-70; that is where the strange, great accidents happen. Exploration checkpoint (Pro/Premier). Deliberately drifts from the prompt, more genre-blending and texture, unpredictable length. Defaults Variety to Off. Not the same as high Weirdness.
 **Free-plan fallback:** v6-mini: Faster, lighter, available on Free. Closer to v6 than to wild, a little flatter with more artifacts. Use for cheap palette tests or if you are on the Free plan.
 
 ## 2. MODE/TOGGLES
@@ -17,30 +17,30 @@ Lane `hybrid` | 142 BPM (half-time feel) | F minor (i (pedal): Fm) | layout: A s
 - **Variety:** Off. Any setting above Off rewrites and expands the Style text before the model sees it (official FAQ: 'reduce the Variety slider to 0 to retain full control of your style tags'). Engineered prompts must run at Off.
 - **Persona:** NO. Voices (formerly Personas; Style Personas live inside the Voices menu): In-app text: 'Songs with Voices cannot be instrumental.' Not used in this workflow.
 - **Duration:** Custom 3:25 (estimated 3:13 from the layout at 142 BPM, plus a buffer rounded up to the next 5 s; [End] stops it early, Crop any tail). Never Auto: v6 runs long on Auto.
-- **Song Title:** Stolen Car Horn
+- **Song Title:** Stolen Glass Tone
 
-## 3. STYLE FIELD (998/1000 chars; head tags first, then lead / bass / drums / counter)
+## 3. STYLE FIELD (986/1000 chars; head tags first, then lead / bass / drums / counter)
 ```text
-a sampled car horn tuned to the key over short thuddy kick and dry 808 snare, 142 BPM, half-time, in F minor, skeletal hybrid hip hop, instrumental, ice calm, the drums doing the threatening, sunny and dark at once, the car horn, last note bent up, kick shadows the lead, wobbly human pocket, twitchy off-grid clicks, the pocket slips drunk on beat 3, beat flips at the midpoint, lead parked in the low mids, bright plucks on top, the bicycle wheel once only, loud dry master, cassette drums. lead: a sampled car horn tuned to the key, honking the riff in short blasts, gated so each note is short. bass: a fretless-style bass guitar over a clean sine sub. drums: a short thuddy kick tuned low, a dry 808 snare with the noise cranked, late, the kick copies the rhythm of the lead note for note, the snare keeping time by itself, a tambourine smacked on 2 and 4, a typewriter key strike in a burst that slows down as it decays, the drums hold one pattern, then hold another, and that is all they do.
+hybrid hip hop, 142 BPM, half-time, in F minor, instrumental, the empty second bar as the signature, ice calm, the drums doing the threatening, slow, wide, patient, sunny and dark at once, the glass tone, last note bent up, cumbia lope, second half double-time, drummer a little ahead, bass a little behind, bright plucks on top, loud dry master. signature: the lead and the bass both rest for the whole second bar of the loop, the drums carrying that bar by themselves, each time around. lead: a glassy ringing tone with a slow waver, each note arriving a little late, pitched down until it sounds heavy. bass: a bass guitar played with the thumb, a blown-out 808 under it on the one. drums: a kick that waits for the bass and lands a hair after it, a fat live snare tuned low, hit off-center, a hair late, a cumbia lope, a scraper and a kick trading off-beats, an 808 cowbell knocking a two-note pattern between the kicks, never the melody, each half of the song one frozen drum loop.
 ```
 
-## 4. LYRICS FIELD (750/5000 chars; section tags only, no words)
+## 4. LYRICS FIELD (719/5000 chars; section tags only, no words)
 ```text
 [Instrumental]
 
-[Hook | the whole beat from the first second, the car horn up front, the lead more clipped, last note bent up]
+[Hook | the whole beat from the first second, the glass tone up front, the lead more clipped, last note bent up]
 
-[Verse | same drums, the car horn half as many notes, the snare drier and closer]
+[Verse | same drums, the glass tone half as many notes, the bass up front, the lead tucked behind it]
 
 [Hook | identical to the first hook, the harmonic hook answering]
 
-[Verse | same drums, a typewriter key strike in a burst that slows down as it decays]
+[Verse | same drums, a dry stick click ratcheting faster across one beat, in the hole after the snare, the empty second bar in every pass of the loop, the same place each time]
 
-[Beat Switch | the kick pattern flips to the off-beats, the lead an octave lower]
+[Beat Switch | double-time drums, hats double, kick pattern doubles]
 
-[Hook | off-beat kicks, lower lead, its last note is held a beat longer each time around]
+[Hook | double-time, hats doubled, its last note is held a beat longer each time around]
 
-[Hook | off-beat kicks, lower lead, identical, the harmonic hook answering, the bicycle wheel barely there, under the hats, the whole way, a bicycle wheel ticking as it spins down, slowing across the bar]
+[Hook | double-time, hats doubled, identical, the harmonic hook answering]
 
 [End]
 ```
@@ -51,27 +51,27 @@ vocals, humming, ad-libs, vocal chops, drum fills, tom fills, snare rolls, hat r
 ```
 
 ## 6. SLIDERS
-- **Weirdness:** 65% — Cassette drums + soul pocket + dry bounce: the lane's tested range is 55-65; above 60 Suno starts drifting tempo and structure.
-- **Style Influence:** 79% — High so the physical descriptions are followed; 70-80 landed closest to the written prompt.
+- **Weirdness:** 55% — Cassette drums + soul pocket + dry bounce: the lane's tested range is 55-65; above 60 Suno starts drifting tempo and structure.
+- **Style Influence:** 80% — High so the physical descriptions are followed; 70-80 landed closest to the written prompt.
 - **Audio Influence:** Not used. No audio is uploaded in this workflow, so the slider does not appear; leave it alone.
 - **Variety:** Off (Exact style). Any setting above Off rewrites and expands the Style text before the model sees it (official FAQ: 'reduce the Variety slider to 0 to retain full control of your style tags'). Engineered prompts must run at Off.
 
 ## 7. VARIATIONS
-**A. Safer** (v6, Weirdness 55%, Style Influence 84%; 980 chars). Sound-neutral anchor, no twitch or slur tags, no hint: the plainest reading of the same sounds.
+**A. Safer** (v6, Weirdness 45%, Style Influence 85%; 997 chars). Sound-neutral anchor, no twitch or slur tags, no hint: the plainest reading of the same sounds.
 ```text
-hybrid hip hop instrumental, cassette drums, live pocket, 142 BPM, half-time, in F minor, instrumental, ice calm, the drums doing the threatening, sunny and dark at once, the car horn, beat flips at the midpoint, lead parked in the low mids, bright plucks on top, loud dry master, cassette drums. lead: a sampled car horn tuned to the key, honking the riff in short blasts, gated so each note is short, each phrase ends on a note bent up a half step at the last moment, every hit placed and left there, unhurried. bass: a fretless-style bass guitar over a clean sine sub, landing a hair behind the kick. drums: a short thuddy kick tuned low, a dry 808 snare with the noise cranked, late, 808 hats in 8ths that drag further behind the kick every bar, then reset, a tambourine smacked on 2 and 4, never quite even, a typewriter key strike in a burst that slows down as it decays, halfway between beats 2 and 3, the drums hold one pattern, then hold another, and that is all they do.
+hybrid hip hop instrumental, cassette drums, live pocket, 142 BPM, half-time, in F minor, instrumental, ice calm, the drums doing the threatening, sunny and dark at once, the glass tone, second half double-time, bright plucks on top, loud dry master. lead: a glassy ringing tone with a slow waver, each note arriving a little late, pitched down until it sounds heavy, each phrase ends on a note bent up a half step at the last moment, every hit placed and left there, unhurried, playing a two-note motif bouncing a tritone. bass: a bass guitar played with the thumb, a blown-out 808 under it on the one, following the kick exactly. drums: a kick that waits for the bass and lands a hair after it, a fat live snare tuned low, hit off-center, a hair late, hats in triplets that slur on beat 3, an 808 cowbell knocking a two-note pattern between the kicks, never the melody, a dry stick click ratcheting faster across one beat, in the hole after the snare, each half of the song one frozen drum loop.
 ```
-**B. Weirder** (v6-wild, Weirdness 74%, Style Influence 69%; 997 chars). One wild tag added; run it on v6-wild.
+**B. Weirder** (v6-wild, Weirdness 68%, Style Influence 64%; 995 chars). One wild tag added; run it on v6-wild.
 ```text
-a sampled car horn tuned to the key over short thuddy kick and dry 808 snare, 142 BPM, half-time, in F minor, skeletal hybrid hip hop, instrumental, ice calm, the drums doing the threatening, sunny and dark at once, the car horn, last note bent up, kick shadows the lead, wobbly human pocket, twitchy off-grid clicks, the pocket slips drunk on beat 3, beat flips at the midpoint, lead parked in the low mids, bright plucks on top, the loop resampled until it smears, the bicycle wheel once only, loud dry master, cassette drums. lead: a sampled car horn tuned to the key, honking the riff in short blasts, gated so each note is short. bass: a fretless-style bass guitar over a clean sine sub. drums: a short thuddy kick tuned low, a dry 808 snare with the noise cranked, late, the kick copies the rhythm of the lead note for note, the snare keeping time by itself, 808 hats, a tambourine smacked on 2 and 4, never quite even, the drums hold one pattern, then hold another, and that is all they do.
+hybrid hip hop, 142 BPM, half-time, in F minor, instrumental, the empty second bar as the signature, ice calm, the drums doing the threatening, slow, wide, patient, sunny and dark at once, the glass tone, last note bent up, cumbia lope, second half double-time, drummer a little ahead, bass a little behind, bright plucks on top, the loop resampled until it smears, loud dry master. signature: the lead and the bass both rest for the whole second bar of the loop, the drums carrying that bar by themselves, each time around. lead: a glassy ringing tone with a slow waver, each note arriving a little late, pitched down until it sounds heavy. bass: a bass guitar played with the thumb, a blown-out 808 under it on the one, following the kick exactly. drums: a kick that waits for the bass and lands a hair after it, a fat live snare tuned low, hit off-center, a hair late, an 808 cowbell knocking a two-note pattern between the kicks, never the melody, each half of the song one frozen drum loop.
 ```
 
 ## 8. POST-GEN NOTES
-- Structure: the layout is "A second pattern for the last third", about 3:13, with the full beat at 0:00. The drums play one pattern from the first second; nothing in this prompt describes a section starting, stopping or returning, because Suno decorates every boundary it is told about. This roll has two drum patterns ("beat flips at the midpoint"); the second pattern's words repeat in every section after the switch so Suno cannot undo it. A reversed kick or a lead-in every four bars is Suno's default drum programming leaking through: change the seed first, then raise Style Influence five points.
-- Cadence: "kick shadows the lead". The kick and snare placement was rolled for this take rather than left to the genre default; the same pattern is meant to play every bar. Timing: "wobbly human pocket".
+- Structure: the layout is "A second pattern for the last third", about 3:13, with the full beat at 0:00. The drums play one pattern from the first second; nothing in this prompt describes a section starting, stopping or returning, because Suno decorates every boundary it is told about. This roll has two drum patterns ("second half double-time"); the second pattern's words repeat in every section after the switch so Suno cannot undo it. A reversed kick or a lead-in every four bars is Suno's default drum programming leaking through: change the seed first, then raise Style Influence five points.
+- Cadence: "cumbia lope". The kick and snare placement was rolled for this take rather than left to the genre default; the same pattern is meant to play every bar. Timing: "drummer a little ahead, bass a little behind".
 - Attitude: cold ("ice calm, the drums doing the threatening"). Menace without sadness: patient, even, nothing rushed.
-- The mystery ingredient (the bicycle wheel) appears barely there, under the hats, the whole way: it is meant to be barely there and to send the track over the edge once. If Suno makes it constant, lower Style Influence five points; if it is missing, that is acceptable on a first take.
-- No hint on this roll; the hook device ("last note bent up") carries the stickiness. Listen for it on the second pass.
+- Signature: the empty second bar, in every pass of the loop, the same place each time. It is the defining ingredient of this take: named second in the head and described before the lead. The silence is part of the loop, the same place each time. If Suno fills the gap or leads into what follows with a reversed sound, change the seed first.
+- Hook device: "last note bent up". Listen for it on the second pass.
 - All three elements must coexist: cassette cowbell drums, a live tine-and-bass pocket, bright plucks. If one is missing, the line that carried it got cut; shorten the counter and re-roll.
 - The drums should drag behind the grid; the kit descriptions say "late" and "dragging" and the slur tag sits in the head.
 - Plucks should stay dry and on top of a murky drum bed; the mix tag keeps the top end clear for this reason.

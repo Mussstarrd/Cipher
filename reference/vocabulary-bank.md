@@ -385,6 +385,37 @@ Landings:
 
 ## Guest families (experimental palette any lane may borrow for the lead)
 
+**tone** (a sound with a pitch, played as the melody over hard drums)
+
+Sources (description | handle):
+- a thin wiry tone that scrapes and bends between notes, like a wire pulled tight | the wiry tone
+- a glassy ringing tone with a slow waver, each note arriving a little late | the glass tone
+- a hollow knocking tone tuned to notes, more wood than pitch | the hollow knock
+- a nasal buzzing drone that steps between two pitches | the buzzing drone
+- a breathy airy tone, half note and half hiss, sliding into pitch | the airy tone
+- a rubbery low boing that bounces down a step on each hit | the boing
+- a metallic scrape tuned to the key, long and rusty | the rusty scrape
+- a soft muffled thud with a pitch, like notes played through a wall | the wall tone
+- a high thin squeal that bends down like a kettle cooling | the kettle squeal
+- a long scraped string-like tone, grainy, the pitch leaning sharp | the scraped tone
+- a plucked string-like twang that goes sour as it rings | the sour twang
+- a choked brassy blurt, more bark than note | the brass bark
+- a watery warbling tone, the pitch wavering like a reflection | the water tone
+- a crackling electric tone that spits at the start of each note | the spitting tone
+- a bell-like ping with almost nothing under it, just the ring | the ghost ping
+- a deep groaning tone that rises a half step and gives up | the groan
+- a papery rattling tone, each note a small shake | the paper rattle
+- a dull clanking tone like a chain on a pipe, tuned to three notes | the chain clank
+
+Processing characters:
+- dry and close, nothing softening it
+- run through a small cracked speaker
+- pitched down until it sounds heavy
+- doubled a few cents apart so it beats against itself
+- gated so each note is short
+- left raw and loud
+- a short dark echo on each note
+
 **world** (sampled and tuned over hard drums)
 
 Sources (description | handle):
@@ -714,6 +745,146 @@ Roles:
 - once in the whole song, in the last verse
 - twice only
 
+**silence** (a hole cut in the loop)
+
+Sources (description | handle):
+- a hole in the loop: on beat 3 of its second bar every sound mutes at once, a full beat of nothing, each time around | the one-beat hole
+- the lead and the bass both rest for the whole second bar of the loop, the drums carrying that bar by themselves, each time around | the empty second bar
+- half a beat of pure silence right after the snare on 3, the whole mix muted, then everything carries on | the gap after the snare
+- the whole mix ducks to nothing for the length of one 8th note in the middle of each bar, like a blink | the blink
+- the kick lands and everything else holds its breath for two beats: kick, air, then the rest | the held breath
+- two beats of nothing in the middle of the second bar, even the bass tail muted, each time around | the two-beat hole
+
+Processing characters:
+- the silence completely dry, every tail gated
+- the room tone left audible in the gap
+- the gap exact and identical each time
+
+Roles:
+- in every pass of the loop, the same place each time
+- all song, never moved
+
+**glitchjam** (a fault in the file, left in on purpose)
+
+Sources (description | handle):
+- the lead jams on one note for a single beat, buzzing like a frozen machine, then carries on as if fine | the jammed note
+- a burst of digital crackle swallowing the lead for half a beat in the middle of the bar | the crackle burst
+- one note of the lead played at half sample rate, gritty and wrong, the same note each time | the crushed note
+- the lead jumps up a whole step for a single beat and falls straight after, like a wrong button pressed | the wrong button
+- a bit-mangled copy of the lead a 16th behind it, flickering in and out | the flickering copy
+- the bass note splits into a metallic ring-modulated clang on beat 3 | the clang
+- a dead-channel buzz gated into three short bursts in the middle of the bar | the buzz bursts
+
+Processing characters:
+- harsh and digital
+- identical each time, like a fault in the file
+- louder than it should be
+
+Roles:
+- once per bar, the same place each time
+- in the middle of the bar, each time around
+- answering the snare
+
+**soulshout** (one sampled shout used as an instrument)
+
+Sources (description | handle):
+- a raw wordless soul shout sampled off an old 45, one holler, pitched up a step and thrown in dry | the soul holler
+- a gritty sampled grunt from a soul stage, short as a snare, layered on the snare itself | the grunt on the snare
+- a sampled soul scream, one second long, dusty, band-passed like a small radio | the radio scream
+- a wordless hey from a room of people, sampled as a one-shot and played like a drum | the hey hit
+- a soul ad-lib sample, one rising wail with the band still faint behind it, pitched up until it chirps | the chirped wail
+- a preacher-style holler sampled as a one-shot, hoarse and huge, the room ringing after it | the hoarse holler
+- a boom-bap ad-lib, one shouted syllable off an old tape, pitched down and heavy, hit like a kick | the heavy shout
+
+Processing characters:
+- dusty, the hiss of the old tape on it
+- pitched up until it sounds urgent
+- dry and close, hard-clipped
+- the same one-shot each time, a single sound and never a phrase
+
+Roles:
+- once per bar on beat 3
+- answering the lead once per phrase
+- on the snare, twice per bar
+- in the gaps the lead leaves
+
+**warbledhum** (a wordless hum on bad tape)
+
+Sources (description | handle):
+- a low wordless hum on warped tape, the pitch wavering, sitting under the beat like a second bassline | the warped hum
+- a single hummed note looped and slowed until it wavers, close and private | the looped hum
+- two hummed notes a fifth apart, sampled once and played from a keyboard, each one leaning flat | the two-note hum
+- a closed-mouth hum pitched down an octave, more chest than note, wavering by hand | the chest hum
+- a hummed three-note figure sampled once and replayed, the warble identical each time | the hummed figure
+
+Processing characters:
+- warbling like a tape left in the sun
+- wordless, a tone and never a phrase
+- low in the mix, felt more than heard
+- the same loop each time
+
+Roles:
+- all the way through, under everything
+- under the lead, one long note per bar
+- in the gaps the lead leaves
+
+**bodyperc** (people in a room instead of a drum kit)
+
+Sources (description | handle):
+- a room of people stomping on a wooden floor on 1 and 3, loose and heavy | the floor stomps
+- handclaps from five people, never quite together, on 2 and 4 | the ragged claps
+- a slapped chest and a finger snap trading hits like a kick and a snare | the chest slap
+- a tongue click and a lip pop sampled as hi-hats, dry and close | the mouth clicks
+- a sharp breath in, sampled as a one-shot and used like an open hat | the breath hit
+- knuckles on a table doubling the kick, the wood louder than the drum | the table knuckles
+
+Processing characters:
+- in a small room, the walls close
+- loose, each hit a different person
+- dry and close
+
+Roles:
+- all the way through, in place of the hats
+- on 2 and 4, each bar the same
+- doubling the kick
+
+**roomtone** (a sound from the room used as an instrument)
+
+Sources (description | handle):
+- a phone ringing in another room, tuned to the key, two rings per bar | the ringing phone
+- rain on a tin roof under everything, loud as an instrument | the tin-roof rain
+- a ticking clock keeping the time where hats would be | the clock tick
+- a refrigerator drone tuned to the root, constant and plain | the fridge drone
+- a box fan on its low setting, a steady blur of air behind the beat | the box fan
+- a dog barking two streets away, the same two barks looped as percussion | the far dog
+- a train far off, its horn bending down through the key once per phrase | the far train
+
+Processing characters:
+- taped on a phone, small and real
+- far behind the drums
+- left raw
+
+Roles:
+- all the way through, under everything
+- in each bar, the same place each time
+
+**offworld** (the whole mix bent one way)
+
+Sources (description | handle):
+- the whole beat heard through a wall, as if it plays in the next room, the lows huge and the highs gone | the next-room mix
+- everything tuned a quarter-tone flat against the bass, sour on purpose | the sour tuning
+- the whole mix in one speaker, mono and narrow, like a small radio in a kitchen | the kitchen radio
+- the lead only in the left ear and its echo only in the right, the middle left empty for the drums | the split ears
+- the whole beat taped off a phone speaker and played again, crunchy and small, the bass added clean under it | the phone-speaker mix
+- the tempo held a hair under where it wants to be, each hit landing heavy | the held-down tempo
+
+Processing characters:
+- all song, the same from the first second
+- committed, with nothing clean left in the mix
+
+Roles:
+- all song, start to finish
+
 ## Hook devices (one in every lead line; from earworm research, see research/06-addictive-sound-theory.md)
 
 - three notes and a rest, the rest being the part that sticks|three notes and a rest
@@ -778,9 +949,9 @@ Clever, tight, syncopated drums with stop-start cuts, dry plucks and knocks, not
 
 **Mix tag:** crisp dry mix, tight low end, nothing padded (neutral: crisp dry mix, tight low end)
 
-**Tempo:** 138-148 or 96-106 BPM (half-time above 120). Major share 0.15, soul/Dorian loops 0, slur tag 0.5, low lead 0.5. Modes straight 50, loop 30, switch 20. Sliders Weirdness 48-60, Style Influence 75-85.
+**Tempo:** 138-148 or 96-106 or 108-116 or 124-134 or 150-160 BPM (half-time above 120). Major share 0.15, soul/Dorian loops 0, slur tag 0.5, low lead 0.5. Modes straight 50, loop 30, switch 20. Sliders Weirdness 48-60, Style Influence 75-85.
 
-**Families** (weights pluck 5, bell 3, synth 1, found 1; guest share 0.3)
+**Families** (weights pluck 5, bell 3, synth 1, found 1; guest share 0.45)
 
 **pluck** (over tight syncopated drums, dry and close)
 
@@ -904,9 +1075,9 @@ Soul-sample chops (pitched up until they chirp, or left warm) over a hard boom-b
 
 **Mix tag:** dusty warm mix, the snare on top, the kick and bass as one sound (neutral: dusty warm mix, the snare on top)
 
-**Tempo:** 86-98 or 98-106 BPM (half-time above 999). Major share 0.25, soul/Dorian loops 0.35, slur tag 0.6, low lead 0.5. Modes straight 55, loop 30, switch 15. Sliders Weirdness 48-60, Style Influence 75-85.
+**Tempo:** 86-98 or 98-106 or 76-86 or 106-114 BPM (half-time above 999). Major share 0.25, soul/Dorian loops 0.35, slur tag 0.6, low lead 0.5. Modes straight 55, loop 30, switch 15. Sliders Weirdness 48-60, Style Influence 75-85.
 
-**Families** (weights chipmunk 4, soulchop 3, tine 2, horn 2; guest share 0.3)
+**Families** (weights chipmunk 4, soulchop 3, tine 2, horn 2; guest share 0.45)
 
 **chipmunk** (sliced off a soul sample over a hard boom-bap kit)
 
@@ -1064,9 +1235,9 @@ Sliced soul keys and pitched-down strings over hard knocking drums, busy twitchi
 
 **Mix tag:** dense dark mix, loud, the snare cutting through (neutral: dense dark mix, loud)
 
-**Tempo:** 140-152 or 86-94 BPM (half-time above 120). Major share 0.05, soul/Dorian loops 0.3, slur tag 0.6, low lead 0.75. Modes switch 40, straight 35, loop 25. Sliders Weirdness 50-62, Style Influence 75-85.
+**Tempo:** 140-152 or 86-94 or 124-136 or 100-112 or 154-164 BPM (half-time above 120). Major share 0.05, soul/Dorian loops 0.3, slur tag 0.6, low lead 0.75. Modes switch 40, straight 35, loop 25. Sliders Weirdness 50-62, Style Influence 75-85.
 
-**Families** (weights chop 4, strings 2, chipmunk 2, synth 1, organ 1; guest share 0.3)
+**Families** (weights chop 4, strings 2, chipmunk 2, synth 1, organ 1; guest share 0.45)
 
 **chop** (sliced and pitched over hard knocking drums)
 
@@ -1206,9 +1377,9 @@ Dark slowed hip hop: a piano, organ, guitar or bell sample dragged down, cassett
 
 **Mix tag:** murky lo-fi mix, the sub kept clean, loud and crunchy (neutral: murky lo-fi mix, the sub kept clean)
 
-**Tempo:** 132-146 or 66-74 BPM (half-time above 120). Major share 0, soul/Dorian loops 0.2, slur tag 0.75, low lead 0.7. Modes loop 45, straight 35, switch 20. Sliders Weirdness 55-65, Style Influence 70-80.
+**Tempo:** 132-146 or 66-74 or 120-130 or 96-108 BPM (half-time above 120). Major share 0, soul/Dorian loops 0.2, slur tag 0.75, low lead 0.7. Modes loop 45, straight 35, switch 20. Sliders Weirdness 55-65, Style Influence 70-80.
 
-**Families** (weights screwed 5, organ 2, synth 2, found 1; guest share 0.3)
+**Families** (weights screwed 5, organ 2, synth 2, found 1; guest share 0.45)
 
 **screwed** (slowed off a sample over 808 drum-machine drums, instruments only)
 
@@ -1310,9 +1481,9 @@ Cassette-grit 808 drums with cowbell knocks under a live tine-piano and bass-gui
 
 **Mix tag:** loud dry master, cassette drums, the top end clear (neutral: loud dry master, cassette drums)
 
-**Tempo:** 136-148 or 88-98 BPM (half-time above 120). Major share 0.3, soul/Dorian loops 0.6, slur tag 0.7, low lead 0.5. Modes switch 35, straight 40, loop 25. Sliders Weirdness 55-65, Style Influence 70-80.
+**Tempo:** 136-148 or 88-98 or 104-114 or 124-134 BPM (half-time above 120). Major share 0.3, soul/Dorian loops 0.6, slur tag 0.7, low lead 0.5. Modes switch 35, straight 40, loop 25. Sliders Weirdness 55-65, Style Influence 70-80.
 
-**Families** (weights pluck 3, chipmunk 3, tine 1, screwed 2; guest share 0.3)
+**Families** (weights pluck 3, chipmunk 3, tine 1, screwed 2; guest share 0.45)
 
 **pluck** (dry on top of cassette drums and a live pocket)
 

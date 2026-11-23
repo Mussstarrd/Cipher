@@ -21,7 +21,7 @@ const anywhere = (name, present) => { any[name] = any[name] || { n: 0, kept: 0 }
 const sh = (name, v) => { if (!v) return; share[name] = share[name] || {}; bump(share[name], v); };
 for (let i = 0; i < N; i++) {
   const b = generate({ lane: 'any', seed: i * 7919 + 11 });
-  const P = b.parts, s = b.style, head = s.split('. lead:')[0];
+  const P = b.parts, s = b.style, head = s.split(/\. (signature|lead):/)[0];
   headLens.push(head.length);
   const D = b.meta.density;
   bump(dens, D); (lens[D] = lens[D] || []).push(s.length);
