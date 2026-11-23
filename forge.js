@@ -61,7 +61,7 @@ function help() {
   console.log('suno-forge: Suno prompt generator for radio-ready hip hop instrumentals\n');
   console.log('Usage: node forge.js [command] [--flag value ...]\n\nCommands: (none)=generate | qa <files...> | lanes | layouts | spec\n\nFlags:');
   for (const [k, v] of Object.entries(FLAGS)) console.log(`  --${k.padEnd(16)} ${v}`);
-  console.log('\nExamples:\n  node forge.js\n  node forge.js --lane any --seed 42 --qa\n  node forge.js --lane connor-price --bpm 140 --mood "sunny" --mode straight\n  node forge.js --config examples/config.hybrid.json --out out.md\n  node forge.js --lane phonk-experimental --batch 6 --format table\n  node forge.js qa examples/*.md');
+  console.log('\nExamples:\n  node forge.js\n  node forge.js --lane any --seed 42 --qa\n  node forge.js --lane anomaly --bpm 142 --mood "cold" --mode straight\n  node forge.js --config examples/config.menace.json --out out.md\n  node forge.js --lane phonk-experimental --batch 6 --format table\n  node forge.js qa examples/*.md');
 }
 
 let pipedAnswers = null;

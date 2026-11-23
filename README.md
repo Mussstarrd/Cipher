@@ -26,11 +26,12 @@ node forge.js lanes | layouts | spec
 
 | Lane | Sound (records never named in prompts) | Written BPM |
 |---|---|---|
-| `connor-price` | Bouncy playful trap-pop: bright plucks and bells over tight drums and big claps, stop-start cuts, crisp clean radio mix | 138-148 half-time, or 96-106 |
-| `paak-pocket` | Live neo-soul funk hip hop: a kit played behind the beat, tine piano, bass guitar, horn stabs, warm analog mix | 86-106 |
+| `anomaly` (flagship) | Technical syncopated drums played off the grid, a heavy dry low end, one lead that should not work; minor and Phrygian only | 130-148 half-time, or 84-96 |
+| `menace` | Slow ominous Southern trap: one big dark hit used like a drum, a huge long 808, a late snare, long silences | 120-140 half-time, or 66-76 |
+| `machine` | Industrial glitch hip hop: distorted drums, struck metal tuned to the key, a lead that sounds like a fault in the machine | 132-146 half-time, 84-96 or 100-110 |
 | `jid-dark` | Dense dark boom-bap/trap hybrid: sliced soul keys and pitched-down strings over knocking drums, twitching hats, a beat switch | 140-152 half-time, or 86-94 |
 | `phonk-experimental` | Memphis-rooted phonk: slowed and sliced samples, cassette grit, 808 cowbell knocks, blown-out 808, a slow dragging pocket. Not drift phonk | 132-146 half-time, or 66-74 |
-| `hybrid` | Cassette cowbell drums under a live tine-and-bass pocket with bright plucks on top | 136-148 half-time, or 88-98 |
+| `paak-pocket` (contributor, small weight) | Live neo-soul funk hip hop: a kit played behind the beat, tine piano, bass guitar, horn stabs, warm analog mix | 86-106 |
 
 ## What makes a roll one of one
 
@@ -61,7 +62,7 @@ lib/qa.js                  QA checker + markdown parser
 lib/render.js, lib/arrange.js, lib/spec.json
 reference/                 grammar-and-guard, suno-field-spec, metatag-cheatsheet, vocabulary-bank, tempo-key-tables, exclusion-presets
 research/                  sourced research + research/handoff (the previous generator's pass-down and source)
-examples/                  one QA-passed block per lane plus the hybrid
+examples/                  one QA-passed block per lane
 .claude/skills, .claude/agents
 scripts/                   build-examples.js, build-app.js, audit.js, test.js
 ```

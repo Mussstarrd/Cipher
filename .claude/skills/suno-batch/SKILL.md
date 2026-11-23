@@ -1,6 +1,6 @@
 ---
 name: suno-batch
-description: Generate N one-of-one Suno prompts for a lane for A/B testing, as a markdown table, JSON, or full blocks. Use when the user wants several rolls, a test matrix, or a batch of prompts for a lane (any, connor-price, paak-pocket, jid-dark, phonk-experimental, hybrid).
+description: Generate N one-of-one Suno prompts for a lane for A/B testing, as a markdown table, JSON, or full blocks. Use when the user wants several rolls, a test matrix, or a batch of prompts for a lane (any, anomaly, menace, machine, jid-dark, phonk-experimental, paak-pocket).
 ---
 
 # suno-batch

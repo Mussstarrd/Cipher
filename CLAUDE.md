@@ -1,10 +1,10 @@
 # suno-forge
 
-Suno prompt generator for radio-ready hip hop **instrumentals**. A reusable toolkit: a sound-design grammar with a guard, five lanes, lyrics layouts, a seeded engine, a QA checker, a one-button page, a CLI, Claude Code skills and sub-agents, and verified reference docs. Not a one-off script. Read `reference/grammar-and-guard.md` before touching vocabulary.
+Suno prompt generator for radio-ready hip hop **instrumentals**. A reusable toolkit: a sound-design grammar with a guard, six lanes, lyrics layouts, a seeded engine, a QA checker, a one-button page, a CLI, Claude Code skills and sub-agents, and verified reference docs. Not a one-off script. Read `reference/grammar-and-guard.md` before touching vocabulary.
 
 ## Project rules (non-negotiable)
 
-1. **Never use real artist names in generated prompts.** Lane ids (`connor-price`, `paak-pocket`, `jid-dark`, `phonk-experimental`, `hybrid`) are internal labels; the records behind them are named only in README and research. Suno silently rewrites a prompt with a name and you lose the whole field. `lib/guard.js` holds the names list and bans "type beat", "in the style of" and comparisons to a capitalised name.
+1. **Never use real artist names in generated prompts.** Lane ids (`anomaly`, `menace`, `machine`, `jid-dark`, `phonk-experimental`, `paak-pocket`) are internal labels; the records behind them are named only in README and research. Suno silently rewrites a prompt with a name and you lose the whole field. `lib/guard.js` holds the names list and bans "type beat", "in the style of" and comparisons to a capitalised name.
 2. **Always output copy-ready blocks.** One block, eight labeled sections (MODEL, MODE/TOGGLES, STYLE FIELD, LYRICS FIELD, EXCLUDE STYLES FIELD, SLIDERS, VARIATIONS, POST-GEN NOTES); the three Suno fields in their own fenced code blocks. The page shows the fields in Suno's order (Lyrics, Styles, Exclude Styles, sliders) with a Copy button each.
 3. **Respect verified limits and front-load.** Style 1000, Lyrics 5000, Exclude Styles 1000, title 80 (community-measured on v6; Suno publishes none). The Style head tags (~260 chars) carry the identity and are never cut; the lead and drums lines always survive the cut order.
 4. **Default to instrumental.** Custom (Advanced) mode, Instrumental ON, Variety OFF, Max Mode ON, `[Instrumental]` first line, `[End]` last, bracket tags only, zero parentheses (Suno sings them), "instrumental" in the head tags, Exclude Styles starts with vocals and lists humming.
@@ -23,7 +23,7 @@ Suno prompt generator for radio-ready hip hop **instrumentals**. A reusable tool
 | `forge.js` | CLI: interactive, flags, `--lane any`, `--mode`, `--layout`, `--config`, `--batch`, `qa <files>`, `lanes`, `layouts`, `spec` |
 | `lib/guard.js` | Word-class rules, names list, EVERY cap; `check(text, allow, deny)` |
 | `lib/grammar.js` | Shared slots: lead/bass/twitch/groove/switch/colour/counter roles/head tags/anti-transition/guest families |
-| `lib/lanes.js` | The five lanes: anchors, families (physical sources with handles), drums, bass, tempo, key colour, layout weights, sliders, exclude, allow/deny |
+| `lib/lanes.js` | The six lanes, one creation button each (`anomaly` is the flagship, weight 4; the soul lane `paak-pocket` is a contributor, weight 1): anchors, families (physical sources with handles), drums, bass, tempo, key colour, layout weights, sliders, exclude, allow/deny |
 | `lib/layouts.js` | Lyrics layouts with placeholders, limits, fallbacks, nominal bars, runtime estimate |
 | `lib/theory.js` | Keys and chord loops (minor-heavy; Dorian/soul loops for the live lane) |
 | `lib/engine.js` | Seeded roll: builds lead/counter/bass/drums/switch/rhythm, Style field with cut order, lyrics fill, variations, fingerprint, warnings |
@@ -32,7 +32,7 @@ Suno prompt generator for radio-ready hip hop **instrumentals**. A reusable tool
 | `lib/spec.json` | Verified Suno facts (models, limits, controls, features, audio-ref terms) |
 | `reference/` | grammar-and-guard, suno-field-spec, metatag-cheatsheet, vocabulary-bank, tempo-key-tables, exclusion-presets |
 | `research/` | Dated, sourced research; `research/handoff/` is the previous generator's pass-down and source (the render-tested rules) |
-| `examples/` | One QA-passed block per lane plus the hybrid; JSON configs |
+| `examples/` | One QA-passed block per lane; JSON configs |
 | `.claude/skills/` | `suno-prompt`, `suno-critique`, `suno-batch` |
 | `.claude/agents/` | `suno-researcher`, `groove-designer`, `style-writer`, `qa-checker` |
 | `scripts/` | `build-examples.js`, `build-app.js`, `audit.js`, `test.js` |
@@ -55,6 +55,9 @@ Generate -> paste into Suno (Lyrics, Styles, Exclude Styles, sliders) -> listen 
 - Add vocabulary as physical descriptions with handles, in the right family, with that family's processing words. Never add a one-phrase label.
 - Every new string must pass `npm test` (the guard walk). If a word is needed by one lane only, add it to that lane's ALLOW; if a word hurts one lane only, add it to that lane's DENY.
 - Never add a phrase with fill/roll/riser/sweep/build/drop/transition/enters/comes in/bar 4; never waltz/shuffle/swing/swung; never a negation; never a vocal-implying word.
+- Lane drift the owner has heard and the lanes now deny: bright, playful, bounce, pluck and pop words turned the old bounce lane into party music; soul, tine-piano and "live pocket" words turned every lane into jazzy soul. `strut` is confidence, never a major key. Keep those words inside the one lane that needs them.
+- Every roll carries one injection: a switch roll's beat switch or key change, or a one-time event from `INJECTIONS` (a glitchy snare slap, a two-bar swap), described in the one lyrics section where it happens and named in the head.
+- The drum pattern is a rolled `CADENCE` (where the kick and snare land) on three rolls in four; lane kick and snare phrases that state their own positions are skipped on those rolls.
 - When the ear finds a problem in a rendered take, turn it into a guard rule, a clash rule or a vocabulary change, and add a test.
 - Any change to `lib/spec.json` must cite a source in `research/01-suno-platform.md` and be mirrored in `reference/suno-field-spec.md`.
 - Run `npm test` and `node forge.js qa examples/*.md` before committing. Regenerate examples and the app if anything in `lib/` changed.

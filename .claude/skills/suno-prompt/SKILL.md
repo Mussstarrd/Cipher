@@ -1,6 +1,6 @@
 ---
 name: suno-prompt
-description: Generate a copy-ready Suno prompt block for a radio-ready hip hop INSTRUMENTAL. Use when the user asks for a Suno prompt, beat prompt, Styles/Lyrics fields, or an instrumental in one of the lanes (connor-price, paak-pocket, jid-dark, phonk-experimental, hybrid, or "any"), or describes a hip hop beat they want Suno to make. Inputs: lane, BPM, key, mood, mode (loop/straight/switch), must-haves.
+description: Generate a copy-ready Suno prompt block for a radio-ready hip hop INSTRUMENTAL. Use when the user asks for a Suno prompt, beat prompt, Styles/Lyrics fields, or an instrumental in one of the lanes (anomaly, menace, machine, jid-dark, phonk-experimental, paak-pocket, or "any"), or describes a hip hop beat they want Suno to make. Inputs: lane, BPM, key, mood, mode (loop/straight/switch), must-haves.
 ---
 
 # suno-prompt
@@ -11,7 +11,7 @@ Produce ONE copy-ready block with eight labeled sections. The engine does the wr
 
 | Input | Values | Default |
 |---|---|---|
-| lane | `any` / `connor-price` / `paak-pocket` / `jid-dark` / `phonk-experimental` / `hybrid` | `any` (weighted random) unless the user describes a sound |
+| lane | `any` / `anomaly` / `menace` / `machine` / `jid-dark` / `phonk-experimental` / `paak-pocket` | `any` (weighted random) unless the user describes a sound |
 | BPM | number; see `node forge.js lanes` for ranges | lane pick |
 | key | `F minor`, `D dorian`, `Eb major` | lane colour (avoids recent keys) |
 | mood | comma words (guarded: swing/vocal/EDM words are dropped and reported) | none |

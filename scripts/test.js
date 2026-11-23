@@ -113,12 +113,12 @@ test('rolls are one of one and lanes keep their identity', () => {
   for (const seed of SEEDS.slice(0, 500)) {
     const ph = generate({ lane: 'phonk-experimental', seed }); if (/cowbell/.test(ph.style)) phonkCowbell++;
     const pk = generate({ lane: 'paak-pocket', seed }); if (/bass guitar/.test(pk.style)) paakBassGuitar++; assert.ok(!/\b808\b/.test(pk.style), pk.style);
-    const cp = generate({ lane: 'connor-price', seed }); connorN++; if (/major/.test(cp.meta.key)) connorMajor++;
+    const cp = generate({ lane: 'anomaly', seed }); connorN++; if (/major/.test(cp.meta.key)) connorMajor++;
     const jd = generate({ lane: 'jid-dark', seed }); jidN++; if (jd.meta.mode === 'switch') jidSwitch++;
   }
   assert.ok(phonkCowbell > 330, `phonk cowbell ${phonkCowbell}/500`);
   assert.ok(paakBassGuitar > 400, `paak bass guitar ${paakBassGuitar}/500`);
-  assert.ok(connorMajor > connorN * 0.1 && connorMajor < connorN * 0.5, `connor major ${connorMajor}/${connorN}`);
+  assert.strictEqual(connorMajor, 0, `the flagship lane stays minor: ${connorMajor}/${connorN} rolls in major`);
   assert.ok(jidSwitch > jidN * 0.22, `jid switch ${jidSwitch}/${jidN}`);
 });
 
@@ -138,7 +138,7 @@ test('lane identity after the listening pass: no funk/jazz in the soul lane, no 
     const pk = generate({ lane: 'paak-pocket', seed });
     assert.ok(!/\b(funk\w*|jazz\w*|neo-soul|ninths?|vibraphone|clav\w*)\b/i.test(pk.style + pk.lyrics), pk.style);
     if (/chipmunk|chirp|sped up|pitched up|pitched DOWN|library|TV-theme|jingle|wedding|exercise|hold-music|wrong-speed/.test(pk.style)) chip++;
-    const cp = generate({ lane: 'connor-price', seed });
+    const cp = generate({ lane: 'anomaly', seed });
     assert.ok(!/\b(pop|dance|club|playful|bright|sunny|big claps)\b/i.test(cp.style + cp.lyrics), cp.style);
     const ph = generate({ lane: 'phonk-experimental', seed });
     assert.ok(!/\b(screwed|sample stab|foghorn|formant|phonk|memphis|chopped|chop|chops|sliced)\b/i.test(ph.style + ph.lyrics), ph.style);
@@ -189,13 +189,13 @@ test('mystery ingredients: a sprinkle on about a third of rolls, placed in one s
     heads[b.meta.headStyle] = (heads[b.meta.headStyle] || 0) + 1;
     assert.ok(checkBlock(b).ok, checkBlock(b).errors.join(' | '));
     if (!b.parts.sprinkle) continue;
-    sprinkled++; fams[b.parts.sprinkle.family] = (fams[b.parts.sprinkle.family] || 0) + 1;
+    sprinkled++; fams[b.parts.sprinkle.handle] = (fams[b.parts.sprinkle.handle] || 0) + 1;
     assert.ok(b.style.includes(`${b.parts.sprinkle.handle} once only`) || b.style.length >= 950, `${lane}/${seed}: sprinkle tag missing from head`);
     const hits = b.lyrics.split('\n').filter((l) => l.includes(b.parts.sprinkle.handle)).length;
     assert.strictEqual(hits, 1, `${lane}/${seed}: sprinkle should sit in exactly one section, found ${hits}\n${b.lyrics}`);
   }
-  assert.ok(sprinkled > N * 0.25 && sprinkled < N * 0.45, `${sprinkled}/${N} rolls carry a sprinkle`);
-  assert.ok(Object.keys(fams).length >= 5, JSON.stringify(fams));
+  assert.ok(sprinkled > N * 0.55, `${sprinkled}/${N} rolls carry a one-time injection (switch and bare rolls carry none)`);
+  assert.ok(Object.keys(fams).length >= 12 && Math.max(...Object.values(fams)) < sprinkled * 0.15, JSON.stringify(fams));
   assert.ok(heads.anchor > N * 0.4 && heads.leadfirst > N * 0.2 && heads.drumsfirst > N * 0.08, JSON.stringify(heads));
   const forced = generate({ lane: 'jid-dark', seed: 4, sprinkle: true }); assert.ok(forced.parts.sprinkle);
   assert.strictEqual(generate({ lane: 'jid-dark', seed: 4, sprinkle: false }).parts.sprinkle, null);
@@ -215,7 +215,7 @@ test('attitude: strut rolls carry no sad or dragging words, lean major, and are 
     assert.ok(checkBlock(b).ok, checkBlock(b).errors.join(' | '));
   }
   assert.ok(strut > N * 0.3 && strut < N * 0.55, `${strut}/${N} strut`);
-  assert.ok(major > strut * 0.4, `${major}/${strut} strut rolls in major`);
+  assert.ok(major < strut * 0.25, `strut is confidence, not a major key: ${major}/${strut} strut rolls in major`);
   assert.strictEqual(generate({ lane: 'paak-pocket', seed: 2, attitude: 'strut' }).meta.attitude, 'strut');
   assert.strictEqual(generate({ lane: 'paak-pocket', seed: 2, attitude: 'cold' }).meta.attitude, 'cold');
 });
@@ -229,7 +229,7 @@ test('user mood and must-have words are guarded', () => {
 });
 
 test('QA catches names, swing words, fills, negatives, parentheses, retired models and audio refs', () => {
-  const b = generate({ lane: 'connor-price', seed: 1 });
+  const b = generate({ lane: 'anomaly', seed: 1 });
   const bad = JSON.parse(JSON.stringify(b));
   bad.style = 'Connor Price type beat, swung hats, hat rolls into the hook, no vocals, ' + bad.style;
   bad.lyrics = bad.lyrics.replace('[End]', 'la la la\n(oohs)\n[End]');
@@ -250,7 +250,7 @@ test('markdown round-trip: rendered block parses back and passes QA', () => {
     const r = checkBlock(parsed);
     assert.ok(r.ok, `${lane}: ${r.errors.join(' | ')}`);
   }
-  const md = renderBlock(generate({ lane: 'connor-price', seed: 1 })).replace('# suno-forge prompt block: ', '# suno-forge prompt block: Connor Price lane: ');
+  const md = renderBlock(generate({ lane: 'anomaly', seed: 1 })).replace('# suno-forge prompt block: ', '# suno-forge prompt block: Connor Price lane: ');
   assert.ok(!checkBlock(parseMarkdownBlock(md)).ok);
 });
 
@@ -260,13 +260,13 @@ test('CLI: flags, any lane, json, batch, qa subcommand, piped interactive', () =
   assert.strictEqual(j.meta.bpm, 150); assert.ok(j.qa.ok);
   const any = JSON.parse(execFileSync('node', ['forge.js', '--lane', 'any', '--seed', '77', '--json'], { cwd: root, encoding: 'utf8' }));
   assert.ok(LANE_IDS.includes(any.meta.lane));
-  const batch = JSON.parse(execFileSync('node', ['forge.js', '--lane', 'connor-price', '--batch', '4', '--seed', '1', '--format', 'json'], { cwd: root, encoding: 'utf8' }));
+  const batch = JSON.parse(execFileSync('node', ['forge.js', '--lane', 'anomaly', '--batch', '4', '--seed', '1', '--format', 'json'], { cwd: root, encoding: 'utf8' }));
   assert.strictEqual(batch.length, 4); assert.ok(batch.every((r) => r.qa.ok)); assert.strictEqual(new Set(batch.map((r) => r.style)).size, 4);
   const tmp = path.join(os.tmpdir(), `forge-test-${Date.now()}.md`);
-  fs.writeFileSync(tmp, renderBlock(generate({ lane: 'hybrid', seed: 1 })));
+  fs.writeFileSync(tmp, renderBlock(generate({ lane: 'menace', seed: 1 })));
   assert.ok(execFileSync('node', ['forge.js', 'qa', tmp], { cwd: root, encoding: 'utf8' }).includes('PASS'));
   fs.unlinkSync(tmp);
-  const piped = execFileSync('node', ['forge.js'], { cwd: root, encoding: 'utf8', input: '5\n138\n\ndark\nloop\n' });
+  const piped = execFileSync('node', ['forge.js'], { cwd: root, encoding: 'utf8', input: '6\n138\n\ndark\nloop\n' });
   assert.ok(/Lane `phonk-experimental` \| 138 BPM/.test(piped) && /\[Loop \|/.test(piped), piped.slice(0, 300));
 });
 

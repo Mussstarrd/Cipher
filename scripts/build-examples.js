@@ -8,11 +8,12 @@ const { renderBlock } = require('../lib/render');
 const { checkBlock } = require('../lib/qa');
 
 const EXAMPLES = {
-  'connor-price': { lane: 'connor-price', bpm: 140, mood: 'sunny', seed: 2026 },
+  'anomaly': { lane: 'anomaly', bpm: 142, mood: 'cold', seed: 2026 },
+  'machine': { lane: 'machine', bpm: 138, seed: 2026 },
   'paak-pocket': { lane: 'paak-pocket', bpm: 94, key: 'D dorian', mood: 'sun-soaked, late-night', seed: 2026 },
   'jid-dark': { lane: 'jid-dark', bpm: 146, mode: 'switch', mood: 'paranoid', seed: 2026 },
   'phonk-experimental': { lane: 'phonk-experimental', bpm: 138, mode: 'loop', mood: 'dark', seed: 2026 },
-  'hybrid': JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'examples', 'config.hybrid.json'), 'utf8')),
+  'menace': JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'examples', 'config.menace.json'), 'utf8')),
 };
 
 let failed = 0;

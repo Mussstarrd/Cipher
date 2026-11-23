@@ -19,26 +19,26 @@ Lane `paak-pocket` | 94 BPM | D minor (i7 - IV7 (Dorian): Dm7 - G7) | layout: Fo
 - **Duration:** Custom 3:20 (estimated 3:09 from the layout at 94 BPM, plus a buffer rounded up to the next 5 s; [End] stops it early, Crop any tail). Never Auto: v6 runs long on Auto.
 - **Song Title:** Stolen Soul Chop
 
-## 3. STYLE FIELD (977/1000 chars; head tags first, then lead / bass / drums / counter)
+## 3. STYLE FIELD (996/1000 chars; head tags first, then lead / bass / drums / counter)
 ```text
-a soul record pitched up a fourth and cut to one bar over kick and snare, 94 BPM, in D minor, dusty library-record boom bap, instrumental, sun-soaked, late-night, kick landing on the and, clipped hat bursts, a stumble on beat 3, same drums every section, hard cuts only, sections cut dead, nothing between, low-mid lead, top cut off, the chipmunk soul chop, a hand-struck hint of the palm-muted cluster, dusty warm mix, the snare on top, the kick and bass as one sound. lead: a soul record pitched up a fourth and cut to one bar, the horns and keys chirping, the room left in. bass: a flatwound bass guitar played with the thumb, dull and thumpy, the same two-bar figure start to finish. drums: a kick a hair behind the bass so the pocket leans back, the hats dead straight, a snare with the wires loose, buzzing, played late, every section starts cold on beat 1, nothing leads into it. hint: a prepared piano cluster struck twice then muted with the palm, the strings buzzing.
+soul boom bap built on one two-bar record loop and a cracking snare, 94 BPM, in D minor, instrumental, sun-soaked, late-night, snare dead on, kick early, nervous clicking percussion, the beat never lets up, the beat stays frozen, deep baritone melody, the chipmunk soul chop, a hand-struck hint of the palm-muted cluster, the phone-speaker bar once only, dusty warm mix, the snare on top, the kick and bass as one sound. lead: a soul record pitched up a fourth and cut to one bar, the horns and keys chirping, the room left in, filtered so the bass of the record is gone and the bass guitar takes it, playing a two-note motif bouncing a tritone. bass: a bass guitar sample off the same soul record, pitched to the key, one note per bar. drums: a hard boom-bap kick, dead and dry, hit a hair late, a snare tuned loose, the buzz ringing into the next kick, sections change on a hard cut, nothing in between. hint: a prepared piano cluster struck twice then muted with the palm, the strings buzzing.
 ```
 
-## 4. LYRICS FIELD (773/5000 chars; section tags only, no words)
+## 4. LYRICS FIELD (895/5000 chars; section tags only, no words)
 ```text
 [Instrumental]
 
 [Intro | the chipmunk soul chop alone, 4 bars]
 
-[Hook | full beat straight in on beat 1, cold, the chipmunk soul chop up front, every section starts cold on beat 1]
+[Hook | full beat straight in on beat 1, cold, the chipmunk soul chop up front, sections change on a hard cut, nothing in between]
 
-[Verse | same drums, kick landing on the and, the pocket leans drunk on beat 3, sober on the one, a reversed hat one-shot stop-start, 3 on, 2 off, answering the snare]
+[Verse | same drums, snare dead on, kick early, played by hand against the bass, a pitched-up knock blip in a burst that slows down as it decays, quietly through the verse]
 
 [Hook | identical, the palm-muted cluster answering the lead with one hit per phrase]
 
 [Break | four bars of total silence, nothing at all]
 
-[Hook | the full beat straight back in on beat 1 as if nothing happened, identical]
+[Hook | the full beat straight back in on beat 1 as if nothing happened, identical, the phone-speaker bar, once only, the whole mix collapses to mono in a phone-speaker band for one bar]
 
 [Verse | same drums, the chipmunk soul chop thinner, played by hand against the bass]
 
@@ -55,24 +55,25 @@ vocals, humming, ad-libs, vocal chops, drum fills, tom fills, snare rolls, hat r
 ```
 
 ## 6. SLIDERS
-- **Weirdness:** 53% — Soul boom bap, live pocket: the lane's tested range is 45-55; above 60 Suno starts drifting tempo and structure.
-- **Style Influence:** 83% — High so the physical descriptions are followed; 75-85 landed closest to the written prompt.
+- **Weirdness:** 52% — Soul boom bap, live pocket: the lane's tested range is 45-55; above 60 Suno starts drifting tempo and structure.
+- **Style Influence:** 85% — High so the physical descriptions are followed; 75-85 landed closest to the written prompt.
 - **Audio Influence:** Not used. No audio is uploaded in this workflow, so the slider does not appear; leave it alone.
 - **Variety:** Off (Exact style). Any setting above Off rewrites and expands the Style text before the model sees it (official FAQ: 'reduce the Variety slider to 0 to retain full control of your style tags'). Engineered prompts must run at Off.
 
 ## 7. VARIATIONS
-**A. Safer** (v6, Weirdness 43%, Style Influence 88%; 985 chars). Sound-neutral anchor, no twitch or slur tags, no hint: the plainest reading of the same sounds.
+**A. Safer** (v6, Weirdness 42%, Style Influence 90%; 982 chars). Sound-neutral anchor, no twitch or slur tags, no hint: the plainest reading of the same sounds.
 ```text
-soul boom bap instrumental, hard snare, drums played by hand, 94 BPM, in D minor, instrumental, dead-eyed, heavy, patient, sun-soaked, late-night, same drums every section, hard cuts only, sections cut dead, nothing between, low-mid lead, top cut off, the chipmunk soul chop, dusty warm mix, the snare on top. lead: a soul record pitched up a fourth and cut to one bar, the horns and keys chirping, the room left in, filtered so the bass of the record is gone and the bass guitar takes it, playing a two-note motif bouncing a tritone as one held note per bar, cut before the snare. bass: a flatwound bass guitar played with the thumb, dull and thumpy, the same two-bar figure start to finish, syncopated 16ths with long rests. drums: a kick a hair behind the bass so the pocket leans back, the hats dead straight, a snare with the wires loose, buzzing, played late, hats played soft with one loud accent per bar, pulled late, every section starts cold on beat 1, nothing leads into it.
+soul boom bap instrumental, hard snare, drums played by hand, 94 BPM, in D minor, instrumental, threatening, the drums like footsteps, sun-soaked, late-night, the beat never lets up, the beat stays frozen, deep baritone melody, the chipmunk soul chop, dusty warm mix, the snare on top. lead: a soul record pitched up a fourth and cut to one bar, the horns and keys chirping, the room left in, filtered so the bass of the record is gone and the bass guitar takes it, playing a two-note motif bouncing a tritone as one held note per bar, cut before the snare, the hook is two notes, the second held until the snare cuts it. bass: a bass guitar sample off the same soul record, pitched to the key, one note per bar, landing a hair behind the kick. drums: a hard boom-bap kick, dead and dry, hit a hair late, a snare tuned loose, the buzz ringing into the next kick, a hat pattern that opens once per bar on the and of 4, wet and late, sections change on a hard cut, nothing in between.
 ```
-**B. Weirder** (v6-wild, Weirdness 80%, Style Influence 60%; 993 chars). One wild tag added; run it on v6-wild.
+**B. Weirder** (v6-wild, Weirdness 67%, Style Influence 56%; 977 chars). One wild tag added; run it on v6-wild.
 ```text
-a soul record pitched up a fourth and cut to one bar over kick and snare, 94 BPM, in D minor, dusty library-record boom bap, instrumental, sun-soaked, late-night, kick landing on the and, clipped hat bursts, a stumble on beat 3, same drums every section, hard cuts only, sections cut dead, nothing between, sliced sample stabs off the grid, low-mid lead, top cut off, the chipmunk soul chop, a hand-struck hint of the palm-muted cluster, dusty warm mix, the snare on top, the kick and bass as one sound. lead: a soul record pitched up a fourth and cut to one bar, the horns and keys chirping, the room left in, filtered so the bass of the record is gone and the bass guitar takes it. bass: a flatwound bass guitar played with the thumb, dull and thumpy, the same two-bar figure start to finish. drums: a kick a hair behind the bass so the pocket leans back, the hats dead straight, a snare with the wires loose, buzzing, played late, every section starts cold on beat 1, nothing leads into it.
+soul boom bap built on one two-bar record loop and a cracking snare, 94 BPM, in D minor, instrumental, sun-soaked, late-night, snare dead on, kick early, nervous clicking percussion, the beat never lets up, the beat stays frozen, drums slowed and slammed, deep baritone melody, the chipmunk soul chop, a hand-struck hint of the palm-muted cluster, the phone-speaker bar once only, dusty warm mix, the snare on top, the kick and bass as one sound. lead: a soul record pitched up a fourth and cut to one bar, the horns and keys chirping, the room left in, filtered so the bass of the record is gone and the bass guitar takes it. bass: a bass guitar sample off the same soul record, pitched to the key, one note per bar. drums: a hard boom-bap kick, dead and dry, hit a hair late, a snare tuned loose, the buzz ringing into the next kick, sections change on a hard cut, nothing in between. hint: a prepared piano cluster struck twice then muted with the palm, the strings buzzing.
 ```
 
 ## 8. POST-GEN NOTES
 - Structure: the first full beat lands at about 0:10; the layout is "Four bars of total silence in the middle" and runs about 3:09. Straight mode: the same drums in every section, hard cuts only.
-- Attitude: cold ("dead-eyed, heavy, patient"). Menace without sadness: patient, even, nothing rushed.
+- Attitude: cold ("threatening, the drums like footsteps"). Menace without sadness: patient, even, nothing rushed.
+- The mystery ingredient (the phone-speaker bar) appears once, about halfway through the song: it is meant to be barely there and to send the track over the edge once. If Suno makes it constant, lower Style Influence five points; if it is missing, that is acceptable on a first take.
 - The hint (the palm-muted cluster) is one ingredient, answering the lead with one hit per phrase. If it takes over the record, run the safer variation (no hint) or re-roll; if it is inaudible, raise Style Influence five points. The hook device in the lead line ("the hook is two notes, the second held until the snare cuts it") is what makes the lead stick; listen for it on the second pass.
 - The chop should sound like a pitched-up record (chirping horns and keys, hiss rising with it), the snare hard and late. If it comes back as a jazz or funk band, a word slipped through: the guard now denies funk, jazz, neo-soul and extended-chord words in this lane.
 - The kick and snare should sit behind the grid and crack; if the drums sound programmed or soft, re-roll.

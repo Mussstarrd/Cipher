@@ -20,6 +20,11 @@
   button:hover { border-color:#3a4150; }
   button.primary { background:var(--accent); color:#1a1200; border-color:var(--accent); font-weight:800; font-size:17px; padding:12px 26px; }
   button.primary:hover { filter:brightness(1.07); }
+  .lanes { display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:8px; margin-bottom:10px; }
+  .lanes button { text-align:left; padding:10px 12px; line-height:1.25; }
+  .lanes button b { display:block; font-size:15px; }
+  .lanes button small { color:var(--muted, #9aa3b2); font-size:12px; }
+  .lanes button.on { border-color:var(--accent); box-shadow:0 0 0 1px var(--accent) inset; }
   details.more { color:var(--muted); font-size:13px; }
   details.more summary { cursor:pointer; padding:4px 0; }
   .grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:10px; margin-top:8px; }
@@ -65,8 +70,9 @@
   <div class="sub">One button. Each roll is one of one. Fields come out in Suno's order: Lyrics, Styles, Exclude Styles, then the sliders. Spec verified __SPEC_VERIFIED__ (__MODELS__).</div>
 </header>
 <main>
+  <div class="lanes" id="lanes" role="group" aria-label="Pick a sound and generate"></div>
   <div class="top">
-    <select id="lane" aria-label="Lane"></select>
+    <select id="lane" aria-label="Lane" hidden></select>
     <button class="primary" id="go">Generate</button>
     <button id="again" hidden>Roll again</button>
     <button id="strut" title="Head up, absolute confidence">Strut</button>
@@ -116,6 +122,13 @@
   for (const [id, l] of Object.entries(LANES)) addOpt(id, `${id}  —  ${l.label}`);
   try { const saved = localStorage.getItem('suno-forge:lane'); if (saved && (saved === 'any' || LANES[saved])) laneSel.value = saved; } catch (e) {}
   laneSel.addEventListener('change', () => { try { localStorage.setItem('suno-forge:lane', laneSel.value); } catch (e) {} });
+  // one creation button per sound: a click picks the lane and rolls
+  const laneBox = $('lanes');
+  const markLane = () => { for (const b of laneBox.children) b.classList.toggle('on', b.dataset.lane === laneSel.value); };
+  const addLane = (id, name, sub) => { const b = document.createElement('button'); b.dataset.lane = id; const t = document.createElement('b'); t.textContent = name; const u = document.createElement('small'); u.textContent = sub; b.append(t, u); b.addEventListener('click', () => { laneSel.value = id; laneSel.dispatchEvent(new Event('change')); markLane(); roll(true); }); laneBox.appendChild(b); };
+  addLane('any', 'Surprise me', 'any sound, weighted');
+  for (const [id, l] of Object.entries(LANES)) addLane(id, l.button || l.label, l.buttonSub || '');
+  markLane();
 
   // ---- memory: never repeat a fingerprint; avoid the last three lead families / drum phrases and last four keys ----
   const STORE = 'suno-forge:seen.v2';
