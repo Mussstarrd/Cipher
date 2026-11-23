@@ -14,9 +14,10 @@ holdings held unchanged. Every brief adds one row, including "no trade" days.
 | 6 | 2026-11-18 | No trade | NVDA Q3: EPS $2.68 vs $2.47 est, revenue ~$115.8B vs ~$109.1B, Q4 guide $130B vs $125.1B consensus; NVDA +2.9%, SMH +2.2% pre-market. No tested setup for buying a post-earnings gap. Miss: no position on for the move | n/a | n/a | n/a | $0 | n/a | not run | n/a | $0 |
 | 7 | 2026-11-19 | No trade | Nasdaq-100 futures ~+2% after Anthropic priced its IPO; MU +4.2%, INTC +4.0%, SMH +2.6% pre-market; jobless claims 203K vs 198K est; Fed minutes hawkish. No entry setup defined in v1 (gap-up hypothesis proposed Nov 18, awaiting Jeffery) | n/a | n/a | n/a | $0 | n/a | not run | n/a | $0 |
 | 8 | 2026-11-20 | No trade | Broad sell-off pre-market: SPCX -6.9%, AMD -6.0%, TSM -5.9%, NVDA -3.3%, SMH -3.2%; VIX at 30; Anthropic down 8-10% after its debut. No entry setup defined in v1 | n/a | n/a | n/a | $0 | n/a | not run | n/a | $0 |
+| 9 | 2026-11-23 | No trade | Rebound pre-market after last week's correction: NVDA +8.6%, SMH +5.7%, QQQ +3.4%, SPY +2.4%. No entry setup defined in v1 | n/a | n/a | n/a | $0 | n/a | not run | n/a | $0 |
 
 ## Running totals
-- Recommendations: 8. Trades: 0. No-trade days: 8. Vetoes: 0.
+- Recommendations: 9. Trades: 0. No-trade days: 9. Vetoes: 0.
 - Paper P&L: $0. Open paper risk: $0.
 - Benchmarks (start = Nov 10 close): SPY 749.92. Holdings 14.890133 NVDA @ 168.89 + 24.613125 SPCX @ 143.09 = $6,036.68.
 - Nov 11 8:47 am (pre-market): SPY 756.91 (+0.93%). Holdings $6,126.70 (+1.49%). Paper 0.00%.
@@ -27,6 +28,7 @@ holdings held unchanged. Every brief adds one row, including "no trade" days.
 - Nov 18 8:47 am (pre-market): SPY 735.03 (-1.99%). Holdings $5,889.83 (-2.43%). Paper 0.00%.
 - Nov 19 8:47 am (pre-market): SPY 737.61 (-1.64%). Holdings $5,842.29 (-3.22%). Paper 0.00%.
 - Nov 20 8:47 am (pre-market): SPY 708.87 (-5.47%). Holdings $5,273.48 (-12.64%). Paper 0.00%.
+- Nov 23 8:48 am (pre-market): SPY 706.50 (-5.79%). Holdings $5,263.35 (-12.81%). Paper 0.00%.
 
 ## Notes
 - 2026-11-10 2:07 pm: Jeffery bought 2x CRWV Nov 27 $90C at $0.12 in 731123444 (real, off-system, before CRWV's earnings that evening). Not a paper position.
@@ -48,3 +50,18 @@ holdings held unchanged. Every brief adds one row, including "no trade" days.
 - Interim check 2026-11-18: SPCX Dec $170C bid $1.53 at the Nov 17 close (review bid $1.70). NVDA print on Nov 17 was a beat; NVDA +2.9% pre-market vs the review's coin-flip call. Design gap flagged to Jeffery: six straight no-trade days because v1 defines no entry setups to test.
 - Correction 2026-11-19: the Nov 18 row called the NVDA post-earnings gap a miss. NVDA closed Nov 18 at $150.96, down 2.9% on the day after a +2.9% pre-market; buying that gap would have lost. Not a miss.
 - Interim check 2026-11-20: SPCX Dec $170C bid $0.94 at the Nov 19 close vs $1.70 at the Nov 16 review (lean sell); still held, about $76 lower.
+
+### 2026-11-23
+Grade of the Nov 16 review, one week in (pre-market to pre-market): NVDA -13.4% ($157.39 to $136.36), SPCX -5.2% ($138.60 to $131.35). The 12-month share calls cannot be graded yet. The Dec $170C lean-sell was right so far: bid $1.70 to $0.42, $128 lower by holding.
+
+| Position | Bull p(hold beats sell) | Bear p | Checker | Review output |
+|---|---|---|---|---|
+| NVDA shares (37.7%) | 50% over 12 mo (Estimate) | 47% (Estimate) | value $2,030.42, unrealised -$1,398; 12.7x annualised EPS: match | No edge either way. Low confidence |
+| SPCX shares (60.0%) | 48% over 12 mo (Guess) | 44% (Guess) | value $3,232.93, unrealised -$828: match | No edge either way; no fundamentals in the facts. Low confidence |
+| SPCX Dec 18 $170C x1 | no hold case; 3-5% above the strike | 2-4% above $178.70 | 5.0% above $170, 2.6% above $178.70 (lognormal, IV 63%, 25 d); needs +29.4% vs a 16.5% one-sigma move | Sell lean, second week; about $42 at the bid. Medium-high confidence |
+| SPCX Mar $340C x4 | hold by default | immaterial | $4 at the bid vs $76 mark | Count as $0 |
+| CRWV Nov 27 $90C x2 | no hold case | agrees | no bid | Expires Friday, nothing to do |
+
+- Both analysts: the two share positions are 97.7% of the account and fell together last week; that concentration is the main unpriced risk.
+- Checker: all values recomputed from quotes, no mismatch over 2%. Option marks total $123 but only about $46 is realisable at the bids.
+- Low disagreement between Bull and Bear (3-4 points on the shares, none on the options); confidence on the shares capped at low.
