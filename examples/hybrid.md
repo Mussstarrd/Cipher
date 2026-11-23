@@ -2,7 +2,7 @@
 
 # suno-forge prompt block: Cassette drums + soul pocket + dry bounce
 
-Lane `hybrid` | 142 BPM (half-time feel) | F minor (i (pedal): Fm) | layout: A second pattern for the last third (switch) | about 3:13, full beat at 0:00 | seed 2026
+Lane `hybrid` | 142 BPM (half-time feel) | F minor (i - bII: Fm - Gb) | layout: A then B, two beats one song (switch) | about 2:56, full beat at 0:07 | seed 2026
 
 ## 1. MODEL
 **Pick:** v6
@@ -16,69 +16,71 @@ Lane `hybrid` | 142 BPM (half-time feel) | F minor (i (pedal): Fm) | layout: A s
 - **Max Mode:** ON. ON for any instrumental over ~2:00; OFF for 30-60 s palette tests (2x (20 per generation vs 10)). Max Mode also keeps silences silent on minimal rolls.
 - **Variety:** Off. Any setting above Off rewrites and expands the Style text before the model sees it (official FAQ: 'reduce the Variety slider to 0 to retain full control of your style tags'). Engineered prompts must run at Off.
 - **Persona:** NO. Voices (formerly Personas; Style Personas live inside the Voices menu): In-app text: 'Songs with Voices cannot be instrumental.' Not used in this workflow.
-- **Duration:** Custom 3:25 (estimated 3:13 from the layout at 142 BPM, plus a buffer rounded up to the next 5 s; [End] stops it early, Crop any tail). Never Auto: v6 runs long on Auto.
-- **Song Title:** Stolen Glass Tone
+- **Duration:** Custom 3:10 (estimated 2:56 from the layout at 142 BPM, plus a buffer rounded up to the next 5 s; [End] stops it early, Crop any tail). Never Auto: v6 runs long on Auto.
+- **Song Title:** Stolen Dry Pluck
 
-## 3. STYLE FIELD (986/1000 chars; head tags first, then lead / bass / drums / counter)
+## 3. STYLE FIELD (973/1000 chars; head tags first, then lead / bass / drums / counter)
 ```text
-hybrid hip hop, 142 BPM, half-time, in F minor, instrumental, the empty second bar as the signature, ice calm, the drums doing the threatening, slow, wide, patient, sunny and dark at once, the glass tone, last note bent up, cumbia lope, second half double-time, drummer a little ahead, bass a little behind, bright plucks on top, loud dry master. signature: the lead and the bass both rest for the whole second bar of the loop, the drums carrying that bar by themselves, each time around. lead: a glassy ringing tone with a slow waver, each note arriving a little late, pitched down until it sounds heavy. bass: a bass guitar played with the thumb, a blown-out 808 under it on the one. drums: a kick that waits for the bass and lands a hair after it, a fat live snare tuned low, hit off-center, a hair late, a cumbia lope, a scraper and a kick trading off-beats, an 808 cowbell knocking a two-note pattern between the kicks, never the melody, each half of the song one frozen drum loop.
+a dry plucked synth hook over 808 kick and crunchy sampled snare, 142 BPM, half-time, in F minor, skeletal hybrid hip hop, instrumental, sunny and dark at once, kick landing on the and, clipped hat bursts, a stumble on beat 3, second half double-time, sections cut dead, nothing between, bright plucks on top, lead tucked above the 808, the dry pluck, a faint hint of the reversed fuzz swell, loud dry master, cassette drums, the top end clear. lead: a dry plucked synth hook, two notes an octave apart, every hit cut dead before the next kick, doubled an octave down, the low copy louder. bass: a bass guitar played with the thumb, a blown-out 808 under it on the one. drums: an 808 kick under a live kick, the live one a hair late, a crunchy sampled snare off a cassette, cracking, a tambourine smacked on 2 and 4, never quite even, one sound in, one sound out, drums identical. hint: a reversed fuzz-guitar swell that blooms into each downbeat and dies before the snare.
 ```
 
-## 4. LYRICS FIELD (719/5000 chars; section tags only, no words)
+## 4. LYRICS FIELD (957/5000 chars; section tags only, no words)
 ```text
 [Instrumental]
 
-[Hook | the whole beat from the first second, the glass tone up front, the lead more clipped, last note bent up]
+[Intro | the dry pluck alone, 4 bars]
 
-[Verse | same drums, the glass tone half as many notes, the bass up front, the lead tucked behind it]
+[Hook | beat A straight in on beat 1, cold, kick landing on the and, the dry pluck up front, one sound in, one sound out, drums identical]
 
-[Hook | identical to the first hook, the harmonic hook answering]
+[Verse | beat A, same drums, the pocket leans drunk on beat 3, sober on the one, a tiny pitched perc ping stop-start, 3 on, 2 off, answering the snare]
 
-[Verse | same drums, a dry stick click ratcheting faster across one beat, in the hole after the snare, the empty second bar in every pass of the loop, the same place each time]
+[Hook | beat A, identical, the wedding-band chop answering]
 
 [Beat Switch | double-time drums, hats double, kick pattern doubles]
 
-[Hook | double-time, hats doubled, its last note is held a beat longer each time around]
+[Hook | beat B, double-time, hats doubled, the dry pluck up front, a tiny pitched perc ping stop-start, 3 on, 2 off, answering the snare]
 
-[Hook | double-time, hats doubled, identical, the harmonic hook answering]
+[Verse | beat B, double-time, hats doubled, the wedding-band chop answering, played by hand against the bass]
+
+[Hook | beat B, double-time, hats doubled, it stays frozen and identical while the drums move, the reversed fuzz swell crying in the gaps the lead leaves]
+
+[Outro | beat B, double-time, hats doubled, stops dead on beat 1]
 
 [End]
 ```
 
-## 5. EXCLUDE STYLES FIELD (533/1000 chars)
+## 5. EXCLUDE STYLES FIELD (374/1000 chars)
 ```text
-vocals, humming, ad-libs, vocal chops, drum fills, tom fills, snare rolls, hat rolls, drum rolls, transitions, transition fills, section transitions, risers, sweeps, filter sweeps, white noise sweeps, build-ups, breakdown FX, impacts, crash cymbals, reverse cymbals, DJ drops, DJ scratching, turntable scratches, tape stop, reverse kick, reversed drums, reverse swells, lead-in fills, kick rolls, beat drops, breakdowns, stutter edits, glitch edits, DJ effects, drift phonk, Brazilian funk, EDM, cowbell melody, jazz, funk, cinematic
+vocals, humming, ad-libs, vocal chops, drum fills, tom fills, snare rolls, hat rolls, drum rolls, transitions, transition fills, section transitions, risers, sweeps, filter sweeps, white noise sweeps, build-ups, breakdown FX, impacts, crash cymbals, reverse cymbals, DJ drops, DJ scratching, tape stop, drift phonk, Brazilian funk, EDM, cowbell melody, jazz, funk, cinematic
 ```
 
 ## 6. SLIDERS
-- **Weirdness:** 55% — Cassette drums + soul pocket + dry bounce: the lane's tested range is 55-65; above 60 Suno starts drifting tempo and structure.
-- **Style Influence:** 80% — High so the physical descriptions are followed; 70-80 landed closest to the written prompt.
+- **Weirdness:** 55% — Cassette drums + soul pocket + dry bounce: the lane's tested range is 50-60; above 60 Suno starts drifting tempo and structure.
+- **Style Influence:** 78% — High so the physical descriptions are followed; 70-80 landed closest to the written prompt.
 - **Audio Influence:** Not used. No audio is uploaded in this workflow, so the slider does not appear; leave it alone.
 - **Variety:** Off (Exact style). Any setting above Off rewrites and expands the Style text before the model sees it (official FAQ: 'reduce the Variety slider to 0 to retain full control of your style tags'). Engineered prompts must run at Off.
 
 ## 7. VARIATIONS
-**A. Safer** (v6, Weirdness 45%, Style Influence 85%; 997 chars). Sound-neutral anchor, no twitch or slur tags, no hint: the plainest reading of the same sounds.
+**A. Safer** (v6, Weirdness 45%, Style Influence 83%; 991 chars). Sound-neutral anchor, no twitch or slur tags, no hint: the plainest reading of the same sounds.
 ```text
-hybrid hip hop instrumental, cassette drums, live pocket, 142 BPM, half-time, in F minor, instrumental, ice calm, the drums doing the threatening, sunny and dark at once, the glass tone, second half double-time, bright plucks on top, loud dry master. lead: a glassy ringing tone with a slow waver, each note arriving a little late, pitched down until it sounds heavy, each phrase ends on a note bent up a half step at the last moment, every hit placed and left there, unhurried, playing a two-note motif bouncing a tritone. bass: a bass guitar played with the thumb, a blown-out 808 under it on the one, following the kick exactly. drums: a kick that waits for the bass and lands a hair after it, a fat live snare tuned low, hit off-center, a hair late, hats in triplets that slur on beat 3, an 808 cowbell knocking a two-note pattern between the kicks, never the melody, a dry stick click ratcheting faster across one beat, in the hole after the snare, each half of the song one frozen drum loop.
+hybrid hip hop instrumental, cassette drums, live pocket, 142 BPM, half-time, in F minor, instrumental, cold and still, the 808 doing the talking, sunny and dark at once, second half double-time, sections cut dead, nothing between, bright plucks on top, lead tucked above the 808, the dry pluck, loud dry master, cassette drums. lead: a dry plucked synth hook, two notes an octave apart, every hit cut dead before the next kick, doubled an octave down, the low copy louder, one held note per bar, cut before the snare, the hook is two notes, the second held until the snare cuts it. bass: a bass guitar played with the thumb, a blown-out 808 under it on the one, following the kick exactly. drums: an 808 kick under a live kick, the live one a hair late, a crunchy sampled snare off a cassette, cracking, hats in triplets that slur on beat 3, a tambourine smacked on 2 and 4, never quite even, the pocket leans drunk on beat 3, sober on the one, one sound in, one sound out, drums identical.
 ```
-**B. Weirder** (v6-wild, Weirdness 68%, Style Influence 64%; 995 chars). One wild tag added; run it on v6-wild.
+**B. Weirder** (v6-wild, Weirdness 75%, Style Influence 70%; 1000 chars). One wild tag added; run it on v6-wild.
 ```text
-hybrid hip hop, 142 BPM, half-time, in F minor, instrumental, the empty second bar as the signature, ice calm, the drums doing the threatening, slow, wide, patient, sunny and dark at once, the glass tone, last note bent up, cumbia lope, second half double-time, drummer a little ahead, bass a little behind, bright plucks on top, the loop resampled until it smears, loud dry master. signature: the lead and the bass both rest for the whole second bar of the loop, the drums carrying that bar by themselves, each time around. lead: a glassy ringing tone with a slow waver, each note arriving a little late, pitched down until it sounds heavy. bass: a bass guitar played with the thumb, a blown-out 808 under it on the one, following the kick exactly. drums: a kick that waits for the bass and lands a hair after it, a fat live snare tuned low, hit off-center, a hair late, an 808 cowbell knocking a two-note pattern between the kicks, never the melody, each half of the song one frozen drum loop.
+a dry plucked synth hook over 808 kick and crunchy sampled snare, 142 BPM, half-time, in F minor, skeletal hybrid hip hop, instrumental, sunny and dark at once, kick landing on the and, clipped hat bursts, a stumble on beat 3, second half double-time, sections cut dead, nothing between, bright plucks on top, drums pitched down a step, lead tucked above the 808, the dry pluck, a faint hint of the reversed fuzz swell, loud dry master, cassette drums, the top end clear. lead: a dry plucked synth hook, two notes an octave apart, every hit cut dead before the next kick, doubled an octave down, the low copy louder. bass: a bass guitar played with the thumb, a blown-out 808 under it on the one. drums: an 808 kick under a live kick, the live one a hair late, a crunchy sampled snare off a cassette, cracking, a tambourine smacked on 2 and 4, never quite even, one sound in, one sound out, drums identical. hint: a reversed fuzz-guitar swell that blooms into each downbeat and dies before the snare.
 ```
 
 ## 8. POST-GEN NOTES
-- Structure: the layout is "A second pattern for the last third", about 3:13, with the full beat at 0:00. The drums play one pattern from the first second; nothing in this prompt describes a section starting, stopping or returning, because Suno decorates every boundary it is told about. This roll has two drum patterns ("second half double-time"); the second pattern's words repeat in every section after the switch so Suno cannot undo it. A reversed kick or a lead-in every four bars is Suno's default drum programming leaking through: change the seed first, then raise Style Influence five points.
-- Cadence: "cumbia lope". The kick and snare placement was rolled for this take rather than left to the genre default; the same pattern is meant to play every bar. Timing: "drummer a little ahead, bass a little behind".
-- Attitude: cold ("ice calm, the drums doing the threatening"). Menace without sadness: patient, even, nothing rushed.
-- Signature: the empty second bar, in every pass of the loop, the same place each time. It is the defining ingredient of this take: named second in the head and described before the lead. The silence is part of the loop, the same place each time. If Suno fills the gap or leads into what follows with a reversed sound, change the seed first.
-- Hook device: "last note bent up". Listen for it on the second pass.
+- Structure: the first full beat lands at about 0:07; the layout is "A then B, two beats one song" and runs about 2:56. The beat switch is one axis ("second half double-time"); its words repeat in the head tag and in every section after the switch so Suno cannot undo it.
+- Attitude: cold ("cold and still, the 808 doing the talking"). Menace without sadness: patient, even, nothing rushed.
+- The hint (the reversed fuzz swell) is one ingredient, crying in the gaps the lead leaves. If it takes over the record, run the safer variation (no hint) or re-roll; if it is inaudible, raise Style Influence five points. The hook device in the lead line ("the hook is two notes, the second held until the snare cuts it") is what makes the lead stick; listen for it on the second pass.
 - All three elements must coexist: cassette cowbell drums, a live tine-and-bass pocket, bright plucks. If one is missing, the line that carried it got cut; shorten the counter and re-roll.
 - The drums should drag behind the grid; the kit descriptions say "late" and "dragging" and the slur tag sits in the head.
 - Plucks should stay dry and on top of a murky drum bed; the mix tag keeps the top end clear for this reason.
 - Suno may hum over the tine piano; the Exclude list handles it.
-- Fills, risers, scratches or a roll at a section change mean a word slipped through: run the QA checker on the block, and keep the steady-drums phrase in the drums line (it is the positive form of "no fills").
+- Fills, risers or a roll at a section change mean a word slipped through: run the QA checker on the block, and keep the anti-transition phrase in the drums line (it is the positive form of "no fills").
 - Any hum, chant or sung syllable means a re-roll, not a fix: the Exclude list is already complete, so change the seed rather than adding words.
-- Ending: [End] should stop it near 3:13. If it runs on, Crop to the last downbeat. If it stops early, Extend from the last good section and paste only the remaining section tags.
+- Ending: [End] should stop it near 2:56. If it runs on, Crop to the last downbeat. If it stops early, Extend from the last good section and paste only the remaining section tags.
 - Extend when the first 60-90 s are keepers and only the back half drifts. Re-roll (or run the weirder variation on v6-wild) when the drums or the lead are wrong from the start.
 - Remaster: Remaster (Pro/Premier) renders subtle variations and runs on v6; use it on the keeper for a cleaner, louder master.
 - Stems: Get Stems (Pro/Premier): Auto Split up to 12 stems for 50 credits; Split from Mix 10 credits per stem; Advanced Split (choose from ~100 instruments) 10 credits per stem, Premier only.
@@ -88,12 +90,14 @@ hybrid hip hop, 142 BPM, half-time, in F minor, instrumental, the empty second b
 
 | # | Section | Bars | Starts |
 |---|---------|------|--------|
-| 1 | Hook | 16 | 0:00 |
-| 2 | Verse | 16 | 0:27 |
-| 3 | Hook | 16 | 0:54 |
-| 4 | Verse | 16 | 1:21 |
-| 5 | Beat Switch | 2 | 1:48 |
-| 6 | Hook | 16 | 1:52 |
-| 7 | Hook | 32 | 2:19 |
+| 1 | Intro | 4 | 0:00 |
+| 2 | Hook | 16 | 0:07 |
+| 3 | Verse | 16 | 0:34 |
+| 4 | Hook | 16 | 1:01 |
+| 5 | Beat Switch | 2 | 1:28 |
+| 6 | Hook | 16 | 1:31 |
+| 7 | Verse | 16 | 1:58 |
+| 8 | Hook | 16 | 2:25 |
+| 9 | Outro | 2 | 2:52 |
 
 </details>
