@@ -318,6 +318,14 @@ Generated from `lib/grammar.js` and `lib/lanes.js` by `node scripts/docs.js` (ed
 - the drums never announce a change, they just change
 
 **Beat-switch axes (tag / cue / after-words)**
+- second half on a new drum pattern / a second drum pattern: the snare moves from 2 and 4 to 3 alone and the kick thins to one per bar / a new drum pattern
+- second half, kick an 8th late / the kick pattern sits one 8th later against everything else, the snare where it was / kick an 8th late
+- second half, new kit, same pattern / keeps the pattern and swaps the kit: a deeper, longer kick and a rim click where the snare was / new kit, same pattern
+- claps take over in the second half / trades the snare for a stack of handclaps and adds a kick on the and of 2 / claps take over
+- hats twice as fast in the second half / doubles the hat rate while kick and snare hold their pattern / hats twice as fast
+- second half a minor third lower / the whole beat sits a minor third lower, lead, bass and drums pitched together / a minor third lower
+- final third a whole step up / sits a whole step higher, every sound moved together, the tempo unchanged / final third a whole step up
+- riff and bass trade registers / the riff and the bass trade registers, the riff down low and the bass line up top / riff and bass trade registers
 - beat switch to half-time / half-time drums, tempo halves, slow heavy kick, long 808 slides / half-time, slow heavy kick
 - second half double-time / double-time drums, hats double, kick pattern doubles / double-time, hats doubled
 - beat switch, key falls / key falls a minor third, the lead pitched down, same drums / in the lower key, the lead pitched down
@@ -353,6 +361,66 @@ Landings:
 - a single low note on beat 3, every other pass silent
 
 ## Guest families (experimental palette any lane may borrow for the lead)
+
+**chart** (one nameable sound, short and percussive, played as the hook over hard drums)
+
+Sources (description | handle):
+- a rubber sole squeaking on a polished floor, two short squeaks tuned a fourth apart, close and dry | the sneaker squeak
+- a windshield wiper dragging across dry glass, sampled and tuned, a two-note creak that falls a half step | the wiper creak
+- a bed spring creak sampled and tuned to one pitch, four quick creaks per bar | the spring creak
+- a drinking straw dragged through a plastic cup lid, the squawk tuned and cut to two notes | the straw squawk
+- a tennis ball can popped open, the pop tuned and played as a three-note riff, dry | the can pop
+- a metal ruler flicked on a desk edge so each note slides upward as it shortens, three flicks per bar | the ruler flick
+- a shop counter bell tapped twice and choked by a palm, pitched down a fifth | the counter bell
+- a stapler punched in time, a low tuned thud layered under each punch so it carries a note | the stapler punch
+- a row of clay flower pots struck with a wooden spoon, each pot one note, a dry four-note riff | the clay pots
+- an empty gas cylinder struck with a rubber mallet, a dull ringing note with a short metal tail, tuned to the root | the tank ring
+- a brake drum hit with a hammer, a short dead clang, three hits tuned to a minor triad | the brake drum
+- tuned rimshots on a tight snare shell, each one pitched, a five-note riff played where keys would be | the pitched rimshots
+- a hollow log-drum note with a knocking front, played as the riff an octave above the bass | the log knock
+- a length of plastic tube slapped on its open top, a deep round thwop, four tubes for four notes | the tube slap
+- an old mobile phone ringtone of five square-wave notes, tinny and dry, played an octave down | the old ringtone
+- a checkout scanner beep pitched into a three-note riff, each beep clipped square | the scanner beep
+- a heart monitor beep pitched down to a soft square note, one per beat, one note a minor third up on beat 3 | the monitor beep
+- a short pitched zap that falls a fifth in an instant, used as a note, three zaps per bar | the zap
+- a bit-reduced sine tone with coarse steps of grain, played as a slow two-note seesaw | the stepped tone
+- a battery-starved toy keyboard whose notes sag flat as they sustain, one finger, three notes | the sagging toy keys
+- a delivery truck warning beeper, one flat note pulsing on the off-beats, heard from across a street | the truck beeper
+- a camera flash charging whine held as one thin note that bends a half step sharp | the flash whine
+- an electric screwdriver squeezed in short bursts, the motor note tuned to the root and the fifth | the motor bursts
+- an electric razor pressed against a tabletop, a low rasping note gated into short stabs | the razor rasp
+- a subway door chime, two falling notes, sampled on a phone and pitched down a fourth | the door chime
+- a turn-signal relay click with a tuned low thump under it, tick-tock on two pitches | the turn signal
+- a pneumatic nail gun, each shot a hard tick with a pitched tail of air, tuned to three notes | the nail gun
+- a rubbery square-wave bass synth riff played an octave too high and too fast, dry and mono, five notes then a gap | the hyper bass riff
+- a hard-clipped saw synth playing one three-note hook, spread wide to both sides, the centre left for the kick | the wide saw hook
+- a sine-wave lead gliding slowly between two notes, a little distortion so it buzzes on small speakers | the gliding sine
+- a square-wave synth pluck with the filter almost shut, each note a soft knock with a short bright tick on top | the muffled pluck
+- a two-oscillator synth stab tuned slightly apart so the pitches beat against each other, one stab on the and of 2 | the beating stab
+- a filter pinged by a click so it rings one short note, tuned for each note of a four-note riff | the filter chirp
+- a noise burst through a tuned comb filter so it carries a pitch, short and breathy, five hits per bar | the tuned noise hit
+- a synth lead that glides up a whole octave on the first note of the riff and stays there | the octave glide
+- a sped-up stab of massed strings and brass, two notes, the low end filtered off so it is thin and urgent | the thin stab
+- a brass-band horn hit sampled from a parade, one fat chord pitched down a third and cut to an eighth | the parade hit
+- a trumpet phrase with the low end filtered away so it sounds like a tin speaker, four notes, mono | the tin-speaker trumpet
+- a double-reed horn sample, nasal and piercing, pitched down a fifth so it growls, three notes | the nasal reed
+- one piano note stretched to ten times its length until it turns into a grainy held tone | the stretched grain tone
+- a guitar feedback squeal caught in a sampler and played from pads, the same squeal at four pitches | the sampled feedback
+- a plastic toy horn, one braying flat note bent a half step by the lips, short blasts | the toy horn
+- a duck call squeezed into three pitches, nasal and rude, played low | the duck call
+- a kazoo through a small amp, doubled an octave down, a buzzing four-note riff | the amp kazoo
+- a length of plastic drainpipe blown like a horn, a rough low honk, two honks per bar | the drainpipe honk
+- a conch shell blown as one long hollow note that cracks upward as the breath runs out | the shell horn
+
+Processing characters:
+- a hard biting edge on a low note
+- thin at the bottom, as if from a small speaker
+- dry and close, every tail kept short
+- hard-clipped so it reads on a phone speaker
+- gated so each note ends in an instant
+- tuned by ear, a few cents off
+- dead centre and loud
+- resampled until the grain shows
 
 **found** (sampled and tuned over hard drums)
 
@@ -792,9 +860,9 @@ The flagship. Technical syncopated drums played off the grid, a heavy dry low en
 
 **Mix tag:** dry heavy mix, the sub clean, the snare up front (neutral: dry heavy mix, the sub clean)
 
-**Tempo:** 138-148 or 130-140 or 84-96 BPM (half-time above 120). Major share 0, soul/Dorian loops 0, slur tag 0.5, low lead 0.5. Modes straight 50, loop 30, switch 20. Sliders Weirdness 45-55, Style Influence 75-85.
+**Tempo:** 84-96 or 96-104 or 138-148 or 150-160 BPM (half-time above 120). Major share 0, soul/Dorian loops 0, slur tag 0.5, low lead 0.5. Modes straight 50, loop 30, switch 20. Sliders Weirdness 45-55, Style Influence 75-85.
 
-**Families** (weights odd 6, stab 3, synth 2, found 2; guest share 0.3)
+**Families** (weights odd 6, stab 3, synth 2, found 2; guest share 0.4)
 
 **odd** (over tight syncopated drums, dry and close)
 

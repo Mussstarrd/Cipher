@@ -76,6 +76,7 @@
     <button class="primary" id="go">Generate</button>
     <button id="again" hidden>Roll again</button>
     <button id="strut" title="Head up, absolute confidence">Strut</button>
+    <button id="detail" title="Switch between the short tight prompt and the long detailed one for the same roll">Detailed</button>
     <span class="vibe" id="vibe"></span>
   </div>
   <details class="more">
@@ -89,6 +90,7 @@
       <div><label for="exclude">Extra Exclude terms</label><input id="exclude" placeholder="siren, acoustic guitar"></div>
       <div><label for="seed">Seed (blank = random)</label><input id="seed" placeholder="42"></div>
       <div><label for="wild">Model</label><select id="wild"><option value="">v6 (follows the prompt)</option><option value="1">v6-wild (strange accidents)</option></select></div>
+      <div><label for="pstyle">Prompt writer</label><select id="pstyle"><option value="">tight: short, scene first (new)</option><option value="detailed">detailed: the long version</option></select></div>
       <div><label for="attitude">Attitude</label><select id="attitude"><option value="">lane decides</option><option value="strut">strut: head up, absolute confidence</option><option value="cold">cold: menace, patient</option><option value="low">low: reflective, inward</option><option value="wild">wild: off the leash</option></select></div>
       <div><label for="sprinkle">Mystery ingredient (once or twice)</label><select id="sprinkle"><option value="">random, about a third of rolls</option><option value="1">always</option><option value="0">never</option></select></div>
       <div><label for="hint">Hint (the strange ingredient)</label><select id="hint"><option value="">random, about half the time</option><option value="hits">piano / string hit structure</option><option value="fuzzlament">fuzz guitar lament</option><option value="machineglitch">machine glitch</option><option value="staxtwitch">nervous horn twitch</option><option value="none">none</option></select></div>
@@ -143,7 +145,7 @@
 
   function readInput(forceSeed) {
     const v = (id) => $(id).value.trim();
-    const input = { lane: laneSel.value, bpm: v('bpm') ? Number(v('bpm')) : undefined, key: v('key') || undefined, mood: v('mood') || undefined, mode: v('mode') === 'minimal' ? undefined : (v('mode') || undefined), minimal: v('mode') === 'minimal', constraints: v('constraints') || undefined, exclude: v('exclude') || undefined, wild: !!v('wild'), hint: v('hint') || undefined, attitude: v('attitude') || undefined, sprinkle: v('sprinkle') === '' ? undefined : v('sprinkle') === '1', avoidKeys: recentKeys };
+    const input = { lane: laneSel.value, bpm: v('bpm') ? Number(v('bpm')) : undefined, key: v('key') || undefined, mood: v('mood') || undefined, mode: v('mode') === 'minimal' ? undefined : (v('mode') || undefined), minimal: v('mode') === 'minimal', constraints: v('constraints') || undefined, exclude: v('exclude') || undefined, wild: !!v('wild'), hint: v('hint') || undefined, attitude: v('attitude') || undefined, style: v('pstyle') || undefined, sprinkle: v('sprinkle') === '' ? undefined : v('sprinkle') === '1', avoidKeys: recentKeys };
     if (forceSeed !== undefined) input.seed = forceSeed;
     return input;
   }
@@ -285,6 +287,8 @@
   $('go').addEventListener('click', () => roll(false));
   $('again').addEventListener('click', () => roll(true));
   $('strut').addEventListener('click', () => { $('attitude').value = 'strut'; roll(true); });
+  // same roll, other writer: the seed is kept so the two prompts describe the same sounds
+  $('detail').addEventListener('click', () => { const sel = $('pstyle'); sel.value = sel.value === 'detailed' ? '' : 'detailed'; $('detail').textContent = sel.value === 'detailed' ? 'Tight' : 'Detailed'; if (pkg) { $('seed').value = String(pkg.meta.seed); roll(false); $('seed').value = ''; } });
 })();
 </script>
 </body>

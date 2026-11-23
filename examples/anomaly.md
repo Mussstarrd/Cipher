@@ -2,12 +2,12 @@
 
 # suno-forge prompt block: Anomaly: syncopated, off-grid, one strange lead
 
-Lane `anomaly` | 142 BPM (half-time feel) | C# minor (i7 - IV7 (Dorian): C#m7 - F#7) | layout: Drums cut, lead alone, then beat B is simply there (switch) | about 2:56, full beat at 0:27 | seed 2026
+Lane `anomaly` | 142 BPM (half-time feel) | C# minor (i7 - IV7 (Dorian): C#m7 - F#7) | layout: Tight, 5 sections (switch) (switch) | about 2:56, full beat at 0:27 | seed 2026
 
 ## 1. MODEL
 **Pick:** v6
 **Why:** v6 follows the written prompt most closely (Weirdness 40-55, Style Influence 75-85 landed nearest the text in listening tests). Flagship (Pro/Premier). Best prompt adherence and structure-tag following; cleanest, most polished mix. Reported slightly narrower stereo than the previous generation and mixes that can go muffled after ~2:30 in standard mode, so run Max Mode for full-length beats.
-**Wild/experimental variant:** Try v6-wild when v6 comes back too tidy or too quantized: run the same fields on v6-wild at Weirdness 65-80 and Style Influence 55-70; that is where the strange, great accidents happen. Exploration checkpoint (Pro/Premier). Deliberately drifts from the prompt, more genre-blending and texture, unpredictable length. Defaults Variety to Off. Not the same as high Weirdness.
+**Wild/experimental variant:** This roll is a good candidate for v6-wild: run the same fields on v6-wild at Weirdness 65-80 and Style Influence 55-70; that is where the strange, great accidents happen. Exploration checkpoint (Pro/Premier). Deliberately drifts from the prompt, more genre-blending and texture, unpredictable length. Defaults Variety to Off. Not the same as high Weirdness.
 **Free-plan fallback:** v6-mini: Faster, lighter, available on Free. Closer to v6 than to wild, a little flatter with more artifacts. Use for cheap palette tests or if you are on the Free plan.
 
 ## 2. MODE/TOGGLES
@@ -19,61 +19,52 @@ Lane `anomaly` | 142 BPM (half-time feel) | C# minor (i7 - IV7 (Dorian): C#m7 - 
 - **Duration:** Custom 3:10 (estimated 2:56 from the layout at 142 BPM, plus a buffer rounded up to the next 5 s; [End] stops it early, Crop any tail). Never Auto: v6 runs long on Auto.
 - **Song Title:** Stolen Dying Siren
 
-## 3. STYLE FIELD (979/1000 chars; head tags first, then lead / bass / drums / counter)
+## 3. STYLE FIELD (633/1000 chars; head tags first, then lead / bass / drums / counter)
 ```text
-a detuned sine lead that slides between two notes like a siren winding down over clipped kick and rimshot-style, 142 BPM, half-time, in C# minor, cold technical trap, instrumental, threatening, the drums like footsteps, cold, six kicks against four hats, late snare, early hats, twitching kick retriggers, beat switch, new drums, same drums every section, lead below the hats, the dying siren, dry heavy mix, the sub clean, the snare up front. lead: a detuned sine lead that slides between two notes like a siren winding down, doubled an octave down, the low copy louder, a chest-level melody, felt as much as heard, off-beat stabs on the and of 2 and 4. bass: a short punchy 808 following the kick. drums: a clipped kick with a wooden thud under it, a rimshot-style snare, tight, a hair early on the last beat of the hook, six even kicks across the bar against four even hat strokes, sparse 8th hats with one open hat per bar, cut dead, every section identical except one sound.
+stop-start Virginia-style hip hop, 142 BPM half-time, slow and wide, Dorian minor, gritty, instrumental, threatening, the drums like footsteps, cold, the dying siren up front, tom, tom, clap, second half double-time, the drums a two-bar loop, the lead thin at the bottom, as if from a small speaker, clear of the bass. lead: a detuned sine lead that slides between two notes like a siren winding down, doubled an octave down. bass: a short punchy 808 following the kick. drums: a clipped kick with a wooden thud under it, a rimshot-style snare, the snare a few milliseconds late each time, the hats dead on the grid, sparse 8th hats.
 ```
 
-## 4. LYRICS FIELD (925/5000 chars; section tags only, no words)
+## 4. LYRICS FIELD (291/5000 chars; section tags only, no words)
 ```text
 [Instrumental]
 
-[Intro | clipped kick and 808 only, 8 bars]
+[Hook | full beat, the dying siren up front]
 
-[Verse | 8 bars, full drums, six kicks against four hats, the dying siren low]
+[Verse | same drums, the dying siren half as many notes]
 
-[Hook | full beat straight in on beat 1, cold, the dying siren up front, the hats dragged a few milliseconds behind the kick, every section identical except one sound]
+[Beat Switch | double-time drums]
 
-[Verse | same drums, the dying siren thinner, the hats dragged a few milliseconds behind the kick]
+[Hook | double-time, hats doubled, the dying siren up front]
 
-[Break | the dying siren alone, slowing down into it like the power got cut]
-
-[Beat Switch | new kick pattern, the 808 running straight 16ths, harder snare]
-
-[Verse | new drums, running 808, the choked chord answering, a rimshot tick in 5-hit bursts that skip the grid, on the last beat of every 2nd bar]
-
-[Hook | new drums, running 808, the last note of each phrase plays reversed]
-
-[Hook | new drums, running 808, identical, the dying siren up front]
-
-[Outro | new drums, running 808, stops dead on beat 1]
+[Verse | double-time, hats doubled, the dying siren an octave down]
 
 [End]
 ```
 
-## 5. EXCLUDE STYLES FIELD (463/1000 chars)
+## 5. EXCLUDE STYLES FIELD (53/1000 chars)
 ```text
-vocals, humming, ad-libs, vocal chops, drum fills, tom fills, snare rolls, hat rolls, drum rolls, transitions, transition fills, section transitions, risers, sweeps, filter sweeps, white noise sweeps, build-ups, breakdown FX, impacts, crash cymbals, reverse cymbals, DJ drops, DJ scratching, tape stop, party music, cartoon music, kids music, tropical, steel drums, ukulele, whistling, K-pop, dance pop, EDM, club music, dubstep, orchestral, lo-fi, jazz, neo-soul
+vocals, humming, drum fills, risers, party music, pop
 ```
 
 ## 6. SLIDERS
-- **Weirdness:** 51% — Anomaly: syncopated, off-grid, one strange lead: the lane's tested range is 45-55; above 60 Suno starts drifting tempo and structure.
-- **Style Influence:** 80% — High so the physical descriptions are followed; 75-85 landed closest to the written prompt.
+- **Weirdness:** 55% — Anomaly: syncopated, off-grid, one strange lead: the lane's tested range is 45-55; above 60 Suno starts drifting tempo and structure.
+- **Style Influence:** 79% — High so the physical descriptions are followed; 75-85 landed closest to the written prompt.
 - **Audio Influence:** Not used. No audio is uploaded in this workflow, so the slider does not appear; leave it alone.
 - **Variety:** Off (Exact style). Any setting above Off rewrites and expands the Style text before the model sees it (official FAQ: 'reduce the Variety slider to 0 to retain full control of your style tags'). Engineered prompts must run at Off.
 
 ## 7. VARIATIONS
-**A. Safer** (v6, Weirdness 41%, Style Influence 85%; 994 chars). Sound-neutral anchor, no twitch or slur tags, no hint: the plainest reading of the same sounds.
+**A. Safer** (v6, Weirdness 45%, Style Influence 84%; 556 chars). Sound-neutral anchor, no twitch or slur tags, no hint: the plainest reading of the same sounds.
 ```text
-syncopated hip hop instrumental, tight dry drums, heavy 808, 142 BPM, half-time, in C# minor, instrumental, threatening, the drums like footsteps, cold, beat switch, new drums, same drums every section, lead below the hats, the dying siren doubled an octave down, dry heavy mix, the sub clean. lead: a detuned sine lead that slides between two notes like a siren winding down, doubled an octave down, the low copy louder, a chest-level melody, felt as much as heard, off-beat stabs on the and of 2 and 4, a five-note motif on a simple rise-and-fall shape, the second note always a sixteenth late, every pass, mono center, out of the kick's way. bass: a short punchy 808 following the kick. drums: a clipped kick with a wooden thud under it, a rimshot-style snare, tight, a hair early on the last beat of the hook, sparse 8th hats with one open hat per bar, cut dead, a rimshot tick in 5-hit bursts that skip the grid, on the last beat of every 2nd bar, every section identical except one sound.
+stop-start Virginia-style hip hop, 142 BPM half-time, slow and wide, Dorian minor, gritty, instrumental, threatening, the drums like footsteps, cold, the dying siren up front, second half double-time, the drums a two-bar loop, dry heavy mix. lead: a detuned sine lead that slides between two notes like a siren winding down, doubled an octave down. bass: a short punchy 808 following the kick. drums: a clipped kick with a wooden thud under it, a rimshot-style snare, the snare a few milliseconds late each time, the hats dead on the grid, sparse 8th hats.
 ```
-**B. Weirder** (v6-wild, Weirdness 77%, Style Influence 64%; 999 chars). One wild tag added; run it on v6-wild.
+**B. Weirder** (v6-wild, Weirdness 66%, Style Influence 70%; 651 chars). One wild tag added; run it on v6-wild.
 ```text
-a detuned sine lead that slides between two notes like a siren winding down over clipped kick and rimshot-style, 142 BPM, half-time, in C# minor, cold technical trap, instrumental, threatening, the drums like footsteps, cold, six kicks against four hats, late snare, early hats, twitching kick retriggers, beat switch, new drums, same drums every section, hats crushed to grit, lead below the hats, the dying siren, dry heavy mix, the sub clean, the snare up front. lead: a detuned sine lead that slides between two notes like a siren winding down, doubled an octave down, the low copy louder, off-beat stabs on the and of 2 and 4. bass: a short punchy 808 following the kick, playing off the kick, landing in its gaps. drums: a clipped kick with a wooden thud under it, a rimshot-style snare, tight, a hair early on the last beat of the hook, six even kicks across the bar against four even hat strokes, sparse 8th hats with one open hat per bar, cut dead, every section identical except one sound.
+stop-start Virginia-style hip hop, 142 BPM half-time, slow and wide, Dorian minor, gritty, instrumental, threatening, the drums like footsteps, cold, the dying siren up front, tom, tom, clap, second half double-time, bit-mangled lead, the drums a two-bar loop, the lead thin at the bottom, as if from a small speaker, clear of the bass. lead: a detuned sine lead that slides between two notes like a siren winding down, doubled an octave down. bass: a short punchy 808 following the kick. drums: a clipped kick with a wooden thud under it, a rimshot-style snare, the snare a few milliseconds late each time, the hats dead on the grid, sparse 8th hats.
 ```
 
 ## 8. POST-GEN NOTES
-- Structure: the first full beat lands at about 0:27; the layout is "Drums cut, lead alone, then beat B is simply there" and runs about 2:56. The beat switch is one axis ("beat switch, new drums"); its words repeat in the head tag and in every section after the switch so Suno cannot undo it.
+- Tight prompt: a short Style field (a scene, a tempo feel, a key colour, the lead, one lateness phrase) and three to five short section tags, following the 2026-11 research (research/07). Judge it on four or more takes: one take tells you less than the difference between two takes of the same prompt. The Detailed switch writes the long version of the same roll.
+- Structure: the first full beat lands at about 0:27; the layout is "Drums cut, lead alone, then beat B is simply there" and runs about 2:56. The beat switch is one axis ("second half double-time"); its words repeat in the head tag and in every section after the switch so Suno cannot undo it.
 - Attitude: cold ("threatening, the drums like footsteps"). Menace without sadness: patient, even, nothing rushed.
 - No hint on this roll; the hook device in the lead line ("a five-note motif on a simple rise-and-fall shape, the second note always a sixteenth late, every pass") carries the stickiness. Listen for it on the second pass.
 - This lane is about the drums: the kick should land off the grid and the snare should slap. If it comes back as party or dance music, re-roll; the lane bans every word that caused that.
@@ -91,15 +82,10 @@ a detuned sine lead that slides between two notes like a siren winding down over
 
 | # | Section | Bars | Starts |
 |---|---------|------|--------|
-| 1 | Intro | 8 | 0:00 |
-| 2 | Verse | 8 | 0:14 |
-| 3 | Hook | 16 | 0:27 |
-| 4 | Verse | 16 | 0:54 |
-| 5 | Break | 4 | 1:21 |
-| 6 | Beat Switch | 2 | 1:28 |
-| 7 | Verse | 16 | 1:31 |
-| 8 | Hook | 16 | 1:58 |
-| 9 | Hook | 16 | 2:25 |
-| 10 | Outro | 2 | 2:52 |
+| 1 | Hook | 21 | 0:00 |
+| 2 | Verse | 21 | 0:35 |
+| 3 | Beat Switch | 21 | 1:11 |
+| 4 | Hook | 21 | 1:46 |
+| 5 | Verse | 21 | 2:22 |
 
 </details>

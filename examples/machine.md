@@ -2,12 +2,12 @@
 
 # suno-forge prompt block: Machine: industrial glitch hip hop
 
-Lane `machine` | 138 BPM (half-time feel) | C# minor (i7 - IV7 (Dorian): C#m7 - F#7) | layout: False start: two bars, dead silence, then the beat for real (straight) | about 2:57, full beat at 0:07 | seed 2026
+Lane `machine` | 138 BPM (half-time feel) | C# minor (i7 - IV7 (Dorian): C#m7 - F#7) | layout: Tight, 5 sections (straight) (straight) | about 2:57, full beat at 0:07 | seed 2026
 
 ## 1. MODEL
 **Pick:** v6
 **Why:** v6 follows the written prompt most closely (Weirdness 40-55, Style Influence 75-85 landed nearest the text in listening tests). Flagship (Pro/Premier). Best prompt adherence and structure-tag following; cleanest, most polished mix. Reported slightly narrower stereo than the previous generation and mixes that can go muffled after ~2:30 in standard mode, so run Max Mode for full-length beats.
-**Wild/experimental variant:** Try v6-wild when v6 comes back too tidy or too quantized: run the same fields on v6-wild at Weirdness 65-80 and Style Influence 55-70; that is where the strange, great accidents happen. Exploration checkpoint (Pro/Premier). Deliberately drifts from the prompt, more genre-blending and texture, unpredictable length. Defaults Variety to Off. Not the same as high Weirdness.
+**Wild/experimental variant:** This roll is a good candidate for v6-wild: run the same fields on v6-wild at Weirdness 65-80 and Style Influence 55-70; that is where the strange, great accidents happen. Exploration checkpoint (Pro/Premier). Deliberately drifts from the prompt, more genre-blending and texture, unpredictable length. Defaults Variety to Off. Not the same as high Weirdness.
 **Free-plan fallback:** v6-mini: Faster, lighter, available on Free. Closer to v6 than to wild, a little flatter with more artifacts. Use for cheap palette tests or if you are on the Free plan.
 
 ## 2. MODE/TOGGLES
@@ -19,59 +19,54 @@ Lane `machine` | 138 BPM (half-time feel) | C# minor (i7 - IV7 (Dorian): C#m7 - 
 - **Duration:** Custom 3:10 (estimated 2:57 from the layout at 138 BPM, plus a buffer rounded up to the next 5 s; [End] stops it early, Crop any tail). Never Auto: v6 runs long on Auto.
 - **Song Title:** Stolen Tuned Clang
 
-## 3. STYLE FIELD (985/1000 chars; head tags first, then lead / bass / drums / counter)
+## 3. STYLE FIELD (573/1000 chars; head tags first, then lead / bass / drums / counter)
 ```text
-mechanical hip hop, a motor for a melody, metal for a snare, 138 BPM, half-time, in C# minor, instrumental, cold and still, the 808 doing the talking, heartbeat kick, lone snare, drummer a little ahead, bass a little behind, twitching kick retriggers, one pocket, locked in, sections cut dead, nothing between, low dark lead melody, the tuned clang, the early kick once only, loud clipped mix, the sub clean under the distortion. lead: a ring-modulated metallic clang tuned to three notes, gated so each note ends in an instant, off-beat stabs on the and of 2 and 4, a five-note motif on a simple rise-and-fall shape, the second note always a sixteenth late, every pass. bass: a square sub with a slow pitch dive on each note, dark. drums: a short punchy kick layered with a metal thud, a snare with a clipped digital tail, harsh, the kick twice on 1 like a heartbeat, the snare a lone hit on 3, a spray-can hiss in 16ths in place of hats, one sound in, one sound out, drums identical.
+glitch hip hop, 138 BPM half-time, crawling tempo, Dorian minor, gritty, instrumental, cold and still, the 808 doing the talking, the tuned clang up front, one snare per bar, trading places, steady pocket, loud and dense, every hit the same strength, the snare on top. lead: a ring-modulated metallic clang tuned to three notes, gated so each note ends in an instant. bass: a square sub with a slow pitch dive on each note. drums: a short punchy kick layered with a metal thud, a snare with a clipped digital tail, the second kick of each bar always late, in place of hats.
 ```
 
-## 4. LYRICS FIELD (785/5000 chars; section tags only, no words)
+## 4. LYRICS FIELD (258/5000 chars; section tags only, no words)
 ```text
 [Instrumental]
 
-[Intro | the full beat for two bars, then one bar of dead silence, then the full beat again from beat 1 as if nothing happened]
+[Hook | full beat, the tuned clang up front]
 
-[Hook | full beat, the tuned clang up front, one sound in, one sound out, drums identical]
+[Verse | same drums, the 808 alone under the kick]
 
-[Verse | same drums, quiet uneven extra snare taps, a tight metallic tick in a quick double hit right before the snare, on beat 3]
+[Hook | same drums, the tuned clang up front]
 
-[Hook | identical]
+[Break | the frozen bar of lead]
 
-[Verse | same drums, the tuned clang out, the oil drum alone, quiet uneven extra snare taps]
-
-[Hook | identical, the last note of each phrase plays reversed]
-
-[Hook | identical again, drums identical, the early kick, once only, the kick lands a full beat early, once, and the bar carries on around it]
-
-[Outro | the beat stops dead mid-bar, silence, then one last hit of short punchy kick]
+[Verse | same drums, the tuned clang half as many notes]
 
 [End]
 ```
 
-## 5. EXCLUDE STYLES FIELD (396/1000 chars)
+## 5. EXCLUDE STYLES FIELD (51/1000 chars)
 ```text
-vocals, humming, ad-libs, vocal chops, drum fills, tom fills, snare rolls, hat rolls, drum rolls, transitions, transition fills, section transitions, risers, sweeps, filter sweeps, white noise sweeps, build-ups, breakdown FX, impacts, crash cymbals, reverse cymbals, DJ drops, DJ scratching, tape stop, EDM, dubstep, techno, rock drums, guitar solo, metal band, film score, jazz, pop, party music
+vocals, humming, drum fills, risers, EDM, rock band
 ```
 
 ## 6. SLIDERS
-- **Weirdness:** 55% — Machine: industrial glitch hip hop: the lane's tested range is 50-60; above 60 Suno starts drifting tempo and structure.
-- **Style Influence:** 78% — High so the physical descriptions are followed; 70-80 landed closest to the written prompt.
+- **Weirdness:** 50% — Machine: industrial glitch hip hop: the lane's tested range is 50-60; above 60 Suno starts drifting tempo and structure.
+- **Style Influence:** 71% — High so the physical descriptions are followed; 70-80 landed closest to the written prompt.
 - **Audio Influence:** Not used. No audio is uploaded in this workflow, so the slider does not appear; leave it alone.
 - **Variety:** Off (Exact style). Any setting above Off rewrites and expands the Style text before the model sees it (official FAQ: 'reduce the Variety slider to 0 to retain full control of your style tags'). Engineered prompts must run at Off.
 
 ## 7. VARIATIONS
-**A. Safer** (v6, Weirdness 45%, Style Influence 83%; 986 chars). Sound-neutral anchor, no twitch or slur tags, no hint: the plainest reading of the same sounds.
+**A. Safer** (v6, Weirdness 40%, Style Influence 76%; 493 chars). Sound-neutral anchor, no twitch or slur tags, no hint: the plainest reading of the same sounds.
 ```text
-distorted hip hop instrumental, hard clipped drums, heavy 808, 138 BPM, half-time, in C# minor, instrumental, cold and still, the 808 doing the talking, one pocket, locked in, sections cut dead, nothing between, low dark lead melody, the tuned clang, loud clipped mix, the sub clean. lead: a ring-modulated metallic clang tuned to three notes, gated so each note ends in an instant, a chest-level melody, felt as much as heard, off-beat stabs on the and of 2 and 4, a five-note motif on a simple rise-and-fall shape, the second note always a sixteenth late, every pass, every hit placed and left there, unhurried. bass: a square sub with a slow pitch dive on each note, dark, one note per bar. drums: a short punchy kick layered with a metal thud, a snare with a clipped digital tail, harsh, a spray-can hiss in 16ths in place of hats, a tight metallic tick in a quick double hit right before the snare, on beat 3, never the same way twice, one sound in, one sound out, drums identical.
+glitch hip hop, 138 BPM half-time, crawling tempo, Dorian minor, gritty, instrumental, cold and still, the 808 doing the talking, the tuned clang up front, steady pocket, loud clipped mix. lead: a ring-modulated metallic clang tuned to three notes, gated so each note ends in an instant. bass: a square sub with a slow pitch dive on each note. drums: a short punchy kick layered with a metal thud, a snare with a clipped digital tail, the second kick of each bar always late, in place of hats.
 ```
-**B. Weirder** (v6-wild, Weirdness 75%, Style Influence 70%; 994 chars). One wild tag added; run it on v6-wild.
+**B. Weirder** (v6-wild, Weirdness 79%, Style Influence 57%; 609 chars). One wild tag added; run it on v6-wild.
 ```text
-mechanical hip hop, a motor for a melody, metal for a snare, 138 BPM, half-time, in C# minor, instrumental, cold and still, the 808 doing the talking, heartbeat kick, lone snare, drummer a little ahead, bass a little behind, twitching kick retriggers, one pocket, locked in, sections cut dead, nothing between, drums pitched down a step, low dark lead melody, the tuned clang, the early kick once only, loud clipped mix, the sub clean under the distortion. lead: a ring-modulated metallic clang tuned to three notes, gated so each note ends in an instant, a chest-level melody, felt as much as heard, off-beat stabs on the and of 2 and 4. bass: a square sub with a slow pitch dive on each note, dark, a click on the attack, one note per bar. drums: a short punchy kick layered with a metal thud, a snare with a clipped digital tail, harsh, the kick twice on 1 like a heartbeat, the snare a lone hit on 3, a spray-can hiss in 16ths in place of hats, one sound in, one sound out, drums identical.
+glitch hip hop, 138 BPM half-time, crawling tempo, Dorian minor, gritty, instrumental, cold and still, the 808 doing the talking, the tuned clang up front, one snare per bar, trading places, the loop resampled until it smears, steady pocket, loud and dense, every hit the same strength, the snare on top. lead: a ring-modulated metallic clang tuned to three notes, gated so each note ends in an instant. bass: a square sub with a slow pitch dive on each note. drums: a short punchy kick layered with a metal thud, a snare with a clipped digital tail, the second kick of each bar always late, in place of hats.
 ```
 
 ## 8. POST-GEN NOTES
+- Tight prompt: a short Style field (a scene, a tempo feel, a key colour, the lead, one lateness phrase) and three to five short section tags, following the 2026-11 research (research/07). Judge it on four or more takes: one take tells you less than the difference between two takes of the same prompt. The Detailed switch writes the long version of the same roll.
 - Structure: the first full beat lands at about 0:07; the layout is "False start: two bars, dead silence, then the beat for real" and runs about 2:57. Straight mode: the same drums in every section, hard cuts only.
 - Attitude: cold ("cold and still, the 808 doing the talking"). Menace without sadness: patient, even, nothing rushed.
-- The mystery ingredient (the early kick) appears once, in the last hook: it is meant to be barely there and to send the track over the edge once. If Suno makes it constant, lower Style Influence five points; if it is missing, that is acceptable on a first take.
+- The mystery ingredient (the frozen bar of lead) appears once, in the last hook: it is meant to be barely there and to send the track over the edge once. If Suno makes it constant, lower Style Influence five points; if it is missing, that is acceptable on a first take.
 - No hint on this roll; the hook device in the lead line ("a five-note motif on a simple rise-and-fall shape, the second note always a sixteenth late, every pass") carries the stickiness. Listen for it on the second pass.
 - It should still be hip hop: a head-nod drum pattern under the noise. If it comes back as a rock or dance track, re-roll.
 - The lead is a machine sound, not an instrument; if it turns into a synth lead, change the seed.
@@ -88,13 +83,10 @@ mechanical hip hop, a motor for a melody, metal for a snare, 138 BPM, half-time,
 
 | # | Section | Bars | Starts |
 |---|---------|------|--------|
-| 1 | Intro | 4 | 0:00 |
-| 2 | Hook | 16 | 0:07 |
-| 3 | Verse | 16 | 0:35 |
-| 4 | Hook | 16 | 1:03 |
-| 5 | Verse | 16 | 1:30 |
-| 6 | Hook | 16 | 1:58 |
-| 7 | Hook | 16 | 2:26 |
-| 8 | Outro | 2 | 2:54 |
+| 1 | Hook | 20 | 0:00 |
+| 2 | Verse | 20 | 0:35 |
+| 3 | Hook | 20 | 1:10 |
+| 4 | Break | 20 | 1:44 |
+| 5 | Verse | 20 | 2:19 |
 
 </details>

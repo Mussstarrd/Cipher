@@ -76,6 +76,7 @@
     <button class="primary" id="go">Generate</button>
     <button id="again" hidden>Roll again</button>
     <button id="strut" title="Head up, absolute confidence">Strut</button>
+    <button id="detail" title="Switch between the short tight prompt and the long detailed one for the same roll">Detailed</button>
     <span class="vibe" id="vibe"></span>
   </div>
   <details class="more">
@@ -89,6 +90,7 @@
       <div><label for="exclude">Extra Exclude terms</label><input id="exclude" placeholder="siren, acoustic guitar"></div>
       <div><label for="seed">Seed (blank = random)</label><input id="seed" placeholder="42"></div>
       <div><label for="wild">Model</label><select id="wild"><option value="">v6 (follows the prompt)</option><option value="1">v6-wild (strange accidents)</option></select></div>
+      <div><label for="pstyle">Prompt writer</label><select id="pstyle"><option value="">tight: short, scene first (new)</option><option value="detailed">detailed: the long version</option></select></div>
       <div><label for="attitude">Attitude</label><select id="attitude"><option value="">lane decides</option><option value="strut">strut: head up, absolute confidence</option><option value="cold">cold: menace, patient</option><option value="low">low: reflective, inward</option><option value="wild">wild: off the leash</option></select></div>
       <div><label for="sprinkle">Mystery ingredient (once or twice)</label><select id="sprinkle"><option value="">random, about a third of rolls</option><option value="1">always</option><option value="0">never</option></select></div>
       <div><label for="hint">Hint (the strange ingredient)</label><select id="hint"><option value="">random, about half the time</option><option value="hits">piano / string hit structure</option><option value="fuzzlament">fuzz guitar lament</option><option value="machineglitch">machine glitch</option><option value="staxtwitch">nervous horn twitch</option><option value="none">none</option></select></div>
@@ -763,6 +765,14 @@ const GROOVE = {
 /** The beat switch is one axis. Its words go in the head tag, the [Beat Switch] cue and every section after it. */
 const SWITCH = {
   axes: [
+    { tag: 'second half on a new drum pattern', cue: 'a second drum pattern: the snare moves from 2 and 4 to 3 alone and the kick thins to one per bar', after: 'a new drum pattern' },
+    { tag: 'second half, kick an 8th late', cue: 'the kick pattern sits one 8th later against everything else, the snare where it was', after: 'kick an 8th late' },
+    { tag: 'second half, new kit, same pattern', cue: 'keeps the pattern and swaps the kit: a deeper, longer kick and a rim click where the snare was', after: 'new kit, same pattern' },
+    { tag: 'claps take over in the second half', cue: 'trades the snare for a stack of handclaps and adds a kick on the and of 2', after: 'claps take over' },
+    { tag: 'hats twice as fast in the second half', cue: 'doubles the hat rate while kick and snare hold their pattern', after: 'hats twice as fast' },
+    { tag: 'second half a minor third lower', cue: 'the whole beat sits a minor third lower, lead, bass and drums pitched together', after: 'a minor third lower' },
+    { tag: 'final third a whole step up', cue: 'sits a whole step higher, every sound moved together, the tempo unchanged', after: 'final third a whole step up' },
+    { tag: 'riff and bass trade registers', cue: 'the riff and the bass trade registers, the riff down low and the bass line up top', after: 'riff and bass trade registers' },
     { tag: 'beat switch to half-time', cue: 'half-time drums, tempo halves, slow heavy kick, long 808 slides', after: 'half-time, slow heavy kick' },
     { tag: 'second half double-time', cue: 'double-time drums, hats double, kick pattern doubles', after: 'double-time, hats doubled' },
     { tag: 'beat switch, key falls', cue: 'key falls a minor third, the lead pitched down, same drums', after: 'in the lower key, the lead pitched down' },
@@ -861,6 +871,40 @@ const CADENCE = [
   'kicks only in the first half of the bar, snares only in the second half|kicks first half, snares second',
   'the kick twice on 1 like a heartbeat, the snare a lone hit on 3|heartbeat kick, lone snare',
   'a kick on 1 and a quieter kick a 16th after 2, the snare on 4 only|snare on 4 only',
+  'kick on 1 and a 16th after 2, the snare on 3, a quiet second snare a 16th after 3|ghost snare after 3',
+  'kick on 1, the and of 1 and the and of 2, a clap on 2 and 4|three kicks crowding the front',
+  'kick on the and of 1 and on 3, the snare on 2 and 4, beat 1 left to the bass alone|bass alone on the one',
+  'kick on 1 and 2, then on the 16th before 3, the and of 3 and a 16th after 4, a clap on 2 and 4|five kicks, the later three uneven',
+  'kick on every beat, rim hits on the 16th before 2 and on the and of 2 only|rims crowding beat 2',
+  'a two-bar pattern, the snare on 3 in the first bar and on 4 in the second, the kick on 1 and the and of 2 both times|snare on 3, then on 4',
+  'kick on 1 and the and of 3, the snare on 2 only, a rim click on 4|snare on 2, rim on 4',
+  'five kicks spaced three 16ths apart starting on 1, the snare on 2 and 4|kick every three 16ths',
+  'kick on 1, the 16th before 2 and the and of 2, one snare on 3, the second half of the bar left to the bass|front-loaded kicks, lone snare',
+  'kick on 1 and the and of 2, the snare a 16th ahead of 2 and square on 4|early snare ahead of 2',
+  'kick on 1 and the and of 3, claps on 2 and a 16th after 4|second clap a 16th late',
+  'the snare on 3, kicks on 1, the and of 3 and on 4, beat 2 left empty|empty beat 2',
+  'kick on 2 and the and of 3, the snare on 4 only, beat 1 carried by the bass|kick waits for 2',
+  'a rim click on 2 and 4, the snare once on the and of 3, the kick on 1 and a 16th after 2|snare on the and of 3',
+  'kick on 1 and the and of 2, two snare hits a 16th apart with the second on 3, the first one soft|flammed snare on 3',
+  'a rim click on 1, the 16th before 2, the and of 2, the and of 3 and on 4, the kick only on 1 and 3|clave rim over a plain kick',
+  'the snare on 2 and 4, kicks on 1, the and of 2 and the 16th before 3|two kicks chasing the snare',
+  'kick on 1, the and of 2 and on 3, a clap on 2 and 4 with a finger snap on top of it|snap-and-clap bounce',
+  'the snare on 3 only, kicks on 1 and the 16th before 3 so the second kick sits tight against the snare|kick tight against the snare',
+  'a two-bar pattern, the first bar kick on 1 and snare on 3, the second bar the same with one more kick on the and of 2|one extra kick in the second bar',
+  'a two-bar pattern, kicks on 1 and the and of 2 in the first bar, on the and of 1 and on 3 in the second, the snare on 2 and 4 in both|kick swaps sides',
+  'a two-bar pattern, the snare on 2 and 4 in the first bar and only on 3 in the second, the kick on 1 in both|backbeat bar, then a lone snare on 3',
+  'kick on 1 and on 4, the snare on the and of 2 only|lone snare on the and of 2',
+  'kick on 1 and the 16th before 4, the snare on 2 and the and of 3|snare on 2 and the and of 3',
+  'kick on 1 and the and of 2, a loud snare on 3, two quiet snare taps on the 16ths either side of 2|quiet taps around 2',
+  'a low tom on 1 and the and of 1, a clap on 2 and 4, the kick only on 3|tom, tom, clap',
+  'a clap on every beat, kicks on 1, the and of 2 and the 16th before 4|clap on all four',
+  'kick a 16th after 1 and on 3, the snare on 2 and 4, beat 1 marked by a rim click|kick a 16th late off the one',
+  'three evenly spaced snares across the bar against a kick on every beat|three snares over four kicks',
+  'a two-bar pattern, kicks on 1 and 3 in both bars, the snare on 4 in the first bar and on 2 in the second|one snare per bar, trading places',
+  'kick on 1, on 2 and the and of 2, the snare on 3, the fourth beat left bare|bare fourth beat',
+  'kicks on 2 and 4, the snare on the and of 1 and the and of 3|kick and snare trade places',
+  'a two-bar pattern, kicks on 1 and the and of 2 throughout, the first bar a snare on 2 and 4, the second bar a rim on 2 and the snare on the and of 3|second bar trips on the and of 3',
+  'one long kick on 1, a clap on 2, a snare on 3, a clap on 4|clap, snare, clap',
 ];
 
 /** Non-quantization, as a head tag. */
@@ -873,7 +917,6 @@ const LOOSE = ['played by hand, off the grid', 'unquantized drums', 'loose human
  */
 const INJECTIONS = [
   'one snare hit bit-crushed and slapped back three times in a row, each echo shorter|the glitched snare slap',
-  'the snare lands twice a 32nd apart, hard, like a hand slipping|the double slap',
   'the key lifts a half step and stays there, the drums unchanged|the half-step lift',
   'the whole beat sinks a whole step for one bar, tight, then is simply where it was|the one-bar key sink',
   'the kick pattern swaps to a new one for two bars, then the first pattern is simply there again|the two-bar swap',
@@ -884,14 +927,73 @@ const INJECTIONS = [
   'the hats vanish for two bars and the kick doubles|the hatless bars',
   'the lead plays its phrase in mirror order, final note first, for one pass|the mirrored phrase',
   'the snare flams into five quick ghost hits and one loud one, by hand|the hand flam',
-  'the whole mix collapses to mono in a phone-speaker band for one bar|the phone-speaker bar',
+  'the whole mix collapses to mono in a phone-speaker band for one bar|the flattened bar',
   'the kick lands a full beat early, once, and the bar carries on around it|the early kick',
   'the feel halves for two bars, the snare on 3 only, the hats gone|the two-bar half-time',
   'the lead and the bass swap registers for one bar, the bass up high and the lead underneath|the register swap',
   'a single bar where the drums play the pattern of a different song, dry, then the loop again|the borrowed bar',
   'the snare slap pitched up a fifth and clipped for one hit only|the pitched slap',
 ];
+const INJECTIONS_RESEARCHED = [
+  'the snare is a hard digital slap, clipped and too loud, on its usual beat|the clipped snare slap',
+  'the snare lands a 16th early and twice, a flam that sounds like a sampler misfire|the misfired snare',
+  'two snares a 16th apart where one belongs, the second harder|the double slap',
+  'the snare is answered by its own copy a 32nd later and an octave down|the shadowed snare',
+  'a burst of bit-grain noise the length of a 16th stands in for the snare|the noise snare',
+  'the whole mix is muted for one beat, the hole exactly where the snare would be|the muted beat',
+  'everything but the bass is muted for a single bar|the bar of bass alone',
+  'the lead holds a single flat note for a full bar while the drums carry on under it|the frozen bar of lead',
+  'the lead plays its riff a tritone away from home for one pass|the pass a tritone off',
+  'the riff is an octave higher for one pass|the pass an octave up',
+  'for one bar the kick takes the snare\'s places and the snare takes the kick\'s|the swapped bar',
+  'one bar plays through a telephone-thin filter, lows and highs removed, the pattern unchanged|the bar on a tiny speaker',
+  'the mix folds to mono and bone dry for one bar|the narrow bar',
+  'one bar plays at half speed with the pitch an octave down|the slowed bar',
+  'the 808 holds one note for two whole bars while the drums play on|the long held 808',
+];
+INJECTIONS.push(...INJECTIONS_RESEARCHED);
 const INJECTION_ROLES = ['once, in the second verse', 'once, in the last hook', 'once only, in the first verse', 'once in the whole song, in the second verse', 'once in the whole song, near the end', 'once, about halfway through the song'];
+
+/**
+ * Tight prompts (research/07): a short Style field of a dozen or so decisions, with the variety put where Suno
+ * listens: a scene (era, region, subgenre) first, a tempo feel, a key colour instead of a tonic, one lateness phrase.
+ */
+const KEY_COLOUR = {
+  minor: ['dark minor', 'cold minor key', 'minor, heavy and sour', 'low dark minor'],
+  phrygian: ['dark minor, flat-second menace', 'Phrygian menace', 'minor with a flat second, tense'],
+  dorian: ['restless minor with a raised sixth', 'Dorian minor, gritty'],
+  major: ['major key, proud', 'major key, heavy', 'Mixolydian strut'],
+};
+const TEMPO_FEEL = {
+  slow: ['slow heavy head-nod', 'slow and wide', 'crawling tempo'],
+  mid: ['unhurried head-nod', 'mid-tempo, sitting back', 'steady walking pace'],
+  up: ['pushing forward', 'quick and tense', 'uptempo, urgent'],
+};
+/** Human timing as one constant on one element (never a band word). */
+const LATE = [
+  'the snare always a hair late', 'the clap a touch behind the kick each time', 'hats played unevenly by hand, the same unevenness each bar',
+  'the kick a hair early and the snare a hair late', 'the snare dragged late, the hats rushing ahead', 'the second kick of each bar always late',
+  'the snare a touch early, the bass a touch late', 'the snare a few milliseconds late each time, the hats dead on the grid', 'the hats ahead of the beat, the kick behind it',
+];
+/** Where chart hip hop puts its energy, said as a physical result (research/08, section 1). One per tight roll. */
+const SPECTRUM = [
+  'a tuned 808 sitting very low and clean, one long round note under everything',
+  'the sub felt in the chest more than heard, pure and steady',
+  'a little grit on top of the 808 so every bass note reads on a phone speaker',
+  'a short knocking kick with a hard tick on the front, sitting just above the 808',
+  'kick and 808 taking turns, the kick\'s knock first and the 808\'s weight right behind it',
+  'a dry cracking snare, a wooden thump under a sharp snap',
+  'thin crisp hats tucked under the snare, airy on top',
+  'the lead low but biting, nasal and buzzing, a hard biting edge on a low note',
+  'the lead thin at the bottom, as if from a small speaker, clear of the bass',
+  'a clear gap between the bass and the lead, the middle of the mix left open',
+  'the lead forward and dead centre, the loudest thing after the snare',
+  'bass and kick in the centre, mono, only the hats and one small sound out wide',
+  'dry and close, short rooms, every tail kept short',
+  'the whole beat reads on a small speaker, every part with an edge you can follow',
+  'loud and dense, every hit the same strength, the snare on top',
+];
+const STEADY = ['same drums all song', 'one drum pattern, start to finish', 'steady pocket', 'the drums a two-bar loop'];
 
 /** Title words. Titles are built from the roll's own sounds (lead handle, hint, key, motion) plus these, and the page never repeats one. */
 const TITLE = {
@@ -902,6 +1004,58 @@ const TITLE = {
 
 /** Shared instrument families any lane may borrow as a guest lead (experimental palette). */
 const FAMILIES = {
+  chart: {
+    frame: 'one nameable sound, short and percussive, played as the hook over hard drums',
+    sources: [
+      'a rubber sole squeaking on a polished floor, two short squeaks tuned a fourth apart, close and dry|the sneaker squeak',
+      'a windshield wiper dragging across dry glass, sampled and tuned, a two-note creak that falls a half step|the wiper creak',
+      'a bed spring creak sampled and tuned to one pitch, four quick creaks per bar|the spring creak',
+      'a drinking straw dragged through a plastic cup lid, the squawk tuned and cut to two notes|the straw squawk',
+      'a tennis ball can popped open, the pop tuned and played as a three-note riff, dry|the can pop',
+      'a metal ruler flicked on a desk edge so each note slides upward as it shortens, three flicks per bar|the ruler flick',
+      'a shop counter bell tapped twice and choked by a palm, pitched down a fifth|the counter bell',
+      'a stapler punched in time, a low tuned thud layered under each punch so it carries a note|the stapler punch',
+      'a row of clay flower pots struck with a wooden spoon, each pot one note, a dry four-note riff|the clay pots',
+      'an empty gas cylinder struck with a rubber mallet, a dull ringing note with a short metal tail, tuned to the root|the tank ring',
+      'a brake drum hit with a hammer, a short dead clang, three hits tuned to a minor triad|the brake drum',
+      'tuned rimshots on a tight snare shell, each one pitched, a five-note riff played where keys would be|the pitched rimshots',
+      'a hollow log-drum note with a knocking front, played as the riff an octave above the bass|the log knock',
+      'a length of plastic tube slapped on its open top, a deep round thwop, four tubes for four notes|the tube slap',
+      'an old mobile phone ringtone of five square-wave notes, tinny and dry, played an octave down|the old ringtone',
+      'a checkout scanner beep pitched into a three-note riff, each beep clipped square|the scanner beep',
+      'a heart monitor beep pitched down to a soft square note, one per beat, one note a minor third up on beat 3|the monitor beep',
+      'a short pitched zap that falls a fifth in an instant, used as a note, three zaps per bar|the zap',
+      'a bit-reduced sine tone with coarse steps of grain, played as a slow two-note seesaw|the stepped tone',
+      'a battery-starved toy keyboard whose notes sag flat as they sustain, one finger, three notes|the sagging toy keys',
+      'a delivery truck warning beeper, one flat note pulsing on the off-beats, heard from across a street|the truck beeper',
+      'a camera flash charging whine held as one thin note that bends a half step sharp|the flash whine',
+      'an electric screwdriver squeezed in short bursts, the motor note tuned to the root and the fifth|the motor bursts',
+      'an electric razor pressed against a tabletop, a low rasping note gated into short stabs|the razor rasp',
+      'a subway door chime, two falling notes, sampled on a phone and pitched down a fourth|the door chime',
+      'a turn-signal relay click with a tuned low thump under it, tick-tock on two pitches|the turn signal',
+      'a pneumatic nail gun, each shot a hard tick with a pitched tail of air, tuned to three notes|the nail gun',
+      'a rubbery square-wave bass synth riff played an octave too high and too fast, dry and mono, five notes then a gap|the hyper bass riff',
+      'a hard-clipped saw synth playing one three-note hook, spread wide to both sides, the centre left for the kick|the wide saw hook',
+      'a sine-wave lead gliding slowly between two notes, a little distortion so it buzzes on small speakers|the gliding sine',
+      'a square-wave synth pluck with the filter almost shut, each note a soft knock with a short bright tick on top|the muffled pluck',
+      'a two-oscillator synth stab tuned slightly apart so the pitches beat against each other, one stab on the and of 2|the beating stab',
+      'a filter pinged by a click so it rings one short note, tuned for each note of a four-note riff|the filter chirp',
+      'a noise burst through a tuned comb filter so it carries a pitch, short and breathy, five hits per bar|the tuned noise hit',
+      'a synth lead that glides up a whole octave on the first note of the riff and stays there|the octave glide',
+      'a sped-up stab of massed strings and brass, two notes, the low end filtered off so it is thin and urgent|the thin stab',
+      'a brass-band horn hit sampled from a parade, one fat chord pitched down a third and cut to an eighth|the parade hit',
+      'a trumpet phrase with the low end filtered away so it sounds like a tin speaker, four notes, mono|the tin-speaker trumpet',
+      'a double-reed horn sample, nasal and piercing, pitched down a fifth so it growls, three notes|the nasal reed',
+      'one piano note stretched to ten times its length until it turns into a grainy held tone|the stretched grain tone',
+      'a guitar feedback squeal caught in a sampler and played from pads, the same squeal at four pitches|the sampled feedback',
+      'a plastic toy horn, one braying flat note bent a half step by the lips, short blasts|the toy horn',
+      'a duck call squeezed into three pitches, nasal and rude, played low|the duck call',
+      'a kazoo through a small amp, doubled an octave down, a buzzing four-note riff|the amp kazoo',
+      'a length of plastic drainpipe blown like a horn, a rough low honk, two honks per bar|the drainpipe honk',
+      'a conch shell blown as one long hollow note that cracks upward as the breath runs out|the shell horn',
+    ],
+    character: ['a hard biting edge on a low note', 'thin at the bottom, as if from a small speaker', 'dry and close, every tail kept short', 'hard-clipped so it reads on a phone speaker', 'gated so each note ends in an instant', 'tuned by ear, a few cents off', 'dead centre and loud', 'resampled until the grain shows'],
+  },
   found: {
     frame: 'sampled and tuned over hard drums',
     sources: [
@@ -973,7 +1127,7 @@ const FAMILIES = {
 };
 
 /** Guest-lead share: a lane borrows the experimental palette for the lead this often; the counter stays in-lane. */
-const GUEST_FAMILIES = [['found', 2], ['synth', 3], ['guitar', 2], ['organ', 2], ['wind', 2]];
+const GUEST_FAMILIES = [['chart', 8], ['found', 2], ['synth', 2], ['guitar', 1], ['organ', 1], ['wind', 1]];
 
 /**
  * Attitude: the posture of the record. strut = head up, absolute confidence; cold = menace; low = reflective;
@@ -1026,7 +1180,7 @@ const ATTITUDE_WEIGHTS = [['strut', 40], ['cold', 25], ['low', 20], ['wild', 15]
 
 const MIX_TAG = 'crisp punchy radio mix';
 
-module.exports = { LEAD, BASS, TWITCH, GROOVE, SWITCH, COLOR, COUNTER_ROLE, RHYTHM, ANTI_TRANSITION, ANTI_TAGS, TITLE, FAMILIES, GUEST_FAMILIES, MIX_TAG, ATTITUDE, ATTITUDE_WEIGHTS, CADENCE, LOOSE, INJECTIONS, INJECTION_ROLES };
+module.exports = { LEAD, BASS, TWITCH, GROOVE, SWITCH, COLOR, COUNTER_ROLE, RHYTHM, ANTI_TRANSITION, ANTI_TAGS, TITLE, FAMILIES, GUEST_FAMILIES, MIX_TAG, ATTITUDE, ATTITUDE_WEIGHTS, CADENCE, LOOSE, INJECTIONS, INJECTION_ROLES, KEY_COLOUR, TEMPO_FEEL, LATE, STEADY, SPECTRUM };
 
   };
   __defs["./lanes"] = function (module, exports, require, __dirname) {
@@ -1046,6 +1200,18 @@ module.exports = { LEAD, BASS, TWITCH, GROOVE, SWITCH, COLOR, COUNTER_ROLE, RHYT
 
 const LANES = {
   anomaly: {
+    scenes: [
+      'early-2000s Virginia minimal hip hop',
+      'mid-2000s stutter-step southern hip hop',
+      'late-2010s minimal west coast trap',
+      'left-field 2010s trap',
+      'cold minimal Atlanta trap',
+      'stop-start Virginia-style hip hop',
+      'dark technical trap',
+      'early-2000s space-age minimal hip hop',
+      'grimy minimal New York trap',
+    ],
+    excludeTight: ['vocals', 'humming', 'drum fills', 'risers', 'party music', 'pop'],
     id: 'anomaly',
     label: 'Anomaly: syncopated, off-grid, one strange lead',
     button: 'Anomaly',
@@ -1077,7 +1243,7 @@ const LANES = {
     neutralAnchor: 'syncopated hip hop instrumental, tight dry drums, heavy 808',
     mainFamily: 'odd',
     families: { odd: 6, stab: 3, synth: 2, found: 2 },
-    guestShare: 0.3,
+    guestShare: 0.4,
     FAMILIES: {
       odd: {
         frame: 'over tight syncopated drums, dry and close',
@@ -1194,7 +1360,7 @@ const LANES = {
         'hats in a 3+3+2 pattern against a straight kick',
       ],
     },
-    tempo: [[138, 148], [130, 140], [84, 96]],
+    tempo: [[84, 96], [96, 104], [138, 148], [150, 160]],
     halfTimeAbove: 120,
     majorShare: 0,
     soulShare: 0,
@@ -1222,6 +1388,15 @@ const LANES = {
     ],
   },
   menace: {
+    scenes: [
+      'mid-2000s Miami boss trap',
+      'early-2000s Houston slow heavy hip hop',
+      'mid-2000s southern street trap',
+      'late-2000s ominous Atlanta trap',
+      'Louisiana slow heavy hip hop',
+      'dark luxury southern trap',
+    ],
+    excludeTight: ['vocals', 'humming', 'drum fills', 'risers', 'film score', 'pop'],
     id: 'menace',
     label: 'Menace: slow heavy boss trap',
     button: 'Menace',
@@ -1373,6 +1548,15 @@ const LANES = {
     ],
   },
   machine: {
+    scenes: [
+      'industrial hip hop',
+      'early-2010s noise hip hop',
+      'late-80s industrial drums under trap',
+      'glitch hip hop',
+      'abrasive experimental trap',
+      'machine-shop hip hop',
+    ],
+    excludeTight: ['vocals', 'humming', 'drum fills', 'risers', 'EDM', 'rock band'],
     id: 'machine',
     label: 'Machine: industrial glitch hip hop',
     button: 'Machine',
@@ -1540,6 +1724,14 @@ const LANES = {
     ],
   },
   'jid-dark': {
+    scenes: [
+      'late-2010s East Atlanta trap',
+      'dark Atlanta boom-bap trap hybrid',
+      'gritty underground southern hip hop',
+      'dense dark 2020s trap',
+      'dark sample-based trap',
+    ],
+    excludeTight: ['vocals', 'humming', 'drum fills', 'risers', 'neo-soul', 'film score'],
     id: 'jid-dark',
     label: 'Dense dark boom-bap/trap hybrid',
     blurb: 'Sliced soul keys and pitched-down strings over hard knocking drums, busy twitching hats, a beat switch halfway.',
@@ -1698,6 +1890,14 @@ const LANES = {
     buttonSub: 'dense, dark, sliced samples',
   },
   'phonk-experimental': {
+    scenes: [
+      'mid-90s southern cassette hip hop',
+      'slowed dark southern hip hop',
+      'underground 90s cassette trap',
+      'murky slowed hip hop',
+      'dark lo-fi southern hip hop',
+    ],
+    excludeTight: ['vocals', 'humming', 'vocal chops', 'drum fills', 'risers', 'drift phonk'],
     id: 'phonk-experimental',
     label: 'Dark slowed cassette hip hop',
     blurb: 'Dark slowed hip hop: a piano, organ, guitar or bell record dragged down, cassette grit, 808 cowbell knocks, a blown-out 808, a slow dragging pocket. The genre names are never said (they summon chopped vocal samples); instruments only.',
@@ -1841,6 +2041,14 @@ const LANES = {
     buttonSub: 'dark, slow, cassette grit',
   },
   'paak-pocket': {
+    scenes: [
+      'mid-90s east coast boom bap',
+      'early-2000s chipmunk soul hip hop',
+      'late-90s New York boom bap',
+      'dusty sample-based boom bap',
+      'sped-up soul-sample boom bap',
+    ],
+    excludeTight: ['vocals', 'humming', 'drum fills', 'DJ scratching', 'neo-soul', 'live band'],
     id: 'paak-pocket',
     label: 'Soul boom bap, live pocket',
     blurb: 'Soul-record chops (pitched up until they chirp, or left warm) over a hard boom-bap kit played behind the beat, bass guitar, horn jabs recorded hot. No jazz, no funk pastiche.',
@@ -3008,6 +3216,61 @@ function placeSprinkle(lyrics, text, role) {
   return lines.join('\n');
 }
 
+/**
+ * The tight Style field (research/07): a dozen or so decisions in about 450 to 650 characters. The scene comes first
+ * (era, region, subgenre: where Suno listens hardest), then tempo and feel, the key as a colour, the mood, the lead by
+ * its handle, the rolled cadence, then one short line each for lead, bass and drums. One lateness phrase, on one drum.
+ * Nothing about sections or one-time events: those live in the lyrics tags.
+ */
+const TIGHT_CAP = 680;
+function styleTight(p, lane, opts = {}) {
+  const { lead, bass, drums, rhythm } = p;
+  const fc = (t) => t.split(',')[0].trim();
+  const plain = !!opts.plain;
+  const H = p.hint && !plain && !p.bare ? p.hint : null;
+  const build = (use) => {
+    const head = [
+      opts.scene || p.scene, `${p.bpm} BPM${p.halfTime ? ' half-time' : ''}`, p.tempoFeel, p.keyColour, 'instrumental', p.attitudeTag, ...(p.moods || []),
+      `${lead.handle} up front`, plain ? null : rhythm.sync, p.mode === 'straight' ? null : rhythm.mode,
+      p.bare ? 'bare minimum, nothing else' : null, ...(p.extraTags || []), opts.wildTag || null, p.steadyTag, plain ? fc(opts.mixTag || p.mixTag) : p.spectrum,
+    ].filter(Boolean).join(', ') + '.';
+    const lines = [
+      `lead: ${fc(lead.source)}${use.character ? `, ${fc(lead.character)}` : ''}.`,
+      `bass: ${fc(bass.source)}.`,
+      `drums: ${fc(drums.kick)}, ${fc(drums.snare)}, ${p.late}${use.hats && !p.bare && /\s/.test(drumWord(drums.hats)) ? `, ${drumWord(drums.hats)}` : ''}.`,
+      H && use.hint ? `hint: ${fc(H.source)}.` : null,
+    ].filter(Boolean);
+    return [head, ...lines].join(' ');
+  };
+  const use = { character: true, hats: true, hint: true };
+  let text = build(use);
+  for (const k of ['character', 'hats', 'hint']) { if (text.length <= TIGHT_CAP) break; use[k] = false; text = build(use); }
+  return { text, drumsKept: true, hintKept: !H || use.hint };
+}
+
+/** Tight lyrics: three to five short tags, each a steady state. The injection is one tag of its own. */
+const TIGHT_LAYOUTS = {
+  straight: [
+    ['[Hook | full beat, {LEAD} up front]', '[Verse | same drums, {LEAD} an octave down]', '[Hook | full beat, {LEAD} up front]', '{INJ}', '[Hook | full beat, {LEAD} up front]'],
+    ['[Hook | full beat, {LEAD} up front]', '[Verse | same drums, {BASS} alone under the kick]', '[Hook | same drums, {LEAD} up front]', '{INJ}', '[Verse | same drums, {LEAD} half as many notes]'],
+    ['[Hook | full beat, {LEAD} up front]', '[Verse | same drums, {LEAD} resting, {BASS} carrying it]', '{INJ}', '[Hook | full beat, {LEAD} up front]'],
+  ],
+  loop: [
+    ['[Loop | {LEAD}, kick and {BASS}, the same two bars]', '[Loop | identical]', '{INJ}', '[Loop | identical, {LEAD} an octave down]', '[Loop | identical]'],
+  ],
+  switch: [
+    ['[Hook | full beat, {LEAD} up front]', '[Verse | same drums, {LEAD} half as many notes]', '[Beat Switch | {CUE}]', '[Hook | {AFTER}, {LEAD} up front]', '[Verse | {AFTER}, {LEAD} an octave down]'],
+  ],
+};
+function lyricsTight(p, r) {
+  const fc = (t) => t.split(',')[0].trim();
+  const vals = { LEAD: p.lead.handle, BASS: /808|sub/.test(p.bass.source) && !/bass guitar/.test(p.bass.source) ? 'the 808' : 'the bass', CUE: fc(p.sw.cue).length <= 84 ? fc(p.sw.cue) : p.sw.after, AFTER: p.sw.after };
+  const short = (t, alt) => (fc(t).length <= 78 ? fc(t) : alt);
+  const inj = p.sprinkle && p.sprinkle.injection && p.mode !== 'switch' ? `[Break | ${short(p.sprinkle.source, p.sprinkle.handle)}${/\bbars?\b|\bpass\b/.test(short(p.sprinkle.source, p.sprinkle.handle)) ? '' : ', two bars'}]` : null;
+  const tags = pick(TIGHT_LAYOUTS[p.mode] || TIGHT_LAYOUTS.straight, r).map((t) => (t === '{INJ}' ? inj : t.replace(/\{(\w+)\}/g, (m, k) => vals[k] || ''))).filter(Boolean);
+  return { text: `[Instrumental]\n\n${tags.join('\n\n')}\n\n[End]`, tags };
+}
+
 /** A title built from the roll's own sounds, salted so the page can ask for another one when it has seen it. */
 const STOP = new Set(['the', 'a', 'an', 'of', 'and', 'with', 'on', 'in']);
 const cap = (w) => w.charAt(0).toUpperCase() + w.slice(1);
@@ -3107,15 +3370,29 @@ function generate(input = {}) {
 
   const antiTag = antiTagPick;
   const p = { anchor, bpm, halfTime, key: harmony.key, mode, layout, moods, extraTags, mixTag, anti, antiTag, bare, cadence, looseTag, headStyle, attitude, attitudeTag, introBars, plan, lead, counter, hint, sprinkle, bass, drums, sw, rhythm };
-  let main = styleField(p, lane);
+  // Two writers for the same roll. tight (the default): a short, front-loaded prompt built on the 2026-11 research.
+  // detailed: the long physical-description prompt of the earlier builds.
+  const tight = (input.style || 'tight') !== 'detailed';
+  const felt = halfTime ? bpm / 2 : bpm;
+  Object.assign(p, {
+    scene: pick(lanePool(lane.scenes || [lane.neutralAnchor]), r),
+    tempoFeel: pick(lanePool(G.TEMPO_FEEL[felt < 76 ? 'slow' : felt <= 96 ? 'mid' : 'up']), r),
+    keyColour: pick(lanePool(G.KEY_COLOUR[/major/.test(harmony.key) ? 'major' : /bII/.test(harmony.roman) ? 'phrygian' : harmony.dorian ? 'dorian' : 'minor']), r),
+    late: pick(lanePool(G.LATE), r), steadyTag: pick(lanePool(G.STEADY), r), spectrum: pick(lanePool(G.SPECTRUM), r),
+  });
+  p.promptStyle = tight ? 'tight' : 'detailed';
+  let main = tight ? styleTight(p, lane) : styleField(p, lane);
+  if (tight && hint && !main.hintKept) p.hint = null;
   // A hint that cannot fit is taken out of the roll altogether, so the lyrics never name a sound the Style field lacks.
-  if (hint && !main.hintKept) { p.hint = null; main = styleField(p, lane); }
+  if (!tight && hint && !main.hintKept) { p.hint = null; main = styleField(p, lane); }
   const hintOut = p.hint;
   const style = main.text;
-  const lyrics = lyricsField(p);
+  const tightLyrics = tight ? lyricsTight(p, r) : null;
+  const lyrics = tight ? tightLyrics.text : lyricsField(p);
   if (!main.drumsKept) warnings.push('the drums line did not fit the Style field; the beat may come back generic');
 
-  const exclude = [...new Set([...lane.exclude, ...splitList(input.exclude)])].join(', ');
+  // The tight Exclude list is six bare nouns or fewer: a long list dilutes (research/07, section 5).
+  const exclude = [...new Set([...(tight ? lane.excludeTight || lane.exclude.slice(0, 6) : lane.exclude), ...splitList(input.exclude)])].join(', ');
   const S = lane.sliders;
   const weirdness = input.weirdness != null ? Number(input.weirdness) : int(S.weirdness[0], S.weirdness[1], r);
   const styleInfluence = input.styleInfluence != null ? Number(input.styleInfluence) : int(S.styleInfluence[0], S.styleInfluence[1], r);
@@ -3124,8 +3401,8 @@ function generate(input = {}) {
   const modelPick = input.wild ? SPEC.models.wild : SPEC.models.default;
   const title = input.title || makeTitle(seed, { lead, hint: hintOut, counter, harmony }, input.titleSalt || 0);
 
-  const safer = styleField({ ...p, moods, extraTags }, lane, { anchor: lane.neutralAnchor, plain: true, mixTag: lane.neutralMixTag }).text;
-  const weirder = styleField(p, lane, { wildTag: pick(lanePool(WILD_TAGS), r) }).text;
+  const safer = tight ? styleTight({ ...p, moods, extraTags }, lane, { plain: true, mixTag: lane.neutralMixTag }).text : styleField({ ...p, moods, extraTags }, lane, { anchor: lane.neutralAnchor, plain: true, mixTag: lane.neutralMixTag }).text;
+  const weirder = tight ? styleTight(p, lane, { wildTag: pick(lanePool(WILD_TAGS), r) }).text : styleField(p, lane, { wildTag: pick(lanePool(WILD_TAGS), r) }).text;
 
   for (const h of Guard.check(`${style}\n${lyrics}\n${safer}\n${weirder}\n${title}`, lane.allow, lane.deny)) warnings.push(`${h.rule}: "${h.word}" ${h.why}`);
 
@@ -3134,7 +3411,8 @@ function generate(input = {}) {
   const sections = [];
   { // section table for the renderer
     const bs = 240 / bpm; let t = 0;
-    layout.sections.forEach((s, i) => {
+    if (tight) { const each = Math.round(plan.totalSeconds / bs / tightLyrics.tags.length); tightLyrics.tags.forEach((s) => { sections.push({ tag: s.match(/^\[([^|\]]+)/)[1].trim(), bars: each, start: fmtTime(t) }); t += each * bs; }); }
+    else layout.sections.forEach((s, i) => {
       if (/^\[End\]/.test(s)) return;
       const bars = sectionBars(layout, i, halfTime, introBars);
       sections.push({ tag: s.match(/^\[([^|\]]+)/)[1].trim(), bars, start: fmtTime(t) }); t += bars * bs;
@@ -3144,7 +3422,7 @@ function generate(input = {}) {
   return {
     meta: {
       lane: laneId, laneLabel: lane.label, bpm, halfTime, key: harmony.key, chords: harmony.chords.join(' - '), roman: harmony.roman,
-      mode, layout: layout.id, layoutLabel: layout.label, bare, headStyle, attitude, seed, title, wildSuggested, hint: hintOut ? { family: hintOut.family, handle: hintOut.handle } : null, sprinkle: sprinkle ? { family: sprinkle.family, handle: sprinkle.handle, role: sprinkle.role } : null, generatedWithSpecVerifiedOn: SPEC.verifiedOn,
+      mode, layout: layout.id, layoutLabel: tight ? `Tight, ${tightLyrics.tags.length} sections (${mode})` : layout.label, promptStyle: tight ? 'tight' : 'detailed', scene: p.scene, bare, headStyle, attitude, seed, title, wildSuggested, hint: hintOut ? { family: hintOut.family, handle: hintOut.handle } : null, sprinkle: sprinkle ? { family: sprinkle.family, handle: sprinkle.handle, role: sprinkle.role } : null, generatedWithSpecVerifiedOn: SPEC.verifiedOn,
     },
     model: {
       pick: modelPick,
@@ -3183,6 +3461,7 @@ function generate(input = {}) {
 function postGen(lane, p, totalFormatted) {
   const f = SPEC.features;
   return [
+    ...(p.promptStyle === 'tight' ? ['Tight prompt: a short Style field (a scene, a tempo feel, a key colour, the lead, one lateness phrase) and three to five short section tags, following the 2026-11 research (research/07). Judge it on four or more takes: one take tells you less than the difference between two takes of the same prompt. The Detailed switch writes the long version of the same roll.'] : []),
     ...(p.bare ? ['Bare mode: the lead, one kick, one bass and silence; no counter, no hint, no percussion colour. If Suno adds anything, raise Style Influence five points and keep "bare minimum, nothing else" in the head.'] : []),
     `Structure: the first full beat lands at about ${fmtTime(p.plan.hookAtSeconds)}; the layout is "${p.layout.label}" and runs about ${totalFormatted}. ${p.mode === 'switch' ? `The beat switch is one axis ("${p.sw.tag}"); its words repeat in the head tag and in every section after the switch so Suno cannot undo it.` : p.mode === 'loop' ? 'Loop mode: every [Loop] tag says identical on purpose; if Suno adds changes anyway, raise Style Influence five points.' : 'Straight mode: the same drums in every section, hard cuts only.'}`,
     `Attitude: ${p.attitude} ("${p.attitudeTag}"). ${p.attitude === 'strut' ? 'Every sad, dragging or mournful phrase was stripped from the pools for this roll, the keys lean major or Mixolydian, the kick stomps on the one and the timing is placed, not late. If it still comes back heavy-lidded, re-roll with --attitude strut and a major key.' : p.attitude === 'cold' ? 'Menace without sadness: patient, even, nothing rushed.' : p.attitude === 'low' ? 'Reflective and inward; the slur and the late snare are allowed here.' : 'Off the leash; run it on v6-wild.'}`,
@@ -3500,7 +3779,7 @@ module.exports = { renderBlock, renderBatchTable };
 
   function readInput(forceSeed) {
     const v = (id) => $(id).value.trim();
-    const input = { lane: laneSel.value, bpm: v('bpm') ? Number(v('bpm')) : undefined, key: v('key') || undefined, mood: v('mood') || undefined, mode: v('mode') === 'minimal' ? undefined : (v('mode') || undefined), minimal: v('mode') === 'minimal', constraints: v('constraints') || undefined, exclude: v('exclude') || undefined, wild: !!v('wild'), hint: v('hint') || undefined, attitude: v('attitude') || undefined, sprinkle: v('sprinkle') === '' ? undefined : v('sprinkle') === '1', avoidKeys: recentKeys };
+    const input = { lane: laneSel.value, bpm: v('bpm') ? Number(v('bpm')) : undefined, key: v('key') || undefined, mood: v('mood') || undefined, mode: v('mode') === 'minimal' ? undefined : (v('mode') || undefined), minimal: v('mode') === 'minimal', constraints: v('constraints') || undefined, exclude: v('exclude') || undefined, wild: !!v('wild'), hint: v('hint') || undefined, attitude: v('attitude') || undefined, style: v('pstyle') || undefined, sprinkle: v('sprinkle') === '' ? undefined : v('sprinkle') === '1', avoidKeys: recentKeys };
     if (forceSeed !== undefined) input.seed = forceSeed;
     return input;
   }
@@ -3642,6 +3921,8 @@ module.exports = { renderBlock, renderBatchTable };
   $('go').addEventListener('click', () => roll(false));
   $('again').addEventListener('click', () => roll(true));
   $('strut').addEventListener('click', () => { $('attitude').value = 'strut'; roll(true); });
+  // same roll, other writer: the seed is kept so the two prompts describe the same sounds
+  $('detail').addEventListener('click', () => { const sel = $('pstyle'); sel.value = sel.value === 'detailed' ? '' : 'detailed'; $('detail').textContent = sel.value === 'detailed' ? 'Tight' : 'Detailed'; if (pkg) { $('seed').value = String(pkg.meta.seed); roll(false); $('seed').value = ''; } });
 })();
 </script>
 </body>

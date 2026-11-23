@@ -37,6 +37,15 @@ node forge.js lanes | layouts | spec
 
 About half of rolls carry a **hint**: one strange ingredient in the counter's seat, described physically and named in the head tags and one Lyrics tag. A fuzz-and-wah guitar lament with tape echo trailing behind it; a machine glitch (a chord sliced into a skipping-disc stutter, a tuned machine-shop clank, ring-modulated stabs); a nervous horn twitch (three horn jabs then silence, guitar chucks, a tambourine in bursts, recorded hot to tape); or a piano or string **hit structure** ("struck in a 3+2 pattern, five hits per bar, the last damped by hand"). Every lead line also carries one **hook device** from earworm research (repeat four times with one note changed; stop one note short of the root; a full beat of silence right before the hook). Pick a hint on the page under More options, or `--hint fuzzlament|machineglitch|staxtwitch|hits|none`.
 
+## Two prompt writers
+
+The same roll can be written two ways (the **Detailed** button on the page, or `--style tight|detailed`):
+
+- **Tight** (default) follows the November 2026 research in `research/07` and `research/08`: a short Styles field that opens on a scene (era, region, subgenre), gives the key as a colour, names the lead, the rolled drum cadence and one lateness phrase, and adds one phrase about where the energy sits in the spectrum. Three to five short section tags. Six Exclude terms.
+- **Detailed** is the long physical-description prompt of the earlier build.
+
+The research is community-grade and none of it has been rendered here. Judge either writer on four or more takes.
+
 ## How a roll is built
 
 1. **Lane, key, tempo, layout.** Keys avoid the last four; the live lane leans Dorian and major-7 loops, the dark lanes stay minor. The lyrics layout (three loop, five straight, three switch) is picked first and decides the mode.

@@ -2,12 +2,12 @@
 
 # suno-forge prompt block: Menace: slow heavy boss trap
 
-Lane `menace` | 132 BPM (half-time feel) | C# minor (i7 - IV7 (Dorian): C#m7 - F#7) | layout: Drums cut, lead alone, then beat B is simply there (switch) | about 3:09, full beat at 0:29 | seed 2026
+Lane `menace` | 132 BPM (half-time feel) | C# minor (i7 - IV7 (Dorian): C#m7 - F#7) | layout: Tight, 5 sections (switch) (switch) | about 3:09, full beat at 0:29 | seed 2026
 
 ## 1. MODEL
 **Pick:** v6
 **Why:** v6 follows the written prompt most closely (Weirdness 40-55, Style Influence 75-85 landed nearest the text in listening tests). Flagship (Pro/Premier). Best prompt adherence and structure-tag following; cleanest, most polished mix. Reported slightly narrower stereo than the previous generation and mixes that can go muffled after ~2:30 in standard mode, so run Max Mode for full-length beats.
-**Wild/experimental variant:** Try v6-wild when v6 comes back too tidy or too quantized: run the same fields on v6-wild at Weirdness 65-80 and Style Influence 55-70; that is where the strange, great accidents happen. Exploration checkpoint (Pro/Premier). Deliberately drifts from the prompt, more genre-blending and texture, unpredictable length. Defaults Variety to Off. Not the same as high Weirdness.
+**Wild/experimental variant:** This roll is a good candidate for v6-wild: run the same fields on v6-wild at Weirdness 65-80 and Style Influence 55-70; that is where the strange, great accidents happen. Exploration checkpoint (Pro/Premier). Deliberately drifts from the prompt, more genre-blending and texture, unpredictable length. Defaults Variety to Off. Not the same as high Weirdness.
 **Free-plan fallback:** v6-mini: Faster, lighter, available on Free. Closer to v6 than to wild, a little flatter with more artifacts. Use for cheap palette tests or if you are on the Free plan.
 
 ## 2. MODE/TOGGLES
@@ -19,61 +19,52 @@ Lane `menace` | 132 BPM (half-time feel) | C# minor (i7 - IV7 (Dorian): C#m7 - F
 - **Duration:** Custom 3:20 (estimated 3:09 from the layout at 132 BPM, plus a buffer rounded up to the next 5 s; [End] stops it early, Crop any tail). Never Auto: v6 runs long on Auto.
 - **Song Title:** Stolen Boss Hit
 
-## 3. STYLE FIELD (981/1000 chars; head tags first, then lead / bass / drums / counter)
+## 3. STYLE FIELD (599/1000 chars; head tags first, then lead / bass / drums / counter)
 ```text
-a low organ-and-brass stab sampled as one hit over dead dry kick and snare, 132 BPM, half-time, in C# minor, ominous minimal trap, instrumental, threatening, the drums like footsteps, ominous, six kicks against four hats, late snare, early hats, twitching kick retriggers, beat switch, new drums, same drums every section, long silences, lead below the hats, the boss hit, huge dark mix, the sub clean, the snare cutting through. lead: a low organ-and-brass stab sampled as one hit, pitched down, the tail gated, hard-clipped and loud, off-beat stabs on the and of 2 and 4, a five-note motif on a simple rise-and-fall shape, the second note always a sixteenth late, every pass. bass: an 808 tuned low, sliding down a fourth on the long notes. drums: a dead dry kick under a huge sub, a snare slap bit-crushed at the edges, late and loud, six even kicks across the bar against four even hat strokes, a slow open hat on the and of 2, choked, every section identical except one sound.
+late-2000s ominous Atlanta trap, 132 BPM half-time, slow and wide, Dorian minor, gritty, instrumental, threatening, the drums like footsteps, ominous, the boss hit up front, tom, tom, clap, beat switch to half-time, long silences, the drums a two-bar loop, the lead thin at the bottom, as if from a small speaker, clear of the bass. lead: a low organ-and-brass stab sampled as one hit, hard-clipped and loud. bass: an 808 tuned low. drums: a dead dry kick under a huge sub, a snare slap bit-crushed at the edges, the snare a few milliseconds late each time, the hats dead on the grid, slow open hat.
 ```
 
-## 4. LYRICS FIELD (909/5000 chars; section tags only, no words)
+## 4. LYRICS FIELD (279/5000 chars; section tags only, no words)
 ```text
 [Instrumental]
 
-[Intro | dead dry kick and 808 only, 8 bars]
+[Hook | full beat, the boss hit up front]
 
-[Verse | 8 bars, full drums, six kicks against four hats, the boss hit low]
+[Verse | same drums, the boss hit half as many notes]
 
-[Hook | full beat straight in on beat 1, cold, the boss hit up front, the hats dragged a few milliseconds behind the kick, every section identical except one sound]
+[Beat Switch | half-time drums]
 
-[Verse | same drums, the boss hit thinner, the hats dragged a few milliseconds behind the kick]
+[Hook | half-time, slow heavy kick, the boss hit up front]
 
-[Break | the boss hit alone, slowing down into it like the power got cut]
-
-[Beat Switch | new kick pattern, the 808 running straight 16ths, harder snare]
-
-[Verse | new drums, running 808, the sour organ answering, a rimshot tick in 5-hit bursts that skip the grid, on the last beat of every 2nd bar]
-
-[Hook | new drums, running 808, the last note of each phrase plays reversed]
-
-[Hook | new drums, running 808, identical, the boss hit up front]
-
-[Outro | new drums, running 808, stops dead on beat 1]
+[Verse | half-time, slow heavy kick, the boss hit an octave down]
 
 [End]
 ```
 
-## 5. EXCLUDE STYLES FIELD (384/1000 chars)
+## 5. EXCLUDE STYLES FIELD (52/1000 chars)
 ```text
-vocals, humming, ad-libs, vocal chops, drum fills, tom fills, snare rolls, hat rolls, drum rolls, transitions, transition fills, section transitions, risers, sweeps, filter sweeps, white noise sweeps, build-ups, breakdown FX, impacts, crash cymbals, reverse cymbals, DJ drops, DJ scratching, tape stop, film score, cinematic, orchestral, EDM, dubstep, jazz, neo-soul, party music, pop
+vocals, humming, drum fills, risers, film score, pop
 ```
 
 ## 6. SLIDERS
-- **Weirdness:** 51% — Menace: slow heavy boss trap: the lane's tested range is 45-55; above 60 Suno starts drifting tempo and structure.
-- **Style Influence:** 80% — High so the physical descriptions are followed; 75-85 landed closest to the written prompt.
+- **Weirdness:** 55% — Menace: slow heavy boss trap: the lane's tested range is 45-55; above 60 Suno starts drifting tempo and structure.
+- **Style Influence:** 79% — High so the physical descriptions are followed; 75-85 landed closest to the written prompt.
 - **Audio Influence:** Not used. No audio is uploaded in this workflow, so the slider does not appear; leave it alone.
 - **Variety:** Off (Exact style). Any setting above Off rewrites and expands the Style text before the model sees it (official FAQ: 'reduce the Variety slider to 0 to retain full control of your style tags'). Engineered prompts must run at Off.
 
 ## 7. VARIATIONS
-**A. Safer** (v6, Weirdness 41%, Style Influence 85%; 992 chars). Sound-neutral anchor, no twitch or slur tags, no hint: the plainest reading of the same sounds.
+**A. Safer** (v6, Weirdness 45%, Style Influence 84%; 522 chars). Sound-neutral anchor, no twitch or slur tags, no hint: the plainest reading of the same sounds.
 ```text
-slow dark trap instrumental, heavy 808, hard snare, 132 BPM, half-time, in C# minor, instrumental, threatening, the drums like footsteps, ominous, beat switch, new drums, same drums every section, long silences, lead below the hats, the boss hit hard-clipped and loud, huge dark mix, the sub clean. lead: a low organ-and-brass stab sampled as one hit, pitched down, the tail gated, hard-clipped and loud, a chest-level melody, felt as much as heard, off-beat stabs on the and of 2 and 4, a five-note motif on a simple rise-and-fall shape, the second note always a sixteenth late, every pass, every hit placed and left there, unhurried. bass: an 808 tuned low, sliding down a fourth on the long notes, following the kick exactly. drums: a dead dry kick under a huge sub, a snare slap bit-crushed at the edges, late and loud, a slow open hat on the and of 2, choked, a rimshot tick in 5-hit bursts that skip the grid, on the last beat of every 2nd bar, every section identical except one sound.
+late-2000s ominous Atlanta trap, 132 BPM half-time, slow and wide, Dorian minor, gritty, instrumental, threatening, the drums like footsteps, ominous, the boss hit up front, beat switch to half-time, long silences, the drums a two-bar loop, huge dark mix. lead: a low organ-and-brass stab sampled as one hit, hard-clipped and loud. bass: an 808 tuned low. drums: a dead dry kick under a huge sub, a snare slap bit-crushed at the edges, the snare a few milliseconds late each time, the hats dead on the grid, slow open hat.
 ```
-**B. Weirder** (v6-wild, Weirdness 77%, Style Influence 64%; 985 chars). One wild tag added; run it on v6-wild.
+**B. Weirder** (v6-wild, Weirdness 66%, Style Influence 70%; 617 chars). One wild tag added; run it on v6-wild.
 ```text
-a low organ-and-brass stab sampled as one hit over dead dry kick and snare, 132 BPM, half-time, in C# minor, ominous minimal trap, instrumental, threatening, the drums like footsteps, ominous, six kicks against four hats, late snare, early hats, twitching kick retriggers, beat switch, new drums, same drums every section, long silences, hats crushed to grit, lead below the hats, the boss hit, huge dark mix, the sub clean, the snare cutting through. lead: a low organ-and-brass stab sampled as one hit, pitched down, the tail gated, hard-clipped and loud, off-beat stabs on the and of 2 and 4. bass: an 808 tuned low, sliding down a fourth on the long notes. drums: a dead dry kick under a huge sub, a snare slap bit-crushed at the edges, late and loud, six even kicks across the bar against four even hat strokes, a slow open hat on the and of 2, choked, a rimshot tick in 5-hit bursts that skip the grid, on the last beat of every 2nd bar, every section identical except one sound.
+late-2000s ominous Atlanta trap, 132 BPM half-time, slow and wide, Dorian minor, gritty, instrumental, threatening, the drums like footsteps, ominous, the boss hit up front, tom, tom, clap, beat switch to half-time, long silences, bit-mangled lead, the drums a two-bar loop, the lead thin at the bottom, as if from a small speaker, clear of the bass. lead: a low organ-and-brass stab sampled as one hit, hard-clipped and loud. bass: an 808 tuned low. drums: a dead dry kick under a huge sub, a snare slap bit-crushed at the edges, the snare a few milliseconds late each time, the hats dead on the grid, slow open hat.
 ```
 
 ## 8. POST-GEN NOTES
-- Structure: the first full beat lands at about 0:29; the layout is "Drums cut, lead alone, then beat B is simply there" and runs about 3:09. The beat switch is one axis ("beat switch, new drums"); its words repeat in the head tag and in every section after the switch so Suno cannot undo it.
+- Tight prompt: a short Style field (a scene, a tempo feel, a key colour, the lead, one lateness phrase) and three to five short section tags, following the 2026-11 research (research/07). Judge it on four or more takes: one take tells you less than the difference between two takes of the same prompt. The Detailed switch writes the long version of the same roll.
+- Structure: the first full beat lands at about 0:29; the layout is "Drums cut, lead alone, then beat B is simply there" and runs about 3:09. The beat switch is one axis ("beat switch to half-time"); its words repeat in the head tag and in every section after the switch so Suno cannot undo it.
 - Attitude: cold ("threatening, the drums like footsteps"). Menace without sadness: patient, even, nothing rushed.
 - No hint on this roll; the hook device in the lead line ("a five-note motif on a simple rise-and-fall shape, the second note always a sixteenth late, every pass") carries the stickiness. Listen for it on the second pass.
 - The hit should land like a drum: one big dark chord, then silence. If it turns into a held pad or a film-score swell, re-roll.
@@ -91,15 +82,10 @@ a low organ-and-brass stab sampled as one hit over dead dry kick and snare, 132 
 
 | # | Section | Bars | Starts |
 |---|---------|------|--------|
-| 1 | Intro | 8 | 0:00 |
-| 2 | Verse | 8 | 0:15 |
-| 3 | Hook | 16 | 0:29 |
-| 4 | Verse | 16 | 0:58 |
-| 5 | Break | 4 | 1:27 |
-| 6 | Beat Switch | 2 | 1:35 |
-| 7 | Verse | 16 | 1:38 |
-| 8 | Hook | 16 | 2:07 |
-| 9 | Hook | 16 | 2:36 |
-| 10 | Outro | 2 | 3:05 |
+| 1 | Hook | 21 | 0:00 |
+| 2 | Verse | 21 | 0:38 |
+| 3 | Beat Switch | 21 | 1:16 |
+| 4 | Hook | 21 | 1:55 |
+| 5 | Verse | 21 | 2:33 |
 
 </details>

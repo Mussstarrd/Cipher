@@ -15,6 +15,15 @@ Suno prompt generator for radio-ready hip hop **instrumentals**. A reusable tool
 9. **Every sound is a physical description with a handle**, never a label; see `reference/grammar-and-guard.md`. Vocal-implying, EDM, film-score and elevator-jazz words are banned (voice, cinematic, strings-family names, Rhodes, sax, smooth, lo-fi outside the phonk lane); each lane ALLOWs the few words it needs and DENYs the words that pull it off course.
 10. **Current Suno facts only.** As of 2026-09-09 the only models are **v6, v6-wild, v6-mini**. v6 at Weirdness 40-55 / Style Influence 75-85; v6-wild at 65-80 / 55-70 for the weird lane. If a Suno fact might have changed, run the `suno-researcher` agent, then update `lib/spec.json` and `reference/suno-field-spec.md` together.
 
+## Two prompt writers (2026-11-23)
+
+Every roll can be written two ways from the same sounds; `--style tight|detailed`, or the Detailed button on the page.
+
+- **tight** (default): the research-backed writer (`research/07-suno-practice-2026-11.md`). A Style field of about 450-680 characters: a **scene** first (era, region, subgenre: `scenes` in `lib/lanes.js`), BPM and a tempo feel, the key as a colour (never a tonic letter), `instrumental`, the attitude, the lead by its handle, the rolled cadence tag, a steady-drums tag, one **spectrum** phrase (`SPECTRUM`, from `research/08-chart-hiphop-sound.md`), then one short line each for lead, bass and drums with exactly one lateness phrase on one drum. Lyrics are three to five short tags, each a steady state; the injection is one `[Break | ...]` tag. Exclude is six bare nouns or fewer (`excludeTight`).
+- **detailed**: the long physical-description writer of the build the owner called bangers (commit a062e09), unchanged except for the new lanes, cadences, looseness tags and injections.
+
+The research is community-grade and unrendered: no public controlled test exists for transitions, timing words or mid-song events. Any rule taken from it is a hypothesis until the owner's ear confirms it. Judge a change on four or more takes per arm, one change at a time; one take tells less than the difference between two takes of the same prompt.
+
 ## Layout
 
 | Path | What |
@@ -31,7 +40,7 @@ Suno prompt generator for radio-ready hip hop **instrumentals**. A reusable tool
 | `lib/render.js`, `lib/arrange.js` | Block/batch renderers; bars-to-seconds helpers |
 | `lib/spec.json` | Verified Suno facts (models, limits, controls, features, audio-ref terms) |
 | `reference/` | grammar-and-guard, suno-field-spec, metatag-cheatsheet, vocabulary-bank, tempo-key-tables, exclusion-presets |
-| `research/` | Dated, sourced research; `research/handoff/` is the previous generator's pass-down and source (the render-tested rules) |
+| `research/` | Dated, sourced research (`07` Suno practice for the current models, `08` chart hip hop sound: frequencies, tempo, lead properties, cadences, injections); `research/handoff/` is the previous generator's pass-down and source (the render-tested rules) |
 | `examples/` | One QA-passed block per lane; JSON configs |
 | `.claude/skills/` | `suno-prompt`, `suno-critique`, `suno-batch` |
 | `.claude/agents/` | `suno-researcher`, `groove-designer`, `style-writer`, `qa-checker` |

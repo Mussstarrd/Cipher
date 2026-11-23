@@ -32,7 +32,8 @@ const FLAGS = {
   styleInfluence: 'Override Style Influence % (0-100)',
   attitude: 'Posture of the record: strut (head up, absolute confidence) | cold | low | wild (lane-weighted random if omitted)',
   sprinkle: 'Force the mystery ingredient on (1) or off (0); random on about a third of rolls if omitted',
-  headStyle: 'How the Styles field opens: anchor | leadfirst | drumsfirst (random if omitted)',
+  headStyle: 'How the detailed Styles field opens: anchor | leadfirst | drumsfirst (random if omitted)',
+  style: 'Prompt writer: tight (default: short, scene first, research/07) | detailed (the long physical-description prompt)',
   minimal: 'Bare mode: the lead, one kick, one bass, silence; forces a minimal layout',
   hint: 'Force the extra ingredient: fuzzlament | machineglitch | staxtwitch | hits | none (random about half the time if omitted)',
   wild: 'Pick v6-wild as the model for this block',
@@ -93,7 +94,7 @@ async function interactive() {
 function fromArgs(args) {
   const input = {};
   if (args.config) Object.assign(input, JSON.parse(fs.readFileSync(path.resolve(args.config), 'utf8')));
-  for (const k of ['lane', 'bpm', 'key', 'mood', 'mode', 'layout', 'hint', 'headStyle', 'attitude', 'constraints', 'exclude', 'weirdness', 'styleInfluence', 'seed', 'title']) if (args[k] !== undefined && args[k] !== true) input[k] = args[k];
+  for (const k of ['lane', 'bpm', 'key', 'mood', 'mode', 'layout', 'hint', 'headStyle', 'style', 'attitude', 'constraints', 'exclude', 'weirdness', 'styleInfluence', 'seed', 'title']) if (args[k] !== undefined && args[k] !== true) input[k] = args[k];
   if (args.wild) input.wild = true;
   if (args.minimal) input.minimal = true;
   if (args.sprinkle !== undefined) input.sprinkle = String(args.sprinkle) === '1' || args.sprinkle === true;

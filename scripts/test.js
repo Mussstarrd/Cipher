@@ -11,7 +11,11 @@ const G = require('../lib/grammar');
 const { LANES } = require('../lib/lanes');
 const { LAYOUTS, estimate } = require('../lib/layouts');
 const HINTS = require('../lib/hints');
-const { generate, SPEC } = require('../lib/engine');
+const ENGINE = require('../lib/engine');
+const { SPEC } = ENGINE;
+/** The suite below was written for the detailed writer; the tight writer has its own test. */
+const generate = (o = {}) => ENGINE.generate({ style: 'detailed', ...o });
+const tight = (o = {}) => ENGINE.generate({ ...o, style: 'tight' });
 const { checkBlock, parseMarkdownBlock } = require('../lib/qa');
 const { renderBlock } = require('../lib/render');
 
@@ -218,6 +222,32 @@ test('attitude: strut rolls carry no sad or dragging words, lean major, and are 
   assert.ok(major < strut * 0.25, `strut is confidence, not a major key: ${major}/${strut} strut rolls in major`);
   assert.strictEqual(generate({ lane: 'paak-pocket', seed: 2, attitude: 'strut' }).meta.attitude, 'strut');
   assert.strictEqual(generate({ lane: 'paak-pocket', seed: 2, attitude: 'cold' }).meta.attitude, 'cold');
+});
+
+test('tight writer: short scene-first Style, a key colour instead of a tonic, short tags, six Exclude terms, QA clean', () => {
+  const scenes = {}; let N = 0, inj = 0;
+  for (const lane of LANE_IDS) for (const seed of SEEDS.slice(0, 300)) {
+    const b = tight({ lane, seed }); N++;
+    const q = checkBlock(b); assert.ok(q.ok, `${lane}/${seed}: ${q.errors.join(' | ')}\n${b.style}\n${b.lyrics}`);
+    assert.deepStrictEqual(b.warnings, [], `${lane}/${seed}: ${b.warnings.join(' | ')}`);
+    assert.strictEqual(b.meta.promptStyle, 'tight');
+    assert.ok(b.style.length <= 700, `${lane}/${seed}: tight Style is ${b.style.length} chars\n${b.style}`);
+    assert.ok(b.style.startsWith(b.meta.scene), `${lane}/${seed}: the scene opens the field`);
+    assert.ok(!/\bin [A-G][#b]? (minor|major)\b/.test(b.style), `${lane}/${seed}: a tonic letter is in the tight head`);
+    assert.ok(/\d+ BPM/.test(b.style.slice(0, 120)) && /\binstrumental\b/.test(b.style.slice(0, 220)), b.style);
+    assert.ok(b.style.includes(`${b.parts.lead.handle} up front`) && /lead: .+ bass: .+ drums: /.test(b.style), b.style);
+    assert.strictEqual((b.style.match(/a hair late|a touch behind|always late|dragged late|unevenly by hand|a touch early|ahead of the beat|milliseconds late/g) || []).length >= 1, true, `${lane}/${seed}: one lateness phrase\n${b.style}`);
+    const tags = b.lyrics.split('\n').filter((l) => /^\[/.test(l) && !/^\[(Instrumental|End)\]/.test(l));
+    assert.ok(tags.length >= 3 && tags.length <= 5 && tags.every((t) => t.length <= 110), `${lane}/${seed}: ${tags.length} tags\n${b.lyrics}`);
+    assert.ok(b.exclude.split(', ').length <= 6 && /vocals/.test(b.exclude) && /humming/.test(b.exclude), b.exclude);
+    if (b.meta.mode !== 'switch' && !b.meta.bare) { assert.strictEqual(tags.filter((t) => /^\[Break \|/.test(t)).length, 1, `${lane}/${seed}: one injection tag\n${b.lyrics}`); inj++; }
+    scenes[`${lane}: ${b.meta.scene}`] = (scenes[`${lane}: ${b.meta.scene}`] || 0) + 1;
+  }
+  assert.ok(Object.keys(scenes).length >= 30 && Math.max(...Object.values(scenes)) <= 300 * 0.3, JSON.stringify(scenes));
+  assert.ok(inj > N * 0.6, `${inj}/${N} tight rolls carry an injection tag`);
+  const a = tight({ lane: 'anomaly', seed: 9 }), d = generate({ lane: 'anomaly', seed: 9 });
+  assert.strictEqual(a.parts.lead.source, d.parts.lead.source, 'tight and detailed describe the same roll');
+  assert.ok(a.style.length < d.style.length);
 });
 
 test('user mood and must-have words are guarded', () => {
