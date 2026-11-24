@@ -15,9 +15,10 @@ holdings held unchanged. Every brief adds one row, including "no trade" days.
 | 7 | 2026-11-19 | No trade | Nasdaq-100 futures ~+2% after Anthropic priced its IPO; MU +4.2%, INTC +4.0%, SMH +2.6% pre-market; jobless claims 203K vs 198K est; Fed minutes hawkish. No entry setup defined in v1 (gap-up hypothesis proposed Nov 18, awaiting Jeffery) | n/a | n/a | n/a | $0 | n/a | not run | n/a | $0 |
 | 8 | 2026-11-20 | No trade | Broad sell-off pre-market: SPCX -6.9%, AMD -6.0%, TSM -5.9%, NVDA -3.3%, SMH -3.2%; VIX at 30; Anthropic down 8-10% after its debut. No entry setup defined in v1 | n/a | n/a | n/a | $0 | n/a | not run | n/a | $0 |
 | 9 | 2026-11-23 | No trade | Rebound pre-market after last week's correction: NVDA +8.6%, SMH +5.7%, QQQ +3.4%, SPY +2.4%. No entry setup defined in v1 | n/a | n/a | n/a | $0 | n/a | not run | n/a | $0 |
+| 10 | 2026-11-24 | No trade | NVDA closed +31.5% on Nov 23 (Reuters-syndicated reports; one newsletter headline ties it to Huang returning, not confirmed), then -4.9% pre-market; MU -6.7%, INTC -6.0%, SMH -4.7%. No entry setup defined in v1 | n/a | n/a | n/a | $0 | n/a | not run | n/a | $0 |
 
 ## Running totals
-- Recommendations: 9. Trades: 0. No-trade days: 9. Vetoes: 0.
+- Recommendations: 10. Trades: 0. No-trade days: 10. Vetoes: 0.
 - Paper P&L: $0. Open paper risk: $0.
 - Benchmarks (start = Nov 10 close): SPY 749.92. Holdings 14.890133 NVDA @ 168.89 + 24.613125 SPCX @ 143.09 = $6,036.68.
 - Nov 11 8:47 am (pre-market): SPY 756.91 (+0.93%). Holdings $6,126.70 (+1.49%). Paper 0.00%.
@@ -29,6 +30,7 @@ holdings held unchanged. Every brief adds one row, including "no trade" days.
 - Nov 19 8:47 am (pre-market): SPY 737.61 (-1.64%). Holdings $5,842.29 (-3.22%). Paper 0.00%.
 - Nov 20 8:47 am (pre-market): SPY 708.87 (-5.47%). Holdings $5,273.48 (-12.64%). Paper 0.00%.
 - Nov 23 8:48 am (pre-market): SPY 706.50 (-5.79%). Holdings $5,263.35 (-12.81%). Paper 0.00%.
+- Nov 24 8:47 am (pre-market): SPY 713.50 (-4.86%). Holdings $5,550.54 (-8.05%). Paper 0.00%.
 
 ## Notes
 - 2026-11-10 2:07 pm: Jeffery bought 2x CRWV Nov 27 $90C at $0.12 in 731123444 (real, off-system, before CRWV's earnings that evening). Not a paper position.
@@ -65,3 +67,4 @@ Grade of the Nov 16 review, one week in (pre-market to pre-market): NVDA -13.4% 
 - Both analysts: the two share positions are 97.7% of the account and fell together last week; that concentration is the main unpriced risk.
 - Checker: all values recomputed from quotes, no mismatch over 2%. Option marks total $123 but only about $46 is realisable at the bids.
 - Low disagreement between Bull and Bear (3-4 points on the shares, none on the options); confidence on the shares capped at low.
+- Interim check 2026-11-24: one day after the Nov 23 review called NVDA shares a coin flip, NVDA closed at $165.05 (+21% from the review's $136.36) and is $156.92 pre-market (+15.1%). Dec $170C bid $0.41 vs $0.42 at the review.
