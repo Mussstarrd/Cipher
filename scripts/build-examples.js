@@ -10,6 +10,7 @@ const { checkBlock } = require('../lib/qa');
 const EXAMPLES = {
   'anomaly': { lane: 'anomaly', bpm: 142, mood: 'cold', seed: 2026 },
   'machine': { lane: 'machine', bpm: 138, seed: 2026 },
+  'triumph': { lane: 'triumph', bpm: 96, mood: 'hopeful', seed: 2026 },
   'paak-pocket': { lane: 'paak-pocket', bpm: 94, key: 'D dorian', mood: 'sun-soaked, late-night', seed: 2026 },
   'jid-dark': { lane: 'jid-dark', bpm: 146, mode: 'switch', mood: 'paranoid', seed: 2026 },
   'phonk-experimental': { lane: 'phonk-experimental', bpm: 138, mode: 'loop', mood: 'dark', seed: 2026 },

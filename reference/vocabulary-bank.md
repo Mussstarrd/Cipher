@@ -978,6 +978,165 @@ Bass patterns:
 
 **Guard:** allow none; deny \b(pop|dance|club|party|festival|bright\w*|sunny|playful|cheerful|feel-good|upbeat|bounc\w*|pluck\w*|mallets?|toy|claps|lo-?fi|dusty|vinyl|crackl\w*|cassette|tape|memphis|phonk|cowbell|soul|jazz\w*|funk\w*|drill|horror|major hook|grins?)\b (pop, dance, bright and cute words turn this lane into party music; dusty or soul words pull it toward the soul lane).
 
+## Lane `triumph`: Triumph: hopeful, big horns, sped-up soul
+
+The record that makes you feel like you already won: a sped-up soul sample or a blaring sampled horn riff, a major-leaning key, big hard drums, a round low end. Hopeful, nostalgic, motivating.
+
+**Anchors** (sound-neutral when the lead is a guest: "triumphant hip hop instrumental, hard drums, big and proud")
+- triumphant soul-sample hip hop, hard drums, big and proud
+- hopeful sped-up soul hip hop, loud drums, wide open
+- victory-lap hip hop, sampled horns, hard snare
+- uplifting boom bap, a soul sample sped up until it shines, big drums
+- celebration hip hop instrumental, blaring sampled brass, round low end
+- nostalgic soul-sample hip hop, sweet and proud, drums up front
+- motivating hip hop, a climbing sample riff, hard kick and snare
+- sunlit soul-sample boom bap, loud and glad
+- proud mid-2000s soul hip hop, the sample up front, heavy drums
+- big-hearted hip hop, a sampled horn riff and a cracking snare
+- hopeful hip hop instrumental, a sample that climbs, drums that march
+- triumphant boom bap, sweet on top, heavy underneath
+
+**Mix tag:** big open mix, the sample up front, the snare cracking (neutral: big open mix, the snare cracking)
+
+**Tempo:** 84-96 or 98-108 or 78-84 BPM (half-time above 999). Major share 0.75, soul/Dorian loops 0.2, slur tag 0.15, low lead 0.1. Modes straight 55, loop 30, switch 15. Sliders Weirdness 40-50, Style Influence 75-85.
+
+**Families** (weights horns 5, soulup 4, chipmunk 3, uplift 2; guest share 0.1)
+
+**horns** (a sampled horn riff blaring over big hard drums)
+
+Sources (description | handle):
+- a soul horn-section riff sampled off an old 45 and sped up, blaring, four notes climbing | the climbing horns
+- a brass stab from a 70s soul intro, pitched up a step, hit on the one | the victory stab
+- a trumpet-and-trombone line rising a fourth then a fifth, sampled, the room still on it | the rising horns
+- a looped horn phrase from a soul 45, two bars, proud and wide | the horn loop
+- a sped-up brass riff with the old hiss left in, answering itself | the answering brass
+- a horn blast held long then three short jabs, sampled and looped | the long-short horns
+- a full horn section hitting one major chord like a slammed door, sampled, glad | the big chord
+- a trumpet line sampled from a soul record, five notes that climb and stay up | the trumpet climb
+
+Processing characters:
+- sped up until it sounds urgent and glad
+- the hiss of the old record left on it
+- filtered so the bass of the sample is gone
+- wide and loud, the top end open
+- pitched up a step, sweet and worn
+- looped off the one so it tumbles forward
+
+**soulup** (a sped-up soul sample over big hard drums)
+
+Sources (description | handle):
+- a sped-up soul sample, strings and keys together, two bars looped, hopeful | the hopeful chop
+- an old soul intro pitched up a fourth, the strings soaring, one bar long | the soaring chop
+- a reggae-record guitar-and-organ skank pitched up and looped, sunlit | the island chop
+- a soul piano run sampled and sped up until it sparkles | the sparkling run
+- a sped-up soul guitar lick, two bars, sweet and worn | the worn lick
+- a sampled string-section climb, four notes up, pitched up a step | the string climb
+- a soul record keys-and-strings phrase sped up, the last chord left ringing | the ringing chop
+- a 70s soul bridge sampled and pitched up, two chords rocking back and forth, glad | the rocking chords
+
+Processing characters:
+- sped up until it sounds urgent and glad
+- the hiss of the old record left on it
+- filtered so the bass of the sample is gone
+- wide and loud, the top end open
+- looped off the one so it tumbles forward
+- a little dusty, a little out of tune, loved
+
+**chipmunk** (a sped-up soul record over big hard drums)
+
+Sources (description | handle):
+- a soul record pitched up a fourth and cut to one bar, the horns and keys chirping, the room left in | the chipmunk soul chop
+- an old soul intro sped up until the strings and keys squeak, cut to two bars and looped off the one | the sped-up soul loop
+- a soul record keys-and-horns phrase pitched up a fifth, cut into four one-beat stabs | the pitched soul stabs
+- a soul ballad intro sped up a step and a half, the piano chirping, the hiss left in | the chirping piano chop
+- a one-bar soul horn-and-keys hit pitched up until it sounds tiny and urgent, played on every downbeat | the tiny horn hit
+- a soul record cut into half-bar pieces and rearranged so it stumbles, pitched up a third | the stumbling soul chop
+- a soul record keys loop at its own pitch, warm and dusty, the room and hiss left in, cut to two bars | the warm soul loop
+- a soul record pitched DOWN a third, slow and heavy, cut to one bar, the hiss rising | the slowed soul chop
+- a 70s library-music record cut to one bar, the keys and brass pitched up a step, dusty | the library chop
+- an old TV theme record sped up until it chirps, cut to two bars, the hiss left in | the TV-theme chop
+- a radio jingle record pitched up a fourth and cut to one beat, played on the one only | the jingle hit
+- a wedding-band record pitched down a step, the horns smeared, cut to one bar | the wedding-band chop
+- an exercise record from the 70s sped up, the keys chirping, cut to two bars and looped off the one | the exercise-record chop
+- a hold-music loop pitched up a fifth, thin and chirping, cut to one bar | the hold-music chop
+- a soul record played at the wrong speed, a quarter tone sharp, cut to one bar, warm | the wrong-speed chop
+
+Processing characters:
+- pitched up until it chirps, the hiss rising with it
+- cut on the one, the tail chopped before the snare
+- the record hiss and room left in
+- filtered so the bass of the record is gone and the bass guitar takes it
+- resampled until the grain shows
+- sliced off the one so it stumbles
+- hard-clipped on every hit
+- warm, at its own pitch, dusty
+
+**uplift** (bright and struck, over big hard drums)
+
+Sources (description | handle):
+- an upright piano hammering major chords in 8ths, sampled, a little out of tune | the hammered piano
+- a soul organ chord held and let go, sampled, glowing | the glowing organ
+- a piano riff climbing the major scale and landing on the fifth | the climbing piano
+- a string-section stab on a major chord, sampled, sharp and proud | the proud stab
+- a glassy electric keys riff, three notes rising, sampled off an old record | the rising keys
+
+Processing characters:
+- sampled, the room still on it
+- pitched up a step, sweet and worn
+- wide and loud, the top end open
+- hard-clipped so it reads on a phone speaker
+- a little out of tune, loved
+
+**Bass**
+- a round sub bass following the roots, steady
+- a bass guitar sample playing root and fifth, steady
+- a deep 808 holding long notes under the sample
+- a clean sine sub doubling the kick
+- a bass line lifted from the same soul record, pitched to the key
+- a round sub that climbs with the sample on the long notes
+
+Bass patterns:
+- following the kick exactly
+- one note per bar
+- root and fifth, two notes per bar
+- holding under the lead and moving when it rests
+- three notes then nothing
+- climbing a step with each chord
+
+**Kick**
+- a big punchy boom-bap kick, the low end round
+- a kick doubled on the and of 3, driving
+- a hard kick on the one and the and of two
+- two kicks before the snare, pushing forward
+- a kick that stomps on the one, hard and square
+- a deep round kick, short, tuned to the root
+- a hard dry kick, loud, the sub left to the bass
+- a kick on 1 and 3 with a ghost before each snare, marching
+
+**Snare**
+- a cracking snare with a clap stacked on it, loud
+- a fat snare with the ring left in, hit hard on 2 and 4
+- a snare like a slap, sharp and dry
+- a big roomy snare, a hair late
+- a hard boom-bap snare, crunchy, up front
+- a snare and a tambourine struck together, glad
+- a tight cracking snare, loud, the tail short
+- a big layered clap on 2 and 4, a hair behind
+
+**Hats**
+- open hats on the off-beats, washing
+- a tambourine on every 8th, loud and even
+- tight hats in 16ths with the accent on the downbeats
+- a shaker and a tambourine together, driving
+- hats in straight 8ths, tight, marching
+- a ride cymbal bell ticking 8ths, proud
+- hand-played hats, every hit a different pressure
+- sparse hats, the tambourine doing the work
+
+**Exclude Styles:** vocals, humming, ad-libs, vocal chops, drum fills, tom fills, snare rolls, hat rolls, drum rolls, transitions, transition fills, section transitions, risers, sweeps, filter sweeps, white noise sweeps, build-ups, breakdown FX, impacts, crash cymbals, reverse cymbals, DJ drops, DJ scratching, tape stop, dark trap, horror, EDM, jazz, neo-soul, lo-fi, sad
+
+**Guard:** allow none; deny \b(dark\w*|menac\w*|sinister|grim|ominous|murky|horror|threat\w*|villain|funeral|drill|phonk|memphis|cowbell|distorted 808|blown-out|jazz\w*|funk\w*|neo-soul|chill|lo-?fi|sag\w*|drag\w*)\b (dark, cold and menacing words turn the hopeful lane into every other lane; jazz and chill words turn it soft).
+
 ## Lane `menace`: Menace: slow heavy boss trap
 
 Slow, ominous Southern trap: one big dark hit (organ, low brass, a struck low piano) used like a drum, a huge long 808, a late snare, long silences.

@@ -210,7 +210,7 @@ test('attitude: strut rolls carry no sad or dragging words, lean major, and are 
   let strut = 0, major = 0, N = 0;
   for (const lane of LANE_IDS) for (const seed of SEEDS.slice(0, 300)) {
     const b = generate({ lane, seed }); N++;
-    assert.ok(['strut', 'cold', 'low', 'wild'].includes(b.meta.attitude));
+    assert.ok(['strut', 'cold', 'low', 'wild', 'rise'].includes(b.meta.attitude));
     assert.ok(b.style.includes(b.parts.attitudeTag) || (b.meta.attitude !== 'strut' && b.style.length >= 950), `${lane}/${seed}: attitude tag missing`);
     if (b.meta.attitude !== 'strut') continue;
     strut++; if (/major/.test(b.meta.key)) major++;
@@ -248,6 +248,22 @@ test('tight writer: short scene-first Style, a key colour instead of a tonic, sh
   const a = tight({ lane: 'anomaly', seed: 9 }), d = generate({ lane: 'anomaly', seed: 9 });
   assert.strictEqual(a.parts.lead.source, d.parts.lead.source, 'tight and detailed describe the same roll');
   assert.ok(a.style.length < d.style.length);
+});
+
+test('the hopeful lane stays hopeful: mostly major, the rise attitude, sampled horns or sped-up soul, no dark words', () => {
+  let major = 0, rise = 0, bright = 0; const N = 400;
+  for (const seed of SEEDS.slice(0, N)) for (const mk of [generate, tight]) {
+    const b = mk({ lane: 'triumph', seed });
+    assert.ok(checkBlock(b).ok, checkBlock(b).errors.join(' | '));
+    const m = (b.style + '\n' + b.lyrics).match(/\b(dark\w*|menac\w*|sinister|grim|ominous|murky|horror|threat\w*|villain|funeral)\b/i);
+    assert.ok(!m, `triumph/${seed}: dark word "${m && m[0]}"\n${b.style}`);
+    if (mk === tight) { if (/major/.test(b.meta.key)) major++; if (b.meta.attitude === 'rise') rise++; if (/horns|soulup|chipmunk|uplift/.test(b.parts.lead.family)) bright++; }
+  }
+  assert.ok(major > N * 0.6, `${major}/${N} triumph rolls in a major key`);
+  assert.ok(rise > N * 0.6, `${rise}/${N} triumph rolls carry the rise attitude`);
+  assert.ok(bright > N * 0.8, `${bright}/${N} triumph leads are sampled horns, sped-up soul or struck keys`);
+  let any = 0; for (const seed of SEEDS.slice(0, 600)) if (tight({ lane: 'any', seed }).meta.lane === 'triumph') any++;
+  assert.ok(any > 600 * 0.12, `"Surprise me" lands on the hopeful lane ${any}/600 times`);
 });
 
 test('user mood and must-have words are guarded', () => {
@@ -296,7 +312,7 @@ test('CLI: flags, any lane, json, batch, qa subcommand, piped interactive', () =
   fs.writeFileSync(tmp, renderBlock(generate({ lane: 'menace', seed: 1 })));
   assert.ok(execFileSync('node', ['forge.js', 'qa', tmp], { cwd: root, encoding: 'utf8' }).includes('PASS'));
   fs.unlinkSync(tmp);
-  const piped = execFileSync('node', ['forge.js'], { cwd: root, encoding: 'utf8', input: '6\n138\n\ndark\nloop\n' });
+  const piped = execFileSync('node', ['forge.js'], { cwd: root, encoding: 'utf8', input: '7\n138\n\ndark\nloop\n' });
   assert.ok(/Lane `phonk-experimental` \| 138 BPM/.test(piped) && /\[Loop \|/.test(piped), piped.slice(0, 300));
 });
 

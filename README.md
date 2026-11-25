@@ -27,6 +27,7 @@ node forge.js lanes | layouts | spec
 | Lane | Sound (records never named in prompts) | Written BPM |
 |---|---|---|
 | `anomaly` (flagship) | Technical syncopated drums played off the grid, a heavy dry low end, one lead that should not work; minor and Phrygian only | 130-148 half-time, or 84-96 |
+| `triumph` | Hopeful, nostalgic, motivating: a sped-up soul sample or a blaring sampled horn riff, a major-leaning key, big hard drums (the feel of "Touch the Sky", "Live Your Life", "Lucifer") | 78-108 |
 | `menace` | Slow ominous Southern trap: one big dark hit used like a drum, a huge long 808, a late snare, long silences | 120-140 half-time, or 66-76 |
 | `machine` | Industrial glitch hip hop: distorted drums, struck metal tuned to the key, a lead that sounds like a fault in the machine | 132-146 half-time, 84-96 or 100-110 |
 | `jid-dark` | Dense dark boom-bap/trap hybrid: sliced soul keys and pitched-down strings over knocking drums, twitching hats, a beat switch | 140-152 half-time, or 86-94 |
