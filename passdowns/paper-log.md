@@ -33,6 +33,7 @@ holdings held unchanged. Every brief adds one row, including "no trade" days.
 - Nov 23 8:48 am (pre-market): SPY 706.50 (-5.79%). Holdings $5,263.35 (-12.81%). Paper 0.00%.
 - Nov 24 8:47 am (pre-market): SPY 713.50 (-4.86%). Holdings $5,550.54 (-8.05%). Paper 0.00%.
 - Nov 25 8:47 am (pre-market): SPY 703.82 (-6.15%). Holdings $5,117.35 (-15.23%). Paper 0.00%.
+- Nov 26 (Thanksgiving, market closed; not a counted day): Nov 25 closes SPY 716.75 (-4.42%). Holdings $5,359.13 (-11.22%). Paper 0.00%.
 
 ## Notes
 - 2026-11-10 2:07 pm: Jeffery bought 2x CRWV Nov 27 $90C at $0.12 in 731123444 (real, off-system, before CRWV's earnings that evening). Not a paper position.
@@ -71,3 +72,4 @@ Grade of the Nov 16 review, one week in (pre-market to pre-market): NVDA -13.4% 
 - Low disagreement between Bull and Bear (3-4 points on the shares, none on the options); confidence on the shares capped at low.
 - Interim check 2026-11-24: one day after the Nov 23 review called NVDA shares a coin flip, NVDA closed at $165.05 (+21% from the review's $136.36) and is $156.92 pre-market (+15.1%). Dec $170C bid $0.41 vs $0.42 at the review.
 - Interim check 2026-11-25: SPCX $119.58 pre-market, below its Nov 5 closing low of $123.62 (no unlock confirmed). Dec $170C bid $0.26 (review bids: $1.70 on Nov 16, $0.42 on Nov 23). Mar $340C and CRWV $90C have no bid.
+- 2026-11-26: market closed. Oct PCE 3.8% y/y, core 3.3% vs 3.2% est. S&P 500 recovered from -3.2% intraday to close -0.25% on Nov 25. Dec $170C bid $0.29. CRWV $90C expires Nov 27 with no bid.
