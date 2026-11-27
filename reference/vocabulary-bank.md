@@ -974,73 +974,89 @@ Bass patterns:
 - a tight hat on every 8th and a pitched-up tick on every third 16th
 - hats in a 3+3+2 pattern against a straight kick
 
-**Exclude Styles:** vocals, humming, ad-libs, vocal chops, drum fills, tom fills, snare rolls, hat rolls, drum rolls, transitions, transition fills, section transitions, risers, sweeps, filter sweeps, white noise sweeps, build-ups, breakdown FX, impacts, crash cymbals, reverse cymbals, DJ drops, DJ scratching, tape stop, party music, cartoon music, kids music, tropical, steel drums, ukulele, whistling, K-pop, dance pop, EDM, club music, dubstep, orchestral, lo-fi, jazz, neo-soul
+**Exclude Styles:** vocals, humming, ad-libs, vocal chops, drum fills, tom fills, snare rolls, hat rolls, drum rolls, transitions, transition fills, section transitions, risers, sweeps, filter sweeps, white noise sweeps, build-ups, breakdown FX, impacts, crash cymbals, reverse cymbals, DJ drops, DJ scratching, tape stop, party music, cartoon music, kids music, tropical, steel drums, ukulele, whistling, K-pop, dance pop, EDM, club music, dubstep, orchestral, lo-fi, neo-soul, jazz, smooth jazz, reggae, elevator music
 
 **Guard:** allow none; deny \b(pop|dance|club|party|festival|bright\w*|sunny|playful|cheerful|feel-good|upbeat|bounc\w*|pluck\w*|mallets?|toy|claps|lo-?fi|dusty|vinyl|crackl\w*|cassette|tape|memphis|phonk|cowbell|soul|jazz\w*|funk\w*|drill|horror|major hook|grins?)\b (pop, dance, bright and cute words turn this lane into party music; dusty or soul words pull it toward the soul lane).
 
-## Lane `triumph`: Triumph: hopeful, big horns, sped-up soul
+## Lane `triumph`: Triumph: defiant, hard-won, horns and steel
 
-The record that makes you feel like you already won: a sped-up soul sample or a blaring sampled horn riff, a major-leaning key, big hard drums, a round low end. Hopeful, nostalgic, motivating.
+Victory that cost something. A blaring sampled horn riff, a slide on rusted steel, a harmonica wail or a sped-up soul sample that strains, over big hard drums in a backwoods barn. Pained, defiant, rebellious, confident, triumphant. Never sweet, never church.
 
-**Anchors** (sound-neutral when the lead is a guest: "triumphant hip hop instrumental, hard drums, big and proud")
-- triumphant soul-sample hip hop, hard drums, big and proud
-- hopeful sped-up soul hip hop, loud drums, wide open
-- victory-lap hip hop, sampled horns, hard snare
-- uplifting boom bap, a soul sample sped up until it shines, big drums
-- celebration hip hop instrumental, blaring sampled brass, round low end
-- nostalgic soul-sample hip hop, sweet and proud, drums up front
-- motivating hip hop, a climbing sample riff, hard kick and snare
-- sunlit soul-sample boom bap, loud and glad
-- proud mid-2000s soul hip hop, the sample up front, heavy drums
-- big-hearted hip hop, a sampled horn riff and a cracking snare
-- hopeful hip hop instrumental, a sample that climbs, drums that march
-- triumphant boom bap, sweet on top, heavy underneath
+**Anchors** (sound-neutral when the lead is a guest: "defiant triumphant hip hop instrumental, hard drums, raw and proud")
+- defiant triumphant hip hop, hard drums, big and proud
+- hard-won victory hip hop, loud drums, raw and wide
+- rebel hip hop instrumental, heavy drums, head up
+- backwoods triumph hip hop, dirt and brass, the snare cracking
+- proud pained southern hip hop, big drums, a riff that climbs
+- river-barn hip hop, raw, defiant, the drums up front
+- bloodied-but-standing boom bap, heavy underneath, proud on top
+- southern rebel boom bap, loud and unbowed
+- triumphant hip hop with dirt on it, hard kick and snare
+- stern victorious hip hop, a climbing riff, drums that march
+- defiant boom bap, rust and brass, heavy low end
 
-**Mix tag:** big open mix, the sample up front, the snare cracking (neutral: big open mix, the snare cracking)
+**Mix tag:** big raw mix, the riff up front, the snare cracking (neutral: big raw mix, the snare cracking)
 
-**Tempo:** 84-96 or 98-108 or 78-84 BPM (half-time above 999). Major share 0.75, soul/Dorian loops 0.2, slur tag 0.15, low lead 0.1. Modes straight 55, loop 30, switch 15. Sliders Weirdness 40-50, Style Influence 75-85.
+**Tempo:** 84-96 or 98-108 or 78-84 BPM (half-time above 999). Major share 0.45, soul/Dorian loops 0, slur tag 0.15, low lead 0.3. Modes straight 55, loop 30, switch 15. Sliders Weirdness 40-50, Style Influence 75-85.
 
-**Families** (weights horns 5, soulup 4, chipmunk 3, uplift 2; guest share 0.1)
+**Families** (weights horns 5, steel 5, soulup 2, chipmunk 1; guest share 0.1)
 
 **horns** (a sampled horn riff blaring over big hard drums)
 
 Sources (description | handle):
 - a soul horn-section riff sampled off an old 45 and sped up, blaring, four notes climbing | the climbing horns
-- a brass stab from a 70s soul intro, pitched up a step, hit on the one | the victory stab
-- a trumpet-and-trombone line rising a fourth then a fifth, sampled, the room still on it | the rising horns
-- a looped horn phrase from a soul 45, two bars, proud and wide | the horn loop
+- a brass stab from a 70s soul intro, pitched up a step, hit on the one, dirty | the victory stab
+- a trumpet-and-trombone line rising a fourth then a fifth, sampled, cracked at the top | the rising horns
+- a low brass blast, trombones and a tuba, one proud note held then cut | the low brass blast
 - a sped-up brass riff with the old hiss left in, answering itself | the answering brass
 - a horn blast held long then three short jabs, sampled and looped | the long-short horns
-- a full horn section hitting one major chord like a slammed door, sampled, glad | the big chord
-- a trumpet line sampled from a soul record, five notes that climb and stay up | the trumpet climb
+- a stack of horns hitting one chord like a door kicked open | the kicked-door chord
+- a single trumpet line, cracked and proud, sampled off worn tape | the cracked trumpet
 
 Processing characters:
-- sped up until it sounds urgent and glad
+- sped up until it sounds urgent and angry
 - the hiss of the old record left on it
 - filtered so the bass of the sample is gone
-- wide and loud, the top end open
-- pitched up a step, sweet and worn
+- wide and loud, overdriven at the edges
+- pitched up a step, worn and proud
 - looped off the one so it tumbles forward
+
+**steel** (rust, wire and wood played hard over big drums)
+
+Sources (description | handle):
+- a slide guitar riff on a rusted resonator, three notes that climb and bite | the resonator slide
+- a harmonica wail sampled and pitched down, one long bent note then two short | the harmonica wail
+- a fuzz guitar riff, five notes that rise and hold, played like a fist raised | the raised riff
+- a dobro lick sampled and looped, steel over dirt, two bars | the dobro lick
+- a low piano hammered in the bottom octave, out of tune, three chords that climb | the hammered low piano
+- a single-string riff plucked on a cigar-box guitar, buzzing, defiant | the cigar-box riff
+- a baritone guitar line, picked hard and low, rising a fourth and holding | the baritone climb
+- a bottleneck slide wailing one note up into the next, sampled off a dusty tape | the bottleneck wail
+- a low string-section riff sawing two notes, stern and proud, sampled | the sawing strings
+
+Processing characters:
+- overdriven through a small amp, the speaker rattling
+- string squeaks and pick noise left in
+- pitched down until it sounds heavy
+- dry and close, a short wooden room on it
+- hard-clipped so it reads on a phone speaker
+- bent slightly flat on the long notes, then pulled up
 
 **soulup** (a sped-up soul sample over big hard drums)
 
 Sources (description | handle):
-- a sped-up soul sample, strings and keys together, two bars looped, hopeful | the hopeful chop
-- an old soul intro pitched up a fourth, the strings soaring, one bar long | the soaring chop
-- a reggae-record guitar-and-organ skank pitched up and looped, sunlit | the island chop
-- a soul piano run sampled and sped up until it sparkles | the sparkling run
-- a sped-up soul guitar lick, two bars, sweet and worn | the worn lick
+- a sped-up soul sample, strings and keys together, two bars looped, straining | the straining chop
+- an old soul intro pitched up a fourth, the strings pushed until they crack, one bar long | the cracked strings chop
 - a sampled string-section climb, four notes up, pitched up a step | the string climb
-- a soul record keys-and-strings phrase sped up, the last chord left ringing | the ringing chop
-- a 70s soul bridge sampled and pitched up, two chords rocking back and forth, glad | the rocking chords
+- a soul record keys-and-strings phrase sped up, the final chord left ringing | the ringing chop
+- a 70s soul bridge sampled and pitched up, two chords rocking back and forth, proud | the rocking chords
 
 Processing characters:
-- sped up until it sounds urgent and glad
+- sped up until it sounds urgent and angry
 - the hiss of the old record left on it
 - filtered so the bass of the sample is gone
-- wide and loud, the top end open
 - looped off the one so it tumbles forward
-- a little dusty, a little out of tune, loved
+- dusty, a little out of tune, worn
 
 **chipmunk** (a sped-up soul record over big hard drums)
 
@@ -1071,29 +1087,13 @@ Processing characters:
 - hard-clipped on every hit
 - warm, at its own pitch, dusty
 
-**uplift** (bright and struck, over big hard drums)
-
-Sources (description | handle):
-- an upright piano hammering major chords in 8ths, sampled, a little out of tune | the hammered piano
-- a soul organ chord held and let go, sampled, glowing | the glowing organ
-- a piano riff climbing the major scale and landing on the fifth | the climbing piano
-- a string-section stab on a major chord, sampled, sharp and proud | the proud stab
-- a glassy electric keys riff, three notes rising, sampled off an old record | the rising keys
-
-Processing characters:
-- sampled, the room still on it
-- pitched up a step, sweet and worn
-- wide and loud, the top end open
-- hard-clipped so it reads on a phone speaker
-- a little out of tune, loved
-
 **Bass**
 - a round sub bass following the roots, steady
-- a bass guitar sample playing root and fifth, steady
-- a deep 808 holding long notes under the sample
+- a bass guitar sample playing root and fifth, picked hard
+- a deep 808 holding long notes under the riff
 - a clean sine sub doubling the kick
 - a bass line lifted from the same soul record, pitched to the key
-- a round sub that climbs with the sample on the long notes
+- a distorted 808 that growls on the long notes
 
 Bass patterns:
 - following the kick exactly
@@ -1105,13 +1105,13 @@ Bass patterns:
 
 **Kick**
 - a big punchy boom-bap kick, the low end round
-- a kick doubled on the and of 3, driving
+- a kick like a boot on barn boards, hard and square
 - a hard kick on the one and the and of two
 - two kicks before the snare, pushing forward
-- a kick that stomps on the one, hard and square
+- a kick that stomps on the one, heavy
 - a deep round kick, short, tuned to the root
 - a hard dry kick, loud, the sub left to the bass
-- a kick on 1 and 3 with a ghost before each snare, marching
+- a kick layered with a foot stomp on a wooden floor
 
 **Snare**
 - a cracking snare with a clap stacked on it, loud
@@ -1119,23 +1119,22 @@ Bass patterns:
 - a snare like a slap, sharp and dry
 - a big roomy snare, a hair late
 - a hard boom-bap snare, crunchy, up front
-- a snare and a tambourine struck together, glad
+- a snare like a plank dropped on a floor, dry
 - a tight cracking snare, loud, the tail short
-- a big layered clap on 2 and 4, a hair behind
+- a rimshot and a snare a few milliseconds apart, hard
 
 **Hats**
 - open hats on the off-beats, washing
-- a tambourine on every 8th, loud and even
 - tight hats in 16ths with the accent on the downbeats
-- a shaker and a tambourine together, driving
+- a chain shaken on the off-beats in place of hats
 - hats in straight 8ths, tight, marching
-- a ride cymbal bell ticking 8ths, proud
 - hand-played hats, every hit a different pressure
-- sparse hats, the tambourine doing the work
+- sparse hats, two per bar, the room doing the rest
+- a shaker of nails in a tin, uneven
 
-**Exclude Styles:** vocals, humming, ad-libs, vocal chops, drum fills, tom fills, snare rolls, hat rolls, drum rolls, transitions, transition fills, section transitions, risers, sweeps, filter sweeps, white noise sweeps, build-ups, breakdown FX, impacts, crash cymbals, reverse cymbals, DJ drops, DJ scratching, tape stop, dark trap, horror, EDM, jazz, neo-soul, lo-fi, sad
+**Exclude Styles:** vocals, humming, ad-libs, vocal chops, drum fills, tom fills, snare rolls, hat rolls, drum rolls, transitions, transition fills, section transitions, risers, sweeps, filter sweeps, white noise sweeps, build-ups, breakdown FX, impacts, crash cymbals, reverse cymbals, DJ drops, DJ scratching, tape stop, dark trap, horror, EDM, neo-soul, lo-fi, sad, jazz, smooth jazz, reggae, elevator music
 
-**Guard:** allow none; deny \b(dark\w*|menac\w*|sinister|grim|ominous|murky|horror|threat\w*|villain|funeral|drill|phonk|memphis|cowbell|distorted 808|blown-out|jazz\w*|funk\w*|neo-soul|chill|lo-?fi|sag\w*|drag\w*)\b (dark, cold and menacing words turn the hopeful lane into every other lane; jazz and chill words turn it soft).
+**Guard:** allow none; deny \b(sinister|horror|villain|drill|phonk|memphis|cowbell|funk\w*|neo-soul|chill|lo-?fi|playful|cheerful|happy|joy\w*|celebrat\w*|party|hopeful|uplifting|organ|tambourine)\b (sweet, churchy and playful words turn hard-won triumph into Sunday school; horror words turn it into every other lane).
 
 ## Lane `menace`: Menace: slow heavy boss trap
 
@@ -1249,7 +1248,7 @@ Bass patterns:
 - a ride bell tick on the off-beats, dark
 - closed hats in uneven 16ths, played by hand, quiet
 
-**Exclude Styles:** vocals, humming, ad-libs, vocal chops, drum fills, tom fills, snare rolls, hat rolls, drum rolls, transitions, transition fills, section transitions, risers, sweeps, filter sweeps, white noise sweeps, build-ups, breakdown FX, impacts, crash cymbals, reverse cymbals, DJ drops, DJ scratching, tape stop, film score, cinematic, orchestral, EDM, dubstep, jazz, neo-soul, party music, pop
+**Exclude Styles:** vocals, humming, ad-libs, vocal chops, drum fills, tom fills, snare rolls, hat rolls, drum rolls, transitions, transition fills, section transitions, risers, sweeps, filter sweeps, white noise sweeps, build-ups, breakdown FX, impacts, crash cymbals, reverse cymbals, DJ drops, DJ scratching, tape stop, film score, cinematic, orchestral, EDM, dubstep, neo-soul, party music, pop, jazz, smooth jazz, reggae, elevator music
 
 **Guard:** allow none; deny \b(bright\w*|sunny|playful|cheerful|chill|jazz\w*|funk\w*|bounc\w*|pluck\w*|pop|dance|club|party|soul|memphis|phonk|cowbell|drill)\b (bright, playful, jazz and film-score words pull this lane out of its slow heavy menace).
 
@@ -1379,7 +1378,7 @@ Bass patterns:
 - sparse distorted hats, two per bar
 - a relay click on the off-beats, dry
 
-**Exclude Styles:** vocals, humming, ad-libs, vocal chops, drum fills, tom fills, snare rolls, hat rolls, drum rolls, transitions, transition fills, section transitions, risers, sweeps, filter sweeps, white noise sweeps, build-ups, breakdown FX, impacts, crash cymbals, reverse cymbals, DJ drops, DJ scratching, tape stop, EDM, dubstep, techno, rock drums, guitar solo, metal band, film score, jazz, pop, party music
+**Exclude Styles:** vocals, humming, ad-libs, vocal chops, drum fills, tom fills, snare rolls, hat rolls, drum rolls, transitions, transition fills, section transitions, risers, sweeps, filter sweeps, white noise sweeps, build-ups, breakdown FX, impacts, crash cymbals, reverse cymbals, DJ drops, DJ scratching, tape stop, EDM, dubstep, techno, rock drums, guitar solo, metal band, film score, pop, party music, jazz, smooth jazz, reggae, elevator music
 
 **Guard:** allow none; deny \b(bright\w*|sunny|playful|cheerful|chill|jazz\w*|funk\w*|soul|bounc\w*|pluck\w*|pop|dance|club|party|dusty|memphis|phonk|cowbell)\b (bright, playful and soul words soften this lane; dance words turn it into club music).
 
@@ -1500,7 +1499,7 @@ Bass patterns:
 - a hat pattern that doubles on the and of every beat, tight and dry
 - crunchy hats in 16ths with one 32nd burst at the end of each bar
 
-**Exclude Styles:** vocals, humming, ad-libs, vocal chops, choir, drum fills, tom fills, snare rolls, hat rolls, drum rolls, transitions, transition fills, section transitions, risers, sweeps, filter sweeps, white noise sweeps, build-ups, breakdown FX, impacts, crash cymbals, reverse cymbals, DJ drops, DJ scratching, tape stop, film score, cinematic, drill, EDM, smooth jazz
+**Exclude Styles:** vocals, humming, ad-libs, vocal chops, choir, drum fills, tom fills, snare rolls, hat rolls, drum rolls, transitions, transition fills, section transitions, risers, sweeps, filter sweeps, white noise sweeps, build-ups, breakdown FX, impacts, crash cymbals, reverse cymbals, DJ drops, DJ scratching, tape stop, film score, cinematic, drill, EDM, jazz, smooth jazz, reggae, elevator music
 
 **Guard:** allow \b(strings?|string section|boom-bap|boom bap)\b; deny \b(drill|clean (modern|pop) mix|polished|bright|sunny|memphis|phonk|cowbell|chill)\b (film-score, drill and clean-pop words pull this lane out of its gritty hybrid).
 
@@ -1605,11 +1604,11 @@ Bass patterns:
 - an 808 cowbell ticking a sparse pattern under the hats, a hair late
 - a cowbell and a woodblock trading knocks on the and of 3
 
-**Exclude Styles:** vocals, vocal samples, vocal chops, chopped vocals, pitched vocals, screwed vocals, humming, singing, rapping, drum fills, tom fills, snare rolls, hat rolls, drum rolls, transitions, transition fills, section transitions, risers, sweeps, filter sweeps, white noise sweeps, build-ups, breakdown FX, impacts, crash cymbals, reverse cymbals, DJ drops, DJ scratching, tape stop, drift phonk, Brazilian funk, EDM, house, cowbell melody, clean pop mix, dubstep
+**Exclude Styles:** vocals, vocal samples, vocal chops, chopped vocals, pitched vocals, screwed vocals, humming, singing, rapping, drum fills, tom fills, snare rolls, hat rolls, drum rolls, transitions, transition fills, section transitions, risers, sweeps, filter sweeps, white noise sweeps, build-ups, breakdown FX, impacts, crash cymbals, reverse cymbals, DJ drops, DJ scratching, tape stop, drift phonk, Brazilian funk, EDM, house, cowbell melody, clean pop mix, dubstep, jazz, smooth jazz, reggae, elevator music
 
 **Guard:** allow \b(cowbell|tape|cassette|lo-?fi|dusty|vinyl|crackl\w*|12 bits)\b; deny \b(phonk|memphis|chopped|screwed|chop|chops|sliced|drift|gym|brazilian|baile|mandel\w*|clean (modern|pop) mix|polished|bright|sunny|cowbell (lead|melody)|melodic cowbell|sample stabs?|vocal stabs?)\b (the genre names themselves summon chopped vocal samples (that is what the genre means to Suno); drift, gym and Brazilian words pull toward the cowbell-melody style).
 
-## Lane `paak-pocket`: Soul boom bap, live pocket
+## Lane `paak-pocket`: Soul chop: juke-joint grit, hard drums
 
 Soul-record chops (pitched up until they chirp, or left warm) over a hard boom-bap kit played behind the beat, bass guitar, horn jabs recorded hot. No jazz, no funk pastiche.
 
@@ -1701,11 +1700,12 @@ Processing characters:
 - a little off the grid on purpose
 
 **Bass**
-- a fingerstyle electric bass guitar, round and muted, the string slides audible
 - a flatwound bass guitar played with the thumb, dull and thumpy, the same two-bar figure start to finish
 - a bass guitar doubled by a quiet sine sub on the root
 - a picked bass guitar with the tone rolled off, sitting a hair behind the kick
 - a bass guitar sample off the same soul record, pitched to the key, one note per bar
+- a low sine bass following the roots, one note per bar
+- a bass guitar sample picked hard, two notes per bar
 
 Bass patterns:
 - landing a hair behind the kick
@@ -1726,6 +1726,9 @@ Bass patterns:
 - a boomy kick with the front head left on, resonant, played soft
 - a kick doubled on the and of 2 only in the hook, loose
 - a kick that waits for the bass and lands a hair after it
+- a hard sampled boom-bap kick, crunchy and loud
+- a kick off an old drum record, pitched down, thudding
+- a kick like a boot on barn boards
 
 **Snare**
 - a hard cracking boom-bap snare, dry, a hair late and hit harder for it
@@ -1735,10 +1738,12 @@ Bass patterns:
 - a snare with the wires loose, buzzing, played late
 - a snare hit with the butt end of the stick, dry and cracking, behind the beat
 - a snare with a quick quiet extra tap before beat 4
-- a brushed snare on 2 and 4, soft and late
 - a snare rimshot on 2 and a full hit on 4, both a hair late
 - a snare played with a towel over the head, dead and dry, late
 - a snare tuned loose, the buzz ringing into the next kick
+- a crunchy sampled snare, loud, a hair late
+- a rimshot crack sampled off a 45, dry
+- a snare like a plank dropped on a floor, dry
 
 **Hats**
 - hand-played hats, every hit a different pressure, dragging behind the kick
@@ -1751,6 +1756,6 @@ Bass patterns:
 - hats played with the tip of the stick, quiet and uneven, the ride bell on beat 3
 - a shaker in one hand and a hat in the other, the two never quite together
 
-**Exclude Styles:** vocals, humming, ad-libs, vocal chops, drum fills, tom fills, snare rolls, hat rolls, drum rolls, transitions, transition fills, section transitions, risers, sweeps, filter sweeps, white noise sweeps, build-ups, breakdown FX, impacts, crash cymbals, reverse cymbals, DJ drops, DJ scratching, tape stop, jazz, smooth jazz, funk, disco, elevator music, trap hi-hats, 808, drum machine, EDM
+**Exclude Styles:** vocals, humming, ad-libs, vocal chops, drum fills, tom fills, snare rolls, hat rolls, drum rolls, transitions, transition fills, section transitions, risers, sweeps, filter sweeps, white noise sweeps, build-ups, breakdown FX, impacts, crash cymbals, reverse cymbals, DJ drops, DJ scratching, tape stop, funk, disco, trap hi-hats, 808, drum machine, EDM, jazz, smooth jazz, reggae, elevator music
 
 **Guard:** allow \b(soul|dusty|chipmunk)\b; deny \b(funk\w*|jazz\w*|neo-soul|ninths?|elevenths?|thirteenths?|vibraphone|clav\w*|wah|disco|groove|trap hats|808s?|drum machine|quantiz\w*|memphis|phonk|cowbell|lo-?fi|cassette|bitcrush\w*|study)\b (funk, jazz and neo-soul words turn this lane into a funk or jazz pastiche; trap and drum-machine words erase the live pocket).

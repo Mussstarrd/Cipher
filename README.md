@@ -27,7 +27,7 @@ node forge.js lanes | layouts | spec
 | Lane | Sound (records never named in prompts) | Written BPM |
 |---|---|---|
 | `anomaly` (flagship) | Technical syncopated drums played off the grid, a heavy dry low end, one lead that should not work; minor and Phrygian only | 130-148 half-time, or 84-96 |
-| `triumph` | Hopeful, nostalgic, motivating: a sped-up soul sample or a blaring sampled horn riff, a major-leaning key, big hard drums (the feel of "Touch the Sky", "Live Your Life", "Lucifer") | 78-108 |
+| `triumph` | Defiant, hard-won victory: a blaring sampled horn riff, a slide on rusted steel, a harmonica wail or a straining sped-up soul sample over big hard drums (the lift of "Touch the Sky", "Live Your Life", "Lucifer", with dirt and blood on it) | 78-108 |
 | `menace` | Slow ominous Southern trap: one big dark hit used like a drum, a huge long 808, a late snare, long silences | 120-140 half-time, or 66-76 |
 | `machine` | Industrial glitch hip hop: distorted drums, struck metal tuned to the key, a lead that sounds like a fault in the machine | 132-146 half-time, 84-96 or 100-110 |
 | `jid-dark` | Dense dark boom-bap/trap hybrid: sliced soul keys and pitched-down strings over knocking drums, twitching hats, a beat switch | 140-152 half-time, or 86-94 |
@@ -37,6 +37,10 @@ node forge.js lanes | layouts | spec
 ## What makes a roll one of one
 
 About half of rolls carry a **hint**: one strange ingredient in the counter's seat, described physically and named in the head tags and one Lyrics tag. A fuzz-and-wah guitar lament with tape echo trailing behind it; a machine glitch (a chord sliced into a skipping-disc stutter, a tuned machine-shop clank, ring-modulated stabs); a nervous horn twitch (three horn jabs then silence, guitar chucks, a tambourine in bursts, recorded hot to tape); or a piano or string **hit structure** ("struck in a 3+2 pattern, five hits per bar, the last damped by hand"). Every lead line also carries one **hook device** from earworm research (repeat four times with one note changed; stop one note short of the root; a full beat of silence right before the hook). Pick a hint on the page under More options, or `--hint fuzzlament|machineglitch|staxtwitch|hits|none`.
+
+## The house sound
+
+Every button is set in the same place: a backwoods barn on the river in Louisiana. Pained, defiant, rebellious, confident, triumphant. No reggae, no jazz, nothing polite: the word filter bans those words in every prompt, and every Exclude list carries `jazz` and `reggae`. On most rolls the snare twitches: it lands on the beat and off it at once.
 
 ## Two prompt writers
 

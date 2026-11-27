@@ -15,6 +15,15 @@ Suno prompt generator for radio-ready hip hop **instrumentals**. A reusable tool
 9. **Every sound is a physical description with a handle**, never a label; see `reference/grammar-and-guard.md`. Vocal-implying, EDM, film-score and elevator-jazz words are banned (voice, cinematic, strings-family names, Rhodes, sax, smooth, lo-fi outside the phonk lane); each lane ALLOWs the few words it needs and DENYs the words that pull it off course.
 10. **Current Suno facts only.** As of 2026-09-09 the only models are **v6, v6-wild, v6-mini**. v6 at Weirdness 40-55 / Style Influence 75-85; v6-wild at 65-80 / 55-70 for the weird lane. If a Suno fact might have changed, run the `suno-researcher` agent, then update `lib/spec.json` and `reference/suno-field-spec.md` together.
 
+## The house sound (2026-11-27, the owner's words)
+
+Everything is sold from one place: **a backwoods barn on the river in Louisiana. Pained, defiant, rebellious, confident, triumphant.** Wisdom given as a sermon in the street, never Sunday school; triumph that cost blood. Never reggae, never jazz, never elevator music, never polite.
+
+- Every lane's `scenes` are set there (backwoods, river-bottom, swamp-country, bayou, levee-town, tin-roof barn). Every roll carries one `SETTING` phrase and one `DEFIANCE` phrase.
+- The guard rule "soft, island and lounge drift" bans reggae, dancehall, island, walking, brushed, fingerstyle, sweet, sunlit, glad, glow, sparkle, gentle, mode names (Dorian, Mixolydian, Lydian), sermon, hymn and Sunday in every string. Every Exclude list carries `jazz` and `reggae`.
+- **The snare twitches.** On most rolls the snare lands on the beat and off it at once (`SNARE_TWITCH` in the drums line, `SNARE_TAGS` in the head): a constant property of the drum, written as "now and then", never a one-time event.
+- `triumph` is defiant, hard-won victory: sampled horns, slide and steel, a straining soul sample, big hard drums, the `rise` attitude. It denies sweet, churchy and party words (hopeful, uplifting, celebration, organ, tambourine) as well as horror words. About 45% major, the rest a pained or bittersweet minor.
+
 ## Two prompt writers (2026-11-23)
 
 Every roll can be written two ways from the same sounds; `--style tight|detailed`, or the Detailed button on the page.
@@ -32,7 +41,7 @@ The research is community-grade and unrendered: no public controlled test exists
 | `forge.js` | CLI: interactive, flags, `--lane any`, `--mode`, `--layout`, `--config`, `--batch`, `qa <files>`, `lanes`, `layouts`, `spec` |
 | `lib/guard.js` | Word-class rules, names list, EVERY cap; `check(text, allow, deny)` |
 | `lib/grammar.js` | Shared slots: lead/bass/twitch/groove/switch/colour/counter roles/head tags/anti-transition/guest families |
-| `lib/lanes.js` | The seven lanes, one creation button each (`anomaly` is the flagship, weight 4; `triumph` is the hopeful one, weight 3; the soul lane `paak-pocket` is a contributor, weight 1): anchors, families (physical sources with handles), drums, bass, tempo, key colour, layout weights, sliders, exclude, allow/deny |
+| `lib/lanes.js` | The seven lanes, one creation button each (`anomaly` is the flagship, weight 4; `triumph` is defiant hard-won victory, weight 3; the soul lane `paak-pocket` is a contributor, weight 1): anchors, families (physical sources with handles), drums, bass, tempo, key colour, layout weights, sliders, exclude, allow/deny |
 | `lib/layouts.js` | Lyrics layouts with placeholders, limits, fallbacks, nominal bars, runtime estimate |
 | `lib/theory.js` | Keys and chord loops (minor-heavy; Dorian/soul loops for the live lane) |
 | `lib/engine.js` | Seeded roll: builds lead/counter/bass/drums/switch/rhythm, Style field with cut order, lyrics fill, variations, fingerprint, warnings |
@@ -65,7 +74,7 @@ Generate -> paste into Suno (Lyrics, Styles, Exclude Styles, sliders) -> listen 
 - Every new string must pass `npm test` (the guard walk). If a word is needed by one lane only, add it to that lane's ALLOW; if a word hurts one lane only, add it to that lane's DENY.
 - Never add a phrase with fill/roll/riser/sweep/build/drop/transition/enters/comes in/bar 4; never waltz/shuffle/swing/swung; never a negation; never a vocal-implying word.
 - Lane drift the owner has heard and the lanes now deny: bright, playful, bounce, pluck and pop words turned the old bounce lane into party music; soul, tine-piano and "live pocket" words turned every lane into jazzy soul. `strut` is confidence, never a major key. Keep those words inside the one lane that needs them.
-- Dark is not the house style either. `triumph` is the hopeful, nostalgic, motivating lane (sped-up soul, big sampled horns, major-leaning keys, hard drums, the `rise` attitude); it denies every dark word, and no other lane's fix may be applied to it. Major keys belong there and only there.
+- Dark is not the house style either, and neither is sweet. `triumph` is the defiant, hard-won one (see The house sound); major keys belong there and only there, and no other lane's fix may be applied to it.
 - Every roll carries one injection: a switch roll's beat switch or key change, or a one-time event from `INJECTIONS` (a glitchy snare slap, a two-bar swap), described in the one lyrics section where it happens and named in the head.
 - The drum pattern is a rolled `CADENCE` (where the kick and snare land) on three rolls in four; lane kick and snare phrases that state their own positions are skipped on those rolls.
 - When the ear finds a problem in a rendered take, turn it into a guard rule, a clash rule or a vocabulary change, and add a test.

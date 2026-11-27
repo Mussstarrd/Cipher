@@ -7,7 +7,7 @@ Lane `jid-dark` | 146 BPM (half-time feel) | C# minor (i7 - IV7 (Dorian): C#m7 -
 ## 1. MODEL
 **Pick:** v6
 **Why:** v6 follows the written prompt most closely (Weirdness 40-55, Style Influence 75-85 landed nearest the text in listening tests). Flagship (Pro/Premier). Best prompt adherence and structure-tag following; cleanest, most polished mix. Reported slightly narrower stereo than the previous generation and mixes that can go muffled after ~2:30 in standard mode, so run Max Mode for full-length beats.
-**Wild/experimental variant:** This roll is a good candidate for v6-wild: run the same fields on v6-wild at Weirdness 65-80 and Style Influence 55-70; that is where the strange, great accidents happen. Exploration checkpoint (Pro/Premier). Deliberately drifts from the prompt, more genre-blending and texture, unpredictable length. Defaults Variety to Off. Not the same as high Weirdness.
+**Wild/experimental variant:** Try v6-wild when v6 comes back too tidy or too quantized: run the same fields on v6-wild at Weirdness 65-80 and Style Influence 55-70; that is where the strange, great accidents happen. Exploration checkpoint (Pro/Premier). Deliberately drifts from the prompt, more genre-blending and texture, unpredictable length. Defaults Variety to Off. Not the same as high Weirdness.
 **Free-plan fallback:** v6-mini: Faster, lighter, available on Free. Closer to v6 than to wild, a little flatter with more artifacts. Use for cheap palette tests or if you are on the Free plan.
 
 ## 2. MODE/TOGGLES
@@ -19,9 +19,9 @@ Lane `jid-dark` | 146 BPM (half-time feel) | C# minor (i7 - IV7 (Dorian): C#m7 -
 - **Duration:** Custom 3:05 (estimated 2:51 from the layout at 146 BPM, plus a buffer rounded up to the next 5 s; [End] stops it early, Crop any tail). Never Auto: v6 runs long on Auto.
 - **Song Title:** Stolen Soul Keys
 
-## 3. STYLE FIELD (645/1000 chars; head tags first, then lead / bass / drums / counter)
+## 3. STYLE FIELD (683/1000 chars; head tags first, then lead / bass / drums / counter)
 ```text
-gritty underground southern hip hop, 146 BPM half-time, slow and wide, Dorian minor, gritty, instrumental, threatening, the drums like footsteps, paranoid, the sliced soul keys up front, quiet taps around 2, beat switch to half-time, the drums a two-bar loop, the lead thin at the bottom, as if from a small speaker, clear of the bass. lead: a soul record keys stab sliced into one-beat pieces and pitched down, resampled until the grain shows. bass: an 808 with a hard knock on top. drums: a syncopated double kick before the snare, a pitched-down snare with a short room, the snare a few milliseconds late each time, the hats dead on the grid.
+river-bottom boom-bap trap hybrid, 146 BPM half-time, crawling tempo, gritty minor, restless, instrumental, threatening, the drums like footsteps, rebellion with its head up, paranoid, the sliced soul keys up front, jittery glitched snare, quiet taps around 2, beat switch to half-time, same drums all song, a little grit on top of the 808 so every bass note reads on a phone speaker. lead: a soul record keys stab sliced into one-beat pieces and pitched down. bass: an 808 with a hard knock on top. drums: a syncopated double kick before the snare, a pitched-down snare with a short room, the snare hits on time, then stutters once a 16th late, now and then, like a sampler misfire.
 ```
 
 ## 4. LYRICS FIELD (311/5000 chars; section tags only, no words)
@@ -41,28 +41,29 @@ gritty underground southern hip hop, 146 BPM half-time, slow and wide, Dorian mi
 [End]
 ```
 
-## 5. EXCLUDE STYLES FIELD (57/1000 chars)
+## 5. EXCLUDE STYLES FIELD (49/1000 chars)
 ```text
-vocals, humming, drum fills, risers, neo-soul, film score
+vocals, humming, drum fills, risers, jazz, reggae
 ```
 
 ## 6. SLIDERS
 - **Weirdness:** 55% — Dense dark boom-bap/trap hybrid: the lane's tested range is 45-55; above 60 Suno starts drifting tempo and structure.
-- **Style Influence:** 79% — High so the physical descriptions are followed; 75-85 landed closest to the written prompt.
+- **Style Influence:** 85% — High so the physical descriptions are followed; 75-85 landed closest to the written prompt.
 - **Audio Influence:** Not used. No audio is uploaded in this workflow, so the slider does not appear; leave it alone.
 - **Variety:** Off (Exact style). Any setting above Off rewrites and expands the Style text before the model sees it (official FAQ: 'reduce the Variety slider to 0 to retain full control of your style tags'). Engineered prompts must run at Off.
 
 ## 7. VARIATIONS
-**A. Safer** (v6, Weirdness 45%, Style Influence 84%; 564 chars). Sound-neutral anchor, no twitch or slur tags, no hint: the plainest reading of the same sounds.
+**A. Safer** (v6, Weirdness 45%, Style Influence 90%; 651 chars). Sound-neutral anchor, no twitch or slur tags, no hint: the plainest reading of the same sounds.
 ```text
-gritty underground southern hip hop, 146 BPM half-time, slow and wide, Dorian minor, gritty, instrumental, threatening, the drums like footsteps, paranoid, the sliced soul keys up front, beat switch to half-time, the drums a two-bar loop, dense dark mix. lead: a soul record keys stab sliced into one-beat pieces and pitched down, resampled until the grain shows. bass: an 808 with a hard knock on top. drums: a syncopated double kick before the snare, a pitched-down snare with a short room, the snare a few milliseconds late each time, the hats dead on the grid.
+river-bottom boom-bap trap hybrid, 146 BPM half-time, crawling tempo, gritty minor, restless, instrumental, threatening, the drums like footsteps, rebellion with its head up, a barn with the doors open to the river, paranoid, the sliced soul keys up front, beat switch to half-time, same drums all song, dense dark mix. lead: a soul record keys stab sliced into one-beat pieces and pitched down, resampled until the grain shows. bass: an 808 with a hard knock on top. drums: a syncopated double kick before the snare, a pitched-down snare with a short room, the snare hits on time, then stutters once a 16th late, now and then, like a sampler misfire.
 ```
-**B. Weirder** (v6-wild, Weirdness 66%, Style Influence 70%; 663 chars). One wild tag added; run it on v6-wild.
+**B. Weirder** (v6-wild, Weirdness 72%, Style Influence 64%; 701 chars). One wild tag added; run it on v6-wild.
 ```text
-gritty underground southern hip hop, 146 BPM half-time, slow and wide, Dorian minor, gritty, instrumental, threatening, the drums like footsteps, paranoid, the sliced soul keys up front, quiet taps around 2, beat switch to half-time, bit-mangled lead, the drums a two-bar loop, the lead thin at the bottom, as if from a small speaker, clear of the bass. lead: a soul record keys stab sliced into one-beat pieces and pitched down, resampled until the grain shows. bass: an 808 with a hard knock on top. drums: a syncopated double kick before the snare, a pitched-down snare with a short room, the snare a few milliseconds late each time, the hats dead on the grid.
+river-bottom boom-bap trap hybrid, 146 BPM half-time, crawling tempo, gritty minor, restless, instrumental, threatening, the drums like footsteps, rebellion with its head up, paranoid, the sliced soul keys up front, jittery glitched snare, quiet taps around 2, beat switch to half-time, bit-mangled lead, same drums all song, a little grit on top of the 808 so every bass note reads on a phone speaker. lead: a soul record keys stab sliced into one-beat pieces and pitched down. bass: an 808 with a hard knock on top. drums: a syncopated double kick before the snare, a pitched-down snare with a short room, the snare hits on time, then stutters once a 16th late, now and then, like a sampler misfire.
 ```
 
 ## 8. POST-GEN NOTES
+- The snare is written to twitch: on the beat and off it at once ("jittery glitched snare"). It is a constant property of the drum, not a one-time event. If the snare comes back plain, raise Style Influence five points before changing the seed.
 - Tight prompt: a short Style field (a scene, a tempo feel, a key colour, the lead, one lateness phrase) and three to five short section tags, following the 2026-11 research (research/07). Judge it on four or more takes: one take tells you less than the difference between two takes of the same prompt. The Detailed switch writes the long version of the same roll.
 - Structure: the first full beat lands at about 0:26; the layout is "Drums cut, lead alone, then beat B is simply there" and runs about 2:51. The beat switch is one axis ("beat switch to half-time"); its words repeat in the head tag and in every section after the switch so Suno cannot undo it.
 - Attitude: cold ("threatening, the drums like footsteps"). Menace without sadness: patient, even, nothing rushed.

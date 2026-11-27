@@ -148,7 +148,7 @@ test('lane identity after the listening pass: no funk/jazz in the soul lane, no 
     assert.ok(!/\b(screwed|sample stab|foghorn|formant|phonk|memphis|chopped|chop|chops|sliced)\b/i.test(ph.style + ph.lyrics), ph.style);
     assert.ok(/vocal chops/.test(ph.exclude));
     const any = generate({ lane: 'any', seed });
-    assert.ok(any.style.slice(0, 400).includes(any.parts.antiTag), `anti tag missing from head: ${any.style}`);
+    assert.ok(any.style.slice(0, 470).includes(any.parts.antiTag), `anti tag missing from head: ${any.style}`);
     assert.ok(any.style.includes(any.parts.drums.twitch.sound) || any.style.length >= 900, `twitch clause missing: ${any.style}`);
     assert.ok(/tape stop/.test(any.exclude) && /crash cymbals/.test(any.exclude), any.exclude);
     if (/straight in on beat 1, cold|nothing leading into it/.test(any.lyrics)) cold++;
@@ -231,12 +231,12 @@ test('tight writer: short scene-first Style, a key colour instead of a tonic, sh
     const q = checkBlock(b); assert.ok(q.ok, `${lane}/${seed}: ${q.errors.join(' | ')}\n${b.style}\n${b.lyrics}`);
     assert.deepStrictEqual(b.warnings, [], `${lane}/${seed}: ${b.warnings.join(' | ')}`);
     assert.strictEqual(b.meta.promptStyle, 'tight');
-    assert.ok(b.style.length <= 700, `${lane}/${seed}: tight Style is ${b.style.length} chars\n${b.style}`);
+    assert.ok(b.style.length <= 740, `${lane}/${seed}: tight Style is ${b.style.length} chars\n${b.style}`);
     assert.ok(b.style.startsWith(b.meta.scene), `${lane}/${seed}: the scene opens the field`);
     assert.ok(!/\bin [A-G][#b]? (minor|major)\b/.test(b.style), `${lane}/${seed}: a tonic letter is in the tight head`);
     assert.ok(/\d+ BPM/.test(b.style.slice(0, 120)) && /\binstrumental\b/.test(b.style.slice(0, 220)), b.style);
     assert.ok(b.style.includes(`${b.parts.lead.handle} up front`) && /lead: .+ bass: .+ drums: /.test(b.style), b.style);
-    assert.strictEqual((b.style.match(/a hair late|a touch behind|always late|dragged late|unevenly by hand|a touch early|ahead of the beat|milliseconds late/g) || []).length >= 1, true, `${lane}/${seed}: one lateness phrase\n${b.style}`);
+    assert.strictEqual((b.style.match(/a hair late|a touch behind|always late|dragged late|unevenly by hand|a touch early|ahead of the beat|milliseconds late|twitch|flam|glitch|jittery|nervous|stutters/g) || []).length >= 1, true, `${lane}/${seed}: one lateness phrase\n${b.style}`);
     const tags = b.lyrics.split('\n').filter((l) => /^\[/.test(l) && !/^\[(Instrumental|End)\]/.test(l));
     assert.ok(tags.length >= 3 && tags.length <= 5 && tags.every((t) => t.length <= 110), `${lane}/${seed}: ${tags.length} tags\n${b.lyrics}`);
     assert.ok(b.exclude.split(', ').length <= 6 && /vocals/.test(b.exclude) && /humming/.test(b.exclude), b.exclude);
@@ -250,20 +250,37 @@ test('tight writer: short scene-first Style, a key colour instead of a tonic, sh
   assert.ok(a.style.length < d.style.length);
 });
 
-test('the hopeful lane stays hopeful: mostly major, the rise attitude, sampled horns or sped-up soul, no dark words', () => {
-  let major = 0, rise = 0, bright = 0; const N = 400;
+test('the house sound: no reggae, no lounge, a defiance phrase and a setting on every roll, the snare twitches', () => {
+  const SOFT = /\b(reggae|dancehall|island|skank\w*|tropical|jazz\w*|lounge|smooth|mellow|brushed|walking|fingerstyle|sweet|sunlit|sunny|glad|sparkl\w*|glow\w*|dorian|mixolydian|sermon|church\w*|sunday)\b/i;
+  let twitch = 0, N = 0; const places = new Set(), spines = new Set();
+  for (const lane of LANE_IDS) for (const seed of SEEDS.slice(0, 250)) for (const mk of [generate, tight]) {
+    const b = mk({ lane, seed }); N++;
+    const m = (b.style + '\n' + b.lyrics + '\n' + b.meta.title).match(SOFT);
+    assert.ok(!m, `${lane}/${seed}: soft or island word "${m && m[0]}"\n${b.style}`);
+    assert.ok(/jazz/.test(b.exclude) && /reggae/.test(b.exclude), `${lane}: Exclude must ban jazz and reggae: ${b.exclude}`);
+    assert.ok(b.style.includes(b.parts.defiance), `${lane}/${seed}: defiance phrase missing\n${b.style}`);
+    if (mk === tight) { assert.ok(b.style.includes(b.parts.setting) || b.style.length > 640, `${lane}/${seed}: setting missing`); places.add(b.parts.setting); assert.ok(/Louisiana|river|swamp|bayou|levee|barn|backwoods|delta|juke|piney|dirt-road|tin-|sawmill|junkyard|southern/.test(b.meta.scene), `${lane}: scene is not the house place: ${b.meta.scene}`); }
+    spines.add(b.parts.defiance);
+    if (b.parts.snareTwitch) { twitch++; assert.ok(b.style.slice(0, 520).includes(b.parts.snareTag), `${lane}/${seed}: snare tag not in the head\n${b.style}`); if (mk === tight) assert.ok(b.style.includes(b.parts.snareTwitch), `${lane}/${seed}: twitching snare missing from the drums line`); }
+  }
+  assert.ok(twitch > N * 0.7, `${twitch}/${N} rolls carry the twitching snare`);
+  assert.ok(places.size >= 6 && spines.size >= 10, `${places.size} settings, ${spines.size} defiance phrases`);
+});
+
+test('triumph is defiant and hard-won: horns and steel, the rise attitude, never sweet or churchy', () => {
+  let major = 0, rise = 0, own = 0; const N = 400;
   for (const seed of SEEDS.slice(0, N)) for (const mk of [generate, tight]) {
     const b = mk({ lane: 'triumph', seed });
     assert.ok(checkBlock(b).ok, checkBlock(b).errors.join(' | '));
-    const m = (b.style + '\n' + b.lyrics).match(/\b(dark\w*|menac\w*|sinister|grim|ominous|murky|horror|threat\w*|villain|funeral)\b/i);
-    assert.ok(!m, `triumph/${seed}: dark word "${m && m[0]}"\n${b.style}`);
-    if (mk === tight) { if (/major/.test(b.meta.key)) major++; if (b.meta.attitude === 'rise') rise++; if (/horns|soulup|chipmunk|uplift/.test(b.parts.lead.family)) bright++; }
+    const m = (b.style + '\n' + b.lyrics).match(/\b(playful|cheerful|happy|joy\w*|celebrat\w*|party|hopeful|uplifting|organ|tambourine|sinister|horror|villain)\b/i);
+    assert.ok(!m, `triumph/${seed}: "${m && m[0]}" does not belong in defiant triumph\n${b.style}`);
+    if (mk === tight) { if (/major/.test(b.meta.key)) major++; if (b.meta.attitude === 'rise') rise++; if (/horns|steel|soulup|chipmunk/.test(b.parts.lead.family)) own++; }
   }
-  assert.ok(major > N * 0.6, `${major}/${N} triumph rolls in a major key`);
+  assert.ok(major > N * 0.25 && major < N * 0.65, `${major}/${N} triumph rolls in a major key`);
   assert.ok(rise > N * 0.6, `${rise}/${N} triumph rolls carry the rise attitude`);
-  assert.ok(bright > N * 0.8, `${bright}/${N} triumph leads are sampled horns, sped-up soul or struck keys`);
+  assert.ok(own > N * 0.8, `${own}/${N} triumph leads are sampled horns, steel or sped-up soul`);
   let any = 0; for (const seed of SEEDS.slice(0, 600)) if (tight({ lane: 'any', seed }).meta.lane === 'triumph') any++;
-  assert.ok(any > 600 * 0.12, `"Surprise me" lands on the hopeful lane ${any}/600 times`);
+  assert.ok(any > 600 * 0.12, `"Surprise me" lands on triumph ${any}/600 times`);
 });
 
 test('user mood and must-have words are guarded', () => {

@@ -7,7 +7,7 @@ Lane `phonk-experimental` | 138 BPM (half-time feel) | C# minor (i7 - IV7 (Doria
 ## 1. MODEL
 **Pick:** v6
 **Why:** v6 follows the written prompt most closely (Weirdness 40-55, Style Influence 75-85 landed nearest the text in listening tests). Flagship (Pro/Premier). Best prompt adherence and structure-tag following; cleanest, most polished mix. Reported slightly narrower stereo than the previous generation and mixes that can go muffled after ~2:30 in standard mode, so run Max Mode for full-length beats.
-**Wild/experimental variant:** This roll is a good candidate for v6-wild: run the same fields on v6-wild at Weirdness 65-80 and Style Influence 55-70; that is where the strange, great accidents happen. Exploration checkpoint (Pro/Premier). Deliberately drifts from the prompt, more genre-blending and texture, unpredictable length. Defaults Variety to Off. Not the same as high Weirdness.
+**Wild/experimental variant:** Try v6-wild when v6 comes back too tidy or too quantized: run the same fields on v6-wild at Weirdness 65-80 and Style Influence 55-70; that is where the strange, great accidents happen. Exploration checkpoint (Pro/Premier). Deliberately drifts from the prompt, more genre-blending and texture, unpredictable length. Defaults Variety to Off. Not the same as high Weirdness.
 **Free-plan fallback:** v6-mini: Faster, lighter, available on Free. Closer to v6 than to wild, a little flatter with more artifacts. Use for cheap palette tests or if you are on the Free plan.
 
 ## 2. MODE/TOGGLES
@@ -19,9 +19,9 @@ Lane `phonk-experimental` | 138 BPM (half-time feel) | C# minor (i7 - IV7 (Doria
 - **Duration:** Custom 3:15 (estimated 3:01 from the layout at 138 BPM, plus a buffer rounded up to the next 5 s; [End] stops it early, Crop any tail). Never Auto: v6 runs long on Auto.
 - **Song Title:** Stolen Slowed Piano
 
-## 3. STYLE FIELD (645/1000 chars; head tags first, then lead / bass / drums / counter)
+## 3. STYLE FIELD (664/1000 chars; head tags first, then lead / bass / drums / counter)
 ```text
-underground 90s cassette trap, 138 BPM half-time, crawling tempo, Dorian minor, gritty, instrumental, cold and still, the 808 doing the talking, dark, the slowed piano up front, one snare per bar, trading places, hypnotic repeating loop, steady pocket, loud and dense, every hit the same strength, the snare on top. lead: a piano record from the 70s slowed down until it drags. bass: a square sub with a slow pitch dive on each note. drums: an 808 kick pitched down a step, an 808 snare and a clap played a 32nd apart, the second kick of each bar always late, 808 closed hats. hint: the whole loop stuttering like a skipping disc for half a bar.
+tin-roof lo-fi southern hip hop, 138 BPM half-time, slow and wide, restless minor with a raised sixth, instrumental, cold and still, the 808 doing the talking, confident, tested, unafraid, a juke joint after closing, dark, the slowed piano up front, nervous twitching snare slap, one snare per bar, trading places, hypnotic repeating loop, same drums all song, loud and dense. lead: a piano record from the 70s slowed down until it drags. bass: a square sub with a slow pitch dive on each note. drums: an 808 kick pitched down a step, an 808 snare and a clap played a 32nd apart, now and then the snare lands between the beats as well as on them, a nervous double.
 ```
 
 ## 4. LYRICS FIELD (212/5000 chars; section tags only, no words)
@@ -41,33 +41,34 @@ underground 90s cassette trap, 138 BPM half-time, crawling tempo, Dorian minor, 
 [End]
 ```
 
-## 5. EXCLUDE STYLES FIELD (61/1000 chars)
+## 5. EXCLUDE STYLES FIELD (54/1000 chars)
 ```text
-vocals, humming, vocal chops, drum fills, risers, drift phonk
+vocals, humming, vocal chops, drum fills, jazz, reggae
 ```
 
 ## 6. SLIDERS
-- **Weirdness:** 50% — Dark slowed cassette hip hop: the lane's tested range is 50-60; above 60 Suno starts drifting tempo and structure.
+- **Weirdness:** 51% — Dark slowed cassette hip hop: the lane's tested range is 50-60; above 60 Suno starts drifting tempo and structure.
 - **Style Influence:** 71% — High so the physical descriptions are followed; 70-80 landed closest to the written prompt.
 - **Audio Influence:** Not used. No audio is uploaded in this workflow, so the slider does not appear; leave it alone.
 - **Variety:** Off (Exact style). Any setting above Off rewrites and expands the Style text before the model sees it (official FAQ: 'reduce the Variety slider to 0 to retain full control of your style tags'). Engineered prompts must run at Off.
 
 ## 7. VARIATIONS
-**A. Safer** (v6, Weirdness 40%, Style Influence 76%; 535 chars). Sound-neutral anchor, no twitch or slur tags, no hint: the plainest reading of the same sounds.
+**A. Safer** (v6, Weirdness 41%, Style Influence 76%; 657 chars). Sound-neutral anchor, no twitch or slur tags, no hint: the plainest reading of the same sounds.
 ```text
-underground 90s cassette trap, 138 BPM half-time, crawling tempo, Dorian minor, gritty, instrumental, cold and still, the 808 doing the talking, dark, the slowed piano up front, hypnotic repeating loop, steady pocket, murky lo-fi mix. lead: a piano record from the 70s slowed down until it drags, low-passed so it sits behind the drums. bass: a square sub with a slow pitch dive on each note. drums: an 808 kick pitched down a step, an 808 snare and a clap played a 32nd apart, the second kick of each bar always late, 808 closed hats.
+tin-roof lo-fi southern hip hop, 138 BPM half-time, slow and wide, restless minor with a raised sixth, instrumental, cold and still, the 808 doing the talking, confident, tested, unafraid, a juke joint after closing, dark, the slowed piano up front, hypnotic repeating loop, same drums all song, murky lo-fi mix. lead: a piano record from the 70s slowed down until it drags, low-passed so it sits behind the drums. bass: a square sub with a slow pitch dive on each note. drums: an 808 kick pitched down a step, an 808 snare and a clap played a 32nd apart, now and then the snare lands between the beats as well as on them, a nervous double, 808 closed hats.
 ```
-**B. Weirder** (v6-wild, Weirdness 79%, Style Influence 57%; 664 chars). One wild tag added; run it on v6-wild.
+**B. Weirder** (v6-wild, Weirdness 69%, Style Influence 70%; 691 chars). One wild tag added; run it on v6-wild.
 ```text
-underground 90s cassette trap, 138 BPM half-time, crawling tempo, Dorian minor, gritty, instrumental, cold and still, the 808 doing the talking, dark, the slowed piano up front, one snare per bar, trading places, hypnotic repeating loop, the loop resampled until it smears, steady pocket, loud and dense, every hit the same strength, the snare on top. lead: a piano record from the 70s slowed down until it drags. bass: a square sub with a slow pitch dive on each note. drums: an 808 kick pitched down a step, an 808 snare and a clap played a 32nd apart, the second kick of each bar always late. hint: the whole loop stuttering like a skipping disc for half a bar.
+tin-roof lo-fi southern hip hop, 138 BPM half-time, slow and wide, restless minor with a raised sixth, instrumental, cold and still, the 808 doing the talking, confident, tested, unafraid, a juke joint after closing, dark, the slowed piano up front, nervous twitching snare slap, one snare per bar, trading places, hypnotic repeating loop, drums pitched down a step, same drums all song, loud and dense. lead: a piano record from the 70s slowed down until it drags. bass: a square sub with a slow pitch dive on each note. drums: an 808 kick pitched down a step, an 808 snare and a clap played a 32nd apart, now and then the snare lands between the beats as well as on them, a nervous double.
 ```
 
 ## 8. POST-GEN NOTES
+- The snare is written to twitch: on the beat and off it at once ("nervous twitching snare slap"). It is a constant property of the drum, not a one-time event. If the snare comes back plain, raise Style Influence five points before changing the seed.
 - Tight prompt: a short Style field (a scene, a tempo feel, a key colour, the lead, one lateness phrase) and three to five short section tags, following the 2026-11 research (research/07). Judge it on four or more takes: one take tells you less than the difference between two takes of the same prompt. The Detailed switch writes the long version of the same roll.
 - Structure: the first full beat lands at about 0:07; the layout is "One sound added, one sound removed" and runs about 3:01. Loop mode: every [Loop] tag says identical on purpose; if Suno adds changes anyway, raise Style Influence five points.
 - Attitude: cold ("cold and still, the 808 doing the talking"). Menace without sadness: patient, even, nothing rushed.
 - The mystery ingredient (the frozen bar of lead) appears once in the whole song, near the end: it is meant to be barely there and to send the track over the edge once. If Suno makes it constant, lower Style Influence five points; if it is missing, that is acceptable on a first take.
-- The hint (the disc skip) is one ingredient, at the end of the song, the last thing heard. If it takes over the record, run the safer variation (no hint) or re-roll; if it is inaudible, raise Style Influence five points. The hook device in the lead line ("a five-note motif on a simple rise-and-fall shape, the second note always a sixteenth late, every pass") is what makes the lead stick; listen for it on the second pass.
+- No hint on this roll; the hook device in the lead line ("a five-note motif on a simple rise-and-fall shape, the second note always a sixteenth late, every pass") carries the stickiness. Listen for it on the second pass.
 - The genre names are never written: "phonk" and "Memphis" summon chopped vocal samples in Suno, so the lane is described as dark slowed cassette hip hop with cowbell knocks. If gibberish voices still appear, re-roll; the Exclude list carries vocal samples, chopped vocals and screwed vocals.
 - The cowbell must stay a rhythmic knock in the drums, never the melody; the colour line says "never the melody" and "cowbell melody" is in the Exclude list.
 - The 808 should be distorted but readable; if it is a clean sine, the bass line got cut for length, so shorten the counter and re-roll.
