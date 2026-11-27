@@ -17,9 +17,10 @@ holdings held unchanged. Every brief adds one row, including "no trade" days.
 | 9 | 2026-11-23 | No trade | Rebound pre-market after last week's correction: NVDA +8.6%, SMH +5.7%, QQQ +3.4%, SPY +2.4%. No entry setup defined in v1 | n/a | n/a | n/a | $0 | n/a | not run | n/a | $0 |
 | 10 | 2026-11-24 | No trade | NVDA closed +31.5% on Nov 23 (Reuters-syndicated reports; one newsletter headline ties it to Huang returning, not confirmed), then -4.9% pre-market; MU -6.7%, INTC -6.0%, SMH -4.7%. No entry setup defined in v1 | n/a | n/a | n/a | $0 | n/a | not run | n/a | $0 |
 | 11 | 2026-11-25 | No trade | Sell-off pre-market ahead of PCE: MU -7.9%, AMD -6.6%, NVDA -6.0%, SMH -5.2%, SPCX -5.0%, QQQ -3.2%, SPY -2.1%. No entry setup defined in v1 | n/a | n/a | n/a | $0 | n/a | not run | n/a | $0 |
+| 12 | 2026-11-27 | No trade (half day, 1 pm close) | Rebound pre-market: MU +6.0%, INTC +4.5%, AMD +4.3%, SMH +3.8%, NVDA +2.4%, QQQ +2.3%, SPY +1.6%. No data or earnings scheduled. No entry setup defined in v1 | n/a | n/a | n/a | $0 | n/a | not run | n/a | $0 |
 
 ## Running totals
-- Recommendations: 11. Trades: 0. No-trade days: 11. Vetoes: 0.
+- Recommendations: 12. Trades: 0. No-trade days: 12. Vetoes: 0.
 - Paper P&L: $0. Open paper risk: $0.
 - Benchmarks (start = Nov 10 close): SPY 749.92. Holdings 14.890133 NVDA @ 168.89 + 24.613125 SPCX @ 143.09 = $6,036.68.
 - Nov 11 8:47 am (pre-market): SPY 756.91 (+0.93%). Holdings $6,126.70 (+1.49%). Paper 0.00%.
@@ -34,6 +35,7 @@ holdings held unchanged. Every brief adds one row, including "no trade" days.
 - Nov 24 8:47 am (pre-market): SPY 713.50 (-4.86%). Holdings $5,550.54 (-8.05%). Paper 0.00%.
 - Nov 25 8:47 am (pre-market): SPY 703.82 (-6.15%). Holdings $5,117.35 (-15.23%). Paper 0.00%.
 - Nov 26 (Thanksgiving, market closed; not a counted day): Nov 25 closes SPY 716.75 (-4.42%). Holdings $5,359.13 (-11.22%). Paper 0.00%.
+- Nov 27 8:47 am (pre-market): SPY 728.14 (-2.90%). Holdings $5,504.17 (-8.82%). Paper 0.00%.
 
 ## Notes
 - 2026-11-10 2:07 pm: Jeffery bought 2x CRWV Nov 27 $90C at $0.12 in 731123444 (real, off-system, before CRWV's earnings that evening). Not a paper position.
@@ -73,3 +75,4 @@ Grade of the Nov 16 review, one week in (pre-market to pre-market): NVDA -13.4% 
 - Interim check 2026-11-24: one day after the Nov 23 review called NVDA shares a coin flip, NVDA closed at $165.05 (+21% from the review's $136.36) and is $156.92 pre-market (+15.1%). Dec $170C bid $0.41 vs $0.42 at the review.
 - Interim check 2026-11-25: SPCX $119.58 pre-market, below its Nov 5 closing low of $123.62 (no unlock confirmed). Dec $170C bid $0.26 (review bids: $1.70 on Nov 16, $0.42 on Nov 23). Mar $340C and CRWV $90C have no bid.
 - 2026-11-26: market closed. Oct PCE 3.8% y/y, core 3.3% vs 3.2% est. S&P 500 recovered from -3.2% intraday to close -0.25% on Nov 25. Dec $170C bid $0.29. CRWV $90C expires Nov 27 with no bid.
+- 2026-11-27: CRWV Nov 27 $90C x2 expires today with no bid; realised loss $24 (real, off-system). Dec $170C bid $0.29.
